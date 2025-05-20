@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import SwipeSwitch from './SwipeSwitch';
 import NumericInputWithUnit from './NumericInputWithUnit';
 
-const ExerciseSetCard = () => {
-  const [expanded, setExpanded] = useState(false);
-  const [setCount, setSetCount] = useState(3);
-  const [sets, setSets] = useState([
-    { id: 1, name: 'Set one', reps: 12, weight: 45, status: 'active' },
-    { id: 2, name: 'Set two', reps: 12, weight: 45, status: 'locked' },
-    { id: 3, name: 'Set three', reps: 120, weight: 45, status: 'locked' }
-  ]);
+const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, defaultSets = 3, defaultReps = 12, defaultWeight = 45 }) => {
+  const [expanded, setExpanded] = useState(!collapsed);
+  const [setCount, setSetCount] = useState(defaultSets);
+  const [sets, setSets] = useState(
+    Array.from({ length: defaultSets }, (_, i) => ({
+      id: i + 1,
+      name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
+      reps: defaultReps,
+      weight: defaultWeight,
+      status: i === 0 ? 'active' : 'locked'
+    }))
+  );
 
   // Update sets array if setCount changes
   React.useEffect(() => {
@@ -86,7 +90,7 @@ const ExerciseSetCard = () => {
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Military press</h2>
+        <h2 className="text-xl font-bold">{exerciseName}</h2>
         <button className="text-xl" onClick={toggleExpanded}>
           <i className="material-icons">
             {expanded ? 'close_fullscreen' : 'open_in_full'}
