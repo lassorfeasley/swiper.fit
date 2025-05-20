@@ -1,6 +1,5 @@
 import { useState } from "react";
 import SwipeSwitch from "./components/UI/SwipeSwitch";
-import IconExample from "./components/IconExample";
 import ExerciseSetCard from "./components/UI/ExerciseSetCard";
 import "./App.css";
 
@@ -48,10 +47,6 @@ function App() {
       <div className="w-full max-w-lg p-4 rounded-lg mb-8">
         <h2 className="text-lg font-bold mb-4">Exercise Set Card</h2>
         <ExerciseSetCard />
-      </div>
-
-      <div className="w-full max-w-lg bg-[#F6F6F6] p-4 rounded-lg">
-        <IconExample />
       </div>
     </div>
   );
