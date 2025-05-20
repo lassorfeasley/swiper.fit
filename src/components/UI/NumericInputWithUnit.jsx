@@ -1,26 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
-const NumericInputWithUnit = ({ initialNumber = 0, unit = 'Reps' }) => {
+const NumericInputWithUnit = ({ initialNumber = 0, unit = 'Reps', onChange }) => {
   const [number, setNumber] = useState(initialNumber);
+  const inputRef = useRef(null);
+  const [isSelected, setIsSelected] = useState(false);
 
   const handleChange = (e) => {
     const value = e.target.value;
     if (!isNaN(value)) {
       setNumber(value);
+      if (onChange) {
+        onChange(value);
+      }
     }
   };
 
+  const handleContainerClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleFocus = (e) => {
+    e.target.select();
+    setIsSelected(true);
+  };
+
+  const handleBlur = () => {
+    setIsSelected(false);
+  };
+
   return (
-    <div className="flex items-center justify-center p-1 bg-white rounded" style={{ width: 'fit-content', backgroundColor: 'white', padding: '4px', borderRadius: '4px' }}>
+    <div 
+      className="flex items-center justify-center bg-white rounded cursor-text" 
+      style={{ width: '60px', backgroundColor: 'white', padding: '4px 8px', borderRadius: '4px' }}
+      onClick={handleContainerClick}
+    >
       <input
+        ref={inputRef}
         type="text"
         value={number}
         onChange={handleChange}
-        className="text-metric font-metric leading-metric text-center text-heading-black"
-        style={{ backgroundColor: 'transparent', border: 'none', width: '50px' }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        className="text-metric font-metric leading-metric text-center text-heading-black flex-1"
+        style={{ backgroundColor: 'transparent', border: 'none', width: 'auto', minWidth: 0, cursor: 'text', outline: 'none' }}
         maxLength={3}
       />
-      <span className="ml-2" style={{ fontSize: '8px', width: '50px', lineHeight: '16px' }}>{unit}</span>
+      <span 
+        className="text-xs whitespace-nowrap" 
+        style={{ fontSize: '8px', width: 'auto', lineHeight: '16px' }}
+        onClick={handleContainerClick}
+      >
+        {unit}
+      </span>
     </div>
   );
 };
