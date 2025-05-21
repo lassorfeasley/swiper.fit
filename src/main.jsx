@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './index.css'
 
@@ -11,7 +12,11 @@ try {
   console.log('Root element found:', root)
   
   if (root) {
-    ReactDOM.createRoot(root).render(<App />)
+    ReactDOM.createRoot(root).render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    )
     console.log('React rendered successfully')
   } else {
     console.error('Root element not found')
