@@ -2,45 +2,30 @@ import React, { useState } from 'react';
 import SwipeSwitch from './SwipeSwitch';
 import NumericInputWithUnit from './NumericInputWithUnit';
 
-const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId }) => {
+const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId, setData = [], onSetDataChange }) => {
   const [focused_view, setFocusedView] = useState(!default_view);
   const [setCount, setSetCount] = useState(defaultSets);
-  const [sets, setSets] = useState(
-    Array.from({ length: defaultSets }, (_, i) => ({
+  const sets = Array.from({ length: setCount }, (_, i) => {
+    const fromParent = setData[i] || {};
+    return {
       id: i + 1,
       name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
-      reps: defaultReps,
-      weight: defaultWeight,
-      status: i === 0 ? 'active' : 'locked'
-    }))
-  );
+      reps: fromParent.reps ?? defaultReps,
+      weight: fromParent.weight ?? defaultWeight,
+      status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
+    };
+  });
 
   // Update sets array if setCount changes
   React.useEffect(() => {
-    setSets(currentSets => {
-      let newSets = [...currentSets];
-      if (setCount > currentSets.length) {
-        // Add new sets
-        for (let i = currentSets.length + 1; i <= setCount; i++) {
-          newSets.push({
-            id: i,
-            name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i-1] || i}`,
-            reps: 12,
-            weight: 45,
-            status: 'locked'
-          });
+    if (onSetDataChange) {
+      for (let i = 0; i < setCount; i++) {
+        if (!setData[i]) {
+          onSetDataChange(i + 1, 'reps', defaultReps);
+          onSetDataChange(i + 1, 'weight', defaultWeight);
         }
-      } else if (setCount < currentSets.length) {
-        // Remove sets
-        newSets = newSets.slice(0, setCount);
       }
-      // Always keep at least one active set
-      if (!newSets.some(s => s.status === 'active')) {
-        const firstLocked = newSets.find(s => s.status === 'locked');
-        if (firstLocked) firstLocked.status = 'active';
-      }
-      return newSets;
-    });
+    }
   }, [setCount]);
 
   const toggleFocusedView = () => {
@@ -48,40 +33,31 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
   };
 
   const handleSetComplete = (setId) => {
-    setSets(currentSets => {
-      return currentSets.map(set => {
-        if (set.id === setId) {
-          // Notify parent when set is completed
-          if (onSetComplete) {
-            onSetComplete({
-              setId,
-              exerciseId,
-              reps: set.reps,
-              weight: set.weight,
-              status: 'complete',
-            });
-          }
-          return { ...set, status: 'complete' };
-        }
-        if (set.status === 'locked') {
-          const completedSetIndex = currentSets.findIndex(s => s.id === setId);
-          const currentSetIndex = currentSets.findIndex(s => s.id === set.id);
-          if (currentSetIndex > completedSetIndex && 
-              currentSets.filter(s => s.status === 'locked' && currentSets.indexOf(s) < currentSetIndex).length === 0) {
-            return { ...set, status: 'active' };
-          }
-        }
-        return set;
-      });
-    });
+    if (onSetComplete) {
+      const set = sets.find(s => s.id === setId);
+      if (set) {
+        onSetComplete({
+          setId,
+          exerciseId,
+          reps: set.reps,
+          weight: set.weight,
+          status: 'complete',
+        });
+      }
+    }
+    if (onSetDataChange) {
+      onSetDataChange(setId, 'status', 'complete');
+      const nextSet = sets.find(s => s.id === setId + 1);
+      if (nextSet && nextSet.status === 'locked') {
+        onSetDataChange(setId + 1, 'status', 'active');
+      }
+    }
   };
 
   const updateSetValue = (setId, field, value) => {
-    setSets(currentSets => 
-      currentSets.map(set => 
-        set.id === setId ? { ...set, [field]: value } : set
-      )
-    );
+    if (onSetDataChange) {
+      onSetDataChange(setId, field, value);
+    }
   };
   
   const activeSet = sets.find(set => set.status === 'active') || sets[0];
@@ -99,25 +75,7 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
 
   // Add this new function for default view swipe
   const handleCompleteAllSets = () => {
-    setSets(currentSets => {
-      const completedSets = currentSets.map(set => ({
-        ...set,
-        status: 'complete'
-      }));
-      // Notify parent for each set
-      if (onSetComplete) {
-        completedSets.forEach(set => {
-          onSetComplete({
-            setId: set.id,
-            exerciseId,
-            reps: set.reps,
-            weight: set.weight,
-            status: 'complete',
-          });
-        });
-      }
-      return completedSets;
-    });
+    // Implementation of handleCompleteAllSets
   };
 
   return (

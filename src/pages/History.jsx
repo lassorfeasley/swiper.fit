@@ -49,17 +49,15 @@ const History = () => {
         .in('workout_id', workoutIds);
       setSets(setsData || []);
 
-      // Generate names for workouts without program names
+      // Generate names for all workouts using the naming convention
       const namesObj = {};
       for (const w of workoutsData || []) {
-        if (!w.programs?.name) {
-          namesObj[w.id] = await generateWorkoutName(
-            new Date(w.created_at),
-            w.programs?.name || '',
-            userId,
-            supabase
-          );
-        }
+        namesObj[w.id] = await generateWorkoutName(
+          new Date(w.created_at),
+          w.programs?.name || '',
+          userId,
+          supabase
+        );
       }
       setNames(namesObj);
       setLoading(false);
@@ -86,7 +84,7 @@ const History = () => {
           {workouts.map(w => (
             <div key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md">
               <div className="text-xl font-bold">
-                {w.programs?.name || names[w.id] || 'Unnamed Workout'}
+                {names[w.id] || 'Unnamed Workout'}
               </div>
               <div className="text-gray-600 mt-1">
                 {new Date(w.created_at).toLocaleString()}

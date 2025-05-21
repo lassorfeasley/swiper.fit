@@ -27,10 +27,29 @@ const Workout = () => {
   useEffect(() => {
     if (step === 'select') {
       setLoading(true);
-      supabase.from('programs').select('*').then(({ data, error }) => {
-        setPrograms(data || []);
+      (async () => {
+        const { data: programsData, error } = await supabase.from('programs').select('*');
+        if (error || !programsData) {
+          setPrograms([]);
+          setLoading(false);
+          return;
+        }
+        // For each program, fetch the number of exercises
+        const programsWithCounts = await Promise.all(
+          programsData.map(async (program) => {
+            const { count, error: countError } = await supabase
+              .from('program_exercises')
+              .select('id', { count: 'exact', head: true })
+              .eq('program_id', program.id);
+            return {
+              ...program,
+              exerciseCount: countError ? 0 : count,
+            };
+          })
+        );
+        setPrograms(programsWithCounts);
         setLoading(false);
-      });
+      })();
     }
   }, [step]);
 
@@ -87,6 +106,21 @@ const Workout = () => {
     }));
   };
 
+  // Handle set data change (for controlled inputs)
+  const handleSetDataChange = (exerciseId, setId, field, value) => {
+    setSetsData(prev => {
+      const prevSets = prev[exerciseId] || [];
+      const setIdx = prevSets.findIndex(s => s.setId === setId);
+      let newSets;
+      if (setIdx !== -1) {
+        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s);
+      } else {
+        newSets = [...prevSets, { setId, [field]: value }];
+      }
+      return { ...prev, [exerciseId]: newSets };
+    });
+  };
+
   // Save sets and workout to Supabase
   const handleEnd = async () => {
     setTimerActive(false);
@@ -115,20 +149,18 @@ const Workout = () => {
       alert('Failed to save workout! ' + (workoutError?.message || ''));
       return;
     }
-    // 2. Insert only completed sets with workout_id
-    console.log('Completed sets:', completedSets);
-    const rows = Object.entries(completedSets).flatMap(([exerciseId, sets]) =>
+    // 2. Insert all sets from setsData with workout_id
+    const rows = Object.entries(setsData).flatMap(([exerciseId, sets]) =>
       sets.map((set, idx) => {
-        const { setId, exerciseId: _remove, status, ...rest } = set; // remove setId, exerciseId, status
+        const { setId, ...rest } = set;
         return {
           ...rest,
-          exercise_id: exerciseId, // use correct column name
+          exercise_id: exerciseId,
           workout_id: workoutInsert.id,
-          order: idx + 1, // set order (1-based index)
+          order: idx + 1,
         };
       })
     );
-    console.log('Rows to insert:', rows);
     if (rows.length > 0) {
       const { error: setsError } = await supabase.from('sets').insert(rows);
       if (setsError) {
@@ -142,7 +174,7 @@ const Workout = () => {
     setExercises([]);
     setTimer(0);
     setCompletedSets({});
-    setSetsData({}); // legacy, can be removed if not used elsewhere
+    setSetsData({});
   };
 
   // UI
@@ -165,7 +197,7 @@ const Workout = () => {
               >
                 <div>
                   <div className="text-xl font-bold">{program.name}</div>
-                  <div className="text-base text-gray-300">{program.exerciseCount || '?'} exercises</div>
+                  <div className="text-base text-gray-300">{typeof program.exerciseCount === 'number' ? program.exerciseCount : '?'} exercises</div>
                 </div>
                 <span className="text-2xl">+</span>
               </button>
@@ -191,6 +223,8 @@ const Workout = () => {
             defaultReps={ex.default_reps}
             defaultWeight={ex.default_weight}
             onSetComplete={setData => handleSetComplete(ex.exercise_id, setData)}
+            setData={setsData[ex.exercise_id] || []}
+            onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
           />
         ))}
       </div>
