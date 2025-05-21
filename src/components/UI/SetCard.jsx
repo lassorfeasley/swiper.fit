@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import SwipeSwitch from './SwipeSwitch';
 import NumericInputWithUnit from './NumericInputWithUnit';
 
-const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, defaultSets = 3, defaultReps = 12, defaultWeight = 45 }) => {
-  const [expanded, setExpanded] = useState(!collapsed);
+const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId }) => {
+  const [focused_view, setFocusedView] = useState(!default_view);
   const [setCount, setSetCount] = useState(defaultSets);
   const [sets, setSets] = useState(
     Array.from({ length: defaultSets }, (_, i) => ({
@@ -43,14 +43,24 @@ const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, d
     });
   }, [setCount]);
 
-  const toggleExpanded = () => {
-    setExpanded(!expanded);
+  const toggleFocusedView = () => {
+    setFocusedView(!focused_view);
   };
 
   const handleSetComplete = (setId) => {
     setSets(currentSets => {
       return currentSets.map(set => {
         if (set.id === setId) {
+          // Notify parent when set is completed
+          if (onSetComplete) {
+            onSetComplete({
+              setId,
+              exerciseId,
+              reps: set.reps,
+              weight: set.weight,
+              status: 'complete',
+            });
+          }
           return { ...set, status: 'complete' };
         }
         if (set.status === 'locked') {
@@ -87,13 +97,36 @@ const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, d
     </div>
   );
 
+  // Add this new function for default view swipe
+  const handleCompleteAllSets = () => {
+    setSets(currentSets => {
+      const completedSets = currentSets.map(set => ({
+        ...set,
+        status: 'complete'
+      }));
+      // Notify parent for each set
+      if (onSetComplete) {
+        completedSets.forEach(set => {
+          onSetComplete({
+            setId: set.id,
+            exerciseId,
+            reps: set.reps,
+            weight: set.weight,
+            status: 'complete',
+          });
+        });
+      }
+      return completedSets;
+    });
+  };
+
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{exerciseName}</h2>
-        <button className="text-xl" onClick={toggleExpanded}>
+        <button className="text-xl" onClick={toggleFocusedView}>
           <i className="material-icons">
-            {expanded ? 'close_fullscreen' : 'open_in_full'}
+            {focused_view ? 'close_fullscreen' : 'open_in_full'}
           </i>
         </button>
       </div>
@@ -103,14 +136,14 @@ const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, d
           unit="Sets"
           onChange={val => setSetCount(Number(val) || 1)}
         />
-        {!expanded && (
+        {!focused_view && (
           <>
             <NumericInputWithUnit initialNumber={activeSet.reps} unit="Reps" />
             <NumericInputWithUnit initialNumber={activeSet.weight} unit="Lbs" />
           </>
         )}
       </div>
-      {expanded ? (
+      {focused_view ? (
         <div className="space-y-4">
           {sets.map(set => (
             <div key={set.id} className="mb-4">
@@ -140,11 +173,11 @@ const ExerciseSetCard = ({ exerciseName = 'Military press', collapsed = false, d
       ) : (
         <SwipeSwitch 
           status={activeSet.status} 
-          onComplete={() => handleSetComplete(activeSet.id)} 
+          onComplete={handleCompleteAllSets} 
         />
       )}
     </div>
   );
 };
 
-export default ExerciseSetCard; 
+export default SetCard; 

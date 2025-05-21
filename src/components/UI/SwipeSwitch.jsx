@@ -6,6 +6,8 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
   const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef(null);
   const [thumbTravel, setThumbTravel] = useState(0);
+  // Internal state to guarantee complete state after swipe
+  const [forceComplete, setForceComplete] = useState(false);
 
   // Animation spring configuration for more natural movement
   const springConfig = {
@@ -38,20 +40,28 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
     return () => window.removeEventListener('resize', handleResize);
   }, [status]); // Re-run when status changes
 
+  // Reset forceComplete if parent resets status
+  useEffect(() => {
+    if (status !== 'complete' && forceComplete) {
+      setForceComplete(false);
+    }
+  }, [status]);
+
   const handleDrag = (e, info) => {
-    if (status !== "active" || !isDragging) return;
+    if ((status !== "active" && status !== "locked") || !isDragging) return;
     if (info.offset.x > 100) {
       setIsDragging(false);
+      setForceComplete(true); // Always force complete on swipe
       onComplete?.();
     }
   };
 
   const handleDragStart = () => {
-    if (status === "active") setIsDragging(true);
+    if (status === "active" || status === "locked") setIsDragging(true);
   };
 
   const handleDragEnd = () => {
-    if (status === "active" && isDragging) {
+    if ((status === "active" || status === "locked") && isDragging) {
       setIsDragging(false);
       controls.start({ x: 0, transition: springConfig });
     }
@@ -59,7 +69,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
 
   useEffect(() => {
     if (thumbTravel > 0) {
-      if (status === "complete") {
+      if (status === "complete" || forceComplete) {
         // Animate to the end position with a smoother transition
         controls.start({ 
           x: thumbTravel,
@@ -80,7 +90,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
         });
       }
     }
-  }, [status, controls, thumbTravel]);
+  }, [status, controls, thumbTravel, forceComplete]);
 
   return (
     <div
@@ -97,7 +107,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
       role="slider"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={status === "complete" ? 100 : 0}
+      aria-valuenow={status === "complete" || forceComplete ? 100 : 0}
     >
       <motion.div
         className="flex items-center justify-center"
@@ -110,7 +120,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
           justifyContent: "center"
         }}
         initial={{ backgroundColor: "#F3F3F3" }}
-        drag={status === "active" ? "x" : false}
+        drag={status !== "complete" ? "x" : false}
         dragConstraints={{ left: 0, right: thumbTravel }}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
@@ -122,12 +132,12 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
           backgroundColor: { duration: 0.3 }
         }}
       >
-        {status === "locked" && (
+        {(status === "locked" && !forceComplete) && (
           <div className="flex items-center justify-center w-full h-full">
             <i className="material-icons" style={{ color: "#666666" }}>lock</i>
           </div>
         )}
-        {status === "complete" && (
+        {(status === "complete" || forceComplete) && (
           <div className="flex items-center justify-center w-full h-full">
             <i className="material-icons" style={{ color: "white" }}>check</i>
           </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import ExerciseSetCard from './UI/ExerciseSetCard';
+import SetCard from './UI/SetCard';
 
 export default function ProgramView() {
   const [programs, setPrograms] = useState([]);
@@ -83,10 +83,10 @@ export default function ProgramView() {
       </div>
       <div className="space-y-4">
         {exerciseCards.map(card => (
-          <ExerciseSetCard
+          <SetCard
             key={card.id}
             exerciseName={card.name}
-            collapsed
+            default_view={true}
             defaultSets={card.default_sets}
             defaultReps={card.default_reps}
             defaultWeight={card.default_weight}
