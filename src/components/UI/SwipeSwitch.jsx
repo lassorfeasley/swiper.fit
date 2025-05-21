@@ -1,7 +1,7 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 
-export default function SwipeSwitch({ status = "locked", onComplete }) {
+export function SwipeSwitch({ status = "locked", onComplete }) {
   const controls = useAnimation();
   const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef(null);
@@ -12,9 +12,9 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
   // Animation spring configuration for more natural movement
   const springConfig = {
     type: "spring",
-    stiffness: 300,  // Lower stiffness for less bounciness
-    damping: 30,     // Higher damping to reduce oscillation
-    mass: 1          // Standard mass
+    stiffness: 300, // Lower stiffness for less bounciness
+    damping: 30, // Higher damping to reduce oscillation
+    mass: 1, // Standard mass
   };
 
   const TRACK_HEIGHT = 60;
@@ -24,7 +24,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
 
   const updateThumbTravel = () => {
     if (trackRef.current) {
-      const trackWidth = trackRef.current.clientWidth - (TRACK_PADDING * 2);
+      const trackWidth = trackRef.current.clientWidth - TRACK_PADDING * 2;
       const newThumbTravel = trackWidth - THUMB_WIDTH;
       setThumbTravel(newThumbTravel);
     }
@@ -32,17 +32,17 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
 
   useEffect(() => {
     updateThumbTravel();
-    
+
     // Add resize listener to handle container width changes
     const handleResize = () => updateThumbTravel();
-    window.addEventListener('resize', handleResize);
-    
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, [status]); // Re-run when status changes
 
   // Reset forceComplete if parent resets status
   useEffect(() => {
-    if (status !== 'complete' && forceComplete) {
+    if (status !== "complete" && forceComplete) {
       setForceComplete(false);
     }
   }, [status]);
@@ -71,22 +71,22 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
     if (thumbTravel > 0) {
       if (status === "complete" || forceComplete) {
         // Animate to the end position with a smoother transition
-        controls.start({ 
+        controls.start({
           x: thumbTravel,
           backgroundColor: "#44BD32",
           transition: {
             ...springConfig,
-            backgroundColor: { duration: 0.3 }
-          }
+            backgroundColor: { duration: 0.3 },
+          },
         });
       } else {
-        controls.start({ 
-          x: 0, 
+        controls.start({
+          x: 0,
           backgroundColor: "#F3F3F3",
           transition: {
             ...springConfig,
-            backgroundColor: { duration: 0.3 }
-          }
+            backgroundColor: { duration: 0.3 },
+          },
         });
       }
     }
@@ -117,7 +117,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
           borderRadius: "8px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
         }}
         initial={{ backgroundColor: "#F3F3F3" }}
         drag={status !== "complete" ? "x" : false}
@@ -129,20 +129,24 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
         whileDrag={{ scale: 1.02, cursor: "grabbing" }}
         transition={{
           x: springConfig,
-          backgroundColor: { duration: 0.3 }
+          backgroundColor: { duration: 0.3 },
         }}
       >
-        {(status === "locked" && !forceComplete) && (
+        {status === "locked" && !forceComplete && (
           <div className="flex items-center justify-center w-full h-full">
-            <i className="material-icons" style={{ color: "#666666" }}>lock</i>
+            <i className="material-icons" style={{ color: "#666666" }}>
+              lock
+            </i>
           </div>
         )}
         {(status === "complete" || forceComplete) && (
           <div className="flex items-center justify-center w-full h-full">
-            <i className="material-icons" style={{ color: "white" }}>check</i>
+            <i className="material-icons" style={{ color: "white" }}>
+              check
+            </i>
           </div>
         )}
       </motion.div>
     </div>
   );
-} 
+}
