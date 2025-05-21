@@ -22,13 +22,25 @@ const History = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch all workouts for the user
-      const { data: workoutsData } = await supabase
+      // Fetch workouts with program information
+      const { data: workoutsData, error } = await supabase
         .from('workouts')
-        .select('*')
+        .select(`
+          *,
+          programs(name)
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching workouts:', error);
+        setWorkouts([]);
+        setLoading(false);
+        return;
+      }
+
       setWorkouts(workoutsData || []);
+
       // Fetch all sets for these workouts
       const workoutIds = (workoutsData || []).map(w => w.id);
       const { data: setsData } = await supabase
@@ -36,15 +48,18 @@ const History = () => {
         .select('id, workout_id, exercise_id')
         .in('workout_id', workoutIds);
       setSets(setsData || []);
-      // Generate names
+
+      // Generate names for workouts without program names
       const namesObj = {};
       for (const w of workoutsData || []) {
-        namesObj[w.id] = await generateWorkoutName(
-          new Date(w.created_at),
-          '', // You can fetch program name if needed
-          userId,
-          supabase
-        );
+        if (!w.programs?.name) {
+          namesObj[w.id] = await generateWorkoutName(
+            new Date(w.created_at),
+            w.programs?.name || '',
+            userId,
+            supabase
+          );
+        }
       }
       setNames(namesObj);
       setLoading(false);
@@ -63,16 +78,25 @@ const History = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="p-6 text-2xl font-bold">Workout history</div>
+      <div className="p-6 text-2xl font-bold">Workout History</div>
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
         <div className="flex flex-col gap-4 p-4">
           {workouts.map(w => (
-            <div key={w.id} className="bg-blue-500 text-white rounded-2xl p-6 flex flex-col shadow-md">
-              <div className="text-xl font-bold">{names[w.id]}</div>
-              <div className="text-base mt-1">{exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0} exercises</div>
-              <div className="text-base mt-1">{formatDuration(w.duration_seconds)}</div>
+            <div key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md">
+              <div className="text-xl font-bold">
+                {w.programs?.name || names[w.id] || 'Unnamed Workout'}
+              </div>
+              <div className="text-gray-600 mt-1">
+                {new Date(w.created_at).toLocaleString()}
+              </div>
+              <div className="text-gray-800 mt-1">
+                {exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0} exercises
+              </div>
+              <div className="text-gray-800 mt-1">
+                Duration: {formatDuration(w.duration_seconds)}
+              </div>
             </div>
           ))}
         </div>
