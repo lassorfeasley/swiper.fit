@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
 
@@ -66,25 +66,38 @@ const WorkoutHistoryDetail = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 pb-32">
-      <div className="p-6 text-2xl font-bold text-white">{workoutName}</div>
+    <div className="min-h-screen w-full bg-[#23262b] pb-32">
+      {/* Header with back arrow and workout name, full width, no margin */}
+      <div className="w-full flex items-center p-6 bg-white shadow-sm sticky top-0 z-10" style={{margin: 0, borderRadius: 0}}>
+        <Link to="/history" className="mr-4 text-black text-3xl font-bold">←</Link>
+        <span className="text-2xl font-bold text-black">{workoutName}</span>
+      </div>
       {loading ? (
         <div className="p-6 text-white">Loading...</div>
       ) : (
-        <div className="flex-1 flex flex-col gap-4 p-4">
+        <div className="flex-1 flex flex-col gap-6 p-4" style={{margin: 0}}>
           {Object.keys(setsByExercise).map(exId => (
-            <div key={exId} className="bg-[#23262b] text-white rounded-2xl p-4 mb-2">
-              <div className="text-lg font-bold mb-2 flex items-center justify-between">
-                <span>[{exercises[exId] || 'Exercise'}]</span>
-                <span className="material-icons">open_in_full</span>
+            <div key={exId} className="bg-white rounded-2xl p-6 flex flex-col shadow-md mb-2">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-2xl font-bold text-black">{exercises[exId] || 'Exercise name'}</span>
+                <span className="material-icons text-2xl text-black">open_in_full</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {setsByExercise[exId].map((set, idx) => (
-                  <div key={set.id} className="bg-white text-black rounded-lg px-3 py-2 flex items-center gap-2 text-sm">
-                    <span>{set.reps} Reps</span>
-                    <span>{set.weight} Lbs</span>
-                  </div>
-                ))}
+              <div className="flex gap-4">
+                {/* Sets pill */}
+                <div className="bg-gray-100 rounded-lg px-4 py-2 flex flex-col items-center min-w-[60px]">
+                  <span className="text-xl font-bold text-black">{setsByExercise[exId].length}</span>
+                  <span className="text-xs text-gray-500">Sets</span>
+                </div>
+                {/* Reps pill (show reps of first set) */}
+                <div className="bg-gray-100 rounded-lg px-4 py-2 flex flex-col items-center min-w-[60px]">
+                  <span className="text-xl font-bold text-black">{setsByExercise[exId][0]?.reps}</span>
+                  <span className="text-xs text-gray-500">Reps</span>
+                </div>
+                {/* Lbs pill (show weight of first set) */}
+                <div className="bg-gray-100 rounded-lg px-4 py-2 flex flex-col items-center min-w-[60px]">
+                  <span className="text-xl font-bold text-black">{setsByExercise[exId][0]?.weight}</span>
+                  <span className="text-xs text-gray-500">Lbs</span>
+                </div>
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
+import { Link } from 'react-router-dom';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
@@ -82,7 +83,7 @@ const History = () => {
       ) : (
         <div className="flex flex-col gap-4 p-4">
           {workouts.map(w => (
-            <div key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md">
+            <Link to={`/history/${w.id}`} key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md hover:bg-gray-200 transition-colors">
               <div className="text-xl font-bold">
                 {names[w.id] || 'Unnamed Workout'}
               </div>
@@ -95,7 +96,7 @@ const History = () => {
               <div className="text-gray-800 mt-1">
                 Duration: {formatDuration(w.duration_seconds)}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
