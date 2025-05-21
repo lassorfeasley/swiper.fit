@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
 const NavBarVisibilityContext = createContext();
 
 export function NavBarVisibilityProvider({ children }) {
   const [navBarVisible, setNavBarVisible] = useState(true);
   return (
-    <NavBarVisibilityContext.Provider value={{ navBarVisible, setNavBarVisible }}>
+    <NavBarVisibilityContext.Provider
+      value={{ navBarVisible, setNavBarVisible }}
+    >
       {children}
     </NavBarVisibilityContext.Provider>
   );
@@ -13,4 +15,4 @@ export function NavBarVisibilityProvider({ children }) {
 
 export function useNavBarVisibility() {
   return useContext(NavBarVisibilityContext);
-} 
+}
