@@ -5,6 +5,8 @@ import Programs from "./pages/Programs";
 import History from "./pages/History";
 import Workout from "./pages/Workout";
 import WorkoutHistoryDetail from "./pages/WorkoutHistoryDetail";
+import ProgramDetail from "./pages/ProgramDetail";
+import EditProgram from "./pages/EditProgram";
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
 
@@ -25,6 +27,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/:programId" element={<ProgramDetail />} />
+          <Route path="/programs/:programId/edit" element={<EditProgram />} />
           <Route path="/history" element={<History />} />
           <Route path="/history/:workoutId" element={<WorkoutHistoryDetail />} />
           <Route path="/workout" element={<Workout />} />
