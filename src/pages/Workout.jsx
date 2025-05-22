@@ -105,6 +105,7 @@ const Workout = () => {
       [exerciseId]: [...(prev[exerciseId] || []), setData]
     }));
   };
+  //
 
   // Handle set data change (for controlled inputs)
   const handleSetDataChange = (exerciseId, setId, field, value) => {
