@@ -86,7 +86,7 @@ const Workout = () => {
         });
     }
   }, [selectedProgram]);
-
+   // 
   // Timer logic
   useEffect(() => {
     if (step !== 'active') return;
