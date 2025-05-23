@@ -20,6 +20,9 @@ function AppContent() {
     { to: "/workout", label: "Workout", icon: <MdAddCircle size={32} /> },
   ];
 
+  // Hide nav bar on Program Detail or Edit Program page
+  const isProgramDetailOrEditPage = /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname);
+
   return (
     <div className="min-h-screen flex flex-col justify-between">
       {/* Main Content */}
@@ -35,8 +38,8 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Bottom Navigation Bar */}
-      {navBarVisible && (
+      {/* Hide nav bar on Program Detail or Edit Program page */}
+      {navBarVisible && !isProgramDetailOrEditPage && (
         <nav className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-lg px-8 py-4 flex space-x-12 z-50">
           {navItems.map((item) => (
             <Link

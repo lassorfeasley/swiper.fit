@@ -1,2 +1,12 @@
-const Home = () => <div className="p-4">Home Page</div>;
+import AppHeader from '../components/UI/AppHeader';
+import MainContainer from '../components/UI/MainContainer';
+
+const Home = () => (
+  <>
+    <AppHeader property1="no-action-no-back" title="Home" />
+    <MainContainer>
+      Home Page
+    </MainContainer>
+  </>
+);
 export default Home; 

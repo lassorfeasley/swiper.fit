@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
 import { Link } from 'react-router-dom';
+import AppHeader from '../components/UI/AppHeader';
+import MainContainer from '../components/UI/MainContainer';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
@@ -76,31 +78,33 @@ const History = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="p-6 text-2xl font-bold">Workout History</div>
-      {loading ? (
-        <div className="p-6">Loading...</div>
-      ) : (
-        <div className="flex flex-col gap-4 p-4">
-          {workouts.map(w => (
-            <Link to={`/history/${w.id}`} key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md hover:bg-gray-200 transition-colors">
-              <div className="text-xl font-bold">
-                {names[w.id] || 'Unnamed Workout'}
-              </div>
-              <div className="text-gray-600 mt-1">
-                {new Date(w.created_at).toLocaleString()}
-              </div>
-              <div className="text-gray-800 mt-1">
-                {exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0} exercises
-              </div>
-              <div className="text-gray-800 mt-1">
-                Duration: {formatDuration(w.duration_seconds)}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+    <>
+      <AppHeader property1="no-action-no-back" title="Workout History" />
+      <MainContainer>
+        {loading ? (
+          <div className="p-6">Loading...</div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {workouts.map(w => (
+              <Link to={`/history/${w.id}`} key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md hover:bg-gray-200 transition-colors">
+                <div className="text-xl font-bold">
+                  {names[w.id] || 'Unnamed Workout'}
+                </div>
+                <div className="text-gray-600 mt-1">
+                  {new Date(w.created_at).toLocaleString()}
+                </div>
+                <div className="text-gray-800 mt-1">
+                  {exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0} exercises
+                </div>
+                <div className="text-gray-800 mt-1">
+                  Duration: {formatDuration(w.duration_seconds)}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </MainContainer>
+    </>
   );
 };
 

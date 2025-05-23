@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import AppHeader from '../components/UI/AppHeader';
+import NewExerciseModal from '../components/UI/NewExerciseModal';
+import { MdEdit } from 'react-icons/md';
 
 const ProgramDetail = () => {
   const { programId } = useParams();
@@ -8,40 +11,86 @@ const ProgramDetail = () => {
   const [program, setProgram] = useState(null);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+
+  const fetchExercises = async () => {
+    setLoading(true);
+    // Fetch program name
+    const { data: programData } = await supabase
+      .from('programs')
+      .select('id, name')
+      .eq('id', programId)
+      .single();
+    setProgram(programData);
+    // Fetch exercises in this program (join with exercises)
+    const { data: progExs } = await supabase
+      .from('program_exercises')
+      .select('id, exercise_id, default_sets, default_reps, default_weight, exercises(name)')
+      .eq('program_id', programId)
+      .order('id', { ascending: true });
+    setExercises(progExs || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      // Fetch program name
-      const { data: programData } = await supabase
-        .from('programs')
-        .select('id, name')
-        .eq('id', programId)
-        .single();
-      setProgram(programData);
-      // Fetch exercises in this program (join with exercises)
-      const { data: progExs } = await supabase
-        .from('program_exercises')
-        .select('id, exercise_id, default_sets, default_reps, default_weight, exercises(name)')
-        .eq('program_id', programId)
-        .order('id', { ascending: true });
-      setExercises(progExs || []);
-      setLoading(false);
-    };
-    if (programId) fetchData();
+    if (programId) fetchExercises();
   }, [programId]);
+
+  // Add new exercise handler
+  const handleAddExercise = async ({ name, sets, reps, weight, unit }) => {
+    // 1. Check if exercise exists
+    let { data: existing, error } = await supabase
+      .from('exercises')
+      .select('id')
+      .eq('name', name)
+      .single();
+    let exerciseId;
+    if (existing && existing.id) {
+      exerciseId = existing.id;
+    } else {
+      // 2. Insert new exercise
+      const { data: newEx, error: insertError } = await supabase
+        .from('exercises')
+        .insert([{ name }])
+        .select()
+        .single();
+      if (insertError || !newEx) {
+        alert('Failed to add exercise');
+        return;
+      }
+      exerciseId = newEx.id;
+    }
+    // 3. Insert into program_exercises
+    const payload = {
+      program_id: programId,
+      exercise_id: exerciseId,
+      default_sets: Number(sets),
+      default_reps: Number(reps),
+      default_weight: Number(weight)
+    };
+    console.log('Inserting into program_exercises:', payload);
+    const { error: progExError } = await supabase
+      .from('program_exercises')
+      .insert(payload);
+    if (progExError) {
+      console.error('Supabase error:', progExError);
+      alert('Failed to add exercise to program');
+      return;
+    }
+    setShowModal(false);
+    fetchExercises();
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-32">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-8 pb-4">
-        <div className="flex items-center gap-2">
-          <span className="material-icons text-2xl text-[#353942]">edit</span>
-          <span className="text-3xl font-bold">{program ? program.name : ''}</span>
-        </div>
-        <span className="material-icons text-3xl text-[#353942]">add</span>
-      </div>
-      <hr className="border-gray-300 mb-6" />
+      <AppHeader
+        property1="default"
+        title={program ? program.name : ''}
+        onBack={() => navigate(-1)}
+        onAdd={() => alert('Rename program (not implemented)')}
+        actionIcon={MdEdit}
+      />
       {/* Exercises List */}
       <div className="flex flex-col gap-8 px-4">
         {loading ? (
@@ -78,10 +127,15 @@ const ProgramDetail = () => {
         )}
       </div>
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-0 w-full bg-[#353942] text-white rounded-t-3xl px-8 py-6 flex items-center justify-between text-2xl font-bold" style={{zIndex: 50}}>
+      <div className="fixed bottom-0 left-0 w-full bg-[#353942] text-white rounded-t-3xl px-8 py-6 flex items-center justify-between text-2xl font-bold" style={{zIndex: 50, cursor: 'pointer'}} onClick={() => setShowModal(true)}>
         <span>New exercise</span>
         <span className="material-icons text-3xl">add</span>
       </div>
+      <NewExerciseModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onAdd={handleAddExercise}
+      />
     </div>
   );
 };

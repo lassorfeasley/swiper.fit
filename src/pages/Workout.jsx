@@ -3,6 +3,8 @@ import { supabase } from '../supabaseClient';
 import SetCard from '../components/UI/SetCard';
 import ActiveFocusedNavBar from '../components/UI/ActiveFocusedNavBar';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
+import AppHeader from '../components/UI/AppHeader';
+import MainContainer from '../components/UI/MainContainer';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -181,62 +183,66 @@ const Workout = () => {
   // UI
   if (step === 'select') {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="p-6 text-2xl font-bold">Select a program</div>
-        {loading ? (
-          <div className="p-6">Loading...</div>
-        ) : (
-          <div className="flex flex-col gap-4 p-4">
-            {programs.map(program => (
-              <button
-                key={program.id}
-                className="bg-[#353942] text-white rounded-2xl p-6 flex justify-between items-center text-left shadow-md"
-                onClick={() => {
-                  setSelectedProgram(program);
-                  setStep('active');
-                }}
-              >
-                <div>
-                  <div className="text-xl font-bold">{program.name}</div>
-                  <div className="text-base text-gray-300">{typeof program.exerciseCount === 'number' ? program.exerciseCount : '?'} exercises</div>
-                </div>
-                <span className="text-2xl">+</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <>
+        <AppHeader property1="no-action-no-back" title="Select a program" />
+        <MainContainer>
+          {loading ? (
+            <div className="p-6">Loading...</div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {programs.map(program => (
+                <button
+                  key={program.id}
+                  className="bg-[#353942] text-white rounded-2xl p-6 flex justify-between items-center text-left shadow-md"
+                  onClick={() => {
+                    setSelectedProgram(program);
+                    setStep('active');
+                  }}
+                >
+                  <div>
+                    <div className="text-xl font-bold">{program.name}</div>
+                    <div className="text-base text-gray-300">{typeof program.exerciseCount === 'number' ? program.exerciseCount : '?'} exercises</div>
+                  </div>
+                  <span className="text-2xl">+</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </MainContainer>
+      </>
     );
   }
 
   // Workout active page
   return (
-    <div className="min-h-screen flex flex-col bg-[#353942] pb-32">
-      <div className="p-6 text-2xl font-bold text-white">{selectedProgram?.name}</div>
-      <div className="flex-1 flex flex-col gap-4 p-4">
-        {exercises.map(ex => (
-          <SetCard
-            key={ex.id}
-            exerciseId={ex.exercise_id}
-            exerciseName={ex.name}
-            default_view={true}
-            defaultSets={ex.default_sets}
-            defaultReps={ex.default_reps}
-            defaultWeight={ex.default_weight}
-            onSetComplete={setData => handleSetComplete(ex.exercise_id, setData)}
-            setData={setsData[ex.exercise_id] || []}
-            onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
-          />
-        ))}
+    <>
+      <AppHeader property1="no-action-no-back" title={selectedProgram?.name || ''} />
+      <div className="min-h-screen flex flex-col bg-[#353942] pb-32">
+        <div className="flex-1 flex flex-col gap-4 p-4">
+          {exercises.map(ex => (
+            <SetCard
+              key={ex.id}
+              exerciseId={ex.exercise_id}
+              exerciseName={ex.name}
+              default_view={true}
+              defaultSets={ex.default_sets}
+              defaultReps={ex.default_reps}
+              defaultWeight={ex.default_weight}
+              onSetComplete={setData => handleSetComplete(ex.exercise_id, setData)}
+              setData={setsData[ex.exercise_id] || []}
+              onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
+            />
+          ))}
+        </div>
+        {/* Focused nav bar for workout active */}
+        <ActiveFocusedNavBar
+          timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
+          isPaused={!timerActive}
+          onPauseToggle={() => setTimerActive(a => !a)}
+          onEnd={handleEnd}
+        />
       </div>
-      {/* Focused nav bar for workout active */}
-      <ActiveFocusedNavBar
-        timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
-        isPaused={!timerActive}
-        onPauseToggle={() => setTimerActive(a => !a)}
-        onEnd={handleEnd}
-      />
-    </div>
+    </>
   );
 };
 
