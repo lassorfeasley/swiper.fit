@@ -87,8 +87,21 @@ const ProgramDetail = () => {
       <AppHeader
         property1="default"
         title={program ? program.name : ''}
-        onBack={() => navigate(-1)}
-        onAdd={() => alert('Rename program (not implemented)')}
+        onBack={() => navigate('/programs')}
+        onAdd={async () => {
+          const newName = window.prompt('Enter new program name:', program?.name || '');
+          if (newName && newName !== program?.name) {
+            const { error } = await supabase
+              .from('programs')
+              .update({ name: newName })
+              .eq('id', programId);
+            if (!error) {
+              setProgram({ ...program, name: newName });
+            } else {
+              alert('Failed to update program name');
+            }
+          }
+        }}
         actionIcon={MdEdit}
       />
       {/* Exercises List */}
