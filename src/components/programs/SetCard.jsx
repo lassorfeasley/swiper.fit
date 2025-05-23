@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SwipeSwitch from './SwipeSwitch';
-import NumericInputWithUnit from './NumericInputWithUnit';
+import SwipeSwitch from '../../components/workout/SwipeSwitch';
+import NumericInputWithUnit from '../../components/common/NumericInputWithUnit';
 
 const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId, setData = [], onSetDataChange }) => {
   const [focused_view, setFocusedView] = useState(!default_view);

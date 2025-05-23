@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import SetCard from './UI/SetCard';
+import SetCard from './SetCard';
 
 export default function ProgramView() {
   const [programs, setPrograms] = useState([]);

@@ -1,5 +1,5 @@
-import AppHeader from '../components/UI/AppHeader';
-import MainContainer from '../components/UI/MainContainer';
+import AppHeader from '../components/layout/AppHeader';
+import MainContainer from '../components/common/MainContainer';
 
 const Home = () => (
   <>

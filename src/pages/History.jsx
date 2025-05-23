@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
 import { Link } from 'react-router-dom';
-import AppHeader from '../components/UI/AppHeader';
-import MainContainer from '../components/UI/MainContainer';
+import AppHeader from '../components/layout/AppHeader';
+import MainContainer from '../components/common/MainContainer';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import SetCard from '../components/UI/SetCard';
-import ActiveFocusedNavBar from '../components/UI/ActiveFocusedNavBar';
+import SetCard from '../components/programs/SetCard';
+import ActiveFocusedNavBar from '../components/layout/ActiveFocusedNavBar';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
-import AppHeader from '../components/UI/AppHeader';
-import MainContainer from '../components/UI/MainContainer';
+import AppHeader from '../components/layout/AppHeader';
+import MainContainer from '../components/common/MainContainer';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'

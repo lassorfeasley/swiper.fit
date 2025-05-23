@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import AppHeader from '../components/UI/AppHeader';
-import NewExerciseModal from '../components/UI/NewExerciseModal';
+import AppHeader from '../components/layout/AppHeader';
+import NewExerciseModal from '../components/common/NewExerciseModal';
 import { MdEdit } from 'react-icons/md';
 
 const ProgramDetail = () => {

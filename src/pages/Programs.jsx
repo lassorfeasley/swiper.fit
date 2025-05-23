@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import AppHeader from '../components/UI/AppHeader';
-import MainContainer from '../components/UI/MainContainer';
+import AppHeader from '../components/layout/AppHeader';
 
 const Programs = () => {
   const [programs, setPrograms] = useState([]);
@@ -40,13 +39,23 @@ const Programs = () => {
   }, []);
 
   return (
-    <>
-      <AppHeader property1="no-action-no-back" title="Programs" />
-      <MainContainer>
-        <div className="bg-[#353942] text-white rounded-2xl p-8 mb-6 flex items-center justify-between text-2xl font-bold cursor-pointer">
-          <span className="font-bold">Create new program</span>
-          <span className="material-icons text-3xl">add</span>
-        </div>
+    <div className="min-h-screen bg-[#f5f5fa] flex flex-col">
+      <AppHeader
+        title="Programs"
+        action_bar={
+          <div className="flex h-12 items-center gap-3 px-5 py-3 w-full">
+            <div className="flex-1 text-white text-base font-medium">
+              Create new program
+            </div>
+            <div className="flex items-center h-full">
+              <button className="p-0 bg-transparent border-none cursor-pointer flex items-center justify-center h-8 w-8" aria-label="Add program">
+                <span className="material-icons w-6 h-6 text-white">add</span>
+              </button>
+            </div>
+          </div>
+        }
+      />
+      <div className="px-4 pt-6">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : programs.length === 0 ? (
@@ -62,14 +71,13 @@ const Programs = () => {
                 <div className="text-2xl font-bold">{program.name}</div>
                 <div className="text-lg text-gray-300 font-normal">{program.exerciseCount} exercises</div>
               </div>
-              <span className="material-icons text-2xl">
-                {program.editable ? 'edit' : 'add'}
-              </span>
+              <span className="material-icons text-2xl">edit</span>
             </div>
           ))
         )}
-      </MainContainer>
-    </>
+      </div>
+      {/* Bottom nav assumed to be present elsewhere */}
+    </div>
   );
 };
 
