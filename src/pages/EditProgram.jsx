@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import AppHeader from '../components/layout/AppHeader';
 
 const EditProgram = () => {
   const { programId } = useParams();
@@ -41,16 +42,16 @@ const EditProgram = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-32">
-      {/* Header with program name and edit icon */}
-      <div className="flex items-center gap-2 px-6 pt-8 pb-4">
-        <span className="text-3xl font-bold flex-1">{program ? program.name : ''}</span>
-        <span
-          className="material-icons text-2xl text-[#353942] cursor-pointer"
-          onClick={openProgramNameEdit}
-        >
-          edit
-        </span>
-      </div>
+      {/* AppHeader with back button */}
+      <AppHeader
+        appHeaderTitle={program ? program.name : ''}
+        showBackButton={true}
+        showActionBar={false}
+        showActionIcon={false}
+        subhead={false}
+        search={false}
+        onBack={() => navigate('/programs')}
+      />
       {/* Exercises List */}
       <div className="flex flex-col gap-8 px-4 pt-4">
         {loading ? (

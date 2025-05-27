@@ -49,6 +49,7 @@ const Programs = () => {
         subhead={false}
         search={true}
         searchPlaceholder="Search programs"
+        onAction={() => navigate('/create_new_program')}
       />
       <div className="min-h-screen bg-[#f5f5fa] flex flex-col">
         <div className="px-4 pt-6">

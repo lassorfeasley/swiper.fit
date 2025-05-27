@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { BackIcon } from "../common/BackIcon";
-import { Icon } from "../common/Icon";
+import { MdArrowBack } from "react-icons/md";
+import Icon from "../common/Icon";
 import SearchField from "../common/forms/SearchField";
 
 export const AppHeader = ({
@@ -13,6 +13,8 @@ export const AppHeader = ({
   search = true,
   subhead = true,
   subheadText = "example subhead text",
+  onBack,
+  onAction,
 }) => {
   // For demo: search state
   const [searchValue, setSearchValue] = React.useState("");
@@ -26,7 +28,19 @@ export const AppHeader = ({
           background: "var(--White, #FFF)",
         }}
       >
-        {showBackButton && <BackIcon className="!relative !w-6 !h-6" />}
+        {showBackButton && (
+          <div
+            className="!relative !w-6 !h-6 cursor-pointer flex items-center justify-center"
+            onClick={onBack}
+            role="button"
+            tabIndex={0}
+            aria-label="Back"
+            style={{ background: "none", border: "none", padding: 0 }}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBack && onBack(); }}
+          >
+            <MdArrowBack className="!w-6 !h-6" />
+          </div>
+        )}
         <div className="flex items-center relative w-full">
           <h1
             className="flex-1 m-0 text-h1 font-h1 leading-h1 font-space text-light-balck"
@@ -45,18 +59,31 @@ export const AppHeader = ({
       </div>
       {showActionBar && (
         <div
-          className="flex items-center w-screen px-5"
+          className="flex items-center w-screen px-5 cursor-pointer"
           style={{
             height: "48px",
             gap: "12px",
             alignSelf: "stretch",
             background: "var(--Black, #2F3640)",
           }}
+          onClick={onAction}
+          role="button"
+          tabIndex={0}
+          aria-label="Action bar"
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onAction && onAction(); }}
         >
           <div className="flex-1 text-metric font-metric leading-metric font-space text-white">
             {actionBarText}
           </div>
-          <Icon className="!relative !w-6 !h-6" style={{ color: "var(--White, #FFF)" }} />
+          <button
+            className="flex items-center justify-center rounded-full bg-white text-black shadow w-10 h-10 ml-2 focus:outline-none"
+            style={{ minWidth: 40, minHeight: 40 }}
+            aria-label="Add"
+            type="button"
+            tabIndex={-1}
+          >
+            <Icon name="add" variant="outlined" size={28} />
+          </button>
         </div>
       )}
       {search && (
@@ -80,6 +107,8 @@ AppHeader.propTypes = {
   search: PropTypes.bool,
   subhead: PropTypes.bool,
   subheadText: PropTypes.string,
+  onBack: PropTypes.func,
+  onAction: PropTypes.func,
 };
 
 export default AppHeader; 
