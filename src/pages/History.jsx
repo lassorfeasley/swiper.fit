@@ -79,7 +79,15 @@ const History = () => {
 
   return (
     <>
-      <AppHeader property1="no-action-no-back" title="Workout History" />
+      <AppHeader
+        appHeaderTitle="Workout history"
+        showActionBar={false}
+        showActionIcon={false}
+        showBackButton={false}
+        subhead={false}
+        search={true}
+        searchPlaceholder="Search"
+      />
       <MainContainer>
         {loading ? (
           <div className="p-6">Loading...</div>

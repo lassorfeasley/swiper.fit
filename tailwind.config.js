@@ -8,19 +8,27 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Space Grotesk', 'sans-serif'],
+        space: ['Space Grotesk', 'sans-serif'],
       },
       colors: {
-        'heading-black': '#2F3640',
+        'light-balck': '#4B6584',
+        'black': '#2F3640',
+        'white': '#FFF',
       },
       fontSize: {
-        'heading': '25px',
-        'metric': '16px',
-      },
-      lineHeight: {
-        'metric': '15px',
+        'h1': '20px',
+        'h2': '16px',
+        'metric': '12px',
       },
       fontWeight: {
-        'metric': '500',
+        'h1': '500',
+        'h2': '400',
+        'metric': '700',
+      },
+      lineHeight: {
+        'h1': '20px',
+        'h2': '16px',
+        'metric': '12px',
       },
     },
   },

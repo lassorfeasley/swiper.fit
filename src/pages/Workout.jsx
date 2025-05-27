@@ -184,7 +184,15 @@ const Workout = () => {
   if (step === 'select') {
     return (
       <>
-        <AppHeader property1="no-action-no-back" title="Select a program" />
+        <AppHeader
+          appHeaderTitle="Select a program to start"
+          showActionBar={false}
+          showActionIcon={false}
+          showBackButton={false}
+          subhead={false}
+          search={true}
+          searchPlaceholder="Search"
+        />
         <MainContainer>
           {loading ? (
             <div className="p-6">Loading...</div>

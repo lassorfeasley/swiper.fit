@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "./styles/typography.css";
+@import "./styles/colors.css";
+
 body {
   margin: 0;
   min-width: 320px;

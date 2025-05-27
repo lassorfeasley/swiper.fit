@@ -7,6 +7,7 @@ import Workout from "./pages/Workout";
 import WorkoutHistoryDetail from "./pages/WorkoutHistoryDetail";
 import ProgramDetail from "./pages/ProgramDetail";
 import EditProgram from "./pages/EditProgram";
+import AppHeaderDemo from "./pages/AppHeaderDemo";
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
 
@@ -35,6 +36,7 @@ function AppContent() {
           <Route path="/history" element={<History />} />
           <Route path="/history/:workoutId" element={<WorkoutHistoryDetail />} />
           <Route path="/workout" element={<Workout />} />
+          <Route path="/app-header-demo" element={<AppHeaderDemo />} />
         </Routes>
       </main>
 

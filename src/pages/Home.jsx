@@ -3,10 +3,18 @@ import MainContainer from '../components/common/MainContainer';
 
 const Home = () => (
   <>
-    <AppHeader property1="no-action-no-back" title="Home" />
+    <AppHeader
+      appHeaderTitle="Home"
+      showActionBar={false}
+      showActionIcon={false}
+      showBackButton={false}
+      subhead={false}
+      search={false}
+    />
     <MainContainer>
       Home Page
     </MainContainer>
   </>
 );
+
 export default Home; 

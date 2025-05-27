@@ -1,57 +1,85 @@
+import PropTypes from "prop-types";
 import React from "react";
+import { BackIcon } from "../common/BackIcon";
+import { Icon } from "../common/Icon";
+import SearchField from "../common/forms/SearchField";
 
 export const AppHeader = ({
-  title = "Page Title",
-  onBack,
-  onEdit,
-  onAction,
-  showBack = false,
-  showEdit = false,
-  action_bar,
+  showActionBar = true,
+  showActionIcon = true,
+  showBackButton = true,
+  appHeaderTitle = "Example app header title",
+  actionBarText = "Example action bar text",
+  search = true,
+  subhead = true,
+  subheadText = "example subhead text",
 }) => {
+  // For demo: search state
+  const [searchValue, setSearchValue] = React.useState("");
+
   return (
-    <header className="flex flex-col w-full items-start relative">
-      <nav className="flex flex-col items-start gap-2 pt-10 pb-5 px-5 relative self-stretch w-full flex-[0_0_auto] bg-white border-b border-black">
-        <div className="flex items-center relative self-stretch w-full flex-[0_0_auto]">
-          {showBack && (
-            <button
-              className="p-0 bg-transparent border-none cursor-pointer mr-4"
-              aria-label="Go back"
-              onClick={onBack}
-            >
-              <span className="material-icons w-6 h-6">arrow_back</span>
-            </button>
-          )}
-          <h1 className="flex-1 text-2xl font-bold text-black">
-            {title}
+    <div className="flex flex-col w-screen items-start relative">
+      <div
+        className="flex flex-col items-start gap-2 w-screen px-5 pt-10 pb-5"
+        style={{
+          borderBottom: "0.5px solid var(--Black, #2F3640)",
+          background: "var(--White, #FFF)",
+        }}
+      >
+        {showBackButton && <BackIcon className="!relative !w-6 !h-6" />}
+        <div className="flex items-center relative w-full">
+          <h1
+            className="flex-1 m-0 text-h1 font-h1 leading-h1 font-space text-light-balck"
+          >
+            {appHeaderTitle}
           </h1>
-          {showEdit && (
-            <button
-              className="p-0 bg-transparent border-none cursor-pointer ml-4"
-              aria-label="Edit title"
-              onClick={onEdit}
-            >
-              <span className="material-icons w-6 h-6">edit</span>
-            </button>
-          )}
-          {onAction && !showEdit && (
-            <button
-              className="p-0 bg-transparent border-none cursor-pointer ml-4"
-              aria-label="Action"
-              onClick={onAction}
-            >
-              <span className="material-icons w-6 h-6">add</span>
-            </button>
-          )}
+          {showActionIcon && <Icon className="!relative !w-6 !h-6" style={{ color: "var(--White, #FFF)" }} />}
         </div>
-      </nav>
-      {action_bar && (
-        <div className="w-full bg-[#353942]">
-          {action_bar}
+        {subhead && (
+          <h2
+            className="self-stretch m-0 text-h2 font-h2 leading-h2 font-space text-black"
+          >
+            {subheadText}
+          </h2>
+        )}
+      </div>
+      {showActionBar && (
+        <div
+          className="flex items-center w-screen px-5"
+          style={{
+            height: "48px",
+            gap: "12px",
+            alignSelf: "stretch",
+            background: "var(--Black, #2F3640)",
+          }}
+        >
+          <div className="flex-1 text-metric font-metric leading-metric font-space text-white">
+            {actionBarText}
+          </div>
+          <Icon className="!relative !w-6 !h-6" style={{ color: "var(--White, #FFF)" }} />
         </div>
       )}
-    </header>
+      {search && (
+        <div className="w-full">
+          <SearchField
+            value={searchValue}
+            onChange={e => setSearchValue(e.target.value)}
+          />
+        </div>
+      )}
+    </div>
   );
+};
+
+AppHeader.propTypes = {
+  showActionBar: PropTypes.bool,
+  showActionIcon: PropTypes.bool,
+  showBackButton: PropTypes.bool,
+  appHeaderTitle: PropTypes.string,
+  actionBarText: PropTypes.string,
+  search: PropTypes.bool,
+  subhead: PropTypes.bool,
+  subheadText: PropTypes.string,
 };
 
 export default AppHeader; 
