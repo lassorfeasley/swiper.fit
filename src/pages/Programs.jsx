@@ -12,7 +12,7 @@ const Programs = () => {
     async function fetchPrograms() {
       setLoading(true);
       // Fetch all programs
-      const { data: programsData, error } = await supabase.from('programs').select('id, program_name');
+      const { data: programsData, error } = await supabase.from('programs').select('id, program_name, created_at').order('created_at', { ascending: false });
       if (error) {
         setPrograms([]);
         setLoading(false);
@@ -62,7 +62,7 @@ const Programs = () => {
               <div
                 key={program.id}
                 className="bg-[#353942] text-white rounded-2xl p-8 mb-6 flex items-center justify-between cursor-pointer"
-                onClick={() => navigate(`/programs/${program.id}`)}
+                onClick={() => navigate(`/programs/${program.id}/configure`)}
               >
                 <div>
                   <div className="text-2xl font-bold">{program.program_name}</div>

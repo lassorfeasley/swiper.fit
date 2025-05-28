@@ -7,16 +7,20 @@ import SetDropdown from './SetDropdown';
 import Icon from '../../Icon';
 import WeightCompoundField from './WeightCompoundField';
 
-const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a new exercise", actionIconName = "arrow_forward", ...props }) => {
+const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a new exercise", actionIconName = "arrow_forward", initialName, initialSets, initialReps, initialWeight, initialUnit, initialSetConfigs, ...props }) => {
   const inputRef = useRef(null);
-  const [exerciseName, setExerciseName] = useState('');
-  const [sets, setSets] = useState(3); // Default value of 3
-  const [reps, setReps] = useState(12); // Default value of 12
-  const [weightIncrement, setWeightIncrement] = useState(25); // Default value of 25
-  const [unit, setUnit] = useState('lbs'); // Default value of lbs
+  const [exerciseName, setExerciseName] = useState(initialName || '');
+  const [sets, setSets] = useState(initialSets ?? 3); // Default value of 3
+  const [reps, setReps] = useState(initialReps ?? 12); // Default value of 12
+  const [weightIncrement, setWeightIncrement] = useState(initialWeight ?? 25); // Default value of 25
+  const [unit, setUnit] = useState(initialUnit || 'lbs'); // Default value of lbs
   const [openSetIndex, setOpenSetIndex] = useState(null); // Track which SetDropdown is open
   // Per-set data: [{ reps, weight, unit }]
-  const [setConfigs, setSetConfigs] = useState(() => Array.from({ length: 3 }, () => ({ reps: 12, weight: 25, unit: 'lbs' })));
+  const [setConfigs, setSetConfigs] = useState(() =>
+    initialSetConfigs && Array.isArray(initialSetConfigs) && initialSetConfigs.length > 0
+      ? initialSetConfigs
+      : Array.from({ length: initialSets ?? 3 }, () => ({ reps: initialReps ?? 12, weight: initialWeight ?? 25, unit: initialUnit || 'lbs' }))
+  );
 
   // Keep setConfigs in sync with sets count and defaults
   useEffect(() => {
@@ -128,6 +132,12 @@ ExerciseSetConfiguration.propTypes = {
   onActionIconClick: PropTypes.func,
   formPrompt: PropTypes.string,
   actionIconName: PropTypes.string,
+  initialName: PropTypes.string,
+  initialSets: PropTypes.number,
+  initialReps: PropTypes.number,
+  initialWeight: PropTypes.number,
+  initialUnit: PropTypes.string,
+  initialSetConfigs: PropTypes.array,
 };
 
 export default ExerciseSetConfiguration; 

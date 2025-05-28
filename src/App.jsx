@@ -10,6 +10,7 @@ import EditProgram from "./pages/EditProgram";
 import AppHeaderDemo from "./pages/AppHeaderDemo";
 import CreateNewProgram from "./pages/CreateNewProgram";
 import CreateOrEditExerciseDemo from './pages/CreateOrEditExerciseDemo';
+import ConfigureProgramExercises from './pages/configure_program_exercises.jsx';
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
 
@@ -38,6 +39,7 @@ function AppContent() {
           <Route path="/programs" element={<Programs />} />
           <Route path="/programs/:programId" element={<ProgramDetail />} />
           <Route path="/programs/:programId/edit" element={<EditProgram />} />
+          <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
           <Route path="/history" element={<History />} />
           <Route path="/history/:workoutId" element={<WorkoutHistoryDetail />} />
           <Route path="/workout" element={<Workout />} />

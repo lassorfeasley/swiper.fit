@@ -15,9 +15,20 @@ export const AppHeader = ({
   subheadText = "example subhead text",
   onBack,
   onAction,
+  searchValue: controlledSearchValue,
+  onSearchChange,
 }) => {
   // For demo: search state
   const [searchValue, setSearchValue] = React.useState("");
+  const isControlled = controlledSearchValue !== undefined && onSearchChange;
+  const value = isControlled ? controlledSearchValue : searchValue;
+  const handleChange = e => {
+    if (isControlled) {
+      onSearchChange(e.target.value);
+    } else {
+      setSearchValue(e.target.value);
+    }
+  };
 
   return (
     <div className="flex flex-col w-screen items-start relative">
@@ -89,8 +100,8 @@ export const AppHeader = ({
       {search && (
         <div className="w-full">
           <SearchField
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
+            value={value}
+            onChange={handleChange}
           />
         </div>
       )}
@@ -109,6 +120,8 @@ AppHeader.propTypes = {
   subheadText: PropTypes.string,
   onBack: PropTypes.func,
   onAction: PropTypes.func,
+  searchValue: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };
 
 export default AppHeader; 

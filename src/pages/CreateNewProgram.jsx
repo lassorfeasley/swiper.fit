@@ -69,12 +69,13 @@ const CreateNewProgram = () => {
       }
       const program_exercise_id = progEx.id;
 
-      // 4. Insert into program_sets (use set_order, remove weight_unit)
+      // 4. Insert into program_sets (use set_order, now include weight_unit)
       const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
         program_exercise_id,
         set_order: idx + 1,
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase.from('program_sets').insert(setRows);
