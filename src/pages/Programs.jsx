@@ -12,7 +12,7 @@ const Programs = () => {
     async function fetchPrograms() {
       setLoading(true);
       // Fetch all programs
-      const { data: programsData, error } = await supabase.from('programs').select('id, name');
+      const { data: programsData, error } = await supabase.from('programs').select('id, program_name');
       if (error) {
         setPrograms([]);
         setLoading(false);
@@ -65,7 +65,7 @@ const Programs = () => {
                 onClick={() => navigate(`/programs/${program.id}`)}
               >
                 <div>
-                  <div className="text-2xl font-bold">{program.name}</div>
+                  <div className="text-2xl font-bold">{program.program_name}</div>
                   <div className="text-lg text-gray-300 font-normal">{program.exerciseCount} exercises</div>
                 </div>
                 <span className="material-icons text-2xl">edit</span>

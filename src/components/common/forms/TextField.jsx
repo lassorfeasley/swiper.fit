@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 const TextField = ({
@@ -9,15 +9,53 @@ const TextField = ({
   error = '',
   type = 'text',
   className = '',
-  inputRef,
+  inputRef: externalInputRef,
+  onEnter,
+  isLastField = false,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const internalInputRef = useRef(null);
+  const inputRef = externalInputRef || internalInputRef;
   const shouldShowFocusedStyle = isFocused || value.length > 0;
+
+  const handleContainerClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && value.trim().length > 0) {
+      e.preventDefault();
+      if (onEnter) {
+        onEnter();
+      } else if (isLastField) {
+        // If this is the last field and no onEnter handler is provided,
+        // try to find and submit the closest form
+        const form = inputRef.current?.closest('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      } else {
+        // Find the next input field and focus it
+        const inputs = Array.from(document.querySelectorAll('input, textarea, select, button:not([type="button"])'));
+        const currentIndex = inputs.indexOf(inputRef.current);
+        if (currentIndex > -1 && currentIndex < inputs.length - 1) {
+          const nextInput = inputs[currentIndex + 1];
+          nextInput.focus();
+          // If the next input is a text input, select its content
+          if (nextInput.type === 'text' && nextInput.value) {
+            nextInput.select();
+          }
+        }
+      }
+    }
+  };
 
   return (
     <div
-      className={`flex bg-white w-full transition-colors ${className} border-2 border-transparent focus-within:border-[#23262B] ${error ? 'border-red-500' : ''}`}
+      className={`flex bg-white w-full transition-colors ${className} border-2 border-transparent focus-within:border-[#23262B] ${error ? 'border-red-500' : ''} cursor-text`}
       style={{
         width: '100%',
         height: '60px',
@@ -31,6 +69,9 @@ const TextField = ({
           alignItems: 'center',
         })
       }}
+      onClick={handleContainerClick}
+      role="textbox"
+      tabIndex={-1}
       {...props}
     >
       {label && (
@@ -49,6 +90,7 @@ const TextField = ({
         type={type}
         value={value}
         onChange={onChange}
+        onKeyDown={handleKeyDown}
         placeholder={error ? placeholder : ''}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -75,6 +117,8 @@ TextField.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) })
   ]),
+  onEnter: PropTypes.func,
+  isLastField: PropTypes.bool,
 };
 
 export default TextField;
