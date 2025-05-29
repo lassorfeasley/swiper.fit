@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
+import { PageNameContext } from '../App';
 
 const EditProgram = () => {
   const { programId } = useParams();
@@ -9,6 +10,7 @@ const EditProgram = () => {
   const [program, setProgram] = useState(null);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { setPageName } = useContext(PageNameContext);
 
   // Placeholder handlers
   const openProgramNameEdit = () => {
@@ -19,6 +21,7 @@ const EditProgram = () => {
   };
 
   useEffect(() => {
+    setPageName('EditProgram');
     const fetchData = async () => {
       setLoading(true);
       // Fetch program name
@@ -38,7 +41,7 @@ const EditProgram = () => {
       setLoading(false);
     };
     if (programId) fetchData();
-  }, [programId]);
+  }, [programId, setPageName]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-32">

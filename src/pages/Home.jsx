@@ -10,8 +10,9 @@ const Home = () => (
       showBackButton={false}
       subhead={false}
       search={false}
+      data-component="AppHeader"
     />
-    <MainContainer>
+    <MainContainer data-component="HomePage">
       Home Page
     </MainContainer>
   </>

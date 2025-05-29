@@ -2,6 +2,10 @@
 margin: 0 auto;
 padding: 2rem; */
 
+html, body, #root {
+  height: 100%;
+}
+
 body {
   background-color: #ffffff;
 }
@@ -29,4 +33,19 @@ div {
 
 .leading-metric {
   line-height: 15px;
+}
+
+body[data-env="development"] [data-component]:hover::after {
+  content: attr(data-component);
+  position: fixed;
+  left: 0;
+  top: 0;
+  background: rgba(30,30,40,0.85);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 2px 10px;
+  z-index: 99999;
+  pointer-events: none;
+  font-family: monospace;
 }

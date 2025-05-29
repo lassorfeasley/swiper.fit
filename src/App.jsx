@@ -5,7 +5,6 @@ import Programs from "./pages/Programs";
 import History from "./pages/History";
 import Workout from "./pages/Workout";
 import WorkoutHistoryDetail from "./pages/WorkoutHistoryDetail";
-import ProgramDetail from "./pages/ProgramDetail";
 import EditProgram from "./pages/EditProgram";
 import AppHeaderDemo from "./pages/AppHeaderDemo";
 import CreateNewProgram from "./pages/CreateNewProgram";
@@ -13,6 +12,34 @@ import CreateOrEditExerciseDemo from './pages/CreateOrEditExerciseDemo';
 import ConfigureProgramExercises from './pages/configure_program_exercises.jsx';
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
+import React, { createContext, useState, useEffect } from 'react';
+
+export const PageNameContext = createContext({ setPageName: () => {}, pageName: '' });
+
+function PageNameFooter() {
+  const { pageName } = React.useContext(PageNameContext);
+  if (!pageName) return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 8,
+      left: 0,
+      width: '100vw',
+      textAlign: 'center',
+      pointerEvents: 'none',
+      zIndex: 9999,
+    }}>
+      <span style={{
+        background: 'rgba(30,30,40,0.5)',
+        color: '#fff',
+        fontSize: 12,
+        borderRadius: 8,
+        padding: '2px 12px',
+        opacity: 0.7,
+      }}>{pageName}</span>
+    </div>
+  );
+}
 
 function AppContent() {
   const location = useLocation();
@@ -37,7 +64,6 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
-          <Route path="/programs/:programId" element={<ProgramDetail />} />
           <Route path="/programs/:programId/edit" element={<EditProgram />} />
           <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
           <Route path="/history" element={<History />} />
@@ -69,9 +95,18 @@ function AppContent() {
 }
 
 export default function App() {
+  const [pageName, setPageName] = useState('');
+  useEffect(() => {
+    if (import.meta.env.MODE === 'development') {
+      document.body.setAttribute('data-env', 'development');
+    }
+  }, []);
   return (
-    <NavBarVisibilityProvider>
-      <AppContent />
-    </NavBarVisibilityProvider>
+    <PageNameContext.Provider value={{ pageName, setPageName }}>
+      <NavBarVisibilityProvider>
+        <AppContent />
+      </NavBarVisibilityProvider>
+      <PageNameFooter />
+    </PageNameContext.Provider>
   );
 }

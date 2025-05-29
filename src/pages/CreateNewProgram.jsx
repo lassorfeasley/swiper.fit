@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
 import AppHeader from '../components/layout/AppHeader';
 import FocusForm from '../components/common/forms/FocusForm';
 import TextField from '../components/common/forms/TextField';
@@ -6,18 +6,21 @@ import Icon from '../components/common/Icon';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { PageNameContext } from '../App';
 
 const CreateNewProgram = () => {
+  const { setPageName } = useContext(PageNameContext);
   const [programName, setProgramName] = useState('');
   const [showAddExercise, setShowAddExercise] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   // Autofocus the input on mount
   useEffect(() => {
+    setPageName('CreateNewProgram');
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [setPageName]);
 
   const showFocusForm = !showAddExercise;
   const isReady = programName.trim().length > 0;
@@ -47,7 +50,7 @@ const CreateNewProgram = () => {
         const { data: newEx, error: insertError } = await supabase
           .from('exercises')
           .insert([{ name: exerciseData.name }])
-          .select()
+          .select('id, name')
           .single();
         if (insertError || !newEx) throw new Error('Failed to create exercise');
         exercise_id = newEx.id;
@@ -82,8 +85,8 @@ const CreateNewProgram = () => {
         if (setError) throw new Error('Failed to save set details');
       }
 
-      // Success: navigate to the new program detail page
-      navigate(`/programs/${program_id}`);
+      // Success: navigate to the new program configure page
+      navigate(`/programs/${program_id}/configure`);
     } catch (err) {
       alert(err.message || 'Failed to create program');
     }

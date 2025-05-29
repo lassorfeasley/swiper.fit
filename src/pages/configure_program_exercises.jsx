@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
@@ -7,11 +7,13 @@ import MetricPill from '../components/common/forms/compound-fields/metric_pill';
 import { Reorder } from 'framer-motion';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
+import { PageNameContext } from '../App';
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const { setNavBarVisible } = useNavBarVisibility();
+  const { setPageName } = useContext(PageNameContext);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState('');
@@ -21,9 +23,10 @@ const ConfigureProgramExercises = () => {
   const isUnmounted = useRef(false);
 
   useEffect(() => {
+    setPageName('ConfigureProgramExercises');
     setNavBarVisible(false);
     return () => setNavBarVisible(true);
-  }, [setNavBarVisible]);
+  }, [setNavBarVisible, setPageName]);
 
   useEffect(() => {
     async function fetchProgramAndExercises() {
@@ -102,7 +105,7 @@ const ConfigureProgramExercises = () => {
         const { data: newEx, error: insertError } = await supabase
           .from('exercises')
           .insert([{ name: exerciseData.name }])
-          .select()
+          .select('id, name')
           .single();
         if (insertError || !newEx) throw new Error('Failed to create exercise');
         exercise_id = newEx.id;
@@ -201,8 +204,19 @@ const ConfigureProgramExercises = () => {
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Handler to close modal or go back to programs page
+  const handleOverlayClick = () => {
+    if (showAddExercise) {
+      setShowAddExercise(false);
+    } else if (editingExercise) {
+      setEditingExercise(null);
+    } else {
+      navigate('/programs');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#f5f5fa] flex flex-col w-full relative">
+    <div className="min-h-screen bg-[#f5f5fa] flex flex-col w-full relative" data-component="ConfigureProgramExercisesPage">
       <AppHeader
         appHeaderTitle={programName || 'Program'}
         subhead={true}
@@ -215,16 +229,17 @@ const ConfigureProgramExercises = () => {
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
+        data-component="AppHeader"
       />
-      <div className="flex-1 flex flex-col items-center px-4 pt-6">
+      <div className="flex-1 flex flex-col items-center px-4 pt-6" data-component="ConfigureProgramExercisesContent">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : (
-          <div className="w-full max-w-lg mx-auto flex flex-col justify-start flex-1">
-            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 flex-1 justify-start">
+          <div className="w-full max-w-lg mx-auto flex flex-col justify-start flex-1" data-component="ExerciseList">
+            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 flex-1 justify-start" data-component="ReorderGroup">
               {filteredExercises.map((ex) => (
-                <Reorder_Card key={ex.id} value={ex}>
-                  <div className="flex flex-col w-full gap-2" onClick={() => setEditingExercise(ex)}>
+                <Reorder_Card key={ex.id} value={ex} data-component="ReorderCard">
+                  <div className="flex flex-col w-full gap-2" onClick={() => setEditingExercise(ex)} data-component="ExerciseCard">
                     <div className="flex items-center gap-2 align-stretch w-full">
                       <div className="text-xl font-bold text-[#5A6B7A] flex-1">{ex.name}</div>
                       <button className="text-[#5A6B7A]">
@@ -232,9 +247,9 @@ const ConfigureProgramExercises = () => {
                       </button>
                     </div>
                     <div className="flex gap-2 mt-2">
-                      <MetricPill value={ex.sets} unit="SETS" />
-                      <MetricPill value={ex.reps} unit="REPS" />
-                      <MetricPill value={ex.weight} unit={ex.unit?.toUpperCase() || "LBS"} />
+                      <MetricPill value={ex.sets} unit="SETS" data-component="MetricPill" />
+                      <MetricPill value={ex.reps} unit="REPS" data-component="MetricPill" />
+                      <MetricPill value={ex.weight} unit={ex.unit?.toUpperCase() || "LBS"} data-component="MetricPill" />
                     </div>
                   </div>
                 </Reorder_Card>
@@ -250,6 +265,7 @@ const ConfigureProgramExercises = () => {
                 formPrompt="Add a new exercise"
                 actionIconName="arrow_forward"
                 onActionIconClick={handleAddExercise}
+                onOverlayClick={handleOverlayClick}
               />
               <button
                 className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
@@ -279,6 +295,7 @@ const ConfigureProgramExercises = () => {
                   weight: cfg.weight,
                   unit: cfg.weight_unit,
                 }))}
+                onOverlayClick={handleOverlayClick}
               />
               <button
                 className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"

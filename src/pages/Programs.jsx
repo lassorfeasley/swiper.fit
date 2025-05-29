@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
+import { PageNameContext } from '../App';
 
 const Programs = () => {
+  const { setPageName } = useContext(PageNameContext);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setPageName('Programs');
     async function fetchPrograms() {
       setLoading(true);
       // Fetch all programs
@@ -36,10 +39,10 @@ const Programs = () => {
       setLoading(false);
     }
     fetchPrograms();
-  }, []);
+  }, [setPageName]);
 
   return (
-    <>
+    <div className="h-screen flex flex-col relative bg-[#f5f5fa]">
       <AppHeader
         appHeaderTitle="Programs"
         actionBarText="Create new program"
@@ -50,9 +53,10 @@ const Programs = () => {
         search={true}
         searchPlaceholder="Search programs"
         onAction={() => navigate('/create_new_program')}
+        data-component="AppHeader"
       />
-      <div className="min-h-screen bg-[#f5f5fa] flex flex-col">
-        <div className="px-4 pt-6">
+      <div className="flex-1 overflow-y-auto px-4 pb-24">
+        <div className="w-full flex flex-col pt-10">
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : programs.length === 0 ? (
@@ -61,21 +65,33 @@ const Programs = () => {
             programs.map(program => (
               <div
                 key={program.id}
-                className="bg-[#353942] text-white rounded-2xl p-8 mb-6 flex items-center justify-between cursor-pointer"
+                className="flex flex-col items-start gap-[10px] mb-6 cursor-pointer w-full"
+                style={{
+                  padding: 20,
+                  borderRadius: 4,
+                  background: '#fff',
+                }}
                 onClick={() => navigate(`/programs/${program.id}/configure`)}
+                data-component="ProgramCard"
               >
-                <div>
-                  <div className="text-2xl font-bold">{program.program_name}</div>
-                  <div className="text-lg text-gray-300 font-normal">{program.exerciseCount} exercises</div>
+                <div
+                  className="flex w-full justify-between items-center"
+                  style={{ alignSelf: 'stretch' }}
+                >
+                  <h1 className="text-h1 font-h1 leading-h1 font-space text-[#353942] m-0">
+                    {program.program_name}
+                  </h1>
+                  <span className="material-symbols-outlined text-3xl text-[#5A6B7A]">settings</span>
                 </div>
-                <span className="material-icons text-2xl">edit</span>
+                <div className="text-metric font-metric leading-metric text-[#5A6B7A]">
+                  {String(program.exerciseCount).padStart(2, '0')} exercises
+                </div>
               </div>
             ))
           )}
         </div>
-        {/* Bottom nav assumed to be present elsewhere */}
       </div>
-    </>
+    </div>
   );
 };
 

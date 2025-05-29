@@ -30,7 +30,7 @@ const History = () => {
         .from('workouts')
         .select(`
           *,
-          programs(name)
+          programs(program_name)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -57,7 +57,7 @@ const History = () => {
       for (const w of workoutsData || []) {
         namesObj[w.id] = await generateWorkoutName(
           new Date(w.created_at),
-          w.programs?.name || '',
+          w.programs?.program_name || '',
           userId,
           supabase
         );
@@ -87,8 +87,9 @@ const History = () => {
         subhead={false}
         search={true}
         searchPlaceholder="Search"
+        data-component="AppHeader"
       />
-      <MainContainer>
+      <MainContainer data-component="HistoryPage">
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (

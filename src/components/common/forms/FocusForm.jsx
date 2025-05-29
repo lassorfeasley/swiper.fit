@@ -1,7 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const FocusForm = ({ children, className = '', contentClassName = '', formPrompt, actionIcon, onActionIconClick, ...props }) => {
+const FocusForm = ({ children, className = '', contentClassName = '', formPrompt, actionIcon, onActionIconClick, onOverlayClick, ...props }) => {
+  // Helper to detect overlay click (not content click)
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && onOverlayClick) {
+      onOverlayClick(e);
+    }
+  };
   return (
     <div
       className={`fixed inset-0 z-50 flex justify-center items-end w-full align-stretch h-screen ${className}`}
@@ -20,6 +26,7 @@ const FocusForm = ({ children, className = '', contentClassName = '', formPrompt
         background: 'rgba(60, 64, 67, 0.85)', // more visible semi-transparent dark overlay
         height: '100vh',
       }}
+      onClick={handleOverlayClick}
       {...props}
     >
       <div
@@ -73,6 +80,7 @@ FocusForm.propTypes = {
   formPrompt: PropTypes.string,
   actionIcon: PropTypes.node,
   onActionIconClick: PropTypes.func,
+  onOverlayClick: PropTypes.func,
 };
 
 export default FocusForm; 

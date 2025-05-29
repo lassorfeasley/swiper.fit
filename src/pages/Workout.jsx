@@ -192,8 +192,9 @@ const Workout = () => {
           subhead={false}
           search={true}
           searchPlaceholder="Search"
+          data-component="AppHeader"
         />
-        <MainContainer>
+        <MainContainer data-component="WorkoutPage">
           {loading ? (
             <div className="p-6">Loading...</div>
           ) : (
@@ -206,6 +207,7 @@ const Workout = () => {
                     setSelectedProgram(program);
                     setStep('active');
                   }}
+                  data-component="ProgramSelectButton"
                 >
                   <div>
                     <div className="text-xl font-bold">{program.name}</div>
@@ -224,8 +226,8 @@ const Workout = () => {
   // Workout active page
   return (
     <>
-      <AppHeader property1="no-action-no-back" title={selectedProgram?.name || ''} />
-      <div className="min-h-screen flex flex-col bg-[#353942] pb-32">
+      <AppHeader property1="no-action-no-back" title={selectedProgram?.name || ''} data-component="AppHeader" />
+      <div className="min-h-screen flex flex-col bg-[#353942] pb-32" data-component="WorkoutPage">
         <div className="flex-1 flex flex-col gap-4 p-4">
           {exercises.map(ex => (
             <SetCard
@@ -239,6 +241,7 @@ const Workout = () => {
               onSetComplete={setData => handleSetComplete(ex.exercise_id, setData)}
               setData={setsData[ex.exercise_id] || []}
               onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
+              data-component="SetCard"
             />
           ))}
         </div>
@@ -248,6 +251,7 @@ const Workout = () => {
           isPaused={!timerActive}
           onPauseToggle={() => setTimerActive(a => !a)}
           onEnd={handleEnd}
+          data-component="ActiveFocusedNavBar"
         />
       </div>
     </>
