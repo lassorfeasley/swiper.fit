@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import SetCard from '../components/programs/SetCard';
+import SetCard from '../components/common/UI_Cards/SetCard';
 import ActiveFocusedNavBar from '../components/layout/ActiveFocusedNavBar';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
 import AppHeader from '../components/layout/AppHeader';
 import MainContainer from '../components/common/MainContainer';
+import CardWrapper from '../components/layout/CardWrapper';
+import ProgramCard from '../components/common/UI_Cards/ProgramCard';
+import { generateWorkoutName } from '../utils/generateWorkoutName';
+import FocusForm from '../components/common/forms/FocusForm';
+import NumericInput from '../components/common/forms/NumericInput';
+import Icon from '../components/common/Icon';
+import TextField from '../components/common/forms/TextField';
+import WeightCompoundField from '../components/common/forms/compound-fields/WeightCompoundField';
+import SetDropdown from '../components/common/forms/compound-fields/SetDropdown';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -18,6 +27,19 @@ const Workout = () => {
   const [setsData, setSetsData] = useState({}); // { exerciseId: [setData, ...] }
   const [completedSets, setCompletedSets] = useState({}); // { exerciseId: [setData, ...] }
   const { setNavBarVisible } = useNavBarVisibility();
+  const [workoutName, setWorkoutName] = useState('');
+
+  // State for adding unscheduled exercise
+  const [showAddUnscheduledForm, setShowAddUnscheduledForm] = useState(false);
+  const [newUnscheduledExerciseName, setNewUnscheduledExerciseName] = useState('');
+  const [newUnscheduledExerciseSets, setNewUnscheduledExerciseSets] = useState(3); // Default to 3 sets
+  const [newUnscheduledExerciseReps, setNewUnscheduledExerciseReps] = useState(10); // Default to 10 reps
+  const [newUnscheduledExerciseWeight, setNewUnscheduledExerciseWeight] = useState(0); // Default to 0 weight
+  const [newUnscheduledExerciseUnit, setNewUnscheduledExerciseUnit] = useState('kg'); // Default to 'kg'
+  const [newUnscheduledSetConfigs, setNewUnscheduledSetConfigs] = useState(
+    Array.from({ length: 3 }, () => ({ reps: 10, weight: 0, unit: 'kg' }))
+  );
+  const [openSetIndex, setOpenSetIndex] = useState(null);
 
   // Hide/show nav bar based on step
   useEffect(() => {
@@ -36,7 +58,6 @@ const Workout = () => {
           setLoading(false);
           return;
         }
-        // For each program, fetch the number of exercises
         const programsWithCounts = await Promise.all(
           programsData.map(async (program) => {
             const { count, error: countError } = await supabase
@@ -57,27 +78,34 @@ const Workout = () => {
 
   // Fetch exercises for selected program
   useEffect(() => {
-    if (selectedProgram) {
+    if (selectedProgram && step === 'active') {
       setLoading(true);
       supabase
         .from('program_exercises')
         .select('*')
         .eq('program_id', selectedProgram.id)
         .then(async ({ data: progExs, error }) => {
-          if (!progExs) {
+          if (error || !progExs) {
             setExercises([]);
             setLoading(false);
             return;
           }
           const exerciseIds = progExs.map(pe => pe.exercise_id);
-          const { data: exercisesData } = await supabase
+          const { data: exercisesData, error: exercisesError } = await supabase
             .from('exercises')
             .select('id, name')
             .in('id', exerciseIds);
-          // Compose exercise cards
+
+          if (exercisesError) {
+            console.error("Error fetching exercises for program:", exercisesError);
+            setExercises([]);
+            setLoading(false);
+            return;
+          }
+
           const cards = progExs.map(pe => ({
-            id: pe.id,
-            exercise_id: pe.exercise_id,
+            id: pe.id, // This is program_exercise_id, unique for list key
+            exercise_id: pe.exercise_id, // This is actual exercise_id
             name: (exercisesData.find(e => e.id === pe.exercise_id) || {}).name || 'Unknown',
             default_sets: pe.default_sets,
             default_reps: pe.default_reps,
@@ -86,9 +114,11 @@ const Workout = () => {
           setExercises(cards);
           setLoading(false);
         });
+    } else if (!selectedProgram && step === 'active') {
+        setExercises([]); // Clear exercises if starting an unscheduled workout from scratch
     }
-  }, [selectedProgram]);
-   // 
+  }, [selectedProgram, step]);
+
   // Timer logic
   useEffect(() => {
     if (step !== 'active') return;
@@ -100,69 +130,93 @@ const Workout = () => {
     return () => clearInterval(timerRef.current);
   }, [timerActive, step]);
 
-  // Handle set completion (collect data for saving)
-  const handleSetComplete = (exerciseId, setData) => {
+  useEffect(() => {
+    if (step === 'active' && selectedProgram) {
+      (async () => {
+        const name = await generateWorkoutName(
+          new Date(),
+          selectedProgram.program_name,
+          'bed5cb48-0242-4894-b58d-94ac01de22ff', // TODO: replace with real user id
+          supabase
+        );
+        setWorkoutName(name);
+      })();
+    } else if (step === 'active' && !selectedProgram) {
+      setWorkoutName('Unscheduled Workout');
+    }
+  }, [step, selectedProgram]);
+
+  // Keep setConfigs in sync with sets count and defaults
+  useEffect(() => {
+    setNewUnscheduledSetConfigs(prev => {
+      const arr = Array.from({ length: newUnscheduledExerciseSets }, (_, i) => prev[i] || { reps: newUnscheduledExerciseReps, weight: newUnscheduledExerciseWeight, unit: newUnscheduledExerciseUnit });
+      return arr.map(cfg => ({
+        reps: cfg.reps ?? newUnscheduledExerciseReps,
+        weight: cfg.weight ?? newUnscheduledExerciseWeight,
+        unit: cfg.unit ?? newUnscheduledExerciseUnit,
+      }));
+    });
+  }, [newUnscheduledExerciseSets, newUnscheduledExerciseReps, newUnscheduledExerciseWeight, newUnscheduledExerciseUnit]);
+
+  // Handle set completion
+  const handleSetComplete = (exerciseId, setDataArg) => {
     setCompletedSets(prev => ({
       ...prev,
-      [exerciseId]: [...(prev[exerciseId] || []), setData]
+      [exerciseId]: [...(prev[exerciseId] || []), setDataArg]
     }));
   };
-  //
 
-  // Handle set data change (for controlled inputs)
+  // Handle set data change
   const handleSetDataChange = (exerciseId, setId, field, value) => {
     setSetsData(prev => {
       const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.setId === setId);
+      const setIdx = prevSets.findIndex(s => s.id === setId); // Assuming setId is unique per exercise from SetCard
       let newSets;
       if (setIdx !== -1) {
         newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s);
       } else {
-        newSets = [...prevSets, { setId, [field]: value }];
+        // This case might need review if setId is not guaranteed.
+        // For now, assuming SetCard provides a unique id for each set data object.
+        newSets = [...prevSets, { id: setId, [field]: value }]; 
       }
       return { ...prev, [exerciseId]: newSets };
     });
   };
 
-  // Save sets and workout to Supabase
+  // Save workout to Supabase
   const handleEnd = async () => {
     setTimerActive(false);
-    // 1. Insert new workout
+    const workoutData = {
+        duration_seconds: timer,
+        completed_at: new Date().toISOString(),
+        user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff', // TODO: replace with real user id
+    };
+    if (selectedProgram) {
+        workoutData.program_id = selectedProgram.id;
+    }
+
     const { data: workoutInsert, error: workoutError } = await supabase
       .from('workouts')
-      .insert([
-        {
-          program_id: selectedProgram.id,
-          duration_seconds: timer, // seconds
-          completed_at: new Date().toISOString(),
-          user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff', // real user id
-        },
-      ])
+      .insert([workoutData])
       .select()
       .single();
+
     if (workoutError || !workoutInsert) {
-      console.error('Workout insert error:', {
-        error: workoutError,
-        payload: {
-          program_id: selectedProgram.id,
-          duration_seconds: timer,
-          completed_at: new Date().toISOString(),
-        }
-      });
+      console.error('Workout insert error:', { error: workoutError, payload: workoutData });
       alert('Failed to save workout! ' + (workoutError?.message || ''));
       return;
     }
-    // 2. Insert all sets from setsData with workout_id
-    const rows = Object.entries(setsData).flatMap(([exerciseId, sets]) =>
-      sets.map((set, idx) => {
-        const { setId, ...rest } = set;
-        return {
-          ...rest,
-          exercise_id: exerciseId,
-          workout_id: workoutInsert.id,
-          order: idx + 1,
-        };
-      })
+    const rows = Object.entries(setsData).flatMap(([exerciseId, exerciseSets]) => 
+        (exerciseSets || []).map((set, idx) => {
+          // Remove id and status before inserting into DB
+          const { id, status, ...restOfSet } = set;
+          return {
+            ...restOfSet,
+            exercise_id: exerciseId,
+            workout_id: workoutInsert.id,
+            order: idx + 1,
+          };
+        })
     );
     if (rows.length > 0) {
       const { error: setsError } = await supabase.from('sets').insert(rows);
@@ -171,90 +225,202 @@ const Workout = () => {
         alert('Failed to save sets! ' + (setsError?.message || ''));
       }
     }
-    // Reset state
     setStep('select');
     setSelectedProgram(null);
     setExercises([]);
     setTimer(0);
     setCompletedSets({});
     setSetsData({});
+    setShowAddUnscheduledForm(false);
+    setNewUnscheduledExerciseName('');
+    setNewUnscheduledExerciseSets(3);
+    setNewUnscheduledExerciseReps(10);
+    setNewUnscheduledExerciseWeight(0);
+    setNewUnscheduledExerciseUnit('kg');
+    setNewUnscheduledSetConfigs(Array.from({ length: 3 }, () => ({ reps: 10, weight: 0, unit: 'kg' })));
+    setOpenSetIndex(null);
+  };
+  
+  const handleAddUnscheduledExercise = async () => {
+    if (!newUnscheduledExerciseName.trim()) {
+      alert("Exercise name cannot be empty.");
+      return;
+    }
+    // 1. Insert the new exercise into the 'exercises' table
+    const { data: newExerciseData, error: insertError } = await supabase
+      .from('exercises')
+      .insert([{ 
+        name: newUnscheduledExerciseName.trim(),
+      }])
+      .select()
+      .single();
+    if (insertError || !newExerciseData) {
+      console.error("Error inserting new exercise:", insertError);
+      alert("Failed to create new exercise. " + (insertError?.message || ''));
+      return;
+    }
+    const createdExerciseId = newExerciseData.id;
+    const newExerciseForWorkout = {
+      id: `unscheduled-${createdExerciseId}-${Date.now()}`,
+      exercise_id: createdExerciseId,
+      name: newUnscheduledExerciseName.trim(),
+      default_sets: newUnscheduledExerciseSets,
+      default_reps: newUnscheduledExerciseReps,
+      default_weight: newUnscheduledExerciseWeight,
+      unit: newUnscheduledExerciseUnit,
+      setConfigs: newUnscheduledSetConfigs,
+      isUnscheduled: true,
+    };
+    setExercises(prevExercises => [...prevExercises, newExerciseForWorkout]);
+    setShowAddUnscheduledForm(false);
+    setNewUnscheduledExerciseName('');
+    setNewUnscheduledExerciseSets(3);
+    setNewUnscheduledExerciseReps(10);
+    setNewUnscheduledExerciseWeight(0);
+    setNewUnscheduledExerciseUnit('kg');
+    setNewUnscheduledSetConfigs(Array.from({ length: 3 }, () => ({ reps: 10, weight: 0, unit: 'kg' })));
+    setOpenSetIndex(null);
   };
 
-  // UI
   if (step === 'select') {
     return (
-      <>
-        <AppHeader
-          appHeaderTitle="Select a program to start"
-          showActionBar={false}
-          showActionIcon={false}
-          showBackButton={false}
-          subhead={false}
-          search={true}
-          searchPlaceholder="Search"
-          data-component="AppHeader"
-        />
+      <CardWrapper
+        header={
+          <AppHeader
+            appHeaderTitle="Select a program to start"
+            showActionBar={false}
+            showActionIcon={false}
+            showBackButton={false}
+            subhead={false}
+            search={true}
+            searchPlaceholder="Search"
+            data-component="AppHeader"
+          />
+        }
+      >
         <MainContainer data-component="WorkoutPage">
           {loading ? (
             <div className="p-6">Loading...</div>
           ) : (
             <div className="flex flex-col gap-4">
               {programs.map(program => (
-                <button
+                <ProgramCard
                   key={program.id}
-                  className="bg-[#353942] text-white rounded-2xl p-6 flex justify-between items-center text-left shadow-md"
+                  programName={program.program_name}
+                  exerciseCount={program.exerciseCount}
                   onClick={() => {
                     setSelectedProgram(program);
                     setStep('active');
                   }}
-                  data-component="ProgramSelectButton"
-                >
-                  <div>
-                    <div className="text-xl font-bold">{program.name}</div>
-                    <div className="text-base text-gray-300">{typeof program.exerciseCount === 'number' ? program.exerciseCount : '?'} exercises</div>
-                  </div>
-                  <span className="text-2xl">+</span>
-                </button>
+                />
               ))}
             </div>
           )}
         </MainContainer>
-      </>
+      </CardWrapper>
     );
   }
 
-  // Workout active page
+  // Active workout page
   return (
-    <>
-      <AppHeader property1="no-action-no-back" title={selectedProgram?.name || ''} data-component="AppHeader" />
-      <div className="min-h-screen flex flex-col bg-[#353942] pb-32" data-component="WorkoutPage">
-        <div className="flex-1 flex flex-col gap-4 p-4">
-          {exercises.map(ex => (
-            <SetCard
-              key={ex.id}
-              exerciseId={ex.exercise_id}
-              exerciseName={ex.name}
-              default_view={true}
-              defaultSets={ex.default_sets}
-              defaultReps={ex.default_reps}
-              defaultWeight={ex.default_weight}
-              onSetComplete={setData => handleSetComplete(ex.exercise_id, setData)}
-              setData={setsData[ex.exercise_id] || []}
-              onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
-              data-component="SetCard"
-            />
-          ))}
-        </div>
-        {/* Focused nav bar for workout active */}
-        <ActiveFocusedNavBar
-          timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
-          isPaused={!timerActive}
-          onPauseToggle={() => setTimerActive(a => !a)}
-          onEnd={handleEnd}
-          data-component="ActiveFocusedNavBar"
+    <CardWrapper
+      header={
+        <AppHeader
+          showBackButton={false}
+          appHeaderTitle={selectedProgram?.program_name || (workoutName || 'Active Workout')}
+          subhead={true}
+          subheadText={selectedProgram ? workoutName : 'Tracking unscheduled exercises'}
+          search={false}
+          showActionBar={true} // Keep true to allow adding unscheduled exercises
+          actionBarText="Add exercise" // Changed from "Add unscheduled exercise" for brevity
+          onAction={() => setShowAddUnscheduledForm(true)}
+          data-component="active_workout_header"
         />
+      }
+    >
+      <div className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto"> {/* Added overflow-y-auto */}
+        {exercises.map(ex => (
+          <SetCard
+            key={ex.id} // Uses the unique ID (program_exercise_id or generated unscheduled id)
+            exerciseId={ex.exercise_id} // Uses the actual exercise_id from 'exercises' table
+            exerciseName={ex.name}
+            default_view={true}
+            defaultSets={ex.default_sets}
+            defaultReps={ex.default_reps}
+            defaultWeight={ex.default_weight}
+            onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
+            setData={setsData[ex.exercise_id] || []}
+            onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
+            data-component="SetCard"
+          />
+        ))}
       </div>
-    </>
+      <ActiveFocusedNavBar
+        timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
+        isPaused={!timerActive}
+        onPauseToggle={() => setTimerActive(a => !a)}
+        onEnd={handleEnd}
+        data-component="ActiveFocusedNavBar"
+      />
+      {showAddUnscheduledForm && (
+        <FocusForm
+          formPrompt="Add New Exercise"
+          onOverlayClick={() => setShowAddUnscheduledForm(false)}
+          actionIcon={<button onClick={handleAddUnscheduledExercise} style={{ background: 'none', border: 'none', padding: 0 }}><Icon name="arrow_forward" size={32} /></button>}
+          className="z-[100]"
+        >
+          <div className="w-full flex flex-col gap-0">
+            <div className="bg-white rounded-xl p-4 flex flex-col gap-0">
+              <TextField
+                label="Exercise name"
+                value={newUnscheduledExerciseName}
+                onChange={e => setNewUnscheduledExerciseName(e.target.value)}
+                placeholder="Exercise name"
+                className="w-full"
+                autoFocus
+              />
+              <NumericInput
+                label="Sets"
+                value={newUnscheduledExerciseSets}
+                onChange={newSets => setNewUnscheduledExerciseSets(Math.max(0, Number(newSets)))}
+                incrementing={true}
+                className="w-full"
+              />
+              <NumericInput
+                label="Reps"
+                value={newUnscheduledExerciseReps}
+                onChange={setNewUnscheduledExerciseReps}
+                incrementing={true}
+                className="w-full"
+              />
+              <WeightCompoundField
+                weight={newUnscheduledExerciseWeight}
+                onWeightChange={setNewUnscheduledExerciseWeight}
+                unit={newUnscheduledExerciseUnit}
+                onUnitChange={setNewUnscheduledExerciseUnit}
+              />
+            </div>
+            {newUnscheduledExerciseSets > 1 && Array.from({ length: newUnscheduledExerciseSets }, (_, i) => (
+              <SetDropdown
+                key={`set-${i + 1}`}
+                setNumber={i + 1}
+                defaultReps={newUnscheduledExerciseReps}
+                defaultWeight={newUnscheduledExerciseWeight}
+                defaultUnit={newUnscheduledExerciseUnit}
+                isOpen={openSetIndex === i + 1}
+                onToggle={() => setOpenSetIndex(openSetIndex === i + 1 ? null : i + 1)}
+                reps={newUnscheduledSetConfigs[i]?.reps}
+                weight={newUnscheduledSetConfigs[i]?.weight}
+                unit={newUnscheduledSetConfigs[i]?.unit}
+                onRepsChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, reps: val } : cfg))}
+                onWeightChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, weight: val } : cfg))}
+                onUnitChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, unit: val } : cfg))}
+              />
+            ))}
+          </div>
+        </FocusForm>
+      )}
+    </CardWrapper>
   );
 };
 

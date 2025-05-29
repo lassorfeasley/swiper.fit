@@ -7,6 +7,7 @@ import ExerciseSetConfiguration from '../components/common/forms/compound-fields
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { PageNameContext } from '../App';
+import CardWrapper from '../components/layout/CardWrapper';
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -93,17 +94,20 @@ const CreateNewProgram = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5fa] flex flex-col w-full relative">
-      <AppHeader
-        appHeaderTitle="New program"
-        subheadText="example subhead text"
-        showBackButton={true}
-        showActionBar={false}
-        showActionIcon={false}
-        subhead={true}
-        search={false}
-        onBack={() => window.history.back()}
-      />
+    <CardWrapper
+      header={
+        <AppHeader
+          appHeaderTitle="New program"
+          subheadText="example subhead text"
+          showBackButton={true}
+          showActionBar={false}
+          showActionIcon={false}
+          subhead={true}
+          search={false}
+          onBack={() => window.history.back()}
+        />
+      }
+    >
       <div className="flex-1 flex flex-col items-center justify-center">
         {/* (Removed placeholder text) */}
       </div>
@@ -149,7 +153,7 @@ const CreateNewProgram = () => {
           onActionIconClick={handleAddExercise}
         />
       )}
-    </div>
+    </CardWrapper>
   );
 };
 

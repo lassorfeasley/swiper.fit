@@ -10,7 +10,7 @@ const FocusForm = ({ children, className = '', contentClassName = '', formPrompt
   };
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center items-end w-full align-stretch h-screen ${className}`}
+      className={`fixed inset-0 z-[9999] flex justify-center items-end w-full align-stretch h-screen ${className}`}
       style={{
         display: 'flex',
         width: '100vw',
@@ -22,7 +22,7 @@ const FocusForm = ({ children, className = '', contentClassName = '', formPrompt
         right: 0,
         bottom: 0,
         position: 'fixed',
-        zIndex: 50,
+        zIndex: 9999,
         background: 'rgba(60, 64, 67, 0.85)', // more visible semi-transparent dark overlay
         height: '100vh',
       }}

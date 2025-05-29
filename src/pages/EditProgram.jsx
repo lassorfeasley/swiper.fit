@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
 import { PageNameContext } from '../App';
+import CardWrapper from '../components/layout/CardWrapper';
 
 const EditProgram = () => {
   const { programId } = useParams();
@@ -44,18 +45,19 @@ const EditProgram = () => {
   }, [programId, setPageName]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white pb-32">
-      {/* AppHeader with back button */}
-      <AppHeader
-        appHeaderTitle={program ? program.name : ''}
-        showBackButton={true}
-        showActionBar={false}
-        showActionIcon={false}
-        subhead={false}
-        search={false}
-        onBack={() => navigate('/programs')}
-      />
-      {/* Exercises List */}
+    <CardWrapper
+      header={
+        <AppHeader
+          appHeaderTitle={program ? program.name : ''}
+          showBackButton={true}
+          showActionBar={false}
+          showActionIcon={false}
+          subhead={false}
+          search={false}
+          onBack={() => navigate('/programs')}
+        />
+      }
+    >
       <div className="flex flex-col gap-8 px-4 pt-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -99,7 +101,7 @@ const EditProgram = () => {
         <span>New exercise</span>
         <span className="material-icons text-3xl">add</span>
       </div>
-    </div>
+    </CardWrapper>
   );
 };
 

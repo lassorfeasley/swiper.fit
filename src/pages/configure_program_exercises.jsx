@@ -2,12 +2,15 @@ import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
-import Reorder_Card from '../components/common/forms/compound-fields/Reorder_Card';
-import MetricPill from '../components/common/forms/compound-fields/metric_pill';
+import Reorder_Card from '../components/common/UI_Cards/Reorder_Card';
+import MetricPill from '../components/common/UI_Cards/MetricPill';
 import { Reorder } from 'framer-motion';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
 import { PageNameContext } from '../App';
+import CardWrapper from '../components/layout/CardWrapper';
+import SetCard from '../components/common/UI_Cards/SetCard';
+import ExerciseSetsConfigurationCard from '../components/common/UI_Cards/ExerciseSetsConfigurationCard';
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();
@@ -216,21 +219,24 @@ const ConfigureProgramExercises = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5fa] flex flex-col w-full relative" data-component="ConfigureProgramExercisesPage">
-      <AppHeader
-        appHeaderTitle={programName || 'Program'}
-        subhead={true}
-        subheadText={`${exercises.length} exercise${exercises.length === 1 ? '' : 's'}`}
-        showActionBar={true}
-        actionBarText="Add an exercise"
-        showBackButton={true}
-        onBack={handleBack}
-        onAction={() => setShowAddExercise(true)}
-        search={true}
-        searchValue={search}
-        onSearchChange={setSearch}
-        data-component="AppHeader"
-      />
+    <CardWrapper
+      header={
+        <AppHeader
+          appHeaderTitle={programName || 'Program'}
+          subhead={true}
+          subheadText={`${exercises.length} exercise${exercises.length === 1 ? '' : 's'}`}
+          showActionBar={true}
+          actionBarText="Add an exercise"
+          showBackButton={true}
+          onBack={handleBack}
+          onAction={() => setShowAddExercise(true)}
+          search={true}
+          searchValue={search}
+          onSearchChange={setSearch}
+          data-component="AppHeader"
+        />
+      }
+    >
       <div className="flex-1 flex flex-col items-center px-4 pt-6" data-component="ConfigureProgramExercisesContent">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -308,7 +314,7 @@ const ConfigureProgramExercises = () => {
           </div>
         )}
       </div>
-    </div>
+    </CardWrapper>
   );
 };
 

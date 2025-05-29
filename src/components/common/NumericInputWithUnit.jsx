@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef } from 'react';
 
-const NumericInputWithUnit = ({ initialNumber = 0, unit = 'Reps', onChange }) => {
+const NumericInputWithUnit = forwardRef(({ initialNumber = 0, unit = 'Reps', onChange }, ref) => {
   const [number, setNumber] = useState(initialNumber);
   const inputRef = useRef(null);
   const [isSelected, setIsSelected] = useState(false);
@@ -37,7 +37,7 @@ const NumericInputWithUnit = ({ initialNumber = 0, unit = 'Reps', onChange }) =>
       onClick={handleContainerClick}
     >
       <input
-        ref={inputRef}
+        ref={ref || inputRef}
         type="text"
         value={number}
         onChange={handleChange}
@@ -56,6 +56,6 @@ const NumericInputWithUnit = ({ initialNumber = 0, unit = 'Reps', onChange }) =>
       </span>
     </div>
   );
-};
+});
 
 export default NumericInputWithUnit; 

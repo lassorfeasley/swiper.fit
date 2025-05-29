@@ -48,20 +48,20 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
   }, [status]);
 
   const handleDrag = (e, info) => {
-    if ((status !== "active" && status !== "locked") || !isDragging) return;
+    if (status !== "active" || !isDragging) return;
     if (info.offset.x > 100) {
       setIsDragging(false);
-      setForceComplete(true); // Always force complete on swipe
+      setForceComplete(true);
       onComplete?.();
     }
   };
 
   const handleDragStart = () => {
-    if (status === "active" || status === "locked") setIsDragging(true);
+    if (status === "active") setIsDragging(true);
   };
 
   const handleDragEnd = () => {
-    if ((status === "active" || status === "locked") && isDragging) {
+    if (status === "active" && isDragging) {
       setIsDragging(false);
       controls.start({ x: 0, transition: springConfig });
     }
@@ -70,7 +70,6 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
   useEffect(() => {
     if (thumbTravel > 0) {
       if (status === "complete" || forceComplete) {
-        // Animate to the end position with a smoother transition
         controls.start({ 
           x: thumbTravel,
           backgroundColor: "#44BD32",
@@ -82,7 +81,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
       } else {
         controls.start({ 
           x: 0, 
-          backgroundColor: "#F3F3F3",
+          backgroundColor: "#FFFFFF",
           transition: {
             ...springConfig,
             backgroundColor: { duration: 0.3 }
@@ -98,7 +97,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
       className="relative flex items-center justify-start overflow-hidden w-full"
       style={{
         height: TRACK_HEIGHT,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#F3F3F3",
         borderRadius: "12px",
         padding: TRACK_PADDING,
         boxSizing: "border-box",
@@ -117,16 +116,17 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
           borderRadius: "8px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          backgroundColor: "#FFFFFF"
         }}
-        initial={{ backgroundColor: "#F3F3F3" }}
-        drag={status !== "complete" ? "x" : false}
+        initial={{ backgroundColor: "#FFFFFF" }}
+        drag={status === "active" ? "x" : false}
         dragConstraints={{ left: 0, right: thumbTravel }}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
         animate={controls}
-        whileDrag={{ scale: 1.02, cursor: "grabbing" }}
+        whileDrag={{ scale: 1.02, cursor: status === "active" ? "grabbing": "default" }}
         transition={{
           x: springConfig,
           backgroundColor: { duration: 0.3 }
@@ -134,12 +134,12 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
       >
         {(status === "locked" && !forceComplete) && (
           <div className="flex items-center justify-center w-full h-full">
-            <i className="material-icons" style={{ color: "#666666" }}>lock</i>
+            <span className="material-symbols-outlined" style={{ color: "#666666", fontSize: 28 }}>lock</span>
           </div>
         )}
         {(status === "complete" || forceComplete) && (
           <div className="flex items-center justify-center w-full h-full">
-            <i className="material-icons" style={{ color: "white" }}>check</i>
+            <span className="material-symbols-outlined" style={{ color: "white", fontSize: 28 }}>check</span>
           </div>
         )}
       </motion.div>

@@ -4,6 +4,7 @@ import { generateWorkoutName } from '../utils/generateWorkoutName';
 import { Link } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
 import MainContainer from '../components/common/MainContainer';
+import CardWrapper from '../components/layout/CardWrapper';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
@@ -78,17 +79,20 @@ const History = () => {
   });
 
   return (
-    <>
-      <AppHeader
-        appHeaderTitle="Workout history"
-        showActionBar={false}
-        showActionIcon={false}
-        showBackButton={false}
-        subhead={false}
-        search={true}
-        searchPlaceholder="Search"
-        data-component="AppHeader"
-      />
+    <CardWrapper
+      header={
+        <AppHeader
+          appHeaderTitle="Workout history"
+          showActionBar={false}
+          showActionIcon={false}
+          showBackButton={false}
+          subhead={false}
+          search={true}
+          searchPlaceholder="Search"
+          data-component="AppHeader"
+        />
+      }
+    >
       <MainContainer data-component="HistoryPage">
         {loading ? (
           <div className="p-6">Loading...</div>
@@ -113,7 +117,7 @@ const History = () => {
           </div>
         )}
       </MainContainer>
-    </>
+    </CardWrapper>
   );
 };
 
