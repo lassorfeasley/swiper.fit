@@ -4,10 +4,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
 import MainContainer from '../components/common/MainContainer';
 import CardWrapper from '../components/layout/CardWrapper';
+import WorkoutTile from '../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
+import TileWrapper from '../components/common/CardsAndTiles/Tiles/TileWrapper';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
@@ -25,6 +27,7 @@ const History = () => {
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [names, setNames] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,45 +85,39 @@ const History = () => {
   });
 
   return (
-    <CardWrapper
-      header={
-        <AppHeader
-          appHeaderTitle="Workout history"
-          showActionBar={false}
-          showActionIcon={false}
-          showBackButton={false}
-          subhead={false}
-          search={true}
-          searchPlaceholder="Search"
-          data-component="AppHeader"
-        />
-      }
-    >
-      <MainContainer data-component="HistoryPage">
-        {loading ? (
-          <div className="p-6">Loading...</div>
-        ) : (
-          <div className="flex flex-col gap-4">
+    <>
+      <AppHeader
+        appHeaderTitle="Workout history"
+        showActionBar={false}
+        showActionIcon={false}
+        showBackButton={false}
+        subhead={false}
+        search={true}
+        searchPlaceholder="Search"
+        data-component="AppHeader"
+      />
+      {loading ? (
+        <div className="p-6">Loading...</div>
+      ) : (
+        <>
+          {/* Spacer to offset fixed AppHeader */}
+          <div style={{ height: '140px' }} />
+          <TileWrapper>
             {workouts.map(w => (
-              <Link to={`/history/${w.id}`} key={w.id} className="bg-white rounded-2xl p-6 flex flex-col shadow-md hover:bg-gray-200 transition-colors">
-                <div className="text-xl font-bold">
-                  {names[w.id] || 'Unnamed Workout'}
-                </div>
-                <div className="text-gray-600 mt-1">
-                  {new Date(w.created_at).toLocaleString()}
-                </div>
-                <div className="text-gray-800 mt-1">
-                  {exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0} exercises
-                </div>
-                <div className="text-gray-800 mt-1">
-                  Duration: {formatDuration(w.duration_seconds)}
-                </div>
-              </Link>
+              <WorkoutTile
+                key={w.id}
+                workoutName={names[w.id] || 'Unnamed Workout'}
+                programName={w.programs?.program_name || ''}
+                exerciseCount={exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0}
+                duration={formatDuration(w.duration_seconds)}
+                onClick={() => navigate(`/history/${w.id}`)}
+                className="hover:bg-gray-200 transition-colors"
+              />
             ))}
-          </div>
-        )}
-      </MainContainer>
-    </CardWrapper>
+          </TileWrapper>
+        </>
+      )}
+    </>
   );
 };
 

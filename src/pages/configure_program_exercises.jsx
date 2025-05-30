@@ -2,15 +2,15 @@ import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
-import Reorder_Card from '../components/common/UI_Cards/Reorder_Card';
-import MetricPill from '../components/common/UI_Cards/MetricPill';
+import Reorder_Card from '../components/common/CardsAndTiles/Reorder_Card';
+import MetricPill from '../components/common/CardsAndTiles/MetricPill';
 import { Reorder } from 'framer-motion';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
 import { PageNameContext } from '../App';
 import CardWrapper from '../components/layout/CardWrapper';
-import SetCard from '../components/common/UI_Cards/SetCard';
-import ExerciseSetsConfigurationCard from '../components/common/UI_Cards/ExerciseSetsConfigurationCard';
+import SetCard from '../components/common/CardsAndTiles/SetCard';
+import ExerciseSetsConfigurationCard from '../components/common/CardsAndTiles/ExerciseSetsConfigurationCard';
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();
@@ -219,29 +219,27 @@ const ConfigureProgramExercises = () => {
   };
 
   return (
-    <CardWrapper
-      header={
-        <AppHeader
-          appHeaderTitle={programName || 'Program'}
-          subhead={true}
-          subheadText={`${exercises.length} exercise${exercises.length === 1 ? '' : 's'}`}
-          showActionBar={true}
-          actionBarText="Add an exercise"
-          showBackButton={true}
-          onBack={handleBack}
-          onAction={() => setShowAddExercise(true)}
-          search={true}
-          searchValue={search}
-          onSearchChange={setSearch}
-          data-component="AppHeader"
-        />
-      }
-    >
-      <div className="flex-1 flex flex-col items-center px-4 pt-6" data-component="ConfigureProgramExercisesContent">
-        {loading ? (
-          <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : (
-          <div className="w-full max-w-lg mx-auto flex flex-col justify-start flex-1" data-component="ExerciseList">
+    <>
+      <AppHeader
+        appHeaderTitle={programName || 'Program'}
+        subhead={true}
+        subheadText={`${exercises.length} exercise${exercises.length === 1 ? '' : 's'}`}
+        showActionBar={true}
+        actionBarText="Add an exercise"
+        showBackButton={true}
+        onBack={handleBack}
+        onAction={() => setShowAddExercise(true)}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        data-component="AppHeader"
+      />
+      <div style={{ height: 140 }} />
+      <CardWrapper>
+        <div className="flex-1 flex flex-col items-center px-4 pt-6" data-component="ConfigureProgramExercisesContent">
+          {loading ? (
+            <div className="text-gray-400 text-center py-8">Loading...</div>
+          ) : (
             <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 flex-1 justify-start" data-component="ReorderGroup">
               {filteredExercises.map((ex) => (
                 <Reorder_Card key={ex.id} value={ex} data-component="ReorderCard">
@@ -261,60 +259,60 @@ const ConfigureProgramExercises = () => {
                 </Reorder_Card>
               ))}
             </Reorder.Group>
-          </div>
-        )}
-        {/* Modal overlay for adding exercise */}
-        {showAddExercise && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
-              <ExerciseSetConfiguration
-                formPrompt="Add a new exercise"
-                actionIconName="arrow_forward"
-                onActionIconClick={handleAddExercise}
-                onOverlayClick={handleOverlayClick}
-              />
-              <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
-                onClick={() => setShowAddExercise(false)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
+          )}
+          {/* Modal overlay for adding exercise */}
+          {showAddExercise && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
+                <ExerciseSetConfiguration
+                  formPrompt="Add a new exercise"
+                  actionIconName="arrow_forward"
+                  onActionIconClick={handleAddExercise}
+                  onOverlayClick={handleOverlayClick}
+                />
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
+                  onClick={() => setShowAddExercise(false)}
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        {/* Modal overlay for editing exercise */}
-        {editingExercise && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
-              <ExerciseSetConfiguration
-                formPrompt="Edit exercise"
-                actionIconName="check"
-                onActionIconClick={handleEditExercise}
-                initialName={editingExercise.name}
-                initialSets={editingExercise.sets}
-                initialReps={editingExercise.reps}
-                initialWeight={editingExercise.weight}
-                initialUnit={editingExercise.unit}
-                initialSetConfigs={editingExercise.setConfigs?.map(cfg => ({
-                  reps: cfg.reps,
-                  weight: cfg.weight,
-                  unit: cfg.weight_unit,
-                }))}
-                onOverlayClick={handleOverlayClick}
-              />
-              <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
-                onClick={() => setEditingExercise(null)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
+          )}
+          {/* Modal overlay for editing exercise */}
+          {editingExercise && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
+                <ExerciseSetConfiguration
+                  formPrompt="Edit exercise"
+                  actionIconName="check"
+                  onActionIconClick={handleEditExercise}
+                  initialName={editingExercise.name}
+                  initialSets={editingExercise.sets}
+                  initialReps={editingExercise.reps}
+                  initialWeight={editingExercise.weight}
+                  initialUnit={editingExercise.unit}
+                  initialSetConfigs={editingExercise.setConfigs?.map(cfg => ({
+                    reps: cfg.reps,
+                    weight: cfg.weight,
+                    unit: cfg.weight_unit,
+                  }))}
+                  onOverlayClick={handleOverlayClick}
+                />
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
+                  onClick={() => setEditingExercise(null)}
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </CardWrapper>
+          )}
+        </div>
+      </CardWrapper>
+    </>
   );
 };
 

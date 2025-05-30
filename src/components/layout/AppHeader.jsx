@@ -31,7 +31,7 @@ export const AppHeader = ({
   };
 
   return (
-    <div className="flex flex-col w-full items-start" data-component="AppHeader">
+    <div className="flex flex-col w-full items-start" style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 10 }} data-component="AppHeader">
       <div
         className="flex flex-col w-full items-start bg-white"
         style={{ borderBottom: "0.5px solid var(--Black, #2F3640)" }}

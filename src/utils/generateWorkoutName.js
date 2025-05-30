@@ -39,7 +39,7 @@ async function generateWorkoutName(createdAt, programName, userId, supabase) {
   if (error) {
     console.error('Error fetching workouts:', error);
     // Fallback to no suffix
-    return `${dayOfWeek} ${bucket} ${programName} workout`;
+    return `${dayOfWeek} ${bucket} workout`;
   }
 
   // Count how many workouts are in the same bucket
@@ -50,7 +50,7 @@ async function generateWorkoutName(createdAt, programName, userId, supabase) {
 
   const roman = countInBucket > 0 ? ` ${intToRoman(countInBucket + 1)}` : '';
 
-  return `${dayOfWeek} ${bucket} ${programName} workout${roman}`;
+  return `${dayOfWeek} ${bucket} workout${roman}`;
 }
 
 export { generateWorkoutName }; 

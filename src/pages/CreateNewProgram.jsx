@@ -94,66 +94,66 @@ const CreateNewProgram = () => {
   };
 
   return (
-    <CardWrapper
-      header={
-        <AppHeader
-          appHeaderTitle="New program"
-          subheadText="example subhead text"
-          showBackButton={true}
-          showActionBar={false}
-          showActionIcon={false}
-          subhead={true}
-          search={false}
-          onBack={() => window.history.back()}
-        />
-      }
-    >
-      <div className="flex-1 flex flex-col items-center justify-center">
-        {/* (Removed placeholder text) */}
-      </div>
-      {/* Modal overlay on top of the page */}
-      {showFocusForm && (
-        <SlideUpForm formPrompt="What should we call this program?">
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              if (isReady) setShowAddExercise(true);
-            }}
-            className="w-full"
-          >
-            <TextField
-              label="Program name"
-              value={programName}
-              onChange={e => setProgramName(e.target.value)}
-              placeholder="Enter program name"
-              inputRef={inputRef}
-            />
-            <div className="w-full flex justify-end mt-8">
-              <button
-                type="submit"
-                disabled={!isReady}
-                className="transition-colors"
-                style={{ cursor: isReady ? 'pointer' : 'not-allowed' }}
-              >
-                <Icon
-                  name="arrow_forward"
-                  variant="outlined"
-                  size={32}
-                  className={isReady ? 'text-black' : 'text-gray-300'}
-                />
-              </button>
-            </div>
-          </form>
-        </SlideUpForm>
-      )}
-      {showAddExercise && (
-        <ExerciseSetConfiguration
-          formPrompt="Add your first exercise"
-          actionIconName="arrow_forward"
-          onActionIconClick={handleAddExercise}
-        />
-      )}
-    </CardWrapper>
+    <>
+      <AppHeader
+        appHeaderTitle="New program"
+        subheadText="example subhead text"
+        showBackButton={true}
+        showActionBar={false}
+        showActionIcon={false}
+        subhead={true}
+        search={false}
+        onBack={() => window.history.back()}
+      />
+      <div style={{ height: 140 }} />
+      <CardWrapper>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          {/* (Removed placeholder text) */}
+        </div>
+        {/* Modal overlay on top of the page */}
+        {showFocusForm && (
+          <SlideUpForm formPrompt="What should we call this program?">
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                if (isReady) setShowAddExercise(true);
+              }}
+              className="w-full"
+            >
+              <TextField
+                label="Program name"
+                value={programName}
+                onChange={e => setProgramName(e.target.value)}
+                placeholder="Enter program name"
+                inputRef={inputRef}
+              />
+              <div className="w-full flex justify-end mt-8">
+                <button
+                  type="submit"
+                  disabled={!isReady}
+                  className="transition-colors"
+                  style={{ cursor: isReady ? 'pointer' : 'not-allowed' }}
+                >
+                  <Icon
+                    name="arrow_forward"
+                    variant="outlined"
+                    size={32}
+                    className={isReady ? 'text-black' : 'text-gray-300'}
+                  />
+                </button>
+              </div>
+            </form>
+          </SlideUpForm>
+        )}
+        {showAddExercise && (
+          <ExerciseSetConfiguration
+            formPrompt="Add your first exercise"
+            actionIconName="arrow_forward"
+            onActionIconClick={handleAddExercise}
+          />
+        )}
+      </CardWrapper>
+    </>
   );
 };
 

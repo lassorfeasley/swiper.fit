@@ -3,9 +3,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import '../../../../../styles/typography.css';
 
 /**
- * WorkoutTile - List-style tile for workout history
+ * WorkoutTile - Tile-style component for workout history
  *
  * Props:
  * - workoutName: string
@@ -13,6 +14,7 @@ import PropTypes from 'prop-types';
  * - exerciseCount: number
  * - duration: string (formatted as 00H:00M)
  * - onClick: function (optional)
+ * - className: string (optional)
  */
 const WorkoutTile = ({
   workoutName,
@@ -23,16 +25,18 @@ const WorkoutTile = ({
   className = '',
 }) => (
   <div
-    className={`flex flex-col px-0 py-4 border-b border-[#e5e7eb] cursor-pointer bg-transparent ${className}`}
+    className={`flex flex-col w-full p-5 items-start gap-3 cursor-pointer bg-white ${className}`}
     onClick={onClick}
-    style={{ minHeight: 64, background: 'var(--Light-grey)' }}
     data-component="WorkoutTile"
   >
-    <span className="text-lg font-bold text-[#353942] leading-tight">{workoutName}</span>
-    <span className="text-base text-[#5A6B7A] mt-1">{programName}</span>
-    <div className="flex items-center gap-4 mt-1">
-      <span className="text-sm font-bold text-[#353942]">{exerciseCount} exercises</span>
-      <span className="text-sm font-bold text-[#353942]">[{duration}]</span>
+    <div className="flex flex-col gap-1 w-full">
+      <span className="h1-head">{workoutName}</span>
+      <span className="h2-head">{programName}</span>
+    </div>
+    <div className="flex items-center gap-3">
+      <span className="metric">{exerciseCount} exercises</span>
+      <span className="metric">|</span>
+      <span className="metric">{duration} time</span>
     </div>
   </div>
 );

@@ -1,3 +1,6 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=132-2406&t=PMJ4ZuE0fteVwbKG-4
+
+
 import React from 'react';
 import PropTypes from 'prop-types';
 
