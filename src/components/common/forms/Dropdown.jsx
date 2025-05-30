@@ -1,3 +1,6 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=177-1417&t=qLasGdJck7GcZoku-4
+
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '../Icon';
