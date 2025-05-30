@@ -1,3 +1,5 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=49-317&t=YBjXtsLhxGedobad-4
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import SetCard from '../components/common/UI_Cards/SetCard';
@@ -8,7 +10,7 @@ import MainContainer from '../components/common/MainContainer';
 import CardWrapper from '../components/layout/CardWrapper';
 import ProgramCard from '../components/common/UI_Cards/ProgramCard';
 import { generateWorkoutName } from '../utils/generateWorkoutName';
-import FocusForm from '../components/common/forms/FocusForm';
+import SlideUpForm from '../components/common/forms/SlideUpForm';
 import NumericInput from '../components/common/forms/NumericInput';
 import Icon from '../components/common/Icon';
 import TextField from '../components/common/forms/TextField';
@@ -363,7 +365,7 @@ const Workout = () => {
         data-component="ActiveFocusedNavBar"
       />
       {showAddUnscheduledForm && (
-        <FocusForm
+        <SlideUpForm
           formPrompt="Add New Exercise"
           onOverlayClick={() => setShowAddUnscheduledForm(false)}
           actionIcon={<button onClick={handleAddUnscheduledExercise} style={{ background: 'none', border: 'none', padding: 0 }}><Icon name="arrow_forward" size={32} /></button>}
@@ -418,7 +420,7 @@ const Workout = () => {
               />
             ))}
           </div>
-        </FocusForm>
+        </SlideUpForm>
       )}
     </CardWrapper>
   );

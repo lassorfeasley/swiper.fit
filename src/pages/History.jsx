@@ -1,3 +1,6 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=61-389&t=YBjXtsLhxGedobad-4
+
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { generateWorkoutName } from '../utils/generateWorkoutName';

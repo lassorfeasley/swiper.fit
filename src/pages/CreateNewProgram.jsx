@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
 import AppHeader from '../components/layout/AppHeader';
-import FocusForm from '../components/common/forms/FocusForm';
+import SlideUpForm from '../components/common/forms/SlideUpForm';
 import TextField from '../components/common/forms/TextField';
 import Icon from '../components/common/Icon';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
@@ -113,7 +113,7 @@ const CreateNewProgram = () => {
       </div>
       {/* Modal overlay on top of the page */}
       {showFocusForm && (
-        <FocusForm formPrompt="What should we call this program?">
+        <SlideUpForm formPrompt="What should we call this program?">
           <form
             onSubmit={e => {
               e.preventDefault();
@@ -144,7 +144,7 @@ const CreateNewProgram = () => {
               </button>
             </div>
           </form>
-        </FocusForm>
+        </SlideUpForm>
       )}
       {showAddExercise && (
         <ExerciseSetConfiguration

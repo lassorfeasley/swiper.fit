@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SwipeSwitch from '../../workout/SwipeSwitch';
 import MetricPill from './MetricPill';
-import FocusForm from '../forms/FocusForm';
+import SlideUpForm from '../forms/SlideUpForm';
 import WeightCompoundField from '../forms/compound-fields/WeightCompoundField';
 import NumericInput from '../forms/NumericInput';
 import Icon from '../Icon';
@@ -94,7 +94,7 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
     setEditMetric(null);
   };
 
-  // For focusing input in FocusForm
+  // For focusing input in SlideUpForm
   const inputRef = useRef(null);
   useEffect(() => {
     if (editMetric && inputRef.current) {
@@ -176,9 +176,9 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
           onComplete={handleCompleteAllSets} 
         />
       )}
-      {/* FocusForm overlay for editing metric */}
+      {/* SlideUpForm overlay for editing metric */}
       {editMetric && (
-        <FocusForm
+        <SlideUpForm
           formPrompt={`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}
           onOverlayClick={handleOverlayClose}
           className="z-[100]"
@@ -218,7 +218,7 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
               onUnitChange={setWeightUnit}
             />
           )}
-        </FocusForm>
+        </SlideUpForm>
       )}
     </div>
   );

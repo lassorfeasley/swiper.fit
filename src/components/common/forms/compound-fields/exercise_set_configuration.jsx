@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import FocusForm from '../FocusForm';
+import SlideUpForm from '../SlideUpForm';
 import TextField from '../TextField';
 import NumericInput from '../NumericInput';
 import SetDropdown from './SetDropdown';
@@ -63,7 +63,7 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
   };
 
   return (
-    <FocusForm
+    <SlideUpForm
       formPrompt={formPrompt}
       actionIcon={
         <Icon
@@ -124,7 +124,7 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
           />
         ))}
       </div>
-    </FocusForm>
+    </SlideUpForm>
   );
 };
 

@@ -1,3 +1,6 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=48-601&t=YBjXtsLhxGedobad-4
+
+
 import React, { useEffect, useState, useContext } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';

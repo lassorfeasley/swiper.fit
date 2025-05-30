@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const FocusForm = ({ children, className = '', contentClassName = '', formPrompt, actionIcon, onActionIconClick, onOverlayClick, ...props }) => {
+const SlideUpForm = ({ children, className = '', contentClassName = '', formPrompt, actionIcon, onActionIconClick, onOverlayClick, ...props }) => {
   // Helper to detect overlay click (not content click)
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget && onOverlayClick) {
@@ -73,7 +73,7 @@ const FocusForm = ({ children, className = '', contentClassName = '', formPrompt
   );
 };
 
-FocusForm.propTypes = {
+SlideUpForm.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   contentClassName: PropTypes.string,
@@ -83,4 +83,4 @@ FocusForm.propTypes = {
   onOverlayClick: PropTypes.func,
 };
 
-export default FocusForm; 
+export default SlideUpForm; 
