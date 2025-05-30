@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { generateWorkoutName } from '../utils/generateWorkoutName';
 import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
 import MainContainer from '../components/common/MainContainer';
@@ -24,20 +23,19 @@ function formatDuration(seconds) {
 
 const History = () => {
   const [workouts, setWorkouts] = useState([]);
-  const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [names, setNames] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch workouts with program information
+      // Fetch workouts with program information and sets in a single query
       const { data: workoutsData, error } = await supabase
         .from('workouts')
         .select(`
           *,
-          programs(program_name)
+          programs(program_name),
+          sets(id, exercise_id)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -49,40 +47,17 @@ const History = () => {
         return;
       }
 
-      setWorkouts(workoutsData || []);
+      // Process the data
+      const processedWorkouts = (workoutsData || []).map(workout => ({
+        ...workout,
+        exerciseCount: new Set(workout.sets?.map(set => set.exercise_id) || []).size
+      }));
 
-      // Fetch all sets for these workouts
-      const workoutIds = (workoutsData || []).map(w => w.id);
-      const { data: setsData } = await supabase
-        .from('sets')
-        .select('id, workout_id, exercise_id')
-        .in('workout_id', workoutIds);
-      setSets(setsData || []);
-
-      // Generate names for all workouts using the naming convention
-      const namesObj = {};
-      for (const w of workoutsData || []) {
-        namesObj[w.id] = await generateWorkoutName(
-          new Date(w.created_at),
-          w.programs?.program_name || '',
-          userId,
-          supabase
-        );
-      }
-      setNames(namesObj);
+      setWorkouts(processedWorkouts);
       setLoading(false);
     };
     fetchData();
   }, []);
-
-  // Map workoutId to unique exercise count
-  const exerciseCounts = {};
-  sets.forEach(set => {
-    if (!exerciseCounts[set.workout_id]) {
-      exerciseCounts[set.workout_id] = new Set();
-    }
-    exerciseCounts[set.workout_id].add(set.exercise_id);
-  });
 
   return (
     <>
@@ -106,9 +81,9 @@ const History = () => {
             {workouts.map(w => (
               <WorkoutTile
                 key={w.id}
-                workoutName={names[w.id] || 'Unnamed Workout'}
+                workoutName={w.workout_name || 'Unnamed Workout'}
                 programName={w.programs?.program_name || ''}
-                exerciseCount={exerciseCounts[w.id] ? exerciseCounts[w.id].size : 0}
+                exerciseCount={w.exerciseCount}
                 duration={formatDuration(w.duration_seconds)}
                 onClick={() => navigate(`/history/${w.id}`)}
                 className="hover:bg-gray-200 transition-colors"

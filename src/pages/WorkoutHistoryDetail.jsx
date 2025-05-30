@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { generateWorkoutName } from '../utils/generateWorkoutName';
 import AppHeader from '../components/layout/AppHeader';
 import ExerciseTile from '../components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
 import TileWrapper from '../components/common/CardsAndTiles/Tiles/TileWrapper';
@@ -16,16 +15,18 @@ const WorkoutHistoryDetail = () => {
   const [workout, setWorkout] = useState(null);
   const [sets, setSets] = useState([]);
   const [exercises, setExercises] = useState({});
-  const [workoutName, setWorkoutName] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch workout
+      // Fetch workout with program information
       const { data: workoutData } = await supabase
         .from('workouts')
-        .select('*')
+        .select(`
+          *,
+          programs(program_name)
+        `)
         .eq('id', workoutId)
         .single();
       setWorkout(workoutData);
@@ -50,15 +51,6 @@ const WorkoutHistoryDetail = () => {
         });
       }
       setExercises(exercisesObj);
-      // Generate workout name
-      if (workoutData) {
-        setWorkoutName(await generateWorkoutName(
-          new Date(workoutData.created_at),
-          '', // You can fetch program name if needed
-          userId,
-          supabase
-        ));
-      }
       setLoading(false);
     };
     if (workoutId) fetchData();
@@ -75,9 +67,9 @@ const WorkoutHistoryDetail = () => {
     <>
       <AppHeader
         showBackButton={true}
-        appHeaderTitle={workoutName || '[Workout name]'}
+        appHeaderTitle={workout?.workout_name || '[Workout name]'}
         subhead={true}
-        subheadText={workout?.program_name || '[Program name]'}
+        subheadText={workout?.programs?.program_name || '[Program name]'}
         search={false}
         showActionBar={false}
         showActionIcon={false}

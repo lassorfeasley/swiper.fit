@@ -9,7 +9,6 @@ import AppHeader from '../components/layout/AppHeader';
 import MainContainer from '../components/common/MainContainer';
 import CardWrapper from '../components/layout/CardWrapper';
 import ProgramCard from '../components/common/CardsAndTiles/ProgramCard';
-import { generateWorkoutName } from '../utils/generateWorkoutName';
 import SlideUpForm from '../components/common/forms/SlideUpForm';
 import NumericInput from '../components/common/forms/NumericInput';
 import Icon from '../components/common/Icon';
@@ -30,6 +29,7 @@ const Workout = () => {
   const [completedSets, setCompletedSets] = useState({}); // { exerciseId: [setData, ...] }
   const { setNavBarVisible } = useNavBarVisibility();
   const [workoutName, setWorkoutName] = useState('');
+  const [startTime, setStartTime] = useState(null);
 
   // State for adding unscheduled exercise
   const [showAddUnscheduledForm, setShowAddUnscheduledForm] = useState(false);
@@ -134,15 +134,11 @@ const Workout = () => {
 
   useEffect(() => {
     if (step === 'active' && selectedProgram) {
-      (async () => {
-        const name = await generateWorkoutName(
-          new Date(),
-          selectedProgram.program_name,
-          'bed5cb48-0242-4894-b58d-94ac01de22ff', // TODO: replace with real user id
-          supabase
-        );
-        setWorkoutName(name);
-      })();
+      const now = new Date();
+      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+      const timeOfDay = now.getHours() < 12 ? 'Morning' : 
+                       now.getHours() < 17 ? 'Afternoon' : 'Evening';
+      setWorkoutName(`${dayOfWeek} ${timeOfDay} ${selectedProgram.program_name} Workout`);
     } else if (step === 'active' && !selectedProgram) {
       setWorkoutName('Unscheduled Workout');
     }
@@ -185,6 +181,13 @@ const Workout = () => {
     });
   };
 
+  // Modify the program selection handler to record start time
+  const handleProgramSelect = (program) => {
+    setSelectedProgram(program);
+    setStartTime(new Date().toISOString()); // Record the exact start time
+    setStep('active');
+  };
+
   // Save workout to Supabase
   const handleEnd = async () => {
     setTimerActive(false);
@@ -192,6 +195,8 @@ const Workout = () => {
         duration_seconds: timer,
         completed_at: new Date().toISOString(),
         user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff', // TODO: replace with real user id
+        workout_name: workoutName,
+        start_time: startTime, // Include the start time in the workout data
     };
     if (selectedProgram) {
         workoutData.program_id = selectedProgram.id;
@@ -309,10 +314,7 @@ const Workout = () => {
                     key={program.id}
                     programName={program.program_name}
                     exerciseCount={program.exerciseCount}
-                    onClick={() => {
-                      setSelectedProgram(program);
-                      setStep('active');
-                    }}
+                    onClick={() => handleProgramSelect(program)}
                   />
                 ))}
               </div>
