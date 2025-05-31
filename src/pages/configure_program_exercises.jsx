@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/layout/AppHeader';
+import CardWrapper from '../components/layout/CardWrapper';
 import Reorder_Card from '../components/common/CardsAndTiles/Reorder_Card';
 import MetricPill from '../components/common/CardsAndTiles/MetricPill';
 import { Reorder } from 'framer-motion';
 import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../NavBarVisibilityContext';
 import { PageNameContext } from '../App';
-import CardWrapper from '../components/layout/CardWrapper';
 import SetCard from '../components/common/CardsAndTiles/SetCard';
 import ExerciseSetsConfigurationCard from '../components/common/CardsAndTiles/ExerciseSetsConfigurationCard';
 
@@ -21,7 +21,7 @@ const ConfigureProgramExercises = () => {
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState('');
   const [showAddExercise, setShowAddExercise] = useState(false);
-  const [editingExercise, setEditingExercise] = useState(null); // {ex, setConfigs}
+  const [editingExercise, setEditingExercise] = useState(null);
   const [search, setSearch] = useState('');
   const isUnmounted = useRef(false);
 
@@ -34,14 +34,13 @@ const ConfigureProgramExercises = () => {
   useEffect(() => {
     async function fetchProgramAndExercises() {
       setLoading(true);
-      // Fetch program name
       const { data: programData } = await supabase
         .from('programs')
         .select('program_name')
         .eq('id', programId)
         .single();
       setProgramName(programData?.program_name || '');
-      // Fetch exercises
+      
       const { data: progExs, error } = await supabase
         .from('program_exercises')
         .select('id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order)')
@@ -67,15 +66,13 @@ const ConfigureProgramExercises = () => {
       setLoading(false);
     }
     fetchProgramAndExercises();
-    // Save order on unmount
     return () => {
       isUnmounted.current = true;
       saveOrder();
     };
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programId]);
 
-  // Save new order to DB
   const saveOrder = async () => {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
@@ -86,46 +83,35 @@ const ConfigureProgramExercises = () => {
     }
   };
 
-  // Save order on navigation (back button)
   const handleBack = () => {
     saveOrder();
     navigate(-1);
   };
 
-  // Add new exercise handler
   const handleAddExercise = async (exerciseData) => {
     try {
-      // 1. Insert exercise (if not exists)
-      let { data: existing, error } = await supabase
+      let { data: existing } = await supabase
         .from('exercises')
         .select('id')
         .eq('name', exerciseData.name)
         .single();
-      let exercise_id;
-      if (existing && existing.id) {
-        exercise_id = existing.id;
-      } else {
+      let exercise_id = existing?.id;
+      if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
           .from('exercises')
           .insert([{ name: exerciseData.name }])
-          .select('id, name')
+          .select('id')
           .single();
         if (insertError || !newEx) throw new Error('Failed to create exercise');
         exercise_id = newEx.id;
       }
-      // 2. Insert into program_exercises
       const { data: progEx, error: progExError } = await supabase
         .from('program_exercises')
-        .insert({
-          program_id: programId,
-          exercise_id,
-          exercise_order: exercises.length + 1,
-        })
-        .select()
+        .insert({ program_id: programId, exercise_id, exercise_order: exercises.length + 1 })
+        .select('id')
         .single();
       if (progExError || !progEx) throw new Error('Failed to link exercise to program');
       const program_exercise_id = progEx.id;
-      // 3. Insert into program_sets
       const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
         program_exercise_id,
         set_order: idx + 1,
@@ -135,28 +121,22 @@ const ConfigureProgramExercises = () => {
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase.from('program_sets').insert(setRows);
-        if (setError) throw new Error('Failed to save set details');
+        if (setError) throw new Error('Failed to save set details: ' + setError.message);
       }
       setShowAddExercise(false);
-      // Refresh list
-      await new Promise(r => setTimeout(r, 200)); // slight delay for DB consistency
-      // Re-fetch exercises
       await refreshExercises();
     } catch (err) {
       alert(err.message || 'Failed to add exercise');
     }
   };
 
-  // Edit exercise handler
   const handleEditExercise = async (exerciseData) => {
     try {
       if (!editingExercise) return;
-      // 1. Update exercise name if changed
       await supabase
         .from('exercises')
         .update({ name: exerciseData.name })
         .eq('id', editingExercise.exercise_id);
-      // 2. Update program_sets: delete old, insert new
       await supabase
         .from('program_sets')
         .delete()
@@ -170,18 +150,15 @@ const ConfigureProgramExercises = () => {
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase.from('program_sets').insert(setRows);
-        if (setError) throw new Error('Failed to update set details');
+        if (setError) throw new Error('Failed to update set details: ' + setError.message);
       }
       setEditingExercise(null);
-      // Refresh list
-      await new Promise(r => setTimeout(r, 200));
       await refreshExercises();
     } catch (err) {
       alert(err.message || 'Failed to update exercise');
     }
   };
 
-  // Helper to refresh exercises
   const refreshExercises = async () => {
     const { data: progExs } = await supabase
       .from('program_exercises')
@@ -202,24 +179,17 @@ const ConfigureProgramExercises = () => {
     setExercises(items);
   };
 
-  // Filtered exercises based on search
   const filteredExercises = exercises.filter(ex =>
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Handler to close modal or go back to programs page
-  const handleOverlayClick = () => {
-    if (showAddExercise) {
-      setShowAddExercise(false);
-    } else if (editingExercise) {
-      setEditingExercise(null);
-    } else {
-      navigate('/programs');
-    }
+  const handleModalClose = () => {
+    setShowAddExercise(false);
+    setEditingExercise(null);
   };
 
   return (
-    <>
+    <div className="flex flex-col h-screen">
       <AppHeader
         appHeaderTitle={programName || 'Program'}
         subhead={true}
@@ -234,19 +204,18 @@ const ConfigureProgramExercises = () => {
         onSearchChange={setSearch}
         data-component="AppHeader"
       />
-      <div style={{ height: 140 }} />
       <CardWrapper>
-        <div className="flex-1 flex flex-col items-center px-4 pt-6" data-component="ConfigureProgramExercisesContent">
+        <div className="px-4 w-full" data-component="ConfigureProgramExercisesContent">
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : (
-            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 flex-1 justify-start" data-component="ReorderGroup">
+            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 w-full" data-component="ReorderGroup">
               {filteredExercises.map((ex) => (
                 <Reorder_Card key={ex.id} value={ex} data-component="ReorderCard">
-                  <div className="flex flex-col w-full gap-2" onClick={() => setEditingExercise(ex)} data-component="ExerciseCard">
+                  <div className="flex flex-col w-full gap-2 cursor-pointer" onClick={() => setEditingExercise(ex)} data-component="ExerciseCard">
                     <div className="flex items-center gap-2 align-stretch w-full">
                       <div className="text-xl font-bold text-[#5A6B7A] flex-1">{ex.name}</div>
-                      <button className="text-[#5A6B7A]">
+                      <button className="text-[#5A6B7A]" aria-label={`Settings for ${ex.name}`}>
                         <span className="material-symbols-outlined">settings</span>
                       </button>
                     </div>
@@ -260,49 +229,28 @@ const ConfigureProgramExercises = () => {
               ))}
             </Reorder.Group>
           )}
-          {/* Modal overlay for adding exercise */}
-          {showAddExercise && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
+          {(showAddExercise || editingExercise) && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={handleModalClose}>
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0" onClick={(e) => e.stopPropagation()}>
                 <ExerciseSetConfiguration
-                  formPrompt="Add a new exercise"
-                  actionIconName="arrow_forward"
-                  onActionIconClick={handleAddExercise}
-                  onOverlayClick={handleOverlayClick}
-                />
-                <button
-                  className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
-                  onClick={() => setShowAddExercise(false)}
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-              </div>
-            </div>
-          )}
-          {/* Modal overlay for editing exercise */}
-          {editingExercise && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0">
-                <ExerciseSetConfiguration
-                  formPrompt="Edit exercise"
-                  actionIconName="check"
-                  onActionIconClick={handleEditExercise}
-                  initialName={editingExercise.name}
-                  initialSets={editingExercise.sets}
-                  initialReps={editingExercise.reps}
-                  initialWeight={editingExercise.weight}
-                  initialUnit={editingExercise.unit}
-                  initialSetConfigs={editingExercise.setConfigs?.map(cfg => ({
+                  formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+                  actionIconName={showAddExercise ? "arrow_forward" : "check"}
+                  onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+                  initialName={editingExercise?.name}
+                  initialSets={editingExercise?.sets}
+                  initialReps={editingExercise?.reps}
+                  initialWeight={editingExercise?.weight}
+                  initialUnit={editingExercise?.unit}
+                  initialSetConfigs={editingExercise?.setConfigs?.map(cfg => ({
                     reps: cfg.reps,
                     weight: cfg.weight,
                     unit: cfg.weight_unit,
                   }))}
-                  onOverlayClick={handleOverlayClick}
+                  onOverlayClick={handleModalClose}
                 />
                 <button
                   className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
-                  onClick={() => setEditingExercise(null)}
+                  onClick={handleModalClose}
                   aria-label="Close"
                 >
                   &times;
@@ -312,7 +260,7 @@ const ConfigureProgramExercises = () => {
           )}
         </div>
       </CardWrapper>
-    </>
+    </div>
   );
 };
 

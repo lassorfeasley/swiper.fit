@@ -6,6 +6,7 @@ import React from "react";
 import { MdArrowBack } from "react-icons/md";
 import Icon from "../common/Icon";
 import SearchField from "../common/forms/SearchField";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const AppHeader = ({
   showActionBar = true,
@@ -21,6 +22,9 @@ export const AppHeader = ({
   searchValue: controlledSearchValue,
   onSearchChange,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // For demo: search state
   const [searchValue, setSearchValue] = React.useState("");
   const isControlled = controlledSearchValue !== undefined && onSearchChange;
@@ -33,8 +37,16 @@ export const AppHeader = ({
     }
   };
 
+  const onBackHandler = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1); // Go back to the previous page in history
+    }
+  };
+
   return (
-    <div className="flex flex-col w-full items-start" style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 10 }} data-component="AppHeader">
+    <div className="flex flex-col w-full items-start" data-component="AppHeader">
       <div
         className="flex flex-col w-full items-start bg-white"
         style={{ borderBottom: "0.5px solid var(--Black, #2F3640)" }}
@@ -43,12 +55,12 @@ export const AppHeader = ({
           {showBackButton && (
             <div
               className="!relative !w-6 !h-6 cursor-pointer flex items-center justify-center"
-              onClick={onBack}
+              onClick={onBackHandler}
               role="button"
               tabIndex={0}
               aria-label="Back"
               style={{ background: "none", border: "none", padding: 0 }}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBack && onBack(); }}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBackHandler && onBackHandler(); }}
             >
               <MdArrowBack className="!w-6 !h-6" />
             </div>

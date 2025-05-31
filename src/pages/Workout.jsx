@@ -29,7 +29,6 @@ const Workout = () => {
   const [completedSets, setCompletedSets] = useState({}); // { exerciseId: [setData, ...] }
   const { setNavBarVisible } = useNavBarVisibility();
   const [workoutName, setWorkoutName] = useState('');
-  const [startTime, setStartTime] = useState(null);
 
   // State for adding unscheduled exercise
   const [showAddUnscheduledForm, setShowAddUnscheduledForm] = useState(false);
@@ -181,10 +180,9 @@ const Workout = () => {
     });
   };
 
-  // Modify the program selection handler to record start time
+  // Modify the program selection handler
   const handleProgramSelect = (program) => {
     setSelectedProgram(program);
-    setStartTime(new Date().toISOString()); // Record the exact start time
     setStep('active');
   };
 
@@ -192,11 +190,10 @@ const Workout = () => {
   const handleEnd = async () => {
     setTimerActive(false);
     const workoutData = {
-        duration_seconds: timer,
-        completed_at: new Date().toISOString(),
-        user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff', // TODO: replace with real user id
-        workout_name: workoutName,
-        start_time: startTime, // Include the start time in the workout data
+      duration_seconds: timer,
+      completed_at: new Date().toISOString(),
+      user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff',
+      workout_name: workoutName,
     };
     if (selectedProgram) {
         workoutData.program_id = selectedProgram.id;
@@ -289,83 +286,82 @@ const Workout = () => {
     setOpenSetIndex(null);
   };
 
-  if (step === 'select') {
-    return (
-      <>
-        <AppHeader
-          appHeaderTitle="Select a program to start"
-          showActionBar={false}
-          showActionIcon={false}
-          showBackButton={false}
-          subhead={false}
-          search={true}
-          searchPlaceholder="Search"
-          data-component="AppHeader"
-        />
-        <div style={{ height: 140 }} />
-        <CardWrapper>
-          <MainContainer data-component="WorkoutPage">
-            {loading ? (
-              <div className="p-6">Loading...</div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {programs.map(program => (
-                  <ProgramCard
-                    key={program.id}
-                    programName={program.program_name}
-                    exerciseCount={program.exerciseCount}
-                    onClick={() => handleProgramSelect(program)}
-                  />
-                ))}
-              </div>
-            )}
-          </MainContainer>
-        </CardWrapper>
-      </>
-    );
-  }
-
-  // Active workout page
+  // Common structure for both steps
   return (
-    <>
-      <AppHeader
-        showBackButton={false}
-        appHeaderTitle={selectedProgram?.program_name || (workoutName || 'Active Workout')}
-        subhead={true}
-        subheadText={selectedProgram ? workoutName : 'Tracking unscheduled exercises'}
-        search={false}
-        showActionBar={true}
-        actionBarText="Add exercise"
-        onAction={() => setShowAddUnscheduledForm(true)}
-        data-component="active_workout_header"
-      />
-      <div style={{ height: 140 }} />
-      <CardWrapper>
-        <div className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto">
-          {exercises.map(ex => (
-            <SetCard
-              key={ex.id}
-              exerciseId={ex.exercise_id}
-              exerciseName={ex.name}
-              default_view={true}
-              defaultSets={ex.default_sets}
-              defaultReps={ex.default_reps}
-              defaultWeight={ex.default_weight}
-              onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
-              setData={setsData[ex.exercise_id] || []}
-              onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
-              data-component="SetCard"
-            />
-          ))}
-        </div>
-        <ActiveFocusedNavBar
-          timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
-          isPaused={!timerActive}
-          onPauseToggle={() => setTimerActive(a => !a)}
-          onEnd={handleEnd}
-          data-component="ActiveFocusedNavBar"
-        />
-      </CardWrapper>
+    <div className="flex flex-col h-screen">
+      {step === 'select' ? (
+        <>
+          <AppHeader
+            appHeaderTitle="Select a program to start"
+            showActionBar={false}
+            showActionIcon={false}
+            showBackButton={false}
+            subhead={false}
+            search={true}
+            searchPlaceholder="Search"
+            data-component="AppHeader"
+          />
+          <CardWrapper>
+            <MainContainer data-component="WorkoutPage">
+              {loading ? (
+                <div className="p-6">Loading...</div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {programs.map(program => (
+                    <ProgramCard
+                      key={program.id}
+                      programName={program.program_name}
+                      exerciseCount={program.exerciseCount}
+                      onClick={() => handleProgramSelect(program)}
+                    />
+                  ))}
+                </div>
+              )}
+            </MainContainer>
+          </CardWrapper>
+        </>
+      ) : (
+        // Active workout page
+        <>
+          <AppHeader
+            showBackButton={false}
+            appHeaderTitle={selectedProgram?.program_name || (workoutName || 'Active Workout')}
+            subhead={true}
+            subheadText={selectedProgram ? workoutName : 'Tracking unscheduled exercises'}
+            search={false}
+            showActionBar={true}
+            actionBarText="Add exercise"
+            onAction={() => setShowAddUnscheduledForm(true)}
+            data-component="active_workout_header"
+          />
+          <CardWrapper>
+            <div className="flex flex-col gap-4 p-4">
+              {exercises.map(ex => (
+                <SetCard
+                  key={ex.id}
+                  exerciseId={ex.exercise_id}
+                  exerciseName={ex.name}
+                  default_view={true}
+                  defaultSets={ex.default_sets}
+                  defaultReps={ex.default_reps}
+                  defaultWeight={ex.default_weight}
+                  onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
+                  setData={setsData[ex.exercise_id] || []}
+                  onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
+                  data-component="SetCard"
+                />
+              ))}
+            </div>
+          </CardWrapper>
+          <ActiveFocusedNavBar
+            timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
+            isPaused={!timerActive}
+            onPauseToggle={() => setTimerActive(a => !a)}
+            onEnd={handleEnd}
+            data-component="ActiveFocusedNavBar"
+          />
+        </>
+      )}
       {showAddUnscheduledForm && (
         <SlideUpForm
           formPrompt="Add New Exercise"
@@ -424,7 +420,7 @@ const Workout = () => {
           </div>
         </SlideUpForm>
       )}
-    </>
+    </div>
   );
 };
 
