@@ -60,7 +60,7 @@ const History = () => {
   }, []);
 
   return (
-    <>
+    <div className="flex flex-col h-screen">
       <AppHeader
         appHeaderTitle="Workout history"
         showActionBar={false}
@@ -71,12 +71,10 @@ const History = () => {
         searchPlaceholder="Search"
         data-component="AppHeader"
       />
-      {loading ? (
-        <div className="p-6">Loading...</div>
-      ) : (
-        <>
-          {/* Spacer to offset fixed AppHeader */}
-          <div style={{ height: '140px' }} />
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="p-6">Loading...</div>
+        ) : (
           <TileWrapper>
             {workouts.map(w => (
               <WorkoutTile
@@ -90,9 +88,9 @@ const History = () => {
               />
             ))}
           </TileWrapper>
-        </>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 };
 
