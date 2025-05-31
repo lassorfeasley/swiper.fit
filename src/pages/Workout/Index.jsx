@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
-import SetCard from "../../components/common/CardsAndTiles/SetCard";
+import SetCard from 'components/common/CardsAndTiles/Cards/Library/SetCard';
 import ActiveFocusedNavBar from '../../components/layout/ActiveFocusedNavBar';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import AppHeader from '../../components/layout/AppHeader';
 import MainContainer from '../../components/common/MainContainer';
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 import ProgramCard from '../../components/common/CardsAndTiles/ProgramCard';
 import SlideUpForm from '../../components/common/forms/SlideUpForm';
 import NumericInput from '../../components/common/forms/NumericInput';

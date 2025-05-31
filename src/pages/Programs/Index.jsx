@@ -6,7 +6,7 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/layout/AppHeader';
 import { PageNameContext } from '../../App';
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 import ProgramCard from '../../components/common/CardsAndTiles/ProgramCard';
 
 const ProgramsIndex = () => {

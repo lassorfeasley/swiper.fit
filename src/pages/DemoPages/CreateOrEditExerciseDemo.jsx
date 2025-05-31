@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import AppHeader from '../../components/layout/AppHeader';
 import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 
 const CreateOrEditExerciseDemo = () => {
   const { setNavBarVisible } = useNavBarVisibility();

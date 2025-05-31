@@ -6,7 +6,7 @@ import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/layout/AppHeader';
 import MainContainer from '../../components/common/MainContainer';
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 import WorkoutTile from '../../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
 import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
 

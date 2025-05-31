@@ -7,7 +7,7 @@ import ExerciseSetConfiguration from '../../components/common/forms/compound-fie
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { PageNameContext } from '../../App';
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);

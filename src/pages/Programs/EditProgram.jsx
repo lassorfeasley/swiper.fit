@@ -1,9 +1,13 @@
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=75-1917&t=iSeOx5vBGiOUayMu-4
+
+
+
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import AppHeader from '../../components/layout/AppHeader';
 import { PageNameContext } from "../../App";
-import CardWrapper from '../../components/layout/CardWrapper';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 
 const EditProgram = () => {
   const { programId } = useParams();

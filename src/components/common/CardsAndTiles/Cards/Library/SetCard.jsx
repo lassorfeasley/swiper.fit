@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import SwipeSwitch from '../../workout/SwipeSwitch';
-import MetricPill from './MetricPill';
-import SlideUpForm from '../forms/SlideUpForm';
-import WeightCompoundField from '../forms/compound-fields/WeightCompoundField';
-import NumericInput from '../forms/NumericInput';
-import Icon from '../Icon';
+import SwipeSwitch from 'components/workout/SwipeSwitch';
+import MetricPill from 'components/common/CardsAndTiles/MetricPill';
+import SlideUpForm from 'components/common/forms/SlideUpForm';
+import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
+import NumericInput from 'components/common/forms/NumericInput';
+import Icon from 'components/common/Icon';
 
 const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId, setData = [], onSetDataChange }) => {
   const [focused_view, setFocusedView] = useState(!default_view);
