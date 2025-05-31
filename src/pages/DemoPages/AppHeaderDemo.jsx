@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import AppHeader from "../components/layout/AppHeader";
-import CardWrapper from '../components/layout/CardWrapper';
+import AppHeader from "../../components/layout/AppHeader";
+import CardWrapper from '../../components/layout/CardWrapper';
 
 const Switch = ({ checked, onChange, label }) => (
   <label className="flex items-center gap-2 cursor-pointer">

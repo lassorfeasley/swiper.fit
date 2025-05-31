@@ -3,14 +3,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import AppHeader from '../components/layout/AppHeader';
-import ExerciseTile from '../components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
-import TileWrapper from '../components/common/CardsAndTiles/Tiles/TileWrapper';
+import { supabase } from '../../supabaseClient';
+import AppHeader from '../../components/layout/AppHeader';
+import ExerciseTile from '../../components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
+import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
-const WorkoutHistoryDetail = () => {
+const WorkoutHistoryDetailIndex = () => {
   const { workoutId } = useParams();
   const [workout, setWorkout] = useState(null);
   const [sets, setSets] = useState([]);
@@ -93,4 +93,4 @@ const WorkoutHistoryDetail = () => {
   );
 };
 
-export default WorkoutHistoryDetail; 
+export default WorkoutHistoryDetailIndex; 

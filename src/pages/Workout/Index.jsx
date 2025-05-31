@@ -1,20 +1,20 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=49-317&t=YBjXtsLhxGedobad-4
 
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient';
-import SetCard from '../components/common/CardsAndTiles/SetCard';
-import ActiveFocusedNavBar from '../components/layout/ActiveFocusedNavBar';
-import { useNavBarVisibility } from '../NavBarVisibilityContext';
-import AppHeader from '../components/layout/AppHeader';
-import MainContainer from '../components/common/MainContainer';
-import CardWrapper from '../components/layout/CardWrapper';
-import ProgramCard from '../components/common/CardsAndTiles/ProgramCard';
-import SlideUpForm from '../components/common/forms/SlideUpForm';
-import NumericInput from '../components/common/forms/NumericInput';
-import Icon from '../components/common/Icon';
-import TextField from '../components/common/forms/TextField';
-import WeightCompoundField from '../components/common/forms/compound-fields/WeightCompoundField';
-import SetDropdown from '../components/common/forms/compound-fields/SetDropdown';
+import { supabase } from '../../supabaseClient';
+import SetCard from "../../components/common/CardsAndTiles/SetCard";
+import ActiveFocusedNavBar from '../../components/layout/ActiveFocusedNavBar';
+import { useNavBarVisibility } from '../../NavBarVisibilityContext';
+import AppHeader from '../../components/layout/AppHeader';
+import MainContainer from '../../components/common/MainContainer';
+import CardWrapper from '../../components/layout/CardWrapper';
+import ProgramCard from '../../components/common/CardsAndTiles/ProgramCard';
+import SlideUpForm from '../../components/common/forms/SlideUpForm';
+import NumericInput from '../../components/common/forms/NumericInput';
+import Icon from '../../components/common/Icon';
+import TextField from '../../components/common/forms/TextField';
+import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
+import SetDropdown from '../../components/common/forms/compound-fields/SetDropdown';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'

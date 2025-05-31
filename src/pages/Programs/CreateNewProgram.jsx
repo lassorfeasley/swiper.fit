@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
-import AppHeader from '../components/layout/AppHeader';
-import SlideUpForm from '../components/common/forms/SlideUpForm';
-import TextField from '../components/common/forms/TextField';
-import Icon from '../components/common/Icon';
-import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
-import { supabase } from '../supabaseClient';
+import AppHeader from '../../components/layout/AppHeader';
+import SlideUpForm from '../../components/common/forms/SlideUpForm';
+import TextField from '../../components/common/forms/TextField';
+import Icon from '../../components/common/Icon';
+import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
+import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { PageNameContext } from '../App';
-import CardWrapper from '../components/layout/CardWrapper';
+import { PageNameContext } from '../../App';
+import CardWrapper from '../../components/layout/CardWrapper';
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);

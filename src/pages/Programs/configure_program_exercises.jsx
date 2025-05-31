@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import AppHeader from '../components/layout/AppHeader';
-import CardWrapper from '../components/layout/CardWrapper';
-import Reorder_Card from '../components/common/CardsAndTiles/Reorder_Card';
-import MetricPill from '../components/common/CardsAndTiles/MetricPill';
+import { supabase } from '../../supabaseClient';
+import AppHeader from '../../components/layout/AppHeader';
+import CardWrapper from '../../components/layout/CardWrapper';
+import Reorder_Card from '../../components/common/CardsAndTiles/Reorder_Card';
+import MetricPill from '../../components/common/CardsAndTiles/MetricPill';
 import { Reorder } from 'framer-motion';
-import ExerciseSetConfiguration from '../components/common/forms/compound-fields/exercise_set_configuration';
-import { useNavBarVisibility } from '../NavBarVisibilityContext';
-import { PageNameContext } from '../App';
-import SetCard from '../components/common/CardsAndTiles/SetCard';
-import ExerciseSetsConfigurationCard from '../components/common/CardsAndTiles/ExerciseSetsConfigurationCard';
+import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
+import { useNavBarVisibility } from '../../NavBarVisibilityContext';
+import { PageNameContext } from '../../App';
+import SetCard from '../../components/common/CardsAndTiles/SetCard';
+import ExerciseSetsConfigurationCard from '../../components/common/CardsAndTiles/ExerciseSetsConfigurationCard';
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();

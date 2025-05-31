@@ -2,14 +2,14 @@
 
 
 import React, { useEffect, useState, useContext } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import AppHeader from '../components/layout/AppHeader';
-import { PageNameContext } from '../App';
-import CardWrapper from '../components/layout/CardWrapper';
-import ProgramCard from '../components/common/CardsAndTiles/ProgramCard';
+import AppHeader from '../../components/layout/AppHeader';
+import { PageNameContext } from '../../App';
+import CardWrapper from '../../components/layout/CardWrapper';
+import ProgramCard from '../../components/common/CardsAndTiles/ProgramCard';
 
-const Programs = () => {
+const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,4 +82,4 @@ const Programs = () => {
   );
 };
 
-export default Programs; 
+export default ProgramsIndex; 

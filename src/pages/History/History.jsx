@@ -2,13 +2,13 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import AppHeader from '../components/layout/AppHeader';
-import MainContainer from '../components/common/MainContainer';
-import CardWrapper from '../components/layout/CardWrapper';
-import WorkoutTile from '../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
-import TileWrapper from '../components/common/CardsAndTiles/Tiles/TileWrapper';
+import AppHeader from '../../components/layout/AppHeader';
+import MainContainer from '../../components/common/MainContainer';
+import CardWrapper from '../../components/layout/CardWrapper';
+import WorkoutTile from '../../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
+import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
 
 const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
 
@@ -21,7 +21,7 @@ function formatDuration(seconds) {
     .join(':');
 }
 
-const History = () => {
+const Index = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -94,4 +94,4 @@ const History = () => {
   );
 };
 
-export default History; 
+export default Index; 
