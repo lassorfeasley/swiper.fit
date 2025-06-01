@@ -1,5 +1,6 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
+// import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
+import { HomeIcon, StarIcon, ArrowPathIcon, PlayIcon } from '@heroicons/react/24/solid';
 import Home from "./pages/Home";
 import Programs from "./pages/programs";
 import History from "./pages/history";
@@ -46,10 +47,10 @@ function AppContent() {
   const location = useLocation();
   const { navBarVisible } = useNavBarVisibility();
   const navItems = [
-    { to: "/", label: "Home", icon: <MdHome size={32} /> },
-    { to: "/programs", label: "Programs", icon: <MdDirectionsRun size={32} /> },
-    { to: "/history", label: "History", icon: <MdHistory size={32} /> },
-    { to: "/workout", label: "Workout", icon: <MdAddCircle size={32} /> },
+    { to: "/", label: "Home", icon: <HomeIcon className="w-7 h-7" /> },
+    { to: "/programs", label: "Programs", icon: <StarIcon className="w-7 h-7" /> },
+    { to: "/history", label: "History", icon: <ArrowPathIcon className="w-7 h-7" /> },
+    { to: "/workout", label: "Workout", icon: <PlayIcon className="w-7 h-7" /> },
   ];
 
   // Hide nav bar on Program Detail, Edit Program, Create New Program, or Create/Edit Exercise Demo page

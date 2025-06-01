@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.49.5",
     "framer-motion": "^11.0.8",
     "prop-types": "^15.8.1",
