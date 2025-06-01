@@ -5,35 +5,46 @@ import SlideUpForm from 'components/common/forms/SlideUpForm';
 import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
 import NumericInput from 'components/common/forms/NumericInput';
 import Icon from 'components/common/Icon';
+import PropTypes from 'prop-types';
 
-const SetCard = ({ exerciseName = 'Military press', default_view = true, defaultSets = 3, defaultReps = 12, defaultWeight = 45, onSetComplete, exerciseId, setData = [], onSetDataChange }) => {
+const SetCard = ({ 
+  exerciseName = 'Military press', 
+  default_view = true, 
+  setConfigs = [], 
+  onSetComplete, 
+  exerciseId, 
+  setData = [], 
+  onSetDataChange 
+}) => {
   const [focused_view, setFocusedView] = useState(!default_view);
-  const [setCount, setSetCount] = useState(defaultSets);
   const [editMetric, setEditMetric] = useState(null); // { metric: 'sets'|'reps'|'weight', setIdx: number|null }
-  const [weightUnit, setWeightUnit] = useState('lbs');
+  const [weightUnit, setWeightUnit] = useState(setConfigs[0]?.unit || 'lbs');
   const [editValue, setEditValue] = useState('');
-  const sets = Array.from({ length: setCount }, (_, i) => {
+
+  // Create sets array from setConfigs and setData
+  const sets = setConfigs.map((config, i) => {
     const fromParent = setData[i] || {};
     return {
       id: i + 1,
       name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
-      reps: fromParent.reps ?? defaultReps,
-      weight: fromParent.weight ?? defaultWeight,
+      reps: fromParent.reps ?? config.reps,
+      weight: fromParent.weight ?? config.weight,
+      unit: config.unit || 'lbs',
       status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
     };
   });
 
-  // Update sets array if setCount changes
+  // Update sets array if setConfigs changes
   React.useEffect(() => {
     if (onSetDataChange) {
-      for (let i = 0; i < setCount; i++) {
+      for (let i = 0; i < setConfigs.length; i++) {
         if (!setData[i]) {
-          onSetDataChange(i + 1, 'reps', defaultReps);
-          onSetDataChange(i + 1, 'weight', defaultWeight);
+          onSetDataChange(i + 1, 'reps', setConfigs[i].reps);
+          onSetDataChange(i + 1, 'weight', setConfigs[i].weight);
         }
       }
     }
-  }, [setCount]);
+  }, [setConfigs]);
 
   const toggleFocusedView = () => {
     setFocusedView(!focused_view);
@@ -72,7 +83,7 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
   // Overlay/modal logic
   const handleMetricPillClick = (metric, setIdx = null) => {
     let value = '';
-    if (metric === 'sets') value = setCount;
+    if (metric === 'sets') value = setConfigs.length;
     else if (metric === 'reps' && setIdx !== null) value = sets[setIdx].reps;
     else if (metric === 'weight' && setIdx !== null) value = sets[setIdx].weight;
     setEditMetric({ metric, setIdx });
@@ -85,7 +96,13 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
   const handleMetricSubmit = () => {
     if (!editMetric) return;
     if (editMetric.metric === 'sets') {
-      setSetCount(Number(editValue) || 1);
+      // We can't modify the number of sets directly since it's controlled by setConfigs
+      // Instead, we should notify the parent component to update setConfigs
+      if (onSetDataChange) {
+        const newCount = Number(editValue) || 1;
+        // Notify parent to update setConfigs length
+        onSetDataChange('sets', newCount);
+      }
     } else if (editMetric.metric === 'reps' && editMetric.setIdx !== null) {
       updateSetValue(editMetric.setIdx + 1, 'reps', editValue);
     } else if (editMetric.metric === 'weight' && editMetric.setIdx !== null) {
@@ -148,31 +165,53 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
         </button>
       </div>
       <div className="mb-4 flex gap-4 items-center">
-        <MetricPill value={setCount} unit="SETS" onClick={() => handleMetricPillClick('sets')} />
-        {!focused_view && <MetricPill value={activeSet.reps} unit="REPS" onClick={() => handleMetricPillClick('reps', sets.indexOf(activeSet))} />}
-        {!focused_view && <MetricPill value={activeSet.weight} unit="LBS" onClick={() => handleMetricPillClick('weight', sets.indexOf(activeSet))} />}
+        <MetricPill value={setConfigs.length} unit="SETS" onClick={() => handleMetricPillClick('sets')} />
+        {/* For REPS and LBS, pass array of values if multiple sets and not all values are the same */}
+        {!focused_view && (
+          (() => {
+            const repsArr = sets.filter(Boolean).map(s => s?.reps ?? 0);
+            const uniqueReps = Array.from(new Set(repsArr));
+            return uniqueReps.length > 1 && repsArr.length <= 3 ? (
+              <MetricPill values={repsArr} unit="REPS" onClick={() => handleMetricPillClick('reps', sets.indexOf(activeSet))} />
+            ) : (
+              <MetricPill value={activeSet?.reps ?? 0} unit="REPS" onClick={() => handleMetricPillClick('reps', sets.indexOf(activeSet))} />
+            );
+          })()
+        )}
+        {!focused_view && (
+          (() => {
+            const weightsArr = sets.filter(Boolean).map(s => s?.weight ?? 0);
+            const uniqueWeights = Array.from(new Set(weightsArr));
+            const unit = sets[0]?.unit?.toUpperCase() || 'LBS';
+            return uniqueWeights.length > 1 && weightsArr.length <= 3 ? (
+              <MetricPill values={weightsArr} unit={unit} onClick={() => handleMetricPillClick('weight', sets.indexOf(activeSet))} />
+            ) : (
+              <MetricPill value={activeSet?.weight ?? 0} unit={unit} onClick={() => handleMetricPillClick('weight', sets.indexOf(activeSet))} />
+            );
+          })()
+        )}
       </div>
       {focused_view ? (
         <div className="space-y-4">
-          {sets.map((set, idx) => (
-            <div key={set.id} className="mb-4">
+          {sets.filter(Boolean).map((set, idx) => (
+            <div key={set?.id ?? idx} className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-lg">{set.name}</span>
+                <span className="text-lg">{set?.name}</span>
                 <div className="flex gap-4">
-                  <MetricPill value={set.reps} unit="REPS" onClick={() => handleMetricPillClick('reps', idx)} />
-                  <MetricPill value={set.weight} unit="LBS" onClick={() => handleMetricPillClick('weight', idx)} />
+                  <MetricPill value={set?.reps ?? 0} unit="REPS" onClick={() => handleMetricPillClick('reps', idx)} />
+                  <MetricPill value={set?.weight ?? 0} unit={set?.unit?.toUpperCase() || 'LBS'} onClick={() => handleMetricPillClick('weight', idx)} />
                 </div>
               </div>
               <SwipeSwitch 
-                status={set.status} 
-                onComplete={() => handleSetComplete(set.id)} 
+                status={set?.status ?? 'locked'} 
+                onComplete={() => handleSetComplete(set?.id)} 
               />
             </div>
           ))}
         </div>
       ) : (
         <SwipeSwitch 
-          status={activeSet.status} 
+          status={activeSet?.status ?? 'locked'} 
           onComplete={handleCompleteAllSets} 
         />
       )}
@@ -222,6 +261,20 @@ const SetCard = ({ exerciseName = 'Military press', default_view = true, default
       )}
     </div>
   );
+};
+
+SetCard.propTypes = {
+  exerciseName: PropTypes.string,
+  default_view: PropTypes.bool,
+  setConfigs: PropTypes.arrayOf(PropTypes.shape({
+    reps: PropTypes.number,
+    weight: PropTypes.number,
+    unit: PropTypes.string
+  })),
+  onSetComplete: PropTypes.func,
+  exerciseId: PropTypes.string.isRequired,
+  setData: PropTypes.array,
+  onSetDataChange: PropTypes.func
 };
 
 export default SetCard; 

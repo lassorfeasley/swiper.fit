@@ -221,8 +221,18 @@ const ConfigureProgramExercises = () => {
                     </div>
                     <div className="flex gap-2 mt-2">
                       <MetricPill value={ex.sets} unit="SETS" data-component="MetricPill" />
-                      <MetricPill value={ex.reps} unit="REPS" data-component="MetricPill" />
-                      <MetricPill value={ex.weight} unit={ex.unit?.toUpperCase() || "LBS"} data-component="MetricPill" />
+                      <MetricPill 
+                        values={ex.setConfigs?.map(cfg => cfg.reps)} 
+                        unit="REPS" 
+                        data-component="MetricPill"
+                        showAllValues={true}
+                      />
+                      <MetricPill 
+                        values={ex.setConfigs?.map(cfg => cfg.weight)} 
+                        unit={ex.unit?.toUpperCase() || "LBS"} 
+                        data-component="MetricPill"
+                        showAllValues={true}
+                      />
                     </div>
                   </div>
                 </Reorder_Card>

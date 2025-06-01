@@ -11,9 +11,7 @@ export default {
         space: ['Space Grotesk', 'sans-serif'],
       },
       colors: {
-        'light-balck': '#4B6584',
-        'black': '#2F3640',
-        'white': '#FFF',
+        // All custom color extensions removed; use Tailwind's native palette
       },
       fontSize: {
         'h1': '20px',

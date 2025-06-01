@@ -9,7 +9,8 @@ const numberToWord = [
 ];
 
 const SetDropdown = ({ setNumber, defaultReps = 10, defaultWeight = 25, defaultUnit = 'lbs', className = '', isOpen, onToggle, reps, weight, unit, onRepsChange, onWeightChange, onUnitChange }) => {
-  const setLabel = `Set ${numberToWord[setNumber] ? numberToWord[setNumber].charAt(0).toUpperCase() + numberToWord[setNumber].slice(1) : setNumber}`;
+  // Use 1-based set numbering for display
+  const setLabel = `Set ${setNumber + 1}`;
 
   // Sync local state with controlled props (for backward compatibility, but prefer controlled)
   useEffect(() => {
@@ -21,7 +22,7 @@ const SetDropdown = ({ setNumber, defaultReps = 10, defaultWeight = 25, defaultU
 
   return (
     <Dropdown
-      value={setLabel}
+      label={setLabel}
       className={`w-full mt-4 ${className}`}
       isOpen={isOpen}
       onToggle={onToggle}

@@ -12,8 +12,8 @@ const ToggleGroup = ({ options, value, onChange, className = '' }) => {
             type="button"
             className={`flex items-center justify-center gap-[10px] h-[30px] flex-[1_0_0] text-h2 font-h2 leading-h2 font-medium transition-colors ${
               isSelected
-                ? ''
-                : 'border border-[#DCDDE1] rounded-[4px]'
+                ? 'bg-slate-200'
+                : 'border border-slate-200 rounded-[4px]'
             }`}
             style={{
               display: 'flex',
@@ -23,8 +23,6 @@ const ToggleGroup = ({ options, value, onChange, className = '' }) => {
               gap: '10px',
               flex: '1 0 0',
               borderRadius: 4,
-              background: isSelected ? '#F2F2F7' : undefined,
-              border: isSelected ? 'none' : '1px solid #DCDDE1',
             }}
             onClick={() => onChange(option.value)}
             aria-pressed={isSelected}

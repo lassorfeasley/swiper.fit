@@ -219,8 +219,8 @@ const ConfigureProgramExercisesIndex = () => { // Renamed component
                     </div>
                     <div className="flex gap-2 mt-2">
                       <MetricPill value={ex.sets} unit="SETS" data-component="MetricPill" />
-                      <MetricPill value={ex.reps} unit="REPS" data-component="MetricPill" />
-                      <MetricPill value={ex.weight} unit={ex.unit?.toUpperCase() || "LBS"} data-component="MetricPill" />
+                      <MetricPill values={ex.setConfigs?.map(cfg => cfg.reps)} unit="REPS" data-component="MetricPill" />
+                      <MetricPill values={ex.setConfigs?.map(cfg => cfg.weight)} unit={ex.setConfigs?.[0]?.unit?.toUpperCase() || "LBS"} data-component="MetricPill" />
                     </div>
                   </div>
                 </Reorder_Card>

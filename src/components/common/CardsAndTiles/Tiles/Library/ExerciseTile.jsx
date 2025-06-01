@@ -27,8 +27,7 @@ const ExerciseTile = ({
 }) => {
   return (
     <div 
-      className={`flex items-center justify-between w-full p-4 bg-white rounded-lg ${className}`}
-      style={{ background: 'var(--Light-grey)' }}
+      className={`flex items-center justify-between w-full p-4 bg-stone-50 rounded-lg ${className}`}
       data-component="ExerciseTile"
     >
       <span className="h2-head">{exerciseName}</span>

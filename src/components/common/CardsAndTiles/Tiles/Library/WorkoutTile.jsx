@@ -25,7 +25,7 @@ const WorkoutTile = ({
   className = '',
 }) => (
   <div
-    className={`flex flex-col w-full p-5 items-start gap-3 cursor-pointer bg-white ${className}`}
+    className={`flex flex-col w-full p-5 items-start gap-3 cursor-pointer bg-stone-50 ${className}`}
     onClick={onClick}
     data-component="WorkoutTile"
   >

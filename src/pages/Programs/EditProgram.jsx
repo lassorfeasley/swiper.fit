@@ -8,6 +8,7 @@ import { supabase } from '../../supabaseClient';
 import AppHeader from '../../components/layout/AppHeader';
 import { PageNameContext } from "../../App";
 import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
+import MetricPill from '../../components/common/CardsAndTiles/MetricPill';
 
 const EditProgram = () => {
   const { programId } = useParams();
@@ -39,10 +40,28 @@ const EditProgram = () => {
       // Fetch exercises in this program (join with exercises)
       const { data: progExs } = await supabase
         .from('program_exercises')
-        .select('id, exercise_id, default_sets, default_reps, default_weight, exercises(name)')
+        .select(`
+          id, 
+          exercise_id, 
+          exercises(name),
+          program_sets(id, reps, weight, weight_unit, set_order)
+        `)
         .eq('program_id', programId)
         .order('id', { ascending: true });
-      setExercises(progExs || []);
+
+      // Process the exercises to include set configurations
+      const processedExercises = (progExs || []).map(ex => ({
+        ...ex,
+        setConfigs: (ex.program_sets || [])
+          .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
+          .map(set => ({
+            reps: set.reps,
+            weight: set.weight,
+            unit: set.weight_unit || 'lbs'
+          }))
+      }));
+      
+      setExercises(processedExercises);
       setLoading(false);
     };
     if (programId) fetchData();
@@ -82,18 +101,9 @@ const EditProgram = () => {
                   </span>
                 </div>
                 <div className="flex gap-4">
-                  <div className="bg-white rounded-lg px-4 py-2 text-lg font-bold flex items-center gap-1">
-                    <span>{ex.default_sets}</span>
-                    <span className="text-xs font-normal ml-1">Sets</span>
-                  </div>
-                  <div className="bg-white rounded-lg px-4 py-2 text-lg font-bold flex items-center gap-1">
-                    <span>{ex.default_reps}</span>
-                    <span className="text-xs font-normal ml-1">Reps</span>
-                  </div>
-                  <div className="bg-white rounded-lg px-4 py-2 text-lg font-bold flex items-center gap-1">
-                    <span>{ex.default_weight}</span>
-                    <span className="text-xs font-normal ml-1">Lbs</span>
-                  </div>
+                  <MetricPill value={ex.setConfigs?.length || 0} unit="Sets" onClick={() => openSetEdit(ex)} showAllValues={true} />
+                  <MetricPill values={ex.setConfigs?.map(cfg => cfg.reps)} unit="Reps" onClick={() => openSetEdit(ex)} showAllValues={true} />
+                  <MetricPill values={ex.setConfigs?.map(cfg => cfg.weight)} unit={ex.setConfigs?.[0]?.unit?.toUpperCase() || "LBS"} onClick={() => openSetEdit(ex)} showAllValues={true} />
                 </div>
               </div>
             ))

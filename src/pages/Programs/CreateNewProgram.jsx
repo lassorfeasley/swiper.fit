@@ -8,6 +8,7 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { PageNameContext } from '../../App';
 import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
+import FormGroupWrapper from '../../components/common/forms/FormWrappers/FormGroupWrapper';
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -111,40 +112,31 @@ const CreateNewProgram = () => {
           {/* (Removed placeholder text) */}
         </div>
         {/* Modal overlay on top of the page */}
-        {showFocusForm && (
-          <SlideUpForm formPrompt="What should we call this program?">
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                if (isReady) setShowAddExercise(true);
-              }}
-              className="w-full"
-            >
-              <TextField
-                label="Program name"
-                value={programName}
-                onChange={e => setProgramName(e.target.value)}
-                placeholder="Enter program name"
-                inputRef={inputRef}
-              />
-              <div className="w-full flex justify-end mt-8">
-                <button
-                  type="submit"
-                  disabled={!isReady}
-                  className="transition-colors"
-                  style={{ cursor: isReady ? 'pointer' : 'not-allowed' }}
-                >
-                  <Icon
-                    name="arrow_forward"
-                    variant="outlined"
-                    size={32}
-                    className={isReady ? 'text-black' : 'text-gray-300'}
-                  />
-                </button>
-              </div>
-            </form>
-          </SlideUpForm>
-        )}
+        <SlideUpForm 
+          formPrompt="What should we call this program?"
+          isOpen={showFocusForm}
+          onOverlayClick={() => setShowAddExercise(false)}
+          actionIcon={
+            <Icon
+              name="arrow_forward"
+              variant="outlined"
+              size={32}
+              className={isReady ? 'text-black' : 'text-gray-300'}
+            />
+          }
+          onActionIconClick={isReady ? () => setShowAddExercise(true) : undefined}
+        >
+          <div className="w-full outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
+            <TextField
+              label="Program name"
+              value={programName}
+              onChange={e => setProgramName(e.target.value)}
+              placeholder="Enter program name"
+              inputRef={inputRef}
+              className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300"
+            />
+          </div>
+        </SlideUpForm>
         {showAddExercise && (
           <ExerciseSetConfiguration
             formPrompt="Add your first exercise"

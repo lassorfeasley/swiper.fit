@@ -83,7 +83,12 @@ const Workout = () => {
       setLoading(true);
       supabase
         .from('program_exercises')
-        .select('*')
+        .select(`
+          id,
+          exercise_id,
+          exercises(name),
+          program_sets(id, reps, weight, weight_unit, set_order)
+        `)
         .eq('program_id', selectedProgram.id)
         .then(async ({ data: progExs, error }) => {
           if (error || !progExs) {
@@ -108,9 +113,13 @@ const Workout = () => {
             id: pe.id, // This is program_exercise_id, unique for list key
             exercise_id: pe.exercise_id, // This is actual exercise_id
             name: (exercisesData.find(e => e.id === pe.exercise_id) || {}).name || 'Unknown',
-            default_sets: pe.default_sets,
-            default_reps: pe.default_reps,
-            default_weight: pe.default_weight
+            setConfigs: (pe.program_sets || [])
+              .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
+              .map(set => ({
+                reps: set.reps,
+                weight: set.weight,
+                unit: set.weight_unit || 'lbs'
+              }))
           }));
           setExercises(cards);
           setLoading(false);
@@ -164,17 +173,37 @@ const Workout = () => {
   };
 
   // Handle set data change
-  const handleSetDataChange = (exerciseId, setId, field, value) => {
+  const handleSetDataChange = (exerciseId, field, value) => {
+    if (field === 'sets') {
+      // Handle set count change
+      setExercises(prevExercises => 
+        prevExercises.map(ex => {
+          if (ex.exercise_id === exerciseId) {
+            const newSetConfigs = Array.from({ length: value }, (_, i) => {
+              const existingConfig = ex.setConfigs[i] || {};
+              return {
+                reps: existingConfig.reps || 10,
+                weight: existingConfig.weight || 0,
+                unit: existingConfig.unit || 'lbs'
+              };
+            });
+            return { ...ex, setConfigs: newSetConfigs };
+          }
+          return ex;
+        })
+      );
+      return;
+    }
+
+    // Handle individual set changes
     setSetsData(prev => {
       const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === setId); // Assuming setId is unique per exercise from SetCard
+      const setIdx = prevSets.findIndex(s => s.id === field); // field is now the setId
       let newSets;
       if (setIdx !== -1) {
-        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s);
+        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [value]: value } : s);
       } else {
-        // This case might need review if setId is not guaranteed.
-        // For now, assuming SetCard provides a unique id for each set data object.
-        newSets = [...prevSets, { id: setId, [field]: value }]; 
+        newSets = [...prevSets, { id: field, [value]: value }];
       }
       return { ...prev, [exerciseId]: newSets };
     });
@@ -268,10 +297,6 @@ const Workout = () => {
       id: `unscheduled-${createdExerciseId}-${Date.now()}`,
       exercise_id: createdExerciseId,
       name: newUnscheduledExerciseName.trim(),
-      default_sets: newUnscheduledExerciseSets,
-      default_reps: newUnscheduledExerciseReps,
-      default_weight: newUnscheduledExerciseWeight,
-      unit: newUnscheduledExerciseUnit,
       setConfigs: newUnscheduledSetConfigs,
       isUnscheduled: true,
     };
@@ -302,22 +327,18 @@ const Workout = () => {
             data-component="AppHeader"
           />
           <CardWrapper>
-            <MainContainer data-component="WorkoutPage">
-              {loading ? (
-                <div className="p-6">Loading...</div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {programs.map(program => (
-                    <ProgramCard
-                      key={program.id}
-                      programName={program.program_name}
-                      exerciseCount={program.exerciseCount}
-                      onClick={() => handleProgramSelect(program)}
-                    />
-                  ))}
-                </div>
-              )}
-            </MainContainer>
+            {loading ? (
+              <div className="p-6">Loading...</div>
+            ) : (
+              programs.map(program => (
+                <ProgramCard
+                  key={program.id}
+                  programName={program.program_name}
+                  exerciseCount={program.exerciseCount}
+                  onClick={() => handleProgramSelect(program)}
+                />
+              ))
+            )}
           </CardWrapper>
         </>
       ) : (
@@ -342,12 +363,10 @@ const Workout = () => {
                   exerciseId={ex.exercise_id}
                   exerciseName={ex.name}
                   default_view={true}
-                  defaultSets={ex.default_sets}
-                  defaultReps={ex.default_reps}
-                  defaultWeight={ex.default_weight}
+                  setConfigs={ex.setConfigs}
                   onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
                   setData={setsData[ex.exercise_id] || []}
-                  onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, setId, field, value)}
+                  onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, field, value)}
                   data-component="SetCard"
                 />
               ))}

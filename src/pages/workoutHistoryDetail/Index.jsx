@@ -67,9 +67,9 @@ const WorkoutHistoryDetailIndex = () => {
     <>
       <AppHeader
         showBackButton={true}
-        appHeaderTitle={workout?.workout_name || '[Workout name]'}
+        appHeaderTitle={workout?.workout_name}
         subhead={true}
-        subheadText={workout?.programs?.program_name || '[Program name]'}
+        subheadText={workout?.programs?.program_name}
         search={false}
         showActionBar={false}
         showActionIcon={false}
