@@ -2,19 +2,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
-import SetCard from 'components/common/CardsAndTiles/Cards/Library/SetCard';
-import ActiveFocusedNavBar from '../../components/layout/ActiveFocusedNavBar';
-import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import AppHeader from '../../components/layout/AppHeader';
-import MainContainer from '../../components/common/MainContainer';
-import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
-import ProgramCard from '../../components/common/CardsAndTiles/ProgramCard';
+import ActiveFocusedNavBar from '../../components/layout/ActiveFocusedNavBar';
+import SetCard from '../../components/common/CardsAndTiles/Cards/Library/SetCard.jsx';
 import SlideUpForm from '../../components/common/forms/SlideUpForm';
-import NumericInput from '../../components/common/forms/NumericInput';
-import Icon from '../../components/common/Icon';
 import TextField from '../../components/common/forms/TextField';
-import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
-import SetDropdown from '../../components/common/forms/compound-fields/SetDropdown';
+import NumericInput from '../../components/common/forms/NumericInput';
+import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField.jsx';
+import SetDropdown from '../../components/common/forms/compound-fields/SetDropdown.jsx';
+import ProgramTile from '../../components/common/CardsAndTiles/Tiles/ProgramTile.jsx';
+import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper.jsx';
+import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
+import { useNavBarVisibility } from '../../NavBarVisibilityContext.jsx';
+import Icon from '../../components/common/Icon.jsx';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -326,12 +326,12 @@ const Workout = () => {
             searchPlaceholder="Search"
             data-component="AppHeader"
           />
-          <CardWrapper>
+          <TileWrapper>
             {loading ? (
               <div className="p-6">Loading...</div>
             ) : (
               programs.map(program => (
-                <ProgramCard
+                <ProgramTile
                   key={program.id}
                   programName={program.program_name}
                   exerciseCount={program.exerciseCount}
@@ -339,7 +339,7 @@ const Workout = () => {
                 />
               ))
             )}
-          </CardWrapper>
+          </TileWrapper>
         </>
       ) : (
         // Active workout page

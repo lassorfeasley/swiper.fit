@@ -46,18 +46,18 @@ export const AppHeader = ({
   };
 
   return (
-    <div className="Appheader self-stretch border-b border-slate-600 inline-flex flex-col justify-start items-start">
-      <div className="Pagelabelwrapper self-stretch px-5 pt-10 pb-5 bg-stone-50 border-b-[0.5px] border-slate-600 flex flex-col justify-start items-start gap-2">
+    <div className="Appheader w-full self-stretch border-b-[0.25px] border-slate-400 inline-flex flex-col justify-start items-start">
+      <div className="Pagelabelwrapper self-stretch px-5 pt-10 pb-5 bg-stone-50 border-b-[0.25px] border-slate-400 flex flex-col justify-start items-start gap-2">
         {showBackButton && (
           <div
-            className="ArrowNarrowLeft w-5 h-5 relative overflow-hidden cursor-pointer flex items-center justify-center"
+            className="ArrowNarrowLeft w-6 h-6 relative overflow-hidden cursor-pointer flex items-center justify-center"
             onClick={onBackHandler}
             role="button"
             tabIndex={0}
             aria-label="Back"
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBackHandler(); }}
           >
-            <ArrowLeftIcon className="w-4 h-[10px] text-zinc-700 absolute left-[2px] top-[5.01px]" />
+            <ArrowLeftIcon className="w-6 h-6 text-zinc-700" />
           </div>
         )}
         <div className="Headingsymbolwrapper self-stretch inline-flex justify-start items-center">
@@ -65,8 +65,8 @@ export const AppHeader = ({
             {appHeaderTitle}
           </div>
           {showActionIcon && (
-            <div className="Pencil w-5 h-5 relative overflow-hidden flex items-center justify-center">
-              <PencilSquareIcon className="w-[14px] h-[14px] text-zinc-700 absolute left-[3px] top-[2.98px]" />
+            <div className="Pencil w-6 h-6 relative overflow-hidden flex items-center justify-center">
+              <PencilSquareIcon className="w-6 h-6 text-zinc-700" />
             </div>
           )}
         </div>
@@ -88,16 +88,16 @@ export const AppHeader = ({
           <div className="Actiontext flex-1 justify-start text-stone-50 text-base font-normal font-['Space_Grotesk'] leading-none">
             {actionBarText}
           </div>
-          <div className="Plus w-5 h-5 relative overflow-hidden flex items-center justify-center">
-            <PlusIcon className="w-2.5 h-2.5 text-white absolute left-[5px] top-[5px]" />
+          <div className="Plus w-6 h-6 relative overflow-hidden flex items-center justify-center">
+            <PlusIcon className="w-6 h-6 text-white" />
           </div>
         </div>
       )}
       {search && (
-        <div className="Searchfeild self-stretch h-14 px-5 py-2.5 bg-white border-b-[0.4px] border-slate-600 inline-flex justify-end items-center gap-2.5">
+        <div className="Searchfeild self-stretch h-14 px-5 py-2.5 bg-white border-b-[0.25px] border-slate-600 inline-flex justify-end items-center gap-2.5">
           <div className="Search flex-1 justify-center text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">Search</div>
           <div className="Symbol w-6 h-6 relative flex items-center justify-center">
-            <MagnifyingGlassIcon className="w-5 h-5 text-slate-600 absolute left-[1px] top-[1px]" />
+            <MagnifyingGlassIcon className="w-6 h-6 text-slate-600" />
           </div>
         </div>
       )}

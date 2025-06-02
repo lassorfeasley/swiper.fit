@@ -11,9 +11,9 @@ body {
 }
 
 /* Clean up the debugging styles */
-div {
+/* div {
   border: none;
-}
+} */
 
 .text-heading {
   font-size: 25px;

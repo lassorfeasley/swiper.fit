@@ -30,28 +30,27 @@ const AppHeaderDemo = () => {
   const [search, setSearch] = useState(true);
 
   return (
-    <CardWrapper
-      header={
-        <AppHeader
-          appHeaderTitle="Example app header title"
-          subheadText="example subhead text"
-          actionBarText="Example action bar text"
-          showActionBar={showActionBar}
-          showActionIcon={showActionIcon}
-          showBackButton={showBackButton}
-          subhead={subhead}
-          search={search}
-        />
-      }
-    >
-      <div className="flex flex-wrap gap-4 p-4 w-full max-w-[430px] mt-8">
-        <Switch checked={showActionBar} onChange={() => setShowActionBar(v => !v)} label="showActionBar" />
-        <Switch checked={showActionIcon} onChange={() => setShowActionIcon(v => !v)} label="showActionIcon" />
-        <Switch checked={showBackButton} onChange={() => setShowBackButton(v => !v)} label="showBackButton" />
-        <Switch checked={subhead} onChange={() => setSubhead(v => !v)} label="subhead" />
-        <Switch checked={search} onChange={() => setSearch(v => !v)} label="search" />
-      </div>
-    </CardWrapper>
+    <>
+      <AppHeader
+        appHeaderTitle="Example app header title"
+        subheadText="example subhead text"
+        actionBarText="Example action bar text"
+        showActionBar={showActionBar}
+        showActionIcon={showActionIcon}
+        showBackButton={showBackButton}
+        subhead={subhead}
+        search={search}
+      />
+      <CardWrapper>
+        <div className="flex flex-wrap gap-4 p-4 w-full max-w-[430px] mt-8">
+          <Switch checked={showActionBar} onChange={() => setShowActionBar(v => !v)} label="showActionBar" />
+          <Switch checked={showActionIcon} onChange={() => setShowActionIcon(v => !v)} label="showActionIcon" />
+          <Switch checked={showBackButton} onChange={() => setShowBackButton(v => !v)} label="showBackButton" />
+          <Switch checked={subhead} onChange={() => setSubhead(v => !v)} label="subhead" />
+          <Switch checked={search} onChange={() => setSearch(v => !v)} label="search" />
+        </div>
+      </CardWrapper>
+    </>
   );
 };
 
