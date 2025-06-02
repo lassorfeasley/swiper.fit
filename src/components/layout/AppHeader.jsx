@@ -2,8 +2,7 @@
 
 import PropTypes from "prop-types";
 import React from "react";
-import { MdArrowBack } from "react-icons/md";
-import Icon from "../common/Icon";
+import { ArrowLeftIcon, PencilSquareIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import SearchField from "../common/forms/SearchField";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -47,66 +46,60 @@ export const AppHeader = ({
   };
 
   return (
-    <div className="w-full bg-stone-50 border-b border-slate-600 flex flex-col justify-start items-start relative z-10" data-layer="AppHeader">
-      <div className="self-stretch px-5 pt-10 pb-5 bg-stone-50 flex flex-col justify-start items-start gap-2" data-layer="PageLabelWrapper">
+    <div className="Appheader self-stretch border-b border-slate-600 inline-flex flex-col justify-start items-start">
+      <div className="Pagelabelwrapper self-stretch px-5 pt-10 pb-5 bg-stone-50 border-b-[0.5px] border-slate-600 flex flex-col justify-start items-start gap-2">
         {showBackButton && (
           <div
-            className="size-6 relative cursor-pointer flex items-center justify-center"
+            className="ArrowNarrowLeft w-5 h-5 relative overflow-hidden cursor-pointer flex items-center justify-center"
             onClick={onBackHandler}
             role="button"
             tabIndex={0}
             aria-label="Back"
-            data-layer="Back_Icon"
-            data-property-1="arrow_back"
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBackHandler(); }}
           >
-            <MdArrowBack className="w-6 h-6 text-slate-600" />
+            <ArrowLeftIcon className="w-4 h-[10px] text-zinc-700 absolute left-[2px] top-[5.01px]" />
           </div>
         )}
-        <div className="self-stretch inline-flex justify-start items-center" data-layer="HeadingSymbolWrapper">
-          <div className="flex-1 justify-start text-slate-600 text-xl font-medium font-[Space_Grotesk] leading-normal" data-layer="Heading">
+        <div className="Headingsymbolwrapper self-stretch inline-flex justify-start items-center">
+          <div className="Heading flex-1 justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">
             {appHeaderTitle}
           </div>
           {showActionIcon && (
-            <div className="size-6 relative flex items-center justify-center" data-layer="Symbol" data-property-1="border_color">
-              <Icon name="border_color" className="w-5 h-5 text-slate-600" />
+            <div className="Pencil w-5 h-5 relative overflow-hidden flex items-center justify-center">
+              <PencilSquareIcon className="w-[14px] h-[14px] text-zinc-700 absolute left-[3px] top-[2.98px]" />
             </div>
           )}
         </div>
         {subhead && (
-          <div className="self-stretch justify-start text-slate-600 text-base font-normal font-[Space_Grotesk] leading-none" data-layer="SubHeading">
+          <div className="Subheading self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">
             {subheadText}
           </div>
         )}
       </div>
       {showActionBar && (
         <div
-          className="self-stretch h-12 px-5 py-3 bg-slate-600 inline-flex justify-start items-center gap-3 cursor-pointer"
+          className="Actionbar self-stretch h-12 px-5 py-3 bg-slate-600 inline-flex justify-start items-center gap-3"
           onClick={onAction}
           role="button"
           tabIndex={0}
           aria-label="Action bar"
-          data-layer="ActionBar"
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onAction && onAction(); }}
         >
-          <div className="flex-1 justify-start text-stone-50 text-base font-normal font-[Space_Grotesk] leading-none" data-layer="ActionText">
+          <div className="Actiontext flex-1 justify-start text-stone-50 text-base font-normal font-['Space_Grotesk'] leading-none">
             {actionBarText}
           </div>
-          <div className="size-6 relative flex items-center justify-center" data-layer="Symbol" data-property-1="add">
-            <Icon name="add" className="w-6 h-6 text-stone-50" />
+          <div className="Plus w-5 h-5 relative overflow-hidden flex items-center justify-center">
+            <PlusIcon className="w-2.5 h-2.5 text-white absolute left-[5px] top-[5px]" />
           </div>
         </div>
       )}
       {search && (
-        <SearchField
-          value={value}
-          onChange={handleChange}
-          className="self-stretch h-14 px-5 py-2.5 bg-stone-50"
-          inputClassName="bg-transparent focus:bg-transparent"
-          data-layer="SearchFeild"
-          data-on-off="true"
-          showBorder={false}
-        />
+        <div className="Searchfeild self-stretch h-14 px-5 py-2.5 bg-white border-b-[0.4px] border-slate-600 inline-flex justify-end items-center gap-2.5">
+          <div className="Search flex-1 justify-center text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">Search</div>
+          <div className="Symbol w-6 h-6 relative flex items-center justify-center">
+            <MagnifyingGlassIcon className="w-5 h-5 text-slate-600 absolute left-[1px] top-[1px]" />
+          </div>
+        </div>
       )}
     </div>
   );
