@@ -15,6 +15,8 @@ import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from 'react';
 import NavBar from "./components/layout/NavBar";
+import SetCardDemo from "./pages/DemoPages/SetCardDemo";
+import SwipeSwitchDemo from "./pages/DemoPages/SwipeSwitchDemo";
 
 export const PageNameContext = createContext({ setPageName: () => {}, pageName: '' });
 
@@ -74,6 +76,8 @@ function AppContent() {
           <Route path="/app-header-demo" element={<AppHeaderDemo />} />
           <Route path="/create_new_program" element={<CreateNewProgram />} />
           <Route path="/create_or_edit_exercise_demo" element={<CreateOrEditExerciseDemo />} />
+          <Route path="/demo/setcard" element={<SetCardDemo />} />
+          <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
         </Routes>
       </main>
 

@@ -4,15 +4,15 @@ import { CheckIcon, LockClosedIcon } from '@heroicons/react/24/solid';
 
 export default function SwipeSwitch({ status = "locked", onComplete }) {
   const controls = useAnimation();
-  const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef(null);
   const [thumbTravel, setThumbTravel] = useState(0);
-  const [forceComplete, setForceComplete] = useState(false);
+  const [swipedComplete, setSwipedComplete] = useState(false);
 
-  const springConfig = { type: "spring", stiffness: 300, damping: 30, mass: 1 };
-  const THUMB_WIDTH = 56; // w-14, as per Figma thumb
-  const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // Assuming p-2 in Tailwind is 8px
-  const DRAG_COMPLETE_THRESHOLD = 70; // Pixels to drag to complete
+  // Use a smooth, non-bouncy tween for all transitions
+  const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
+  const THUMB_WIDTH = 56; // w-14
+  const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // p-2 in Tailwind
+  const DRAG_COMPLETE_THRESHOLD = 70;
 
   const updateThumbTravel = () => {
     if (trackRef.current) {
@@ -25,130 +25,87 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
   };
 
   useEffect(() => {
-    if (status === "active") {
-      updateThumbTravel();
-    }
-    const handleResize = () => {
-      if (status === "active") {
-        updateThumbTravel();
-      }
-    };
+    updateThumbTravel();
+    const handleResize = () => updateThumbTravel();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Reset swipedComplete when parent status changes
+  useEffect(() => {
+    if (status !== "active") {
+      setSwipedComplete(false);
+    }
   }, [status]);
 
   useEffect(() => {
-    if (status !== 'complete' && forceComplete) {
-      setForceComplete(false);
+    if (status === "complete") {
+      // Animate to rightmost, green
+      controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+    } else if (swipedComplete) {
+      // Animate to rightmost, green
+      controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+    } else {
+      // Animate to left, white
+      controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
     }
-  }, [status, forceComplete]);
+  }, [status, thumbTravel, controls, swipedComplete]);
 
-  const handleDragStart = () => {
-    if (status === "active") {
-      // Reset forceComplete at the start of a new drag if it wasn't externally completed
-      if (status !== 'complete') {
-        setForceComplete(false);
-      }
-      setIsDragging(true);
+  const handleDragEnd = (_, info) => {
+    if (status === "active" && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
+      setSwipedComplete(true);
+      onComplete();
+    } else {
+      controls.start({ x: 0, transition: tweenConfig });
     }
   };
 
-  const handleDrag = (e, info) => {
-    if (status !== "active" || !isDragging || thumbTravel <= 0) return;
-    // Check for completion based on fixed pixel threshold
-    if (info.offset.x > DRAG_COMPLETE_THRESHOLD) {
-      if (!forceComplete) { // Prevent multiple calls if already triggered
-        setForceComplete(true);
-        if (onComplete) {
-          onComplete();
-        }
-      }
-    }
+  const isLocked = status === "locked";
+  const isActive = status === "active";
+  const isComplete = status === "complete";
+
+  // Always use left for positioning, animate x
+  const thumbStyle = {
+    borderRadius: '0.125rem',
+    zIndex: 2,
+    height: 'calc(100% - 16px)',
+    top: 8,
+    left: RAIL_HORIZONTAL_PADDING_PER_SIDE
   };
-
-  const handleDragEnd = (e, info) => {
-    if (status === "active" && isDragging) {
-      setIsDragging(false); // Primary place to set isDragging false
-      // If forceComplete was not set during the drag, it means threshold wasn't met.
-      if (!forceComplete) {
-        controls.start({ x: 0, transition: springConfig });
-      }
-      // If forceComplete IS true, the main animation useEffect will handle moving to completed state.
-    }
-  };
-
-  useEffect(() => {
-    let targetX = 0;
-    let newBgColor = "#FFFFFF";
-
-    if (status === "complete" || forceComplete) {
-      targetX = thumbTravel;
-      newBgColor = "#22C55E";
-    } else if (status === "locked") {
-      targetX = 0;
-    } else { 
-      targetX = 0;
-    }
-    if (thumbTravel >= 0) {
-      controls.start({ x: targetX, backgroundColor: newBgColor, transition: { ...springConfig, backgroundColor: { duration: 0.3 } } });
-    }
-  }, [status, forceComplete, thumbTravel, controls]);
 
   return (
-    <>
-      {status === "active" && (
-        <div className="Property1Default self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">
-          <div ref={trackRef} className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex items-center relative overflow-hidden">
-            <motion.div
-              className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute"
-              style={{ borderRadius: '0.125rem', zIndex: 2, height: 'calc(100% - 16px)', top: 8 }}
-              drag="x"
-              dragConstraints={thumbTravel > 0 ? { left: 0, right: thumbTravel } : {left: 0, right: 0}}
-              onDragStart={handleDragStart}
-              onDrag={handleDrag}
-              onDragEnd={handleDragEnd}
-              animate={controls}
-              whileDrag={{ cursor: "grabbing" }}
-              transition={{ x: springConfig, backgroundColor: { duration: 0.3 } }}
-            >
-              {/* Content of thumb for active state - icon can be conditional based on drag/forceComplete if needed */}
-              { (forceComplete) ? (
-                <div className="Check size-7 relative overflow-hidden flex items-center justify-center">
-                   <CheckIcon className="w-5 h-[14px] absolute left-[4.52px] top-[7.50px] text-white" />
-                </div>
-              ) : (
-                <div className="Check size-7 relative overflow-hidden flex items-center justify-center">
-                  <CheckIcon className="w-5 h-[14px] absolute left-[4.52px] top-[7.50px] text-transparent" />
-                </div>
-              )}
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {(status === "complete" || (status === "active" && forceComplete)) && (
-        <div className="Property1Complete self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">
-          <div className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex justify-end items-center relative overflow-hidden">
-            <div className="Thumb w-14 bg-green-500 rounded-sm flex justify-center items-center gap-2.5 absolute" style={{ height: 'calc(100% - 16px)', top: 8, right: RAIL_HORIZONTAL_PADDING_PER_SIDE }}>
-              <div className="Check size-7 relative overflow-hidden flex items-center justify-center">
-                <CheckIcon className="w-5 h-[14px] absolute left-[4.52px] top-[7.50px] text-white" />
+    <div className="self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">
+      <div 
+        ref={trackRef} 
+        className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex items-center relative overflow-hidden"
+      >
+        <motion.div
+          className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute"
+          style={thumbStyle}
+          drag={isActive ? "x" : false}
+          dragConstraints={thumbTravel > 0 ? { left: 0, right: thumbTravel } : { left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          animate={controls}
+          whileDrag={{ cursor: "grabbing" }}
+          transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
+        >
+          <div className="size-7 relative overflow-hidden flex items-center justify-center">
+            {isLocked && (
+              <LockClosedIcon className="w-5 h-6 absolute left-[4.50px] top-[3px] text-neutral-300" />
+            )}
+            {(isComplete || swipedComplete) && (
+              <div data-svg-wrapper data-layer="check" className="Check relative flex items-center justify-center">
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M25.0605 7.93949C25.3417 8.22078 25.4997 8.60224 25.4997 8.99998C25.4997 9.39773 25.3417 9.77919 25.0605 10.0605L13.0605 22.0605C12.7792 22.3417 12.3977 22.4997 12 22.4997C11.6023 22.4997 11.2208 22.3417 10.9395 22.0605L4.9395 16.0605C4.66626 15.7776 4.51507 15.3987 4.51849 15.0054C4.52191 14.6121 4.67966 14.2359 4.95777 13.9578C5.23588 13.6796 5.6121 13.5219 6.0054 13.5185C6.39869 13.5151 6.7776 13.6662 7.0605 13.9395L12 18.879L22.9395 7.93949C23.2208 7.65828 23.6023 7.50031 24 7.50031C24.3977 7.50031 24.7792 7.65828 25.0605 7.93949Z" fill="white"/>
+                </svg>
               </div>
-            </div>
+            )}
+            {isActive && !isComplete && !swipedComplete && (
+              <CheckIcon className="w-5 h-[14px] absolute left-[4.52px] top-[7.50px] text-transparent" />
+            )}
           </div>
-        </div>
-      )}
-
-      {status === "locked" && !forceComplete && (
-        <div className="Property1Locked self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-[5px] w-full">
-          <div className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex justify-start items-center relative overflow-hidden">
-            <div className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute" style={{ height: 'calc(100% - 16px)', top: 8, left: RAIL_HORIZONTAL_PADDING_PER_SIDE }}>
-              <div className="LockClosed size-7 relative overflow-hidden flex items-center justify-center">
-                <LockClosedIcon className="w-5 h-6 absolute left-[4.50px] top-[3px] text-neutral-300" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+        </motion.div>
+      </div>
+    </div>
   );
 } 

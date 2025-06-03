@@ -50,35 +50,61 @@ const SetCard = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(setConfigs)]); // Deep compare setConfigs to re-run if its content changes
 
-  // Memoize activeSet and swipeStatus to prevent unnecessary recalculation and re-renders
+  // New logic for swipeStatus in compact view
+  const allComplete = sets.every(set => set.status === 'complete');
+  const anyActive = sets.some(set => set.status === 'active');
   const activeSet = useMemo(
     () => sets.find(set => set.status === 'active') || (sets.length > 0 ? sets[0] : undefined),
     [JSON.stringify(sets)]
   );
-
-  const swipeStatus = useMemo(
-    () => (activeSet ? activeSet.status : 'locked'),
-    [activeSet]
-  );
+  const swipeStatus = allComplete
+    ? 'complete'
+    : anyActive
+      ? 'active'
+      : 'locked';
 
   // Handler for completing the CURRENTLY ACTIVE set
   const handleActiveSetComplete = () => {
-    if (!activeSet) return; // No active set to complete
-
-    if (onSetComplete) {
-      onSetComplete({
-        setId: activeSet.id,
-        exerciseId,
-        reps: activeSet.reps,
-        weight: activeSet.weight,
-        status: 'complete',
-      });
-    }
-    if (onSetDataChange) {
-      onSetDataChange(activeSet.id, 'status', 'complete');
-      const nextSet = sets.find(s => s.id === activeSet.id + 1);
-      if (nextSet && nextSet.status === 'locked') {
-        onSetDataChange(nextSet.id, 'status', 'active');
+    if (focused_view) {
+      // Expanded view: complete only the active set and unlock the next
+      if (!activeSet) return;
+      if (onSetComplete) {
+        onSetComplete({
+          setId: activeSet.id,
+          exerciseId,
+          reps: activeSet.reps,
+          weight: activeSet.weight,
+          status: 'complete',
+        });
+      }
+      if (onSetDataChange) {
+        onSetDataChange(activeSet.id, 'status', 'complete');
+        const nextSet = sets.find(s => s.id === activeSet.id + 1);
+        if (nextSet && nextSet.status === 'locked') {
+          onSetDataChange(nextSet.id, 'status', 'active');
+        }
+      }
+    } else {
+      // Compact view: complete ALL sets
+      if (onSetDataChange) {
+        sets.forEach(set => {
+          if (set.status !== 'complete') {
+            onSetDataChange(set.id, 'status', 'complete');
+          }
+        });
+      }
+      if (onSetComplete) {
+        sets.forEach(set => {
+          if (set.status !== 'complete') {
+            onSetComplete({
+              setId: set.id,
+              exerciseId,
+              reps: set.reps,
+              weight: set.weight,
+              status: 'complete',
+            });
+          }
+        });
       }
     }
   };
@@ -175,7 +201,7 @@ const SetCard = ({
 
   // Default compact view (what was previously the main return)
   return (
-    <div className="Property1Compactactivesetcard self-stretch p-3 bg-stone-50 rounded-xl inline-flex flex-col justify-start items-start gap-4">
+    <div className="Property1Compactactivesetcard self-stretch w-full p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4">
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
