@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
  */
 const TileWrapper = ({ children, className = '' }) => (
   <div
-    className={`flex flex-col gap-1 overflow-y-auto pb-[200px] m-0 bg-stone-50 ${className}`}
+    className={`flex flex-col gap-[2px] overflow-y-auto pb-[200px] m-0 bg-grey-200 ${className}`}
     style={{ padding: 0 }}
     data-component="TileWrapper"
   >
