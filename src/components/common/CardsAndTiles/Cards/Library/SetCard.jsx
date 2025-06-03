@@ -42,9 +42,9 @@ const SetCard = ({
       sets.forEach(set => {
         const parentSetData = setData.find(d => d.id === set.id);
         if (!parentSetData || parentSetData.reps === undefined || parentSetData.weight === undefined || parentSetData.status === undefined) {
-          onSetDataChange(set.id, 'reps', set.reps);
-          onSetDataChange(set.id, 'weight', set.weight);
-          onSetDataChange(set.id, 'status', set.status);
+          onSetDataChange(exerciseId, set.id, 'reps', set.reps);
+          onSetDataChange(exerciseId, set.id, 'weight', set.weight);
+          onSetDataChange(exerciseId, set.id, 'status', set.status);
         }
       });
     }
@@ -79,10 +79,10 @@ const SetCard = ({
         });
       }
       if (onSetDataChange) {
-        onSetDataChange(activeSet.id, 'status', 'complete');
+        onSetDataChange(exerciseId, activeSet.id, 'status', 'complete');
         const nextSet = sets.find(s => s.id === activeSet.id + 1);
         if (nextSet && nextSet.status === 'locked') {
-          onSetDataChange(nextSet.id, 'status', 'active');
+          onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
         }
       }
     } else {
@@ -90,7 +90,7 @@ const SetCard = ({
       if (onSetDataChange) {
         sets.forEach(set => {
           if (set.status !== 'complete') {
-            onSetDataChange(set.id, 'status', 'complete');
+            onSetDataChange(exerciseId, set.id, 'status', 'complete');
           }
         });
       }
@@ -128,12 +128,12 @@ const SetCard = ({
     if (editMetric.metric === 'sets') {
       if (onSetDataChange) {
         const newCount = Number(editValue) || 1;
-        onSetDataChange('sets', newCount);
+        onSetDataChange(exerciseId, 'sets', null, newCount);
       }
     } else if (editMetric.metric === 'reps' && editMetric.setIdx !== null) {
-      onSetDataChange(editMetric.setIdx + 1, 'reps', editValue);
+      onSetDataChange(exerciseId, sets[editMetric.setIdx].id, 'reps', editValue);
     } else if (editMetric.metric === 'weight' && editMetric.setIdx !== null) {
-      onSetDataChange(editMetric.setIdx + 1, 'weight', editValue);
+      onSetDataChange(exerciseId, sets[editMetric.setIdx].id, 'weight', editValue);
     }
     setEditMetric(null);
   };
@@ -199,10 +199,10 @@ const SetCard = ({
                       onSetComplete({ setId: set.id, exerciseId, reps: set.reps, weight: set.weight, status: 'complete' });
                     }
                     if (onSetDataChange) {
-                      onSetDataChange(set.id, 'status', 'complete');
+                      onSetDataChange(exerciseId, set.id, 'status', 'complete');
                       const nextSet = sets.find(s => s.id === set.id + 1);
                       if (nextSet && nextSet.status === 'locked') {
-                        onSetDataChange(nextSet.id, 'status', 'active');
+                        onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
                       }
                     }
                   }} 
@@ -261,7 +261,7 @@ SetCard.propTypes = {
     unit: PropTypes.string
   })),
   onSetComplete: PropTypes.func,
-  exerciseId: PropTypes.string, // Made optional as it might not always be needed for compact view logic if not completing
+  exerciseId: PropTypes.string.isRequired, // Now required
   setData: PropTypes.array,
   onSetDataChange: PropTypes.func
 };

@@ -173,8 +173,8 @@ const Workout = () => {
   };
 
   // Handle set data change
-  const handleSetDataChange = (exerciseId, field, value) => {
-    if (field === 'sets') {
+  const handleSetDataChange = (exerciseId, setId, field, value) => {
+    if (setId === 'sets') {
       // Handle set count change
       setExercises(prevExercises => 
         prevExercises.map(ex => {
@@ -198,12 +198,12 @@ const Workout = () => {
     // Handle individual set changes
     setSetsData(prev => {
       const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === field); // field is now the setId
+      const setIdx = prevSets.findIndex(s => s.id === setId);
       let newSets;
       if (setIdx !== -1) {
-        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [value]: value } : s);
+        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s);
       } else {
-        newSets = [...prevSets, { id: field, [value]: value }];
+        newSets = [...prevSets, { id: setId, [field]: value }];
       }
       return { ...prev, [exerciseId]: newSets };
     });
@@ -366,7 +366,7 @@ const Workout = () => {
                   setConfigs={ex.setConfigs}
                   onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
                   setData={setsData[ex.exercise_id] || []}
-                  onSetDataChange={(setId, field, value) => handleSetDataChange(ex.exercise_id, field, value)}
+                  onSetDataChange={handleSetDataChange}
                   data-component="SetCard"
                 />
               ))}
