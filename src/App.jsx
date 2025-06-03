@@ -11,6 +11,7 @@ import AppHeaderDemo from "./pages/DemoPages/AppHeaderDemo";
 import CreateNewProgram from "./pages/Programs/CreateNewProgram";
 import CreateOrEditExerciseDemo from './pages/DemoPages/CreateOrEditExerciseDemo';
 import ConfigureProgramExercises from './pages/configure_program_exercises';
+import FormFieldDemo from './pages/DemoPages/FormFieldDemo';
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from "./NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from 'react';
@@ -78,6 +79,7 @@ function AppContent() {
           <Route path="/create_or_edit_exercise_demo" element={<CreateOrEditExerciseDemo />} />
           <Route path="/demo/setcard" element={<SetCardDemo />} />
           <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
+          <Route path="/demo/form-fields" element={<FormFieldDemo />} />
         </Routes>
       </main>
 

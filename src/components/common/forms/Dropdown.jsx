@@ -50,24 +50,15 @@ const ToggleButton = ({ label, isSelected, onClick }) => (
 );
 
 const Dropdown = ({ 
-  label, 
-  options, 
-  value, 
-  onChange, 
-  className = '', 
-  children,
-  isOpen: controlledIsOpen, 
+  label,
+  isOpen: controlledIsOpen,
   onToggle,
-  showNumericFields = false,
-  numericValues = { reps: 0, weight: 0 },
-  onNumericChange,
-  unit = 'lbs',
-  onUnitChange,
+  children,
+  className = '',
 }) => {
   const [open, setOpen] = useState(false);
   const isControlled = controlledIsOpen !== undefined && onToggle;
   const isOpen = isControlled ? controlledIsOpen : open;
-  const selected = options ? options.find(opt => opt.value === value) : null;
 
   const handleToggle = () => {
     if (isControlled) {
@@ -78,68 +69,23 @@ const Dropdown = ({
   };
 
   return (
-    <div className={`w-full rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden ${className}`}>
-      <div 
-        className="w-full h-11 px-2.5 bg-white flex justify-between items-center cursor-pointer"
+    <div data-layer="DropdownField" className={`Dropdownfield w-full rounded-sm inline-flex flex-col justify-start items-start gap-1 overflow-hidden ${className}`}>
+      <button
+        data-layer="Dropdown"
         onClick={handleToggle}
-        role="button"
-        tabIndex={0}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
+        className="Dropdown w-full px-4 py-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-between items-center"
       >
-        <div className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">
-          {selected ? selected.label : label || 'Set'}
+        <div data-layer="SetNumber" className="Setnumber justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">
+          {label}
         </div>
-        <Icon name={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'} variant="outlined" size={24} className="text-slate-500" />
-      </div>
+        <div data-svg-wrapper data-layer="chevron-down" className={`ChevronDown relative transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M7.93955 10.9395C8.22084 10.6583 8.6023 10.5003 9.00005 10.5003C9.39779 10.5003 9.77925 10.6583 10.0605 10.9395L15 15.879L19.9395 10.9395C20.0779 10.7962 20.2434 10.682 20.4264 10.6033C20.6094 10.5247 20.8063 10.4834 21.0054 10.4816C21.2046 10.4799 21.4021 10.5178 21.5865 10.5933C21.7708 10.6687 21.9383 10.7801 22.0791 10.9209C22.22 11.0617 22.3314 11.2292 22.4068 11.4136C22.4822 11.5979 22.5202 11.7954 22.5184 11.9946C22.5167 12.1938 22.4753 12.3906 22.3967 12.5736C22.3181 12.7566 22.2038 12.9221 22.0605 13.0605L16.0605 19.0605C15.7793 19.3417 15.3978 19.4997 15 19.4997C14.6023 19.4997 14.2208 19.3417 13.9395 19.0605L7.93955 13.0605C7.65834 12.7792 7.50037 12.3977 7.50037 12C7.50037 11.6023 7.65834 11.2208 7.93955 10.9395V10.9395Z" fill="#3F3F46"/>
+          </svg>
+        </div>
+      </button>
       {isOpen && (
-        <div className="w-full flex flex-col justify-start items-start overflow-hidden bg-white">
-          {options && (
-            <div className="w-full">
-              {options.map(opt => (
-                <div
-                  key={opt.value}
-                  className={`h-11 px-2.5 flex items-center cursor-pointer hover:bg-slate-100 ${opt.value === value ? 'bg-slate-100' : ''}`}
-                  onClick={() => {
-                    onChange(opt.value);
-                    if (!isControlled) setOpen(false);
-                  }}
-                  role="option"
-                  aria-selected={opt.value === value}
-                >
-                  <span className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">
-                    {opt.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          {showNumericFields && (
-            <>
-              <NumericField
-                label="Reps"
-                value={numericValues.reps}
-                onIncrement={() => onNumericChange?.('reps', numericValues.reps + 1)}
-                onDecrement={() => onNumericChange?.('reps', Math.max(0, numericValues.reps - 1))}
-              />
-              <NumericField
-                label="Weight"
-                value={numericValues.weight}
-                onIncrement={() => onNumericChange?.('weight', numericValues.weight + 1)}
-                onDecrement={() => onNumericChange?.('weight', Math.max(0, numericValues.weight - 1))}
-              />
-              <div className="w-full px-3 pb-3 flex justify-start items-center gap-3">
-                {['lbs', 'kg', 'body'].map((u) => (
-                  <ToggleButton
-                    key={u}
-                    label={u}
-                    isSelected={unit === u}
-                    onClick={() => onUnitChange?.(u)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+        <div data-layer="Frame 40" className="Frame40 w-full rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start gap-2.5 overflow-hidden">
           {children}
         </div>
       )}
@@ -148,27 +94,11 @@ const Dropdown = ({
 };
 
 Dropdown.propTypes = {
-  label: PropTypes.string,
-  options: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    })
-  ),
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func,
-  className: PropTypes.string,
-  children: PropTypes.node,
+  label: PropTypes.string.isRequired,
   isOpen: PropTypes.bool,
   onToggle: PropTypes.func,
-  showNumericFields: PropTypes.bool,
-  numericValues: PropTypes.shape({
-    reps: PropTypes.number,
-    weight: PropTypes.number,
-  }),
-  onNumericChange: PropTypes.func,
-  unit: PropTypes.oneOf(['lbs', 'kg', 'body']),
-  onUnitChange: PropTypes.func,
+  children: PropTypes.node,
+  className: PropTypes.string,
 };
 
 NumericField.propTypes = {
