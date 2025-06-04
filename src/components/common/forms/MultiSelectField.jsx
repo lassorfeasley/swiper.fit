@@ -1,33 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-
-const ToggleButton = ({ label, isSelected, onClick, className = "" }) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 h-7 rounded-sm flex justify-center items-center gap-2.5 ${
-        isSelected
-          ? "bg-slate-200"
-          : "bg-stone-50 outline outline-1 outline-offset-[-1px] outline-slate-200"
-      } ${className}`}
-    >
-      <span
-        className={`flex-1 text-center justify-start text-slate-600 ${
-          isSelected ? "text-base" : "text-sm"
-        } font-normal font-['Space_Grotesk'] leading-none`}
-      >
-        {label}
-      </span>
-    </button>
-  );
-};
-
-ToggleButton.propTypes = {
-  label: PropTypes.string.isRequired,
-  isSelected: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
-  className: PropTypes.string,
-};
+import ToggleButton from './ToggleGroup';
 
 const MultiSelectField = ({
   options = [],

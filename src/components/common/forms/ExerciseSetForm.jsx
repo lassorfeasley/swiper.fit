@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Dropdown from './Dropdown';
+import ToggleButton from './ToggleGroup';
 
 const ExerciseSetForm = ({ 
   setNumber = 1,
@@ -101,21 +102,13 @@ const ExerciseSetForm = ({
           </div>
           <div data-layer="Multi-select field" className="MultiSelectField self-stretch px-3 pb-3 bg-white inline-flex justify-start items-center gap-3">
             {['lbs', 'kg', 'body'].map((unitOption) => (
-              <button
+              <ToggleButton
                 key={unitOption}
                 onClick={() => handleUnitChange(unitOption)}
-                className={`Togglebuttonwrapper flex-1 h-7 rounded-sm flex justify-center items-center gap-2.5 transition-colors ${
-                  unit === unitOption
-                    ? 'bg-slate-200'
-                    : 'bg-stone-50 outline outline-1 outline-offset-[-1px] outline-slate-200'
-                }`}
+                isSelected={unit === unitOption}
               >
-                <div className={`Lbs flex-1 text-center justify-start text-slate-600 ${
-                  unit === unitOption ? 'text-base' : 'text-sm'
-                } font-normal font-['Space_Grotesk']`}>
-                  {unitOption}
-                </div>
-              </button>
+                {unitOption}
+              </ToggleButton>
             ))}
           </div>
         </div>

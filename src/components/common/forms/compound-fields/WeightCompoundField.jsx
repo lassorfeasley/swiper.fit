@@ -4,7 +4,7 @@ import NumericInput from '../NumericInput';
 import ToggleGroup from '../ToggleGroup';
 
 const WeightCompoundField = ({
-  weight,
+  weight = 25,
   onWeightChange,
   unit,
   onUnitChange,
@@ -14,7 +14,7 @@ const WeightCompoundField = ({
 }) => {
   const isBody = unit === 'body';
   return (
-    <div className={`w-full bg-white rounded-xl flex flex-col gap-0 ${className}`}>
+    <div className={`w-full bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col gap-0 overflow-hidden ${className}`}>
       <NumericInput
         label={weightLabel}
         value={isBody ? 'body' : weight}
@@ -27,8 +27,7 @@ const WeightCompoundField = ({
       <div
         style={{
           display: 'flex',
-          height: '50px',
-          padding: '0px 12px',
+          padding: '0px 0px 12px 0px ',
           justifyContent: 'center',
           alignItems: 'flex-start',
           gap: '12px',
@@ -51,7 +50,7 @@ const WeightCompoundField = ({
 };
 
 WeightCompoundField.propTypes = {
-  weight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  weight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onWeightChange: PropTypes.func.isRequired,
   unit: PropTypes.string.isRequired,
   onUnitChange: PropTypes.func.isRequired,

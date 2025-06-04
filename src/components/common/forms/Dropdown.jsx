@@ -33,22 +33,6 @@ const NumericField = ({ label, value, onIncrement, onDecrement }) => (
   </div>
 );
 
-const ToggleButton = ({ label, isSelected, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex-1 h-7 ${
-      isSelected 
-        ? 'bg-slate-200' 
-        : 'bg-stone-50 outline outline-1 outline-offset-[-1px] outline-slate-200'
-    } rounded-sm flex justify-center items-center gap-2.5`}
-    type="button"
-  >
-    <span className={`flex-1 text-center text-slate-600 ${isSelected ? 'text-base' : 'text-sm'} font-normal font-['Space_Grotesk'] leading-none`}>
-      {label}
-    </span>
-  </button>
-);
-
 const Dropdown = ({ 
   label,
   isOpen: controlledIsOpen,
@@ -106,12 +90,6 @@ NumericField.propTypes = {
   value: PropTypes.number.isRequired,
   onIncrement: PropTypes.func.isRequired,
   onDecrement: PropTypes.func.isRequired,
-};
-
-ToggleButton.propTypes = {
-  label: PropTypes.string.isRequired,
-  isSelected: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
 };
 
 export default Dropdown; 

@@ -1,36 +1,47 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+const ToggleButton = ({ label, isSelected, onClick }) => (
+  <div
+    className={`flex-1 h-7 ${
+      isSelected
+        ? 'bg-slate-200'
+        : 'bg-stone-50 outline outline-1 outline-offset-[-1px] outline-slate-200'
+    } rounded-sm flex justify-center items-center Togglebuttonwrapper`}
+    data-layer="ToggleButtonWrapper"
+    data-property-1={isSelected ? 'Selected' : 'default'}
+    onClick={onClick}
+    style={{ cursor: 'pointer' }}
+    role="button"
+    tabIndex={0}
+    onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+  >
+    <div
+      className={`text-center justify-start text-slate-600 ${isSelected ? 'text-base' : 'text-sm'} font-normal font-['Space_Grotesk'] leading-normal`}
+      data-layer={label}
+    >
+      {label}
+    </div>
+  </div>
+);
+
+ToggleButton.propTypes = {
+  label: PropTypes.string.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+};
+
 const ToggleGroup = ({ options, value, onChange, className = '' }) => {
   return (
-    <div className={`flex w-full gap-4 ${className}`} role="group">
-      {options.map(option => {
-        const isSelected = value === option.value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            className={`flex items-center justify-center gap-[10px] h-[30px] flex-[1_0_0] text-h2 font-h2 leading-h2 font-medium transition-colors ${
-              isSelected
-                ? 'bg-slate-200'
-                : 'border border-slate-200 rounded-[4px]'
-            }`}
-            style={{
-              display: 'flex',
-              height: '30px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '10px',
-              flex: '1 0 0',
-              borderRadius: 4,
-            }}
-            onClick={() => onChange(option.value)}
-            aria-pressed={isSelected}
-          >
-            {option.label}
-          </button>
-        );
-      })}
+    <div className={`w-full inline-flex items-start gap-2 Togglegroup px-3 pb-0 pt-0 ${className}`} data-layer="ToggleGroup" role="group">
+      {options.map(option => (
+        <ToggleButton
+          key={option.value}
+          label={option.label}
+          isSelected={value === option.value}
+          onClick={() => onChange(option.value)}
+        />
+      ))}
     </div>
   );
 };

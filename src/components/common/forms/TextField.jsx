@@ -50,6 +50,12 @@ const TextField = ({
         !isInForm ? 'rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300' : ''
       } ${className}`}
       {...props}
+      onClick={() => {
+        if (!isFocused && inputRef.current) {
+          inputRef.current.focus();
+        }
+      }}
+      style={{ cursor: 'text' }}
     >
       {/* Inactive state: label centered, input hidden */}
       {!showFloating && (

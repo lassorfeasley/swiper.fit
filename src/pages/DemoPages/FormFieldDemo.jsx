@@ -9,6 +9,7 @@ import NumericInput from '../../components/common/forms/NumericInput';
 import TextField, { FormProvider } from '../../components/common/forms/TextField';
 import Dropdown from '../../components/common/forms/Dropdown';
 import SearchField from '../../components/common/forms/SearchField';
+import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
 
 const FormFieldDemo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -18,6 +19,11 @@ const FormFieldDemo = () => {
     setData: {
       reps: 10,
       weight: 25,
+      unit: 'lbs'
+    },
+    // Weight Compound Field
+    weightData: {
+      weight: 45,
       unit: 'lbs'
     },
     // Numeric Input
@@ -90,6 +96,21 @@ const FormFieldDemo = () => {
 
             {/* Compound Form Fields (no border) */}
             <FormProvider>
+              {/* Weight Compound Field */}
+              <WeightCompoundField
+                weight={formData.weightData.weight}
+                onWeightChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  weightData: { ...prev.weightData, weight: value }
+                }))}
+                unit={formData.weightData.unit}
+                onUnitChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  weightData: { ...prev.weightData, unit: value }
+                }))}
+                weightLabel="Weight Input"
+              />
+
               {/* Exercise Set Form */}
               <ExerciseSetForm
                 setNumber={1}
