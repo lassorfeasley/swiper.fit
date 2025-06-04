@@ -14,7 +14,7 @@ const WeightCompoundField = ({
 }) => {
   const isBody = unit === 'body';
   return (
-    <div className={`w-full bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col gap-0 overflow-hidden ${className}`}>
+    <div className={`w-full bg-white rounded-lg flex flex-col gap-0 overflow-hidden ${className}`}>
       <NumericInput
         label={weightLabel}
         value={isBody ? 'body' : weight}
