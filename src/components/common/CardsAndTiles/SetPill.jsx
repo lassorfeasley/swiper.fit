@@ -9,8 +9,10 @@ import PropTypes from 'prop-types';
  * - weight: number - Weight value
  * - unit: string - Unit of weight ('kg', 'lbs', or 'body')
  * - className: string (optional) - Additional CSS classes
+ * - onClick: func (optional) - Function to call when the pill is clicked
+ * - style: object (optional) - Additional styles to apply to the pill
  */
-const SetPill = ({ reps, weight, unit = 'lbs', className = '' }) => {
+const SetPill = ({ reps, weight, unit = 'lbs', className = '', onClick, style }) => {
   // Format the weight display based on unit
   const formatWeight = () => {
     if (unit === 'body') return 'body';
@@ -24,7 +26,10 @@ const SetPill = ({ reps, weight, unit = 'lbs', className = '' }) => {
     <div 
       data-layer="SetPill" 
       className={combinedClasses}
-      style={{ backgroundColor: '#e5e7eb' }} // Fallback color in case the class isn't working
+      style={{ backgroundColor: '#e5e7eb', ...style }} // Fallback color in case the class isn't working
+      onClick={onClick}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
     >
       <div 
         data-layer="RepsXWeight" 
@@ -41,6 +46,8 @@ SetPill.propTypes = {
   weight: PropTypes.number,
   unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
   className: PropTypes.string,
+  onClick: PropTypes.func,
+  style: PropTypes.object,
 };
 
 export default SetPill; 

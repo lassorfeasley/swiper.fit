@@ -17,7 +17,7 @@ const ToggleButton = ({ label, isSelected, onClick }) => (
     onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
   >
     <div
-      className={`text-center justify-start text-slate-600 ${isSelected ? 'text-base' : 'text-sm'} font-normal font-['Space_Grotesk'] leading-normal`}
+      className={`text-center justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal`}
       data-layer={label}
     >
       {label}
@@ -33,7 +33,7 @@ ToggleButton.propTypes = {
 
 const ToggleGroup = ({ options, value, onChange, className = '' }) => {
   return (
-    <div className={`w-full inline-flex items-start gap-2 Togglegroup px-3 pb-0 pt-0 ${className}`} data-layer="ToggleGroup" role="group">
+    <div className={`w-full inline-flex items-start gap-2 Togglegroup px-3 pb-3 pt-0 ${className}`} data-layer="ToggleGroup" role="group">
       {options.map(option => (
         <ToggleButton
           key={option.value}
