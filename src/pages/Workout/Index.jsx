@@ -144,11 +144,11 @@ const Workout = () => {
     if (step === 'active' && selectedProgram) {
       const now = new Date();
       const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
-      const timeOfDay = now.getHours() < 12 ? 'Morning' : 
-                       now.getHours() < 17 ? 'Afternoon' : 'Evening';
-      setWorkoutName(`${dayOfWeek} ${timeOfDay} ${selectedProgram.program_name} Workout`);
+      const timeOfDay = now.getHours() < 12 ? 'morning' : 
+                         now.getHours() < 17 ? 'afternoon' : 'evening';
+      setWorkoutName(`${dayOfWeek} ${timeOfDay} workout`);
     } else if (step === 'active' && !selectedProgram) {
-      setWorkoutName('Unscheduled Workout');
+      setWorkoutName('Unscheduled workout');
     }
   }, [step, selectedProgram]);
 
@@ -346,9 +346,9 @@ const Workout = () => {
         <>
           <AppHeader
             showBackButton={false}
-            appHeaderTitle={selectedProgram?.program_name || (workoutName || 'Active Workout')}
+            appHeaderTitle={workoutName || 'Active Workout'}
             subhead={true}
-            subheadText={selectedProgram ? workoutName : 'Tracking unscheduled exercises'}
+            subheadText={selectedProgram?.program_name || 'Tracking unscheduled exercises'}
             search={false}
             showActionBar={true}
             actionBarText="Add exercise"
