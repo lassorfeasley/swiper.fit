@@ -8,7 +8,7 @@ import Icon from '../../Icon';
 import WeightCompoundField from './WeightCompoundField';
 import FormGroupWrapper from '../FormWrappers/FormGroupWrapper';
 
-const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a new exercise", actionIconName = "arrow_forward", initialName, initialSets, initialSetConfigs, ...props }) => {
+const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a new exercise", initialName, initialSets, initialSetConfigs, ...props }) => {
   const inputRef = useRef(null);
   const [exerciseName, setExerciseName] = useState(initialName || '');
   const [sets, setSets] = useState(initialSets ?? 3); // Default value of 3
@@ -81,14 +81,9 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
   return (
     <SlideUpForm
       formPrompt={formPrompt}
-      actionIcon={
-        <Icon
-          name={actionIconName}
-          size={32}
-          className={isReady ? 'text-black cursor-pointer' : 'text-gray-300 cursor-not-allowed'}
-        />
-      }
+      isReady={isReady}
       onActionIconClick={isReady ? handleActionIconClick : undefined}
+      {...props}
     >
       <div className="w-full flex flex-col gap-0">
         <FormGroupWrapper>
@@ -133,7 +128,6 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
 ExerciseSetConfiguration.propTypes = {
   onActionIconClick: PropTypes.func,
   formPrompt: PropTypes.string,
-  actionIconName: PropTypes.string,
   initialName: PropTypes.string,
   initialSets: PropTypes.number,
   initialSetConfigs: PropTypes.array,

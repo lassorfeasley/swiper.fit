@@ -240,33 +240,23 @@ const ConfigureProgramExercises = () => {
             </Reorder.Group>
           )}
           {(showAddExercise || editingExercise) && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={handleModalClose}>
-              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-0" onClick={(e) => e.stopPropagation()}>
-                <ExerciseSetConfiguration
-                  formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-                  actionIconName={showAddExercise ? "arrow_forward" : "check"}
-                  onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
-                  initialName={editingExercise?.name}
-                  initialSets={editingExercise?.sets}
-                  initialReps={editingExercise?.reps}
-                  initialWeight={editingExercise?.weight}
-                  initialUnit={editingExercise?.unit}
-                  initialSetConfigs={editingExercise?.setConfigs?.map(cfg => ({
-                    reps: cfg.reps,
-                    weight: cfg.weight,
-                    unit: cfg.weight_unit,
-                  }))}
-                  onOverlayClick={handleModalClose}
-                />
-                <button
-                  className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
-                  onClick={handleModalClose}
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-              </div>
-            </div>
+            <ExerciseSetConfiguration
+              formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+              actionIconName={showAddExercise ? "arrow_forward" : "check"}
+              onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+              initialName={editingExercise?.name}
+              initialSets={editingExercise?.sets}
+              initialReps={editingExercise?.reps}
+              initialWeight={editingExercise?.weight}
+              initialUnit={editingExercise?.unit}
+              initialSetConfigs={editingExercise?.setConfigs?.map(cfg => ({
+                reps: cfg.reps,
+                weight: cfg.weight,
+                unit: cfg.weight_unit,
+              }))}
+              onOverlayClick={handleModalClose}
+              isOpen={true}
+            />
           )}
         </div>
       </CardWrapper>
