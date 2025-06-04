@@ -34,7 +34,7 @@ const SetCard = ({
       name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
       reps: fromParent.reps ?? config.reps,
       weight: fromParent.weight ?? config.weight,
-      unit: config.unit || 'lbs',
+      unit: fromParent.unit ?? (config.unit || 'lbs'),
       status: fromParent.status ?? (i === 0 ? 'active' : 'locked'), // Default first set to active, others locked
     };
   });
@@ -304,12 +304,12 @@ const SetCard = ({
           <SwipeSwitch status={swipeStatus} onComplete={handleActiveSetComplete} />
         </div>
         <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center overflow-hidden">
-          {setConfigs.map((pill, idx) => (
+          {sets.map((set, idx) => (
             <SetPill
-              key={idx}
-              reps={pill.reps}
-              weight={pill.weight}
-              unit={pill.unit}
+              key={set.id}
+              reps={set.reps}
+              weight={set.weight}
+              unit={set.unit}
               onClick={() => handlePillClick(idx)}
               style={{ cursor: 'pointer' }}
             />

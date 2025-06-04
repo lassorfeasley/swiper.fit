@@ -53,7 +53,7 @@ const Workout = () => {
     if (step === 'select') {
       setLoading(true);
       (async () => {
-        const { data: programsData, error } = await supabase.from('programs').select('*');
+        const { data: programsData, error } = await supabase.from('programs').select('*').order('created_at', { ascending: false });
         if (error || !programsData) {
           setPrograms([]);
           setLoading(false);
