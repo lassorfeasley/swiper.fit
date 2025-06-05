@@ -12,7 +12,7 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
   const inputRef = useRef(null);
   const [exerciseName, setExerciseName] = useState(initialName || '');
   const [sets, setSets] = useState(initialSets ?? 3); // Default value of 3
-  const [openSetIndex, setOpenSetIndex] = useState(null); // No set open by default
+  const [openSetIndex, setOpenSetIndex] = useState(0); // First set open by default
   // Per-set data: [{ reps, weight, unit }]
   const [setConfigs, setSetConfigs] = useState(() =>
     initialSetConfigs && Array.isArray(initialSetConfigs) && initialSetConfigs.length > 0
@@ -131,9 +131,9 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
             defaultUnit={setConfigs[0]?.unit ?? 'lbs'}
             isOpen={openSetIndex === i}
             onToggle={() => setOpenSetIndex(openSetIndex === i ? null : i)}
-            reps={setConfigs[i]?.reps}
-            weight={setConfigs[i]?.weight}
-            unit={setConfigs[i]?.unit}
+            reps={setConfigs[i]?.reps ?? 12}
+            weight={setConfigs[i]?.weight ?? 25}
+            unit={setConfigs[i]?.unit ?? 'lbs'}
             onRepsChange={val => handleSetChange(i, 'reps', val)}
             onWeightChange={val => handleSetChange(i, 'weight', val)}
             onUnitChange={val => handleSetChange(i, 'unit', val)}

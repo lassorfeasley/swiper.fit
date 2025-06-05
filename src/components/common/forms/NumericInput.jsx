@@ -136,7 +136,7 @@ const NumericInput = ({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               readOnly={readOnly}
-              className={`${inputStyles} w-16 min-w-[3ch] max-w-[20px] text-center`}
+              className={`${inputStyles} w-16 min-w-[3ch] max-w-[20px] text-right`}
               aria-label={label}
             />
             <button 
@@ -158,7 +158,7 @@ const NumericInput = ({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               readOnly={readOnly}
-              className={`${inputStyles} w-full text-center`}
+              className={`${inputStyles} w-full text-right`}
               aria-label={label}
             />
           </div>
