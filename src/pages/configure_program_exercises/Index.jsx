@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import AppHeader from '../../components/layout/AppHeader';
 import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import { PageNameContext } from '../../App';
@@ -29,6 +29,9 @@ const ConfigureProgramExercisesIndex = () => {
 
   const [editingSetInfo, setEditingSetInfo] = useState(null);
   const [currentSetEditData, setCurrentSetEditData] = useState({ reps: 0, weight: 0, unit: 'lbs' });
+
+  const dragControls = useDragControls();
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     setPageName('ConfigureProgramExercises');
@@ -214,6 +217,8 @@ const ConfigureProgramExercisesIndex = () => {
   };
 
   const handleSetPillClick = (exerciseId, setIndex) => {
+    setShowAddExercise(false);
+    setEditingExercise(null);
     const exercise = exercises.find(ex => ex.id === exerciseId);
     if (exercise && exercise.setConfigs && exercise.setConfigs[setIndex]) {
       const setData = exercise.setConfigs[setIndex];
@@ -263,6 +268,8 @@ const ConfigureProgramExercisesIndex = () => {
         });
       });
       setEditingSetInfo(null);
+      setEditingExercise(null);
+      setShowAddExercise(false);
     } catch (err) {
       alert(err.message || 'Failed to save set changes.');
       console.error("handleSaveSetEdit error:", err);
@@ -273,6 +280,12 @@ const ConfigureProgramExercisesIndex = () => {
     setCurrentSetEditData(prev => ({ ...prev, [field]: value }));
     if (field === 'unit' && value === 'body') {
       setCurrentSetEditData(prev => ({ ...prev, weight: 0 }));
+    }
+  };
+
+  const handleCardClick = (e, exercise) => {
+    if (!isDragging) {
+      setEditingExercise(exercise);
     }
   };
 
@@ -297,13 +310,32 @@ const ConfigureProgramExercisesIndex = () => {
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : (
           filteredExercises.map((ex, exerciseIndex) => (
-            <Reorder.Item key={ex.id} value={ex} className="w-full">
-              <div data-layer="ProgramExerciseCard" className="Programexercisecard self-stretch w-full px-3 py-2 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-5">
+            <Reorder.Item 
+              key={ex.id} 
+              value={ex} 
+              className="w-full"
+              dragControls={dragControls}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={() => setIsDragging(false)}
+            >
+              <div 
+                data-layer="ProgramExerciseCard" 
+                className="Programexercisecard self-stretch w-full px-3 py-2 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-5 cursor-pointer"
+                onClick={(e) => handleCardClick(e, ex)}
+              >
                 <div data-layer="NameAndIconWrapper" className="Nameandiconwrapper self-stretch inline-flex justify-start items-center gap-2">
                   <div data-layer="[Exercise name]" className="ExerciseName flex-1 justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">
                     {ex.name}
                   </div>
-                  <div data-svg-wrapper data-layer="pencil" className="Pencil relative cursor-pointer" onClick={() => setEditingExercise(ex)}>
+                  <div 
+                    data-svg-wrapper 
+                    data-layer="pencil" 
+                    className="Pencil relative cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingExercise(ex);
+                    }}
+                  >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M13.586 3.58598C13.7705 3.39496 13.9912 3.24259 14.2352 3.13778C14.4792 3.03296 14.7416 2.97779 15.0072 2.97548C15.2728 2.97317 15.5361 3.02377 15.7819 3.12434C16.0277 3.2249 16.251 3.3734 16.4388 3.56119C16.6266 3.74897 16.7751 3.97228 16.8756 4.21807C16.9762 4.46386 17.0268 4.72722 17.0245 4.99278C17.0222 5.25834 16.967 5.52078 16.8622 5.76479C16.7574 6.0088 16.605 6.22949 16.414 6.41398L15.621 7.20698L12.793 4.37898L13.586 3.58598V3.58598ZM11.379 5.79298L3 14.172V17H5.828L14.208 8.62098L11.378 5.79298H11.379Z" fill="var(--slate-600, #2F3640)"/>
                     </svg>
@@ -330,19 +362,7 @@ const ConfigureProgramExercisesIndex = () => {
         )}
       </CardWrapper>
 
-      {(showAddExercise || editingExercise) && (
-        <ExerciseSetConfiguration
-          formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-          onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
-          initialName={editingExercise?.name}
-          initialSets={editingExercise?.setConfigs?.length}
-          initialSetConfigs={editingExercise?.setConfigs}
-          onOverlayClick={handleModalClose}
-          isOpen={true}
-        />
-      )}
-
-      {editingSetInfo && currentSetEditData && (
+      {editingSetInfo && currentSetEditData ? (
         <SlideUpForm
           formPrompt="Edit Set"
           isOpen={editingSetInfo !== null}
@@ -350,7 +370,7 @@ const ConfigureProgramExercisesIndex = () => {
           onActionIconClick={handleSaveSetEdit}
           isReady={true}
         >
-          <FormGroupWrapper className="flex flex-col gap-0 py-1">
+          <FormGroupWrapper className="flex flex-col gap-0">
             <NumericInput
               label="Reps"
               value={currentSetEditData.reps}
@@ -370,6 +390,16 @@ const ConfigureProgramExercisesIndex = () => {
             />
           </FormGroupWrapper>
         </SlideUpForm>
+      ) : (showAddExercise || editingExercise) && (
+        <ExerciseSetConfiguration
+          formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+          onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+          initialName={editingExercise?.name}
+          initialSets={editingExercise?.setConfigs?.length}
+          initialSetConfigs={editingExercise?.setConfigs}
+          onOverlayClick={handleModalClose}
+          isOpen={true}
+        />
       )}
     </div>
   );

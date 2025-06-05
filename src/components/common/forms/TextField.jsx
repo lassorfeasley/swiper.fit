@@ -5,6 +5,8 @@ import PropTypes from "prop-types";
 
 const FormContext = createContext(false);
 
+export { FormContext };
+
 export const FormProvider = ({ children }) => (
   <FormContext.Provider value={true}>
     {children}
@@ -46,8 +48,10 @@ const TextField = ({
 
   return (
     <div 
-      className={`w-full h-14 px-4 bg-white relative ${
-        !isInForm ? 'rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300' : ''
+      className={`w-full h-14 px-4 ${
+        !isInForm 
+          ? 'bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300' 
+          : 'bg-white border-none rounded-none outline-none'
       } ${className}`}
       {...props}
       onClick={() => {
@@ -84,7 +88,7 @@ const TextField = ({
             onFocus={handleFocus}
             onBlur={handleBlur}
             placeholder={isFloating && value.length === 0 ? placeholder : ''}
-            className="w-full bg-transparent text-xl text-black font-['Space_Grotesk'] focus:outline-none"
+            className="w-full bg-transparent border-none rounded-none text-xl text-black font-['Space_Grotesk'] focus:outline-none"
             autoComplete="off"
           />
         </div>
@@ -100,7 +104,7 @@ const TextField = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={''}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-text bg-transparent focus:outline-none"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-text bg-transparent border-none rounded-none focus:outline-none"
           autoComplete="off"
           tabIndex={0}
         />

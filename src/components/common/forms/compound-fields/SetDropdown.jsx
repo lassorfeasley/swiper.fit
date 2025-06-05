@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Dropdown from '../Dropdown';
 import NumericInput from '../NumericInput';
 import WeightCompoundField from './WeightCompoundField';
+import FormGroupWrapper from '../FormWrappers/FormGroupWrapper';
 
 const numberToWord = [
   'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'
@@ -10,7 +11,7 @@ const numberToWord = [
 
 const SetDropdown = ({ setNumber, defaultReps = 10, defaultWeight = 25, defaultUnit = 'lbs', className = '', isOpen, onToggle, reps, weight, unit, onRepsChange, onWeightChange, onUnitChange }) => {
   // Use 1-based set numbering for display
-  const setLabel = `Set ${setNumber + 1}`;
+  const setLabel = `Set ${setNumber}`;
 
   // Sync local state with controlled props (for backward compatibility, but prefer controlled)
   useEffect(() => {
@@ -27,7 +28,7 @@ const SetDropdown = ({ setNumber, defaultReps = 10, defaultWeight = 25, defaultU
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      <div className="p-4 flex flex-col gap-4">
+      <FormGroupWrapper>
         <NumericInput
           label="Reps"
           value={reps}
@@ -41,7 +42,7 @@ const SetDropdown = ({ setNumber, defaultReps = 10, defaultWeight = 25, defaultU
           unit={unit}
           onUnitChange={onUnitChange}
         />
-      </div>
+      </FormGroupWrapper>
     </Dropdown>
   );
 };

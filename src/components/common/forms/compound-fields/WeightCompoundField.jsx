@@ -27,7 +27,7 @@ const WeightCompoundField = ({
       <div
         style={{
           display: 'flex',
-          padding: '0px 0px 12px 0px ',
+          padding: '0px 0px 0px 0px ',
           justifyContent: 'center',
           alignItems: 'flex-start',
           gap: '12px',

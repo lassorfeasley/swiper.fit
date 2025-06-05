@@ -17,23 +17,12 @@ export const AppHeader = ({
   subheadText = "example subhead text",
   onBack,
   onAction,
-  searchValue: controlledSearchValue,
+  searchValue,
   onSearchChange,
+  searchPlaceholder,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // For demo: search state
-  const [searchValue, setSearchValue] = React.useState("");
-  const isControlled = controlledSearchValue !== undefined && onSearchChange;
-  const value = isControlled ? controlledSearchValue : searchValue;
-  const handleChange = e => {
-    if (isControlled) {
-      onSearchChange(e.target.value);
-    } else {
-      setSearchValue(e.target.value);
-    }
-  };
 
   const onBackHandler = () => {
     if (onBack) {
@@ -95,7 +84,12 @@ export const AppHeader = ({
       )}
       {search && (
         <div className="Searchfeild self-stretch h-14 px-5 py-2.5 bg-white border-b-[0.25px] border-slate-600 inline-flex justify-end items-center gap-2.5">
-          <div className="Search flex-1 justify-center text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">Search</div>
+          <SearchField
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder || "Search..."}
+            className="flex-1"
+          />
           <div className="Symbol w-6 h-6 relative flex items-center justify-center">
             <MagnifyingGlassIcon className="w-6 h-6 text-slate-600" />
           </div>
@@ -118,6 +112,7 @@ AppHeader.propTypes = {
   onAction: PropTypes.func,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
+  searchPlaceholder: PropTypes.string,
 };
 
 export default AppHeader; 

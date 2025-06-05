@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SlideUpForm from '../SlideUpForm';
-import TextField from '../TextField';
+import TextField, { FormProvider } from '../TextField';
 import NumericInput from '../NumericInput';
 import SetDropdown from './SetDropdown';
 import Icon from '../../Icon';
@@ -12,7 +12,7 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
   const inputRef = useRef(null);
   const [exerciseName, setExerciseName] = useState(initialName || '');
   const [sets, setSets] = useState(initialSets ?? 3); // Default value of 3
-  const [openSetIndex, setOpenSetIndex] = useState(0); // First set open by default
+  const [openSetIndex, setOpenSetIndex] = useState(null); // No set open by default
   // Per-set data: [{ reps, weight, unit }]
   const [setConfigs, setSetConfigs] = useState(() =>
     initialSetConfigs && Array.isArray(initialSetConfigs) && initialSetConfigs.length > 0
@@ -22,13 +22,30 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
 
   // Keep setConfigs in sync with sets count
   useEffect(() => {
-    setSetConfigs(prev => {
-      const arr = Array.from({ length: sets }, (_, i) => prev[i] || { ...prev[0] });
-      return arr.map((cfg, i) => ({
-        reps: cfg.reps ?? prev[0]?.reps ?? 12,
-        weight: cfg.weight ?? prev[0]?.weight ?? 25,
-        unit: cfg.unit ?? prev[0]?.unit ?? 'lbs',
-      }));
+    setSetConfigs(prevConfigs => {
+      const newSize = sets || 0;
+      const oldSize = prevConfigs.length;
+
+      if (newSize === oldSize) {
+        return prevConfigs;
+      }
+
+      const newSetConfigs = [...prevConfigs];
+      newSetConfigs.length = newSize; // Truncate or expand array
+
+      // If expanding, fill new spots with default values from the first set, or hardcoded defaults
+      if (newSize > oldSize) {
+        const defaultSet = {
+          reps: prevConfigs[0]?.reps ?? 12,
+          weight: prevConfigs[0]?.weight ?? 25,
+          unit: prevConfigs[0]?.unit ?? 'lbs',
+        };
+        for (let i = oldSize; i < newSize; i++) {
+          newSetConfigs[i] = { ...defaultSet };
+        }
+      }
+      
+      return newSetConfigs;
     });
   }, [sets]);
 
@@ -86,26 +103,28 @@ const ExerciseSetConfiguration = ({ onActionIconClick, formPrompt = "Create a ne
       {...props}
     >
       <div className="w-full flex flex-col gap-0">
-        <FormGroupWrapper>
-          <TextField
-            label="Exercise name"
-            value={exerciseName}
-            onChange={e => setExerciseName(e.target.value)}
-            placeholder="Enter exercise name"
-            inputRef={inputRef}
-            className="w-full"
-          />
-          <NumericInput
-            label="Sets"
-            value={sets}
-            onChange={newSets => setSets(Math.max(0, Number(newSets)))}
-            incrementing={true}
-            className="w-full"
-          />
-        </FormGroupWrapper>
+        <FormProvider>
+          <FormGroupWrapper>
+            <TextField
+              label="Exercise name"
+              value={exerciseName}
+              onChange={e => setExerciseName(e.target.value)}
+              placeholder="Enter exercise name"
+              inputRef={inputRef}
+              className="w-full"
+            />
+            <NumericInput
+              label="Sets"
+              value={sets}
+              onChange={newSets => setSets(Math.max(0, Number(newSets)))}
+              incrementing={true}
+              className="w-full"
+            />
+          </FormGroupWrapper>
+        </FormProvider>
         {sets > 0 && Array.from({ length: sets }, (_, i) => (
           <SetDropdown
-            key={`set-${i + 1}`}
+            key={`set-${i}`}
             setNumber={i + 1}
             defaultReps={setConfigs[0]?.reps ?? 12}
             defaultWeight={setConfigs[0]?.weight ?? 25}
