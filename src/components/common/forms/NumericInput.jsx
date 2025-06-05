@@ -14,6 +14,7 @@ const NumericInput = ({
   incrementing = true,
   allowDecimal = true,
   readOnly = false,
+  textAlign = 'center',
 }) => {
   const isInForm = useContext(FormContext) || false;
   const [internalDisplayValue, setInternalDisplayValue] = useState(value?.toString() ?? min.toString());
@@ -136,7 +137,7 @@ const NumericInput = ({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               readOnly={readOnly}
-              className={`${inputStyles} w-16 min-w-[3ch] max-w-[20px] text-right`}
+              className={`${inputStyles} w-16 min-w-[3ch] max-w-[20px] text-${textAlign}`}
               aria-label={label}
             />
             <button 
@@ -151,14 +152,14 @@ const NumericInput = ({
           </div>
         )}
         {!incrementing && (
-          <div className="flex-1 min-w-[3ch] text-center">
+          <div className={`flex-1 min-w-[3ch] text-${textAlign}`}>
              <input 
               type="text"
               value={readOnly ? value?.toString() : internalDisplayValue}
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               readOnly={readOnly}
-              className={`${inputStyles} w-full text-right`}
+              className={`${inputStyles} w-full`}
               aria-label={label}
             />
           </div>
@@ -179,6 +180,7 @@ NumericInput.propTypes = {
   incrementing: PropTypes.bool,
   allowDecimal: PropTypes.bool,
   readOnly: PropTypes.bool,
+  textAlign: PropTypes.string,
 };
 
 export default NumericInput; 
