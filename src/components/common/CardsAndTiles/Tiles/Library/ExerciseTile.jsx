@@ -4,17 +4,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import '../../../../../styles/typography.css';
-import MetricPill from '../../MetricPill';
+import SetPill from '../../SetPill';
 
 /**
- * ExerciseTile - Tile component for displaying exercise details with editable metrics
+ * ExerciseTile - Tile component for displaying exercise details with completed sets
  * 
  * Props:
  * - exerciseName: string
  * - sets: number
  * - reps: number
  * - weight: number
- * - onMetricsChange: function (optional)
+ * - unit: string (optional) - Unit of weight ('kg', 'lbs', or 'body')
  * - className: string (optional)
  */
 const ExerciseTile = ({
@@ -22,32 +22,27 @@ const ExerciseTile = ({
   sets = 0,
   reps = 0, 
   weight = 0,
-  onMetricsChange,
+  unit = 'lbs',
   className = '',
 }) => {
   return (
     <div 
-      className={`flex items-center justify-between w-full p-4 bg-stone-50 rounded-lg ${className}`}
+      className={`w-full max-w-full overflow-x-hidden p-4 bg-stone-50 rounded-lg ${className}`}
       data-component="ExerciseTile"
     >
-      <span className="h2-head">{exerciseName}</span>
-      
-      <div className="flex items-center gap-2">
-        <MetricPill
-          value={sets}
-          unit="SETS"
-          onClick={() => onMetricsChange?.('sets', sets)}
-        />
-        <MetricPill
-          value={reps}
-          unit="REPS"
-          onClick={() => onMetricsChange?.('reps', reps)}
-        />
-        <MetricPill
-          value={weight}
-          unit="LBS"
-          onClick={() => onMetricsChange?.('weight', weight)}
-        />
+      <div className="w-full">
+        <span className="h2-head whitespace-nowrap block">{exerciseName}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 mt-2">
+        {Array.from({ length: sets }, (_, i) => (
+          <SetPill
+            key={i}
+            reps={reps}
+            weight={weight}
+            unit={unit}
+            complete={true}
+          />
+        ))}
       </div>
     </div>
   );
@@ -58,7 +53,7 @@ ExerciseTile.propTypes = {
   sets: PropTypes.number,
   reps: PropTypes.number,
   weight: PropTypes.number,
-  onMetricsChange: PropTypes.func,
+  unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
   className: PropTypes.string,
 };
 
