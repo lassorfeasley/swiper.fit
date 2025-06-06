@@ -15,6 +15,7 @@ import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper
 import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext.jsx';
 import Icon from '../../components/common/Icon.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -41,6 +42,8 @@ const Workout = () => {
     Array.from({ length: 3 }, () => ({ reps: 10, weight: 0, unit: 'kg' }))
   );
   const [openSetIndex, setOpenSetIndex] = useState(null);
+
+  const navigate = useNavigate();
 
   // Hide/show nav bar based on step
   useEffect(() => {
@@ -258,6 +261,8 @@ const Workout = () => {
         alert('Failed to save sets! ' + (setsError?.message || ''));
       }
     }
+    // Redirect to the history detail page for the new workout
+    navigate(`/history/${workoutInsert.id}`);
     setStep('select');
     setSelectedProgram(null);
     setExercises([]);

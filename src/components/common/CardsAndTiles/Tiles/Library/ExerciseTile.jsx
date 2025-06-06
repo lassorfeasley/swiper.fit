@@ -27,13 +27,13 @@ const ExerciseTile = ({
 }) => {
   return (
     <div 
-      className={`w-full max-w-full overflow-x-hidden p-4 bg-stone-50 rounded-lg ${className}`}
-      data-component="ExerciseTile"
+      className={`Exercisetile self-stretch p-5 bg-stone-50 inline-flex flex-col justify-center items-start gap-4 ${className}`}
+      data-layer="ExerciseTile"
     >
-      <div className="w-full">
-        <span className="h2-head whitespace-nowrap block">{exerciseName}</span>
+      <div data-layer="[Exercise name]" className="ExerciseName w-96 h-7 justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">
+        {exerciseName}
       </div>
-      <div className="flex flex-wrap items-center gap-2 mt-2">
+      <div data-layer="Frame 5" data-property-1="Default" className="Frame5 inline-flex flex-wrap justify-start items-center gap-2">
         {Array.from({ length: sets }, (_, i) => (
           <SetPill
             key={i}
@@ -41,6 +41,7 @@ const ExerciseTile = ({
             weight={weight}
             unit={unit}
             complete={true}
+            className="Setpill px-1 py-0.5 bg-green-500 rounded-sm flex justify-start items-center gap-1"
           />
         ))}
       </div>
