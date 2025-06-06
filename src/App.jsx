@@ -18,6 +18,9 @@ import React, { createContext, useState, useEffect } from 'react';
 import NavBar from "./components/layout/NavBar";
 import SetCardDemo from "./pages/DemoPages/SetCardDemo";
 import SwipeSwitchDemo from "./pages/DemoPages/SwipeSwitchDemo";
+import Login from './pages/Login';
+import RequireAuth from './components/RequireAuth';
+import CreateAccount from './pages/CreateAccount';
 
 export const PageNameContext = createContext({ setPageName: () => {}, pageName: '' });
 
@@ -56,35 +59,43 @@ function AppContent() {
     { to: "/workout", label: "Workout", icon: <PlayIcon className="w-7 h-7" /> },
   ];
 
-  // Hide nav bar on Program Detail, Edit Program, Create New Program, or Create/Edit Exercise Demo page
-  const isProgramDetailOrEditOrCreatePage =
+  // Hide nav bar on Program Detail, Edit Program, Create New Program, Create/Edit Exercise Demo, or Login page
+  const isProgramDetailOrEditOrCreateOrLoginPage =
     /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname) ||
     location.pathname === '/create_new_program' ||
-    location.pathname === '/create_or_edit_exercise_demo';
+    location.pathname === '/create_or_edit_exercise_demo' ||
+    location.pathname === '/login' ||
+    location.pathname === '/create-account';
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
       {/* Main Content */}
       <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/programs/:programId/edit" element={<EditProgram />} />
-          <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/history/:workoutId" element={<WorkoutHistoryDetail />} />
-          <Route path="/workout" element={<Workout />} />
-          <Route path="/app-header-demo" element={<AppHeaderDemo />} />
-          <Route path="/create_new_program" element={<CreateNewProgram />} />
-          <Route path="/create_or_edit_exercise_demo" element={<CreateOrEditExerciseDemo />} />
-          <Route path="/demo/setcard" element={<SetCardDemo />} />
-          <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
-          <Route path="/demo/form-fields" element={<FormFieldDemo />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/create-account" element={<CreateAccount />} />
         </Routes>
+        <RequireAuth>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/programs/:programId/edit" element={<EditProgram />} />
+            <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/history/:workoutId" element={<WorkoutHistoryDetail />} />
+            <Route path="/workout" element={<Workout />} />
+            <Route path="/app-header-demo" element={<AppHeaderDemo />} />
+            <Route path="/create_new_program" element={<CreateNewProgram />} />
+            <Route path="/create_or_edit_exercise_demo" element={<CreateOrEditExerciseDemo />} />
+            <Route path="/demo/setcard" element={<SetCardDemo />} />
+            <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
+            <Route path="/demo/form-fields" element={<FormFieldDemo />} />
+          </Routes>
+        </RequireAuth>
       </main>
 
       {/* Navigation bar */}
-      {navBarVisible && !isProgramDetailOrEditOrCreatePage && (
+      {navBarVisible && !isProgramDetailOrEditOrCreateOrLoginPage && (
         <NavBar navItems={navItems} />
       )}
     </div>
