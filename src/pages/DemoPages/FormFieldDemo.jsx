@@ -6,7 +6,7 @@ import MainContainer from '../../components/common/MainContainer';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import ExerciseSetForm from '../../components/common/forms/compound-fields/ExerciseSetForm';
 import NumericInput from '../../components/common/forms/NumericInput';
-import TextField from '../../components/common/forms/TextField';
+import { Input } from "components/ui/input";
 import Dropdown from '../../components/common/forms/Dropdown';
 import SearchField from '../../components/common/forms/SearchField';
 import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
@@ -79,7 +79,7 @@ const FormFieldDemo = () => {
         >
           <div className="p-4 space-y-4">
             {/* Standalone TextField (will have border) */}
-            <TextField
+            <Input
               label="Standalone Text Field"
               value={formData.standaloneText}
               onChange={(e) => setFormData(prev => ({ ...prev, standaloneText: e.target.value }))}
@@ -132,7 +132,7 @@ const FormFieldDemo = () => {
               />
 
               {/* Text Input */}
-              <TextField
+              <Input
                 label="Form Text Field"
                 value={formData.formText}
                 onChange={(e) => setFormData(prev => ({ ...prev, formText: e.target.value }))}

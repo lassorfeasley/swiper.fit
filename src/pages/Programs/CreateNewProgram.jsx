@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useContext } from "react";
 import AppHeader from "../../components/layout/AppHeader";
 import SlideUpForm from "../../components/common/forms/SlideUpForm";
-import TextField from "../../components/common/forms/TextField";
+import { Input } from "components/ui/input";
 import Icon from "../../components/common/Icon";
 import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { supabase } from "../../supabaseClient";
@@ -130,7 +130,7 @@ const CreateNewProgram = () => {
           }
         >
           <div className="w-full outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
-            <TextField
+            <Input
               label="Program name"
               value={programName}
               onChange={(e) => setProgramName(e.target.value)}

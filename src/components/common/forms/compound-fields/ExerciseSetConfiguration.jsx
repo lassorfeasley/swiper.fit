@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import SlideUpForm from "../SlideUpForm";
-import TextField from "../TextField";
+import { Input } from "components/ui/input";
 import NumericInput from "../NumericInput";
 import SetDropdown from "./SetDropdown";
 import FormGroupWrapper from "../FormWrappers/FormGroupWrapper";
@@ -117,12 +117,11 @@ const ExerciseSetConfiguration = ({
     >
       <div className="w-full flex flex-col gap-0">
         <FormGroupWrapper>
-          <TextField
-            label="Exercise name"
+          <Input
+            type="text"
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
             placeholder="Enter exercise name"
-            inputRef={inputRef}
             className="w-full"
           />
           <NumericInput

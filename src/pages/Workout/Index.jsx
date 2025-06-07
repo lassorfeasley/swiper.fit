@@ -6,7 +6,6 @@ import AppHeader from '../../components/layout/AppHeader';
 import ActiveFocusedNavBar from '../../components/layout/ActiveFocusedNavBar';
 import SetCard from '../../components/common/CardsAndTiles/Cards/Library/SetCard.jsx';
 import SlideUpForm from '../../components/common/forms/SlideUpForm';
-import TextField from '../../components/common/forms/TextField';
 import NumericInput from '../../components/common/forms/NumericInput';
 import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField.jsx';
 import SetDropdown from '../../components/common/forms/compound-fields/SetDropdown.jsx';
@@ -16,6 +15,7 @@ import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper
 import { useNavBarVisibility } from '../../NavBarVisibilityContext.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { useNavigate } from 'react-router-dom';
+import { Input } from "components/ui/input";
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -395,7 +395,7 @@ const Workout = () => {
         >
           <div className="w-full flex flex-col gap-0">
             <div className="bg-white rounded-xl p-4 flex flex-col gap-0">
-              <TextField
+              <Input
                 label="Exercise name"
                 value={newUnscheduledExerciseName}
                 onChange={e => setNewUnscheduledExerciseName(e.target.value)}
