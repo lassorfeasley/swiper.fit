@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import AppHeader from '../../components/layout/AppHeader';
-import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
-import { useNavBarVisibility } from '../../NavBarVisibilityContext';
-import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
+import React, { useEffect } from "react";
+import AppHeader from "../../components/layout/AppHeader";
+import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
+import { useNavBarVisibility } from "../../NavBarVisibilityContext";
+import CardWrapper from "../../components/common/CardsAndTiles/Cards/CardWrapper";
 
 const CreateOrEditExerciseDemo = () => {
   const { setNavBarVisible } = useNavBarVisibility();
@@ -27,16 +27,16 @@ const CreateOrEditExerciseDemo = () => {
       <div style={{ height: 140 }} />
       <CardWrapper>
         <div className="flex-1 flex flex-col items-center justify-center">
-           {/* Placeholder for main content */}
+          {/* Placeholder for main content */}
         </div>
         <ExerciseSetConfiguration
-           formPrompt="Create a new exercise"
-           actionIconName="arrow_forward"
-           onActionIconClick={() => alert("Action icon clicked!")}
+          formPrompt="Create a new exercise"
+          actionIconName="arrow_forward"
+          onActionIconClick={() => alert("Action icon clicked!")}
         />
       </CardWrapper>
     </>
   );
 };
 
-export default CreateOrEditExerciseDemo; 
+export default CreateOrEditExerciseDemo;
