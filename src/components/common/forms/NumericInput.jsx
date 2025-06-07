@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-// Add FormContext for form detection
-import { FormContext } from "./TextField";
 
 const NumericInput = ({
   label,
@@ -16,7 +14,7 @@ const NumericInput = ({
   readOnly = false,
   textAlign = 'center',
 }) => {
-  const isInForm = useContext(FormContext) || false;
+  const isInForm = false;
   const [internalDisplayValue, setInternalDisplayValue] = useState(value?.toString() ?? min.toString());
 
   useEffect(() => {

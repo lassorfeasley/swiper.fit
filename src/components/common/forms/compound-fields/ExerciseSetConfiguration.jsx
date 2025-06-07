@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import SlideUpForm from "../SlideUpForm";
-import TextField, { FormProvider } from "../TextField";
+import TextField from "../TextField";
 import NumericInput from "../NumericInput";
 import SetDropdown from "./SetDropdown";
 import FormGroupWrapper from "../FormWrappers/FormGroupWrapper";
@@ -116,25 +116,23 @@ const ExerciseSetConfiguration = ({
       {...props}
     >
       <div className="w-full flex flex-col gap-0">
-        <FormProvider>
-          <FormGroupWrapper>
-            <TextField
-              label="Exercise name"
-              value={exerciseName}
-              onChange={(e) => setExerciseName(e.target.value)}
-              placeholder="Enter exercise name"
-              inputRef={inputRef}
-              className="w-full"
-            />
-            <NumericInput
-              label="Sets"
-              value={sets}
-              onChange={(newSets) => setSets(Math.max(0, Number(newSets)))}
-              incrementing={true}
-              className="w-full"
-            />
-          </FormGroupWrapper>
-        </FormProvider>
+        <FormGroupWrapper>
+          <TextField
+            label="Exercise name"
+            value={exerciseName}
+            onChange={(e) => setExerciseName(e.target.value)}
+            placeholder="Enter exercise name"
+            inputRef={inputRef}
+            className="w-full"
+          />
+          <NumericInput
+            label="Sets"
+            value={sets}
+            onChange={(newSets) => setSets(Math.max(0, Number(newSets)))}
+            incrementing={true}
+            className="w-full"
+          />
+        </FormGroupWrapper>
         {sets > 0 &&
           Array.from({ length: sets }, (_, i) => (
             <SetDropdown

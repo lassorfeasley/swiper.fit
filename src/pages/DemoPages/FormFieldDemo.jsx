@@ -6,7 +6,7 @@ import MainContainer from '../../components/common/MainContainer';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import ExerciseSetForm from '../../components/common/forms/compound-fields/ExerciseSetForm';
 import NumericInput from '../../components/common/forms/NumericInput';
-import TextField, { FormProvider } from '../../components/common/forms/TextField';
+import TextField from '../../components/common/forms/TextField';
 import Dropdown from '../../components/common/forms/Dropdown';
 import SearchField from '../../components/common/forms/SearchField';
 import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';

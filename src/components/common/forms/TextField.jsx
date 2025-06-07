@@ -1,20 +1,8 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=75-1692&t=qLasGdJck7GcZoku-4
 
-import React, { useState, useRef, useEffect, createContext, useContext } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Input } from "../../../src/components/ui/input";
-import { Label } from "../../../src/components/ui/label";
 import { cn } from "@/lib/utils";
-
-const FormContext = createContext(false);
-
-export { FormContext };
-
-export const FormProvider = ({ children }) => (
-  <FormContext.Provider value={true}>
-    {children}
-  </FormContext.Provider>
-);
 
 const TextField = ({
   label,
@@ -22,92 +10,86 @@ const TextField = ({
   onChange,
   placeholder = "",
   className = "",
-  error,
+  error = false,
   id,
-  inputRef: externalInputRef,
+  icon,
+  disabled = false,
+  type = "text",
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [isFloating, setIsFloating] = useState(false);
-  const internalInputRef = useRef(null);
-  const inputRef = externalInputRef || internalInputRef;
-  const isInForm = useContext(FormContext);
+  const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    setIsFloating(isFocused || value.length > 0);
-  }, [isFocused, value]);
+  // Determine outline color
+  let outlineColor = "outline-neutral-300 border border-neutral-300";
+  if (error) outlineColor = "outline-red-400 border border-red-400";
+  else if (isFocused) outlineColor = "outline-slate-600 border border-slate-600";
+  else if (isHovered) outlineColor = "outline-slate-600 border border-slate-600";
+  else if (disabled) outlineColor = "outline-neutral-300 border border-neutral-300";
 
-  const handleFocus = (e) => {
-    setIsFocused(true);
-    props.onFocus?.(e);
-  };
+  // Determine text color
+  let textColor = "text-slate-500";
+  if (isFocused) textColor = "text-black";
+  if (disabled) textColor = "text-neutral-300";
 
-  const handleBlur = (e) => {
-    setIsFocused(false);
-    props.onBlur?.(e);
-  };
+  // Font class
+  const fontClass = "font-['Space_Grotesk']";
+
+  // Use label as placeholder if placeholder is not provided
+  const effectivePlaceholder = placeholder || label || "";
 
   return (
-    <div 
-      className={cn(
-        "relative w-full",
-        !isInForm && "rounded-md",
-        className
-      )}
-      onClick={() => {
-        if (!isFocused && inputRef.current) {
-          inputRef.current.focus();
-        }
-      }}
-    >
-      <Label
-        htmlFor={id}
+    <div className={cn("w-full flex flex-col items-start gap-2", className)}>
+      <div
         className={cn(
-          "absolute left-3 transition-all duration-200 pointer-events-none",
-          isFloating 
-            ? "text-xs -top-2.5 bg-background px-1 text-muted-foreground" 
-            : "text-base top-1/2 -translate-y-1/2 text-muted-foreground"
+          "self-stretch h-14 p-4 bg-white rounded-sm outline outline-1 outline-offset-[-1px] inline-flex justify-start items-center gap-1 overflow-hidden w-full",
+          outlineColor
         )}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{ cursor: disabled ? 'not-allowed' : 'text' }}
+        data-layer="TextInput"
       >
-        {label}
-      </Label>
-      <Input
-        type="text"
-        id={id}
-        ref={inputRef}
-        value={value}
-        onChange={onChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={isFloating ? placeholder : ""}
-        className={cn(
-          "w-full h-14 px-3",
-          !isInForm && "border-input",
-          error && "border-destructive focus-visible:ring-destructive",
-          isFloating && "pt-4"
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={effectivePlaceholder}
+          disabled={disabled}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={cn(
+            "flex-1 bg-transparent border-none outline-none text-xl leading-loose",
+            fontClass,
+            textColor,
+            disabled && "text-neutral-300",
+            "placeholder:text-slate-400"
+          )}
+          autoComplete="off"
+          {...props}
+        />
+        {icon && (
+          <div className="ml-2 flex items-center" data-layer="icon">
+            {icon}
+          </div>
         )}
-        autoComplete="off"
-        {...props}
-      />
+      </div>
     </div>
   );
 };
 
 TextField.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   className: PropTypes.string,
   error: PropTypes.bool,
   id: PropTypes.string,
-  inputRef: PropTypes.any,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-};
-
-FormProvider.propTypes = {
-  children: PropTypes.node.isRequired,
+  icon: PropTypes.node,
+  disabled: PropTypes.bool,
+  type: PropTypes.string,
 };
 
 export default TextField;

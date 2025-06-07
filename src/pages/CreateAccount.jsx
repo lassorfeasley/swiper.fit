@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
-import { Input } from "../components/ui/input";
+import TextField from "../components/common/forms/TextField";
 import { Button } from "../components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import AppHeader from "../components/layout/AppHeader";
@@ -39,24 +39,22 @@ export default function CreateAccount() {
       />
       <div className="absolute top-0 left-0 w-full h-full z-0 flex flex-col justify-center items-center">
         <div className="flex flex-col gap-4 w-full px-4 lg:w-1/3">
-          <Input
+          <TextField
             label="Email"
+            placeholder="Email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             id="create-account-email"
-            className="bg-white h-[56px]"
-            placeholder="Email"
             disabled={signupMutation.isPending}
           />
-          <Input
+          <TextField
             label="Password"
+            placeholder="Password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             id="create-account-password"
-            className="bg-white h-[56px]"
-            placeholder="Password"
             disabled={signupMutation.isPending}
           />
           <Button
