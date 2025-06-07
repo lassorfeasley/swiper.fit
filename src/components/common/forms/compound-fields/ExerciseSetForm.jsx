@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import Dropdown from './Dropdown';
-import ToggleButton from './ToggleGroup';
+import Dropdown from '../Dropdown';
+import ToggleButton from '../ToggleGroup';
 
 const ExerciseSetForm = ({ 
   setNumber = 1,

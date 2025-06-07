@@ -2,6 +2,9 @@
 
 import React, { useState, useRef, useEffect, createContext, useContext } from "react";
 import PropTypes from "prop-types";
+import { Input } from "../../../src/components/ui/input";
+import { Label } from "../../../src/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const FormContext = createContext(false);
 
@@ -44,71 +47,48 @@ const TextField = ({
     props.onBlur?.(e);
   };
 
-  const showFloating = isFloating;
-
   return (
     <div 
-      className={`w-full h-14 px-4 ${
-        !isInForm 
-          ? 'bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300' 
-          : 'bg-white border-none rounded-none outline-none'
-      } ${className}`}
-      {...props}
+      className={cn(
+        "relative w-full",
+        !isInForm && "rounded-md",
+        className
+      )}
       onClick={() => {
         if (!isFocused && inputRef.current) {
           inputRef.current.focus();
         }
       }}
-      style={{ cursor: 'text' }}
     >
-      {/* Inactive state: label centered, input hidden */}
-      {!showFloating && (
-        <label
-          htmlFor={id}
-          className="absolute left-4 right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl font-['Space_Grotesk'] pointer-events-none select-none w-auto"
-        >
-          {label}
-        </label>
-      )}
-      {/* Floating state: label stacked above input */}
-      {showFloating && (
-        <div className="flex flex-col items-start justify-center gap-0 h-full">
-          <label
-            htmlFor={id}
-            className="text-xs text-slate-500 font-['Space_Grotesk'] pointer-events-none select-none"
-          >
-            {label}
-          </label>
-          <input
-            type="text"
-            id={id}
-            ref={inputRef}
-            value={value}
-            onChange={onChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder={isFloating && value.length === 0 ? placeholder : ''}
-            className="w-full bg-transparent border-none rounded-none text-xl text-black font-['Space_Grotesk'] focus:outline-none"
-            autoComplete="off"
-          />
-        </div>
-      )}
-      {/* Hidden input for focus/typing in inactive state */}
-      {!showFloating && (
-        <input
-          type="text"
-          id={id}
-          ref={inputRef}
-          value={value}
-          onChange={onChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          placeholder={''}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-text bg-transparent border-none rounded-none focus:outline-none"
-          autoComplete="off"
-          tabIndex={0}
-        />
-      )}
+      <Label
+        htmlFor={id}
+        className={cn(
+          "absolute left-3 transition-all duration-200 pointer-events-none",
+          isFloating 
+            ? "text-xs -top-2.5 bg-background px-1 text-muted-foreground" 
+            : "text-base top-1/2 -translate-y-1/2 text-muted-foreground"
+        )}
+      >
+        {label}
+      </Label>
+      <Input
+        type="text"
+        id={id}
+        ref={inputRef}
+        value={value}
+        onChange={onChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={isFloating ? placeholder : ""}
+        className={cn(
+          "w-full h-14 px-3",
+          !isInForm && "border-input",
+          error && "border-destructive focus-visible:ring-destructive",
+          isFloating && "pt-4"
+        )}
+        autoComplete="off"
+        {...props}
+      />
     </div>
   );
 };

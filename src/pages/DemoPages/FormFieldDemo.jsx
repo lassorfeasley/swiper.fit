@@ -4,7 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import AppHeader from '../../components/layout/AppHeader';
 import MainContainer from '../../components/common/MainContainer';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
-import ExerciseSetForm from '../../components/common/forms/ExerciseSetForm';
+import ExerciseSetForm from '../../components/common/forms/compound-fields/ExerciseSetForm';
 import NumericInput from '../../components/common/forms/NumericInput';
 import TextField, { FormProvider } from '../../components/common/forms/TextField';
 import Dropdown from '../../components/common/forms/Dropdown';
