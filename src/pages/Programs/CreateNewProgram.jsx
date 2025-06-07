@@ -1,24 +1,23 @@
-import React, { useRef, useEffect, useState, useContext } from 'react';
-import AppHeader from '../../components/layout/AppHeader';
-import SlideUpForm from '../../components/common/forms/SlideUpForm';
-import TextField from '../../components/common/forms/TextField';
-import Icon from '../../components/common/Icon';
-import ExerciseSetConfiguration from '../../components/common/forms/compound-fields/exercise_set_configuration';
-import { supabase } from '../../supabaseClient';
-import { useNavigate } from 'react-router-dom';
-import { PageNameContext } from '../../App';
-import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
-import FormGroupWrapper from '../../components/common/forms/FormWrappers/FormGroupWrapper';
+import React, { useRef, useEffect, useState, useContext } from "react";
+import AppHeader from "../../components/layout/AppHeader";
+import SlideUpForm from "../../components/common/forms/SlideUpForm";
+import TextField from "../../components/common/forms/TextField";
+import Icon from "../../components/common/Icon";
+import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
+import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom";
+import { PageNameContext } from "../../App";
+import CardWrapper from "../../components/common/CardsAndTiles/Cards/CardWrapper";
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);
-  const [programName, setProgramName] = useState('');
+  const [programName, setProgramName] = useState("");
   const [showAddExercise, setShowAddExercise] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   // Autofocus the input on mount
   useEffect(() => {
-    setPageName('CreateNewProgram');
+    setPageName("CreateNewProgram");
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -32,35 +31,35 @@ const CreateNewProgram = () => {
     try {
       // 1. Insert program
       const { data: program, error: programError } = await supabase
-        .from('programs')
+        .from("programs")
         .insert({ program_name: programName })
         .select()
         .single();
-      if (programError || !program) throw new Error('Failed to create program');
+      if (programError || !program) throw new Error("Failed to create program");
       const program_id = program.id;
 
       // 2. Insert exercise (if not exists)
       let { data: existing, error: exError } = await supabase
-        .from('exercises')
-        .select('id')
-        .eq('name', exerciseData.name)
+        .from("exercises")
+        .select("id")
+        .eq("name", exerciseData.name)
         .single();
       let exercise_id;
       if (existing && existing.id) {
         exercise_id = existing.id;
       } else {
         const { data: newEx, error: insertError } = await supabase
-          .from('exercises')
+          .from("exercises")
           .insert([{ name: exerciseData.name }])
-          .select('id, name')
+          .select("id, name")
           .single();
-        if (insertError || !newEx) throw new Error('Failed to create exercise');
+        if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
       }
 
       // 3. Insert into program_exercises (only valid columns)
       const { data: progEx, error: progExError } = await supabase
-        .from('program_exercises')
+        .from("program_exercises")
         .insert({
           program_id,
           exercise_id,
@@ -69,8 +68,8 @@ const CreateNewProgram = () => {
         .select()
         .single();
       if (progExError || !progEx) {
-        console.error('program_exercises insert error:', progExError);
-        throw new Error('Failed to link exercise to program');
+        console.error("program_exercises insert error:", progExError);
+        throw new Error("Failed to link exercise to program");
       }
       const program_exercise_id = progEx.id;
 
@@ -83,14 +82,16 @@ const CreateNewProgram = () => {
         weight_unit: cfg.unit,
       }));
       if (setRows.length > 0) {
-        const { error: setError } = await supabase.from('program_sets').insert(setRows);
-        if (setError) throw new Error('Failed to save set details');
+        const { error: setError } = await supabase
+          .from("program_sets")
+          .insert(setRows);
+        if (setError) throw new Error("Failed to save set details");
       }
 
       // Success: navigate to the new program configure page
       navigate(`/programs/${program_id}/configure`);
     } catch (err) {
-      alert(err.message || 'Failed to create program');
+      alert(err.message || "Failed to create program");
     }
   };
 
@@ -112,7 +113,7 @@ const CreateNewProgram = () => {
           {/* (Removed placeholder text) */}
         </div>
         {/* Modal overlay on top of the page */}
-        <SlideUpForm 
+        <SlideUpForm
           formPrompt="What should we call this program?"
           isOpen={showFocusForm}
           onOverlayClick={() => setShowAddExercise(false)}
@@ -121,16 +122,18 @@ const CreateNewProgram = () => {
               name="arrow_forward"
               variant="outlined"
               size={32}
-              className={isReady ? 'text-black' : 'text-gray-300'}
+              className={isReady ? "text-black" : "text-gray-300"}
             />
           }
-          onActionIconClick={isReady ? () => setShowAddExercise(true) : undefined}
+          onActionIconClick={
+            isReady ? () => setShowAddExercise(true) : undefined
+          }
         >
           <div className="w-full outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
             <TextField
               label="Program name"
               value={programName}
-              onChange={e => setProgramName(e.target.value)}
+              onChange={(e) => setProgramName(e.target.value)}
               placeholder="Enter program name"
               inputRef={inputRef}
               className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300"
@@ -149,4 +152,4 @@ const CreateNewProgram = () => {
   );
 };
 
-export default CreateNewProgram; 
+export default CreateNewProgram;

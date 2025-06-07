@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { useEffect, useState } from "react";
+import { useNavigate, Outlet } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
-export default function RequireAuth({ children }) {
+export default function RequireAuth() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const navigate = useNavigate();
@@ -11,16 +11,21 @@ export default function RequireAuth({ children }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
-      if (!session) navigate('/login');
+      if (!session) navigate("/login");
     });
     // Listen for changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session) navigate('/login');
-    });
-    return () => listener?.subscription.unsubscribe();
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        if (!session) navigate("/login");
+      }
+    );
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   if (loading) return <div>Loading...</div>;
-  return session ? children : null;
-} 
+
+  return session ? <Outlet /> : null; // <-- This is critical
+}
