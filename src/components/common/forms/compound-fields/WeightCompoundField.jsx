@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import NumericInput from '../NumericInput';
-import ToggleGroup from '../ToggleGroup';
+import { ToggleGroup, ToggleGroupItem } from '@/src/components/ui/toggle-group';
 
 const WeightCompoundField = ({
   weight = 25,
@@ -35,16 +35,11 @@ const WeightCompoundField = ({
           alignSelf: 'stretch',
         }}
       >
-        <ToggleGroup
-          options={[
-            { label: 'lbs', value: 'lbs' },
-            { label: 'kg', value: 'kg' },
-            { label: 'body', value: 'body' },
-          ]}
-          value={unit}
-          onChange={onUnitChange}
-          className="w-full"
-        />
+        <ToggleGroup type="single" value={unit} onValueChange={onUnitChange} className="w-full" variant="outline">
+          <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
+          <ToggleGroupItem value="kg">kg</ToggleGroupItem>
+          <ToggleGroupItem value="body">body</ToggleGroupItem>
+        </ToggleGroup>
       </div>
     </div>
   );
