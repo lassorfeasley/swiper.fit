@@ -1,16 +1,15 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=48-601&t=YBjXtsLhxGedobad-4
 
+import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
-import { supabase } from "../../supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/layout/AppHeader";
-import { PageNameContext } from "../../App";
+import { PageNameContext } from "@/App";
 import TileWrapper from "@/components/common/CardsAndTiles/Tiles/TileWrapper";
 import ProgramTile from "@/components/common/CardsAndTiles/Tiles/ProgramTile";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import MainContainer from "@/components/common/MainContainer";
-import { useNavBarVisibility } from "../../NavBarVisibilityContext";
+import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);

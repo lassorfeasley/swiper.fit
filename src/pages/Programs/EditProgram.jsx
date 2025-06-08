@@ -4,10 +4,11 @@
 
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import AppHeader from '../../components/layout/AppHeader';
-import { PageNameContext } from "../../App";
-import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
+import { supabase } from "@/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
+import AppHeader from "@/components/layout/AppHeader";
+import { PageNameContext } from "@/App";
+import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MetricPill from '../../components/common/CardsAndTiles/MetricPill';
 
 const EditProgram = () => {

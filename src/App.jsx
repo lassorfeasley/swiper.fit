@@ -32,6 +32,7 @@ import RequireAuth from "./components/RequireAuth";
 import CreateAccount from "./pages/CreateAccount";
 import PasswordReset from "./pages/PasswordReset";
 import UpdatePassword from "./pages/UpdatePassword";
+import { AuthProvider } from './contexts/AuthContext';
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -158,12 +159,13 @@ export default function App() {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <PageNameContext.Provider value={{ pageName, setPageName }}>
-        <NavBarVisibilityProvider>
-          <AppContent />
-        </NavBarVisibilityProvider>
-        {/* <PageNameFooter /> */}
-      </PageNameContext.Provider>
+      <AuthProvider>
+        <PageNameContext.Provider value={{ pageName, setPageName }}>
+          <NavBarVisibilityProvider>
+            <AppContent />
+          </NavBarVisibilityProvider>
+        </PageNameContext.Provider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

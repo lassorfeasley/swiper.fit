@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AppHeader from "../components/layout/AppHeader";
+import AppHeader from "@/components/layout/AppHeader";
 import { Link } from "react-router-dom";
 
 export default function PasswordReset() {

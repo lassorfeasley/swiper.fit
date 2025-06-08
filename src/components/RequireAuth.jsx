@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RequireAuth() {
   const [loading, setLoading] = useState(true);

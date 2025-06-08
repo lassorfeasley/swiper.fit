@@ -4,9 +4,9 @@ import SlideUpForm from "@/components/common/forms/SlideUpForm";
 import { Input } from "@/components/ui/input";
 import Icon from "@/components/common/Icon";
 import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "@/supabaseClient";
 import { useLocation, useNavigate } from "react-router-dom";
-import { PageNameContext } from "../../App";
+import { PageNameContext } from "@/App";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MainContainer from "@/components/common/MainContainer";
 

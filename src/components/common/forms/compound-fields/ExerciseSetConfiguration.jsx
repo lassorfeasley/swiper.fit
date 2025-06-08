@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import SlideUpForm from "../SlideUpForm";
+import SlideUpForm from "@/components/common/forms/SlideUpForm";
 import { Input } from "@/components/ui/input";
-import NumericInput from "../NumericInput";
+import NumericInput from "@/components/common/forms/NumericInput";
 import SetDropdown from "./SetDropdown";
-import FormGroupWrapper from "../FormWrappers/FormGroupWrapper";
+import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
 
 const ExerciseSetConfiguration = ({
   onActionIconClick,
