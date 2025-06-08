@@ -15,7 +15,14 @@ export default function PasswordReset() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: "", message: "" });
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    
+    // Get the current origin (e.g., http://localhost:3000)
+    const origin = window.location.origin;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/update-password`
+    });
+    
     if (error) {
       setStatus({ type: "error", message: error.message });
     } else {

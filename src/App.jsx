@@ -31,6 +31,7 @@ import Login from "./pages/Login";
 import RequireAuth from "./components/RequireAuth";
 import CreateAccount from "./pages/CreateAccount";
 import PasswordReset from "./pages/PasswordReset";
+import UpdatePassword from "./pages/UpdatePassword";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -96,7 +97,8 @@ function AppContent() {
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
     location.pathname === "/create-account" ||
-    location.pathname === "/reset-password";
+    location.pathname === "/reset-password" ||
+    location.pathname === "/update-password";
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -123,6 +125,7 @@ function AppContent() {
               element={<WorkoutHistoryDetail />}
             />
             <Route path="/workout" element={<Workout />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/app-header-demo" element={<AppHeaderDemo />} />
             <Route path="/create_new_program" element={<CreateNewProgram />} />
             <Route
