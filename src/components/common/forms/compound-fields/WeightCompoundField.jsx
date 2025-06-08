@@ -21,7 +21,7 @@ const WeightCompoundField = ({
         onChange={isBody ? () => {} : onWeightChange}
         incrementing={!isBody}
         className={`w-full ${isBody ? 'bg-gray-100 text-h2 font-h2 leading-h2 text-[#353942] cursor-not-allowed' : ''}`}
-        allowDecimal={allowDecimal}
+        allowTwoDecimals={true}
         readOnly={isBody}
         textAlign={isBody ? 'left' : 'center'}
       />

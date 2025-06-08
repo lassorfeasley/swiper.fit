@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/common/forms/NumericInput";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/src/components/ui/accordion";
 import WeightCompoundField from "./WeightCompoundField";
+import { Card } from "@/components/ui/card";
+import SetConfigurationCard from './SetConfigurationCard';
+import { Button } from '@/components/ui/button';
 
 const ExerciseSetConfiguration = ({
   onActionIconClick,
@@ -71,29 +74,11 @@ const ExerciseSetConfiguration = ({
 
   // Helper: when editing first set, update all sets that still match the old first set value
   const handleSetChange = (idx, field, value) => {
-    setSetConfigs((prev) => {
-      if (field === "unit") {
-        // Enforce single unit for all sets
-        return prev.map((cfg) => ({ ...cfg, unit: value }));
-      }
-      if (idx === 0) {
-        // Editing the first set: update all sets that match the old first set value
-        const oldFirst = prev[0];
-        return prev.map((cfg, i) => {
-          if (i === 0) return { ...cfg, [field]: value };
-          // Only update if this set matches the old first set value for this field
-          if (cfg[field] === oldFirst[field]) {
-            return { ...cfg, [field]: value };
-          }
-          return cfg;
-        });
-      } else {
-        // Editing a later set: just update that set
-        return prev.map((cfg, i) =>
-          i === idx ? { ...cfg, [field]: value } : cfg
-        );
-      }
-    });
+    setSetConfigs((prev) =>
+      prev.map((cfg, i) =>
+        i === idx ? { ...cfg, [field]: value } : cfg
+      )
+    );
   };
 
   const handleActionIconClick = () => {
@@ -112,17 +97,6 @@ const ExerciseSetConfiguration = ({
     <>
       <SheetHeader>
         <SheetTitle>{formPrompt}</SheetTitle>
-        <SheetFooter>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              onClick={isReady ? handleActionIconClick : undefined}
-              disabled={!isReady}
-            >
-              {isReady ? "Create" : "Close"}
-            </button>
-          </div>
-        </SheetFooter>
       </SheetHeader>
       <div className="w-full flex flex-col gap-0">
         <Input
@@ -147,14 +121,9 @@ const ExerciseSetConfiguration = ({
                   {`Set ${i + 1}`}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <NumericInput
-                    label="Reps"
-                    value={setConfigs[i]?.reps ?? 12}
-                    onChange={(val) => handleSetChange(i, "reps", val)}
-                    incrementing={true}
-                    className="w-full"
-                  />
-                  <WeightCompoundField
+                  <SetConfigurationCard
+                    reps={setConfigs[i]?.reps ?? 12}
+                    onRepsChange={(val) => handleSetChange(i, "reps", val)}
                     weight={setConfigs[i]?.weight ?? 25}
                     onWeightChange={(val) => handleSetChange(i, "weight", val)}
                     unit={setConfigs[i]?.unit ?? "lbs"}
@@ -166,6 +135,13 @@ const ExerciseSetConfiguration = ({
           </Accordion>
         )}
       </div>
+      <Button
+        className="w-full mt-6"
+        onClick={isReady ? handleActionIconClick : undefined}
+        disabled={!isReady}
+      >
+        Done
+      </Button>
     </>
   );
 };
