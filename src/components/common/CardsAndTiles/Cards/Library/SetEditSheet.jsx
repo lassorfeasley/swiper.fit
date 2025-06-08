@@ -6,9 +6,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetFooter,
-} from "../../../../../src/components/ui/sheet";
+} from "../../../../ui/sheet";
 import NumericInput from 'components/common/forms/NumericInput';
-import ToggleGroup from 'components/common/forms/ToggleGroup';
+import { ToggleGroup, ToggleGroupItem } from "../../../../ui/toggle-group";
 
 const SetEditSheet = ({
   isOpen,
@@ -58,15 +58,15 @@ const SetEditSheet = ({
             incrementing={formValues.unit !== 'body'}
           />
           <ToggleGroup
-            options={[
-              { label: 'lbs', value: 'lbs' },
-              { label: 'kg', value: 'kg' },
-              { label: 'body', value: 'body' },
-            ]}
+            type="single"
             value={formValues.unit}
-            onChange={unit => handleFormChange('unit', unit)}
+            onValueChange={unit => unit && handleFormChange('unit', unit)}
             className="w-full bg-white pt-0 pb-3 px-3 gap-3"
-          />
+          >
+            <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
+            <ToggleGroupItem value="kg">kg</ToggleGroupItem>
+            <ToggleGroupItem value="body">body</ToggleGroupItem>
+          </ToggleGroup>
         </div>
         <SheetFooter className="mt-6">
           <button
