@@ -7,8 +7,7 @@ import { supabase } from '../../supabaseClient';
 import AppHeader from '../../components/layout/AppHeader';
 import ExerciseTile from '../../components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
 import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
-
-const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
+import { useAuth } from "@/contexts/AuthContext";
 
 const WorkoutHistoryDetailIndex = () => {
   const { workoutId } = useParams();
@@ -16,10 +15,18 @@ const WorkoutHistoryDetailIndex = () => {
   const [sets, setSets] = useState([]);
   const [exercises, setExercises] = useState({});
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      if (!user) {
+        setWorkout(null);
+        setSets([]);
+        setExercises({});
+        setLoading(false);
+        return;
+      }
       // Fetch workout with program information
       const { data: workoutData } = await supabase
         .from('workouts')
@@ -28,6 +35,7 @@ const WorkoutHistoryDetailIndex = () => {
           programs(program_name)
         `)
         .eq('id', workoutId)
+        .eq('user_id', user.id)
         .single();
       setWorkout(workoutData);
       // Fetch sets for this workout
@@ -54,7 +62,7 @@ const WorkoutHistoryDetailIndex = () => {
       setLoading(false);
     };
     if (workoutId) fetchData();
-  }, [workoutId]);
+  }, [workoutId, user]);
 
   // Group sets by exercise_id
   const setsByExercise = {};

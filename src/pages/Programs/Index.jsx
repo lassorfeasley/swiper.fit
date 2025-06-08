@@ -10,9 +10,11 @@ import ProgramTile from "@/components/common/CardsAndTiles/Tiles/ProgramTile";
 import { useQuery } from "@tanstack/react-query";
 import MainContainer from "@/components/common/MainContainer";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
+  const { user } = useAuth();
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -21,10 +23,16 @@ const ProgramsIndex = () => {
     setPageName("Programs");
     async function fetchPrograms() {
       setLoading(true);
-      // Fetch all programs
+      if (!user) {
+        setPrograms([]);
+        setLoading(false);
+        return;
+      }
+      // Fetch only programs for this user
       const { data: programsData, error } = await supabase
         .from("programs")
         .select("id, program_name, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
         setPrograms([]);
@@ -49,7 +57,7 @@ const ProgramsIndex = () => {
       setLoading(false);
     }
     fetchPrograms();
-  }, [setPageName]);
+  }, [setPageName, user]);
 
   return (
     <div className="flex flex-col h-screen">

@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -46,6 +47,7 @@ const Workout = () => {
   const [openSetIndex, setOpenSetIndex] = useState(null);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Hide/show nav bar based on step
   useEffect(() => {
@@ -58,7 +60,16 @@ const Workout = () => {
     if (step === 'select') {
       setLoading(true);
       (async () => {
-        const { data: programsData, error } = await supabase.from('programs').select('*').order('created_at', { ascending: false });
+        if (!user) {
+          setPrograms([]);
+          setLoading(false);
+          return;
+        }
+        const { data: programsData, error } = await supabase
+          .from('programs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
         if (error || !programsData) {
           setPrograms([]);
           setLoading(false);
@@ -80,7 +91,7 @@ const Workout = () => {
         setLoading(false);
       })();
     }
-  }, [step]);
+  }, [step, user]);
 
   // Fetch exercises for selected program
   useEffect(() => {
@@ -226,7 +237,7 @@ const Workout = () => {
     const workoutData = {
       duration_seconds: timer,
       completed_at: new Date().toISOString(),
-      user_id: 'bed5cb48-0242-4894-b58d-94ac01de22ff',
+      user_id: user.id,
       workout_name: workoutName,
     };
     if (selectedProgram) {

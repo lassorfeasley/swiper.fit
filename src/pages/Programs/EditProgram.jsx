@@ -10,10 +10,12 @@ import AppHeader from "@/components/layout/AppHeader";
 import { PageNameContext } from "@/App";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MetricPill from '../../components/common/CardsAndTiles/MetricPill';
+import { useAuth } from "@/contexts/AuthContext";
 
 const EditProgram = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [program, setProgram] = useState(null);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,11 +33,18 @@ const EditProgram = () => {
     setPageName('EditProgram');
     const fetchData = async () => {
       setLoading(true);
+      if (!user) {
+        setProgram(null);
+        setExercises([]);
+        setLoading(false);
+        return;
+      }
       // Fetch program name
       const { data: programData } = await supabase
         .from('programs')
         .select('id, name')
         .eq('id', programId)
+        .eq('user_id', user.id)
         .single();
       setProgram(programData);
       // Fetch exercises in this program (join with exercises)
@@ -66,7 +75,7 @@ const EditProgram = () => {
       setLoading(false);
     };
     if (programId) fetchData();
-  }, [programId, setPageName]);
+  }, [programId, setPageName, user]);
 
   return (
     <>

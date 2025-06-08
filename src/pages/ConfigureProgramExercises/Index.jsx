@@ -13,12 +13,14 @@ import ToggleGroup from "@/components/common/forms/ToggleGroup";
 import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
 import SetPill from "@/components/common/CardsAndTiles/SetPill";
 import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ConfigureProgramExercisesIndex = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const { setNavBarVisible } = useNavBarVisibility();
   const { setPageName } = useContext(PageNameContext);
+  const { user } = useAuth();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState("");
@@ -57,10 +59,17 @@ const ConfigureProgramExercisesIndex = () => {
   useEffect(() => {
     async function fetchProgramAndExercises() {
       setLoading(true);
+      if (!user) {
+        setProgramName("");
+        setExercises([]);
+        setLoading(false);
+        return;
+      }
       const { data: programData } = await supabase
         .from("programs")
         .select("program_name")
         .eq("id", programId)
+        .eq("user_id", user.id)
         .single();
       setProgramName(programData?.program_name || "");
 
@@ -93,7 +102,7 @@ const ConfigureProgramExercisesIndex = () => {
       isUnmounted.current = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programId]);
+  }, [programId, user]);
 
   const saveOrder = async () => {
     for (let i = 0; i < exercises.length; i++) {

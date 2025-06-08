@@ -9,9 +9,11 @@ import { PageNameContext } from "@/App";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MainContainer from "@/components/common/MainContainer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);
+  const { user } = useAuth();
   const [programName, setProgramName] = useState("");
   const [showAddExercise, setShowAddExercise] = useState(false);
   const inputRef = useRef(null);
@@ -30,10 +32,11 @@ const CreateNewProgram = () => {
   // Handler for when the user submits the first exercise
   const handleAddExercise = async (exerciseData) => {
     try {
+      if (!user) throw new Error("User not authenticated");
       // 1. Insert program
       const { data: program, error: programError } = await supabase
         .from("programs")
-        .insert({ program_name: programName })
+        .insert({ program_name: programName, user_id: user.id })
         .select()
         .single();
       if (programError || !program) throw new Error("Failed to create program");

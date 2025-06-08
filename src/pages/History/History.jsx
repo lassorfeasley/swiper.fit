@@ -9,8 +9,7 @@ import MainContainer from '../../components/common/MainContainer';
 import CardWrapper from '../../components/layout/CardWrapper';
 import WorkoutTile from '../../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
 import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
-
-const userId = 'bed5cb48-0242-4894-b58d-94ac01de22ff'; // Replace with dynamic user id if needed
+import { useAuth } from "@/contexts/AuthContext";
 
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -25,10 +24,16 @@ const Index = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      if (!user) {
+        setWorkouts([]);
+        setLoading(false);
+        return;
+      }
       // Fetch workouts with program information and sets in a single query
       const { data: workoutsData, error } = await supabase
         .from('workouts')
@@ -37,7 +42,7 @@ const Index = () => {
           programs(program_name),
           sets(id, exercise_id)
         `)
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,7 +62,7 @@ const Index = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   return (
     <div className="flex flex-col h-screen">
