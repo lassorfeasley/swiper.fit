@@ -17,7 +17,7 @@ import Icon from '../../components/common/Icon.jsx';
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Workout = () => {
@@ -404,38 +404,37 @@ const Workout = () => {
           <SheetContent className="w-[300px]">
             <SheetHeader>
               <SheetTitle>Add New Exercise</SheetTitle>
+              <SheetDescription>Fill out the details below</SheetDescription>
             </SheetHeader>
-            <div className="w-full flex flex-col gap-0">
-              <div className="bg-white rounded-xl p-4 flex flex-col gap-0">
-                <Input
-                  label="Exercise name"
-                  value={newUnscheduledExerciseName}
-                  onChange={e => setNewUnscheduledExerciseName(e.target.value)}
-                  placeholder="Exercise name"
-                  className="w-full"
-                  autoFocus
-                />
-                <NumericInput
-                  label="Sets"
-                  value={newUnscheduledExerciseSets}
-                  onChange={newSets => setNewUnscheduledExerciseSets(Math.max(0, Number(newSets)))}
-                  incrementing={true}
-                  className="w-full"
-                />
-                <NumericInput
-                  label="Reps"
-                  value={newUnscheduledExerciseReps}
-                  onChange={setNewUnscheduledExerciseReps}
-                  incrementing={true}
-                  className="w-full"
-                />
-                <WeightCompoundField
-                  weight={newUnscheduledExerciseWeight}
-                  onWeightChange={setNewUnscheduledExerciseWeight}
-                  unit={newUnscheduledExerciseUnit}
-                  onUnitChange={setNewUnscheduledExerciseUnit}
-                />
-              </div>
+            <div className="flex flex-col gap-4 mt-4">
+              <Input
+                label="Exercise name"
+                value={newUnscheduledExerciseName}
+                onChange={e => setNewUnscheduledExerciseName(e.target.value)}
+                placeholder="Exercise name"
+                className="w-full"
+                autoFocus
+              />
+              <NumericInput
+                label="Sets"
+                value={newUnscheduledExerciseSets}
+                onChange={newSets => setNewUnscheduledExerciseSets(Math.max(0, Number(newSets)))}
+                incrementing={true}
+                className="w-full"
+              />
+              <NumericInput
+                label="Reps"
+                value={newUnscheduledExerciseReps}
+                onChange={setNewUnscheduledExerciseReps}
+                incrementing={true}
+                className="w-full"
+              />
+              <WeightCompoundField
+                weight={newUnscheduledExerciseWeight}
+                onWeightChange={setNewUnscheduledExerciseWeight}
+                unit={newUnscheduledExerciseUnit}
+                onUnitChange={setNewUnscheduledExerciseUnit}
+              />
               {newUnscheduledExerciseSets > 1 && Array.from({ length: newUnscheduledExerciseSets }, (_, i) => (
                 <SetDropdown
                   key={`set-${i + 1}`}
@@ -455,12 +454,12 @@ const Workout = () => {
               ))}
             </div>
             <SheetFooter>
-              <SheetTitle>Actions</SheetTitle>
-              <SheetFooter>
-                <SheetTitle>
-                  <button onClick={handleAddUnscheduledExercise} style={{ background: 'none', border: 'none', padding: 0 }}><Icon name="arrow_forward" size={32} /></button>
-                </SheetTitle>
-              </SheetFooter>
+              <button
+                className="w-full bg-black text-white px-4 py-2 rounded-lg"
+                onClick={handleAddUnscheduledExercise}
+              >
+                <Icon name="arrow_forward" size={32} />
+              </button>
             </SheetFooter>
           </SheetContent>
         </Sheet>

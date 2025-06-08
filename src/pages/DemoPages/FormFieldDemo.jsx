@@ -75,83 +75,58 @@ const FormFieldDemo = () => {
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
         >
-          <SheetContent className="w-[350px] p-4 space-y-4">
+          <SheetContent className="w-[350px]">
             <SheetHeader>
               <SheetTitle>Form Components Demo</SheetTitle>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Close
-                  </button>
-                </SheetClose>
-              </SheetFooter>
             </SheetHeader>
-            <div className="p-4 space-y-4">
-              {/* Standalone TextField (will have border) */}
+            <div className="flex flex-col gap-4 mt-4">
               <Input
                 label="Standalone Text Field"
                 value={formData.standaloneText}
                 onChange={(e) => setFormData(prev => ({ ...prev, standaloneText: e.target.value }))}
                 placeholder="Enter some text"
               />
-
-              {/* Standalone SearchField */}
               <SearchField
                 label="Search"
                 value={formData.searchText}
                 onChange={(e) => setFormData(prev => ({ ...prev, searchText: e.target.value }))}
                 placeholder="Search..."
               />
-
-              {/* Compound Form Fields (no border) */}
-              <FormProvider>
-                {/* Weight Compound Field */}
-                <WeightCompoundField
-                  weight={formData.weightData.weight}
-                  onWeightChange={(value) => setFormData(prev => ({
-                    ...prev,
-                    weightData: { ...prev.weightData, weight: value }
-                  }))}
-                  unit={formData.weightData.unit}
-                  onUnitChange={(value) => setFormData(prev => ({
-                    ...prev,
-                    weightData: { ...prev.weightData, unit: value }
-                  }))}
-                  weightLabel="Weight Input"
-                />
-
-                {/* Exercise Set Form */}
-                <ExerciseSetForm
-                  setNumber={1}
-                  initialReps={formData.setData.reps}
-                  initialWeight={formData.setData.weight}
-                  initialUnit={formData.setData.unit}
-                  onRepsChange={(value) => handleSetDataChange('reps', value)}
-                  onWeightChange={(value) => handleSetDataChange('weight', value)}
-                  onUnitChange={(value) => handleSetDataChange('unit', value)}
-                />
-
-                {/* Numeric Input */}
-                <NumericInput
-                  label="Numeric Input"
-                  value={formData.numericValue}
-                  onChange={(value) => setFormData(prev => ({ ...prev, numericValue: value }))}
-                  min={0}
-                  max={100}
-                />
-
-                {/* Text Input */}
-                <Input
-                  label="Form Text Field"
-                  value={formData.formText}
-                  onChange={(e) => setFormData(prev => ({ ...prev, formText: e.target.value }))}
-                  placeholder="Enter some text"
-                />
-              </FormProvider>
-
-              {/* Debug Section */}
+              <WeightCompoundField
+                weight={formData.weightData.weight}
+                onWeightChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  weightData: { ...prev.weightData, weight: value }
+                }))}
+                unit={formData.weightData.unit}
+                onUnitChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  weightData: { ...prev.weightData, unit: value }
+                }))}
+                weightLabel="Weight Input"
+              />
+              <ExerciseSetForm
+                setNumber={1}
+                initialReps={formData.setData.reps}
+                initialWeight={formData.setData.weight}
+                initialUnit={formData.setData.unit}
+                onRepsChange={(value) => handleSetDataChange('reps', value)}
+                onWeightChange={(value) => handleSetDataChange('weight', value)}
+                onUnitChange={(value) => handleSetDataChange('unit', value)}
+              />
+              <NumericInput
+                label="Numeric Input"
+                value={formData.numericValue}
+                onChange={(value) => setFormData(prev => ({ ...prev, numericValue: value }))}
+                min={0}
+                max={100}
+              />
+              <Input
+                label="Form Text Field"
+                value={formData.formText}
+                onChange={(e) => setFormData(prev => ({ ...prev, formText: e.target.value }))}
+                placeholder="Enter some text"
+              />
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Current Values:</h3>
                 <pre className="text-sm text-gray-600">
@@ -159,6 +134,14 @@ const FormFieldDemo = () => {
                 </pre>
               </div>
             </div>
+            <SheetFooter>
+              <button
+                className="w-full bg-black text-white px-4 py-2 rounded-lg"
+                onClick={() => setIsFormOpen(false)}
+              >
+                Close
+              </button>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
       </MainContainer>

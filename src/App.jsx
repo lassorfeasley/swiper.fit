@@ -12,9 +12,7 @@ import Programs from "./pages/programs";
 import History from "./pages/history";
 import Workout from "./pages/workout";
 import WorkoutHistoryDetail from "./pages/workoutHistoryDetail";
-import EditProgram from "./pages/Programs/EditProgram";
 import AppHeaderDemo from "./pages/DemoPages/AppHeaderDemo";
-import CreateNewProgram from "./pages/Programs/CreateNewProgram";
 import CreateOrEditExerciseDemo from "./pages/DemoPages/CreateOrEditExerciseDemo";
 import ConfigureProgramExercises from "./pages/Programs/ConfigureProgramExercises";
 import FormFieldDemo from "./pages/DemoPages/FormFieldDemo";
@@ -94,7 +92,6 @@ function AppContent() {
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
     /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname) ||
-    location.pathname === "/create_new_program" ||
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
     location.pathname === "/create-account" ||
@@ -115,11 +112,7 @@ function AppContent() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Home />} />
             <Route path="/programs" element={<Programs />} />
-            <Route path="/programs/:programId/edit" element={<EditProgram />} />
-            <Route
-              path="/programs/:programId/configure"
-              element={<ConfigureProgramExercises />}
-            />
+            <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
             <Route path="/history" element={<History />} />
             <Route
               path="/history/:workoutId"
@@ -128,7 +121,6 @@ function AppContent() {
             <Route path="/workout" element={<Workout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/app-header-demo" element={<AppHeaderDemo />} />
-            <Route path="/create_new_program" element={<CreateNewProgram />} />
             <Route
               path="/create_or_edit_exercise_demo"
               element={<CreateOrEditExerciseDemo />}

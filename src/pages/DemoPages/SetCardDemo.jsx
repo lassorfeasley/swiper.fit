@@ -105,20 +105,15 @@ export default function SetCardDemo() {
         <SheetContent className="w-[300px] sm:w-[425px]">
           <SheetHeader>
             <SheetTitle>Edit set</SheetTitle>
-            <SheetFooter>
-              <SheetClose asChild>
-                <button onClick={() => setShowForm(false)}>Close</button>
-              </SheetClose>
-            </SheetFooter>
           </SheetHeader>
-          <div className="Exampleform self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+          <div className="flex flex-col gap-4 mt-4">
             <NumericInput
               label="Reps"
               value={formValues.reps}
               onChange={v => setFormValues(f => ({ ...f, reps: v }))}
               min={0}
               max={999}
-              className="self-stretch px-4 py-3 bg-white"
+              className="w-full"
             />
             <NumericInput
               label="Weight"
@@ -126,15 +121,23 @@ export default function SetCardDemo() {
               onChange={v => setFormValues(f => ({ ...f, weight: v }))}
               min={0}
               max={999}
-              className="self-stretch px-4 py-3 bg-white"
+              className="w-full"
             />
             <ToggleGroup
               options={unitOptions}
               value={formValues.unit}
               onChange={unit => setFormValues(f => ({ ...f, unit }))}
-              className="self-stretch px-3 pb-3 bg-white gap-3"
+              className="w-full gap-3"
             />
           </div>
+          <SheetFooter>
+            <button
+              className="w-full bg-black text-white px-4 py-2 rounded-lg"
+              onClick={() => setShowForm(false)}
+            >
+              Close
+            </button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
 

@@ -11,12 +11,24 @@ import { useQuery } from "@tanstack/react-query";
 import MainContainer from "@/components/common/MainContainer";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import Icon from "@/components/common/Icon";
+import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
+import { Button } from "@/components/ui/button";
+import NumericInput from "@/components/common/forms/NumericInput";
+import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
+import ToggleGroup from "@/components/common/forms/ToggleGroup";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const { user } = useAuth();
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSheet, setShowSheet] = useState(false);
+  const [programName, setProgramName] = useState("");
+  const [refreshFlag, setRefreshFlag] = useState(0);
+  const inputRef = React.useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,7 +69,30 @@ const ProgramsIndex = () => {
       setLoading(false);
     }
     fetchPrograms();
-  }, [setPageName, user]);
+  }, [setPageName, user, refreshFlag]);
+
+  const handleCreateProgram = async () => {
+    try {
+      if (!user) throw new Error("User not authenticated");
+      // 1. Insert program
+      const { data: program, error: programError } = await supabase
+        .from("programs")
+        .insert({ program_name: programName, user_id: user.id })
+        .select()
+        .single();
+      if (programError || !program) throw new Error("Failed to create program");
+      const program_id = program.id;
+      // Success: close sheet, refresh list, and redirect
+      setShowSheet(false);
+      setProgramName("");
+      setRefreshFlag(f => f + 1);
+      navigate(`/programs/${program_id}/configure`);
+    } catch (err) {
+      alert(err.message || "Failed to create program");
+    }
+  };
+
+  const isReady = programName.trim().length > 0;
 
   return (
     <div className="flex flex-col h-screen">
@@ -70,7 +105,13 @@ const ProgramsIndex = () => {
         subhead={false}
         search={true}
         searchPlaceholder="Search programs"
-        onAction={() => navigate("/create_new_program")}
+        onAction={() => {
+          setShowSheet(true);
+          setProgramName("");
+          setTimeout(() => {
+            if (inputRef.current) inputRef.current.focus();
+          }, 100);
+        }}
         data-component="AppHeader"
       />
       <TileWrapper className="px-4">
@@ -91,6 +132,34 @@ const ProgramsIndex = () => {
           ))
         )}
       </TileWrapper>
+      {/* Sheet for creating a new program */}
+      {showSheet && (
+        <Sheet open={showSheet} onOpenChange={setShowSheet}>
+          <SheetContent className="w-[350px] p-6">
+            <SheetHeader className="text-left items-start">
+              <SheetTitle className="text-left">What should we call this program?</SheetTitle>
+              <SheetDescription className="text-left">Enter program name</SheetDescription>
+            </SheetHeader>
+            <Input
+              label="Program name"
+              value={programName}
+              onChange={e => setProgramName(e.target.value)}
+              placeholder="Enter program name"
+              ref={inputRef}
+              className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
+            />
+            <SheetFooter className="text-left items-start">
+              <Button
+                className="w-full text-left justify-start"
+                disabled={!isReady}
+                onClick={handleCreateProgram}
+              >
+                Create program
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 };

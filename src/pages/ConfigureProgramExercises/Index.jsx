@@ -7,7 +7,7 @@ import { Reorder, useDragControls } from "framer-motion";
 import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import NumericInput from "@/components/common/forms/NumericInput";
 import ToggleGroup from "@/components/common/forms/ToggleGroup";
 import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
@@ -432,29 +432,34 @@ const ConfigureProgramExercisesIndex = () => {
           <SheetContent className="w-[300px]">
             <SheetHeader>
               <SheetTitle>Edit Set</SheetTitle>
+              <SheetDescription>Update set details below</SheetDescription>
             </SheetHeader>
+            <div className="flex flex-col gap-4 mt-4">
+              <NumericInput
+                label="Reps"
+                value={currentSetEditData.reps}
+                onChange={(val) => handleSetEditFormChange("reps", val)}
+                min={0}
+                max={999}
+                className="w-full"
+              />
+              <WeightCompoundField
+                weight={currentSetEditData.weight}
+                onWeightChange={(val) => handleSetEditFormChange("weight", val)}
+                unit={currentSetEditData.unit}
+                onUnitChange={(val) => handleSetEditFormChange("unit", val)}
+                weightLabel="Weight"
+                allowDecimal={true}
+                className="w-full"
+              />
+            </div>
             <SheetFooter>
-              <SheetTitle>
-                <FormGroupWrapper className="flex flex-col gap-0">
-                  <NumericInput
-                    label="Reps"
-                    value={currentSetEditData.reps}
-                    onChange={(val) => handleSetEditFormChange("reps", val)}
-                    min={0}
-                    max={999}
-                    className="w-full"
-                  />
-                  <WeightCompoundField
-                    weight={currentSetEditData.weight}
-                    onWeightChange={(val) => handleSetEditFormChange("weight", val)}
-                    unit={currentSetEditData.unit}
-                    onUnitChange={(val) => handleSetEditFormChange("unit", val)}
-                    weightLabel="Weight"
-                    allowDecimal={true}
-                    className="w-full"
-                  />
-                </FormGroupWrapper>
-              </SheetTitle>
+              <button
+                className="w-full bg-black text-white px-4 py-2 rounded-lg"
+                onClick={handleSaveSetEdit}
+              >
+                Save
+              </button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
