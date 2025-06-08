@@ -17,6 +17,7 @@ import Icon from '../../components/common/Icon.jsx';
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -388,62 +389,70 @@ const Workout = () => {
         </>
       )}
       {showAddUnscheduledForm && (
-        <SlideUpForm
-          formPrompt="Add New Exercise"
-          onOverlayClick={() => setShowAddUnscheduledForm(false)}
-          actionIcon={<button onClick={handleAddUnscheduledExercise} style={{ background: 'none', border: 'none', padding: 0 }}><Icon name="arrow_forward" size={32} /></button>}
-          className="z-[100]"
-        >
-          <div className="w-full flex flex-col gap-0">
-            <div className="bg-white rounded-xl p-4 flex flex-col gap-0">
-              <Input
-                label="Exercise name"
-                value={newUnscheduledExerciseName}
-                onChange={e => setNewUnscheduledExerciseName(e.target.value)}
-                placeholder="Exercise name"
-                className="w-full"
-                autoFocus
-              />
-              <NumericInput
-                label="Sets"
-                value={newUnscheduledExerciseSets}
-                onChange={newSets => setNewUnscheduledExerciseSets(Math.max(0, Number(newSets)))}
-                incrementing={true}
-                className="w-full"
-              />
-              <NumericInput
-                label="Reps"
-                value={newUnscheduledExerciseReps}
-                onChange={setNewUnscheduledExerciseReps}
-                incrementing={true}
-                className="w-full"
-              />
-              <WeightCompoundField
-                weight={newUnscheduledExerciseWeight}
-                onWeightChange={setNewUnscheduledExerciseWeight}
-                unit={newUnscheduledExerciseUnit}
-                onUnitChange={setNewUnscheduledExerciseUnit}
-              />
+        <Sheet open={showAddUnscheduledForm} onOpenChange={setShowAddUnscheduledForm}>
+          <SheetContent className="w-[300px]">
+            <SheetHeader>
+              <SheetTitle>Add New Exercise</SheetTitle>
+            </SheetHeader>
+            <div className="w-full flex flex-col gap-0">
+              <div className="bg-white rounded-xl p-4 flex flex-col gap-0">
+                <Input
+                  label="Exercise name"
+                  value={newUnscheduledExerciseName}
+                  onChange={e => setNewUnscheduledExerciseName(e.target.value)}
+                  placeholder="Exercise name"
+                  className="w-full"
+                  autoFocus
+                />
+                <NumericInput
+                  label="Sets"
+                  value={newUnscheduledExerciseSets}
+                  onChange={newSets => setNewUnscheduledExerciseSets(Math.max(0, Number(newSets)))}
+                  incrementing={true}
+                  className="w-full"
+                />
+                <NumericInput
+                  label="Reps"
+                  value={newUnscheduledExerciseReps}
+                  onChange={setNewUnscheduledExerciseReps}
+                  incrementing={true}
+                  className="w-full"
+                />
+                <WeightCompoundField
+                  weight={newUnscheduledExerciseWeight}
+                  onWeightChange={setNewUnscheduledExerciseWeight}
+                  unit={newUnscheduledExerciseUnit}
+                  onUnitChange={setNewUnscheduledExerciseUnit}
+                />
+              </div>
+              {newUnscheduledExerciseSets > 1 && Array.from({ length: newUnscheduledExerciseSets }, (_, i) => (
+                <SetDropdown
+                  key={`set-${i + 1}`}
+                  setNumber={i + 1}
+                  defaultReps={newUnscheduledExerciseReps}
+                  defaultWeight={newUnscheduledExerciseWeight}
+                  defaultUnit={newUnscheduledExerciseUnit}
+                  isOpen={openSetIndex === i + 1}
+                  onToggle={() => setOpenSetIndex(openSetIndex === i + 1 ? null : i + 1)}
+                  reps={newUnscheduledSetConfigs[i]?.reps}
+                  weight={newUnscheduledSetConfigs[i]?.weight}
+                  unit={newUnscheduledSetConfigs[i]?.unit}
+                  onRepsChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, reps: val } : cfg))}
+                  onWeightChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, weight: val } : cfg))}
+                  onUnitChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, unit: val } : cfg))}
+                />
+              ))}
             </div>
-            {newUnscheduledExerciseSets > 1 && Array.from({ length: newUnscheduledExerciseSets }, (_, i) => (
-              <SetDropdown
-                key={`set-${i + 1}`}
-                setNumber={i + 1}
-                defaultReps={newUnscheduledExerciseReps}
-                defaultWeight={newUnscheduledExerciseWeight}
-                defaultUnit={newUnscheduledExerciseUnit}
-                isOpen={openSetIndex === i + 1}
-                onToggle={() => setOpenSetIndex(openSetIndex === i + 1 ? null : i + 1)}
-                reps={newUnscheduledSetConfigs[i]?.reps}
-                weight={newUnscheduledSetConfigs[i]?.weight}
-                unit={newUnscheduledSetConfigs[i]?.unit}
-                onRepsChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, reps: val } : cfg))}
-                onWeightChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, weight: val } : cfg))}
-                onUnitChange={val => setNewUnscheduledSetConfigs(cfgs => cfgs.map((cfg, idx) => idx === i ? { ...cfg, unit: val } : cfg))}
-              />
-            ))}
-          </div>
-        </SlideUpForm>
+            <SheetFooter>
+              <SheetTitle>Actions</SheetTitle>
+              <SheetFooter>
+                <SheetTitle>
+                  <button onClick={handleAddUnscheduledExercise} style={{ background: 'none', border: 'none', padding: 0 }}><Icon name="arrow_forward" size={32} /></button>
+                </SheetTitle>
+              </SheetFooter>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );

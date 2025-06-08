@@ -7,7 +7,7 @@ import { Reorder, useDragControls } from "framer-motion";
 import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
-import SlideUpForm from "@/components/common/forms/SlideUpForm";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from "@/components/common/forms/NumericInput";
 import ToggleGroup from "@/components/common/forms/ToggleGroup";
 import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
@@ -416,33 +416,39 @@ const ConfigureProgramExercisesIndex = () => {
       </CardWrapper>
 
       {editingSetInfo && currentSetEditData ? (
-        <SlideUpForm
-          formPrompt="Edit Set"
-          isOpen={editingSetInfo !== null}
-          onOverlayClick={() => setEditingSetInfo(null)}
-          onActionIconClick={handleSaveSetEdit}
-          isReady={true}
+        <Sheet
+          open={editingSetInfo !== null}
+          onOpenChange={() => setEditingSetInfo(null)}
         >
-          <FormGroupWrapper className="flex flex-col gap-0">
-            <NumericInput
-              label="Reps"
-              value={currentSetEditData.reps}
-              onChange={(val) => handleSetEditFormChange("reps", val)}
-              min={0}
-              max={999}
-              className="w-full"
-            />
-            <WeightCompoundField
-              weight={currentSetEditData.weight}
-              onWeightChange={(val) => handleSetEditFormChange("weight", val)}
-              unit={currentSetEditData.unit}
-              onUnitChange={(val) => handleSetEditFormChange("unit", val)}
-              weightLabel="Weight"
-              allowDecimal={true}
-              className="w-full"
-            />
-          </FormGroupWrapper>
-        </SlideUpForm>
+          <SheetContent className="w-[300px]">
+            <SheetHeader>
+              <SheetTitle>Edit Set</SheetTitle>
+            </SheetHeader>
+            <SheetFooter>
+              <SheetTitle>
+                <FormGroupWrapper className="flex flex-col gap-0">
+                  <NumericInput
+                    label="Reps"
+                    value={currentSetEditData.reps}
+                    onChange={(val) => handleSetEditFormChange("reps", val)}
+                    min={0}
+                    max={999}
+                    className="w-full"
+                  />
+                  <WeightCompoundField
+                    weight={currentSetEditData.weight}
+                    onWeightChange={(val) => handleSetEditFormChange("weight", val)}
+                    unit={currentSetEditData.unit}
+                    onUnitChange={(val) => handleSetEditFormChange("unit", val)}
+                    weightLabel="Weight"
+                    allowDecimal={true}
+                    className="w-full"
+                  />
+                </FormGroupWrapper>
+              </SheetTitle>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       ) : (
         (showAddExercise || editingExercise) && (
           <ExerciseSetConfiguration

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import SetCard from '@/components/common/CardsAndTiles/Cards/Library/SetCard';
 import SetPill from '@/components/common/CardsAndTiles/SetPill';
-import SlideUpForm from '@/components/common/forms/SlideUpForm';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from '@/components/common/forms/NumericInput';
 import ToggleGroup from '@/components/common/forms/ToggleGroup';
 
@@ -100,39 +100,43 @@ export default function SetCardDemo() {
         </div>
       </div>
 
-      {/* SlideUpForm Demo */}
-      <SlideUpForm
-        isOpen={showForm}
-        formPrompt="Edit set"
-        onOverlayClick={() => setShowForm(false)}
-        onActionIconClick={() => setShowForm(false)}
-        isReady={true}
-      >
-        <div className="Exampleform self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-          <NumericInput
-            label="Reps"
-            value={formValues.reps}
-            onChange={v => setFormValues(f => ({ ...f, reps: v }))}
-            min={0}
-            max={999}
-            className="self-stretch px-4 py-3 bg-white"
-          />
-          <NumericInput
-            label="Weight"
-            value={formValues.weight || 0}
-            onChange={v => setFormValues(f => ({ ...f, weight: v }))}
-            min={0}
-            max={999}
-            className="self-stretch px-4 py-3 bg-white"
-          />
-          <ToggleGroup
-            options={unitOptions}
-            value={formValues.unit}
-            onChange={unit => setFormValues(f => ({ ...f, unit }))}
-            className="self-stretch px-3 pb-3 bg-white gap-3"
-          />
-        </div>
-      </SlideUpForm>
+      {/* Sheet-based modal */}
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+        <SheetContent className="w-[300px] sm:w-[425px]">
+          <SheetHeader>
+            <SheetTitle>Edit set</SheetTitle>
+            <SheetFooter>
+              <SheetClose asChild>
+                <button onClick={() => setShowForm(false)}>Close</button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetHeader>
+          <div className="Exampleform self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+            <NumericInput
+              label="Reps"
+              value={formValues.reps}
+              onChange={v => setFormValues(f => ({ ...f, reps: v }))}
+              min={0}
+              max={999}
+              className="self-stretch px-4 py-3 bg-white"
+            />
+            <NumericInput
+              label="Weight"
+              value={formValues.weight || 0}
+              onChange={v => setFormValues(f => ({ ...f, weight: v }))}
+              min={0}
+              max={999}
+              className="self-stretch px-4 py-3 bg-white"
+            />
+            <ToggleGroup
+              options={unitOptions}
+              value={formValues.unit}
+              onChange={unit => setFormValues(f => ({ ...f, unit }))}
+              className="self-stretch px-3 pb-3 bg-white gap-3"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <div style={{ marginTop: 24 }}>
         <h4>Completion Log:</h4>

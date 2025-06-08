@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, useContext } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import SlideUpForm from "@/components/common/forms/SlideUpForm";
 import { Input } from "@/components/ui/input";
 import Icon from "@/components/common/Icon";
 import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
@@ -9,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MainContainer from "@/components/common/MainContainer";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
 const CreateNewProgram = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -114,33 +114,47 @@ const CreateNewProgram = () => {
           {/* (Removed placeholder text) */}
         </div>
         {/* Modal overlay on top of the page */}
-        <SlideUpForm
-          formPrompt="What should we call this program?"
-          isOpen={showFocusForm}
-          onOverlayClick={() => setShowAddExercise(false)}
-          actionIcon={
-            <Icon
-              name="arrow_forward"
-              variant="outlined"
-              size={32}
-              className={isReady ? "text-black" : "text-gray-300"}
-            />
-          }
-          onActionIconClick={
-            isReady ? () => setShowAddExercise(true) : undefined
-          }
+        <Sheet
+          open={showFocusForm}
+          onOpenChange={() => setShowAddExercise(false)}
         >
-          <div className="w-full outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
-            <Input
-              label="Program name"
-              value={programName}
-              onChange={(e) => setProgramName(e.target.value)}
-              placeholder="Enter program name"
-              inputRef={inputRef}
-              className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300"
-            />
-          </div>
-        </SlideUpForm>
+          <SheetContent className="w-[300px] p-0">
+            <SheetHeader className="px-3">
+              <SheetTitle className="text-sm font-medium">
+                What should we call this program?
+              </SheetTitle>
+            </SheetHeader>
+            <div className="w-full outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
+              <Input
+                label="Program name"
+                value={programName}
+                onChange={(e) => setProgramName(e.target.value)}
+                placeholder="Enter program name"
+                inputRef={inputRef}
+                className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300"
+              />
+            </div>
+            <SheetFooter className="flex justify-end">
+              <SheetTitle className="text-sm font-medium">
+                {isReady ? (
+                  <Icon
+                    name="arrow_forward"
+                    variant="outlined"
+                    size={32}
+                    className="text-black"
+                  />
+                ) : (
+                  <Icon
+                    name="arrow_forward"
+                    variant="outlined"
+                    size={32}
+                    className="text-gray-300"
+                  />
+                )}
+              </SheetTitle>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
         {showAddExercise && (
           <ExerciseSetConfiguration
             formPrompt="Add your first exercise"
