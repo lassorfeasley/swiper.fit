@@ -30,6 +30,7 @@ import SwipeSwitchDemo from "./pages/DemoPages/SwipeSwitchDemo";
 import Login from "./pages/Login";
 import RequireAuth from "./components/RequireAuth";
 import CreateAccount from "./pages/CreateAccount";
+import PasswordReset from "./pages/PasswordReset";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -94,7 +95,8 @@ function AppContent() {
     location.pathname === "/create_new_program" ||
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
-    location.pathname === "/create-account";
+    location.pathname === "/create-account" ||
+    location.pathname === "/reset-password";
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -104,6 +106,7 @@ function AppContent() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/create-account" element={<CreateAccount />} />
+          <Route path="/reset-password" element={<PasswordReset />} />
 
           {/* Protected routes wrapper */}
           <Route element={<RequireAuth />}>

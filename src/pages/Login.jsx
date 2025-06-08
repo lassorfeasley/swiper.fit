@@ -91,7 +91,10 @@ export default function Login() {
               <div className="text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
                 Password
               </div>
-              <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer">
+              <div
+                className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
+                onClick={() => navigate('/reset-password')}
+              >
                 Forgot your password?
               </div>
             </div>
