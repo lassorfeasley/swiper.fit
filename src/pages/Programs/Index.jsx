@@ -3,10 +3,14 @@
 import React, { useEffect, useState, useContext } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
-import AppHeader from "../../components/layout/AppHeader";
+import AppHeader from "@/components/layout/AppHeader";
 import { PageNameContext } from "../../App";
-import TileWrapper from "../../components/common/CardsAndTiles/Tiles/TileWrapper";
-import ProgramTile from "../../components/common/CardsAndTiles/Tiles/ProgramTile";
+import TileWrapper from "@/components/common/CardsAndTiles/Tiles/TileWrapper";
+import ProgramTile from "@/components/common/CardsAndTiles/Tiles/ProgramTile";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import MainContainer from "@/components/common/MainContainer";
+import { useNavBarVisibility } from "../../NavBarVisibilityContext";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);

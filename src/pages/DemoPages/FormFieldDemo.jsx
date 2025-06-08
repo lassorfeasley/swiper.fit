@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import SlideUpForm from '../../components/common/forms/SlideUpForm';
+import SlideUpForm from '@/components/common/forms/SlideUpForm';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import AppHeader from '../../components/layout/AppHeader';
-import MainContainer from '../../components/common/MainContainer';
+import AppHeader from '@/components/layout/AppHeader';
+import MainContainer from '@/components/common/MainContainer';
 import { useNavBarVisibility } from '../../NavBarVisibilityContext';
 import ExerciseSetForm from '../../components/common/forms/compound-fields/ExerciseSetForm';
-import NumericInput from '../../components/common/forms/NumericInput';
-import { Input } from "components/ui/input";
+import NumericInput from '@/components/common/forms/NumericInput';
+import { Input } from "@/components/ui/input";
 import Dropdown from '../../components/common/forms/Dropdown';
 import SearchField from '../../components/common/forms/SearchField';
 import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
+import ToggleGroup from "@/components/common/forms/ToggleGroup";
 
 const FormFieldDemo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);

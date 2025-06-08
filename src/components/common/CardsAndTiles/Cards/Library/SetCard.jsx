@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import SwipeSwitch from 'components/workout/SwipeSwitch';
-import MetricPill from 'components/common/CardsAndTiles/MetricPill';
-import SetPill from 'components/common/CardsAndTiles/SetPill';
+import SwipeSwitch from '@/components/workout/SwipeSwitch';
+import MetricPill from '@/components/common/CardsAndTiles/MetricPill';
+import SetPill from '@/components/common/CardsAndTiles/SetPill';
 import SetEditSheet from './SetEditSheet';
-import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
-import NumericInput from 'components/common/forms/NumericInput';
-import Icon from 'components/common/Icon';
+import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
+import NumericInput from '@/components/common/forms/NumericInput';
+import Icon from '@/components/common/Icon';
 import PropTypes from 'prop-types';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/solid';
-import ToggleGroup from 'components/common/forms/ToggleGroup';
+import ToggleGroup from '@/components/common/forms/ToggleGroup';
 
 const SetCard = ({ 
   exerciseName = 'Military press', 

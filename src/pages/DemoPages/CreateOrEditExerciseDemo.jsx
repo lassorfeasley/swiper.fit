@@ -1,8 +1,10 @@
 import React, { useEffect } from "react";
-import AppHeader from "../../components/layout/AppHeader";
-import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
+import AppHeader from "@/components/layout/AppHeader";
+import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "../../NavBarVisibilityContext";
-import CardWrapper from "../../components/common/CardsAndTiles/Cards/CardWrapper";
+import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
+import MainContainer from "@/components/common/MainContainer";
+import { useState } from "react";
 
 const CreateOrEditExerciseDemo = () => {
   const { setNavBarVisible } = useNavBarVisibility();

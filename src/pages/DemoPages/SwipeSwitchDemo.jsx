@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SwipeSwitch from 'components/workout/SwipeSwitch';
+import SwipeSwitch from '@/components/workout/SwipeSwitch';
 
 export default function SwipeSwitchDemo() {
   const [status, setStatus] = useState('locked');

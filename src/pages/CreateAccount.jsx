@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
-import { Input } from "components/ui/input";
-import { Button } from "components/ui/button";
+import { supabase } from "@/supabaseClient";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { Card, CardContent } from "components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import AppHeader from "@/components/layout/AppHeader";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");

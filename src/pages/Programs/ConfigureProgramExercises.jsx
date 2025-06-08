@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import AppHeader from "../../components/layout/AppHeader";
-import CardWrapper from "../../components/common/CardsAndTiles/Cards/CardWrapper";
-import { Reorder } from "framer-motion";
-import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
+import AppHeader from "@/components/layout/AppHeader";
+import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
+import { Reorder, useDragControls } from "framer-motion";
+import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "../../NavBarVisibilityContext";
 import { PageNameContext } from "../../App";
+import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();

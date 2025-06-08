@@ -15,7 +15,8 @@ import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper
 import { useNavBarVisibility } from '../../NavBarVisibilityContext.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { useNavigate } from 'react-router-dom';
-import { Input } from "components/ui/input";
+import { Input } from "@/components/ui/input";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import SlideUpForm from "../SlideUpForm";
-import { Input } from "components/ui/input";
+import { Input } from "@/components/ui/input";
 import NumericInput from "../NumericInput";
 import SetDropdown from "./SetDropdown";
 import FormGroupWrapper from "../FormWrappers/FormGroupWrapper";

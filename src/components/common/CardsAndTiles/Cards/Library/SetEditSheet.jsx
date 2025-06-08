@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetFooter,
 } from "../../../../ui/sheet";
-import NumericInput from 'components/common/forms/NumericInput';
+import NumericInput from "@/components/common/forms/NumericInput";
 import { ToggleGroup, ToggleGroupItem } from "../../../../ui/toggle-group";
 
 const SetEditSheet = ({

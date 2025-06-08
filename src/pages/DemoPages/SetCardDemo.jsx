@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import SetCard from 'components/common/CardsAndTiles/Cards/Library/SetCard';
-import SetPill from 'components/common/CardsAndTiles/SetPill';
-import SlideUpForm from 'components/common/forms/SlideUpForm';
-import NumericInput from 'components/common/forms/NumericInput';
-import ToggleGroup from 'components/common/forms/ToggleGroup';
+import SetCard from '@/components/common/CardsAndTiles/Cards/Library/SetCard';
+import SetPill from '@/components/common/CardsAndTiles/SetPill';
+import SlideUpForm from '@/components/common/forms/SlideUpForm';
+import NumericInput from '@/components/common/forms/NumericInput';
+import ToggleGroup from '@/components/common/forms/ToggleGroup';
 
 const initialSetConfigs = [
   { reps: 10, weight: 25, unit: 'lbs' },

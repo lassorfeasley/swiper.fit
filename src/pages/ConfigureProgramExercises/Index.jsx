@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import AppHeader from "../../components/layout/AppHeader";
-import CardWrapper from "../../components/common/CardsAndTiles/Cards/CardWrapper";
+import AppHeader from "@/components/layout/AppHeader";
+import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import { Reorder, useDragControls } from "framer-motion";
-import ExerciseSetConfiguration from "../../components/common/forms/compound-fields/ExerciseSetConfiguration";
+import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "../../NavBarVisibilityContext";
 import { PageNameContext } from "../../App";
-import SlideUpForm from "../../components/common/forms/SlideUpForm";
-import NumericInput from "../../components/common/forms/NumericInput";
-import ToggleGroup from "../../components/common/forms/ToggleGroup";
-import FormGroupWrapper from "../../components/common/forms/FormWrappers/FormGroupWrapper";
-import SetPill from "../../components/common/CardsAndTiles/SetPill";
-import WeightCompoundField from "../../components/common/forms/compound-fields/WeightCompoundField";
+import SlideUpForm from "@/components/common/forms/SlideUpForm";
+import NumericInput from "@/components/common/forms/NumericInput";
+import ToggleGroup from "@/components/common/forms/ToggleGroup";
+import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
+import SetPill from "@/components/common/CardsAndTiles/SetPill";
+import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
 
 const ConfigureProgramExercisesIndex = () => {
   const { programId } = useParams();
