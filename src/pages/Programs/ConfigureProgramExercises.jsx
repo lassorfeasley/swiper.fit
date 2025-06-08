@@ -8,6 +8,7 @@ import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();
@@ -305,17 +306,17 @@ const ConfigureProgramExercises = () => {
         )}
       </CardWrapper>
       {(showAddExercise || editingExercise) && (
-        <ExerciseSetConfiguration
-          formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-          onActionIconClick={
-            showAddExercise ? handleAddExercise : handleEditExercise
-          }
-          initialName={editingExercise?.name}
-          initialSets={editingExercise?.setConfigs?.length}
-          initialSetConfigs={editingExercise?.setConfigs}
-          onOverlayClick={handleModalClose}
-          isOpen={true}
-        />
+        <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
+          <SheetContent>
+            <ExerciseSetConfiguration
+              formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+              onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+              initialName={editingExercise?.name}
+              initialSets={editingExercise?.setConfigs?.length}
+              initialSetConfigs={editingExercise?.setConfigs}
+            />
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );

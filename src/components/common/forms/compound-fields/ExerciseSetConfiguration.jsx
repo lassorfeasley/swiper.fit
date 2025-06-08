@@ -109,60 +109,58 @@ const ExerciseSetConfiguration = ({
   };
 
   return (
-    <Sheet>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>{formPrompt}</SheetTitle>
-          <SheetFooter>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                onClick={isReady ? handleActionIconClick : undefined}
-                disabled={!isReady}
-              >
-                {isReady ? "Create" : "Close"}
-              </button>
-            </div>
-          </SheetFooter>
-        </SheetHeader>
-        <div className="w-full flex flex-col gap-0">
-          <FormGroupWrapper>
-            <Input
-              type="text"
-              value={exerciseName}
-              onChange={(e) => setExerciseName(e.target.value)}
-              placeholder="Enter exercise name"
-              className="w-full"
+    <>
+      <SheetHeader>
+        <SheetTitle>{formPrompt}</SheetTitle>
+        <SheetFooter>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              onClick={isReady ? handleActionIconClick : undefined}
+              disabled={!isReady}
+            >
+              {isReady ? "Create" : "Close"}
+            </button>
+          </div>
+        </SheetFooter>
+      </SheetHeader>
+      <div className="w-full flex flex-col gap-0">
+        <FormGroupWrapper>
+          <Input
+            type="text"
+            value={exerciseName}
+            onChange={(e) => setExerciseName(e.target.value)}
+            placeholder="Enter exercise name"
+            className="w-full"
+          />
+          <NumericInput
+            label="Sets"
+            value={sets}
+            onChange={(newSets) => setSets(Math.max(0, Number(newSets)))}
+            incrementing={true}
+            className="w-full"
+          />
+        </FormGroupWrapper>
+        {sets > 0 &&
+          Array.from({ length: sets }, (_, i) => (
+            <SetDropdown
+              key={`set-${i}`}
+              setNumber={i + 1}
+              defaultReps={setConfigs[0]?.reps ?? 12}
+              defaultWeight={setConfigs[0]?.weight ?? 25}
+              defaultUnit={setConfigs[0]?.unit ?? "lbs"}
+              isOpen={openSetIndex === i}
+              onToggle={() => setOpenSetIndex(openSetIndex === i ? null : i)}
+              reps={setConfigs[i]?.reps ?? 12}
+              weight={setConfigs[i]?.weight ?? 25}
+              unit={setConfigs[i]?.unit ?? "lbs"}
+              onRepsChange={(val) => handleSetChange(i, "reps", val)}
+              onWeightChange={(val) => handleSetChange(i, "weight", val)}
+              onUnitChange={(val) => handleSetChange(i, "unit", val)}
             />
-            <NumericInput
-              label="Sets"
-              value={sets}
-              onChange={(newSets) => setSets(Math.max(0, Number(newSets)))}
-              incrementing={true}
-              className="w-full"
-            />
-          </FormGroupWrapper>
-          {sets > 0 &&
-            Array.from({ length: sets }, (_, i) => (
-              <SetDropdown
-                key={`set-${i}`}
-                setNumber={i + 1}
-                defaultReps={setConfigs[0]?.reps ?? 12}
-                defaultWeight={setConfigs[0]?.weight ?? 25}
-                defaultUnit={setConfigs[0]?.unit ?? "lbs"}
-                isOpen={openSetIndex === i}
-                onToggle={() => setOpenSetIndex(openSetIndex === i ? null : i)}
-                reps={setConfigs[i]?.reps ?? 12}
-                weight={setConfigs[i]?.weight ?? 25}
-                unit={setConfigs[i]?.unit ?? "lbs"}
-                onRepsChange={(val) => handleSetChange(i, "reps", val)}
-                onWeightChange={(val) => handleSetChange(i, "weight", val)}
-                onUnitChange={(val) => handleSetChange(i, "unit", val)}
-              />
-            ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+          ))}
+      </div>
+    </>
   );
 };
 
