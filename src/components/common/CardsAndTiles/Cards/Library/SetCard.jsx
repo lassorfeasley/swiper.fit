@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import SwipeSwitch from 'components/workout/SwipeSwitch';
 import MetricPill from 'components/common/CardsAndTiles/MetricPill';
 import SetPill from 'components/common/CardsAndTiles/SetPill';
-import SlideUpForm from 'components/common/forms/SlideUpForm';
+import SetEditSheet from './SetEditSheet';
 import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
 import NumericInput from 'components/common/forms/NumericInput';
 import Icon from 'components/common/Icon';
@@ -25,6 +25,7 @@ const SetCard = ({
   const [editValue, setEditValue] = useState('');
   const [editingSetIdx, setEditingSetIdx] = useState(null);
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: 'lbs' });
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
 
   // Create sets array from setConfigs and setData
   const sets = setConfigs.map((config, i) => {
@@ -164,18 +165,15 @@ const SetCard = ({
     const set = sets[idx];
     setEditForm({ reps: set.reps, weight: set.weight, unit: set.unit });
     setEditingSetIdx(idx);
+    setIsEditSheetOpen(true);
   };
 
-  const handleEditFormChange = (field, value) => {
-    setEditForm(f => ({ ...f, [field]: value }));
-  };
-
-  const handleEditFormSave = () => {
-    if (editingSetIdx !== null && onSetDataChange) {
-      const setId = sets[editingSetIdx].id;
-      onSetDataChange(exerciseId, setId, 'reps', editForm.reps);
-      onSetDataChange(exerciseId, setId, 'weight', editForm.weight);
-      onSetDataChange(exerciseId, setId, 'unit', editForm.unit);
+  const handleEditFormSave = (formValues) => {
+    if (editingSetIdx === null) return;
+    if (onSetDataChange) {
+      onSetDataChange(exerciseId, sets[editingSetIdx].id, 'reps', formValues.reps);
+      onSetDataChange(exerciseId, sets[editingSetIdx].id, 'weight', formValues.weight);
+      onSetDataChange(exerciseId, sets[editingSetIdx].id, 'unit', formValues.unit);
     }
     setEditingSetIdx(null);
   };
@@ -239,43 +237,13 @@ const SetCard = ({
             ))}
           </div>
         </div>
-        <SlideUpForm
-          isOpen={editingSetIdx !== null}
+        <SetEditSheet
+          isOpen={isEditSheetOpen}
+          onOpenChange={setIsEditSheetOpen}
           formPrompt="Edit set"
-          onOverlayClick={() => setEditingSetIdx(null)}
-          onActionIconClick={handleEditFormSave}
-          isReady={true}
-        >
-          <div className="Exampleform self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-            <NumericInput
-              label="Reps"
-              value={editForm.reps}
-              onChange={v => handleEditFormChange('reps', v)}
-              min={0}
-              max={999}
-              className="self-stretch"
-            />
-            <NumericInput
-              label="Weight"
-              value={editForm.weight !== undefined && editForm.unit !== 'body' ? editForm.weight : (editForm.unit === 'body' ? 'body' : 0) }
-              onChange={v => handleEditFormChange('weight', v)}
-              min={0}
-              max={999}
-              className="self-stretch"
-              incrementing={editForm.unit !== 'body'}
-            />
-            <ToggleGroup
-              options={[
-                { label: 'lbs', value: 'lbs' },
-                { label: 'kg', value: 'kg' },
-                { label: 'body', value: 'body' },
-              ]}
-              value={editForm.unit}
-              onChange={unit => handleEditFormChange('unit', unit)}
-              className="self-stretch bg-white pt-0 pb-3 px-3 gap-3"
-            />
-          </div>
-        </SlideUpForm>
+          onSave={handleEditFormSave}
+          initialValues={editForm}
+        />
       </>
     );
   }
@@ -318,43 +286,13 @@ const SetCard = ({
           ))}
         </div>
       </div>
-      <SlideUpForm
-        isOpen={editingSetIdx !== null}
+      <SetEditSheet
+        isOpen={isEditSheetOpen}
+        onOpenChange={setIsEditSheetOpen}
         formPrompt="Edit set"
-        onOverlayClick={() => setEditingSetIdx(null)}
-        onActionIconClick={handleEditFormSave}
-        isReady={true}
-      >
-        <div className="Exampleform self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-          <NumericInput
-            label="Reps"
-            value={editForm.reps}
-            onChange={v => handleEditFormChange('reps', v)}
-            min={0}
-            max={999}
-            className="self-stretch"
-          />
-          <NumericInput
-            label="Weight"
-            value={editForm.weight !== undefined && editForm.unit !== 'body' ? editForm.weight : (editForm.unit === 'body' ? 'body' : 0) }
-            onChange={v => handleEditFormChange('weight', v)}
-            min={0}
-            max={999}
-            className="self-stretch"
-            incrementing={editForm.unit !== 'body'}
-          />
-          <ToggleGroup
-            options={[
-              { label: 'lbs', value: 'lbs' },
-              { label: 'kg', value: 'kg' },
-              { label: 'body', value: 'body' },
-            ]}
-            value={editForm.unit}
-            onChange={unit => handleEditFormChange('unit', unit)}
-            className="self-stretch bg-white pt-0 pb-3 px-3 gap-3"
-          />
-        </div>
-      </SlideUpForm>
+        onSave={handleEditFormSave}
+        initialValues={editForm}
+      />
     </>
   );
 };
