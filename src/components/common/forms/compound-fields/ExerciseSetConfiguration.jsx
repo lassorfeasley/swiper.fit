@@ -3,7 +3,8 @@ import PropTypes from "prop-types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/common/forms/NumericInput";
-import SetDropdown from "./SetDropdown";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/src/components/ui/accordion";
+import WeightCompoundField from "./WeightCompoundField";
 import FormGroupWrapper from "@/components/common/forms/FormWrappers/FormGroupWrapper";
 
 const ExerciseSetConfiguration = ({
@@ -141,24 +142,34 @@ const ExerciseSetConfiguration = ({
             className="w-full"
           />
         </FormGroupWrapper>
-        {sets > 0 &&
-          Array.from({ length: sets }, (_, i) => (
-            <SetDropdown
-              key={`set-${i}`}
-              setNumber={i + 1}
-              defaultReps={setConfigs[0]?.reps ?? 12}
-              defaultWeight={setConfigs[0]?.weight ?? 25}
-              defaultUnit={setConfigs[0]?.unit ?? "lbs"}
-              isOpen={openSetIndex === i}
-              onToggle={() => setOpenSetIndex(openSetIndex === i ? null : i)}
-              reps={setConfigs[i]?.reps ?? 12}
-              weight={setConfigs[i]?.weight ?? 25}
-              unit={setConfigs[i]?.unit ?? "lbs"}
-              onRepsChange={(val) => handleSetChange(i, "reps", val)}
-              onWeightChange={(val) => handleSetChange(i, "weight", val)}
-              onUnitChange={(val) => handleSetChange(i, "unit", val)}
-            />
-          ))}
+        {sets > 0 && (
+          <Accordion type="single" collapsible className="w-full mt-4">
+            {Array.from({ length: sets }, (_, i) => (
+              <AccordionItem key={`set-${i}`} value={`set-${i}`}>
+                <AccordionTrigger>
+                  {`Set ${i + 1}`}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <FormGroupWrapper>
+                    <NumericInput
+                      label="Reps"
+                      value={setConfigs[i]?.reps ?? 12}
+                      onChange={(val) => handleSetChange(i, "reps", val)}
+                      incrementing={true}
+                      className="w-full"
+                    />
+                    <WeightCompoundField
+                      weight={setConfigs[i]?.weight ?? 25}
+                      onWeightChange={(val) => handleSetChange(i, "weight", val)}
+                      unit={setConfigs[i]?.unit ?? "lbs"}
+                      onUnitChange={(val) => handleSetChange(i, "unit", val)}
+                    />
+                  </FormGroupWrapper>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </div>
     </>
   );
