@@ -3,11 +3,17 @@ import { supabase } from "../supabaseClient";
 import { Input } from "components/ui/input";
 import { Button } from "components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import AppHeader from "../components/layout/AppHeader";
+import { Alert, AlertDescription } from "components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { Card, CardContent } from "components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
   const signupMutation = useMutation({
     mutationFn: async ({ email, password }) => {
@@ -15,7 +21,13 @@ export default function CreateAccount() {
       if (error) throw error;
       return data;
     },
+    onSuccess: () => {
+      setErrorMessage("");
+      setSuccessMessage("Check your email to confirm your account.");
+    },
     onError: (error) => {
+      setErrorMessage(error.message);
+      setSuccessMessage("");
       console.error("Signup error:", error);
     },
   });
@@ -26,41 +38,60 @@ export default function CreateAccount() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <AppHeader
-        appHeaderTitle="Create account"
-        subheadText="Create an account"
-        showBackButton={true}
-        showActionBar={false}
-        showActionIcon={false}
-        subhead={true}
-        search={false}
-        onBack={() => window.history.back()}
-      />
-      <div className="absolute top-0 left-0 w-full h-full z-0 flex flex-col justify-center items-center">
-        <div className="flex flex-col gap-4 w-full px-4 lg:w-1/3">
-          <div className="mb-4">
-            <Input
-              type="email"
-              id="create-account-email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={signupMutation.isPending}
-              className="bg-white"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="flex flex-col gap-5 p-5">
+          {/* Header row */}
+          <div className="self-stretch inline-flex justify-between items-center">
+            <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9">
+              Create an account
+            </div>
+            <div
+              className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
+              onClick={() => navigate('/login')}
+            >
+              Log in
+            </div>
           </div>
-          <div className="mb-4">
-            <Input
-              type="password"
-              id="create-account-password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={signupMutation.isPending}
-              className="bg-white"
-            />
+          {/* Email field label */}
+          <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+            <div className="self-stretch inline-flex justify-between items-start">
+              <div className="flex-1 text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                Email
+              </div>
+            </div>
+            <div className="mb-4 w-full">
+              <Input
+                type="email"
+                id="create-account-email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={signupMutation.isPending}
+                className="w-full bg-white"
+              />
+            </div>
           </div>
+          {/* Password field label */}
+          <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+            <div className="self-stretch inline-flex justify-between items-start">
+              <div className="text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                Password
+              </div>
+            </div>
+            <div className="mb-4 w-full">
+              <Input
+                type="password"
+                id="create-account-password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={signupMutation.isPending}
+                className="w-full bg-white"
+              />
+            </div>
+          </div>
+          {/* Create Account button */}
           <Button
             type="submit"
             data-layer="Button"
@@ -68,22 +99,10 @@ export default function CreateAccount() {
             className="w-full h-[56px]"
             onClick={handleSignup}
           >
-            {signupMutation.isPending
-              ? "Creating Account..."
-              : "Create Account"}
+            {signupMutation.isPending ? "Creating Account..." : "Create Account"}
           </Button>
-        </div>
-        {signupMutation.isError && (
-          <div style={{ color: "red", width: "100%" }}>
-            {signupMutation.error.message}
-          </div>
-        )}
-        {signupMutation.isSuccess && (
-          <div style={{ color: "green", width: "100%" }}>
-            Check your email to confirm your account.
-          </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

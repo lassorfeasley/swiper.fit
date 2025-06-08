@@ -4,13 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "components/ui/input";
 import { Button } from "components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import AppHeader from "../components/layout/AppHeader";
+import { Alert, AlertDescription } from "components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Card, CardContent } from "components/ui/card";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const loginMutation = useMutation({
@@ -25,6 +28,7 @@ export default function Login() {
     onSuccess: () => {
       setEmailError(false);
       setPasswordError(false);
+      setErrorMessage("");
       navigate("/");
     },
     onError: (error) => {
@@ -36,6 +40,7 @@ export default function Login() {
         msg.includes("password") ||
           (!msg.includes("email") && !msg.includes("password"))
       );
+      setErrorMessage(error.message);
       console.error("Login error:", error);
     },
   });
@@ -46,44 +51,63 @@ export default function Login() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <AppHeader
-        appHeaderTitle="Sign in"
-        subheadText="Login or create an account"
-        showBackButton={true}
-        showActionBar={false}
-        showActionIcon={false}
-        subhead={true}
-        search={false}
-        onBack={() => navigate(-1)}
-      />
-      <div className="absolute top-0 left-0 w-full h-full z-0 flex flex-col justify-center items-center">
-        <div className="flex flex-col gap-4 w-full px-4 lg:w-1/3">
-          <div className="mb-4">
-            <Input
-              type="email"
-              id="login-email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loginMutation.isPending}
-              className={`bg-white${emailError ? " border-red-500" : ""}`}
-            />
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="flex flex-col gap-5 p-5">
+          {/* Header row */}
+          <div className="self-stretch inline-flex justify-between items-center">
+            <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9">
+              Login to your account
+            </div>
+            <div
+              className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
+              onClick={() => navigate('/create-account')}
+            >
+              Sign up
+            </div>
           </div>
-          <div className="mb-4">
-            <Input
-              type="password"
-              id="login-password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loginMutation.isPending}
-              className={`bg-white${passwordError ? " border-red-500" : ""}`}
-            />
+          {/* Email field label */}
+          <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+            <div className="self-stretch inline-flex justify-between items-start">
+              <div className="flex-1 text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                Email
+              </div>
+            </div>
+            <div className="mb-4 w-full">
+              <Input
+                type="email"
+                id="login-email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loginMutation.isPending}
+                className={`w-full bg-white${emailError ? " border-red-500" : ""}`}
+              />
+            </div>
           </div>
-          <a className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal self-end cursor-pointer mb-4">
-            Forgot password?
-          </a>
+          {/* Password field label and forgot link */}
+          <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+            <div className="self-stretch inline-flex justify-between items-start">
+              <div className="text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                Password
+              </div>
+              <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer">
+                Forgot your password?
+              </div>
+            </div>
+            <div className="mb-4 w-full">
+              <Input
+                type="password"
+                id="login-password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loginMutation.isPending}
+                className={`w-full bg-white${passwordError ? " border-red-500" : ""}`}
+              />
+            </div>
+          </div>
+          {/* Login button */}
           <Button
             type="submit"
             disabled={loginMutation.isPending}
@@ -92,19 +116,8 @@ export default function Login() {
           >
             {loginMutation.isPending ? "Logging in..." : "Login"}
           </Button>
-          <a
-            onClick={() => navigate("/create-account")}
-            className="text-slate-500 text-base font-normal font-['Space_Grotesk'] cursor-pointer text-center mt-4"
-          >
-            or create an account
-          </a>
-          {loginMutation.isError && (
-            <div style={{ color: "red", width: "100%", textAlign: "center" }}>
-              {loginMutation.error.message}
-            </div>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
