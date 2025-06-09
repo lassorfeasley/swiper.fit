@@ -271,7 +271,6 @@ const ProgramBuilder = () => {
               exerciseName={ex.name}
               setConfigs={ex.setConfigs}
               onEdit={() => setEditingExercise(ex)}
-              isReorderable={true}
             />
           ))
         )}
