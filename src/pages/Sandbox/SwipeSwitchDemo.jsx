@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SwipeSwitch from '@/components/common/forms/SwipeSwitch';
+import SwipeSwitch from '@/components/ui/swipe-switch';
 
 export default function SwipeSwitchDemo() {
   const [status, setStatus] = useState('locked');

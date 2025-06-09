@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import SwipeSwitch from '@/components/common/forms/SwipeSwitch';
+import SwipeSwitch from '@/components/ui/swipe-switch';
 import SetPill from '@/components/ui/SetPill';
 import SetEditSheet from '@/components/common/forms/SetEditSheet';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
