@@ -265,7 +265,7 @@ const ActiveWorkout = ({
         data-component="active_workout_header"
       />
       <CardWrapper>
-        <div className="flex flex-col gap-4 p-4">
+        <div className="w-full flex flex-col gap-4 p-4">
           {exercises.map(ex => (
             <ActiveExerciseCard
               key={ex.id}

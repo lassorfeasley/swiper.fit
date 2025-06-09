@@ -166,7 +166,7 @@ const ActiveExerciseCard = ({
   // If expanded view is true, render the detailed view
   if (isExpanded) {
     return (
-      <CardWrapper className="w-full flex-1 Property1Expanded self-stretch rounded-xl inline-flex flex-col justify-start items-start gap-[1px] overflow-hidden">
+      <CardWrapper className="w-full Property1Expanded self-stretch rounded-xl inline-flex flex-col justify-start items-start gap-[1px] overflow-hidden">
         <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
             <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
@@ -238,7 +238,7 @@ const ActiveExerciseCard = ({
 
   // Compact view
   return (
-    <CardWrapper className="w-full flex-1 Property1Compactactivesetcard self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-[16px]">
+    <CardWrapper className="w-full Property1Compactactivesetcard self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-[16px]">
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
