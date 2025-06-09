@@ -15,7 +15,6 @@ import CompletedWorkout from "./pages/History/CompletedWorkout";
 import AppHeaderDemo from "./pages/Sandbox/AppHeaderDemo";
 import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
-import FormFieldDemo from "./pages/Sandbox/FormFieldDemo";
 import "./App.css";
 import {
   NavBarVisibilityProvider,
@@ -124,7 +123,6 @@ function AppContent() {
             />
             <Route path="/demo/setcard" element={<SetCardDemo />} />
             <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
-            <Route path="/demo/form-fields" element={<FormFieldDemo />} />
           </Route>
         </Routes>
       </main>
