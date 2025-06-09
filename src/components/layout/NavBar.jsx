@@ -4,7 +4,7 @@ import React from "react";
 import { Link, useLocation, NavLink } from "react-router-dom";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
-import Icon from "../common/Icon";
+import Icon from "@/components/ui/Icon";
 
 export default function NavBar({ navItems }) {
   const location = useLocation();

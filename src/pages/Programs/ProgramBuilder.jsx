@@ -10,7 +10,7 @@ import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/rea
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
+import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 
 const ProgramBuilder = () => {

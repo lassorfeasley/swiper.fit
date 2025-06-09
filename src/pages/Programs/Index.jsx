@@ -7,17 +7,17 @@ import AppHeader from "@/components/layout/AppHeader";
 import { PageNameContext } from "@/App";
 import ProgramCard from '@/components/common/Cards/ProgramCard';
 import { useQuery } from "@tanstack/react-query";
-import MainContainer from "@/components/common/MainContainer";
+import MainContainer from "@/components/layout/MainContainer";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import Icon from "@/components/common/Icon";
+import Icon from "@/components/ui/Icon";
 import { Button } from "@/components/ui/button";
 import NumericInput from "@/components/ui/numeric-input";
-import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
+import WeightCompoundField from "@/components/common/forms/WeightCompoundField";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
+import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 
 const ProgramsIndex = () => {

@@ -5,7 +5,7 @@ import React from "react";
 import { ArrowLeftIcon, PencilSquareIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import SearchField from "@/components/ui/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
-import Icon from "@/components/common/Icon";
+import Icon from "@/components/ui/Icon";
 
 export const AppHeader = ({
   showActionBar = true,

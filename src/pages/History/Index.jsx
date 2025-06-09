@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layout/AppHeader';
-import MainContainer from '@/components/common/MainContainer';
+import MainContainer from '@/components/layout/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import WorkoutCard from '@/components/common/Cards/WorkoutCard';
 import { useAuth } from "@/contexts/AuthContext";

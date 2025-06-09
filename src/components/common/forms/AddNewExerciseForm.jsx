@@ -87,48 +87,46 @@ const AddNewExerciseForm = ({
           <AccordionItem key={idx} value={String(idx)}>
             <AccordionTrigger>{`Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</AccordionTrigger>
             <AccordionContent>
-              <div className="flex flex-col gap-4 p-2">
+              <div className="flex flex-col gap-4 py-2">
                 <NumericInput
                   label="Reps"
                   value={cfg.reps}
-                  onChange={val => handleSetConfigChange(idx, 'reps', val)}
-                  min={1}
-                  max={100}
+                  onChange={v => handleSetConfigChange(idx, 'reps', v)}
+                  min={0}
+                  max={999}
+                  className="w-full"
                 />
-                <Separator className="my-2" />
                 <NumericInput
                   label="Weight"
-                  value={cfg.weight}
-                  onChange={val => handleSetConfigChange(idx, 'weight', val)}
+                  value={cfg.weight !== undefined && cfg.unit !== 'body' ? cfg.weight : (cfg.unit === 'body' ? 'body' : 0)}
+                  onChange={v => handleSetConfigChange(idx, 'weight', v)}
                   min={0}
-                  max={1000}
-                  allowTwoDecimals={true}
+                  max={999}
+                  className="w-full"
+                  incrementing={cfg.unit !== 'body'}
                 />
                 <ToggleGroup
                   type="single"
                   value={cfg.unit}
-                  onValueChange={val => handleSetConfigChange(idx, 'unit', val)}
-                  className="w-full flex rounded-lg overflow-hidden border border-gray-200"
-                  variant="outline"
+                  onValueChange={unit => unit && handleSetConfigChange(idx, 'unit', unit)}
+                  className="w-full bg-white pt-0 pb-3 px-3 gap-3"
                 >
-                  {unitOptions.map(opt => (
-                    <ToggleGroupItem key={opt.value} value={opt.value} className="flex-1 text-sm font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">
-                      {opt.label}
-                    </ToggleGroupItem>
-                  ))}
+                  <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
+                  <ToggleGroupItem value="kg">kg</ToggleGroupItem>
+                  <ToggleGroupItem value="body">body</ToggleGroupItem>
                 </ToggleGroup>
               </div>
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
-      <div className="flex flex-col gap-2 mt-4">
-        <Button type="submit" className="w-full">
-          Save
+      <div className="flex gap-2">
+        <Button type="submit" className="flex-1">
+          {formPrompt}
         </Button>
         {onDelete && (
-          <Button type="button" variant="destructive" className="w-full" onClick={onDelete}>
-            Delete Exercise
+          <Button type="button" variant="destructive" onClick={onDelete}>
+            Delete
           </Button>
         )}
       </div>
@@ -142,7 +140,13 @@ AddNewExerciseForm.propTypes = {
   formPrompt: PropTypes.string,
   initialName: PropTypes.string,
   initialSets: PropTypes.number,
-  initialSetConfigs: PropTypes.array,
+  initialSetConfigs: PropTypes.arrayOf(
+    PropTypes.shape({
+      reps: PropTypes.number,
+      weight: PropTypes.number,
+      unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
+    })
+  ),
 };
 
 export default AddNewExerciseForm; 

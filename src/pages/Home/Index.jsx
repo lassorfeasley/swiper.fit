@@ -2,7 +2,7 @@
 
 
 import AppHeader from '../../components/layout/AppHeader';
-import MainContainer from '../../components/common/MainContainer';
+import MainContainer from '@/components/layout/MainContainer';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
