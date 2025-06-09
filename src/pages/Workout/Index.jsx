@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
-import { useNavBarVisibility } from '@/NavBarVisibilityContext';
+import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import AppHeader from '@/components/layout/AppHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ProgramCard from '@/components/common/Cards/ProgramCard';

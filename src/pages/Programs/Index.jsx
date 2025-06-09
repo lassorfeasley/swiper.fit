@@ -8,7 +8,7 @@ import { PageNameContext } from "@/App";
 import ProgramCard from '@/components/common/Cards/ProgramCard';
 import { useQuery } from "@tanstack/react-query";
 import MainContainer from "@/components/layout/MainContainer";
-import { useNavBarVisibility } from "@/NavBarVisibilityContext";
+import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";

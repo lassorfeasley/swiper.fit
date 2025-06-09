@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { useNavBarVisibility } from "@/NavBarVisibilityContext";
+import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import MainContainer from "@/components/layout/MainContainer";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";

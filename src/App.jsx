@@ -16,10 +16,7 @@ import AppHeaderDemo from "./pages/Sandbox/AppHeaderDemo";
 import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
-import {
-  NavBarVisibilityProvider,
-  useNavBarVisibility,
-} from "./NavBarVisibilityContext";
+import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import React, { createContext, useState, useEffect } from "react";
 import NavBar from "./components/layout/NavBar";
 import SetCardDemo from "./pages/Sandbox/SetCardDemo";
@@ -29,7 +26,7 @@ import Login from "./pages/auth/Login";
 import CreateAccount from "./pages/auth/CreateAccount";
 import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
-import RequireAuth from "./components/RequireAuth";
+import RequireAuth from "@/lib/auth/RequireAuth";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
