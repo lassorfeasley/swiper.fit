@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/NavBarVisibilityContext';
 import AppHeader from '@/components/layout/AppHeader';
-import TileWrapper from '@/components/common/CardsAndTiles/Wrappers/TileWrapper';
-import ProgramTile from '@/components/common/CardsAndTiles/ProgramTile';
+import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
+import ProgramTile from '@/components/common/Cards/ProgramTile';
 import ActiveWorkout from './ActiveWorkout';
 
 const Workout = () => {

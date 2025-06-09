@@ -6,9 +6,9 @@ import { supabase } from '@/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layout/AppHeader';
 import MainContainer from '@/components/common/MainContainer';
-import CardWrapper from '@/components/common/CardsAndTiles/Wrappers/CardWrapper';
-import WorkoutTile from '@/components/common/CardsAndTiles/WorkoutTile';
-import TileWrapper from '@/components/common/CardsAndTiles/Wrappers/TileWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import WorkoutTile from '@/components/common/Cards/WorkoutTile';
+import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
 function formatDuration(seconds) {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import ActiveExerciseCard from '@/components/common/CardsAndTiles/ActiveExerciseCard';
+import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import SetPill from '@/components/ui/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import NumericInput from '@/components/common/forms/NumericInput';
+import NumericInput from '@/components/ui/numeric-input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const initialSetConfigs = [

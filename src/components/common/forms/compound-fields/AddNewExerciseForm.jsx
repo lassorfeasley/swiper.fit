@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Input } from "@/components/ui/input";
-import NumericInput from "@/components/common/forms/NumericInput";
+import NumericInput from "@/components/ui/numeric-input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';

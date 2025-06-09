@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import CardWrapper from '@/components/common/CardsAndTiles/Wrappers/CardWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import MainContainer from "@/components/common/MainContainer";
 
 const Switch = ({ checked, onChange, label }) => (

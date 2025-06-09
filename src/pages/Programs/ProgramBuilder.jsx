@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppHeader from "@/components/layout/AppHeader";
-import CardWrapper from '@/components/common/CardsAndTiles/Wrappers/CardWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder, useDragControls } from "framer-motion";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
-import ExerciseCard from '@/components/common/CardsAndTiles/ExerciseCard';
+import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 
 const ProgramBuilder = () => {
   const { programId } = useParams();

@@ -3,7 +3,7 @@ import SwipeSwitch from '@/components/ui/swipe-switch';
 import SetPill from '@/components/ui/SetPill';
 import SetEditSheet from '@/components/common/forms/SetEditSheet';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
-import NumericInput from '@/components/common/forms/NumericInput';
+import NumericInput from '@/components/ui/numeric-input';
 import Icon from '@/components/common/Icon';
 import PropTypes from 'prop-types';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/solid';
