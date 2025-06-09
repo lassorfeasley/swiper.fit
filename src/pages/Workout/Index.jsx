@@ -72,56 +72,76 @@ const Workout = () => {
 
   // Handle workout end
   const handleWorkoutEnd = async (workoutData) => {
-    const { duration_seconds, workout_name, setsData } = workoutData;
-    
-    const workoutInsertData = {
-      duration_seconds,
-      completed_at: new Date().toISOString(),
-      user_id: user.id,
-      workout_name,
-    };
-    
-    if (selectedProgram) {
-      workoutInsertData.program_id = selectedProgram.id;
-    }
+    try {
+      const { duration_seconds, workout_name, setsData, completedSets } = workoutData;
+      
+      // First, validate that we have sets to save
+      const allSets = Object.entries(setsData).flatMap(([exerciseId, exerciseSets]) => 
+        (exerciseSets || [])
+          .filter(set => {
+            // Only include sets that are marked as complete
+            const isComplete = completedSets[exerciseId]?.some(
+              completedSet => completedSet.setId === set.id && completedSet.status === 'complete'
+            );
+            return isComplete && set.reps && set.weight !== undefined;
+          })
+          .map((set, idx) => ({
+            exercise_id: exerciseId,
+            reps: set.reps,
+            weight: set.weight,
+            weight_unit: set.unit,
+            order: idx + 1
+          }))
+      );
 
-    const { data: workoutInsert, error: workoutError } = await supabase
-      .from('workouts')
-      .insert([workoutInsertData])
-      .select()
-      .single();
-
-    if (workoutError || !workoutInsert) {
-      console.error('Workout insert error:', { error: workoutError, payload: workoutInsertData });
-      alert('Failed to save workout! ' + (workoutError?.message || ''));
-      return;
-    }
-
-    const rows = Object.entries(setsData).flatMap(([exerciseId, exerciseSets]) => 
-      (exerciseSets || []).map((set, idx) => {
-        const { id, status, ...restOfSet } = set;
-        return {
-          ...restOfSet,
-          exercise_id: exerciseId,
-          workout_id: workoutInsert.id,
-          order: idx + 1,
-        };
-      })
-    );
-
-    if (rows.length > 0) {
-      const { error: setsError } = await supabase.from('sets').insert(rows);
-      if (setsError) {
-        console.error('Sets insert error:', setsError, rows);
-        alert('Failed to save sets! ' + (setsError?.message || ''));
+      if (allSets.length === 0) {
+        alert('You must log at least one set to complete a workout.');
+        return;
       }
-    }
 
-    // Reset state and navigate
-    navigate(`/history/${workoutInsert.id}`);
-    setStep('select');
-    setSelectedProgram(null);
-    setExercises([]);
+      // Create the workout first
+      const workoutInsertData = {
+        duration_seconds,
+        completed_at: new Date().toISOString(),
+        user_id: user.id,
+        workout_name,
+        program_id: selectedProgram?.id
+      };
+
+      const { data: workoutInsert, error: workoutError } = await supabase
+        .from('workouts')
+        .insert([workoutInsertData])
+        .select()
+        .single();
+
+      if (workoutError || !workoutInsert) {
+        console.error('Workout insert error:', { error: workoutError, payload: workoutInsertData });
+        alert('Failed to save workout! ' + (workoutError?.message || ''));
+        return;
+      }
+
+      // Now create the sets with the workout ID
+      const setRows = allSets.map(set => ({
+        ...set,
+        workout_id: workoutInsert.id
+      }));
+
+      const { error: setsError } = await supabase.from('sets').insert(setRows);
+      if (setsError) {
+        console.error('Sets insert error:', setsError, setRows);
+        alert('Failed to save sets! ' + (setsError?.message || ''));
+        return;
+      }
+
+      // Reset state and navigate
+      navigate(`/history/${workoutInsert.id}`);
+      setStep('select');
+      setSelectedProgram(null);
+      setExercises([]);
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      alert('An unexpected error occurred while saving your workout. Please try again.');
+    }
   };
 
   return (

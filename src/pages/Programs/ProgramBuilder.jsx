@@ -104,7 +104,7 @@ const ProgramBuilder = () => {
         .from("exercises")
         .select("id")
         .eq("name", exerciseData.name)
-        .single();
+        .maybeSingle();
       let exercise_id = existing?.id;
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
@@ -233,6 +233,33 @@ const ProgramBuilder = () => {
     setEditingExercise(null);
   };
 
+  // Handler to update setConfigs for an exercise and persist to Supabase
+  const handleSetConfigsChange = async (exerciseId, newSetConfigs) => {
+    setExercises(prev => prev.map(ex =>
+      ex.exercise_id === exerciseId ? { ...ex, setConfigs: newSetConfigs } : ex
+    ));
+    // Find the program_exercise_id for this exercise
+    const programExercise = exercises.find(ex => ex.exercise_id === exerciseId);
+    if (!programExercise) return;
+    const program_exercise_id = programExercise.id;
+    // Delete old sets
+    await supabase
+      .from('program_sets')
+      .delete()
+      .eq('program_exercise_id', program_exercise_id);
+    // Insert new sets
+    const setRows = (newSetConfigs || []).map((cfg, idx) => ({
+      program_exercise_id,
+      set_order: idx + 1,
+      reps: Number(cfg.reps),
+      weight: Number(cfg.weight),
+      weight_unit: cfg.unit,
+    }));
+    if (setRows.length > 0) {
+      await supabase.from('program_sets').insert(setRows);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <AppHeader
@@ -271,6 +298,7 @@ const ProgramBuilder = () => {
               exerciseName={ex.name}
               setConfigs={ex.setConfigs}
               onEdit={() => setEditingExercise(ex)}
+              onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
             />
           ))
         )}

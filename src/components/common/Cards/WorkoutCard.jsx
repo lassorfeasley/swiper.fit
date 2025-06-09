@@ -9,7 +9,7 @@ const WorkoutCard = ({ workoutName, exerciseCount = 0, className = '', ...props 
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{workoutName}</div>
           <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
-            {exerciseCount === 1 ? 'One exercise' : `${exerciseCount} exercises`}
+            {`${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'}`}
           </div>
         </div>
       </div>

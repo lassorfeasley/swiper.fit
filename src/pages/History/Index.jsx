@@ -55,7 +55,7 @@ const History = () => {
       const processedWorkouts = (workoutsData || []).map(workout => ({
         ...workout,
         exerciseCount: new Set(workout.sets?.map(set => set.exercise_id) || []).size
-      }));
+      })).filter(w => w.sets && w.sets.length > 0);
 
       setWorkouts(processedWorkouts);
       setLoading(false);

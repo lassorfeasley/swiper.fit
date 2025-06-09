@@ -13,8 +13,10 @@ import { Badge } from '@/components/ui/badge';
  * - onClick: func (optional) - Function to call when the pill is clicked
  * - style: object (optional) - Additional styles to apply to the pill
  * - complete: boolean (optional) - Whether the set is completed
+ * - editable: boolean (optional) - Whether the pill is editable (shows pointer and triggers onEdit)
+ * - onEdit: func (optional) - Function to call when editing is triggered
  */
-const SetPill = ({ reps, weight, unit = 'lbs', className = '', onClick, style, complete = false }) => {
+const SetPill = ({ reps, weight, unit = 'lbs', className = '', onClick, style, complete = false, editable = false, onEdit }) => {
   // Format the weight display based on unit
   const formatWeight = () => {
     if (unit === 'body') return 'body';
@@ -24,14 +26,24 @@ const SetPill = ({ reps, weight, unit = 'lbs', className = '', onClick, style, c
   // Choose badge variant
   const badgeVariant = complete ? 'secondary' : 'default';
 
+  // Handle click
+  const handleClick = (e) => {
+    if (editable && onEdit) {
+      e.stopPropagation();
+      onEdit(e);
+    } else if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <Badge
       variant={badgeVariant}
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-normal cursor-pointer ${className}`.trim()}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-normal ${editable ? 'cursor-pointer' : ''} ${className}`.trim()}
       style={style}
-      onClick={onClick}
-      tabIndex={onClick ? 0 : undefined}
-      role={onClick ? 'button' : undefined}
+      onClick={handleClick}
+      tabIndex={editable || onClick ? 0 : undefined}
+      role={editable ? 'button' : (onClick ? 'button' : undefined)}
       data-layer={complete ? 'Property 1=complete' : 'SetPill'}
     >
       {complete && (
@@ -59,6 +71,8 @@ SetPill.propTypes = {
   onClick: PropTypes.func,
   style: PropTypes.object,
   complete: PropTypes.bool,
+  editable: PropTypes.bool,
+  onEdit: PropTypes.func,
 };
 
 export default SetPill; 

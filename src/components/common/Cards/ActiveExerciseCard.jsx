@@ -195,10 +195,10 @@ const ActiveExerciseCard = ({
                 <SetPill
                   reps={set.reps}
                   weight={set.weight}
-                  weightUnit={set.unit}
-                  onClick={() => handlePillClick(idx)}
-                  style={{ cursor: 'pointer' }}
-                  isComplete={set.status === 'complete'}
+                  unit={set.unit}
+                  editable={true}
+                  onEdit={() => handlePillClick(idx)}
+                  complete={set.status === 'complete'}
                 />
               </div>
               <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
@@ -270,10 +270,10 @@ const ActiveExerciseCard = ({
             key={set.id}
             reps={set.reps}
             weight={set.weight}
-            weightUnit={set.unit}
-            onClick={() => handlePillClick(idx)}
-            style={{ cursor: 'pointer' }}
-            isComplete={allComplete || set.status === 'complete'}
+            unit={set.unit}
+            editable={true}
+            onEdit={() => handlePillClick(idx)}
+            complete={allComplete || set.status === 'complete'}
           />
         ))}
       </div>
