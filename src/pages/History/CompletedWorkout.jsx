@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
 import AppHeader from '@/components/layout/AppHeader';
-import ExerciseCard from '@/components/common/CardsAndTiles/Cards/ExerciseCard';
-import TileWrapper from '@/components/common/CardsAndTiles/Tiles/TileWrapper';
+import ExerciseCard from '@/components/common/CardsAndTiles/ExerciseCard';
+import TileWrapper from '@/components/common/CardsAndTiles/Wrappers/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
 const CompletedWorkout = () => {

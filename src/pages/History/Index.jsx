@@ -2,13 +2,13 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '@/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import AppHeader from '../../components/layout/AppHeader';
-import MainContainer from '../../components/common/MainContainer';
-import CardWrapper from '../../components/common/CardsAndTiles/Cards/CardWrapper';
-import WorkoutTile from '../../components/common/CardsAndTiles/Tiles/Library/WorkoutTile';
-import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
+import AppHeader from '@/components/layout/AppHeader';
+import MainContainer from '@/components/common/MainContainer';
+import CardWrapper from '@/components/common/CardsAndTiles/Wrappers/CardWrapper';
+import WorkoutTile from '@/components/common/CardsAndTiles/WorkoutTile';
+import TileWrapper from '@/components/common/CardsAndTiles/Wrappers/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
 function formatDuration(seconds) {

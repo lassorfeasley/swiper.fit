@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ActiveExerciseCard from '@/components/common/CardsAndTiles/Cards/Library/ActiveExerciseCard';
+import ActiveExerciseCard from '@/components/common/CardsAndTiles/ActiveExerciseCard';
 import SetPill from '@/components/common/CardsAndTiles/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from '@/components/common/forms/NumericInput';

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AppHeader from "@/components/layout/AppHeader";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
-import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
+import CardWrapper from '@/components/common/CardsAndTiles/Wrappers/CardWrapper';
 import MainContainer from "@/components/common/MainContainer";
 import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
 
