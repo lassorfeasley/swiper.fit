@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
 import AppHeader from '@/components/layout/AppHeader';
-import ExerciseTile from '@/components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
+import ExerciseCard from '@/components/common/CardsAndTiles/Cards/ExerciseCard';
 import TileWrapper from '@/components/common/CardsAndTiles/Tiles/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -86,12 +86,14 @@ const CompletedWorkout = () => {
       ) : (
         <TileWrapper>
           {Object.keys(setsByExercise).map(exId => (
-            <ExerciseTile
+            <ExerciseCard
               key={exId}
+              mode="completed"
               exerciseName={exercises[exId] || '[Exercise name]'}
               sets={setsByExercise[exId].length}
               reps={setsByExercise[exId][0]?.reps || 0}
               weight={setsByExercise[exId][0]?.weight || 0}
+              unit={setsByExercise[exId][0]?.unit || 'lbs'}
             />
           ))}
         </TileWrapper>

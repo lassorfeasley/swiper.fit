@@ -81,6 +81,7 @@ const NumericInput = ({
           className="text-xl"
           disabled={readOnly || value <= min}
           tabIndex={-1}
+          type="button"
         >
           −
         </Button>
@@ -100,6 +101,7 @@ const NumericInput = ({
           className="text-xl"
           disabled={readOnly || value >= max}
           tabIndex={-1}
+          type="button"
         >
           +
         </Button>

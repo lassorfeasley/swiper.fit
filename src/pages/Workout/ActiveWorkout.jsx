@@ -5,9 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import AppHeader from '@/components/layout/AppHeader';
 import CardWrapper from '@/components/common/CardsAndTiles/Cards/CardWrapper';
-import SetCard from '@/components/common/CardsAndTiles/Cards/Library/SetCard';
+import ActiveExerciseCard from '@/components/common/CardsAndTiles/Cards/Library/ActiveExerciseCard';
 import ActiveFocusedNavBar from '@/components/layout/ActiveFocusedNavBar';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import NumericInput from '@/components/common/forms/NumericInput';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
@@ -184,6 +184,12 @@ const ActiveWorkout = ({
 
   const handleEnd = async () => {
     setTimerActive(false);
+    // Check if at least one set is logged
+    const totalSets = Object.values(setsData).reduce((acc, arr) => acc + (arr ? arr.length : 0), 0);
+    if (totalSets === 0) {
+      alert('You must log at least one set to complete a workout.');
+      return;
+    }
     onEnd?.({
       duration_seconds: timer,
       workout_name: workoutName,
@@ -253,7 +259,7 @@ const ActiveWorkout = ({
       <CardWrapper>
         <div className="flex flex-col gap-4 p-4">
           {exercises.map(ex => (
-            <SetCard
+            <ActiveExerciseCard
               key={ex.id}
               exerciseId={ex.exercise_id}
               exerciseName={ex.name}
@@ -262,7 +268,7 @@ const ActiveWorkout = ({
               onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
               setData={setsData[ex.exercise_id] || []}
               onSetDataChange={handleSetDataChange}
-              data-component="SetCard"
+              data-component="ActiveExerciseCard"
             />
           ))}
         </div>
@@ -278,6 +284,12 @@ const ActiveWorkout = ({
       {showAddExercise && (
         <Sheet open={showAddExercise} onOpenChange={handleModalClose}>
           <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Add a new exercise</SheetTitle>
+              <SheetDescription>
+                Fill out the form below to add a new exercise to your workout.
+              </SheetDescription>
+            </SheetHeader>
             <AddNewExerciseForm
               key="add-new"
               formPrompt="Add a new exercise"

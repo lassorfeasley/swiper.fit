@@ -114,7 +114,7 @@ function AppContent() {
             <Route path="/programs" element={<Programs />} />
             <Route path="/programs/:programId/configure" element={<ProgramBuilder />} />
             <Route path="/history" element={<History />} />
-            <Route path="/workout/:workoutId" element={<CompletedWorkout />} />
+            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/app-header-demo" element={<AppHeaderDemo />} />

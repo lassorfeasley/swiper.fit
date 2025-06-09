@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/solid';
 import ToggleGroup from '@/components/common/forms/ToggleGroup';
 
-const SetCard = ({ 
+const ActiveExerciseCard = ({ 
   exerciseName = 'Military press', 
   default_view = true, 
   setConfigs = [], 
@@ -297,7 +297,7 @@ const SetCard = ({
   );
 };
 
-SetCard.propTypes = {
+ActiveExerciseCard.propTypes = {
   exerciseName: PropTypes.string,
   default_view: PropTypes.bool,
   setConfigs: PropTypes.arrayOf(PropTypes.shape({
@@ -311,4 +311,4 @@ SetCard.propTypes = {
   onSetDataChange: PropTypes.func
 };
 
-export default SetCard; 
+export default ActiveExerciseCard; 

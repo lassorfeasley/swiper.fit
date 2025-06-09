@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SetCard from '@/components/common/CardsAndTiles/Cards/Library/SetCard';
+import ActiveExerciseCard from '@/components/common/CardsAndTiles/Cards/Library/ActiveExerciseCard';
 import SetPill from '@/components/common/CardsAndTiles/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from '@/components/common/forms/NumericInput';
@@ -67,7 +67,7 @@ export default function SetCardDemo() {
       {/* Original SetCard */}
       <div className="mb-8">
         <h3 className="text-lg font-bold mb-4">SetCard Component</h3>
-        <SetCard
+        <ActiveExerciseCard
           exerciseName="Demo Exercise"
           default_view={!compact}
           setConfigs={initialSetConfigs}

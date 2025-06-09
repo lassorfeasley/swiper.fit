@@ -7,10 +7,11 @@ import { Reorder, useDragControls } from "framer-motion";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
+import ExerciseCard from "@/components/common/CardsAndTiles/Cards/ExerciseCard";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -89,6 +90,10 @@ const ProgramBuilder = () => {
   };
 
   const handleBack = () => {
+    if (exercises.length === 0) {
+      alert('You must add at least one exercise to save this program.');
+      return;
+    }
     saveOrder();
     navigate(-1);
   };
@@ -260,61 +265,28 @@ const ProgramBuilder = () => {
           </div>
         ) : (
           filteredExercises.map((ex) => (
-            <Reorder.Item key={ex.id} value={ex}>
-              <Card className="Programexercisecard self-stretch px-3 py-2 bg-white rounded-lg flex flex-col justify-start items-start gap-5">
-                <div
-                  data-layer="NameAndIconWrapper"
-                  className="Nameandiconwrapper self-stretch inline-flex justify-start items-center gap-2"
-                >
-                  <CardTitle className="flex-1">{ex.name}</CardTitle>
-                  <div
-                    data-svg-wrapper
-                    data-layer="pencil"
-                    className="Pencil relative cursor-pointer"
-                    onClick={() => setEditingExercise(ex)}
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M13.586 3.58599C13.7705 3.39497 13.9912 3.24261 14.2352 3.13779C14.4792 3.03297 14.7416 2.9778 15.0072 2.97549C15.2728 2.97319 15.5361 3.02379 15.7819 3.12435C16.0277 3.22491 16.251 3.37342 16.4388 3.5612C16.6266 3.74899 16.7751 3.97229 16.8756 4.21809C16.9762 4.46388 17.0268 4.72724 17.0245 4.9928C17.0222 5.25836 16.967 5.5208 16.8622 5.7648C16.7574 6.00881 16.605 6.2295 16.414 6.41399L15.621 7.20699L12.793 4.37899L13.586 3.58599V3.58599ZM11.379 5.79299L3 14.172V17H5.828L14.208 8.62099L11.378 5.79299H11.379Z"
-                        fill="var(--slate-600, #2F3640)"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div
-                  data-layer="SetPillWrapper"
-                  className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-2 flex-wrap content-center"
-                >
-                  {(ex.setConfigs || []).map((set, index) => (
-                    <Badge
-                      key={index}
-                      className="gap-1"
-                    >
-                      <span className="Repsxweight text-center justify-center whitespace-nowrap">
-                        {`${set.reps || "0"}×${set.weight || "0"} ${set.unit || "lbs"}`}
-                      </span>
-                    </Badge>
-                  ))}
-                  {(ex.setConfigs || []).length === 0 && (
-                    <div className="text-slate-400 text-xs font-normal font-['Space_Grotesk'] leading-none">
-                      No sets configured. Click the pencil to edit.
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </Reorder.Item>
+            <ExerciseCard
+              key={ex.id}
+              mode="default"
+              exerciseName={ex.name}
+              setConfigs={ex.setConfigs}
+              onEdit={() => setEditingExercise(ex)}
+              isReorderable={true}
+            />
           ))
         )}
       </CardWrapper>
       {(showAddExercise || editingExercise) && (
         <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
           <SheetContent>
+            <SheetHeader>
+              <SheetTitle>{showAddExercise ? "Add a new exercise" : "Edit exercise"}</SheetTitle>
+              <SheetDescription>
+                {showAddExercise
+                  ? "Fill out the form below to add a new exercise to your program."
+                  : "Edit the details for this exercise."}
+              </SheetDescription>
+            </SheetHeader>
             <AddNewExerciseForm
               key={editingExercise ? editingExercise.id : 'add-new'}
               formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
