@@ -272,11 +272,12 @@ const ActiveWorkout = ({
               exerciseId={ex.exercise_id}
               exerciseName={ex.name}
               default_view={true}
-              setConfigs={ex.setConfigs}
+              initialSetConfigs={ex.setConfigs}
               onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
               setData={setsData[ex.exercise_id] || []}
               onSetDataChange={handleSetDataChange}
               data-component="ActiveExerciseCard"
+              isUnscheduled={ex.isUnscheduled}
             />
           ))}
         </div>
