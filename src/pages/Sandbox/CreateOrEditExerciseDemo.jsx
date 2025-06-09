@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import MainContainer from "@/components/common/MainContainer";
+import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
 
 const CreateOrEditExerciseDemo = () => {
   const { setNavBarVisible } = useNavBarVisibility();
@@ -30,9 +30,8 @@ const CreateOrEditExerciseDemo = () => {
         <div className="flex-1 flex flex-col items-center justify-center">
           {/* Placeholder for main content */}
         </div>
-        <ExerciseSetConfiguration
+        <AddNewExerciseForm
           formPrompt="Create a new exercise"
-          actionIconName="arrow_forward"
           onActionIconClick={() => alert("Action icon clicked!")}
         />
       </CardWrapper>

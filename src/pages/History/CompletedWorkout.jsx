@@ -1,15 +1,14 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=61-360&t=YBjXtsLhxGedobad-4
 
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import AppHeader from '../../components/layout/AppHeader';
-import ExerciseTile from '../../components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
-import TileWrapper from '../../components/common/CardsAndTiles/Tiles/TileWrapper';
+import { supabase } from '@/supabaseClient';
+import AppHeader from '@/components/layout/AppHeader';
+import ExerciseTile from '@/components/common/CardsAndTiles/Tiles/Library/ExerciseTile';
+import TileWrapper from '@/components/common/CardsAndTiles/Tiles/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
-const WorkoutHistoryDetailIndex = () => {
+const CompletedWorkout = () => {
   const { workoutId } = useParams();
   const [workout, setWorkout] = useState(null);
   const [sets, setSets] = useState([]);
@@ -101,4 +100,4 @@ const WorkoutHistoryDetailIndex = () => {
   );
 };
 
-export default WorkoutHistoryDetailIndex; 
+export default CompletedWorkout; 

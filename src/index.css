@@ -1,9 +1,9 @@
+@import "./styles/typography.css";
+@import "./styles/colors.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "./styles/typography.css";
-@import "./styles/colors.css";
 
 body {
   margin: 0;

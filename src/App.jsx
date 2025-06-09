@@ -11,11 +11,11 @@ import Home from "./pages/Home";
 import Programs from "./pages/programs";
 import History from "./pages/history";
 import Workout from "./pages/workout";
-import WorkoutHistoryDetail from "./pages/workoutHistoryDetail";
-import AppHeaderDemo from "./pages/DemoPages/AppHeaderDemo";
-import CreateOrEditExerciseDemo from "./pages/DemoPages/CreateOrEditExerciseDemo";
+import CompletedWorkout from "./pages/History/CompletedWorkout";
+import AppHeaderDemo from "./pages/Sandbox/AppHeaderDemo";
+import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
-import FormFieldDemo from "./pages/DemoPages/FormFieldDemo";
+import FormFieldDemo from "./pages/Sandbox/FormFieldDemo";
 import "./App.css";
 import {
   NavBarVisibilityProvider,
@@ -23,8 +23,8 @@ import {
 } from "./NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from "react";
 import NavBar from "./components/layout/NavBar";
-import SetCardDemo from "./pages/DemoPages/SetCardDemo";
-import SwipeSwitchDemo from "./pages/DemoPages/SwipeSwitchDemo";
+import SetCardDemo from "./pages/Sandbox/SetCardDemo";
+import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
 import { AuthProvider } from './contexts/AuthContext';
 import Login from "./pages/auth/Login";
 import CreateAccount from "./pages/auth/CreateAccount";
@@ -114,10 +114,7 @@ function AppContent() {
             <Route path="/programs" element={<Programs />} />
             <Route path="/programs/:programId/configure" element={<ProgramBuilder />} />
             <Route path="/history" element={<History />} />
-            <Route
-              path="/history/:workoutId"
-              element={<WorkoutHistoryDetail />}
-            />
+            <Route path="/workout/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/app-header-demo" element={<AppHeaderDemo />} />

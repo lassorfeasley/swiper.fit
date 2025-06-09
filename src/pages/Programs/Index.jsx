@@ -14,11 +14,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import Icon from "@/components/common/Icon";
-import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { Button } from "@/components/ui/button";
 import NumericInput from "@/components/common/forms/NumericInput";
 import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
 import ToggleGroup from "@/components/common/forms/ToggleGroup";
+import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);

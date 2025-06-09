@@ -4,13 +4,13 @@ import { supabase } from "@/supabaseClient";
 import AppHeader from "@/components/layout/AppHeader";
 import CardWrapper from "@/components/common/CardsAndTiles/Cards/CardWrapper";
 import { Reorder, useDragControls } from "framer-motion";
-import ExerciseSetConfiguration from "@/components/common/forms/compound-fields/ExerciseSetConfiguration";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -175,6 +175,25 @@ const ProgramBuilder = () => {
     }
   };
 
+  const handleDeleteExercise = async () => {
+    try {
+      if (!editingExercise) return;
+      
+      // Delete the program exercise and its associated sets
+      const { error: deleteError } = await supabase
+        .from("program_exercises")
+        .delete()
+        .eq("id", editingExercise.id);
+      
+      if (deleteError) throw new Error("Failed to delete exercise");
+      
+      setEditingExercise(null);
+      await refreshExercises();
+    } catch (err) {
+      alert(err.message || "Failed to delete exercise");
+    }
+  };
+
   const refreshExercises = async () => {
     const { data: progExs } = await supabase
       .from("program_exercises")
@@ -296,10 +315,11 @@ const ProgramBuilder = () => {
       {(showAddExercise || editingExercise) && (
         <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
           <SheetContent>
-            <ExerciseSetConfiguration
+            <AddNewExerciseForm
               key={editingExercise ? editingExercise.id : 'add-new'}
               formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
               onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+              onDelete={editingExercise ? handleDeleteExercise : undefined}
               initialName={editingExercise?.name}
               initialSets={editingExercise?.setConfigs?.length}
               initialSetConfigs={editingExercise?.setConfigs}
