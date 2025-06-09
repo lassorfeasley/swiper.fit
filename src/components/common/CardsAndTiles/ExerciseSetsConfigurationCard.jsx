@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Badge } from '@/src/components/ui/badge';
 
 const ExerciseSetsConfigurationCard = ({
   name,
@@ -20,18 +21,18 @@ const ExerciseSetsConfigurationCard = ({
       <div className="flex-1">
         <div className="text-xl font-bold text-[#5A6B7A]">{name || '[Exercise name]'}</div>
         <div className="flex gap-4 mt-2">
-          <div className="flex items-center gap-1 bg-white rounded px-3 py-1 text-base font-bold">
+          <Badge className="flex items-center gap-1">
             <span>{sets}</span>
             <span className="text-xs font-normal ml-1">SETS</span>
-          </div>
-          <div className="flex items-center gap-1 bg-white rounded px-3 py-1 text-base font-bold">
+          </Badge>
+          <Badge className="flex items-center gap-1">
             <span>{reps}</span>
             <span className="text-xs font-normal ml-1">REPS</span>
-          </div>
-          <div className="flex items-center gap-1 bg-white rounded px-3 py-1 text-base font-bold">
+          </Badge>
+          <Badge className="flex items-center gap-1">
             <span>{weight}</span>
             <span className="text-xs font-normal ml-1">{unit?.toUpperCase() || 'LBS'}</span>
-          </div>
+          </Badge>
         </div>
       </div>
       {/* Settings icon */}

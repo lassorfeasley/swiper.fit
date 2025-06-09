@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/common/forms/NumericInput";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/src/components/ui/accordion";
@@ -34,18 +34,28 @@ const ExerciseSetConfiguration = ({
         }))
   );
 
+  // Reset state when editingExercise changes (i.e., when initialSetConfigs or initialSets change)
+  useEffect(() => {
+    setSets(initialSets ?? 3);
+    setSetConfigs(
+      initialSetConfigs && Array.isArray(initialSetConfigs) && initialSetConfigs.length > 0
+        ? initialSetConfigs.slice(0, initialSets ?? 3)
+        : Array.from({ length: initialSets ?? 3 }, () => ({
+            reps: 12,
+            weight: 25,
+            unit: "lbs",
+          }))
+    );
+  }, [initialSets, initialSetConfigs]);
+
   // Keep setConfigs in sync with sets count
   useEffect(() => {
     setSetConfigs((prevConfigs) => {
       const newSize = sets || 0;
       const oldSize = prevConfigs.length;
 
-      if (newSize === oldSize) {
-        return prevConfigs;
-      }
-
-      const newSetConfigs = [...prevConfigs];
-      newSetConfigs.length = newSize; // Truncate or expand array
+      // Always truncate to newSize
+      let newSetConfigs = prevConfigs.slice(0, newSize);
 
       // If expanding, fill new spots with default values from the first set, or hardcoded defaults
       if (newSize > oldSize) {
@@ -95,10 +105,13 @@ const ExerciseSetConfiguration = ({
 
   return (
     <>
-      <SheetHeader>
-        <SheetTitle>{formPrompt}</SheetTitle>
+      <SheetHeader className="items-start">
+        <SheetTitle className="text-left w-full">{formPrompt}</SheetTitle>
+        <SheetDescription>
+          Configure the exercise name, number of sets, and set details below.
+        </SheetDescription>
       </SheetHeader>
-      <div className="w-full flex flex-col gap-0">
+      <div className="w-full flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
         <Input
           type="text"
           value={exerciseName}
@@ -109,9 +122,11 @@ const ExerciseSetConfiguration = ({
         <NumericInput
           label="Sets"
           value={sets}
-          onChange={(newSets) => setSets(Math.max(0, Number(newSets)))}
+          onChange={(newSets) => setSets(Math.max(1, Math.min(20, Number(newSets))))}
           incrementing={true}
           className="w-full"
+          min={1}
+          max={20}
         />
         {sets > 0 && (
           <Accordion type="single" collapsible className="w-full mt-4">

@@ -9,6 +9,8 @@ import { useNavBarVisibility } from "@/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Card, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/src/components/ui/badge';
 
 const ConfigureProgramExercises = () => {
   const { programId } = useParams();
@@ -240,20 +242,12 @@ const ConfigureProgramExercises = () => {
         ) : (
           filteredExercises.map((ex) => (
             <Reorder.Item key={ex.id} value={ex}>
-              <div
-                data-layer="ProgramExerciseCard"
-                className="Programexercisecard self-stretch px-3 py-2 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-5"
-              >
+              <Card className="Programexercisecard self-stretch px-3 py-2 bg-white rounded-lg flex flex-col justify-start items-start gap-5">
                 <div
                   data-layer="NameAndIconWrapper"
                   className="Nameandiconwrapper self-stretch inline-flex justify-start items-center gap-2"
                 >
-                  <div
-                    data-layer="[Exercise name]"
-                    className="ExerciseName flex-1 justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose"
-                  >
-                    {ex.name}
-                  </div>
+                  <CardTitle className="flex-1">{ex.name}</CardTitle>
                   <div
                     data-svg-wrapper
                     data-layer="pencil"
@@ -279,20 +273,14 @@ const ConfigureProgramExercises = () => {
                   className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-2 flex-wrap content-center"
                 >
                   {(ex.setConfigs || []).map((set, index) => (
-                    <div
+                    <Badge
                       key={index}
-                      data-layer="SetPill"
-                      className="Setpill size- px-1 py-0.5 bg-grey-200 rounded-sm flex justify-start items-center"
+                      className="gap-1"
                     >
-                      <div
-                        data-layer="RepsXWeight"
-                        className="Repsxweight text-center justify-center text-slate-500 text-xs font-normal font-['Space_Grotesk'] leading-none"
-                      >
-                        {`${set.reps || "0"}×${set.weight || "0"} ${
-                          set.unit || "lbs"
-                        }`}
-                      </div>
-                    </div>
+                      <span className="Repsxweight text-center justify-center whitespace-nowrap">
+                        {`${set.reps || "0"}×${set.weight || "0"} ${set.unit || "lbs"}`}
+                      </span>
+                    </Badge>
                   ))}
                   {(ex.setConfigs || []).length === 0 && (
                     <div className="text-slate-400 text-xs font-normal font-['Space_Grotesk'] leading-none">
@@ -300,7 +288,7 @@ const ConfigureProgramExercises = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             </Reorder.Item>
           ))
         )}
@@ -309,6 +297,7 @@ const ConfigureProgramExercises = () => {
         <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
           <SheetContent>
             <ExerciseSetConfiguration
+              key={editingExercise ? editingExercise.id : 'add-new'}
               formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
               onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
               initialName={editingExercise?.name}

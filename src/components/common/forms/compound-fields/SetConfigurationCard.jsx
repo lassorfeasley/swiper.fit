@@ -40,9 +40,9 @@ const SetConfigurationCard = ({
         className="w-full flex rounded-lg overflow-hidden border border-gray-200"
         variant="outline"
       >
-        <ToggleGroupItem value="lbs" className="flex-1 text-lg font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">lbs</ToggleGroupItem>
-        <ToggleGroupItem value="kg" className="flex-1 text-lg font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">kg</ToggleGroupItem>
-        <ToggleGroupItem value="body" className="flex-1 text-lg font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">body</ToggleGroupItem>
+        <ToggleGroupItem value="lbs" className="flex-1 text-sm font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">lbs</ToggleGroupItem>
+        <ToggleGroupItem value="kg" className="flex-1 text-sm font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">kg</ToggleGroupItem>
+        <ToggleGroupItem value="body" className="flex-1 text-sm font-medium py-2 rounded-none border-0 focus:z-10 data-[state=on]:bg-gray-100 data-[state=on]:shadow-none data-[state=on]:text-black">body</ToggleGroupItem>
       </ToggleGroup>
     </Card>
   );

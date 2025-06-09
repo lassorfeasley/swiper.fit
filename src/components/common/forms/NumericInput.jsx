@@ -73,7 +73,7 @@ const NumericInput = ({
   return (
     <div className={cn("space-y-2", className)}>
       {label && <Label htmlFor={id}>{label}</Label>}
-      <div className="flex items-center gap-4 px-4 py-2 border rounded-md shadow-sm w-fit">
+      <div className="flex items-center gap-4 px-4 py-2 border rounded-md shadow-sm w-fit h-[52px]">
         <Button
           variant="ghost"
           size="icon"
@@ -91,7 +91,7 @@ const NumericInput = ({
           onChange={handleInputChange}
           onBlur={handleBlur}
           readOnly={readOnly}
-          className="w-12 text-center border-none focus:outline-none bg-transparent"
+          className="w-12 h-[52px] text-center border-none focus:outline-none bg-transparent"
         />
         <Button
           variant="ghost"
