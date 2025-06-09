@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import SwipeSwitch from '@/components/common/forms/SwipeSwitch';
-import SetPill from './SetPill';
+import SetPill from '@/components/ui/SetPill';
 import SetEditSheet from '@/components/common/forms/SetEditSheet';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
 import NumericInput from '@/components/common/forms/NumericInput';

@@ -45,6 +45,7 @@ const ActiveWorkout = ({
   // Fetch exercises for selected program
   useEffect(() => {
     if (selectedProgram) {
+      console.log('Fetching exercises for program:', selectedProgram);
       setLoading(true);
       supabase
         .from('program_exercises')
@@ -56,16 +57,21 @@ const ActiveWorkout = ({
         `)
         .eq('program_id', selectedProgram.id)
         .then(async ({ data: progExs, error }) => {
+          console.log('Program exercises query result:', { progExs, error });
           if (error || !progExs) {
+            console.error('Error fetching program exercises:', error);
             setExercises([]);
             setLoading(false);
             return;
           }
           const exerciseIds = progExs.map(pe => pe.exercise_id);
+          console.log('Exercise IDs to fetch:', exerciseIds);
           const { data: exercisesData, error: exercisesError } = await supabase
             .from('exercises')
             .select('id, name')
             .in('id', exerciseIds);
+
+          console.log('Exercises query result:', { exercisesData, exercisesError });
 
           if (exercisesError) {
             console.error("Error fetching exercises for program:", exercisesError);
@@ -86,11 +92,13 @@ const ActiveWorkout = ({
                 unit: set.weight_unit || 'lbs'
               }))
           }));
+          console.log('Processed exercise cards:', cards);
           setExercises(cards);
           onExercisesChange?.(cards);
           setLoading(false);
         });
     } else {
+      console.log('No program selected, clearing exercises');
       setExercises([]);
       onExercisesChange?.([]);
     }

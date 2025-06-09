@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TileWrapper from './Wrappers/TileWrapper';
 
-function ProgramTile({ programName, workoutCount = 0, className = '', ...props }) {
+function ProgramTile({ programName, exerciseCount = 0, className = '', ...props }) {
   return (
     <TileWrapper className={className} {...props}>
       <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden">
@@ -11,7 +11,7 @@ function ProgramTile({ programName, workoutCount = 0, className = '', ...props }
             {programName}
           </div>
           <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
-            {workoutCount === 1 ? 'One workout' : `${workoutCount} workouts`}
+            {`${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'}`}
           </div>
         </div>
       </div>
@@ -21,7 +21,7 @@ function ProgramTile({ programName, workoutCount = 0, className = '', ...props }
 
 ProgramTile.propTypes = {
   programName: PropTypes.string.isRequired,
-  workoutCount: PropTypes.number,
+  exerciseCount: PropTypes.number,
   className: PropTypes.string,
 };
 

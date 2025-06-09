@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TileWrapper from './Wrappers/TileWrapper';
-import SetPill from './SetPill';
+import SetPill from '@/components/ui/SetPill';
 
 const ExerciseTile = ({ exerciseName, setConfigs = [], className = '', ...props }) => {
   return (

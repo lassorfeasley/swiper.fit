@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/CardsAndTiles/ActiveExerciseCard';
-import SetPill from '@/components/common/CardsAndTiles/SetPill';
+import SetPill from '@/components/ui/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from '@/components/common/forms/NumericInput';
 import ToggleGroup from '@/components/common/forms/ToggleGroup';

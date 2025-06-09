@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CardWrapper from './Wrappers/CardWrapper';
-import SetPill from './SetPill';
+import SetPill from '@/components/ui/SetPill';
 
 const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', ...props }) => {
   return (
