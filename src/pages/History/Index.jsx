@@ -8,7 +8,6 @@ import AppHeader from '@/components/layout/AppHeader';
 import MainContainer from '@/components/common/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import WorkoutTile from '@/components/common/Cards/WorkoutTile';
-import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
 function formatDuration(seconds) {
@@ -80,7 +79,7 @@ const History = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
-          <TileWrapper>
+          <CardWrapper>
             {workouts.map(w => (
               <WorkoutTile
                 key={w.id}
@@ -92,7 +91,7 @@ const History = () => {
                 className="hover:bg-gray-200 transition-colors"
               />
             ))}
-          </TileWrapper>
+          </CardWrapper>
         )}
       </div>
     </div>

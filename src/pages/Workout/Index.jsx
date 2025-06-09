@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/NavBarVisibilityContext';
 import AppHeader from '@/components/layout/AppHeader';
-import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ProgramTile from '@/components/common/Cards/ProgramTile';
 import ActiveWorkout from './ActiveWorkout';
 
@@ -138,7 +138,7 @@ const Workout = () => {
             searchPlaceholder="Search"
             data-component="AppHeader"
           />
-          <TileWrapper>
+          <CardWrapper>
             {loading ? (
               <div className="p-6">Loading...</div>
             ) : (
@@ -151,7 +151,7 @@ const Workout = () => {
                 />
               ))
             )}
-          </TileWrapper>
+          </CardWrapper>
         </>
       ) : (
         <ActiveWorkout

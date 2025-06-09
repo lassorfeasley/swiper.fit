@@ -5,7 +5,6 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/layout/AppHeader";
 import { PageNameContext } from "@/App";
-import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
 import ProgramTile from '@/components/common/Cards/ProgramTile';
 import { useQuery } from "@tanstack/react-query";
 import MainContainer from "@/components/common/MainContainer";
@@ -19,6 +18,7 @@ import NumericInput from "@/components/ui/numeric-input";
 import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -114,7 +114,7 @@ const ProgramsIndex = () => {
         }}
         data-component="AppHeader"
       />
-      <TileWrapper className="px-4">
+      <CardWrapper className="px-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : programs.length === 0 ? (
@@ -131,7 +131,7 @@ const ProgramsIndex = () => {
             />
           ))
         )}
-      </TileWrapper>
+      </CardWrapper>
       {/* Sheet for creating a new program */}
       {showSheet && (
         <Sheet open={showSheet} onOpenChange={setShowSheet}>

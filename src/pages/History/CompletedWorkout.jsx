@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
 import AppHeader from '@/components/layout/AppHeader';
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
-import TileWrapper from '@/components/common/Cards/Wrappers/TileWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { useAuth } from "@/contexts/AuthContext";
 
 const CompletedWorkout = () => {
@@ -84,7 +84,7 @@ const CompletedWorkout = () => {
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
-        <TileWrapper>
+        <CardWrapper>
           {Object.keys(setsByExercise).map(exId => (
             <ExerciseCard
               key={exId}
@@ -96,7 +96,7 @@ const CompletedWorkout = () => {
               unit={setsByExercise[exId][0]?.unit || 'lbs'}
             />
           ))}
-        </TileWrapper>
+        </CardWrapper>
       )}
     </>
   );
