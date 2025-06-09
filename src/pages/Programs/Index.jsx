@@ -17,7 +17,7 @@ import Icon from "@/components/common/Icon";
 import { Button } from "@/components/ui/button";
 import NumericInput from "@/components/common/forms/NumericInput";
 import WeightCompoundField from "@/components/common/forms/compound-fields/WeightCompoundField";
-import ToggleGroup from "@/components/common/forms/ToggleGroup";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import AddNewExerciseForm from "@/components/common/forms/compound-fields/AddNewExerciseForm";
 
 const ProgramsIndex = () => {

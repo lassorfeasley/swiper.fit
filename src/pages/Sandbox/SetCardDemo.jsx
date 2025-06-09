@@ -3,7 +3,7 @@ import ActiveExerciseCard from '@/components/common/CardsAndTiles/ActiveExercise
 import SetPill from '@/components/ui/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import NumericInput from '@/components/common/forms/NumericInput';
-import ToggleGroup from '@/components/common/forms/ToggleGroup';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const initialSetConfigs = [
   { reps: 10, weight: 25, unit: 'lbs' },
@@ -123,12 +123,11 @@ export default function SetCardDemo() {
               max={999}
               className="w-full"
             />
-            <ToggleGroup
-              options={unitOptions}
-              value={formValues.unit}
-              onChange={unit => setFormValues(f => ({ ...f, unit }))}
-              className="w-full gap-3"
-            />
+            <ToggleGroup type="single" value={formValues.unit} onValueChange={unit => setFormValues(f => ({ ...f, unit }))} className="w-full gap-3">
+              <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
+              <ToggleGroupItem value="kg">kg</ToggleGroupItem>
+              <ToggleGroupItem value="body">body</ToggleGroupItem>
+            </ToggleGroup>
           </div>
           <SheetFooter>
             <button

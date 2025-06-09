@@ -7,7 +7,6 @@ import NumericInput from '@/components/common/forms/NumericInput';
 import Icon from '@/components/common/Icon';
 import PropTypes from 'prop-types';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/solid';
-import ToggleGroup from '@/components/common/forms/ToggleGroup';
 import CardWrapper from './Wrappers/CardWrapper';
 
 const ActiveExerciseCard = ({

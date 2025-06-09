@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import Dropdown from '../../components/common/forms/Dropdown';
 import SearchField from '../../components/common/forms/SearchField';
 import WeightCompoundField from '../../components/common/forms/compound-fields/WeightCompoundField';
-import ToggleGroup from "@/components/common/forms/ToggleGroup";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const FormFieldDemo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
