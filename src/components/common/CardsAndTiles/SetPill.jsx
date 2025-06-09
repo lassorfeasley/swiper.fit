@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Badge } from '@/src/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 
 /**
  * SetPill - Component for displaying a set's reps and weight in a pill format

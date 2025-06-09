@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/common/forms/NumericInput";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/src/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import WeightCompoundField from "./WeightCompoundField";
 import { Card } from "@/components/ui/card";
 import SetConfigurationCard from './SetConfigurationCard';

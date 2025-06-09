@@ -14,7 +14,7 @@ import Workout from "./pages/workout";
 import WorkoutHistoryDetail from "./pages/workoutHistoryDetail";
 import AppHeaderDemo from "./pages/DemoPages/AppHeaderDemo";
 import CreateOrEditExerciseDemo from "./pages/DemoPages/CreateOrEditExerciseDemo";
-import ConfigureProgramExercises from "./pages/Programs/ConfigureProgramExercises";
+import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import FormFieldDemo from "./pages/DemoPages/FormFieldDemo";
 import "./App.css";
 import {
@@ -25,12 +25,12 @@ import React, { createContext, useState, useEffect } from "react";
 import NavBar from "./components/layout/NavBar";
 import SetCardDemo from "./pages/DemoPages/SetCardDemo";
 import SwipeSwitchDemo from "./pages/DemoPages/SwipeSwitchDemo";
-import Login from "./pages/Login";
-import RequireAuth from "./components/RequireAuth";
-import CreateAccount from "./pages/CreateAccount";
-import PasswordReset from "./pages/PasswordReset";
-import UpdatePassword from "./pages/UpdatePassword";
 import { AuthProvider } from './contexts/AuthContext';
+import Login from "./pages/auth/Login";
+import CreateAccount from "./pages/auth/CreateAccount";
+import PasswordReset from "./pages/auth/PasswordReset";
+import UpdatePassword from "./pages/auth/UpdatePassword";
+import RequireAuth from "./components/RequireAuth";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -112,7 +112,7 @@ function AppContent() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Home />} />
             <Route path="/programs" element={<Programs />} />
-            <Route path="/programs/:programId/configure" element={<ConfigureProgramExercises />} />
+            <Route path="/programs/:programId/configure" element={<ProgramBuilder />} />
             <Route path="/history" element={<History />} />
             <Route
               path="/history/:workoutId"

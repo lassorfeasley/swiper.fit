@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import NumericInput from '../NumericInput';
-import { ToggleGroup, ToggleGroupItem } from '@/src/components/ui/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const WeightCompoundField = ({
   weight = 25,

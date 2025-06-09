@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Card } from '@/components/ui/card';
 import NumericInput from '../NumericInput';
-import { ToggleGroup, ToggleGroupItem } from '@/src/components/ui/toggle-group';
-import { Separator } from '@/src/components/ui/separator';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Separator } from '@/components/ui/separator';
 
 const SetConfigurationCard = ({
   reps,

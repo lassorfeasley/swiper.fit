@@ -10,9 +10,9 @@ import { PageNameContext } from "@/App";
 import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Card, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/src/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 
-const ConfigureProgramExercises = () => {
+const ProgramBuilder = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const { setNavBarVisible } = useNavBarVisibility();
@@ -26,7 +26,7 @@ const ConfigureProgramExercises = () => {
   const isUnmounted = useRef(false);
 
   useEffect(() => {
-    setPageName("ConfigureProgramExercises");
+    setPageName("ProgramBuilder");
     setNavBarVisible(false);
     return () => setNavBarVisible(true);
   }, [setNavBarVisible, setPageName]);
@@ -311,4 +311,4 @@ const ConfigureProgramExercises = () => {
   );
 };
 
-export default ConfigureProgramExercises;
+export default ProgramBuilder;
