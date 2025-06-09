@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import SwipeSwitch from '@/components/ui/swipe-switch';
 import SetPill from '@/components/ui/SetPill';
-import SetEditSheet from '@/components/common/forms/SetEditSheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import SetEditForm from '@/components/common/forms/SetEditForm';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
 import NumericInput from '@/components/ui/numeric-input';
 import Icon from '@/components/common/Icon';
@@ -225,13 +226,17 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <SetEditSheet
-          isOpen={isEditSheetOpen}
-          onOpenChange={setIsEditSheetOpen}
-          formPrompt="Edit set"
-          onSave={handleEditFormSave}
-          initialValues={editForm}
-        />
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+          <SheetContent side="bottom" className="h-[85vh]">
+            <SheetHeader className="mb-4">
+              <SheetTitle>Edit set</SheetTitle>
+            </SheetHeader>
+            <SetEditForm
+              onSave={handleEditFormSave}
+              initialValues={editForm}
+            />
+          </SheetContent>
+        </Sheet>
       </CardWrapper>
     );
   }
@@ -277,13 +282,17 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <SetEditSheet
-        isOpen={isEditSheetOpen}
-        onOpenChange={setIsEditSheetOpen}
-        formPrompt="Edit set"
-        onSave={handleEditFormSave}
-        initialValues={editForm}
-      />
+      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh]">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+          </SheetHeader>
+          <SetEditForm
+            onSave={handleEditFormSave}
+            initialValues={editForm}
+          />
+        </SheetContent>
+      </Sheet>
     </CardWrapper>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import SetPill from '@/components/ui/SetPill';
-import SetEditSheet from '@/components/common/forms/SetEditSheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import SetEditForm from '@/components/common/forms/SetEditForm';
 
 const initialSetConfigs = [
   { reps: 10, weight: 25, unit: 'lbs' },
@@ -99,16 +100,20 @@ export default function SetCardDemo() {
       </div>
 
       {/* Sheet-based modal */}
-      <SetEditSheet
-        isOpen={showForm}
-        onOpenChange={setShowForm}
-        formPrompt="Edit set"
-        initialValues={formValues}
-        onSave={(newValues) => {
-          setFormValues(newValues);
-          setShowForm(false);
-        }}
-      />
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+        <SheetContent side="bottom" className="h-[85vh]">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+          </SheetHeader>
+          <SetEditForm
+            onSave={(newValues) => {
+              setFormValues(newValues);
+              setShowForm(false);
+            }}
+            initialValues={formValues}
+          />
+        </SheetContent>
+      </Sheet>
 
       <div style={{ marginTop: 24 }}>
         <h4>Completion Log:</h4>
