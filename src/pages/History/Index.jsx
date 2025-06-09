@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layout/AppHeader';
 import MainContainer from '@/components/common/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import WorkoutTile from '@/components/common/Cards/WorkoutTile';
+import WorkoutCard from '@/components/common/Cards/WorkoutCard';
 import { useAuth } from "@/contexts/AuthContext";
 
 function formatDuration(seconds) {
@@ -81,7 +81,7 @@ const History = () => {
         ) : (
           <CardWrapper>
             {workouts.map(w => (
-              <WorkoutTile
+              <WorkoutCard
                 key={w.id}
                 workoutName={w.workout_name || 'Unnamed Workout'}
                 programName={w.programs?.program_name || ''}

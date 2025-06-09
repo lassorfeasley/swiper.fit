@@ -5,7 +5,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/layout/AppHeader";
 import { PageNameContext } from "@/App";
-import ProgramTile from '@/components/common/Cards/ProgramTile';
+import ProgramCard from '@/components/common/Cards/ProgramCard';
 import { useQuery } from "@tanstack/react-query";
 import MainContainer from "@/components/common/MainContainer";
 import { useNavBarVisibility } from "@/NavBarVisibilityContext";
@@ -123,7 +123,7 @@ const ProgramsIndex = () => {
           </div>
         ) : (
           programs.map((program) => (
-            <ProgramTile
+            <ProgramCard
               key={program.id}
               programName={program.program_name}
               exerciseCount={program.exerciseCount}

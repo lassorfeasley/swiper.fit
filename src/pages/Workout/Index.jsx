@@ -7,7 +7,7 @@ import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/NavBarVisibilityContext';
 import AppHeader from '@/components/layout/AppHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import ProgramTile from '@/components/common/Cards/ProgramTile';
+import ProgramCard from '@/components/common/Cards/ProgramCard';
 import ActiveWorkout from './ActiveWorkout';
 
 const Workout = () => {
@@ -143,7 +143,7 @@ const Workout = () => {
               <div className="p-6">Loading...</div>
             ) : (
               programs.map(program => (
-                <ProgramTile
+                <ProgramCard
                   key={program.id}
                   programName={program.program_name}
                   exerciseCount={program.exerciseCount}
