@@ -76,11 +76,9 @@ const ActiveExerciseCard = ({
       {openSetIndex !== null && (
         <SetEditSheet
           isOpen={openSetIndex !== null}
-          onClose={handleSheetClose}
-          setNumber={openSetIndex + 1}
-          initialReps={setConfigs[openSetIndex]?.reps}
-          initialWeight={setConfigs[openSetIndex]?.weight}
-          initialWeightUnit={setConfigs[openSetIndex]?.unit}
+          onOpenChange={handleSheetClose}
+          formPrompt={`Edit Set ${openSetIndex + 1}`}
+          initialValues={setConfigs[openSetIndex]}
           onSave={(newConfig) => {
             handleSetEdit(openSetIndex, newConfig);
             handleSheetClose();

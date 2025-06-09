@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import SetPill from '@/components/ui/SetPill';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import NumericInput from '@/components/ui/numeric-input';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import SetEditSheet from '@/components/common/forms/SetEditSheet';
 
 const initialSetConfigs = [
   { reps: 10, weight: 25, unit: 'lbs' },
@@ -101,44 +99,16 @@ export default function SetCardDemo() {
       </div>
 
       {/* Sheet-based modal */}
-      <Sheet open={showForm} onOpenChange={setShowForm}>
-        <SheetContent className="w-[300px] sm:w-[425px]">
-          <SheetHeader>
-            <SheetTitle>Edit set</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-col gap-4 mt-4">
-            <NumericInput
-              label="Reps"
-              value={formValues.reps}
-              onChange={v => setFormValues(f => ({ ...f, reps: v }))}
-              min={0}
-              max={999}
-              className="w-full"
-            />
-            <NumericInput
-              label="Weight"
-              value={formValues.weight || 0}
-              onChange={v => setFormValues(f => ({ ...f, weight: v }))}
-              min={0}
-              max={999}
-              className="w-full"
-            />
-            <ToggleGroup type="single" value={formValues.unit} onValueChange={unit => setFormValues(f => ({ ...f, unit }))} className="w-full gap-3">
-              <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
-              <ToggleGroupItem value="kg">kg</ToggleGroupItem>
-              <ToggleGroupItem value="body">body</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-          <SheetFooter>
-            <button
-              className="w-full bg-black text-white px-4 py-2 rounded-lg"
-              onClick={() => setShowForm(false)}
-            >
-              Close
-            </button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <SetEditSheet
+        isOpen={showForm}
+        onOpenChange={setShowForm}
+        formPrompt="Edit set"
+        initialValues={formValues}
+        onSave={(newValues) => {
+          setFormValues(newValues);
+          setShowForm(false);
+        }}
+      />
 
       <div style={{ marginTop: 24 }}>
         <h4>Completion Log:</h4>

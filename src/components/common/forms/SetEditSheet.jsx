@@ -5,10 +5,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
 } from "@/components/ui/sheet";
-import NumericInput from '@/components/ui/numeric-input';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import SetEditForm from './SetEditForm';
 
 const SetEditSheet = ({
   isOpen,
@@ -17,18 +15,7 @@ const SetEditSheet = ({
   onSave,
   initialValues = { reps: 0, weight: 0, unit: 'lbs' },
 }) => {
-  const [formValues, setFormValues] = React.useState(initialValues);
-
-  // Reset form values when initialValues change
-  React.useEffect(() => {
-    setFormValues(initialValues);
-  }, [initialValues]);
-
-  const handleFormChange = (field, value) => {
-    setFormValues(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = () => {
+  const handleSave = (formValues) => {
     onSave(formValues);
     onOpenChange(false);
   };
@@ -39,43 +26,11 @@ const SetEditSheet = ({
         <SheetHeader className="mb-4">
           <SheetTitle>{formPrompt}</SheetTitle>
         </SheetHeader>
-        <div className="flex flex-col gap-4">
-          <NumericInput
-            label="Reps"
-            value={formValues.reps}
-            onChange={v => handleFormChange('reps', v)}
-            min={0}
-            max={999}
-            className="w-full"
-          />
-          <NumericInput
-            label="Weight"
-            value={formValues.weight !== undefined && formValues.unit !== 'body' ? formValues.weight : (formValues.unit === 'body' ? 'body' : 0)}
-            onChange={v => handleFormChange('weight', v)}
-            min={0}
-            max={999}
-            className="w-full"
-            incrementing={formValues.unit !== 'body'}
-          />
-          <ToggleGroup
-            type="single"
-            value={formValues.unit}
-            onValueChange={unit => unit && handleFormChange('unit', unit)}
-            className="w-full bg-white pt-0 pb-3 px-3 gap-3"
-          >
-            <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
-            <ToggleGroupItem value="kg">kg</ToggleGroupItem>
-            <ToggleGroupItem value="body">body</ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-        <SheetFooter className="mt-6">
-          <button
-            onClick={handleSave}
-            className="w-full bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors"
-          >
-            Save
-          </button>
-        </SheetFooter>
+        <SetEditForm
+          formPrompt={formPrompt}
+          onSave={handleSave}
+          initialValues={initialValues}
+        />
       </SheetContent>
     </Sheet>
   );
