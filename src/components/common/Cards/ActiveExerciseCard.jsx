@@ -59,7 +59,8 @@ const ActiveExerciseCard = ({
             await Promise.all([
               onSetDataChange(exerciseId, set.id, 'reps', set.reps),
               onSetDataChange(exerciseId, set.id, 'weight', set.weight),
-              onSetDataChange(exerciseId, set.id, 'status', set.status)
+              onSetDataChange(exerciseId, set.id, 'status', set.status),
+              onSetDataChange(exerciseId, set.id, 'unit', set.unit)
             ]);
           }
         }

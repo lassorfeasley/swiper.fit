@@ -16,11 +16,14 @@ import { Badge } from '@/components/ui/badge';
  * - editable: boolean (optional) - Whether the pill is editable (shows pointer and triggers onEdit)
  * - onEdit: func (optional) - Function to call when editing is triggered
  */
-const SetPill = ({ reps, weight, unit = 'lbs', className = '', onClick, style, complete = false, editable = false, onEdit }) => {
+const SetPill = ({ reps, weight, unit, className = '', onClick, style, complete = false, editable = false, onEdit }) => {
   // Format the weight display based on unit
   const formatWeight = () => {
     if (unit === 'body') return 'body';
-    return `${weight} ${unit}`;
+    if (weight !== undefined && unit) {
+      return `${weight} ${unit}`;
+    }
+    return weight !== undefined ? `${weight}` : '';
   };
 
   // Choose badge variant

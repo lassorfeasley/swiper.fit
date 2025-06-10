@@ -49,11 +49,10 @@ const CompletedWorkout = () => {
       // Only keep sets that have reps and weight logged and are valid numbers
       const validSets = (setsData || []).filter(set => 
         typeof set.reps === 'number' && !isNaN(set.reps) && set.reps > 0 &&
-        typeof set.weight === 'number' && !isNaN(set.weight) && set.weight >= 0 &&
-        set.weight_unit // Ensure we have a unit
+        typeof set.weight === 'number' && !isNaN(set.weight) && set.weight >= 0
       ).map(set => ({
         ...set,
-        unit: set.weight_unit // Map weight_unit to unit for compatibility with existing components
+        unit: set.weight_unit // Do not default to 'lbs', allow undefined/null
       }));
       setSets(validSets);
 
