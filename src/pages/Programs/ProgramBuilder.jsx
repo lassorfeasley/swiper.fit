@@ -6,7 +6,6 @@ import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder, useDragControls } from "framer-motion";
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { PageNameContext } from "@/App";
-import { PlusCircleIcon, TrashIcon, PencilIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
