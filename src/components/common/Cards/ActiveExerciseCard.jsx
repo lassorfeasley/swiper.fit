@@ -86,10 +86,8 @@ const ActiveExerciseCard = ({
     if (!mountedRef.current) return;
 
     try {
-      if (isExpanded) {
+      if (isExpanded && activeSet) {
         // Expanded view: complete only the active set and unlock the next
-        if (!activeSet) return;
-        
         if (onSetComplete) {
           await onSetComplete({
             setId: activeSet.id,
@@ -107,7 +105,7 @@ const ActiveExerciseCard = ({
             await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
           }
         }
-      } else {
+      } else if (!isExpanded) {
         // Compact view: complete ALL sets
         if (onSetDataChange) {
           await Promise.all(sets.map(set => {
