@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import CardWrapper from './Wrappers/CardWrapper';
-import SetPill from '@/components/ui/SetPill';
+import SetPill from '@/components/molecules/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 

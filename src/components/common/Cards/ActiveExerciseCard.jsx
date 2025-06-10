@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import SwipeSwitch from '@/components/ui/swipe-switch';
-import SetPill from '@/components/ui/SetPill';
+import SwipeSwitch from '@/components/molecules/swipe-switch';
+import SetPill from '@/components/molecules/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
-import NumericInput from '@/components/ui/numeric-input';
-import Icon from '@/components/ui/Icon';
+import NumericInput from '@/components/molecules/numeric-input';
+import Icon from '@/components/molecules/Icon';
 import PropTypes from 'prop-types';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/solid';
 import CardWrapper from './Wrappers/CardWrapper';

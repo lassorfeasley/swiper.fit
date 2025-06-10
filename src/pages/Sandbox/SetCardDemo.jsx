@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
-import SetPill from '@/components/ui/SetPill';
+import SetPill from '@/components/molecules/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 

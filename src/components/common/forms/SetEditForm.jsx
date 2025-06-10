@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import NumericInput from '@/components/ui/numeric-input';
+import NumericInput from '@/components/molecules/numeric-input';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import WeightCompoundField from './WeightCompoundField';
 
 const SetEditForm = ({
   formPrompt = "Edit set",

@@ -8,9 +8,9 @@ import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import NumericInput from '@/components/ui/numeric-input';
+import NumericInput from '@/components/molecules/numeric-input';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
-import Icon from '@/components/ui/Icon';
+import Icon from '@/components/molecules/Icon';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 
 /**

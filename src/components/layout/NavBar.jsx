@@ -4,7 +4,8 @@ import React from "react";
 import { Link, useLocation, NavLink } from "react-router-dom";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/molecules/Icon";
+import { HomeIcon, RectangleStackIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
 
 export default function NavBar({ navItems }) {
   const location = useLocation();
