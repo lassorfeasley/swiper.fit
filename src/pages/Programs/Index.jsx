@@ -12,7 +12,6 @@ import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import Icon from "@/components/molecules/Icon";
 import { Button } from "@/components/ui/button";
 import NumericInput from "@/components/molecules/numeric-input";
 import WeightCompoundField from "@/components/common/forms/WeightCompoundField";

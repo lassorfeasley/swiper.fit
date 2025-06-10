@@ -2,10 +2,9 @@
 
 import PropTypes from "prop-types";
 import React from "react";
-import { ArrowLeftIcon, PencilSquareIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import { ArrowLeft, Pencil, Plus, Search } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
-import Icon from "@/components/molecules/Icon";
 
 export const AppHeader = ({
   showActionBar = true,
@@ -47,7 +46,7 @@ export const AppHeader = ({
             aria-label="Back"
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBackHandler(); }}
           >
-            <ArrowLeftIcon className="w-6 h-6 text-zinc-700" />
+            <ArrowLeft className="w-6 h-6 text-zinc-700" />
           </div>
         )}
         <div className="Headingsymbolwrapper self-stretch inline-flex justify-start items-center">
@@ -56,7 +55,7 @@ export const AppHeader = ({
           </div>
           {showActionIcon && (
             <div className="Pencil w-6 h-6 relative overflow-hidden flex items-center justify-center">
-              <PencilSquareIcon className="w-6 h-6 text-zinc-700" />
+              <Pencil className="w-6 h-6 text-zinc-700" />
             </div>
           )}
         </div>
@@ -79,7 +78,7 @@ export const AppHeader = ({
             {actionBarText}
           </div>
           <div className="Plus w-6 h-6 relative overflow-hidden flex items-center justify-center">
-            <PlusIcon className="w-6 h-6 text-white" />
+            <Plus className="w-6 h-6 text-white" />
           </div>
         </div>
       )}
@@ -92,7 +91,7 @@ export const AppHeader = ({
             className="flex-1"
           />
           <div className="Symbol w-6 h-6 relative flex items-center justify-center">
-            <MagnifyingGlassIcon className="w-6 h-6 text-slate-600" />
+            <Search className="w-6 h-6 text-slate-600" />
           </div>
         </div>
       )}

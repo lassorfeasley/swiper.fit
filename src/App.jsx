@@ -1,11 +1,11 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 // import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
 import {
-  HomeIcon,
-  StarIcon,
-  ArrowPathIcon,
-  PlayIcon,
-} from "@heroicons/react/24/solid";
+  Home as HomeIcon,
+  Star,
+  RotateCcw,
+  Play,
+} from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home";
 import Programs from "./pages/programs";
@@ -72,17 +72,17 @@ function AppContent() {
     {
       to: "/programs",
       label: "Programs",
-      icon: <StarIcon className="w-7 h-7" />,
+      icon: <Star className="w-7 h-7" />,
     },
     {
       to: "/history",
       label: "History",
-      icon: <ArrowPathIcon className="w-7 h-7" />,
+      icon: <RotateCcw className="w-7 h-7" />,
     },
     {
       to: "/workout",
       label: "Workout",
-      icon: <PlayIcon className="w-7 h-7" />,
+      icon: <Play className="w-7 h-7" />,
     },
   ];
 
