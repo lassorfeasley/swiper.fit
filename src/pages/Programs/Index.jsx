@@ -27,6 +27,7 @@ const ProgramsIndex = () => {
   const [showSheet, setShowSheet] = useState(false);
   const [programName, setProgramName] = useState("");
   const [refreshFlag, setRefreshFlag] = useState(0);
+  const [search, setSearch] = useState("");
   const inputRef = React.useRef(null);
   const navigate = useNavigate();
 
@@ -104,6 +105,8 @@ const ProgramsIndex = () => {
         subhead={false}
         search={true}
         searchPlaceholder="Search programs"
+        searchValue={search}
+        onSearchChange={setSearch}
         onAction={() => {
           setShowSheet(true);
           setProgramName("");
@@ -121,14 +124,22 @@ const ProgramsIndex = () => {
             No programs found.
           </div>
         ) : (
-          programs.map((program) => (
-            <ProgramCard
-              key={program.id}
-              programName={program.program_name}
-              exerciseCount={program.exerciseCount}
-              onClick={() => navigate(`/programs/${program.id}/configure`)}
-            />
-          ))
+          programs
+            .filter(program => {
+              const q = search.toLowerCase();
+              return (
+                program.program_name?.toLowerCase().includes(q) ||
+                String(program.exerciseCount).includes(q)
+              );
+            })
+            .map((program) => (
+              <ProgramCard
+                key={program.id}
+                programName={program.program_name}
+                exerciseCount={program.exerciseCount}
+                onClick={() => navigate(`/programs/${program.id}/configure`)}
+              />
+            ))
         )}
       </CardWrapper>
       {/* Sheet for creating a new program */}

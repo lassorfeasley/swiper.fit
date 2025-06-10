@@ -22,6 +22,7 @@ function formatDuration(seconds) {
 const History = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -73,6 +74,8 @@ const History = () => {
         subhead={false}
         search={true}
         searchPlaceholder="Search"
+        searchValue={search}
+        onSearchChange={setSearch}
         data-component="AppHeader"
       />
       <div className="flex-1 overflow-y-auto">
@@ -80,17 +83,26 @@ const History = () => {
           <div className="p-6">Loading...</div>
         ) : (
           <CardWrapper>
-            {workouts.map(w => (
-              <WorkoutCard
-                key={w.id}
-                workoutName={w.workout_name || 'Unnamed Workout'}
-                programName={w.programs?.program_name || ''}
-                exerciseCount={w.exerciseCount}
-                duration={formatDuration(w.duration_seconds)}
-                onClick={() => navigate(`/history/${w.id}`)}
-                className="hover:bg-gray-200 transition-colors"
-              />
-            ))}
+            {workouts
+              .filter(w => {
+                const q = search.toLowerCase();
+                return (
+                  w.workout_name?.toLowerCase().includes(q) ||
+                  w.programs?.program_name?.toLowerCase().includes(q) ||
+                  String(w.exerciseCount).includes(q)
+                );
+              })
+              .map(w => (
+                <WorkoutCard
+                  key={w.id}
+                  workoutName={w.workout_name || 'Unnamed Workout'}
+                  programName={w.programs?.program_name || ''}
+                  exerciseCount={w.exerciseCount}
+                  duration={formatDuration(w.duration_seconds)}
+                  onClick={() => navigate(`/history/${w.id}`)}
+                  className="hover:bg-gray-200 transition-colors"
+                />
+              ))}
           </CardWrapper>
         )}
       </div>
