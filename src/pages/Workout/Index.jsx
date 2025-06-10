@@ -123,8 +123,7 @@ const Workout = () => {
       // Now create the sets with the workout ID
       const setRows = allSets.map(set => ({
         ...set,
-        workout_id: workoutInsert.id,
-        weight_unit: set.unit || null
+        workout_id: workoutInsert.id
       }));
 
       const { error: setsError } = await supabase.from('sets').insert(setRows);
