@@ -5,11 +5,13 @@ import SetPill from '@/components/ui/SetPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 
-const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, onSetConfigsChange }) => {
+const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, onSetConfigsChange, mode = 'default' }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetIndex, setEditSetIndex] = useState(null);
   const [editFormValues, setEditFormValues] = useState({ reps: 0, weight: 0, unit: 'lbs' });
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
+
+  const setsAreEditable = onSetConfigsChange !== undefined && mode !== 'completed';
 
   // Keep localSetConfigs in sync with setConfigs prop
   useEffect(() => {
@@ -18,6 +20,7 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
 
   // Open edit sheet for a set
   const handleSetEdit = (idx) => {
+    if (!setsAreEditable) return;
     setEditSetIndex(idx);
     setEditFormValues(localSetConfigs[idx]);
     setEditSheetOpen(true);
@@ -42,7 +45,7 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
           <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
-            {localSetConfigs.length === 1 ? 'One set' : localSetConfigs.length === 2 ? 'Two sets' : localSetConfigs.length === 3 ? 'Three sets' : `${localSetConfigs.length} sets`}
+            {localSetConfigs.length === 0 ? 'No sets' : localSetConfigs.length === 1 ? 'One set' : localSetConfigs.length === 2 ? 'Two sets' : localSetConfigs.length === 3 ? 'Three sets' : `${localSetConfigs.length} sets`}
           </div>
         </div>
         {onEdit && (
@@ -63,11 +66,13 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
             reps={config.reps}
             weight={config.weight}
             unit={config.unit || 'lbs'}
-            editable={true}
+            editable={setsAreEditable}
             onEdit={() => handleSetEdit(idx)}
+            complete={mode === 'completed'}
           />
         ))}
       </div>
+      {setsAreEditable && (
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
         <SheetContent side="bottom" className="h-[85vh]">
           <SheetHeader className="mb-4">
@@ -79,6 +84,7 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
           />
         </SheetContent>
       </Sheet>
+      )}
     </CardWrapper>
   );
 };
@@ -93,6 +99,7 @@ ExerciseCard.propTypes = {
   className: PropTypes.string,
   onEdit: PropTypes.func,
   onSetConfigsChange: PropTypes.func,
+  mode: PropTypes.oneOf(['default', 'completed']),
 };
 
 export default ExerciseCard; 

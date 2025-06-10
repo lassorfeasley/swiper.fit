@@ -6,7 +6,6 @@ import { supabase } from '@/supabaseClient';
 import AppHeader from '@/components/layout/AppHeader';
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import SetPill from '@/components/ui/SetPill';
 import { useAuth } from "@/contexts/AuthContext";
 
 const CompletedWorkout = () => {
@@ -106,29 +105,15 @@ const CompletedWorkout = () => {
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
-        <CardWrapper>
+        <CardWrapper className="px-4 py-4">
           {exercisesWithSets.map(([exId, exerciseSets]) => (
-            <div key={exId} className="mb-4">
-              <ExerciseCard
-                mode="completed"
-                exerciseName={exercises[exId] || '[Exercise name]'}
-                sets={exerciseSets.length}
-                reps={exerciseSets[0]?.reps || 0}
-                weight={exerciseSets[0]?.weight || 0}
-                unit={exerciseSets[0]?.unit || 'lbs'}
-              />
-              <div className="flex flex-wrap gap-2 mt-2 px-3">
-                {exerciseSets.map((set, idx) => (
-                  <SetPill
-                    key={set.id}
-                    reps={set.reps}
-                    weight={set.weight}
-                    unit={set.unit || 'lbs'}
-                    complete={true}
-                  />
-                ))}
-              </div>
-            </div>
+            <ExerciseCard
+              key={exId}
+              mode="completed"
+              exerciseName={exercises[exId] || '[Exercise name]'}
+              setConfigs={exerciseSets}
+              className="mb-4"
+            />
           ))}
         </CardWrapper>
       )}
