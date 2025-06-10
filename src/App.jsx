@@ -7,10 +7,10 @@ import {
   Play,
 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Home from "./pages/Home";
-import Programs from "./pages/programs";
-import History from "./pages/history";
-import Workout from "./pages/workout";
+import Home from "./pages/Home/Home";
+import Programs from "./pages/Programs/Programs";
+import History from "./pages/History/History";
+import Workout from "./pages/Workout/Workout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
 import AppHeaderDemo from "./pages/Sandbox/AppHeaderDemo";
 import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
