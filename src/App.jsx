@@ -17,7 +17,7 @@ import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import React, { createContext, useState, useEffect } from "react";
-import NavBar from "./components/layout/NavBar";
+import ResponsiveNav from "./components/organisms/responsive-nav";
 import SetCardDemo from "./pages/Sandbox/SetCardDemo";
 import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
 import { AuthProvider } from './contexts/AuthContext';
@@ -126,7 +126,7 @@ function AppContent() {
 
       {/* Navigation bar */}
       {navBarVisible && !isProgramDetailOrEditOrCreateOrLoginPage && (
-        <NavBar navItems={navItems} />
+        <ResponsiveNav navItems={navItems} />
       )}
     </div>
   );
