@@ -269,6 +269,7 @@ const ProgramBuilder = () => {
       search={true}
       searchValue={search}
       onSearchChange={setSearch}
+      pageContext="programBuilder"
       data-component="AppHeader"
     >
       <CardWrapper

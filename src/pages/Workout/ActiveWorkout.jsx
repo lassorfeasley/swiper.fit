@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
+import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
+import { PageNameContext } from "@/App";
 import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
@@ -10,8 +12,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Input } from '@/components/ui/input';
 import NumericInput from '@/components/molecules/numeric-input';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
-import { Play, Pause, Square, Circle } from 'lucide-react';
+import { Play, Pause, Square, Circle, Home, History, Dumbbell, Settings, Star, RotateCcw } from 'lucide-react';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
+import ResponsiveNav from '@/components/organisms/responsive-nav';
+import AppLayout from '@/components/layout/AppLayout';
+
+// Define navigation items
+const navItems = [
+  { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
+  { to: "/programs", label: "Programs", icon: <Star className="w-7 h-7" /> },
+  { to: "/history", label: "History", icon: <RotateCcw className="w-7 h-7" /> },
+  { to: "/workout", label: "Workout", icon: <Play className="w-7 h-7" /> },
+];
 
 /**
  * ActiveFocusedNavBar Component
@@ -318,18 +330,18 @@ const ActiveWorkout = ({
   };
 
   return (
-    <>
-      <PageHeader
-        showBackButton={false}
-        appHeaderTitle={workoutName || 'Active Workout'}
-        subhead={true}
-        subheadText={selectedProgram?.program_name || 'Tracking unscheduled exercises'}
-        search={false}
-        showActionBar={true}
-        actionBarText="Add exercise"
-        onAction={() => setShowAddExercise(true)}
-        data-component="active_workout_header"
-      />
+    <AppLayout
+      appHeaderTitle={workoutName || 'Active Workout'}
+      subhead={true}
+      subheadText={selectedProgram?.program_name || 'Tracking unscheduled exercises'}
+      showActionBar={true}
+      actionBarText="Add exercise"
+      onAction={() => setShowAddExercise(true)}
+      showBackButton={false}
+      search={false}
+      data-component="active_workout_header"
+    >
+      <ResponsiveNav navItems={navItems} />
       <CardWrapper>
         <div className="w-full flex flex-col gap-4 p-4">
           {exercises.map(ex => (
@@ -379,7 +391,7 @@ const ActiveWorkout = ({
           </SheetContent>
         </Sheet>
       )}
-    </>
+    </AppLayout>
   );
 };
 

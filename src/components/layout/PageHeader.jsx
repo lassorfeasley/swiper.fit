@@ -17,14 +17,14 @@ const headerResponsiveStyle = `
 `;
 
 export const PageHeader = forwardRef(({
-  showActionBar = true,
-  showActionIcon = true,
-  showBackButton = true,
-  appHeaderTitle = "Example app header title",
-  actionBarText = "Example action bar text",
-  search = true,
-  subhead = true,
-  subheadText = "example subhead text",
+  showActionBar = false,
+  showActionIcon = false,
+  showBackButton = false,
+  appHeaderTitle = "Welcome to Swiper.fit!",
+  actionBarText = "",
+  search = false,
+  subhead = false,
+  subheadText = "",
   onBack,
   onAction,
   searchValue,
@@ -32,6 +32,7 @@ export const PageHeader = forwardRef(({
   searchPlaceholder,
   className,
   sidebarWidth = 256,
+  pageContext = "default",
   ...props
 }, ref) => {
   const navigate = useNavigate();
@@ -64,12 +65,37 @@ export const PageHeader = forwardRef(({
     }, 100);
   };
 
+  // Generate dynamic search placeholder based on page context
+  const getSearchPlaceholder = () => {
+    if (searchPlaceholder) return searchPlaceholder;
+    
+    switch (pageContext) {
+      case "programs":
+        return "Search programs";
+      case "history":
+        return "Search workouts";
+      case "workout":
+        return "Search programs";
+      case "workoutDetail":
+        return "Search exercises";
+      case "programBuilder":
+        return "Search exercises";
+      default:
+        return `Search ${appHeaderTitle.toLowerCase()}`;
+    }
+  };
+
+  const handleClearSearch = () => {
+    onSearchChange("");
+    setSearchActive(false);
+  };
+
   return (
     <>
       <style>{headerResponsiveStyle}</style>
       <div
         ref={ref}
-        className={cn("fixed top-0 right-0 z-50 bg-neutral-200 border-b border-neutral-100 page-header-fixed", className)}
+        className={cn("fixed top-0 right-0 z-50 bg-stone-200 border-b border-neutral-100 page-header-fixed", className)}
         style={{ left: sidebarWidth }}
         {...props}
       >
@@ -125,29 +151,27 @@ export const PageHeader = forwardRef(({
                   )}
                   {/* Show search input and clear when active */}
                   {searchActive && (
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-72 max-w-[70vw]">
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-96">
                         <SearchField
                           ref={searchInputRef}
                           value={searchValue}
                           onChange={(e) => onSearchChange(e.target.value)}
                           onBlur={handleSearchBlur}
-                          placeholder={searchPlaceholder || "Search..."}
-                          className="w-full px-4 py-2 bg-white rounded-[40px] border border-stone-400 text-stone-700 text-sm font-normal font-['Space_Grotesk'] leading-tight focus:outline-none focus:ring-2 focus:ring-stone-400"
+                          placeholder={getSearchPlaceholder()}
+                          className="w-full h-14 px-4 py-2 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-slate-500 text-base font-normal font-['Space_Grotesk'] leading-normal focus:outline-none focus:ring-2 focus:ring-neutral-300"
                         />
-                        <span className="absolute right-10 top-1/2 -translate-y-1/2 text-stone-600">
-                          <Search className="size-5" />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-300">
+                          <Search className="size-4" />
                         </span>
-                        {searchValue && (
-                          <button
-                            className="absolute right-2 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors"
-                            onClick={() => { onSearchChange(""); setSearchActive(false); }}
-                            aria-label="Clear search"
-                          >
-                            <X className="size-7" />
-                          </button>
-                        )}
                       </div>
+                      <button
+                        className="size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={handleClearSearch}
+                        aria-label="Clear search and exit"
+                      >
+                        <X className="size-7" />
+                      </button>
                     </div>
                   )}
                 </>
@@ -186,6 +210,7 @@ PageHeader.propTypes = {
   searchPlaceholder: PropTypes.string,
   className: PropTypes.string,
   sidebarWidth: PropTypes.number,
+  pageContext: PropTypes.oneOf(["default", "programs", "history", "workout", "workoutDetail", "programBuilder"]),
 };
 
 export default PageHeader; 

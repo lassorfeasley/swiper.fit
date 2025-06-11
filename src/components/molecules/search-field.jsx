@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 
-const SearchField = ({
+const SearchField = React.forwardRef(({
   value,
   onChange,
   placeholder = '',
   className = '',
+  customPlaceholder,
   ...props
-}) => {
+}, ref) => {
   const inputRef = useRef(null);
 
   return (
@@ -21,19 +22,22 @@ const SearchField = ({
         type="text"
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
-        className="w-full h-full bg-transparent text-xl text-black font-['Space_Grotesk'] focus:outline-none"
+        placeholder={customPlaceholder || placeholder}
+        className="w-full h-full bg-transparent text-base text-slate-500 font-['Space_Grotesk'] focus:outline-none"
         autoComplete="off"
       />
     </div>
   );
-};
+});
 
 SearchField.propTypes = {
   value: PropTypes.string,
   onChange: PropTypes.func,
   placeholder: PropTypes.string,
+  customPlaceholder: PropTypes.string,
   className: PropTypes.string,
 };
+
+SearchField.displayName = "SearchField";
 
 export default SearchField; 

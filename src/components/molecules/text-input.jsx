@@ -9,6 +9,7 @@ const TextInput = React.forwardRef(({
   icon,
   error,
   disabled,
+  customPlaceholder,
   ...props
 }, ref) => {
   const [isFocused, setIsFocused] = React.useState(false)
@@ -52,6 +53,7 @@ const TextInput = React.forwardRef(({
           disabled={disabled}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          placeholder={customPlaceholder}
           {...props}
         />
         {icon && (
