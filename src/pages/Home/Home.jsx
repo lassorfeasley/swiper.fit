@@ -1,5 +1,4 @@
-// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=107-1611&t=3oXUhbg9QEWAH2mC-4
-
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=107-1611
 
 import AppLayout from '@/components/layout/AppLayout';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";

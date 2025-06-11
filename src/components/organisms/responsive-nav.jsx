@@ -74,41 +74,43 @@ export default function ResponsiveNav() {
       {/* Header */}
       <div className="flex items-center gap-2 h-14 border-b px-4 sticky top-0 z-10 bg-background">
         <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <span className="text-lg font-bold text-primary">F</span>
+          <span className="text-lg font-bold text-primary">S</span>
         </div>
-        <h1 className="text-xl font-bold text-slate-800">FitAI</h1>
+        <h1 className="text-xl font-bold text-slate-800">SwiperFit</h1>
       </div>
-      {/* Nav */}
-      <nav className="flex-1 overflow-auto p-2 flex flex-col gap-1">
-        {navItems.map((item) => {
-          const selected = location.pathname === item.to;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                selected && "bg-accent text-accent-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              )}
-              aria-current={selected ? "page" : undefined}
-            >
-              <span className={cn(
-                "size-5 shrink-0",
-                selected ? "text-accent-foreground" : "text-muted-foreground group-hover:text-accent-foreground"
-              )}>
-                {item.icon}
-              </span>
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Nav - vertically centered */}
+      <div className="flex-1 flex flex-col justify-center">
+        <nav className="p-2 flex flex-col gap-1">
+          {navItems.map((item) => {
+            const selected = location.pathname === item.to;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  selected && "bg-accent text-accent-foreground",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                )}
+                aria-current={selected ? "page" : undefined}
+              >
+                <span className={cn(
+                  "size-5 shrink-0",
+                  selected ? "text-accent-foreground" : "text-muted-foreground group-hover:text-accent-foreground"
+                )}>
+                  {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
       {/* Footer */}
       <div className="flex h-14 items-center border-t px-4 sticky bottom-0 z-10 bg-background">
         <div className="flex flex-col gap-1">
-          <div className="text-xs text-slate-500">© 2024 FitAI</div>
+          <div className="text-xs text-slate-500">© 2024 SwiperFit</div>
           <div className="text-xs text-slate-400">All rights reserved</div>
         </div>
       </div>

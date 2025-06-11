@@ -1,4 +1,4 @@
-// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=61-360&t=YBjXtsLhxGedobad-4
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-360
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';

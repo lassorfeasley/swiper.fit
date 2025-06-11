@@ -1,4 +1,4 @@
-// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=48-601&t=YBjXtsLhxGedobad-4
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=48-601
 
 import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";

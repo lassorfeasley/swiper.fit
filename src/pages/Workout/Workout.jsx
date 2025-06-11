@@ -1,4 +1,4 @@
-// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=49-317&t=YBjXtsLhxGedobad-4
+// @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=49-317
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
