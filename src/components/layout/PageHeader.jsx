@@ -5,6 +5,7 @@ import React from "react";
 import { ArrowLeft, Pencil, Plus, Search } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export const PageHeader = ({
   showActionBar = true,
@@ -20,6 +21,8 @@ export const PageHeader = ({
   searchValue,
   onSearchChange,
   searchPlaceholder,
+  className,
+  ...props
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,64 +38,63 @@ export const PageHeader = ({
   };
 
   return (
-    <div className="Appheader w-full self-stretch border-b-[0.25px] border-slate-400 inline-flex flex-col justify-start items-start">
-      <div className="Pagelabelwrapper self-stretch px-5 pt-10 pb-5 bg-stone-50 border-b-[0.25px] border-slate-400 flex flex-col justify-start items-start gap-2">
+    <div 
+      className={cn(
+        "w-full self-stretch border-b border-slate-200 bg-white",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex flex-col gap-2 px-5 pt-10 pb-5 bg-stone-50 border-b border-slate-200">
         {showBackButton && (
-          <div
-            className="ArrowNarrowLeft w-6 h-6 relative overflow-hidden cursor-pointer flex items-center justify-center"
+          <button
+            className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-zinc-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={onBackHandler}
-            role="button"
-            tabIndex={0}
             aria-label="Back"
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onBackHandler(); }}
           >
-            <ArrowLeft className="w-6 h-6 text-zinc-700" />
-          </div>
+            <ArrowLeft className="w-6 h-6" />
+          </button>
         )}
-        <div className="Headingsymbolwrapper self-stretch inline-flex justify-start items-center">
-          <div className="Heading flex-1 justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="flex-1 text-xl font-medium text-slate-600 font-['Space_Grotesk'] leading-normal">
             {appHeaderTitle}
-          </div>
+          </h1>
           {showActionIcon && (
-            <div className="Pencil w-6 h-6 relative overflow-hidden flex items-center justify-center">
-              <Pencil className="w-6 h-6 text-zinc-700" />
-            </div>
+            <button
+              className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-zinc-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Edit"
+            >
+              <Pencil className="w-6 h-6" />
+            </button>
           )}
         </div>
         {subhead && (
-          <div className="Subheading self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">
+          <p className="text-base font-normal text-slate-600 font-['Space_Grotesk'] leading-none">
             {subheadText}
-          </div>
+          </p>
         )}
       </div>
       {showActionBar && (
-        <div
-          className="Actionbar self-stretch h-12 px-5 py-3 bg-slate-600 inline-flex justify-start items-center gap-3"
+        <button
+          className="w-full h-12 px-5 py-3 bg-slate-600 flex items-center justify-between gap-3 text-stone-50 hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onAction}
-          role="button"
-          tabIndex={0}
           aria-label="Action bar"
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onAction && onAction(); }}
         >
-          <div className="Actiontext flex-1 justify-start text-stone-50 text-base font-normal font-['Space_Grotesk'] leading-none">
+          <span className="flex-1 text-base font-normal font-['Space_Grotesk'] leading-none text-left">
             {actionBarText}
-          </div>
-          <div className="Plus w-6 h-6 relative overflow-hidden flex items-center justify-center">
-            <Plus className="w-6 h-6 text-white" />
-          </div>
-        </div>
+          </span>
+          <Plus className="w-6 h-6 text-white" />
+        </button>
       )}
       {search && (
-        <div className="Searchfeild self-stretch h-14 px-5 py-2.5 bg-white border-b-[0.25px] border-slate-600 inline-flex justify-end items-center gap-2.5">
+        <div className="flex items-center gap-2.5 px-5 py-2.5 bg-white border-b border-slate-200">
           <SearchField
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder || "Search..."}
             className="flex-1"
           />
-          <div className="Symbol w-6 h-6 relative flex items-center justify-center">
-            <Search className="w-6 h-6 text-slate-600" />
-          </div>
+          <Search className="w-6 h-6 text-slate-600" />
         </div>
       )}
     </div>
@@ -113,6 +115,7 @@ PageHeader.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   searchPlaceholder: PropTypes.string,
+  className: PropTypes.string,
 };
 
 export default PageHeader; 
