@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import AppLayout from '@/components/layout/AppLayout';
+import { TextInput } from "@/components/molecules/text-input";
+import { Eye } from "lucide-react";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
@@ -64,14 +65,13 @@ export default function CreateAccount() {
                 </div>
               </div>
               <div className="mb-4 w-full">
-                <Input
+                <TextInput
                   type="email"
                   id="create-account-email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={signupMutation.isPending}
-                  className="w-full bg-white"
                 />
               </div>
             </div>
@@ -83,14 +83,14 @@ export default function CreateAccount() {
                 </div>
               </div>
               <div className="mb-4 w-full">
-                <Input
+                <TextInput
                   type="password"
                   id="create-account-password"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={signupMutation.isPending}
-                  className="w-full bg-white"
+                  icon={<Eye className="size-6 text-neutral-300" />}
                 />
               </div>
             </div>

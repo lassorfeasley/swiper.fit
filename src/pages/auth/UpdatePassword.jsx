@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { Alert } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from '@/components/layout/AppLayout';
+import { TextInput } from "@/components/molecules/text-input";
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -75,26 +75,26 @@ export default function UpdatePassword() {
                 <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
                   New Password
                 </label>
-                <Input
+                <TextInput
                   type="password"
                   placeholder="Enter new password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   required
-                  className="w-full bg-white"
+                  icon={<Eye className="size-6 text-neutral-300" />}
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
                   Confirm Password
                 </label>
-                <Input
+                <TextInput
                   type="password"
                   placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full bg-white"
+                  icon={<Eye className="size-6 text-neutral-300" />}
                 />
               </div>
               <Button type="submit" className="w-full h-[56px]">

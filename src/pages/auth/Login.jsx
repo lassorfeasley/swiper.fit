@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import AppLayout from '@/components/layout/AppLayout';
+import { TextInput } from "@/components/molecules/text-input";
+import { Eye } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -76,14 +77,14 @@ export default function Login() {
                 </div>
               </div>
               <div className="mb-4 w-full">
-                <Input
+                <TextInput
                   type="email"
                   id="login-email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loginMutation.isPending}
-                  className={`w-full bg-white${emailError ? " border-red-500" : ""}`}
+                  error={emailError ? errorMessage : undefined}
                 />
               </div>
             </div>
@@ -101,14 +102,15 @@ export default function Login() {
                 </div>
               </div>
               <div className="mb-4 w-full">
-                <Input
+                <TextInput
                   type="password"
                   id="login-password"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loginMutation.isPending}
-                  className={`w-full bg-white${passwordError ? " border-red-500" : ""}`}
+                  icon={<Eye className="size-6 text-neutral-300" />}
+                  error={passwordError ? errorMessage : undefined}
                 />
               </div>
             </div>

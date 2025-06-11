@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +7,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from '@/components/layout/AppLayout';
 import { Link } from "react-router-dom";
+import { TextInput } from "@/components/molecules/text-input";
 
 export default function PasswordReset() {
   const [email, setEmail] = useState("");
@@ -56,13 +56,12 @@ export default function PasswordReset() {
               </Alert>
             )}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <Input
+              <TextInput
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full bg-white"
               />
               <Button type="submit" className="w-full h-[56px]">
                 Send reset link
