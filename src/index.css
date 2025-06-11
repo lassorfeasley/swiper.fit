@@ -9,7 +9,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f2f2f7;
+  @apply bg-stone-200;
 }
 
 @layer base {
@@ -73,6 +73,6 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-stone-200 text-foreground;
   }
 }
