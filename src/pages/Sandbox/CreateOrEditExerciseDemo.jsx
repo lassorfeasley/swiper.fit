@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import MainContainer from "@/components/layout/MainContainer";
@@ -15,7 +15,7 @@ const CreateOrEditExerciseDemo = () => {
 
   return (
     <>
-      <AppHeader
+      <PageHeader
         appHeaderTitle="Create or Edit Exercise Demo"
         subheadText="Demo for exercise creation form development"
         showBackButton={true}

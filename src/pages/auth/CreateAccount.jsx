@@ -8,7 +8,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");

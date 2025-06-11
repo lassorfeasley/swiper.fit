@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
-import AppHeader from '@/components/layout/AppHeader';
+import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -319,7 +319,7 @@ const ActiveWorkout = ({
 
   return (
     <>
-      <AppHeader
+      <PageHeader
         showBackButton={false}
         appHeaderTitle={workoutName || 'Active Workout'}
         subhead={true}

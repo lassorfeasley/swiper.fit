@@ -12,7 +12,6 @@ import Programs from "./pages/Programs/Programs";
 import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
-import AppHeaderDemo from "./pages/Sandbox/AppHeaderDemo";
 import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
@@ -27,6 +26,7 @@ import CreateAccount from "./pages/auth/CreateAccount";
 import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
+import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -113,13 +113,13 @@ function AppContent() {
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
-            <Route path="/app-header-demo" element={<AppHeaderDemo />} />
             <Route
               path="/create_or_edit_exercise_demo"
               element={<CreateOrEditExerciseDemo />}
             />
             <Route path="/demo/setcard" element={<SetCardDemo />} />
             <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
+            <Route path="/page-header-demo" element={<PageHeaderDemo />} />
           </Route>
         </Routes>
       </main>

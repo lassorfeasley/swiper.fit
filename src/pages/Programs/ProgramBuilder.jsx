@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder, useDragControls } from "framer-motion";
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
@@ -261,7 +261,7 @@ const ProgramBuilder = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <AppHeader
+      <PageHeader
         appHeaderTitle={programName || "Program"}
         subhead={true}
         subheadText={`${exercises.length} exercise${

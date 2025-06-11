@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
-import AppHeader from '@/components/layout/AppHeader';
+import PageHeader from '@/components/layout/PageHeader';
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,7 +93,7 @@ const CompletedWorkout = () => {
 
   return (
     <>
-      <AppHeader
+      <PageHeader
         showBackButton={true}
         appHeaderTitle={workout?.workout_name}
         subhead={true}

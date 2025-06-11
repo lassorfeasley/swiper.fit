@@ -7,7 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function Login() {
   const [email, setEmail] = useState("");

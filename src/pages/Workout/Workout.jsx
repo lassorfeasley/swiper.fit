@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
-import AppHeader from '@/components/layout/AppHeader';
+import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ProgramCard from '@/components/common/Cards/ProgramCard';
 import ActiveWorkout from './ActiveWorkout';
@@ -148,7 +148,7 @@ const Workout = () => {
     <div className="flex flex-col h-screen">
       {step === 'select' ? (
         <>
-          <AppHeader
+          <PageHeader
             appHeaderTitle="Select a program to start"
             showActionBar={false}
             showActionIcon={false}

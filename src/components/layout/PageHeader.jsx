@@ -6,7 +6,7 @@ import { ArrowLeft, Pencil, Plus, Search } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 
-export const AppHeader = ({
+export const PageHeader = ({
   showActionBar = true,
   showActionIcon = true,
   showBackButton = true,
@@ -99,7 +99,7 @@ export const AppHeader = ({
   );
 };
 
-AppHeader.propTypes = {
+PageHeader.propTypes = {
   showActionBar: PropTypes.bool,
   showActionIcon: PropTypes.bool,
   showBackButton: PropTypes.bool,
@@ -115,4 +115,4 @@ AppHeader.propTypes = {
   searchPlaceholder: PropTypes.string,
 };
 
-export default AppHeader; 
+export default PageHeader; 

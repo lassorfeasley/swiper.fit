@@ -1,7 +1,7 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=107-1611&t=3oXUhbg9QEWAH2mC-4
 
 
-import AppHeader from '../../components/layout/AppHeader';
+import PageHeader from '../../components/layout/PageHeader';
 import MainContainer from '@/components/layout/MainContainer';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ const Home = () => {
   };
   return (
     <>
-      <AppHeader
+      <PageHeader
         appHeaderTitle="Home"
         showActionBar={false}
         showActionIcon={false}

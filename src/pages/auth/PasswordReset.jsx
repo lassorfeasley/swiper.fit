@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import { Link } from "react-router-dom";
 
 export default function PasswordReset() {

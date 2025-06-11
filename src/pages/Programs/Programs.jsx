@@ -3,7 +3,7 @@
 import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AppHeader from "@/components/layout/AppHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import { PageNameContext } from "@/App";
 import ProgramCard from '@/components/common/Cards/ProgramCard';
 import { useQuery } from "@tanstack/react-query";
@@ -96,7 +96,7 @@ const ProgramsIndex = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <AppHeader
+      <PageHeader
         appHeaderTitle="Programs"
         actionBarText="Create new program"
         showActionBar={true}

@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import AppHeader from '@/components/layout/AppHeader';
+import PageHeader from '@/components/layout/PageHeader';
 import MainContainer from '@/components/layout/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import WorkoutCard from '@/components/common/Cards/WorkoutCard';
@@ -66,7 +66,7 @@ const History = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <AppHeader
+      <PageHeader
         appHeaderTitle="Workout history"
         showActionBar={false}
         showActionIcon={false}
