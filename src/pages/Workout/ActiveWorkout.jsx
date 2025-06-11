@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { PageNameContext } from "@/App";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
@@ -92,39 +93,55 @@ const ActiveFocusedNavBar = ({ timer, isPaused, onPauseToggle, onEnd }) => {
   );
 };
 
-const ActiveWorkout = ({ 
-  selectedProgram, 
-  onEnd,
-  exercises: initialExercises = [],
-  onExercisesChange
-}) => {
-  const [exercises, setExercises] = useState(initialExercises);
-  const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [timerActive, setTimerActive] = useState(true);
-  const timerRef = useRef();
-  const [setsData, setSetsData] = useState({}); // { exerciseId: [setData, ...] }
-  const [completedSets, setCompletedSets] = useState({}); // { exerciseId: [setData, ...] }
-  const [workoutName, setWorkoutName] = useState('');
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [newUnscheduledExerciseName, setNewUnscheduledExerciseName] = useState('');
-  const [newUnscheduledExerciseSets, setNewUnscheduledExerciseSets] = useState(3);
-  const [newUnscheduledExerciseReps, setNewUnscheduledExerciseReps] = useState(10);
-  const [newUnscheduledExerciseWeight, setNewUnscheduledExerciseWeight] = useState(0);
-  const [newUnscheduledExerciseUnit, setNewUnscheduledExerciseUnit] = useState('kg');
-  const [newUnscheduledSetConfigs, setNewUnscheduledSetConfigs] = useState(
-    Array.from({ length: 3 }, () => ({ reps: 10, weight: 0, unit: 'kg' }))
-  );
-  const [openSetIndex, setOpenSetIndex] = useState(null);
-
-  const navigate = useNavigate();
+const ActiveWorkout = () => {
+  const { setPageName } = useContext(PageNameContext);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { activeWorkout, isWorkoutActive, startWorkout, endWorkout } = useActiveWorkout();
+  const [exercises, setExercises] = useState([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [showEndWorkout, setShowEndWorkout] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showSheet, setShowSheet] = useState(false);
+  const [newExercise, setNewExercise] = useState(null);
+  const [refreshFlag, setRefreshFlag] = useState(0);
+  const { setNavBarVisible } = useNavBarVisibility();
+
+  // Initialize workout if not already active
+  useEffect(() => {
+    if (!isWorkoutActive) {
+      // If no active workout, redirect to workout selection
+      navigate('/workout');
+      return;
+    }
+
+    // Set up the workout timer
+    const timer = setInterval(() => {
+      if (!isPaused) {
+        setElapsedTime(prev => prev + 1);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isWorkoutActive, isPaused, navigate]);
+
+  // Hide nav bar when workout is active
+  useEffect(() => {
+    setNavBarVisible(false);
+    return () => setNavBarVisible(true);
+  }, [setNavBarVisible]);
+
+  // Set page name
+  useEffect(() => {
+    setPageName("Active Workout");
+  }, [setPageName]);
 
   // Fetch exercises for selected program
   useEffect(() => {
-    if (selectedProgram) {
-      console.log('Fetching exercises for program:', selectedProgram);
-      setLoading(true);
+    if (activeWorkout) {
+      console.log('Fetching exercises for program:', activeWorkout);
       supabase
         .from('program_exercises')
         .select(`
@@ -133,13 +150,12 @@ const ActiveWorkout = ({
           exercises(name),
           program_sets(id, reps, weight, weight_unit, set_order)
         `)
-        .eq('program_id', selectedProgram.id)
+        .eq('program_id', activeWorkout.programId)
         .then(async ({ data: progExs, error }) => {
           console.log('Program exercises query result:', { progExs, error });
           if (error || !progExs) {
             console.error('Error fetching program exercises:', error);
             setExercises([]);
-            setLoading(false);
             return;
           }
           const exerciseIds = progExs.map(pe => pe.exercise_id);
@@ -154,7 +170,6 @@ const ActiveWorkout = ({
           if (exercisesError) {
             console.error("Error fetching exercises for program:", exercisesError);
             setExercises([]);
-            setLoading(false);
             return;
           }
 
@@ -172,174 +187,91 @@ const ActiveWorkout = ({
           }));
           console.log('Processed exercise cards:', cards);
           setExercises(cards);
-          onExercisesChange?.(cards);
-          setLoading(false);
         });
     } else {
       console.log('No program selected, clearing exercises');
       setExercises([]);
-      onExercisesChange?.([]);
     }
-  }, [selectedProgram, onExercisesChange]);
+  }, [activeWorkout]);
 
-  // Timer logic
-  useEffect(() => {
-    if (timerActive) {
-      timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [timerActive]);
-
-  // Set workout name based on time and program
-  useEffect(() => {
-    if (selectedProgram) {
-      const now = new Date();
-      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
-      const timeOfDay = now.getHours() < 12 ? 'morning' : 
-                       now.getHours() < 17 ? 'afternoon' : 'evening';
-      setWorkoutName(`${dayOfWeek} ${timeOfDay} workout`);
-    } else {
-      setWorkoutName('Unscheduled workout');
-    }
-  }, [selectedProgram]);
-
-  // Keep setConfigs in sync with sets count and defaults
-  useEffect(() => {
-    setNewUnscheduledSetConfigs(prev => {
-      const arr = Array.from({ length: newUnscheduledExerciseSets }, (_, i) => 
-        prev[i] || { 
-          reps: newUnscheduledExerciseReps, 
-          weight: newUnscheduledExerciseWeight, 
-          unit: newUnscheduledExerciseUnit 
-        }
-      );
-      return arr.map(cfg => ({
-        reps: cfg.reps ?? newUnscheduledExerciseReps,
-        weight: cfg.weight ?? newUnscheduledExerciseWeight,
-        unit: cfg.unit ?? newUnscheduledExerciseUnit,
-      }));
-    });
-  }, [newUnscheduledExerciseSets, newUnscheduledExerciseReps, newUnscheduledExerciseWeight, newUnscheduledExerciseUnit]);
-
-  // Handle set completion
-  const handleSetComplete = (exerciseId, setDataArg) => {
-    setCompletedSets(prev => ({
-      ...prev,
-      [exerciseId]: [...(prev[exerciseId] || []), setDataArg]
-    }));
-  };
-
-  // Handle set data change
-  const handleSetDataChange = (exerciseId, setId, field, value) => {
-    if (setId === 'sets') {
-      setExercises(prevExercises => {
-        const updatedExercises = prevExercises.map(ex => {
-          if (ex.exercise_id === exerciseId) {
-            const newSetConfigs = Array.from({ length: value }, (_, i) => {
-              const existingConfig = ex.setConfigs[i] || {};
-              return {
-                reps: existingConfig.reps || 10,
-                weight: existingConfig.weight || 0,
-                unit: existingConfig.unit || 'lbs'
-              };
-            });
-            return { ...ex, setConfigs: newSetConfigs };
-          }
-          return ex;
-        });
-        onExercisesChange?.(updatedExercises);
-        return updatedExercises;
-      });
-      return;
-    }
-
-    setSetsData(prev => {
-      const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === setId);
-      let newSets;
-      if (setIdx !== -1) {
-        newSets = prevSets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s);
-      } else {
-        newSets = [...prevSets, { id: setId, [field]: value }];
-      }
-      return { ...prev, [exerciseId]: newSets };
-    });
-  };
-
-  const handleEnd = async () => {
-    setTimerActive(false);
-    // Check if at least one set is logged
-    const totalSets = Object.values(setsData).reduce((acc, arr) => acc + (arr ? arr.length : 0), 0);
-    if (totalSets === 0) {
-      alert('You must log at least one set to complete a workout.');
-      return;
-    }
-    onEnd?.({
-      duration_seconds: timer,
-      workout_name: workoutName,
-      setsData,
-      completedSets
-    });
-  };
-
-  const handleAddExercise = async (exerciseData) => {
+  const handleEndWorkout = async () => {
     try {
-      if (!exerciseData.name.trim()) {
-        alert("Exercise name cannot be empty.");
-        return;
-      }
-
-      const { data: newExerciseData, error: insertError } = await supabase
-        .from('exercises')
-        .insert([{ 
-          name: exerciseData.name.trim(),
-        }])
+      // Save workout data to database
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .insert([
+          {
+            user_id: user.id,
+            program_id: activeWorkout?.programId,
+            workout_name: activeWorkout?.name || 'Workout',
+            duration: elapsedTime,
+            completed_at: new Date().toISOString(),
+          }
+        ])
         .select()
         .single();
 
-      if (insertError || !newExerciseData) {
-        console.error("Error inserting new exercise:", insertError);
-        alert("Failed to create new exercise. " + (insertError?.message || ''));
-        return;
+      if (error) throw error;
+
+      // Save exercises and sets
+      for (const exercise of exercises) {
+        const { error: exerciseError } = await supabase
+          .from('workout_exercises')
+          .insert([
+            {
+              workout_id: workout.id,
+              exercise_id: exercise.id,
+              exercise_name: exercise.name,
+              order: exercise.order,
+            }
+          ]);
+
+        if (exerciseError) throw exerciseError;
+
+        // Save sets for each exercise
+        for (const set of exercise.sets) {
+          const { error: setError } = await supabase
+            .from('workout_sets')
+            .insert([
+              {
+                workout_id: workout.id,
+                exercise_id: exercise.id,
+                weight: set.weight,
+                reps: set.reps,
+                order: set.order,
+              }
+            ]);
+
+          if (setError) throw setError;
+        }
       }
 
-      const createdExerciseId = newExerciseData.id;
-      const newExerciseForWorkout = {
-        id: `unscheduled-${createdExerciseId}-${Date.now()}`,
-        exercise_id: createdExerciseId,
-        name: exerciseData.name.trim(),
-        setConfigs: exerciseData.setConfigs,
-        isUnscheduled: true,
-      };
-
-      const updatedExercises = [...exercises, newExerciseForWorkout];
-      setExercises(updatedExercises);
-      onExercisesChange?.(updatedExercises);
-      
-      // Reset form
-      setShowAddExercise(false);
-    } catch (err) {
-      alert(err.message || "Failed to add exercise");
+      // End the workout
+      endWorkout();
+      navigate('/history');
+    } catch (error) {
+      console.error('Error ending workout:', error);
+      // Handle error appropriately
     }
-  };
-
-  const handleModalClose = () => {
-    setShowAddExercise(false);
   };
 
   return (
     <AppLayout
-      appHeaderTitle={workoutName || 'Active Workout'}
+      appHeaderTitle="Active Workout"
       subhead={true}
-      subheadText={selectedProgram?.program_name || 'Tracking unscheduled exercises'}
+      subheadText={activeWorkout?.name || 'Workout in Progress'}
+      showBackButton={true}
       showActionBar={true}
-      actionBarText="Add exercise"
-      onAction={() => setShowAddExercise(true)}
-      showBackButton={false}
-      search={false}
-      data-component="active_workout_header"
+      actionBarText="End Workout"
+      showActionIcon={false}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
+      onBack={() => {
+        // Don't navigate away, just show confirmation
+        setShowEndWorkout(true);
+      }}
+      onAction={() => setShowEndWorkout(true)}
     >
       <ResponsiveNav navItems={navItems} />
       <CardWrapper>
@@ -351,25 +283,29 @@ const ActiveWorkout = ({
               exerciseName={ex.name}
               default_view={true}
               initialSetConfigs={ex.setConfigs}
-              onSetComplete={(setDataArg) => handleSetComplete(ex.exercise_id, setDataArg)}
-              setData={setsData[ex.exercise_id] || []}
-              onSetDataChange={handleSetDataChange}
+              onSetComplete={(setDataArg) => {
+                // Handle set completion
+              }}
+              setData={[]}
+              onSetDataChange={(exerciseId, setId, field, value) => {
+                // Handle set data change
+              }}
               data-component="ActiveExerciseCard"
-              isUnscheduled={ex.isUnscheduled}
+              isUnscheduled={false}
             />
           ))}
         </div>
       </CardWrapper>
       <ActiveFocusedNavBar
-        timer={`${String(Math.floor(timer/60)).padStart(2,'0')}:${String(timer%60).padStart(2,'0')}`}
-        isPaused={!timerActive}
-        onPauseToggle={() => setTimerActive(a => !a)}
-        onEnd={handleEnd}
+        timer={`${String(Math.floor(elapsedTime/60)).padStart(2,'0')}:${String(elapsedTime%60).padStart(2,'0')}`}
+        isPaused={!isPaused}
+        onPauseToggle={() => setIsPaused(a => !a)}
+        onEnd={handleEndWorkout}
         data-component="ActiveFocusedNavBar"
       />
 
       {showAddExercise && (
-        <Sheet open={showAddExercise} onOpenChange={handleModalClose}>
+        <Sheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Add a new exercise</SheetTitle>
@@ -380,7 +316,9 @@ const ActiveWorkout = ({
             <AddNewExerciseForm
               key="add-new"
               formPrompt="Add a new exercise"
-              onActionIconClick={handleAddExercise}
+              onActionIconClick={(exerciseData) => {
+                // Handle adding a new exercise
+              }}
               initialSets={3}
               initialSetConfigs={Array.from({ length: 3 }, () => ({
                 reps: 10,
@@ -400,7 +338,6 @@ ActiveWorkout.propTypes = {
     id: PropTypes.string.isRequired,
     program_name: PropTypes.string.isRequired,
   }),
-  onEnd: PropTypes.func.isRequired,
   exercises: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
     exercise_id: PropTypes.string.isRequired,

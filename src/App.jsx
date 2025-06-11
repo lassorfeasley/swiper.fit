@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Link } from "react-router-dom";
 // import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
 import {
   Home as HomeIcon,
@@ -11,6 +11,7 @@ import Home from "./pages/Home/Home";
 import Programs from "./pages/Programs/Programs";
 import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
+import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
 import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
@@ -26,6 +27,8 @@ import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
 import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
+import { ActiveWorkoutProvider, useActiveWorkout } from './contexts/ActiveWorkoutContext';
+import { Button } from "@/components/ui/button";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -63,6 +66,28 @@ function PageNameFooter() {
   );
 }
 
+// Persistent Workout Button Component
+function PersistentWorkoutButton() {
+  const { isWorkoutActive, activeWorkout } = useActiveWorkout();
+  const location = useLocation();
+
+  if (!isWorkoutActive || location.pathname === '/workout/active') {
+    return null;
+  }
+
+  return (
+    <Link to="/workout/active">
+      <Button
+        className="fixed bottom-24 right-4 z-50 shadow-lg bg-primary hover:bg-primary/90"
+        size="lg"
+      >
+        <Play className="w-5 h-5 mr-2" />
+        Return to Workout
+      </Button>
+    </Link>
+  );
+}
+
 function AppContent() {
   const location = useLocation();
   const { navBarVisible } = useNavBarVisibility();
@@ -93,6 +118,7 @@ function AppContent() {
             <Route path="/history" element={<History />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
+            <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route
               path="/create_or_edit_exercise_demo"
@@ -104,9 +130,7 @@ function AppContent() {
           </Route>
         </Routes>
       </main>
-
-      {/* Navigation bar */}
-      {/* This is now handled by AppLayout */}
+      <PersistentWorkoutButton />
     </div>
   );
 }
@@ -123,11 +147,13 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <PageNameContext.Provider value={{ pageName, setPageName }}>
-          <NavBarVisibilityProvider>
-            <AppContent />
-          </NavBarVisibilityProvider>
-        </PageNameContext.Provider>
+        <ActiveWorkoutProvider>
+          <PageNameContext.Provider value={{ pageName, setPageName }}>
+            <NavBarVisibilityProvider>
+              <AppContent />
+            </NavBarVisibilityProvider>
+          </PageNameContext.Provider>
+        </ActiveWorkoutProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
