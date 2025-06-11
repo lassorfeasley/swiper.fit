@@ -1,8 +1,8 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=114-1276&t=9pgcPuKv7UdpdreN-4
 
 import PropTypes from "prop-types";
-import React from "react";
-import { ArrowLeft, Pencil, Plus, Search } from 'lucide-react';
+import React, { useState, useRef } from "react";
+import { ArrowLeft, Pencil, Plus, Search, X } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,8 @@ export const PageHeader = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchActive, setSearchActive] = useState(false);
+  const searchInputRef = useRef(null);
 
   const onBackHandler = () => {
     if (onBack) {
@@ -37,66 +39,115 @@ export const PageHeader = ({
     }
   };
 
+  // When searchActive becomes true, focus the input
+  React.useEffect(() => {
+    if (searchActive && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchActive]);
+
+  // Hide search if blurred and empty
+  const handleSearchBlur = (e) => {
+    // Timeout to allow click on clear button
+    setTimeout(() => {
+      if (!searchValue) setSearchActive(false);
+    }, 100);
+  };
+
   return (
-    <div 
-      className={cn(
-        "w-full self-stretch border-b border-slate-200 bg-white",
-        className
-      )}
-      {...props}
-    >
-      <div className="flex flex-col gap-2 px-5 pt-10 pb-5 bg-stone-50 border-b border-slate-200">
+    <div className={cn("w-full bg-neutral-200 border-b border-neutral-100", className)} {...props}>
+      <div className="p-3 flex justify-start items-center gap-2">
         {showBackButton && (
           <button
-            className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-zinc-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="size-7 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={onBackHandler}
             aria-label="Back"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="size-4" />
           </button>
         )}
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="flex-1 text-xl font-medium text-slate-600 font-['Space_Grotesk'] leading-normal">
-            {appHeaderTitle}
-          </h1>
-          {showActionIcon && (
-            <button
-              className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-zinc-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Edit"
-            >
-              <Pencil className="w-6 h-6" />
-            </button>
-          )}
+        <div className="flex-1 h-10 flex justify-between items-center">
+          <div className="flex-1 flex justify-start items-center gap-2">
+            <div className="flex-1 flex flex-col justify-start items-start gap-1">
+              <div className="flex justify-start items-center gap-2">
+                {/* Hide title on mobile if search is active */}
+                <h1 className={cn(
+                  "text-stone-600 text-xl font-bold font-['Space_Grotesk'] leading-loose",
+                  searchActive ? "hidden sm:block" : ""
+                )}>
+                  {appHeaderTitle}
+                </h1>
+                {showActionIcon && !searchActive && (
+                  <button
+                    className="size-4 flex items-center justify-center text-stone-600 opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Edit"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              {subhead && !searchActive && (
+                <p className="text-base font-normal text-slate-600 font-['Space_Grotesk'] leading-none">
+                  {subheadText}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end items-center gap-3">
+            {search && (
+              <>
+                {/* Only show magnifying glass if search is not active */}
+                {!searchActive && (
+                  <button
+                    className="size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Open search"
+                    onClick={() => setSearchActive(true)}
+                  >
+                    <Search className="size-6" />
+                  </button>
+                )}
+                {/* Show search input and clear when active */}
+                {searchActive && (
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-72 max-w-[70vw]">
+                      <SearchField
+                        ref={searchInputRef}
+                        value={searchValue}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        onBlur={handleSearchBlur}
+                        placeholder={searchPlaceholder || "Search..."}
+                        className="w-full px-4 py-2 bg-white rounded-[40px] border border-stone-400 text-stone-700 text-sm font-normal font-['Space_Grotesk'] leading-tight focus:outline-none focus:ring-2 focus:ring-stone-400"
+                      />
+                      <span className="absolute right-10 top-1/2 -translate-y-1/2 text-stone-600">
+                        <Search className="size-5" />
+                      </span>
+                      {searchValue && (
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors"
+                          onClick={() => { onSearchChange(""); setSearchActive(false); }}
+                          aria-label="Clear search"
+                        >
+                          <X className="size-7" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            {/* Only show action bar button if not searching */}
+            {showActionBar && (!searchActive) && (
+              <button
+                className="size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={onAction}
+                aria-label="Add"
+              >
+                <Plus className="size-7" />
+              </button>
+            )}
+          </div>
         </div>
-        {subhead && (
-          <p className="text-base font-normal text-slate-600 font-['Space_Grotesk'] leading-none">
-            {subheadText}
-          </p>
-        )}
       </div>
-      {showActionBar && (
-        <button
-          className="w-full h-12 px-5 py-3 bg-slate-600 flex items-center justify-between gap-3 text-stone-50 hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={onAction}
-          aria-label="Action bar"
-        >
-          <span className="flex-1 text-base font-normal font-['Space_Grotesk'] leading-none text-left">
-            {actionBarText}
-          </span>
-          <Plus className="w-6 h-6 text-white" />
-        </button>
-      )}
-      {search && (
-        <div className="flex items-center gap-2.5 px-5 py-2.5 bg-white border-b border-slate-200">
-          <SearchField
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder || "Search..."}
-            className="flex-1"
-          />
-          <Search className="w-6 h-6 text-slate-600" />
-        </div>
-      )}
     </div>
   );
 };
