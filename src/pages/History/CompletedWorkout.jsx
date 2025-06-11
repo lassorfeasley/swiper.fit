@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
-import PageHeader from '@/components/layout/PageHeader';
+import AppLayout from '@/components/layout/AppLayout';
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,20 +92,19 @@ const CompletedWorkout = () => {
   const exercisesWithSets = Object.entries(setsByExercise).filter(([_, sets]) => sets.length > 0);
 
   return (
-    <>
-      <PageHeader
-        showBackButton={true}
-        appHeaderTitle={workout?.workout_name}
-        subhead={true}
-        subheadText={workout?.programs?.program_name}
-        search={false}
-        showActionBar={false}
-        showActionIcon={false}
-      />
+    <AppLayout
+      appHeaderTitle={workout?.workout_name}
+      subhead={true}
+      subheadText={workout?.programs?.program_name}
+      showBackButton={true}
+      showActionBar={false}
+      showActionIcon={false}
+      search={false}
+    >
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
-        <CardWrapper className="px-4 py-4">
+        <CardWrapper>
           {exercisesWithSets.map(([exId, exerciseSets]) => (
             <ExerciseCard
               key={exId}
@@ -117,7 +116,7 @@ const CompletedWorkout = () => {
           ))}
         </CardWrapper>
       )}
-    </>
+    </AppLayout>
   );
 };
 

@@ -36,7 +36,7 @@ function ResponsiveNav({ navItems }) {
       <div className="flex-1 flex flex-col justify-center">
         <nav className="flex flex-col">
           {navItems.map((item) => {
-            const selected = location.pathname === item.to;
+            const selected = new RegExp(`^${item.to}(\/|$)`).test(location.pathname);
             return (
               <Link
                 key={item.to}
@@ -106,12 +106,12 @@ function ResponsiveNav({ navItems }) {
     </aside>
   );
 
-  // Mobile Bottom Nav
+  // Mobile Nav
   const MobileNav = () => (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-stone-100 border-t border-neutral-300 flex justify-between items-start px-6 py-3 z-50 h-20">
       <div className="flex flex-1 max-w-[350px] justify-between items-center mx-auto w-full h-full">
         {navItems.map((item) => {
-          const selected = location.pathname === item.to;
+          const selected = new RegExp(`^${item.to}(\/|$)`).test(location.pathname);
           return (
             <Link
               key={item.to}

@@ -14,7 +14,14 @@ const Home = () => {
     window.location.reload();
   };
   return (
-    <AppLayout>
+    <AppLayout
+      appHeaderTitle="Home"
+      showActionBar={false}
+      showActionIcon={false}
+      showBackButton={false}
+      subhead={false}
+      search={false}
+    >
       <div className="max-w-xl mx-auto mt-8 flex flex-col gap-4">
         <Alert>
           <AlertTitle>You are logged in as {email}</AlertTitle>

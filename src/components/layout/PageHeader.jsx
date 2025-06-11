@@ -1,13 +1,13 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=114-1276&t=9pgcPuKv7UdpdreN-4
 
 import PropTypes from "prop-types";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, forwardRef } from "react";
 import { ArrowLeft, Pencil, Plus, Search, X } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-export const PageHeader = ({
+export const PageHeader = forwardRef(({
   showActionBar = true,
   showActionIcon = true,
   showBackButton = true,
@@ -22,8 +22,9 @@ export const PageHeader = ({
   onSearchChange,
   searchPlaceholder,
   className,
+  sidebarWidth = 256,
   ...props
-}) => {
+}, ref) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchActive, setSearchActive] = useState(false);
@@ -55,7 +56,12 @@ export const PageHeader = ({
   };
 
   return (
-    <div className={cn("w-full bg-neutral-200 border-b border-neutral-100", className)} {...props}>
+    <div
+      ref={ref}
+      className={cn("fixed top-0 right-0 z-50 w-full bg-neutral-200 border-b border-neutral-100", className)}
+      style={{ left: sidebarWidth, width: `calc(100vw - ${sidebarWidth}px)` }}
+      {...props}
+    >
       <div className="p-3 flex justify-start items-center gap-2">
         {showBackButton && (
           <button
@@ -150,7 +156,7 @@ export const PageHeader = ({
       </div>
     </div>
   );
-};
+});
 
 PageHeader.propTypes = {
   showActionBar: PropTypes.bool,
@@ -167,6 +173,7 @@ PageHeader.propTypes = {
   onSearchChange: PropTypes.func,
   searchPlaceholder: PropTypes.string,
   className: PropTypes.string,
+  sidebarWidth: PropTypes.number,
 };
 
 export default PageHeader; 

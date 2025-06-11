@@ -9,20 +9,22 @@ const CardWrapper = ({
   reorderable = false,
   items = [],
   onReorder = () => {},
+  headerRef,
   ...props 
 }) => {
   const divProps = { ...props };
   delete divProps.reorderable;
   delete divProps.items;
   delete divProps.onReorder;
+  delete divProps.headerRef;
 
   return (
     <div
-      className={`CardWrapper self-stretch w-full rounded-xl flex flex-col justify-start items-stretch gap-[5px] p-[10px] ${className}`}
+      className={`CardWrapper self-stretch w-full rounded-xl flex flex-col justify-start items-stretch gap-4 ${className}`}
       {...divProps}
     >
       {cardTitle && (
-        <div className="w-full px-4 py-2 bg-gray-50 border-b border-gray-200">
+        <div className="w-full bg-gray-50 border-b border-gray-200">
           <h3 className="text-lg font-semibold">{cardTitle}</h3>
         </div>
       )}
@@ -56,6 +58,7 @@ CardWrapper.propTypes = {
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
+  headerRef: PropTypes.object,
 };
 
 export default CardWrapper; 

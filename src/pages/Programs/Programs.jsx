@@ -100,7 +100,7 @@ const ProgramsIndex = () => {
       appHeaderTitle="Programs"
       actionBarText="Create new program"
       showActionBar={true}
-      showActionIcon={true}
+      showActionIcon={false}
       showBackButton={false}
       subhead={false}
       search={true}

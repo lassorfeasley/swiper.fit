@@ -4,7 +4,6 @@ import { supabase } from "@/supabaseClient";
 import PageHeader from "@/components/layout/PageHeader";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder, useDragControls } from "framer-motion";
-import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { PageNameContext } from "@/App";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Card, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,6 @@ import AppLayout from '@/components/layout/AppLayout';
 const ProgramBuilder = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
-  const { setNavBarVisible } = useNavBarVisibility();
   const { setPageName } = useContext(PageNameContext);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,9 +26,7 @@ const ProgramBuilder = () => {
 
   useEffect(() => {
     setPageName("ProgramBuilder");
-    setNavBarVisible(false);
-    return () => setNavBarVisible(true);
-  }, [setNavBarVisible, setPageName]);
+  }, [setPageName]);
 
   useEffect(() => {
     async function fetchProgramAndExercises() {
