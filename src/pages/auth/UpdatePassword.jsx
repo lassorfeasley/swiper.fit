@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -47,60 +48,62 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="flex flex-col gap-5 p-5">
-          <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9 mb-2">
-            Update Password
-          </div>
-          <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] mb-4">
-            Set a new password for your account
-          </div>
-          {status.type === "error" && (
-            <Alert variant="destructive" className="mb-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{status.message}</AlertDescription>
-            </Alert>
-          )}
-          {status.type === "success" && (
-            <Alert className="mb-2 bg-green-50 border-green-200 text-green-800">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription>{status.message}</AlertDescription>
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
-                New Password
-              </label>
-              <Input
-                type="password"
-                placeholder="Enter new password"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                required
-                className="w-full bg-white"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
-                Confirm Password
-              </label>
-              <Input
-                type="password"
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                required
-                className="w-full bg-white"
-              />
-            </div>
-            <Button type="submit" className="w-full h-[56px]">
+    <AppLayout showSidebar={false}>
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="flex flex-col gap-5 p-5">
+            <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9 mb-2">
               Update Password
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+            <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] mb-4">
+              Set a new password for your account
+            </div>
+            {status.type === "error" && (
+              <Alert variant="destructive" className="mb-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{status.message}</AlertDescription>
+              </Alert>
+            )}
+            {status.type === "success" && (
+              <Alert className="mb-2 bg-green-50 border-green-200 text-green-800">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription>{status.message}</AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
+                  New Password
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required
+                  className="w-full bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
+                  Confirm Password
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full bg-white"
+                />
+              </div>
+              <Button type="submit" className="w-full h-[56px]">
+                Update Password
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
   );
 } 

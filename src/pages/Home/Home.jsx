@@ -1,8 +1,7 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=107-1611&t=3oXUhbg9QEWAH2mC-4
 
 
-import PageHeader from '../../components/layout/PageHeader';
-import MainContainer from '@/components/layout/MainContainer';
+import AppLayout from '@/components/layout/AppLayout';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,26 +15,15 @@ const Home = () => {
     window.location.reload();
   };
   return (
-    <>
-      <PageHeader
-        appHeaderTitle="Home"
-        showActionBar={false}
-        showActionIcon={false}
-        showBackButton={false}
-        subhead={false}
-        search={false}
-        data-component="AppHeader"
-      />
-      <MainContainer data-component="HomePage">
-        <div className="max-w-xl mx-auto mt-8 flex flex-col gap-4">
-          <Alert>
-            <AlertTitle>You are logged in as {email}</AlertTitle>
-          </Alert>
-          <Button onClick={handleLogout} variant="destructive">Log out</Button>
-        </div>
-        Home Page
-      </MainContainer>
-    </>
+    <AppLayout>
+      <div className="max-w-xl mx-auto mt-8 flex flex-col gap-4">
+        <Alert>
+          <AlertTitle>You are logged in as {email}</AlertTitle>
+        </Alert>
+        <Button onClick={handleLogout} variant="destructive">Log out</Button>
+      </div>
+      Home Page
+    </AppLayout>
   );
 };
 
