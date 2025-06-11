@@ -1,10 +1,12 @@
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
-import { Home, Star, RotateCcw, Play, Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar,
   SidebarHeader,
@@ -15,16 +17,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  { to: '/', label: 'Home', icon: <Home className="size-5" /> },
-  { to: '/programs', label: 'Programs', icon: <Star className="size-5" /> },
-  { to: '/history', label: 'History', icon: <RotateCcw className="size-5" /> },
-  { to: '/workout', label: 'Workout', icon: <Play className="size-5" /> },
-];
-
-export default function ResponsiveNav() {
+function ResponsiveNav({ navItems }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
@@ -32,41 +28,6 @@ export default function ResponsiveNav() {
       setSidebarOpen(false);
     }
   }, [location.pathname]);
-
-  // Mobile Sidebar (Sheet)
-  const MobileSidebar = () => (
-    <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          className="md:hidden fixed top-4 left-4 z-40"
-          size="icon"
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent
-        side="left"
-        className={cn(
-          "w-64 p-0 border-r bg-stone-100 flex flex-col h-full"
-        )}
-      >
-        <SidebarContent />
-      </SheetContent>
-    </Sheet>
-  );
-
-  // Desktop Sidebar
-  const DesktopSidebar = () => (
-    <aside
-      className={cn(
-        "hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-r md:bg-stone-100 md:z-30"
-      )}
-    >
-      <SidebarContent />
-    </aside>
-  );
 
   // Sidebar Content (shared)
   const SidebarContent = () => (
@@ -104,6 +65,47 @@ export default function ResponsiveNav() {
     </div>
   );
 
+  // Mobile Sidebar (Sheet)
+  const MobileSidebar = () => (
+    <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          className="md:hidden fixed top-4 left-4 z-40"
+          size="icon"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent
+        side="left"
+        className={cn(
+          "w-64 p-0 border-r bg-stone-100 flex flex-col h-full"
+        )}
+      >
+        <SheetTitle asChild>
+          <VisuallyHidden>Sidebar</VisuallyHidden>
+        </SheetTitle>
+        <SheetDescription asChild>
+          <VisuallyHidden>Sidebar navigation and links</VisuallyHidden>
+        </SheetDescription>
+        <SidebarContent />
+      </SheetContent>
+    </Sheet>
+  );
+
+  // Desktop Sidebar
+  const DesktopSidebar = () => (
+    <aside
+      className={cn(
+        "hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-r md:bg-stone-100 md:z-30"
+      )}
+    >
+      <SidebarContent />
+    </aside>
+  );
+
   // Mobile Bottom Nav
   const MobileNav = () => (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-stone-100 border-t border-neutral-300 flex justify-between items-start px-6 py-3 z-50 h-20">
@@ -139,9 +141,23 @@ export default function ResponsiveNav() {
 
   return (
     <>
-      <MobileSidebar />
+      {/* Only show mobile sidebar/hamburger if not mobile nav */}
+      {!isMobile && <MobileSidebar />}
       <DesktopSidebar />
-      <MobileNav />
+      {/* Only show mobile nav on mobile */}
+      {isMobile && <MobileNav />}
     </>
   );
-} 
+}
+
+ResponsiveNav.propTypes = {
+  navItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      to: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      icon: PropTypes.node.isRequired,
+    })
+  ).isRequired,
+};
+
+export default ResponsiveNav; 

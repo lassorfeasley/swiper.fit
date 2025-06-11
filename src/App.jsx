@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 // import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
 import {
   Home as HomeIcon,
@@ -17,7 +17,6 @@ import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import React, { createContext, useState, useEffect } from "react";
-import ResponsiveNav from "./components/organisms/responsive-nav";
 import SetCardDemo from "./pages/Sandbox/SetCardDemo";
 import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
 import { AuthProvider } from './contexts/AuthContext';
@@ -67,24 +66,6 @@ function PageNameFooter() {
 function AppContent() {
   const location = useLocation();
   const { navBarVisible } = useNavBarVisibility();
-  const navItems = [
-    { to: "/", label: "Home", icon: <HomeIcon className="w-7 h-7" /> },
-    {
-      to: "/programs",
-      label: "Programs",
-      icon: <Star className="w-7 h-7" />,
-    },
-    {
-      to: "/history",
-      label: "History",
-      icon: <RotateCcw className="w-7 h-7" />,
-    },
-    {
-      to: "/workout",
-      label: "Workout",
-      icon: <Play className="w-7 h-7" />,
-    },
-  ];
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
     /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname) ||
@@ -125,9 +106,7 @@ function AppContent() {
       </main>
 
       {/* Navigation bar */}
-      {navBarVisible && !isProgramDetailOrEditOrCreateOrLoginPage && (
-        <ResponsiveNav navItems={navItems} />
-      )}
+      {/* This is now handled by AppLayout */}
     </div>
   );
 }
