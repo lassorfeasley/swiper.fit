@@ -18,6 +18,7 @@ import WeightCompoundField from "@/components/common/forms/WeightCompoundField";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import AppLayout from '@/components/layout/AppLayout';
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -95,27 +96,26 @@ const ProgramsIndex = () => {
   const isReady = programName.trim().length > 0;
 
   return (
-    <div className="flex flex-col h-screen">
-      <PageHeader
-        appHeaderTitle="Programs"
-        actionBarText="Create new program"
-        showActionBar={true}
-        showActionIcon={true}
-        showBackButton={false}
-        subhead={false}
-        search={true}
-        searchPlaceholder="Search programs"
-        searchValue={search}
-        onSearchChange={setSearch}
-        onAction={() => {
-          setShowSheet(true);
-          setProgramName("");
-          setTimeout(() => {
-            if (inputRef.current) inputRef.current.focus();
-          }, 100);
-        }}
-        data-component="AppHeader"
-      />
+    <AppLayout
+      appHeaderTitle="Programs"
+      actionBarText="Create new program"
+      showActionBar={true}
+      showActionIcon={true}
+      showBackButton={false}
+      subhead={false}
+      search={true}
+      searchPlaceholder="Search programs"
+      searchValue={search}
+      onSearchChange={setSearch}
+      onAction={() => {
+        setShowSheet(true);
+        setProgramName("");
+        setTimeout(() => {
+          if (inputRef.current) inputRef.current.focus();
+        }, 100);
+      }}
+      data-component="AppHeader"
+    >
       <CardWrapper className="px-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -170,7 +170,7 @@ const ProgramsIndex = () => {
           </SheetContent>
         </Sheet>
       )}
-    </div>
+    </AppLayout>
   );
 };
 

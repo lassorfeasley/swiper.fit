@@ -9,6 +9,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ProgramCard from '@/components/common/Cards/ProgramCard';
 import ActiveWorkout from './ActiveWorkout';
+import AppLayout from '@/components/layout/AppLayout';
 
 const Workout = () => {
   const [step, setStep] = useState('select'); // 'select' or 'active'
@@ -145,43 +146,40 @@ const Workout = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {step === 'select' ? (
-        <>
-          <PageHeader
-            appHeaderTitle="Select a program to start"
-            showActionBar={false}
-            showActionIcon={false}
-            showBackButton={false}
-            subhead={false}
-            search={true}
-            searchPlaceholder="Search"
-            data-component="AppHeader"
-          />
-          <CardWrapper>
-            {loading ? (
-              <div className="p-6">Loading...</div>
-            ) : (
-              programs.map(program => (
-                <ProgramCard
-                  key={program.id}
-                  programName={program.program_name}
-                  exerciseCount={program.exerciseCount}
-                  onClick={() => handleProgramSelect(program)}
-                />
-              ))
-            )}
-          </CardWrapper>
-        </>
-      ) : (
-        <ActiveWorkout
-          selectedProgram={selectedProgram}
-          exercises={exercises}
-          onExercisesChange={setExercises}
-          onEnd={handleWorkoutEnd}
-        />
-      )}
-    </div>
+    step === 'select' ? (
+      <AppLayout
+        appHeaderTitle="Select a program to start"
+        showActionBar={false}
+        showActionIcon={false}
+        showBackButton={false}
+        subhead={false}
+        search={true}
+        searchPlaceholder="Search"
+        data-component="AppHeader"
+      >
+        <CardWrapper>
+          {loading ? (
+            <div className="p-6">Loading...</div>
+          ) : (
+            programs.map(program => (
+              <ProgramCard
+                key={program.id}
+                programName={program.program_name}
+                exerciseCount={program.exerciseCount}
+                onClick={() => handleProgramSelect(program)}
+              />
+            ))
+          )}
+        </CardWrapper>
+      </AppLayout>
+    ) : (
+      <ActiveWorkout
+        selectedProgram={selectedProgram}
+        exercises={exercises}
+        onExercisesChange={setExercises}
+        onEnd={handleWorkoutEnd}
+      />
+    )
   );
 };
 

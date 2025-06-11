@@ -9,6 +9,7 @@ import MainContainer from '@/components/layout/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import WorkoutCard from '@/components/common/Cards/WorkoutCard';
 import { useAuth } from "@/contexts/AuthContext";
+import AppLayout from '@/components/layout/AppLayout';
 
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -65,48 +66,45 @@ const History = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen">
-      <PageHeader
-        appHeaderTitle="Workout history"
-        showActionBar={false}
-        showActionIcon={false}
-        showBackButton={false}
-        subhead={false}
-        search={true}
-        searchPlaceholder="Search"
-        searchValue={search}
-        onSearchChange={setSearch}
-        data-component="AppHeader"
-      />
-      <div className="flex-1 overflow-y-auto">
+    <AppLayout
+      appHeaderTitle="History"
+      showActionBar={false}
+      showActionIcon={false}
+      showBackButton={false}
+      subhead={false}
+      search={true}
+      searchPlaceholder="Search workouts"
+      searchValue={search}
+      onSearchChange={setSearch}
+      data-component="AppHeader"
+    >
+      <CardWrapper>
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
-          <CardWrapper>
-            {workouts
-              .filter(w => {
-                const q = search.toLowerCase();
-                return (
-                  w.workout_name?.toLowerCase().includes(q) ||
-                  w.programs?.program_name?.toLowerCase().includes(q) ||
-                  String(w.exerciseCount).includes(q)
-                );
-              })
-              .map(w => (
-                <WorkoutCard
-                  key={w.id}
-                  workoutName={w.workout_name || 'Unnamed Workout'}
-                  programName={w.programs?.program_name || ''}
-                  exerciseCount={w.exerciseCount}
-                  duration={formatDuration(w.duration_seconds)}
-                  onClick={() => navigate(`/history/${w.id}`)}
-                  className="hover:bg-gray-200 transition-colors"
-                />
-              ))}
-          </CardWrapper>
+          workouts
+            .filter(w => {
+              const q = search.toLowerCase();
+              return (
+                w.workout_name?.toLowerCase().includes(q) ||
+                w.programs?.program_name?.toLowerCase().includes(q) ||
+                String(w.exerciseCount).includes(q)
+              );
+            })
+            .map(w => (
+              <WorkoutCard
+                key={w.id}
+                workoutName={w.workout_name || 'Unnamed Workout'}
+                programName={w.programs?.program_name || ''}
+                exerciseCount={w.exerciseCount}
+                duration={formatDuration(w.duration_seconds)}
+                onClick={() => navigate(`/history/${w.id}`)}
+                className="hover:bg-gray-200 transition-colors"
+              />
+            ))
         )}
-      </div>
-    </div>
+      </CardWrapper>
+    </AppLayout>
   );
 };
 

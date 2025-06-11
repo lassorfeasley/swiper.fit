@@ -11,6 +11,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
+import AppLayout from '@/components/layout/AppLayout';
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -260,23 +261,20 @@ const ProgramBuilder = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <PageHeader
-        appHeaderTitle={programName || "Program"}
-        subhead={true}
-        subheadText={`${exercises.length} exercise${
-          exercises.length === 1 ? "" : "s"
-        }`}
-        showActionBar={true}
-        actionBarText="Add an exercise"
-        showBackButton={true}
-        onBack={handleBack}
-        onAction={() => setShowAddExercise(true)}
-        search={true}
-        searchValue={search}
-        onSearchChange={setSearch}
-        data-component="AppHeader"
-      />
+    <AppLayout
+      appHeaderTitle={programName || "Program"}
+      subhead={true}
+      subheadText={`${exercises.length} exercise${exercises.length === 1 ? "" : "s"}`}
+      showActionBar={true}
+      actionBarText="Add an exercise"
+      showBackButton={true}
+      onBack={handleBack}
+      onAction={() => setShowAddExercise(true)}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
+      data-component="AppHeader"
+    >
       <CardWrapper
         reorderable={true}
         items={filteredExercises}
@@ -325,7 +323,7 @@ const ProgramBuilder = () => {
           </SheetContent>
         </Sheet>
       )}
-    </div>
+    </AppLayout>
   );
 };
 
