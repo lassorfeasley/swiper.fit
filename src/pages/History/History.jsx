@@ -1,8 +1,8 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-389
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/supabaseClient';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import PageHeader from '@/components/layout/PageHeader';
 import MainContainer from '@/components/layout/MainContainer';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
@@ -25,44 +25,46 @@ const History = () => {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const location = useLocation();
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    if (!user) {
+      setWorkouts([]);
+      setLoading(false);
+      return;
+    }
+    // Fetch workouts with program information and sets in a single query
+    const { data: workoutsData, error } = await supabase
+      .from('workouts')
+      .select(`
+        *,
+        programs(program_name),
+        sets(id, exercise_id)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching workouts:', error);
+      setWorkouts([]);
+      setLoading(false);
+      return;
+    }
+
+    // Process the data
+    const processedWorkouts = (workoutsData || []).map(workout => ({
+      ...workout,
+      exerciseCount: new Set(workout.sets?.map(set => set.exercise_id) || []).size
+    })).filter(w => w.sets && w.sets.length > 0);
+
+    setWorkouts(processedWorkouts);
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      if (!user) {
-        setWorkouts([]);
-        setLoading(false);
-        return;
-      }
-      // Fetch workouts with program information and sets in a single query
-      const { data: workoutsData, error } = await supabase
-        .from('workouts')
-        .select(`
-          *,
-          programs(program_name),
-          sets(id, exercise_id)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching workouts:', error);
-        setWorkouts([]);
-        setLoading(false);
-        return;
-      }
-
-      // Process the data
-      const processedWorkouts = (workoutsData || []).map(workout => ({
-        ...workout,
-        exerciseCount: new Set(workout.sets?.map(set => set.exercise_id) || []).size
-      })).filter(w => w.sets && w.sets.length > 0);
-
-      setWorkouts(processedWorkouts);
-      setLoading(false);
-    };
     fetchData();
-  }, []);
+  }, [fetchData, location.key]);
 
   return (
     <AppLayout
