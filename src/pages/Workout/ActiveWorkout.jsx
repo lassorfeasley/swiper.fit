@@ -48,6 +48,7 @@ const ActiveWorkout = () => {
   const [showEndWorkout, setShowEndWorkout] = useState(false);
   const [search, setSearch] = useState("");
   const { setNavBarVisible } = useNavBarVisibility();
+  const [setDataByExercise, setSetDataByExercise] = useState({});
 
   // This effect now safely handles all navigation logic for this page.
   useEffect(() => {
@@ -118,6 +119,24 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkout]);
 
+  const handleSetDataChange = (exerciseId, setId, field, value) => {
+    setSetDataByExercise(prev => {
+      const prevSets = prev[exerciseId] || [];
+      const setIdx = prevSets.findIndex(s => s.id === setId);
+      let newSets;
+      if (setIdx === -1) {
+        // New set
+        newSets = [...prevSets, { id: setId, [field]: value }];
+      } else {
+        // Update existing set
+        newSets = prevSets.map((s, i) =>
+          i === setIdx ? { ...s, [field]: value } : s
+        );
+      }
+      return { ...prev, [exerciseId]: newSets };
+    });
+  };
+
   const handleEndWorkout = () => {
     try {
       const workoutData = {
@@ -125,8 +144,16 @@ const ActiveWorkout = () => {
         name: activeWorkout?.name,
         duration_seconds: elapsedTime,
       };
-      // This now only updates the context state. The useEffect handles the navigation.
-      prepareForSummary({ workoutData, exercises });
+      // Merge setConfigs with setData for completion status
+      const mergedExercises = exercises.map(ex => ({
+        ...ex,
+        setConfigs: (ex.setConfigs || []).map((set, idx) => {
+          const setDataArr = setDataByExercise[ex.exercise_id] || [];
+          const setData = setDataArr.find(s => s.id === idx + 1); // id is 1-based
+          return { ...set, ...(setData || {}) };
+        }),
+      }));
+      prepareForSummary({ workoutData, exercises: mergedExercises });
     } catch (error) {
       console.error('Error preparing workout summary:', error);
     }
@@ -158,8 +185,8 @@ const ActiveWorkout = () => {
               default_view={true}
               initialSetConfigs={ex.setConfigs}
               onSetComplete={() => {}}
-              setData={[]}
-              onSetDataChange={() => {}}
+              setData={setDataByExercise[ex.exercise_id] || []}
+              onSetDataChange={handleSetDataChange}
               isUnscheduled={false}
             />
           ))}

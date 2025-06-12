@@ -17,8 +17,9 @@ const WorkoutSummary = () => {
       setsByExercise[ex.exercise_id] = [];
     }
     (ex.setConfigs || []).forEach(set => {
-      // Only add sets that have valid reps and weight
+      // Only add sets that are marked complete and have valid reps and weight
       if (
+        set.status === 'complete' &&
         typeof set.reps === 'number' && !isNaN(set.reps) && set.reps > 0 &&
         typeof set.weight === 'number' && !isNaN(set.weight) && set.weight >= 0
       ) {
