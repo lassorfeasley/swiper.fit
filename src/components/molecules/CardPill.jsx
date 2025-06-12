@@ -3,20 +3,32 @@ import PropTypes from 'prop-types';
 import { Badge } from '@/components/ui/badge';
 
 /**
- * CardPill - Component for displaying a pill format that can be used for various card elements
+ * CardPill - Component for displaying a pill format for sets or exercises
  * 
  * Props:
- * - reps: number - Number of repetitions (for exercise sets)
- * - weight: number - Weight value (for exercise sets)
- * - unit: string - Unit of weight ('kg', 'lbs', or 'body')
+ * - variant: 'sets' | 'exercises' (default: 'sets')
+ * - reps, weight, unit: for 'sets' variant
+ * - label: for 'exercises' variant (exercise name)
  * - className: string (optional) - Additional CSS classes
  * - onClick: func (optional) - Function to call when the pill is clicked
  * - style: object (optional) - Additional styles to apply to the pill
- * - complete: boolean (optional) - Whether the pill is completed
- * - editable: boolean (optional) - Whether the pill is editable (shows pointer and triggers onEdit)
- * - onEdit: func (optional) - Function to call when editing is triggered
+ * - complete: boolean (optional) - Whether the pill is completed (sets only)
+ * - editable: boolean (optional) - Whether the pill is editable (sets only)
+ * - onEdit: func (optional) - Function to call when editing is triggered (sets only)
  */
-const CardPill = ({ reps, weight, unit, className = '', onClick, style, complete = false, editable = false, onEdit }) => {
+const CardPill = ({
+  variant = 'sets',
+  reps,
+  weight,
+  unit,
+  label,
+  className = '',
+  onClick,
+  style,
+  complete = false,
+  editable = false,
+  onEdit
+}) => {
   // Format the weight display based on unit
   const formatWeight = () => {
     if (unit === 'body') return 'body';
@@ -36,13 +48,31 @@ const CardPill = ({ reps, weight, unit, className = '', onClick, style, complete
     }
   };
 
+  // Shared pill classes
+  const pillClass = `px-2 py-0.5 rounded-[20px] flex items-center ${complete ? 'bg-slate-200' : 'bg-gray-200'} ${editable ? 'cursor-pointer' : ''} ${className}`.trim();
+
+  if (variant === 'exercises') {
+    return (
+      <div
+        data-layer="Property 1=Exercises"
+        className={pillClass}
+        style={style}
+        onClick={onClick}
+        tabIndex={onClick ? 0 : undefined}
+        role={onClick ? 'button' : undefined}
+      >
+        <span className="text-center text-gray-600 text-xs font-semibold font-['Space_Grotesk'] leading-none">
+          {label}
+        </span>
+      </div>
+    );
+  }
+
+  // Default: sets variant
   return (
     <div
-      data-layer={complete ? "Property 1=Complete" : "Property 1=Default"}
-      className={`size- px-2 py-0.5 rounded-[20px] inline-flex justify-start items-center 
-        ${complete ? 'bg-slate-200' : 'bg-grey-200'} 
-        ${editable ? 'cursor-pointer' : ''} 
-        ${className}`.trim()}
+      data-layer={complete ? "Property 1=Complete" : "Property 1=Sets"}
+      className={pillClass}
       style={style}
       onClick={handleClick}
       tabIndex={editable || onClick ? 0 : undefined}
@@ -58,7 +88,7 @@ const CardPill = ({ reps, weight, unit, className = '', onClick, style, complete
       <div 
         data-layer="RepsXWeight" 
         className={`Repsxweight text-center justify-center text-xs font-semibold font-['Space_Grotesk'] leading-none 
-          ${complete ? 'text-slate-600' : 'text-grey-600'}`}
+          ${complete ? 'text-slate-600' : 'text-gray-600'}`}
       >
         {reps}×{formatWeight()}
       </div>
@@ -67,9 +97,11 @@ const CardPill = ({ reps, weight, unit, className = '', onClick, style, complete
 };
 
 CardPill.propTypes = {
-  reps: PropTypes.number.isRequired,
+  variant: PropTypes.oneOf(['sets', 'exercises']),
+  reps: PropTypes.number,
   weight: PropTypes.number,
   unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
+  label: PropTypes.string,
   className: PropTypes.string,
   onClick: PropTypes.func,
   style: PropTypes.object,

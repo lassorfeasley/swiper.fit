@@ -1,27 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import CardWrapper from './Wrappers/CardWrapper';
+import { Card, CardContent } from '@/components/ui/card';
+import CardPill from '@/components/molecules/CardPill';
 
-const ProgramCard = ({ programName, exerciseCount = 0, className = '', ...props }) => {
+const ProgramCard = ({ programName, exerciseNames = [], className = '', ...props }) => {
   return (
-    <CardWrapper className={className} {...props}>
-      <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden">
-        <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-          <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">
-            {programName}
-          </div>
-          <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
-            {`${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'}`}
-          </div>
+    <Card className={`w-full max-w-[500px] p-4 bg-white rounded-lg flex flex-col gap-2 cursor-pointer ${className}`} {...props}>
+      <CardContent className="flex flex-col gap-4 p-0">
+        <div className="text-slate-950 text-xl font-medium font-['Space_Grotesk'] leading-normal">
+          {programName}
         </div>
-      </div>
-    </CardWrapper>
+        <div className="flex flex-wrap gap-2 content-center">
+          {exerciseNames.map((name, idx) => (
+            <CardPill
+              key={idx}
+              variant="exercises"
+              label={name}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
 ProgramCard.propTypes = {
   programName: PropTypes.string.isRequired,
-  exerciseCount: PropTypes.number,
+  exerciseNames: PropTypes.arrayOf(PropTypes.string),
   className: PropTypes.string,
 };
 

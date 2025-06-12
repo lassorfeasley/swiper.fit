@@ -41,10 +41,17 @@ const ProgramsIndex = () => {
         setLoading(false);
         return;
       }
-      // Fetch only programs for this user
-      const { data: programsData, error } = await supabase
+      // Fetch programs and their exercises for this user
+      const { data, error } = await supabase
         .from("programs")
-        .select("id, program_name, created_at")
+        .select(`
+          id,
+          program_name,
+          program_exercises (
+            exercise_id,
+            exercises ( name )
+          )
+        `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
@@ -52,21 +59,14 @@ const ProgramsIndex = () => {
         setLoading(false);
         return;
       }
-      // For each program, fetch the number of exercises
-      const programsWithCounts = await Promise.all(
-        (programsData || []).map(async (program) => {
-          const { count, error: countError } = await supabase
-            .from("program_exercises")
-            .select("id", { count: "exact", head: true })
-            .eq("program_id", program.id);
-          return {
-            ...program,
-            exerciseCount: countError ? 0 : count,
-            editable: true, // You can add logic for editability if needed
-          };
-        })
-      );
-      setPrograms(programsWithCounts);
+      // Map exercises for each program
+      const programsWithExercises = (data || []).map(program => ({
+        ...program,
+        exerciseNames: (program.program_exercises || [])
+          .map(pe => pe.exercises?.name)
+          .filter(Boolean)
+      }));
+      setPrograms(programsWithExercises);
       setLoading(false);
     }
     fetchPrograms();
@@ -95,6 +95,15 @@ const ProgramsIndex = () => {
 
   const isReady = programName.trim().length > 0;
 
+  // Filter programs by search
+  const filteredPrograms = programs.filter(program => {
+    const q = search.toLowerCase();
+    return (
+      program.program_name?.toLowerCase().includes(q) ||
+      (program.exerciseNames && program.exerciseNames.some(name => name.toLowerCase().includes(q)))
+    );
+  });
+
   return (
     <AppLayout
       appHeaderTitle="Programs"
@@ -104,7 +113,7 @@ const ProgramsIndex = () => {
       showBackButton={false}
       subhead={false}
       search={true}
-      searchPlaceholder="Search programs"
+      searchPlaceholder="Search programs or exercises"
       searchValue={search}
       onSearchChange={setSearch}
       onAction={() => {
@@ -119,27 +128,19 @@ const ProgramsIndex = () => {
       <CardWrapper className="px-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : programs.length === 0 ? (
+        ) : filteredPrograms.length === 0 ? (
           <div className="text-gray-400 text-center py-8">
             No programs found.
           </div>
         ) : (
-          programs
-            .filter(program => {
-              const q = search.toLowerCase();
-              return (
-                program.program_name?.toLowerCase().includes(q) ||
-                String(program.exerciseCount).includes(q)
-              );
-            })
-            .map((program) => (
-              <ProgramCard
-                key={program.id}
-                programName={program.program_name}
-                exerciseCount={program.exerciseCount}
-                onClick={() => navigate(`/programs/${program.id}/configure`)}
-              />
-            ))
+          filteredPrograms.map((program) => (
+            <ProgramCard
+              key={program.id}
+              programName={program.program_name}
+              exerciseNames={program.exerciseNames}
+              onClick={() => navigate(`/programs/${program.id}/configure`)}
+            />
+          ))
         )}
       </CardWrapper>
       {/* Sheet for creating a new program */}

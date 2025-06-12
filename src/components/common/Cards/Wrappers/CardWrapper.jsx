@@ -20,7 +20,7 @@ const CardWrapper = ({
 
   return (
     <div
-      className={`CardWrapper self-stretch w-full rounded-xl flex flex-col justify-start items-stretch gap-4 ${className}`}
+      className={`CardWrapper self-stretch w-full rounded-xl flex flex-col justify-start items-center gap-4 ${className}`}
       {...divProps}
     >
       {cardTitle && (

@@ -15,20 +15,27 @@ import AppLayout from '@/components/layout/AppLayout';
 const Workout = () => {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
   const { setNavBarVisible } = useNavBarVisibility();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { startWorkout } = useActiveWorkout();
 
-  // Fetch programs on mount
+  // Fetch programs and their exercises on mount
   useEffect(() => {
     async function fetchPrograms() {
       if (!user) return;
-      
       setLoading(true);
       const { data, error } = await supabase
         .from('programs')
-        .select('id, program_name')
+        .select(`
+          id,
+          program_name,
+          program_exercises (
+            exercise_id,
+            exercises ( name )
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -36,7 +43,13 @@ const Workout = () => {
         console.error('Error fetching programs:', error);
         setPrograms([]);
       } else {
-        setPrograms(data || []);
+        const programsWithExercises = (data || []).map(program => ({
+          ...program,
+          exerciseNames: (program.program_exercises || [])
+            .map(pe => pe.exercises?.name)
+            .filter(Boolean)
+        }));
+        setPrograms(programsWithExercises);
       }
       setLoading(false);
     }
@@ -55,6 +68,15 @@ const Workout = () => {
     navigate('/workout/active');
   };
 
+  // Filter programs by search
+  const filteredPrograms = programs.filter(program => {
+    const q = search.toLowerCase();
+    return (
+      program.program_name?.toLowerCase().includes(q) ||
+      (program.exerciseNames && program.exerciseNames.some(name => name.toLowerCase().includes(q)))
+    );
+  });
+
   return (
     <AppLayout
       appHeaderTitle="Start Workout"
@@ -62,20 +84,24 @@ const Workout = () => {
       showActionIcon={false}
       showBackButton={false}
       subhead={false}
-      search={false}
+      search={true}
+      searchPlaceholder="Search programs or exercises"
+      searchValue={search}
+      onSearchChange={setSearch}
     >
       <CardWrapper className="px-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : programs.length === 0 ? (
+        ) : filteredPrograms.length === 0 ? (
           <div className="text-gray-400 text-center py-8">
             No programs found. Create a program to start a workout.
           </div>
         ) : (
-          programs.map((program) => (
+          filteredPrograms.map((program) => (
             <ProgramCard
               key={program.id}
               programName={program.program_name}
+              exerciseNames={program.exerciseNames}
               onClick={() => handleStartWorkout(program)}
             />
           ))
