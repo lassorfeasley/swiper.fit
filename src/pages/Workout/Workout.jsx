@@ -18,40 +18,56 @@ const Workout = () => {
   const [search, setSearch] = useState("");
   const { setNavBarVisible } = useNavBarVisibility();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { startWorkout } = useActiveWorkout();
+
+  // Add debug logging
+  useEffect(() => {
+    console.log('Auth state:', { user, session });
+  }, [user, session]);
 
   // Fetch programs and their exercises on mount
   useEffect(() => {
     async function fetchPrograms() {
-      if (!user) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('programs')
-        .select(`
-          id,
-          program_name,
-          program_exercises (
-            exercise_id,
-            exercises ( name )
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching programs:', error);
-        setPrograms([]);
-      } else {
-        const programsWithExercises = (data || []).map(program => ({
-          ...program,
-          exerciseNames: (program.program_exercises || [])
-            .map(pe => pe.exercises?.name)
-            .filter(Boolean)
-        }));
-        setPrograms(programsWithExercises);
+      if (!user) {
+        console.log('No user found, skipping fetch');
+        return;
       }
-      setLoading(false);
+      console.log('Fetching programs for user:', user.id);
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('programs')
+          .select(`
+            id,
+            program_name,
+            program_exercises (
+              exercise_id,
+              exercises ( name )
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching programs:', error);
+          setPrograms([]);
+        } else {
+          console.log('Successfully fetched programs:', data);
+          const programsWithExercises = (data || []).map(program => ({
+            ...program,
+            exerciseNames: (program.program_exercises || [])
+              .map(pe => pe.exercises?.name)
+              .filter(Boolean)
+          }));
+          setPrograms(programsWithExercises);
+        }
+      } catch (err) {
+        console.error('Exception fetching programs:', err);
+        setPrograms([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchPrograms();

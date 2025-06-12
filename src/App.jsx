@@ -29,6 +29,7 @@ import RequireAuth from "@/lib/auth/RequireAuth";
 import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
 import { ActiveWorkoutProvider, useActiveWorkout } from './contexts/ActiveWorkoutContext';
 import { Button } from "@/components/ui/button";
+import WorkoutSummary from './pages/Workout/WorkoutSummary';
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -119,6 +120,7 @@ function AppContent() {
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
+            <Route path="/workout/summary" element={<WorkoutSummary />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route
               path="/create_or_edit_exercise_demo"
