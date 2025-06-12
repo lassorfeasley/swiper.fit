@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
-import SetPill from '@/components/molecules/SetPill';
+import CardPill from '@/components/molecules/CardPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 
@@ -81,13 +81,13 @@ export default function SetCardDemo() {
         <h3 className="text-lg font-bold mb-4">SetPill Examples</h3>
         <div className="flex flex-wrap gap-2">
           {/* Regular weight examples */}
-          <SetPill reps={12} weight={45} unit="lbs" onClick={() => handleSetPillClick(12, 45, 'lbs')} style={{ cursor: 'pointer' }} />
-          <SetPill reps={10} weight={20} unit="kg" onClick={() => handleSetPillClick(10, 20, 'kg')} style={{ cursor: 'pointer' }} />
+          <CardPill reps={12} weight={45} unit="lbs" onClick={() => handleSetPillClick(12, 45, 'lbs')} style={{ cursor: 'pointer' }} />
+          <CardPill reps={10} weight={20} unit="kg" onClick={() => handleSetPillClick(10, 20, 'kg')} style={{ cursor: 'pointer' }} />
           {/* Bodyweight example */}
-          <SetPill reps={15} unit="body" onClick={() => handleSetPillClick(15, undefined, 'body')} style={{ cursor: 'pointer' }} />
+          <CardPill reps={15} unit="body" onClick={() => handleSetPillClick(15, undefined, 'body')} style={{ cursor: 'pointer' }} />
           {/* Examples from initialSetConfigs */}
           {initialSetConfigs.map((config, i) => (
-            <SetPill
+            <CardPill
               key={i}
               reps={config.reps}
               weight={config.weight}

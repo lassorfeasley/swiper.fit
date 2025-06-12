@@ -3,20 +3,20 @@ import PropTypes from 'prop-types';
 import { Badge } from '@/components/ui/badge';
 
 /**
- * SetPill - Component for displaying a set's reps and weight in a pill format
+ * CardPill - Component for displaying a pill format that can be used for various card elements
  * 
  * Props:
- * - reps: number - Number of repetitions
- * - weight: number - Weight value
+ * - reps: number - Number of repetitions (for exercise sets)
+ * - weight: number - Weight value (for exercise sets)
  * - unit: string - Unit of weight ('kg', 'lbs', or 'body')
  * - className: string (optional) - Additional CSS classes
  * - onClick: func (optional) - Function to call when the pill is clicked
  * - style: object (optional) - Additional styles to apply to the pill
- * - complete: boolean (optional) - Whether the set is completed
+ * - complete: boolean (optional) - Whether the pill is completed
  * - editable: boolean (optional) - Whether the pill is editable (shows pointer and triggers onEdit)
  * - onEdit: func (optional) - Function to call when editing is triggered
  */
-const SetPill = ({ reps, weight, unit, className = '', onClick, style, complete = false, editable = false, onEdit }) => {
+const CardPill = ({ reps, weight, unit, className = '', onClick, style, complete = false, editable = false, onEdit }) => {
   // Format the weight display based on unit
   const formatWeight = () => {
     if (unit === 'body') return 'body';
@@ -25,9 +25,6 @@ const SetPill = ({ reps, weight, unit, className = '', onClick, style, complete 
     }
     return weight !== undefined ? `${weight}` : '';
   };
-
-  // Choose badge variant
-  const badgeVariant = complete ? 'secondary' : 'default';
 
   // Handle click
   const handleClick = (e) => {
@@ -40,14 +37,16 @@ const SetPill = ({ reps, weight, unit, className = '', onClick, style, complete 
   };
 
   return (
-    <Badge
-      variant={badgeVariant}
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-normal ${editable ? 'cursor-pointer' : ''} ${className}`.trim()}
+    <div
+      data-layer={complete ? "Property 1=Complete" : "Property 1=Default"}
+      className={`size- px-2 py-0.5 rounded-[20px] inline-flex justify-start items-center 
+        ${complete ? 'bg-slate-200' : 'bg-grey-200'} 
+        ${editable ? 'cursor-pointer' : ''} 
+        ${className}`.trim()}
       style={style}
       onClick={handleClick}
       tabIndex={editable || onClick ? 0 : undefined}
       role={editable ? 'button' : (onClick ? 'button' : undefined)}
-      data-layer={complete ? 'Property 1=complete' : 'SetPill'}
     >
       {complete && (
         <span data-layer="check" className="Check relative mr-1">
@@ -56,17 +55,18 @@ const SetPill = ({ reps, weight, unit, className = '', onClick, style, complete 
           </svg>
         </span>
       )}
-      <span 
+      <div 
         data-layer="RepsXWeight" 
-        className={`Repsxweight text-center justify-center whitespace-nowrap ${complete ? 'text-muted-foreground' : 'text-foreground'}`}
+        className={`Repsxweight text-center justify-center text-xs font-semibold font-['Space_Grotesk'] leading-none 
+          ${complete ? 'text-slate-600' : 'text-grey-600'}`}
       >
         {reps}×{formatWeight()}
-      </span>
-    </Badge>
+      </div>
+    </div>
   );
 };
 
-SetPill.propTypes = {
+CardPill.propTypes = {
   reps: PropTypes.number.isRequired,
   weight: PropTypes.number,
   unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
@@ -78,4 +78,4 @@ SetPill.propTypes = {
   onEdit: PropTypes.func,
 };
 
-export default SetPill; 
+export default CardPill; 

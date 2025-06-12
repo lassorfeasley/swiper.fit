@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import CardWrapper from './Wrappers/CardWrapper';
-import SetPill from '@/components/molecules/SetPill';
+import CardPill from '@/components/molecules/CardPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 
@@ -61,7 +61,7 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
       </div>
       <div className="Setpillwrapper self-stretch flex flex-wrap items-start gap-3 content-start p-3 bg-white">
         {localSetConfigs.map((config, idx) => (
-          <SetPill
+          <CardPill
             key={idx}
             reps={config.reps}
             weight={config.weight}

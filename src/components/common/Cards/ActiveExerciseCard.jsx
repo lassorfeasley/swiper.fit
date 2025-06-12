@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import SwipeSwitch from '@/components/molecules/swipe-switch';
-import SetPill from '@/components/molecules/SetPill';
+import CardPill from '@/components/molecules/CardPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
@@ -188,7 +188,7 @@ const ActiveExerciseCard = ({
                 <div className="SetOne justify-center text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
                   {set.name}
                 </div>
-                <SetPill
+                <CardPill
                   reps={set.reps}
                   weight={set.weight}
                   unit={set.unit}
@@ -260,7 +260,7 @@ const ActiveExerciseCard = ({
       </div>
       <div className="Setpillwrapper self-stretch flex flex-wrap items-start gap-3 content-start">
         {sets.map((set, idx) => (
-          <SetPill
+          <CardPill
             key={set.id}
             reps={set.reps}
             weight={set.weight}
