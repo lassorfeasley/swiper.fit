@@ -38,7 +38,7 @@ const TextInput = React.forwardRef(({
   }
 
   return (
-    <div className="w-96 inline-flex flex-col justify-start items-start gap-2">
+    <div className="w-full inline-flex flex-col justify-start items-start gap-2">
       <div 
         className={cn(
           "relative w-full",
