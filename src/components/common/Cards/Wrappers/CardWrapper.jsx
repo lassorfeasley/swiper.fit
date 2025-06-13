@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Reorder } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const CardWrapper = ({ 
   children, 
@@ -20,7 +21,8 @@ const CardWrapper = ({
 
   return (
     <div
-      className={`CardWrapper self-stretch w-full rounded-xl flex flex-col justify-start items-center gap-4 ${className}`}
+      className={cn('CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto', className)}
+      style={{ maxWidth: 500, ...(props.style || {}) }}
       {...divProps}
     >
       {cardTitle && (

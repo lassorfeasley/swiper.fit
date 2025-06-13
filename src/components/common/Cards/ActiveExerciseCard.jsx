@@ -19,7 +19,7 @@ const ActiveExerciseCard = ({
   default_view = true,
   setData = [],
 }) => {
-  const [isExpanded, setIsExpanded] = useState(!default_view);
+  const [isExpanded, setIsExpanded] = useState(!default_view && initialSetConfigs.length > 1);
   const [setConfigs, setSetConfigs] = useState(initialSetConfigs);
   const [openSetIndex, setOpenSetIndex] = useState(null);
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: 'lbs' });
@@ -172,62 +172,70 @@ const ActiveExerciseCard = ({
   }, [exerciseId, onSetDataChange, openSetIndex, sets]);
 
   // If expanded view is true, render the detailed view
-  if (isExpanded) {
+  if (isExpanded && initialSetConfigs.length > 1) {
     return (
-      <CardWrapper className="w-full Property1Expanded self-stretch rounded-xl inline-flex flex-col justify-start items-start gap-[1px] overflow-hidden">
-        <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden">
+      <CardWrapper className="Property1Expanded self-stretch rounded-xl inline-flex flex-col justify-start items-start overflow-hidden gap-0" style={{ maxWidth: 500 }}>
+        <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden" style={{ marginBottom: 0 }}>
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-            <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
-            <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
+            <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
+            <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
               {setConfigs.length === 1 ? 'One set' : setConfigs.length === 2 ? 'Two sets' : setConfigs.length === 3 ? 'Three sets' : `${setConfigs.length} sets`}
             </div>
           </div>
-          <button 
-            type="button" 
-            onClick={() => setIsExpanded(false)} 
-            className="SortAscending relative"
-          >
-            <Minimize2 width={30} height={30} />
-          </button>
+          {initialSetConfigs.length > 1 && (
+            <button 
+              type="button" 
+              onClick={() => setIsExpanded(false)} 
+              className="SortAscending size-7 relative overflow-hidden"
+            >
+              <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
+            </button>
+          )}
         </div>
-        <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-[1px]">
+        <div className="w-full">
           {sets.map((set, idx) => (
-            <div key={set.id} className="SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2">
-              <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
-                <div className="SetOne justify-center text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
-                  {set.name}
+            <React.Fragment key={set.id}>
+              <div className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start${idx === 0 ? ' pt-0' : ''}`}>
+                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center mb-1">
+                  <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+                    {set.name}
+                  </div>
+                  <CardPill
+                    reps={set.reps}
+                    weight={set.weight}
+                    unit={set.unit}
+                    editable={true}
+                    onEdit={() => handlePillClick(idx)}
+                    complete={set.status === 'complete'}
+                    className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+                  />
                 </div>
-                <CardPill
-                  reps={set.reps}
-                  weight={set.weight}
-                  unit={set.unit}
-                  editable={true}
-                  onEdit={() => handlePillClick(idx)}
-                  complete={set.status === 'complete'}
-                />
-              </div>
-              <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
-                <SwipeSwitch 
-                  status={set.status} 
-                  onComplete={() => {
-                    if (onSetComplete) {
-                      onSetComplete({ setId: set.id, exerciseId, reps: set.reps, weight: set.weight, status: 'complete' });
-                    }
-                    if (onSetDataChange) {
-                      console.log('ActiveExerciseCard: Expanded view - swipe sending data for set:', set);
-                      onSetDataChange(exerciseId, set.id, 'status', 'complete');
-                      onSetDataChange(exerciseId, set.id, 'reps', set.reps);
-                      onSetDataChange(exerciseId, set.id, 'weight', set.weight);
-                      onSetDataChange(exerciseId, set.id, 'unit', set.unit);
-                      const nextSet = sets.find(s => s.id === set.id + 1);
-                      if (nextSet && nextSet.status === 'locked') {
-                        onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
+                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
+                  <SwipeSwitch 
+                    status={set.status} 
+                    onComplete={() => {
+                      if (onSetComplete) {
+                        onSetComplete({ setId: set.id, exerciseId, reps: set.reps, weight: set.weight, status: 'complete' });
                       }
-                    }
-                  }} 
-                />
+                      if (onSetDataChange) {
+                        console.log('ActiveExerciseCard: Expanded view - swipe sending data for set:', set);
+                        onSetDataChange(exerciseId, set.id, 'status', 'complete');
+                        onSetDataChange(exerciseId, set.id, 'reps', set.reps);
+                        onSetDataChange(exerciseId, set.id, 'weight', set.weight);
+                        onSetDataChange(exerciseId, set.id, 'unit', set.unit);
+                        const nextSet = sets.find(s => s.id === set.id + 1);
+                        if (nextSet && nextSet.status === 'locked') {
+                          onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
+                        }
+                      }
+                    }} 
+                  />
+                </div>
               </div>
-            </div>
+              {idx < sets.length - 1 && (
+                <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.5px] outline-stone-200" />
+              )}
+            </React.Fragment>
           ))}
         </div>
         {isUnscheduled && (
@@ -255,26 +263,28 @@ const ActiveExerciseCard = ({
 
   // Compact view
   return (
-    <CardWrapper className="w-full Property1Compactactivesetcard self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-[16px]">
+    <CardWrapper className="Property1Compact self-stretch p-3 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-4" style={{ maxWidth: 500 }}>
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-          <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-normal font-['Space_Grotesk'] leading-loose">{exerciseName}</div>
-          <div className="Setnumber self-stretch justify-start text-slate-600 text-xs font-normal font-['Space_Grotesk'] leading-none">
+          <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
+          <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
             {setConfigs.length === 1 ? 'One set' : setConfigs.length === 2 ? 'Two sets' : setConfigs.length === 3 ? 'Three sets' : `${setConfigs.length} sets`}
           </div>
         </div>
-        <button 
-          type="button" 
-          onClick={() => setIsExpanded(true)} 
-          className="SortDescending relative"
-        >
-          <Maximize2 width={30} height={30} />
-        </button>
+        {initialSetConfigs.length > 1 && (
+          <button 
+            type="button" 
+            onClick={() => setIsExpanded(true)} 
+            className="SortDescending size-7 relative overflow-hidden"
+          >
+            <Maximize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
+          </button>
+        )}
       </div>
-      <div className="SwipeStates self-stretch">
+      <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
         <SwipeSwitch status={swipeStatus} onComplete={handleActiveSetComplete} />
       </div>
-      <div className="Setpillwrapper self-stretch flex flex-wrap items-start gap-3 content-start">
+      <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center overflow-hidden">
         {sets.map((set, idx) => (
           <CardPill
             key={set.id}
@@ -284,6 +294,7 @@ const ActiveExerciseCard = ({
             editable={true}
             onEdit={() => handlePillClick(idx)}
             complete={allComplete || set.status === 'complete'}
+            className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
           />
         ))}
       </div>

@@ -77,7 +77,7 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
     <div className="self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">
       <div 
         ref={trackRef} 
-        className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex items-center relative overflow-hidden"
+        className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex items-center relative overflow-hidden min-w-[56px]"
       >
         <motion.div
           className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute"
