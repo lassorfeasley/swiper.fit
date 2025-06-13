@@ -1,8 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import NumericInput from '@/components/molecules/numeric-input';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import WeightCompoundField from './WeightCompoundField';
+import ToggleInput from '@/components/molecules/toggle-input';
+
+const unitOptions = [
+  { label: 'lbs', value: 'lbs' },
+  { label: 'kg', value: 'kg' },
+  { label: 'body', value: 'body' },
+];
 
 const SetEditForm = ({
   formPrompt = "Edit set",
@@ -26,34 +31,35 @@ const SetEditForm = ({
   };
 
   return (
-    <div className={`flex flex-col gap-4 ${className}`}>
-      <NumericInput
-        label="Reps"
-        value={formValues.reps}
-        onChange={v => handleFormChange('reps', v)}
-        min={0}
-        max={999}
-        className="w-full"
-      />
-      <NumericInput
-        label="Weight"
-        value={formValues.weight !== undefined && formValues.unit !== 'body' ? formValues.weight : (formValues.unit === 'body' ? 'body' : 0)}
-        onChange={v => handleFormChange('weight', v)}
-        min={0}
-        max={999}
-        className="w-full"
-        incrementing={formValues.unit !== 'body'}
-      />
-      <ToggleGroup
-        type="single"
+    <div className={`flex flex-col gap-6 ${className}`}>
+      <div className="flex flex-col gap-1">
+        <label className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Reps</label>
+        <NumericInput
+          value={formValues.reps}
+          onChange={v => handleFormChange('reps', v)}
+          min={0}
+          max={999}
+          className="w-full"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight</label>
+        <NumericInput
+          value={formValues.weight !== undefined && formValues.unit !== 'body' ? formValues.weight : (formValues.unit === 'body' ? 'body' : 0)}
+          onChange={v => handleFormChange('weight', v)}
+          min={0}
+          max={999}
+          className="w-full"
+          incrementing={formValues.unit !== 'body'}
+        />
+      </div>
+      <ToggleInput
+        label="Weight unit"
+        options={unitOptions}
         value={formValues.unit}
-        onValueChange={unit => unit && handleFormChange('unit', unit)}
-        className="w-full bg-white pt-0 pb-3 px-3 gap-3"
-      >
-        <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
-        <ToggleGroupItem value="kg">kg</ToggleGroupItem>
-        <ToggleGroupItem value="body">body</ToggleGroupItem>
-      </ToggleGroup>
+        onChange={unit => unit && handleFormChange('unit', unit)}
+        className="w-full"
+      />
       <button
         onClick={handleSave}
         className="w-full bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors"

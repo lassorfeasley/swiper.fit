@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import CardPill from '@/components/molecules/CardPill';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SwiperSheet } from '@/components/ui/swiper-sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder } from 'framer-motion';
@@ -84,17 +85,15 @@ const ExerciseCard = ({
         cardContent
       )}
       {setsAreEditable && (
-        <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetContent side="bottom" className="h-[85vh]">
-            <SheetHeader className="mb-4">
-              <SheetTitle>Edit set</SheetTitle>
-            </SheetHeader>
-            <SetEditForm
-              onSave={handleEditFormSave}
-              initialValues={editFormValues}
-            />
-          </SheetContent>
-        </Sheet>
+        <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+          </SheetHeader>
+          <SetEditForm
+            onSave={handleEditFormSave}
+            initialValues={editFormValues}
+          />
+        </SwiperSheet>
       )}
     </CardWrapper>
   );

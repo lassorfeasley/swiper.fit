@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import SwipeSwitch from '@/components/molecules/swipe-switch';
 import CardPill from '@/components/molecules/CardPill';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { SwiperSheet } from '@/components/ui/swiper-sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
 import NumericInput from '@/components/molecules/numeric-input';
@@ -247,20 +248,18 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetContent side="bottom" className="h-[85vh]">
-            <SheetHeader className="mb-4">
-              <SheetTitle>Edit set</SheetTitle>
-              <SheetDescription>
-                Update the reps, weight, and unit for this set.
-              </SheetDescription>
-            </SheetHeader>
-            <SetEditForm
-              onSave={handleEditFormSave}
-              initialValues={editForm}
-            />
-          </SheetContent>
-        </Sheet>
+        <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+            <SheetDescription>
+              Update the reps, weight, and unit for this set.
+            </SheetDescription>
+          </SheetHeader>
+          <SetEditForm
+            onSave={handleEditFormSave}
+            initialValues={editForm}
+          />
+        </SwiperSheet>
       </CardWrapper>
     );
   }
@@ -307,20 +306,18 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SheetContent side="bottom" className="h-[85vh]">
-          <SheetHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-            <SheetDescription>
-              Update the reps, weight, and unit for this set.
-            </SheetDescription>
-          </SheetHeader>
-          <SetEditForm
-            onSave={handleEditFormSave}
-            initialValues={editForm}
-          />
-        </SheetContent>
-      </Sheet>
+      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetHeader className="mb-4">
+          <SheetTitle>Edit set</SheetTitle>
+          <SheetDescription>
+            Update the reps, weight, and unit for this set.
+          </SheetDescription>
+        </SheetHeader>
+        <SetEditForm
+          onSave={handleEditFormSave}
+          initialValues={editForm}
+        />
+      </SwiperSheet>
     </CardWrapper>
   );
 };

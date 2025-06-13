@@ -6,6 +6,7 @@ import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder, useDragControls } from "framer-motion";
 import { PageNameContext } from "@/App";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { SwiperSheet } from '@/components/ui/swiper-sheet';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
@@ -295,19 +296,17 @@ const ProgramBuilder = () => {
         )}
       </CardWrapper>
       {(showAddExercise || editingExercise) && (
-        <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
-          <SheetContent>
-            <AddNewExerciseForm
-              key={editingExercise ? editingExercise.id : 'add-new'}
-              formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-              onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
-              onDelete={editingExercise ? handleDeleteExercise : undefined}
-              initialName={editingExercise?.name}
-              initialSets={editingExercise?.setConfigs?.length}
-              initialSetConfigs={editingExercise?.setConfigs}
-            />
-          </SheetContent>
-        </Sheet>
+        <SwiperSheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
+          <AddNewExerciseForm
+            key={editingExercise ? editingExercise.id : 'add-new'}
+            formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+            onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+            onDelete={editingExercise ? handleDeleteExercise : undefined}
+            initialName={editingExercise?.name}
+            initialSets={editingExercise?.setConfigs?.length}
+            initialSetConfigs={editingExercise?.setConfigs}
+          />
+        </SwiperSheet>
       )}
     </AppLayout>
   );

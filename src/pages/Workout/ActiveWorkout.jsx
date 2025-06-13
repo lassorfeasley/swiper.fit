@@ -13,6 +13,7 @@ import { Play, Home, History, Star, RotateCcw } from 'lucide-react';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import ResponsiveNav from '@/components/organisms/responsive-nav';
 import AppLayout from '@/components/layout/AppLayout';
+import { SwiperSheet } from '@/components/ui/swiper-sheet';
 
 const navItems = [
   { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
@@ -230,21 +231,19 @@ const ActiveWorkout = () => {
       </CardWrapper>
 
       {showAddExercise && (
-        <Sheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
-          <SheetContent>
-            <AddNewExerciseForm
-              key="add-new"
-              formPrompt="Add a new exercise"
-              onActionIconClick={() => {}}
-              initialSets={3}
-              initialSetConfigs={Array.from({ length: 3 }, () => ({
-                reps: 10,
-                weight: 0,
-                unit: 'kg'
-              }))}
-            />
-          </SheetContent>
-        </Sheet>
+        <SwiperSheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
+          <AddNewExerciseForm
+            key="add-new"
+            formPrompt="Add a new exercise"
+            onActionIconClick={() => {}}
+            initialSets={3}
+            initialSetConfigs={Array.from({ length: 3 }, () => ({
+              reps: 10,
+              weight: 0,
+              unit: 'kg'
+            }))}
+          />
+        </SwiperSheet>
       )}
     </AppLayout>
   );

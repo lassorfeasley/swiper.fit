@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import CardPill from '@/components/molecules/CardPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SwiperSheet } from '@/components/ui/swiper-sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 
 const initialSetConfigs = [
@@ -99,21 +100,19 @@ export default function SetCardDemo() {
         </div>
       </div>
 
-      {/* Sheet-based modal */}
-      <Sheet open={showForm} onOpenChange={setShowForm}>
-        <SheetContent side="bottom" className="h-[85vh]">
-          <SheetHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-          </SheetHeader>
-          <SetEditForm
-            onSave={(newValues) => {
-              setFormValues(newValues);
-              setShowForm(false);
-            }}
-            initialValues={formValues}
-          />
-        </SheetContent>
-      </Sheet>
+      {/* SwiperSheet-based modal */}
+      <SwiperSheet open={showForm} onOpenChange={setShowForm}>
+        <SheetHeader className="mb-4">
+          <SheetTitle>Edit set</SheetTitle>
+        </SheetHeader>
+        <SetEditForm
+          onSave={(newValues) => {
+            setFormValues(newValues);
+            setShowForm(false);
+          }}
+          initialValues={formValues}
+        />
+      </SwiperSheet>
 
       <div style={{ marginTop: 24 }}>
         <h4>Completion Log:</h4>
