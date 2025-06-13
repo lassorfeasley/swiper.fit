@@ -104,15 +104,15 @@ const CompletedWorkout = () => {
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
-        <CardWrapper>
+        <CardWrapper className="px-4">
           {exercisesWithSets.map(([exId, exerciseSets]) => (
-            <ExerciseCard
-              key={exId}
-              mode="completed"
-              exerciseName={exercises[exId] || '[Exercise name]'}
-              setConfigs={exerciseSets}
-              className="mb-4"
-            />
+            <div key={exId} className="w-full">
+              <ExerciseCard
+                mode="completed"
+                exerciseName={exercises[exId] || '[Exercise name]'}
+                setConfigs={exerciseSets}
+              />
+            </div>
           ))}
         </CardWrapper>
       )}

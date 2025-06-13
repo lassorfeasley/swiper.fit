@@ -272,12 +272,7 @@ const ProgramBuilder = () => {
       pageContext="programBuilder"
       data-component="AppHeader"
     >
-      <CardWrapper
-        reorderable={true}
-        items={filteredExercises}
-        onReorder={setExercises}
-        className="px-4"
-      >
+      <CardWrapper className="px-4">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredExercises.length === 0 && !loading ? (
@@ -285,16 +280,20 @@ const ProgramBuilder = () => {
             No exercises found. Try adding one!
           </div>
         ) : (
-          filteredExercises.map((ex) => (
-            <ExerciseCard
-              key={ex.id}
-              mode="default"
-              exerciseName={ex.name}
-              setConfigs={ex.setConfigs}
-              onEdit={() => setEditingExercise(ex)}
-              onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
-            />
-          ))
+          <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 w-full">
+            {filteredExercises.map((ex) => (
+              <ExerciseCard
+                key={ex.id}
+                mode="default"
+                exerciseName={ex.name}
+                setConfigs={ex.setConfigs}
+                onEdit={() => setEditingExercise(ex)}
+                onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
+                reorderable={true}
+                reorderValue={ex}
+              />
+            ))}
+          </Reorder.Group>
         )}
       </CardWrapper>
       {(showAddExercise || editingExercise) && (

@@ -3,8 +3,20 @@ import PropTypes from 'prop-types';
 import CardPill from '@/components/molecules/CardPill';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import { Reorder } from 'framer-motion';
 
-const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, onSetConfigsChange, mode = 'default' }) => {
+const ExerciseCard = ({ 
+  exerciseName, 
+  setConfigs = [], 
+  className = '', 
+  onEdit, 
+  onSetConfigsChange, 
+  mode = 'default',
+  reorderable = false,
+  reorderValue,
+  ...props 
+}) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetIndex, setEditSetIndex] = useState(null);
   const [editFormValues, setEditFormValues] = useState({ reps: 0, weight: 0, unit: 'lbs' });
@@ -38,29 +50,39 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
     setEditSetIndex(null);
   };
 
-  return (
-    <div data-layer="ExerciseCard" className={`w-full ${className}`}>
-      <div data-layer="CardContentsWrapper" className="w-full p-4 bg-stone-50 rounded-lg">
-        <div data-layer="ExersiceCardContent" className="w-full flex flex-col gap-2">
-          <div data-layer="Exercise Name" className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7">
-            {exerciseName}
-          </div>
-          <div data-layer="Frame 5" data-property-1="Default" className="w-full flex flex-wrap gap-2">
-            {localSetConfigs.map((config, idx) => (
-              <CardPill
-                key={idx}
-                reps={config.reps}
-                weight={config.weight}
-                unit={config.unit || 'lbs'}
-                editable={setsAreEditable}
-                onEdit={() => handleSetEdit(idx)}
-                complete={mode === 'completed'}
-                className={mode === 'completed' ? 'bg-green-500 text-white' : ''}
-              />
-            ))}
-          </div>
+  const cardContent = (
+    <div data-layer="CardContentsWrapper" className="w-full p-4 bg-stone-50 rounded-lg">
+      <div data-layer="ExersiceCardContent" className="w-full flex flex-col gap-2">
+        <div data-layer="Exercise Name" className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7">
+          {exerciseName}
+        </div>
+        <div data-layer="Frame 5" data-property-1="Default" className="w-full flex flex-wrap gap-2">
+          {localSetConfigs.map((config, idx) => (
+            <CardPill
+              key={idx}
+              reps={config.reps}
+              weight={config.weight}
+              unit={config.unit || 'lbs'}
+              editable={setsAreEditable}
+              onEdit={() => handleSetEdit(idx)}
+              complete={mode === 'completed'}
+              className={mode === 'completed' ? 'bg-green-500 text-white' : ''}
+            />
+          ))}
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <CardWrapper className={className}>
+      {reorderable ? (
+        <Reorder.Item value={reorderValue} className="w-full">
+          {cardContent}
+        </Reorder.Item>
+      ) : (
+        cardContent
+      )}
       {setsAreEditable && (
         <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
           <SheetContent side="bottom" className="h-[85vh]">
@@ -74,7 +96,7 @@ const ExerciseCard = ({ exerciseName, setConfigs = [], className = '', onEdit, o
           </SheetContent>
         </Sheet>
       )}
-    </div>
+    </CardWrapper>
   );
 };
 
@@ -89,6 +111,8 @@ ExerciseCard.propTypes = {
   onEdit: PropTypes.func,
   onSetConfigsChange: PropTypes.func,
   mode: PropTypes.oneOf(['default', 'completed']),
+  reorderable: PropTypes.bool,
+  reorderValue: PropTypes.any,
 };
 
 export default ExerciseCard; 
