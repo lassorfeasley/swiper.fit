@@ -85,9 +85,12 @@ const ActiveExerciseCard = ({
   const handleActiveSetComplete = useCallback(async () => {
     if (!mountedRef.current) return;
 
+    console.log(`ActiveExerciseCard: handleActiveSetComplete called. View: ${isExpanded ? 'Expanded' : 'Compact'}`);
+
     try {
       if (isExpanded && activeSet) {
         // Expanded view: complete only the active set and unlock the next
+        console.log('ActiveExerciseCard: Expanded view completion. Active set:', activeSet);
         if (onSetComplete) {
           await onSetComplete({
             setId: activeSet.id,
@@ -99,6 +102,7 @@ const ActiveExerciseCard = ({
         }
         
         if (onSetDataChange) {
+          console.log('ActiveExerciseCard: Expanded view sending data:', { exerciseId, setId: activeSet.id, status: 'complete' });
           await onSetDataChange(exerciseId, activeSet.id, 'status', 'complete');
           const nextSet = sets.find(s => s.id === activeSet.id + 1);
           if (nextSet && nextSet.status === 'locked') {
@@ -108,9 +112,14 @@ const ActiveExerciseCard = ({
       } else if (!isExpanded) {
         // Compact view: complete ALL sets
         if (onSetDataChange) {
+          console.log('ActiveExerciseCard: Compact view completion. All sets:', sets);
           await Promise.all(sets.map(set => {
             if (set.status !== 'complete') {
-              return onSetDataChange(exerciseId, set.id, 'status', 'complete');
+              console.log('ActiveExerciseCard: Compact view sending data for set:', set);
+              onSetDataChange(exerciseId, set.id, 'status', 'complete');
+              onSetDataChange(exerciseId, set.id, 'reps', set.reps);
+              onSetDataChange(exerciseId, set.id, 'weight', set.weight);
+              onSetDataChange(exerciseId, set.id, 'unit', set.unit);
             }
             return Promise.resolve();
           }));
@@ -205,7 +214,11 @@ const ActiveExerciseCard = ({
                       onSetComplete({ setId: set.id, exerciseId, reps: set.reps, weight: set.weight, status: 'complete' });
                     }
                     if (onSetDataChange) {
+                      console.log('ActiveExerciseCard: Expanded view - swipe sending data for set:', set);
                       onSetDataChange(exerciseId, set.id, 'status', 'complete');
+                      onSetDataChange(exerciseId, set.id, 'reps', set.reps);
+                      onSetDataChange(exerciseId, set.id, 'weight', set.weight);
+                      onSetDataChange(exerciseId, set.id, 'unit', set.unit);
                       const nextSet = sets.find(s => s.id === set.id + 1);
                       if (nextSet && nextSet.status === 'locked') {
                         onSetDataChange(exerciseId, nextSet.id, 'status', 'active');

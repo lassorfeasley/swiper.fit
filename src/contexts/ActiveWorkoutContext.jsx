@@ -7,7 +7,6 @@ export function ActiveWorkoutProvider({ children }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [workoutSummaryData, setWorkoutSummaryData] = useState(null);
 
   useEffect(() => {
     let timer;
@@ -26,22 +25,17 @@ export function ActiveWorkoutProvider({ children }) {
     setIsWorkoutActive(true);
     setElapsedTime(0);
     setIsPaused(false);
-    setWorkoutSummaryData(null);
-  }, []);
-
-  const prepareForSummary = useCallback((summaryData) => {
-    setWorkoutSummaryData(summaryData);
-    setIsWorkoutActive(false); // This triggers the navigation effect
-  }, []);
-
-  const clearSummaryAndReset = useCallback(() => {
-    setWorkoutSummaryData(null);
-    setElapsedTime(0);
-    setActiveWorkout(null);
   }, []);
 
   const togglePause = useCallback(() => {
     setIsPaused(prev => !prev);
+  }, []);
+
+  const endWorkout = useCallback(() => {
+    setIsWorkoutActive(false);
+    setActiveWorkout(null);
+    setElapsedTime(0);
+    setIsPaused(false);
   }, []);
 
   return (
@@ -53,9 +47,7 @@ export function ActiveWorkoutProvider({ children }) {
         elapsedTime,
         isPaused,
         togglePause,
-        workoutSummaryData,
-        prepareForSummary,
-        clearSummaryAndReset
+        endWorkout
       }}
     >
       {children}

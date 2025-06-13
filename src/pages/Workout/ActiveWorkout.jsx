@@ -1,29 +1,19 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
 import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import PageHeader from '@/components/layout/PageHeader';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Input } from '@/components/ui/input';
-import NumericInput from '@/components/molecules/numeric-input';
-import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
-import { Play, Pause, Square, Circle, Home, History, Dumbbell, Settings, Star, RotateCcw } from 'lucide-react';
+import { Play, Pause, Square, Circle, Home, History, Star, RotateCcw } from 'lucide-react';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import ResponsiveNav from '@/components/organisms/responsive-nav';
 import AppLayout from '@/components/layout/AppLayout';
-import {
-  Alert,
-  AlertTitle,
-  AlertDescription,
-} from "@/components/ui/alert";
 
-// Define navigation items
 const navItems = [
   { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
   { to: "/programs", label: "Programs", icon: <Star className="w-7 h-7" /> },
@@ -31,48 +21,98 @@ const navItems = [
   { to: "/workout", label: "Workout", icon: <Play className="w-7 h-7" /> },
 ];
 
+const ActiveFocusedNavBar = ({ timer, isPaused, onPauseToggle, onEnd }) => {
+  return (
+    <div 
+      data-layer="ActiveWorkoutNav" 
+      className="fixed bottom-0 left-0 w-full h-24 px-6 py-3 bg-black/90 backdrop-blur-[2px] flex justify-center items-start z-50"
+    >
+      <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper w-80 max-w-80 flex justify-between items-start">
+        <div data-layer="Timer" className="Timer flex justify-start items-center gap-1">
+          <div data-svg-wrapper data-layer="RecordingIcon" className="Recordingicon">
+            <Circle className="w-5 h-5 text-green-500" fill="currentColor" />
+          </div>
+          <div data-layer="TimePassed" className="Timepassed justify-center text-white text-xl font-normal font-['Space_Grotesk'] leading-loose">
+            {timer}
+          </div>
+        </div>
+        <div data-layer="NavIconsWrapper" className="Naviconswrapper flex justify-start items-center">
+          <div 
+            data-layer="NavIcons" 
+            data-selected={!isPaused} 
+            className={`Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer${isPaused ? ' NaviconsSelected3 w-14' : ''}`}
+            onClick={onPauseToggle}
+          >
+            {isPaused ? (
+              <>
+                <div data-svg-wrapper data-layer="play" className="Play relative">
+                  <Play className="w-7 h-7 text-white" />
+                </div>
+                <div data-layer="Resume" className="Resume text-center justify-start text-white text-xs font-bold font-['Space_Grotesk'] leading-3">Resume</div>
+              </>
+            ) : (
+              <>
+                <div data-svg-wrapper data-layer="pause" className="Pause relative">
+                  <Pause className="w-7 h-7 text-slate-200" />
+                </div>
+                <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
+                  Pause
+                </div>
+              </>
+            )}
+          </div>
+          <div 
+            data-layer="NavIcons" 
+            data-selected="true" 
+            className="Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer"
+            onClick={onEnd}
+          >
+            <div data-svg-wrapper data-layer="stop" className="Stop relative">
+              <Square className="w-7 h-7 text-slate-200" />
+            </div>
+            <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
+              End
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const {
     activeWorkout,
     isWorkoutActive,
     elapsedTime,
-    workoutSummaryData,
-    prepareForSummary
+    isPaused,
+    togglePause,
+    endWorkout: contextEndWorkout,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
-  const [showEndWorkout, setShowEndWorkout] = useState(false);
   const [search, setSearch] = useState("");
   const { setNavBarVisible } = useNavBarVisibility();
   const [setDataByExercise, setSetDataByExercise] = useState({});
 
-  // This effect now safely handles all navigation logic for this page.
   useEffect(() => {
     if (!isWorkoutActive) {
-      if (workoutSummaryData) {
-        navigate('/workout/summary', { replace: true });
-      } else {
-        navigate('/workout', { replace: true });
-      }
+      navigate('/workout', { replace: true });
     }
-  }, [isWorkoutActive, workoutSummaryData, navigate]);
+  }, [isWorkoutActive, navigate]);
 
-  // Hide nav bar when workout is active
   useEffect(() => {
     setNavBarVisible(false);
     return () => setNavBarVisible(true);
   }, [setNavBarVisible]);
 
-  // Set page name
   useEffect(() => {
     setPageName("Active Workout");
   }, [setPageName]);
 
-  // Fetch exercises for selected program
   useEffect(() => {
     if (activeWorkout) {
       supabase
@@ -125,10 +165,8 @@ const ActiveWorkout = () => {
       const setIdx = prevSets.findIndex(s => s.id === setId);
       let newSets;
       if (setIdx === -1) {
-        // New set
         newSets = [...prevSets, { id: setId, [field]: value }];
       } else {
-        // Update existing set
         newSets = prevSets.map((s, i) =>
           i === setIdx ? { ...s, [field]: value } : s
         );
@@ -137,25 +175,92 @@ const ActiveWorkout = () => {
     });
   };
 
-  const handleEndWorkout = () => {
+  const handleEndWorkout = async () => {
     try {
-      const workoutData = {
-        programId: activeWorkout?.programId,
-        name: activeWorkout?.name,
-        duration_seconds: elapsedTime,
-      };
-      // Merge setConfigs with setData for completion status
-      const mergedExercises = exercises.map(ex => ({
+      console.log('Starting workout end process...');
+      console.log('Active workout data:', activeWorkout);
+      console.log('User:', user);
+      console.log('Exercises:', exercises);
+      console.log('Set data:', setDataByExercise);
+
+      if (!user?.id) {
+        throw new Error('No user ID available');
+      }
+
+      if (!activeWorkout?.programId) {
+        throw new Error('No active workout program ID available');
+      }
+
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .insert([
+          {
+            user_id: user.id,
+            program_id: activeWorkout?.programId,
+            workout_name: activeWorkout?.name || 'Workout',
+            duration_seconds: elapsedTime,
+            completed_at: new Date().toISOString(),
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating workout record:', error);
+        throw error;
+      }
+
+      console.log('Created workout record:', workout);
+
+      const allExercisesWithSets = exercises.map(ex => ({
         ...ex,
-        setConfigs: (ex.setConfigs || []).map((set, idx) => {
-          const setDataArr = setDataByExercise[ex.exercise_id] || [];
-          const setData = setDataArr.find(s => s.id === idx + 1); // id is 1-based
-          return { ...set, ...(setData || {}) };
-        }),
+        sets: (setDataByExercise[ex.exercise_id] || []).map((s, index) => {
+            const config = ex.setConfigs[s.id - 1] || {};
+            return {
+                reps: s.reps ?? config.reps,
+                weight: s.weight ?? config.weight,
+                order: index + 1,
+            };
+        })
       }));
-      prepareForSummary({ workoutData, exercises: mergedExercises });
+
+      console.log('Processed exercises with sets:', allExercisesWithSets);
+
+      for (const exercise of allExercisesWithSets) {
+        if(exercise.sets.length === 0) {
+          console.log('Skipping exercise with no sets:', exercise.name);
+          continue;
+        }
+
+        console.log('Saving sets for exercise:', exercise.name);
+
+        // Insert all sets for this exercise directly into the sets table
+        const setRows = exercise.sets.map(set => ({
+          workout_id: workout.id,
+          exercise_id: exercise.exercise_id,
+          reps: set.reps,
+          weight: set.weight,
+          order: set.order,
+          weight_unit: exercise.setConfigs[0]?.unit || 'lbs' // Use the first set's unit as default
+        }));
+
+        const { error: setError } = await supabase
+          .from('sets')
+          .insert(setRows);
+
+        if (setError) {
+          console.error('Error saving sets for exercise:', exercise.name, setError);
+          throw setError;
+        }
+      }
+
+      console.log('Successfully saved all workout data');
+      contextEndWorkout();
+      navigate('/history');
     } catch (error) {
-      console.error('Error preparing workout summary:', error);
+      console.error('Error ending workout:', error);
+      // Add user feedback here
+      alert('There was an error ending your workout. Please try again.');
     }
   };
 
@@ -164,15 +269,11 @@ const ActiveWorkout = () => {
       appHeaderTitle="Active Workout"
       subhead={true}
       subheadText={activeWorkout?.name || 'Workout in Progress'}
-      showBackButton={true}
-      showActionBar={true}
-      actionBarText="End Workout"
-      showActionIcon={false}
+      showBackButton={false}
+      showActionBar={false}
       search={true}
       searchValue={search}
       onSearchChange={setSearch}
-      onBack={() => setShowEndWorkout(true)}
-      onAction={handleEndWorkout}
     >
       <ResponsiveNav navItems={navItems} />
       <CardWrapper>
@@ -193,16 +294,12 @@ const ActiveWorkout = () => {
         </div>
       </CardWrapper>
 
-      <Alert open={showEndWorkout}>
-        <AlertTitle>End your workout?</AlertTitle>
-        <AlertDescription>
-          This will save your current progress. You won't be able to come back to it.
-        </AlertDescription>
-        <div className="mt-4 flex justify-end">
-          <button onClick={() => setShowEndWorkout(false)} className="px-4 py-2 mr-2 bg-gray-300 rounded-md">Cancel</button>
-          <button onClick={handleEndWorkout} className="px-4 py-2 bg-red-500 text-white rounded-md">End Workout</button>
-        </div>
-      </Alert>
+      <ActiveFocusedNavBar
+        timer={`${String(Math.floor(elapsedTime/60)).padStart(2,'0')}:${String(elapsedTime%60).padStart(2,'0')}`}
+        isPaused={isPaused}
+        onPauseToggle={togglePause}
+        onEnd={handleEndWorkout}
+      />
 
       {showAddExercise && (
         <Sheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
@@ -232,21 +329,7 @@ const ActiveWorkout = () => {
 };
 
 ActiveWorkout.propTypes = {
-  selectedProgram: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    program_name: PropTypes.string.isRequired,
-  }),
-  exercises: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    exercise_id: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    setConfigs: PropTypes.arrayOf(PropTypes.shape({
-      reps: PropTypes.number.isRequired,
-      weight: PropTypes.number.isRequired,
-      unit: PropTypes.string.isRequired,
-    })).isRequired,
-  })),
-  onExercisesChange: PropTypes.func,
+  // PropTypes can be re-added if needed
 };
 
 export default ActiveWorkout; 
