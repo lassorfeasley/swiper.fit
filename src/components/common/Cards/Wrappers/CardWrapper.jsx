@@ -31,7 +31,7 @@ const CardWrapper = ({
         </div>
       )}
       {reorderable ? (
-        <Reorder.Group axis="y" values={items} onReorder={onReorder} className="w-full">
+        <Reorder.Group axis="y" values={items} onReorder={onReorder} className="w-full flex flex-col gap-4">
           {React.Children.map(children, (child, idx) =>
             React.isValidElement(child)
               ? (
