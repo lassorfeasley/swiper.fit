@@ -86,13 +86,13 @@ const ExerciseCard = ({
       )}
       {setsAreEditable && (
         <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-          </SheetHeader>
-          <SetEditForm
-            onSave={handleEditFormSave}
-            initialValues={editFormValues}
-          />
+            <SheetHeader className="mb-4">
+              <SheetTitle>Edit set</SheetTitle>
+            </SheetHeader>
+            <SetEditForm
+              onSave={handleEditFormSave}
+              initialValues={editFormValues}
+            />
         </SwiperSheet>
       )}
     </CardWrapper>

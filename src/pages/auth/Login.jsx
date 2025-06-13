@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { SwiperCard, SwiperCardContent } from "@/components/molecules/swiper-card";
 import AppLayout from '@/components/layout/AppLayout';
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
@@ -55,8 +55,8 @@ export default function Login() {
   return (
     <AppLayout showSidebar={false}>
       <div className="min-h-screen flex items-center justify-center bg-muted">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="flex flex-col gap-5 p-5">
+        <SwiperCard className="w-full max-w-md mx-4">
+          <SwiperCardContent className="flex flex-col gap-5 p-5">
             {/* Header row */}
             <div className="self-stretch inline-flex justify-between items-center">
               <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9">
@@ -123,8 +123,8 @@ export default function Login() {
             >
               {loginMutation.isPending ? "Logging in..." : "Login"}
             </Button>
-          </CardContent>
-        </Card>
+          </SwiperCardContent>
+        </SwiperCard>
       </div>
     </AppLayout>
   );

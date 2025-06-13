@@ -9,9 +9,9 @@ const Reorder_Card = ({ value, children, className = '' }) => {
   return (
     <Reorder.Item
       value={value}
-      className={`flex items-center rounded-2xl bg-stone-50 p-0 min-h-[80px] relative shadow-sm ${className}`}
+      className={`flex items-center rounded-2xl bg-stone-50 p-0 min-h-[80px] relative ${className}`}
       style={{ borderRadius: 12 }}
-      whileDrag={{ scale: 1.02, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
+      whileDrag={{ scale: 1.02 }}
     >
       {/* Reorder sidebar with drag handle */}
       <div className="flex flex-col items-center justify-center h-full py-2 px-2 select-none">

@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from '@/components/layout/AppLayout';
 import { TextInput } from "@/components/molecules/text-input";
+import { SwiperCard, SwiperCardContent } from "@/components/molecules/swiper-card";
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -50,8 +51,8 @@ export default function UpdatePassword() {
   return (
     <AppLayout showSidebar={false}>
       <div className="min-h-screen flex items-center justify-center bg-muted">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="flex flex-col gap-5 p-5">
+        <SwiperCard className="w-full max-w-md mx-4">
+          <SwiperCardContent className="flex flex-col gap-5 p-5">
             <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9 mb-2">
               Update Password
             </div>
@@ -101,8 +102,8 @@ export default function UpdatePassword() {
                 Update Password
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </SwiperCardContent>
+        </SwiperCard>
       </div>
     </AppLayout>
   );

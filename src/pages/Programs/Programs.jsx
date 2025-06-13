@@ -147,27 +147,27 @@ const ProgramsIndex = () => {
       {/* Sheet for creating a new program */}
       {showSheet && (
         <SwiperSheet open={showSheet} onOpenChange={setShowSheet}>
-          <SheetHeader className="text-left items-start">
-            <SheetTitle className="text-left">What should we call this program?</SheetTitle>
-            <SheetDescription className="text-left">Enter program name</SheetDescription>
-          </SheetHeader>
-          <Input
-            label="Program name"
-            value={programName}
-            onChange={e => setProgramName(e.target.value)}
-            placeholder="Enter program name"
-            ref={inputRef}
-            className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
-          />
-          <SheetFooter className="text-left items-start">
-            <Button
-              className="w-full text-left justify-start"
-              disabled={!isReady}
-              onClick={handleCreateProgram}
-            >
-              Create program
-            </Button>
-          </SheetFooter>
+            <SheetHeader className="text-left items-start">
+              <SheetTitle className="text-left">What should we call this program?</SheetTitle>
+              <SheetDescription className="text-left">Enter program name</SheetDescription>
+            </SheetHeader>
+            <Input
+              label="Program name"
+              value={programName}
+              onChange={e => setProgramName(e.target.value)}
+              placeholder="Enter program name"
+              ref={inputRef}
+              className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
+            />
+            <SheetFooter className="text-left items-start">
+              <Button
+                className="w-full text-left justify-start"
+                disabled={!isReady}
+                onClick={handleCreateProgram}
+              >
+                Create program
+              </Button>
+            </SheetFooter>
         </SwiperSheet>
       )}
     </AppLayout>

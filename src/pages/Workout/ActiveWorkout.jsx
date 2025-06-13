@@ -232,17 +232,17 @@ const ActiveWorkout = () => {
 
       {showAddExercise && (
         <SwiperSheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
-          <AddNewExerciseForm
-            key="add-new"
-            formPrompt="Add a new exercise"
-            onActionIconClick={() => {}}
-            initialSets={3}
-            initialSetConfigs={Array.from({ length: 3 }, () => ({
-              reps: 10,
-              weight: 0,
-              unit: 'kg'
-            }))}
-          />
+            <AddNewExerciseForm
+              key="add-new"
+              formPrompt="Add a new exercise"
+              onActionIconClick={() => {}}
+              initialSets={3}
+              initialSetConfigs={Array.from({ length: 3 }, () => ({
+                reps: 10,
+                weight: 0,
+                unit: 'kg'
+              }))}
+            />
         </SwiperSheet>
       )}
     </AppLayout>

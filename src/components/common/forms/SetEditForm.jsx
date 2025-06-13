@@ -34,24 +34,24 @@ const SetEditForm = ({
     <div className={`flex flex-col gap-6 ${className}`}>
       <div className="flex flex-col gap-1">
         <label className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Reps</label>
-        <NumericInput
-          value={formValues.reps}
-          onChange={v => handleFormChange('reps', v)}
-          min={0}
-          max={999}
-          className="w-full"
-        />
+      <NumericInput
+        value={formValues.reps}
+        onChange={v => handleFormChange('reps', v)}
+        min={0}
+        max={999}
+        className="w-full"
+      />
       </div>
       <div className="flex flex-col gap-1">
         <label className="text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight</label>
-        <NumericInput
-          value={formValues.weight !== undefined && formValues.unit !== 'body' ? formValues.weight : (formValues.unit === 'body' ? 'body' : 0)}
-          onChange={v => handleFormChange('weight', v)}
-          min={0}
-          max={999}
-          className="w-full"
-          incrementing={formValues.unit !== 'body'}
-        />
+      <NumericInput
+        value={formValues.weight !== undefined && formValues.unit !== 'body' ? formValues.weight : (formValues.unit === 'body' ? 'body' : 0)}
+        onChange={v => handleFormChange('weight', v)}
+        min={0}
+        max={999}
+        className="w-full"
+        incrementing={formValues.unit !== 'body'}
+      />
       </div>
       <ToggleInput
         label="Weight unit"

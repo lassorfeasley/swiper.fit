@@ -102,16 +102,16 @@ export default function SetCardDemo() {
 
       {/* SwiperSheet-based modal */}
       <SwiperSheet open={showForm} onOpenChange={setShowForm}>
-        <SheetHeader className="mb-4">
-          <SheetTitle>Edit set</SheetTitle>
-        </SheetHeader>
-        <SetEditForm
-          onSave={(newValues) => {
-            setFormValues(newValues);
-            setShowForm(false);
-          }}
-          initialValues={formValues}
-        />
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+          </SheetHeader>
+          <SetEditForm
+            onSave={(newValues) => {
+              setFormValues(newValues);
+              setShowForm(false);
+            }}
+            initialValues={formValues}
+          />
       </SwiperSheet>
 
       <div style={{ marginTop: 24 }}>

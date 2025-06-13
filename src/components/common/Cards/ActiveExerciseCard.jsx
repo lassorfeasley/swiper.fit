@@ -249,16 +249,16 @@ const ActiveExerciseCard = ({
           </div>
         )}
         <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-            <SheetDescription>
-              Update the reps, weight, and unit for this set.
-            </SheetDescription>
-          </SheetHeader>
-          <SetEditForm
-            onSave={handleEditFormSave}
-            initialValues={editForm}
-          />
+            <SheetHeader className="mb-4">
+              <SheetTitle>Edit set</SheetTitle>
+              <SheetDescription>
+                Update the reps, weight, and unit for this set.
+              </SheetDescription>
+            </SheetHeader>
+            <SetEditForm
+              onSave={handleEditFormSave}
+              initialValues={editForm}
+            />
         </SwiperSheet>
       </CardWrapper>
     );
@@ -307,16 +307,16 @@ const ActiveExerciseCard = ({
         </div>
       )}
       <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SheetHeader className="mb-4">
-          <SheetTitle>Edit set</SheetTitle>
-          <SheetDescription>
-            Update the reps, weight, and unit for this set.
-          </SheetDescription>
-        </SheetHeader>
-        <SetEditForm
-          onSave={handleEditFormSave}
-          initialValues={editForm}
-        />
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+            <SheetDescription>
+              Update the reps, weight, and unit for this set.
+            </SheetDescription>
+          </SheetHeader>
+          <SetEditForm
+            onSave={handleEditFormSave}
+            initialValues={editForm}
+          />
       </SwiperSheet>
     </CardWrapper>
   );

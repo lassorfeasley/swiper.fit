@@ -11,7 +11,7 @@ const ExerciseSetsConfigurationCard = ({
   dragHandleProps = {},
 }) => {
   return (
-    <div className="flex items-center bg-[#f5f6fa] rounded-xl p-4 mb-4 shadow-sm">
+    <div className="flex items-center bg-[#f5f6fa] rounded-xl p-4 mb-4">
       {/* Drag handle */}
       <div {...dragHandleProps} className="mr-4 cursor-move select-none text-gray-400">
         <span className="material-icons">drag_indicator</span>
