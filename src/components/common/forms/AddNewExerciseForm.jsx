@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/molecules/numeric-input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import ToggleInput from '@/components/molecules/toggle-input';
 import { Button } from '@/components/ui/button';
 
 const unitOptions = [
@@ -105,16 +105,13 @@ const AddNewExerciseForm = ({
                   className="w-full"
                   incrementing={cfg.unit !== 'body'}
                 />
-                <ToggleGroup
-                  type="single"
+                <ToggleInput
+                  label={false}
+                  options={unitOptions}
                   value={cfg.unit}
-                  onValueChange={unit => unit && handleSetConfigChange(idx, 'unit', unit)}
-                  className="w-full bg-white pt-0 pb-3 px-3 gap-3"
-                >
-                  <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
-                  <ToggleGroupItem value="kg">kg</ToggleGroupItem>
-                  <ToggleGroupItem value="body">body</ToggleGroupItem>
-                </ToggleGroup>
+                  onChange={unit => unit && handleSetConfigChange(idx, 'unit', unit)}
+                  className="w-full"
+                />
               </div>
             </AccordionContent>
           </AccordionItem>
