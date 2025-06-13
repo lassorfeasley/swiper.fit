@@ -48,7 +48,7 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
         {state === 'return-to-workout' && (
           <div 
             data-layer="Property 1=return-to-workout" 
-            className="Property1ReturnToWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-center gap-2 overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
+            className="Property1ReturnToWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-start gap-2 overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
             onClick={handleReturnToWorkout}
             role="button"
             tabIndex={0}
