@@ -1,12 +1,14 @@
 import React from "react";
-import { PlayCircle, ChevronRightCircle, PauseCircle, StopCircle, Circle, Play, Pause, Square } from "lucide-react";
+import { PlayCircle, ChevronRightCircle, PauseCircle, StopCircle, Circle, Play, Pause, Square, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useNavigate } from "react-router-dom";
 
-// Props: state: 'c2a' | 'programPrompt' | 'workoutInProgress', variant: 'sidebar' | 'mobile', onClick: function
+// Props: state: 'c2a' | 'programPrompt' | 'active-workout' | 'return-to-workout', variant: 'sidebar' | 'mobile', onClick: function
 export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', onClick, onEnd }) {
   const { elapsedTime, isPaused, togglePause, endWorkout: contextEndWorkout } = useActiveWorkout();
+  const navigate = useNavigate();
 
   // Format seconds into MM:SS
   const formatTime = (totalSeconds) => {
@@ -16,6 +18,10 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
   };
 
   const handleEnd = onEnd || contextEndWorkout;
+
+  const handleReturnToWorkout = () => {
+    navigate('/workout/active');
+  };
 
   // Sidebar style: colored, rounded, full-width bar (no Card)
   if (variant === 'sidebar') {
@@ -39,7 +45,28 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
             <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">Select a program</span>
           </div>
         )}
-        {state === 'workoutInProgress' && (
+        {state === 'return-to-workout' && (
+          <div 
+            data-layer="Property 1=return-to-workout" 
+            className="Property1ReturnToWorkout self-stretch p-2 bg-green-600 rounded-lg backdrop-blur-[2px] inline-flex justify-between items-start overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
+            onClick={handleReturnToWorkout}
+            role="button"
+            tabIndex={0}
+            aria-label="Return to active workout"
+          >
+            <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper flex-1 flex justify-between items-center">
+              <div data-layer="icon-text-wrapper" className="IconTextWrapper flex-1 flex justify-start items-center gap-1">
+                <div data-layer="lucide" className="Lucide size-6 relative overflow-hidden">
+                  <ArrowRight className="size-4 text-white" />
+                </div>
+                <div data-layer="TimePassed" className="Timepassed justify-center text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
+                  Return to workout
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {state === 'active-workout' && (
           <div 
             data-layer="ActiveWorkoutNav" 
             className="w-full h-24 px-6 py-3 bg-black/90 backdrop-blur-[2px] flex justify-center items-start"
@@ -119,7 +146,21 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
           <span className="text-xs font-semibold font-['Space_Grotesk'] leading-none">Select a program</span>
         </div>
       )}
-      {state === 'workoutInProgress' && (
+      {state === 'return-to-workout' && (
+        <div 
+          className="w-full p-2 bg-green-600 rounded-lg flex items-center gap-2 cursor-pointer hover:bg-green-700 transition-colors"
+          onClick={handleReturnToWorkout}
+          role="button"
+          tabIndex={0}
+          aria-label="Return to active workout"
+        >
+          <ArrowRight className="size-4 text-white" />
+          <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
+            Return to workout
+          </span>
+        </div>
+      )}
+      {state === 'active-workout' && (
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-1">
             <Circle className="Lucide size-6 text-green-600" fill="currentColor" />

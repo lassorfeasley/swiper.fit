@@ -32,7 +32,11 @@ function ResponsiveNav({ navItems, onEnd }) {
   // Determine nav state
   let workoutNavState = 'c2a';
   if (isWorkoutActive) {
-    workoutNavState = 'workoutInProgress';
+    if (location.pathname === '/workout/active') {
+      workoutNavState = 'active-workout';
+    } else {
+      workoutNavState = 'return-to-workout';
+    }
   } else if (location.pathname === '/workout') {
     workoutNavState = 'programPrompt';
   }

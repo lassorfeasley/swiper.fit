@@ -7,6 +7,7 @@ export function ActiveWorkoutProvider({ children }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [workoutProgress, setWorkoutProgress] = useState({});
 
   useEffect(() => {
     let timer;
@@ -25,6 +26,7 @@ export function ActiveWorkoutProvider({ children }) {
     setIsWorkoutActive(true);
     setElapsedTime(0);
     setIsPaused(false);
+    setWorkoutProgress({}); // Reset progress when starting new workout
   }, []);
 
   const togglePause = useCallback(() => {
@@ -36,6 +38,23 @@ export function ActiveWorkoutProvider({ children }) {
     setActiveWorkout(null);
     setElapsedTime(0);
     setIsPaused(false);
+    setWorkoutProgress({}); // Clear progress when ending workout
+  }, []);
+
+  const updateWorkoutProgress = useCallback((exerciseId, setId, field, value) => {
+    setWorkoutProgress(prev => {
+      const prevSets = prev[exerciseId] || [];
+      const setIdx = prevSets.findIndex(s => s.id === setId);
+      let newSets;
+      if (setIdx === -1) {
+        newSets = [...prevSets, { id: setId, [field]: value }];
+      } else {
+        newSets = prevSets.map((s, i) =>
+          i === setIdx ? { ...s, [field]: value } : s
+        );
+      }
+      return { ...prev, [exerciseId]: newSets };
+    });
   }, []);
 
   return (
@@ -47,7 +66,9 @@ export function ActiveWorkoutProvider({ children }) {
         elapsedTime,
         isPaused,
         togglePause,
-        endWorkout
+        endWorkout,
+        workoutProgress,
+        updateWorkoutProgress
       }}
     >
       {children}

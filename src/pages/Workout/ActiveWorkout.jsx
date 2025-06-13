@@ -32,12 +32,13 @@ const ActiveWorkout = () => {
     isPaused,
     togglePause,
     endWorkout: contextEndWorkout,
+    workoutProgress,
+    updateWorkoutProgress
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [search, setSearch] = useState("");
   const { setNavBarVisible } = useNavBarVisibility();
-  const [setDataByExercise, setSetDataByExercise] = useState({});
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -101,19 +102,7 @@ const ActiveWorkout = () => {
   }, [activeWorkout]);
 
   const handleSetDataChange = (exerciseId, setId, field, value) => {
-    setSetDataByExercise(prev => {
-      const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === setId);
-      let newSets;
-      if (setIdx === -1) {
-        newSets = [...prevSets, { id: setId, [field]: value }];
-      } else {
-        newSets = prevSets.map((s, i) =>
-          i === setIdx ? { ...s, [field]: value } : s
-        );
-      }
-      return { ...prev, [exerciseId]: newSets };
-    });
+    updateWorkoutProgress(exerciseId, setId, field, value);
   };
 
   const handleEndWorkout = async () => {
@@ -122,7 +111,7 @@ const ActiveWorkout = () => {
       console.log('Active workout data:', activeWorkout);
       console.log('User:', user);
       console.log('Exercises:', exercises);
-      console.log('Set data:', setDataByExercise);
+      console.log('Set data:', workoutProgress);
 
       if (!user?.id) {
         throw new Error('No user ID available');
@@ -154,7 +143,7 @@ const ActiveWorkout = () => {
       console.log('Created workout record:', workout);
 
       const allExercisesWithSets = exercises.map(ex => {
-        const completedSets = (setDataByExercise[ex.exercise_id] || [])
+        const completedSets = (workoutProgress[ex.exercise_id] || [])
           .filter(s => s.status === 'complete')
           .map((s, index) => {
             const config = ex.setConfigs[s.id - 1] || {};
@@ -206,7 +195,6 @@ const ActiveWorkout = () => {
       navigate('/history');
     } catch (error) {
       console.error('Error ending workout:', error);
-      // Add user feedback here
       alert('There was an error ending your workout. Please try again.');
     }
   };
@@ -233,7 +221,7 @@ const ActiveWorkout = () => {
               default_view={true}
               initialSetConfigs={ex.setConfigs}
               onSetComplete={() => {}}
-              setData={setDataByExercise[ex.exercise_id] || []}
+              setData={workoutProgress[ex.exercise_id] || []}
               onSetDataChange={handleSetDataChange}
               isUnscheduled={false}
             />
