@@ -19,7 +19,7 @@ import {
 import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
 import { useActiveWorkout } from '@/contexts/ActiveWorkoutContext';
 
-function ResponsiveNav({ navItems }) {
+function ResponsiveNav({ navItems, onEnd }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -119,7 +119,7 @@ function ResponsiveNav({ navItems }) {
         <SidebarContent />
         <SidebarFooter>
           <div className="w-full px-5 pb-8">
-            <ActiveWorkoutNav variant="sidebar" state={workoutNavState} onClick={handleC2AClick} />
+            <ActiveWorkoutNav variant="sidebar" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
           </div>
         </SidebarFooter>
       </div>
@@ -157,7 +157,7 @@ function ResponsiveNav({ navItems }) {
         })}
       </div>
       <div className="w-full flex justify-center mt-2">
-        <ActiveWorkoutNav variant="mobile" state={workoutNavState} onClick={handleC2AClick} />
+        <ActiveWorkoutNav variant="mobile" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
       </div>
     </nav>
   );
@@ -181,6 +181,11 @@ ResponsiveNav.propTypes = {
       icon: PropTypes.node.isRequired,
     })
   ).isRequired,
+  onEnd: PropTypes.func,
+};
+
+ResponsiveNav.defaultProps = {
+  onEnd: () => {},
 };
 
 export default ResponsiveNav; 

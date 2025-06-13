@@ -54,20 +54,24 @@ const ActiveExerciseCard = ({
       if (onSetDataChange) {
         for (const set of sets) {
           const parentSetData = setData.find(d => d.id === set.id);
-          if (!parentSetData || parentSetData.reps === undefined || parentSetData.weight === undefined || parentSetData.status === undefined) {
+          // Only update if the set is complete and doesn't have data yet
+          if (set.status === 'complete' && (!parentSetData || parentSetData.reps === undefined)) {
             await Promise.all([
               onSetDataChange(exerciseId, set.id, 'reps', set.reps),
               onSetDataChange(exerciseId, set.id, 'weight', set.weight),
               onSetDataChange(exerciseId, set.id, 'status', set.status),
               onSetDataChange(exerciseId, set.id, 'unit', set.unit)
             ]);
+          } else if (parentSetData?.status !== set.status) {
+            // Or if the status has changed
+             await onSetDataChange(exerciseId, set.id, 'status', set.status);
           }
         }
       }
     };
 
     updateSets().catch(console.error);
-  }, [JSON.stringify(setConfigs), exerciseId, onSetDataChange, setData, sets]);
+  }, [JSON.stringify(sets), exerciseId, onSetDataChange, setData]);
 
   // New logic for swipeStatus in compact view
   const allComplete = useMemo(() => sets.every(set => set.status === 'complete'), [sets]);

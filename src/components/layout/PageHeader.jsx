@@ -23,8 +23,6 @@ export const PageHeader = forwardRef(({
   appHeaderTitle = "Welcome to Swiper.fit!",
   actionBarText = "",
   search = false,
-  subhead = false,
-  subheadText = "",
   onBack,
   onAction,
   searchValue,
@@ -129,11 +127,6 @@ export const PageHeader = forwardRef(({
                     </button>
                   )}
                 </div>
-                {subhead && !searchActive && (
-                  <p className="text-base font-normal text-slate-600 font-['Space_Grotesk'] leading-none">
-                    {subheadText}
-                  </p>
-                )}
               </div>
             </div>
             <div className="flex justify-end items-center gap-3">
@@ -201,8 +194,6 @@ PageHeader.propTypes = {
   appHeaderTitle: PropTypes.string,
   actionBarText: PropTypes.string,
   search: PropTypes.bool,
-  subhead: PropTypes.bool,
-  subheadText: PropTypes.string,
   onBack: PropTypes.func,
   onAction: PropTypes.func,
   searchValue: PropTypes.string,

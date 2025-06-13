@@ -9,7 +9,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Play, Pause, Square, Circle, Home, History, Star, RotateCcw } from 'lucide-react';
+import { Play, Home, History, Star, RotateCcw } from 'lucide-react';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import ResponsiveNav from '@/components/organisms/responsive-nav';
 import AppLayout from '@/components/layout/AppLayout';
@@ -20,65 +20,6 @@ const navItems = [
   { to: "/history", label: "History", icon: <RotateCcw className="w-7 h-7" /> },
   { to: "/workout", label: "Workout", icon: <Play className="w-7 h-7" /> },
 ];
-
-const ActiveFocusedNavBar = ({ timer, isPaused, onPauseToggle, onEnd }) => {
-  return (
-    <div 
-      data-layer="ActiveWorkoutNav" 
-      className="fixed bottom-0 left-0 w-full h-24 px-6 py-3 bg-black/90 backdrop-blur-[2px] flex justify-center items-start z-50"
-    >
-      <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper w-80 max-w-80 flex justify-between items-start">
-        <div data-layer="Timer" className="Timer flex justify-start items-center gap-1">
-          <div data-svg-wrapper data-layer="RecordingIcon" className="Recordingicon">
-            <Circle className="w-5 h-5 text-green-500" fill="currentColor" />
-          </div>
-          <div data-layer="TimePassed" className="Timepassed justify-center text-white text-xl font-normal font-['Space_Grotesk'] leading-loose">
-            {timer}
-          </div>
-        </div>
-        <div data-layer="NavIconsWrapper" className="Naviconswrapper flex justify-start items-center">
-          <div 
-            data-layer="NavIcons" 
-            data-selected={!isPaused} 
-            className={`Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer${isPaused ? ' NaviconsSelected3 w-14' : ''}`}
-            onClick={onPauseToggle}
-          >
-            {isPaused ? (
-              <>
-                <div data-svg-wrapper data-layer="play" className="Play relative">
-                  <Play className="w-7 h-7 text-white" />
-                </div>
-                <div data-layer="Resume" className="Resume text-center justify-start text-white text-xs font-bold font-['Space_Grotesk'] leading-3">Resume</div>
-              </>
-            ) : (
-              <>
-                <div data-svg-wrapper data-layer="pause" className="Pause relative">
-                  <Pause className="w-7 h-7 text-slate-200" />
-                </div>
-                <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
-                  Pause
-                </div>
-              </>
-            )}
-          </div>
-          <div 
-            data-layer="NavIcons" 
-            data-selected="true" 
-            className="Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer"
-            onClick={onEnd}
-          >
-            <div data-svg-wrapper data-layer="stop" className="Stop relative">
-              <Square className="w-7 h-7 text-slate-200" />
-            </div>
-            <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
-              End
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -212,17 +153,23 @@ const ActiveWorkout = () => {
 
       console.log('Created workout record:', workout);
 
-      const allExercisesWithSets = exercises.map(ex => ({
-        ...ex,
-        sets: (setDataByExercise[ex.exercise_id] || []).map((s, index) => {
+      const allExercisesWithSets = exercises.map(ex => {
+        const completedSets = (setDataByExercise[ex.exercise_id] || [])
+          .filter(s => s.status === 'complete')
+          .map((s, index) => {
             const config = ex.setConfigs[s.id - 1] || {};
             return {
-                reps: s.reps ?? config.reps,
-                weight: s.weight ?? config.weight,
-                order: index + 1,
+              reps: s.reps ?? config.reps,
+              weight: s.weight ?? config.weight,
+              order: index + 1,
             };
-        })
-      }));
+          });
+
+        return {
+          ...ex,
+          sets: completedSets,
+        };
+      });
 
       console.log('Processed exercises with sets:', allExercisesWithSets);
 
@@ -275,7 +222,7 @@ const ActiveWorkout = () => {
       searchValue={search}
       onSearchChange={setSearch}
     >
-      <ResponsiveNav navItems={navItems} />
+      <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
       <CardWrapper>
         <div className="w-full flex flex-col gap-4 p-4">
           {exercises.map(ex => (
@@ -293,13 +240,6 @@ const ActiveWorkout = () => {
           ))}
         </div>
       </CardWrapper>
-
-      <ActiveFocusedNavBar
-        timer={`${String(Math.floor(elapsedTime/60)).padStart(2,'0')}:${String(elapsedTime%60).padStart(2,'0')}`}
-        isPaused={isPaused}
-        onPauseToggle={togglePause}
-        onEnd={handleEndWorkout}
-      />
 
       {showAddExercise && (
         <Sheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
