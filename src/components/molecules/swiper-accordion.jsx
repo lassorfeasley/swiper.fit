@@ -1,13 +1,21 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
+import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const SwiperAccordion = AccordionPrimitive.Root
+const SwiperAccordion = React.forwardRef(({ className, ...props }, ref) => (
+  <AccordionPrimitive.Root
+    ref={ref}
+    className={cn("flex flex-col w-full gap-0", className)}
+    {...props}
+  />
+))
+SwiperAccordion.displayName = "SwiperAccordion"
 
 const SwiperAccordionItem = React.forwardRef(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item 
     ref={ref} 
-    className={cn("self-stretch inline-flex flex-col justify-center items-start", className)} 
+    className={cn("border-b border-neutral-300", className)} 
     {...props} 
   />
 ))
@@ -18,19 +26,18 @@ const SwiperAccordionTrigger = React.forwardRef(({ className, children, ...props
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "self-stretch h-12 inline-flex justify-start items-center gap-2.5 w-full",
+        "self-stretch h-12 inline-flex justify-between items-center gap-2.5 w-full",
         "text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal",
-        "transition-all [&[data-state=open]>div>div]:rotate-180",
+        "transition-all [&[data-state=open]>svg]:rotate-180",
+        "hover:bg-slate-50",
         className
       )}
       {...props}
     >
-      <div className="w-80 self-stretch justify-center">
+      <div className="text-left">
         {children}
       </div>
-      <div className="size-6 relative overflow-hidden">
-        <div className="Vector w-3 h-1.5 left-[6px] top-[9px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600 transition-transform duration-200" />
-      </div>
+      <ChevronDown className="h-6 w-6 shrink-0 text-slate-600 transition-transform duration-200" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))
@@ -42,11 +49,8 @@ const SwiperAccordionContent = React.forwardRef(({ className, children, ...props
     className="w-full overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full py-4", className)}>
       {children}
-    </div>
-    <div className="Divider self-stretch flex flex-col justify-start items-start">
-      <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-neutral-300" />
     </div>
   </AccordionPrimitive.Content>
 ))

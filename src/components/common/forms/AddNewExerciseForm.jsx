@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Input } from "@/components/ui/input";
 import NumericInput from "@/components/molecules/numeric-input";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { SwiperAccordion, SwiperAccordionItem, SwiperAccordionTrigger, SwiperAccordionContent } from "@/components/molecules/swiper-accordion";
 import { Separator } from "@/components/ui/separator";
 import ToggleInput from '@/components/molecules/toggle-input';
 import { Button } from '@/components/ui/button';
@@ -82,11 +82,11 @@ const AddNewExerciseForm = ({
           max={10}
         />
       </div>
-      <Accordion type="single" collapsible value={openSet} onValueChange={setOpenSet} className="w-full">
+      <SwiperAccordion type="single" collapsible value={openSet} onValueChange={setOpenSet} className="w-full">
         {setConfigs.map((cfg, idx) => (
-          <AccordionItem key={idx} value={String(idx)}>
-            <AccordionTrigger>{`Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</AccordionTrigger>
-            <AccordionContent>
+          <SwiperAccordionItem key={idx} value={String(idx)}>
+            <SwiperAccordionTrigger>{`Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</SwiperAccordionTrigger>
+            <SwiperAccordionContent>
               <div className="flex flex-col gap-4 py-2">
                 <NumericInput
                   label="Reps"
@@ -113,10 +113,10 @@ const AddNewExerciseForm = ({
                   className="w-full"
                 />
               </div>
-            </AccordionContent>
-          </AccordionItem>
+            </SwiperAccordionContent>
+          </SwiperAccordionItem>
         ))}
-      </Accordion>
+      </SwiperAccordion>
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">
           {formPrompt}
