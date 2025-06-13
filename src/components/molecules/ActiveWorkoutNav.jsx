@@ -29,7 +29,7 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
       <div className="w-full">
         {state === 'c2a' && (
           <div
-            className="w-full h-10 p-2 bg-red-500 rounded-sm backdrop-blur-[2px] flex items-center gap-2 cursor-pointer hover:bg-red-600 transition-colors"
+            className="w-full h-12 p-3 bg-red-500 rounded-[8px] backdrop-blur-[2px] flex items-center gap-2 cursor-pointer hover:bg-red-600 transition-colors"
             onClick={onClick}
             tabIndex={0}
             role="button"
@@ -40,7 +40,7 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
           </div>
         )}
         {state === 'programPrompt' && (
-          <div className="w-full h-10 p-2 bg-orange-500 rounded-sm backdrop-blur-[2px] flex items-center gap-2">
+          <div className="w-full h-12 p-3 bg-orange-500 rounded-[8px] backdrop-blur-[2px] flex items-center gap-2">
             <ChevronRightCircle className="Lucide size-6 text-white" />
             <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">Select a program</span>
           </div>
@@ -48,76 +48,53 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
         {state === 'return-to-workout' && (
           <div 
             data-layer="Property 1=return-to-workout" 
-            className="Property1ReturnToWorkout self-stretch p-2 bg-green-600 rounded-lg backdrop-blur-[2px] inline-flex justify-between items-start overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
+            className="Property1ReturnToWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-center gap-2 overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
             onClick={handleReturnToWorkout}
             role="button"
             tabIndex={0}
             aria-label="Return to active workout"
           >
-            <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper flex-1 flex justify-between items-center">
-              <div data-layer="icon-text-wrapper" className="IconTextWrapper flex-1 flex justify-start items-center gap-1">
-                <div data-layer="lucide" className="Lucide size-6 relative overflow-hidden">
-                  <ArrowRight className="size-4 text-white" />
-                </div>
-                <div data-layer="TimePassed" className="Timepassed justify-center text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
-                  Return to workout
-                </div>
-              </div>
-            </div>
+            <span className="flex items-center">
+              <ArrowRight className="size-5 text-white" />
+            </span>
+            <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
+              Return to workout
+            </span>
           </div>
         )}
         {state === 'active-workout' && (
           <div 
-            data-layer="ActiveWorkoutNav" 
-            className="w-full h-24 px-6 py-3 bg-black/90 backdrop-blur-[2px] flex justify-center items-start"
+            data-layer="Property 1=active-workout" 
+            className="Property1ActiveWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-between overflow-hidden"
           >
-            <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper w-80 max-w-80 flex justify-between items-start">
-              <div data-layer="Timer" className="Timer flex justify-start items-center gap-1">
-                <div data-svg-wrapper data-layer="RecordingIcon" className="Recordingicon">
-                  <Circle className="w-5 h-5 text-green-500" fill="currentColor" />
-                </div>
-                <div data-layer="TimePassed" className="Timepassed justify-center text-white text-xl font-normal font-['Space_Grotesk'] leading-loose">
+            <div data-layer="max-width-wrapper" className="MaxWidthWrapper flex flex-1 items-center justify-between">
+              <div data-layer="icon-timer-wrapper" className="IconTimerWrapper flex items-center gap-2">
+                <span className="flex items-center h-6">
+                  <Circle className="size-3 text-stone-100" fill="currentColor" />
+                </span>
+                <div data-layer="timer" className="Timer flex items-center text-white text-sm font-normal font-['Space_Grotesk'] leading-tight">
                   {formatTime(elapsedTime)}
                 </div>
               </div>
-              <div data-layer="NavIconsWrapper" className="Naviconswrapper flex justify-start items-center">
-                <div 
-                  data-layer="NavIcons" 
-                  data-selected={!isPaused} 
-                  className={`Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer${isPaused ? ' NaviconsSelected3 w-14' : ''}`}
+              <div data-layer="icons-wrapper" className="IconsWrapper flex items-center gap-2">
+                <button
+                  className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
                   onClick={togglePause}
+                  aria-label={isPaused ? "Resume" : "Pause"}
                 >
                   {isPaused ? (
-                    <>
-                      <div data-svg-wrapper data-layer="play" className="Play relative">
-                        <Play className="w-7 h-7 text-white" />
-                      </div>
-                      <div data-layer="Resume" className="Resume text-center justify-start text-white text-xs font-bold font-['Space_Grotesk'] leading-3">Resume</div>
-                    </>
+                    <PlayCircle className="size-8" />
                   ) : (
-                    <>
-                      <div data-svg-wrapper data-layer="pause" className="Pause relative">
-                        <Pause className="w-7 h-7 text-slate-200" />
-                      </div>
-                      <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
-                        Pause
-                      </div>
-                    </>
+                    <PauseCircle className="size-8" />
                   )}
-                </div>
-                <div 
-                  data-layer="NavIcons" 
-                  data-selected="true" 
-                  className="Navicons w-16 inline-flex flex-col justify-start items-center gap-1 cursor-pointer"
+                </button>
+                <button
+                  className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
                   onClick={handleEnd}
+                  aria-label="End workout"
                 >
-                  <div data-svg-wrapper data-layer="stop" className="Stop relative">
-                    <Square className="w-7 h-7 text-slate-200" />
-                  </div>
-                  <div data-layer="Workout" className="Workout text-center justify-start text-stone-50 text-xs font-bold font-['Space_Grotesk'] leading-3">
-                    End
-                  </div>
-                </div>
+                  <StopCircle className="size-8" />
+                </button>
               </div>
             </div>
           </div>
@@ -161,18 +138,34 @@ export default function ActiveWorkoutNav({ state = 'c2a', variant = 'sidebar', o
         </div>
       )}
       {state === 'active-workout' && (
-        <div className="flex justify-between items-center w-full">
+        <div 
+          className="w-full p-2 bg-green-600 rounded-lg flex justify-between items-center"
+        >
           <div className="flex items-center gap-1">
-            <Circle className="Lucide size-6 text-green-600" fill="currentColor" />
-            <span className="text-sm font-normal font-['Space_Grotesk'] leading-tight">{formatTime(elapsedTime)}</span>
+            <Circle className="size-3 text-stone-100" fill="currentColor" />
+            <span className="text-white text-sm font-normal font-['Space_Grotesk'] leading-tight">
+              {formatTime(elapsedTime)}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" aria-label={isPaused ? "Resume" : "Pause"} onClick={togglePause}>
-              <PauseCircle className={`Lucide size-6 ${isPaused ? 'opacity-50' : 'text-green-600'}`} />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Stop" onClick={handleEnd}>
-              <StopCircle className="Lucide size-6 text-green-600" />
-            </Button>
+            <button
+              className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
+              onClick={togglePause}
+              aria-label={isPaused ? "Resume" : "Pause"}
+            >
+              {isPaused ? (
+                <PlayCircle className="size-8" />
+              ) : (
+                <PauseCircle className="size-8" />
+              )}
+            </button>
+            <button
+              className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
+              onClick={handleEnd}
+              aria-label="End workout"
+            >
+              <StopCircle className="size-8" />
+            </button>
           </div>
         </div>
       )}
