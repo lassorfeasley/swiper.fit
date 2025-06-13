@@ -84,7 +84,7 @@ const AddNewExerciseForm = ({
 
   return (
     <form className="Editexerciseform w-full max-w-sm box-border inline-flex flex-col justify-start items-start gap-6" onSubmit={handleSave}>
-      <div className="CreateExercise self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-7">Create exercise</div>
+      <div className="CreateExercise self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>
       <div className="Divider self-stretch flex flex-col justify-start items-start">
         <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
       </div>
@@ -195,11 +195,18 @@ const AddNewExerciseForm = ({
       </div>
       <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
         <SwiperButton type="submit" className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-slate-600 rounded-sm inline-flex justify-center items-center gap-2.5">
-          Add to program
+          {formPrompt === 'Edit exercise' ? 'Save exercise' : 'Add to program'}
         </SwiperButton>
-        <SwiperButton type="button" variant="destructive" onClick={onDelete} className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-red-400 rounded-sm inline-flex justify-center items-center gap-2.5">
-          Cancel
-        </SwiperButton>
+        {formPrompt === 'Edit exercise' && (
+          <SwiperButton type="button" variant="destructive" onClick={onDelete} className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-red-400 rounded-sm inline-flex justify-center items-center gap-2.5">
+            Delete exercise
+          </SwiperButton>
+        )}
+        {formPrompt !== 'Edit exercise' && (
+          <SwiperButton type="button" variant="destructive" onClick={onDelete} className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-red-400 rounded-sm inline-flex justify-center items-center gap-2.5">
+            Cancel
+          </SwiperButton>
+        )}
       </div>
     </form>
   );

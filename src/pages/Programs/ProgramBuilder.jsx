@@ -290,6 +290,7 @@ const ProgramBuilder = () => {
                 onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
                 reorderable={true}
                 reorderValue={ex}
+                onCardClick={() => setEditingExercise(ex)}
               />
             ))}
           </Reorder.Group>

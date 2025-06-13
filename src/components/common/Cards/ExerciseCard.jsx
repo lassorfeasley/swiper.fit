@@ -16,12 +16,14 @@ const ExerciseCard = ({
   mode = 'default',
   reorderable = false,
   reorderValue,
+  onCardClick,
   ...props 
 }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetIndex, setEditSetIndex] = useState(null);
   const [editFormValues, setEditFormValues] = useState({ reps: 0, weight: 0, unit: 'lbs' });
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
+  const [isDragging, setIsDragging] = useState(false);
 
   const setsAreEditable = onSetConfigsChange !== undefined && mode !== 'completed';
 
@@ -51,8 +53,18 @@ const ExerciseCard = ({
     setEditSetIndex(null);
   };
 
+  const handleCardClick = (e) => {
+    if (isDragging) return;
+    if (onCardClick) onCardClick(e);
+  };
+
   const cardContent = (
-    <div data-layer="CardContentsWrapper" className="w-full p-4 bg-stone-50 rounded-lg">
+    <div
+      data-layer="CardContentsWrapper"
+      className="w-full p-4 bg-stone-50 rounded-lg"
+      onClick={handleCardClick}
+      style={{ cursor: setsAreEditable && onCardClick ? 'pointer' : 'default' }}
+    >
       <div data-layer="ExersiceCardContent" className="w-full flex flex-col gap-2">
         <div data-layer="Exercise Name" className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7">
           {exerciseName}
@@ -65,7 +77,10 @@ const ExerciseCard = ({
               weight={config.weight}
               unit={config.unit || 'lbs'}
               editable={setsAreEditable}
-              onEdit={() => handleSetEdit(idx)}
+              onEdit={(e) => {
+                e.stopPropagation();
+                handleSetEdit(idx);
+              }}
               complete={mode === 'completed'}
               className={mode === 'completed' ? 'bg-green-500 text-white' : ''}
             />
@@ -78,7 +93,12 @@ const ExerciseCard = ({
   return (
     <CardWrapper className={className}>
       {reorderable ? (
-        <Reorder.Item value={reorderValue} className="w-full">
+        <Reorder.Item
+          value={reorderValue}
+          className="w-full"
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={() => setIsDragging(false)}
+        >
           {cardContent}
         </Reorder.Item>
       ) : (
@@ -112,6 +132,7 @@ ExerciseCard.propTypes = {
   mode: PropTypes.oneOf(['default', 'completed']),
   reorderable: PropTypes.bool,
   reorderValue: PropTypes.any,
+  onCardClick: PropTypes.func,
 };
 
 export default ExerciseCard; 
