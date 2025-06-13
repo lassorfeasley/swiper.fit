@@ -5,7 +5,7 @@ import NumericInput from "@/components/molecules/numeric-input";
 import { SwiperAccordion, SwiperAccordionItem, SwiperAccordionTrigger, SwiperAccordionContent } from "@/components/molecules/swiper-accordion";
 import { Separator } from "@/components/ui/separator";
 import ToggleInput from '@/components/molecules/toggle-input';
-import { Button } from '@/components/ui/button';
+import { SwiperButton } from '@/components/molecules/swiper-button';
 
 const unitOptions = [
   { label: 'lbs', value: 'lbs' },
@@ -118,13 +118,13 @@ const AddNewExerciseForm = ({
         ))}
       </SwiperAccordion>
       <div className="flex gap-2">
-        <Button type="submit" className="flex-1">
+        <SwiperButton type="submit" className="flex-1">
           {formPrompt}
-        </Button>
+        </SwiperButton>
         {onDelete && (
-          <Button type="button" variant="destructive" onClick={onDelete}>
+          <SwiperButton type="button" variant="destructive" onClick={onDelete}>
             Delete
-          </Button>
+          </SwiperButton>
         )}
       </div>
     </form>
