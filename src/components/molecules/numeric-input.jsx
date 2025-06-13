@@ -142,7 +142,7 @@ const NumericInput = ({
 };
 
 NumericInput.propTypes = {
-  label: PropTypes.bool,
+  label: PropTypes.node,
   labelText: PropTypes.string,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onChange: PropTypes.func.isRequired,

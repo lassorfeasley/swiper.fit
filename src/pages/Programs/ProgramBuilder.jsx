@@ -259,8 +259,6 @@ const ProgramBuilder = () => {
   return (
     <AppLayout
       appHeaderTitle={programName || "Program"}
-      subhead={true}
-      subheadText={`${exercises.length} exercise${exercises.length === 1 ? "" : "s"}`}
       showActionBar={true}
       actionBarText="Add an exercise"
       showBackButton={true}
