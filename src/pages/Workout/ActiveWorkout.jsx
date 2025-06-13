@@ -232,12 +232,6 @@ const ActiveWorkout = () => {
       {showAddExercise && (
         <Sheet open={showAddExercise} onOpenChange={() => setShowAddExercise(false)}>
           <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Add a new exercise</SheetTitle>
-              <SheetDescription>
-                Fill out the form below to add a new exercise to your workout.
-              </SheetDescription>
-            </SheetHeader>
             <AddNewExerciseForm
               key="add-new"
               formPrompt="Add a new exercise"

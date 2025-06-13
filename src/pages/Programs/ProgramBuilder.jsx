@@ -297,14 +297,6 @@ const ProgramBuilder = () => {
       {(showAddExercise || editingExercise) && (
         <Sheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
           <SheetContent>
-            <SheetHeader>
-              <SheetTitle>{showAddExercise ? "Add a new exercise" : "Edit exercise"}</SheetTitle>
-              <SheetDescription>
-                {showAddExercise
-                  ? "Fill out the form below to add a new exercise to your program."
-                  : "Edit the details for this exercise."}
-              </SheetDescription>
-            </SheetHeader>
             <AddNewExerciseForm
               key={editingExercise ? editingExercise.id : 'add-new'}
               formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
