@@ -133,6 +133,9 @@ function ResponsiveNav({ navItems, onEnd }) {
   // Mobile Nav
   const MobileNav = () => (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-stone-100 border-t border-neutral-300 flex flex-col items-center px-6 py-3 z-50 h-32">
+      <div className="w-full mb-[20px]">
+        <ActiveWorkoutNav variant="sidebar" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
+      </div>
       <div className="flex flex-1 max-w-[350px] justify-between items-center mx-auto w-full h-full">
         {filteredNavItems.map((item) => {
           const selected = new RegExp(`^${item.to}(\/|$)`).test(location.pathname);
@@ -159,9 +162,6 @@ function ResponsiveNav({ navItems, onEnd }) {
             </Link>
           );
         })}
-      </div>
-      <div className="w-full flex justify-center mt-2">
-        <ActiveWorkoutNav variant="mobile" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
       </div>
     </nav>
   );
