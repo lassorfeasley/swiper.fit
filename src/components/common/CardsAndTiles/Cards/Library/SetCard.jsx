@@ -6,6 +6,7 @@ import WeightCompoundField from 'components/common/forms/compound-fields/WeightC
 import NumericInput from 'components/common/forms/NumericInput';
 import Icon from 'components/common/Icon';
 import PropTypes from 'prop-types';
+import CardPill from 'components/molecules/CardPill';
 
 const SetCard = ({ 
   exerciseName = 'Military press', 
@@ -193,21 +194,41 @@ const SetCard = ({
       </div>
       {focused_view ? (
         <div className="space-y-4">
-          {sets.filter(Boolean).map((set, idx) => (
-            <div key={set?.id ?? idx} className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-lg">{set?.name}</span>
-                <div className="flex gap-4">
-                  <MetricPill value={set?.reps ?? 0} unit="REPS" onClick={() => handleMetricPillClick('reps', idx)} />
-                  <MetricPill value={set?.weight ?? 0} unit={set?.unit?.toUpperCase() || 'LBS'} onClick={() => handleMetricPillClick('weight', idx)} />
+          {sets.filter(Boolean).map((set, idx) => {
+            const setConfig = setConfigs[idx] || {};
+            const setType = setConfig.set_type || 'reps';
+            const timedDuration = setConfig.timed_set_duration;
+            let swipeStatus = set.status;
+            if (setType === 'timed') {
+              if (set.status === 'locked') swipeStatus = 'inactive-timed';
+              else if (set.status === 'active') swipeStatus = 'active-timed';
+              else if (set.status === 'complete') swipeStatus = 'complete';
+            }
+            return (
+              <div key={set?.id ?? idx} className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-lg">{set?.name}</span>
+                  <div className="flex gap-4">
+                    <CardPill
+                      reps={set?.reps}
+                      weight={set?.weight}
+                      unit={set?.unit}
+                      complete={set?.status === 'complete'}
+                      editable={true}
+                      onEdit={() => handleMetricPillClick('reps', idx)}
+                      set_type={setType}
+                      timed_set_duration={timedDuration}
+                    />
+                  </div>
                 </div>
+                <SwipeSwitch
+                  status={swipeStatus}
+                  onComplete={() => handleSetComplete(set?.id)}
+                  duration={setType === 'timed' ? timedDuration : undefined}
+                />
               </div>
-              <SwipeSwitch 
-                status={set?.status ?? 'locked'} 
-                onComplete={() => handleSetComplete(set?.id)} 
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <SwipeSwitch 

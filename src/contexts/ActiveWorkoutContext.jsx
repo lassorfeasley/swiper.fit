@@ -175,8 +175,7 @@ export function ActiveWorkoutProvider({ children }) {
             exercise_id: exerciseId,
             reps: Number(reps),
             weight: Number(weight),
-            weight_unit: unit,
-            user_id: user.id
+            weight_unit: unit
         })
         .select()
         .single();

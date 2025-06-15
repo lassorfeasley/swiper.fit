@@ -5,11 +5,17 @@ import NumericInput from "@/components/molecules/numeric-input";
 import { SwiperAccordion, SwiperAccordionItem, SwiperAccordionTrigger, SwiperAccordionContent } from "@/components/molecules/swiper-accordion";
 import ToggleInput from '@/components/molecules/toggle-input';
 import { SwiperButton } from '@/components/molecules/swiper-button';
+import SetBuilderForm from './SetBuilderForm';
 
 const unitOptions = [
   { label: 'lbs', value: 'lbs' },
   { label: 'kg', value: 'kg' },
   { label: 'body', value: 'body' },
+];
+
+const setTypeOptions = [
+  { label: 'Reps', value: 'reps' },
+  { label: 'Timed', value: 'timed' },
 ];
 
 const AddNewExerciseForm = ({
@@ -34,6 +40,8 @@ const AddNewExerciseForm = ({
     weight: initialSetConfigs[0]?.weight ?? 25,
     unit: initialSetConfigs[0]?.unit ?? 'lbs',
   });
+  const [setTypeDefault, setSetTypeDefault] = useState('reps');
+  const [setTypeOverrides, setSetTypeOverrides] = useState(() => Array.from({ length: sets || 3 }, () => 'reps'));
 
   useEffect(() => {
     setSetConfigs(prev => {
@@ -61,6 +69,35 @@ const AddNewExerciseForm = ({
 
   const handleSetDefaultsChange = (field, value) => {
     setSetDefaults(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSetTypeDefaultChange = (val) => {
+    setSetTypeDefault(val);
+    setSetDefaults(prev => {
+      const next = { ...prev, set_type: val };
+      if (val === 'timed' && (!prev.timed_set_duration || prev.timed_set_duration <= 0)) {
+        next.timed_set_duration = 30;
+      }
+      if (val === 'reps') {
+        next.timed_set_duration = undefined;
+      }
+      return next;
+    });
+  };
+
+  const handleSetTypeOverrideChange = (idx, val) => {
+    setSetTypeOverrides(prev => prev.map((t, i) => i === idx ? val : t));
+    setSetConfigs(prev => prev.map((cfg, i) => {
+      if (i !== idx) return cfg;
+      const next = { ...cfg, set_type: val };
+      if (val === 'timed' && (!cfg.timed_set_duration || cfg.timed_set_duration <= 0)) {
+        next.timed_set_duration = 30;
+      }
+      if (val === 'reps') {
+        next.timed_set_duration = undefined;
+      }
+      return next;
+    }));
   };
 
   const handleSave = (e) => {
@@ -112,39 +149,19 @@ const AddNewExerciseForm = ({
       <div className="Frame10 self-stretch flex flex-col justify-start items-start gap-3">
         <div className="SetDefaults self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">Set defaults</div>
         <div className="TheseSettingsWillApplyToAllSetsUnlessYouEditThemIndividuallyBelow self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">These settings will apply to all sets unless you edit them individually below. </div>
-        <div className="Setconfigurationform self-stretch flex flex-col justify-start items-start gap-6">
-          <div className="Frame5 self-stretch flex flex-col justify-start items-start gap-3">
-            <div className="NumericField self-stretch flex flex-col justify-start items-start gap-1">
-              <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Reps</div>
-              <NumericInput
-                value={setDefaults.reps}
-                onChange={v => handleSetDefaultsChange('reps', v)}
-                min={0}
-                max={999}
-                className="Incrimentermetricwrapper self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
-              />
-            </div>
-            <div className="NumericField self-stretch flex flex-col justify-start items-start gap-1">
-              <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight</div>
-              <NumericInput
-                value={setDefaults.weight !== undefined && setDefaults.unit !== 'body' ? setDefaults.weight : (setDefaults.unit === 'body' ? 'body' : 0)}
-                onChange={v => handleSetDefaultsChange('weight', v)}
-                min={0}
-                max={999}
-                className="Incrimentermetricwrapper self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
-                incrementing={setDefaults.unit !== 'body'}
-              />
-            </div>
-            <div className="Togglegroup self-stretch flex flex-col justify-start items-center gap-1">
-              <div className="FieldLabel self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight unit</div>
-              <ToggleInput
-                options={unitOptions}
-                value={setDefaults.unit}
-                onChange={unit => unit && handleSetDefaultsChange('unit', unit)}
-                className="Frame4 self-stretch rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden"
-              />
-            </div>
-          </div>
+        <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
+          <SetBuilderForm
+            setType={setTypeDefault}
+            onSetTypeChange={val => val && handleSetTypeDefaultChange(val)}
+            reps={setDefaults.reps}
+            timed_set_duration={setDefaults.timed_set_duration}
+            onRepsChange={v => handleSetDefaultsChange('reps', v)}
+            onTimedDurationChange={v => handleSetDefaultsChange('timed_set_duration', v)}
+            weight={setDefaults.weight}
+            unit={setDefaults.unit}
+            onWeightChange={v => handleSetDefaultsChange('weight', v)}
+            onUnitChange={unit => unit && handleSetDefaultsChange('unit', unit)}
+          />
         </div>
       </div>
       <div className="Divider self-stretch flex flex-col justify-start items-start">
@@ -157,34 +174,18 @@ const AddNewExerciseForm = ({
               <SwiperAccordionTrigger>{`Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</SwiperAccordionTrigger>
               <SwiperAccordionContent>
                 <div className="flex flex-col gap-4 py-2">
-                  <div className="NumericField flex flex-col gap-1">
-                    <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Reps</div>
-                    <NumericInput
-                      value={getSetValue(idx, 'reps')}
-                      onChange={v => handleSetFieldChange(idx, 'reps', v)}
-                      min={0}
-                      max={999}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="NumericField flex flex-col gap-1">
-                    <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight</div>
-                    <NumericInput
-                      value={getSetValue(idx, 'weight') !== undefined && getSetValue(idx, 'unit') !== 'body' ? getSetValue(idx, 'weight') : (getSetValue(idx, 'unit') === 'body' ? 'body' : 0)}
-                      onChange={v => handleSetFieldChange(idx, 'weight', v)}
-                      min={0}
-                      max={999}
-                      className="w-full"
-                      incrementing={getSetValue(idx, 'unit') !== 'body'}
-                    />
-                  </div>
-                  <div className="Togglegroup flex flex-col gap-1">
-                    <div className="FieldLabel self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight unit</div>
-                    <ToggleInput
-                      options={unitOptions}
-                      value={getSetValue(idx, 'unit')}
-                      onChange={unit => unit && handleSetFieldChange(idx, 'unit', unit)}
-                      className="w-full"
+                  <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
+                    <SetBuilderForm
+                      setType={setTypeOverrides[idx]}
+                      onSetTypeChange={val => val && handleSetTypeOverrideChange(idx, val)}
+                      reps={getSetValue(idx, 'reps')}
+                      timed_set_duration={setTypeOverrides[idx] === 'timed' ? (getSetValue(idx, 'timed_set_duration') || 30) : getSetValue(idx, 'timed_set_duration')}
+                      onRepsChange={v => handleSetFieldChange(idx, 'reps', v)}
+                      onTimedDurationChange={v => handleSetFieldChange(idx, 'timed_set_duration', v)}
+                      weight={getSetValue(idx, 'weight')}
+                      unit={getSetValue(idx, 'unit')}
+                      onWeightChange={v => handleSetFieldChange(idx, 'weight', v)}
+                      onUnitChange={unit => unit && handleSetFieldChange(idx, 'unit', unit)}
                     />
                   </div>
                 </div>

@@ -2,11 +2,16 @@ import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { Check, Lock } from 'lucide-react';
 
-export default function SwipeSwitch({ status = "locked", onComplete }) {
+export default function SwipeSwitch({ status = "locked", onComplete, duration = 30 }) {
   const controls = useAnimation();
   const trackRef = useRef(null);
   const [thumbTravel, setThumbTravel] = useState(0);
   const [swipedComplete, setSwipedComplete] = useState(false);
+  
+  // Internal state to manage timed sets
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [timer, setTimer] = useState(duration);
+  const timerInterval = useRef(null);
 
   // Use a smooth, non-bouncy tween for all transitions
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
@@ -42,14 +47,46 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
     if (status === "complete") {
       // Animate to rightmost, green
       controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      setIsTimerActive(false);
     } else if (swipedComplete) {
       // Animate to rightmost, green
       controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      setIsTimerActive(false);
     } else {
       // Animate to left, white
       controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
     }
   }, [status, thumbTravel, controls, swipedComplete]);
+
+  useEffect(() => {
+    // Only run the timer if this component's internal state says so
+    if (isTimerActive) {
+      if (timerInterval.current) clearInterval(timerInterval.current);
+      timerInterval.current = setInterval(() => {
+        setTimer(prev => {
+          if (prev > 1) return prev - 1;
+          
+          // When timer hits 0, clear interval and call onComplete
+          clearInterval(timerInterval.current);
+          if (onComplete) {
+            onComplete(); 
+          }
+          return 0;
+        });
+      }, 1000);
+    } else {
+      // Reset timer if it's not active
+      setTimer(duration);
+      if (timerInterval.current) clearInterval(timerInterval.current);
+    }
+    return () => { if (timerInterval.current) clearInterval(timerInterval.current); };
+  }, [isTimerActive, duration, onComplete]);
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const handleDragEnd = (_, info) => {
     if (status === "active" && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
@@ -57,6 +94,12 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
       onComplete();
     } else {
       controls.start({ x: 0, transition: tweenConfig });
+    }
+  };
+
+  const handleTimerClick = () => {
+    if (status === 'active' || status === 'inactive-timed') {
+      setIsTimerActive(!isTimerActive);
     }
   };
 
@@ -72,6 +115,50 @@ export default function SwipeSwitch({ status = "locked", onComplete }) {
     top: 8,
     left: RAIL_HORIZONTAL_PADDING_PER_SIDE
   };
+
+  if (status === 'inactive-timed' || (status === 'active' && isTimerActive)) {
+    const currentStatus = isTimerActive ? 'active-timed' : 'inactive-timed';
+    const timeToDisplay = isTimerActive ? timer : duration;
+
+    return (
+      <div 
+        className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px] cursor-pointer"
+        onClick={handleTimerClick}
+      >
+        <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
+          <div className={`Thumb flex-1 h-10 p-2.5 rounded-sm flex justify-center items-center gap-2.5 ${isTimerActive ? 'bg-white' : 'bg-white'}`}>
+            <div className="Lucide size-6 relative overflow-hidden">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="9" stroke={isTimerActive ? "#22C55E" : "#A3A3A3"} strokeWidth="2"/>
+                  <path d="M12 7V12L15 15" stroke={isTimerActive ? "#22C55E" : "#A3A3A3"} strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+            </div>
+            <div className={`justify-center text-sm font-normal font-['Space_Grotesk'] leading-tight ${isTimerActive ? 'text-green-600' : 'text-neutral-400'}`}>
+              {formatTime(timeToDisplay)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'active-timed') {
+    return (
+      <div className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px]" onClick={handleTimerClick}>
+        <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
+          <div className="Thumb flex-1 h-10 p-2.5 bg-white rounded-sm flex justify-center items-center gap-2.5">
+            <div className="Lucide size-6 relative overflow-hidden">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="9" stroke="#22C55E" strokeWidth="2"/>
+                  <path d="M12 7V12L15 15" stroke="#22C55E" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+            </div>
+            <div className="00 justify-center text-green-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">{formatTime(timer)}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">

@@ -21,60 +21,34 @@ const ActiveExerciseCard = ({
   setData = [],
 }) => {
   const [isExpanded, setIsExpanded] = useState(!default_view && initialSetConfigs.length > 1);
-  const [setConfigs, setSetConfigs] = useState(initialSetConfigs);
   const [openSetIndex, setOpenSetIndex] = useState(null);
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: 'lbs' });
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const mountedRef = useRef(true);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;
     };
   }, []);
 
-  // Create sets array from setConfigs and setData
-  const sets = useMemo(() => setConfigs.map((config, i) => {
-    const fromParent = setData[i] || {};
-    return {
-      id: i + 1,
-      name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
-      reps: fromParent.reps ?? config.reps,
-      weight: fromParent.weight ?? config.weight,
-      unit: fromParent.unit ?? (config.unit || 'lbs'),
-      status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
-    };
-  }), [setConfigs, setData]);
+  // Derive sets from setData and initialSetConfigs
+  const sets = useMemo(() => {
+    return initialSetConfigs.map((config, i) => {
+      const fromParent = setData.find(d => d.id === i + 1 || d.id === String(i + 1)) || setData[i] || {};
+      return {
+        id: i + 1,
+        name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
+        reps: fromParent.reps ?? config.reps,
+        weight: fromParent.weight ?? config.weight,
+        unit: fromParent.unit ?? (config.unit || 'lbs'),
+        status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
+        set_type: fromParent.set_type ?? config.set_type ?? 'reps',
+        timed_set_duration: fromParent.timed_set_duration ?? config.timed_set_duration,
+      };
+    });
+  }, [initialSetConfigs, setData]);
 
-  // Update sets array if setConfigs changes
-  useEffect(() => {
-    if (!mountedRef.current) return;
-
-    const updateSets = async () => {
-      if (onSetDataChange) {
-        for (const set of sets) {
-          const parentSetData = setData.find(d => d.id === set.id);
-          // Only update if the set is complete and doesn't have data yet
-          if (set.status === 'complete' && (!parentSetData || parentSetData.reps === undefined)) {
-            await Promise.all([
-              onSetDataChange(exerciseId, set.id, 'reps', set.reps),
-              onSetDataChange(exerciseId, set.id, 'weight', set.weight),
-              onSetDataChange(exerciseId, set.id, 'status', set.status),
-              onSetDataChange(exerciseId, set.id, 'unit', set.unit)
-            ]);
-          } else if (parentSetData?.status !== set.status) {
-            // Or if the status has changed
-             await onSetDataChange(exerciseId, set.id, 'status', set.status);
-          }
-        }
-      }
-    };
-
-    updateSets().catch(console.error);
-  }, [JSON.stringify(sets), exerciseId, onSetDataChange, setData]);
-
-  // New logic for swipeStatus in compact view
   const allComplete = useMemo(() => sets.every(set => set.status === 'complete'), [sets]);
   const anyActive = useMemo(() => sets.some(set => set.status === 'active'), [sets]);
   const activeSet = useMemo(
@@ -86,128 +60,123 @@ const ActiveExerciseCard = ({
     [allComplete, anyActive]
   );
 
-  // Handler for completing the CURRENTLY ACTIVE set
-  const handleActiveSetComplete = useCallback(async () => {
-    if (!mountedRef.current) return;
-
-    const activeSet = sets.find(s => s.status === 'active');
-    if (!activeSet) return;
-    
-    try {
-      if (onSetComplete) {
-        // Pass the exerciseId and the activeSet object
-        await onSetComplete(exerciseId, activeSet);
-      }
-      
-      if (onSetDataChange) {
-        // Mark current set as complete
-        await onSetDataChange(exerciseId, activeSet.id, 'status', 'complete');
-        
-        // Activate the next set if it exists
-        const nextSet = sets.find(s => s.id === activeSet.id + 1);
-        if (nextSet && nextSet.status === 'locked') {
-          await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
-        }
-      }
-    } catch (error) {
-      console.error('Error completing set:', error);
-    }
-  }, [sets, exerciseId, onSetComplete, onSetDataChange]);
-
-  // Handler for completing a specific set (by index) in expanded view
   const handleSetComplete = useCallback(async (setIdx) => {
     if (!mountedRef.current) return;
-    const set = sets[setIdx];
-    if (!set) return;
-
-    try {
-      if (onSetComplete) {
-        await onSetComplete(exerciseId, set);
-      }
-      if (onSetDataChange) {
-        // Mark this set as complete
-        await onSetDataChange(exerciseId, set.id, 'status', 'complete');
-        // Unlock the next set if it exists and is locked
-        const nextSet = sets[setIdx + 1];
-        if (nextSet && nextSet.status === 'locked') {
-          await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
-        }
-      }
-    } catch (error) {
-      console.error('Error completing set:', error);
+    const setToComplete = sets[setIdx];
+    const nextSet = sets[setIdx + 1];
+    if (onSetComplete) {
+      Promise.resolve(onSetComplete(exerciseId, setToComplete)).catch(console.error);
     }
-  }, [sets, exerciseId, onSetComplete, onSetDataChange]);
+    if (onSetDataChange) {
+      Promise.resolve(onSetDataChange(exerciseId, setToComplete.id, 'status', 'complete')).catch(console.error);
+      if (nextSet && nextSet.status === 'locked') {
+        Promise.resolve(onSetDataChange(exerciseId, nextSet.id, 'status', 'active')).catch(console.error);
+      }
+    }
+  }, [exerciseId, onSetComplete, onSetDataChange, sets]);
+
+  const handleActiveSetComplete = useCallback(async () => {
+    if (!mountedRef.current) return;
+    const activeSetIndex = sets.findIndex(s => s.status === 'active');
+    if (activeSetIndex === -1) return;
+    const activeSetToComplete = sets[activeSetIndex];
+    const nextSet = sets[activeSetIndex + 1];
+    if (onSetComplete) {
+      Promise.resolve(onSetComplete(exerciseId, activeSetToComplete)).catch(console.error);
+    }
+    if (onSetDataChange) {
+      Promise.resolve(onSetDataChange(exerciseId, activeSetToComplete.id, 'status', 'complete')).catch(console.error);
+      if (nextSet && nextSet.status === 'locked') {
+        Promise.resolve(onSetDataChange(exerciseId, nextSet.id, 'status', 'active')).catch(console.error);
+      }
+    }
+  }, [exerciseId, onSetComplete, onSetDataChange, sets]);
 
   const handlePillClick = useCallback((idx) => {
     if (!mountedRef.current) return;
     const set = sets[idx];
-    setEditForm({ reps: set.reps, weight: set.weight, unit: set.unit });
+    setEditForm({
+      reps: set.reps,
+      weight: set.weight,
+      unit: set.unit,
+      set_type: set.set_type || (initialSetConfigs[idx]?.set_type) || 'reps',
+      timed_set_duration: set.timed_set_duration || (initialSetConfigs[idx]?.timed_set_duration) || 30
+    });
     setOpenSetIndex(idx);
     setIsEditSheetOpen(true);
-  }, [sets]);
+  }, [sets, initialSetConfigs]);
 
   const handleEditFormSave = useCallback(async (formValues) => {
     if (!mountedRef.current || openSetIndex === null) return;
-
-    try {
-      if (onSetDataChange) {
-        await Promise.all([
-          onSetDataChange(exerciseId, sets[openSetIndex].id, 'reps', formValues.reps),
-          onSetDataChange(exerciseId, sets[openSetIndex].id, 'weight', formValues.weight),
-          onSetDataChange(exerciseId, sets[openSetIndex].id, 'unit', formValues.unit)
-        ]);
-      }
-      setOpenSetIndex(null);
-      setIsEditSheetOpen(false);
-    } catch (error) {
-      console.error('Error saving set edit:', error);
+    const set_id_to_update = sets[openSetIndex].id;
+    if (onSetDataChange) {
+      Promise.all([
+        onSetDataChange(exerciseId, set_id_to_update, 'reps', formValues.reps),
+        onSetDataChange(exerciseId, set_id_to_update, 'weight', formValues.weight),
+        onSetDataChange(exerciseId, set_id_to_update, 'unit', formValues.unit),
+        onSetDataChange(exerciseId, set_id_to_update, 'set_type', formValues.set_type),
+        onSetDataChange(exerciseId, set_id_to_update, 'timed_set_duration', formValues.set_type === 'timed' ? formValues.timed_set_duration : undefined)
+      ]).catch(console.error);
     }
+    setOpenSetIndex(null);
+    setIsEditSheetOpen(false);
   }, [exerciseId, onSetDataChange, openSetIndex, sets]);
 
   // If expanded view is true, render the detailed view
   if (isExpanded && initialSetConfigs.length > 1) {
     return (
-      <CardWrapper className="Property1Expanded self-stretch rounded-xl inline-flex flex-col justify-start items-start overflow-hidden gap-0" style={{ maxWidth: 500 }}>
-        <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-start overflow-hidden" style={{ marginBottom: 0 }}>
+      <CardWrapper className="Property1Expanded self-stretch rounded-xl flex flex-col justify-start items-start overflow-hidden gap-0">
+        <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-center overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
             <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
             <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-              {setConfigs.length === 1 ? 'One set' : setConfigs.length === 2 ? 'Two sets' : setConfigs.length === 3 ? 'Three sets' : `${setConfigs.length} sets`}
+              {sets.length === 1 ? 'One set' : sets.length === 2 ? 'Two sets' : sets.length === 3 ? 'Three sets' : `${sets.length} sets`}
             </div>
           </div>
-          {initialSetConfigs.length > 1 && (
-            <button 
-              type="button" 
-              onClick={() => setIsExpanded(false)} 
-              className="SortAscending size-7 relative overflow-hidden"
-            >
-              <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
-            </button>
-          )}
+          <button type="button" onClick={() => setIsExpanded(false)} className="Lucide size-6 flex items-center justify-center relative overflow-hidden">
+            <Minimize2 className="w-4 h-4 outline outline-2 outline-offset-[-1px] outline-neutral-300" />
+          </button>
         </div>
-        <div className="w-full flex flex-col">
-          {sets.map((set, idx) => (
-            <div key={set.id} className="Set self-stretch pl-3 pr-2 py-2 bg-white border-b-2 border-slate-100 flex flex-col gap-2">
-              <div className="Setrepsweightwrapper flex justify-between items-center">
-                <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-                  {set.name}
+        {sets.map((set, idx) => {
+          const setType = set.set_type || 'reps';
+          const timedDuration = set.timed_set_duration;
+          let swipeStatus = set.status;
+          if (setType === 'timed' && set.status !== 'complete') {
+            swipeStatus = 'inactive-timed';
+          }
+          return (
+            <React.Fragment key={set.id}>
+              <div className="SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2">
+                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
+                  <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">{set.name}</div>
+                  <CardPill
+                    reps={set.reps}
+                    weight={set.weight}
+                    unit={set.unit}
+                    complete={set.status === 'complete'}
+                    editable={true}
+                    onEdit={() => handlePillClick(idx)}
+                    set_type={setType}
+                    timed_set_duration={timedDuration}
+                    className="Cardpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+                  />
                 </div>
-                <CardPill
-                  reps={set.reps}
-                  weight={set.weight}
-                  unit={set.unit}
-                  complete={set.status === 'complete'}
-                  editable={true}
-                  onEdit={() => handlePillClick(idx)}
-                  className="Setpill"
-                />
+                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
+                  <SwipeSwitch
+                    status={swipeStatus}
+                    onComplete={() => handleSetComplete(idx)}
+                    duration={timedDuration || 30}
+                  />
+                </div>
               </div>
-              <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
-                <SwipeSwitch status={set.status} onComplete={() => handleSetComplete(idx)} />
-              </div>
-            </div>
-          ))}
-        </div>
+              {idx < sets.length - 1 && (
+                <div className="Divider self-stretch flex flex-col justify-start items-start">
+                  <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
         {isUnscheduled && (
           <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
             Unscheduled Exercise
@@ -236,7 +205,7 @@ const ActiveExerciseCard = ({
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
           <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-            {setConfigs.length === 1 ? 'One set' : setConfigs.length === 2 ? 'Two sets' : setConfigs.length === 3 ? 'Three sets' : `${setConfigs.length} sets`}
+            {sets.length === 1 ? 'One set' : sets.length === 2 ? 'Two sets' : sets.length === 3 ? 'Three sets' : `${sets.length} sets`}
           </div>
         </div>
         {initialSetConfigs.length > 1 && (
@@ -250,21 +219,31 @@ const ActiveExerciseCard = ({
         )}
       </div>
       <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
-        <SwipeSwitch status={swipeStatus} onComplete={handleActiveSetComplete} />
+        <SwipeSwitch 
+          status={swipeStatus} 
+          onComplete={handleActiveSetComplete}
+          duration={activeSet?.set_type === 'timed' ? activeSet.timed_set_duration : undefined}
+        />
       </div>
       <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center overflow-hidden">
-        {sets.map((set, idx) => (
-          <CardPill
-            key={set.id}
-            reps={set.reps}
-            weight={set.weight}
-            unit={set.unit}
-            editable={true}
-            onEdit={() => handlePillClick(idx)}
-            complete={allComplete || set.status === 'complete'}
-            className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
-          />
-        ))}
+        {sets.map((set, idx) => {
+          const setType = set.set_type || 'reps';
+          const timedDuration = set.timed_set_duration;
+          return (
+            <CardPill
+              key={set.id}
+              reps={set.reps}
+              weight={set.weight}
+              unit={set.unit}
+              complete={set.status === 'complete'}
+              editable={true}
+              onEdit={() => handlePillClick(idx)}
+              set_type={setType}
+              timed_set_duration={timedDuration}
+              className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+            />
+          );
+        })}
       </div>
       {isUnscheduled && (
         <div className="text-center text-sm text-gray-500 mt-2">
@@ -304,7 +283,7 @@ ActiveExerciseCard.propTypes = {
   default_view: PropTypes.bool,
   setData: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       reps: PropTypes.number,
       weight: PropTypes.number,
       unit: PropTypes.string,

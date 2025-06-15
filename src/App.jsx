@@ -13,22 +13,23 @@ import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
-import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
+// import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
 import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import React, { createContext, useState, useEffect } from "react";
-import SetCardDemo from "./pages/Sandbox/SetCardDemo";
-import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
+// import SetCardDemo from "./pages/Sandbox/SetCardDemo";
+// import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
 import { AuthProvider } from './contexts/AuthContext';
 import Login from "./pages/auth/Login";
 import CreateAccount from "./pages/auth/CreateAccount";
 import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
-import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
+// import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
 import { ActiveWorkoutProvider, useActiveWorkout } from './contexts/ActiveWorkoutContext';
 import { Button } from "@/components/ui/button";
+import DemoPage from './pages/Sandbox/DemoPage';
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -98,13 +99,7 @@ function AppContent() {
             <Route path="/workout" element={<Workout />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
-            <Route
-              path="/create_or_edit_exercise_demo"
-              element={<CreateOrEditExerciseDemo />}
-            />
-            <Route path="/demo/setcard" element={<SetCardDemo />} />
-            <Route path="/demo/swipeswitch" element={<SwipeSwitchDemo />} />
-            <Route path="/page-header-demo" element={<PageHeaderDemo />} />
+            <Route path="/demo" element={<DemoPage />} />
           </Route>
         </Routes>
       </main>

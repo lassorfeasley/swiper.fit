@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
  * - complete: boolean (optional) - Whether the pill is completed (sets only)
  * - editable: boolean (optional) - Whether the pill is editable (sets only)
  * - onEdit: func (optional) - Function to call when editing is triggered (sets only)
+ * - set_type: string (optional) - Type of set ('reps' or 'timed')
+ * - timed_set_duration: number (optional) - Duration of timed set in seconds
  */
 const CardPill = ({
   variant = 'sets',
@@ -27,7 +29,9 @@ const CardPill = ({
   style,
   complete = false,
   editable = false,
-  onEdit
+  onEdit,
+  set_type = 'reps',
+  timed_set_duration,
 }) => {
   // Format the weight display based on unit
   const formatWeight = () => {
@@ -36,6 +40,21 @@ const CardPill = ({
       return `${weight} ${unit}`;
     }
     return weight !== undefined ? `${weight}` : '';
+  };
+
+  const formatWeightForTimed = () => {
+    if (unit === 'body') return '× body';
+    if (weight > 0 && unit) {
+      return `× ${weight} ${unit}`;
+    }
+    return '';
+  }
+
+  // Format time as MM:SS
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   // Handle click
@@ -85,12 +104,22 @@ const CardPill = ({
           </svg>
         </span>
       )}
+      {set_type === 'timed' && (
+        <span data-layer="lucide" className="Lucide size-4 relative overflow-hidden mr-1">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="7" cy="7" r="5.5" stroke="#334155" strokeWidth="1.2"/>
+            <path d="M7 4.5V7L8.5 8.5" stroke="#334155" strokeWidth="1.2" strokeLinecap="round"/>
+          </svg>
+        </span>
+      )}
       <div 
         data-layer="RepsXWeight" 
         className={`Repsxweight text-center justify-center text-xs font-semibold font-['Space_Grotesk'] leading-none 
           ${complete ? 'text-slate-600' : 'text-gray-600'}`}
       >
-        {reps}×{formatWeight()}
+        {set_type === 'timed'
+          ? `${formatTime(timed_set_duration || 0)} ${formatWeightForTimed()}`
+          : `${reps}×${formatWeight()}`}
       </div>
     </div>
   );
@@ -108,6 +137,8 @@ CardPill.propTypes = {
   complete: PropTypes.bool,
   editable: PropTypes.bool,
   onEdit: PropTypes.func,
+  set_type: PropTypes.string,
+  timed_set_duration: PropTypes.number,
 };
 
 export default CardPill; 

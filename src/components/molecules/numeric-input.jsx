@@ -16,6 +16,7 @@ const NumericInput = ({
   readOnly = false,
   id,
   allowTwoDecimals = false,
+  unitLabel,
 }) => {
   const [internalValue, setInternalValue] = useState(value?.toString() ?? "");
   const [isFocused, setIsFocused] = useState(false);
@@ -113,17 +114,22 @@ const NumericInput = ({
             <Minus className="w-4 h-4 text-neutral-400" strokeWidth={2} />
           </button>
         )}
-        <input
-          id={id}
-          type="text"
-          value={internalValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur}
-          onFocus={() => setIsFocused(true)}
-          readOnly={readOnly}
-          className={getInputStyles()}
-          style={{ minWidth: 40 }}
-        />
+        <div className="flex-1 flex flex-col justify-center items-center">
+          <input
+            id={id}
+            type="text"
+            value={internalValue}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            onFocus={() => setIsFocused(true)}
+            readOnly={readOnly}
+            className={getInputStyles()}
+            style={{ minWidth: 40 }}
+          />
+          {unitLabel && (
+            <div className="text-center text-slate-500 text-sm font-normal font-['Space_Grotesk'] leading-tight">{unitLabel}</div>
+          )}
+        </div>
         {incrementing && (
           <button
             onClick={increment}
@@ -154,6 +160,7 @@ NumericInput.propTypes = {
   readOnly: PropTypes.bool,
   id: PropTypes.string,
   allowTwoDecimals: PropTypes.bool,
+  unitLabel: PropTypes.string,
 };
 
 export default NumericInput; 
