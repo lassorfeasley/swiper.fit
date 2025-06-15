@@ -90,65 +90,29 @@ const ActiveExerciseCard = ({
   const handleActiveSetComplete = useCallback(async () => {
     if (!mountedRef.current) return;
 
-    console.log(`ActiveExerciseCard: handleActiveSetComplete called. View: ${isExpanded ? 'Expanded' : 'Compact'}`);
-
+    const activeSet = sets.find(s => s.status === 'active');
+    if (!activeSet) return;
+    
     try {
-      if (isExpanded && activeSet) {
-        // Expanded view: complete only the active set and unlock the next
-        console.log('ActiveExerciseCard: Expanded view completion. Active set:', activeSet);
-        if (onSetComplete) {
-          await onSetComplete({
-            setId: activeSet.id,
-            exerciseId,
-            reps: activeSet.reps,
-            weight: activeSet.weight,
-            status: 'complete',
-          });
-        }
+      if (onSetComplete) {
+        // Pass the exerciseId and the activeSet object
+        await onSetComplete(exerciseId, activeSet);
+      }
+      
+      if (onSetDataChange) {
+        // Mark current set as complete
+        await onSetDataChange(exerciseId, activeSet.id, 'status', 'complete');
         
-        if (onSetDataChange) {
-          console.log('ActiveExerciseCard: Expanded view sending data:', { exerciseId, setId: activeSet.id, status: 'complete' });
-          await onSetDataChange(exerciseId, activeSet.id, 'status', 'complete');
-          const nextSet = sets.find(s => s.id === activeSet.id + 1);
-          if (nextSet && nextSet.status === 'locked') {
-            await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
-          }
-        }
-      } else if (!isExpanded) {
-        // Compact view: complete ALL sets
-        if (onSetDataChange) {
-          console.log('ActiveExerciseCard: Compact view completion. All sets:', sets);
-          await Promise.all(sets.map(set => {
-            if (set.status !== 'complete') {
-              console.log('ActiveExerciseCard: Compact view sending data for set:', set);
-              onSetDataChange(exerciseId, set.id, 'status', 'complete');
-              onSetDataChange(exerciseId, set.id, 'reps', set.reps);
-              onSetDataChange(exerciseId, set.id, 'weight', set.weight);
-              onSetDataChange(exerciseId, set.id, 'unit', set.unit);
-            }
-            return Promise.resolve();
-          }));
-        }
-        
-        if (onSetComplete) {
-          await Promise.all(sets.map(set => {
-            if (set.status !== 'complete') {
-              return onSetComplete({
-                setId: set.id,
-                exerciseId,
-                reps: set.reps,
-                weight: set.weight,
-                status: 'complete',
-              });
-            }
-            return Promise.resolve();
-          }));
+        // Activate the next set if it exists
+        const nextSet = sets.find(s => s.id === activeSet.id + 1);
+        if (nextSet && nextSet.status === 'locked') {
+          await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
         }
       }
     } catch (error) {
       console.error('Error completing set:', error);
     }
-  }, [isExpanded, activeSet, exerciseId, onSetComplete, onSetDataChange, sets]);
+  }, [sets, exerciseId, onSetComplete, onSetDataChange]);
 
   const handlePillClick = useCallback((idx) => {
     if (!mountedRef.current) return;
@@ -199,48 +163,21 @@ const ActiveExerciseCard = ({
         </div>
         <div className="w-full">
           {sets.map((set, idx) => (
-            <React.Fragment key={set.id}>
-              <div className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start${idx === 0 ? ' pt-0' : ''}`}>
-                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center mb-1">
-                  <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-                    {set.name}
-                  </div>
-                  <CardPill
-                    reps={set.reps}
-                    weight={set.weight}
-                    unit={set.unit}
-                    editable={true}
-                    onEdit={() => handlePillClick(idx)}
-                    complete={set.status === 'complete'}
-                    className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
-                  />
-                </div>
-                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
-                  <SwipeSwitch 
-                    status={set.status} 
-                    onComplete={() => {
-                      if (onSetComplete) {
-                        onSetComplete({ setId: set.id, exerciseId, reps: set.reps, weight: set.weight, status: 'complete' });
-                      }
-                      if (onSetDataChange) {
-                        console.log('ActiveExerciseCard: Expanded view - swipe sending data for set:', set);
-                        onSetDataChange(exerciseId, set.id, 'status', 'complete');
-                        onSetDataChange(exerciseId, set.id, 'reps', set.reps);
-                        onSetDataChange(exerciseId, set.id, 'weight', set.weight);
-                        onSetDataChange(exerciseId, set.id, 'unit', set.unit);
-                        const nextSet = sets.find(s => s.id === set.id + 1);
-                        if (nextSet && nextSet.status === 'locked') {
-                          onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
-                        }
-                      }
-                    }} 
-                  />
-                </div>
+            <div key={set.id} className="Set self-stretch pl-3 pr-2 py-2 bg-white border-b-2 border-slate-100 justify-between items-center inline-flex">
+              <CardPill 
+                text={set.name} 
+                isActive={set.status === 'active'} 
+                isComplete={set.status === 'complete'} 
+                onClick={() => handlePillClick(idx)}
+              />
+              <div className="flex-1 text-center text-slate-600 text-base font-medium font-['Space_Grotesk'] leading-normal">
+                {`${set.weight}${set.unit} x ${set.reps}`}
               </div>
-              {idx < sets.length - 1 && (
-                <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.5px] outline-stone-200" />
-              )}
-            </React.Fragment>
+              <SwipeSwitch 
+                status={set.status} 
+                onSwitch={handleActiveSetComplete} 
+              />
+            </div>
           ))}
         </div>
         {isUnscheduled && (

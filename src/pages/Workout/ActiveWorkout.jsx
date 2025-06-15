@@ -34,7 +34,8 @@ const ActiveWorkout = () => {
     togglePause,
     endWorkout: contextEndWorkout,
     workoutProgress,
-    updateWorkoutProgress
+    updateWorkoutProgress,
+    saveSet
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -106,93 +107,13 @@ const ActiveWorkout = () => {
     updateWorkoutProgress(exerciseId, setId, field, value);
   };
 
+  const handleSetComplete = (exerciseId, setConfig) => {
+    saveSet(exerciseId, setConfig);
+  };
+
   const handleEndWorkout = async () => {
     try {
-      console.log('Starting workout end process...');
-      console.log('Active workout data:', activeWorkout);
-      console.log('User:', user);
-      console.log('Exercises:', exercises);
-      console.log('Set data:', workoutProgress);
-
-      if (!user?.id) {
-        throw new Error('No user ID available');
-      }
-
-      if (!activeWorkout?.programId) {
-        throw new Error('No active workout program ID available');
-      }
-
-      const { data: workout, error } = await supabase
-        .from('workouts')
-        .insert([
-          {
-            user_id: user.id,
-            program_id: activeWorkout?.programId,
-            workout_name: activeWorkout?.name || 'Workout',
-            duration_seconds: elapsedTime,
-            completed_at: new Date().toISOString(),
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating workout record:', error);
-        throw error;
-      }
-
-      console.log('Created workout record:', workout);
-
-      const allExercisesWithSets = exercises.map(ex => {
-        const completedSets = (workoutProgress[ex.exercise_id] || [])
-          .filter(s => s.status === 'complete')
-          .map((s, index) => {
-            const config = ex.setConfigs[s.id - 1] || {};
-            return {
-              reps: s.reps ?? config.reps,
-              weight: s.weight ?? config.weight,
-              order: index + 1,
-            };
-          });
-
-        return {
-          ...ex,
-          sets: completedSets,
-        };
-      });
-
-      console.log('Processed exercises with sets:', allExercisesWithSets);
-
-      for (const exercise of allExercisesWithSets) {
-        if(exercise.sets.length === 0) {
-          console.log('Skipping exercise with no sets:', exercise.name);
-          continue;
-        }
-
-        console.log('Saving sets for exercise:', exercise.name);
-
-        // Insert all sets for this exercise directly into the sets table
-        const setRows = exercise.sets.map(set => ({
-          workout_id: workout.id,
-          exercise_id: exercise.exercise_id,
-          reps: set.reps,
-          weight: set.weight,
-          order: set.order,
-          weight_unit: exercise.setConfigs[0]?.unit || 'lbs' // Use the first set's unit as default
-        }));
-
-        const { error: setError } = await supabase
-          .from('sets')
-          .insert(setRows);
-
-        if (setError) {
-          console.error('Error saving sets for exercise:', exercise.name, setError);
-          throw setError;
-        }
-      }
-
-      console.log('Successfully saved all workout data');
-      contextEndWorkout();
+      await contextEndWorkout();
       navigate('/history');
     } catch (error) {
       console.error('Error ending workout:', error);
@@ -221,7 +142,7 @@ const ActiveWorkout = () => {
               exerciseName={ex.name}
               default_view={true}
               initialSetConfigs={ex.setConfigs}
-              onSetComplete={() => {}}
+              onSetComplete={handleSetComplete}
               setData={workoutProgress[ex.exercise_id] || []}
               onSetDataChange={handleSetDataChange}
               isUnscheduled={false}

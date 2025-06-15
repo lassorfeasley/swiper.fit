@@ -73,15 +73,15 @@ const Workout = () => {
     fetchPrograms();
   }, [user]);
 
-  const handleStartWorkout = (program) => {
-    const workoutData = {
-      programId: program.id,
-      name: program.program_name,
-      startTime: new Date().toISOString(),
-    };
-    
-    startWorkout(workoutData);
-    navigate('/workout/active');
+  const handleStartWorkout = async (program) => {
+    try {
+      await startWorkout(program);
+      navigate('/workout/active');
+    } catch (error) {
+      console.error(error.message);
+      // Optionally, show an error message to the user
+      alert(error.message);
+    }
   };
 
   // Filter programs by search
