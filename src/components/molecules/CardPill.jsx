@@ -61,7 +61,7 @@ const CardPill = ({
   const handleClick = (e) => {
     if (editable && onEdit) {
       e.stopPropagation();
-      onEdit(e);
+      onEdit();
     } else if (onClick) {
       onClick(e);
     }
