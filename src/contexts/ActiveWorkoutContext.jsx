@@ -145,12 +145,21 @@ export function ActiveWorkoutProvider({ children }) {
 
   const updateWorkoutProgress = useCallback(async (exerciseId, setId, field, value) => {
     // Optimistic UI update
+    // Coerce setId to a string (or number if possible)
+    let validSetId = setId;
+    if (typeof setId !== 'string' && typeof setId !== 'number') {
+      if (typeof setId === 'object' && setId !== null && 'toString' in setId) {
+        validSetId = setId.toString();
+      } else {
+        validSetId = String(setId);
+      }
+    }
     setWorkoutProgress(prev => {
       const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === setId);
+      const setIdx = prevSets.findIndex(s => s.id === validSetId);
       let newSets;
       if (setIdx === -1) {
-        newSets = [...prevSets, { id: setId, [field]: value }];
+        newSets = [...prevSets, { id: validSetId, [field]: value }];
       } else {
         newSets = prevSets.map((s, i) =>
           i === setIdx ? { ...s, [field]: value } : s

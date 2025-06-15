@@ -38,10 +38,15 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
 
   // Reset swipedComplete when parent status changes
   useEffect(() => {
-    if (status !== "active") {
+    if (status !== "active" && status !== "ready-timed-set") {
       setSwipedComplete(false);
     }
-  }, [status]);
+    // Start timer automatically when transitioning to counting-down-timed
+    if (status === "counting-down-timed" && !isTimerActive) {
+      setTimer(duration); // Reset timer to duration when starting countdown
+      setIsTimerActive(true);
+    }
+  }, [status, duration, isTimerActive]);
 
   useEffect(() => {
     if (status === "complete") {
@@ -89,23 +94,21 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   };
 
   const handleDragEnd = (_, info) => {
-    if (status === "active" && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
-      setSwipedComplete(true);
+    if ((status === "active" || status === "ready-timed-set") && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
+      if (status !== 'ready-timed-set') {
+        setSwipedComplete(true);
+      }
       onComplete();
     } else {
       controls.start({ x: 0, transition: tweenConfig });
     }
   };
 
-  const handleTimerClick = () => {
-    if (status === 'active' || status === 'inactive-timed') {
-      setIsTimerActive(!isTimerActive);
-    }
-  };
-
   const isLocked = status === "locked";
   const isActive = status === "active";
   const isComplete = status === "complete";
+  const isReadyTimed = status === "ready-timed-set";
+  const isCountingDown = status === "counting-down-timed";
 
   // Always use left for positioning, animate x
   const thumbStyle = {
@@ -116,35 +119,9 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
     left: RAIL_HORIZONTAL_PADDING_PER_SIDE
   };
 
-  if (status === 'inactive-timed' || (status === 'active' && isTimerActive)) {
-    const currentStatus = isTimerActive ? 'active-timed' : 'inactive-timed';
-    const timeToDisplay = isTimerActive ? timer : duration;
-
+  if (isCountingDown) {
     return (
-      <div 
-        className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px] cursor-pointer"
-        onClick={handleTimerClick}
-      >
-        <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
-          <div className={`Thumb flex-1 h-10 p-2.5 rounded-sm flex justify-center items-center gap-2.5 ${isTimerActive ? 'bg-white' : 'bg-white'}`}>
-            <div className="Lucide size-6 relative overflow-hidden">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="9" stroke={isTimerActive ? "#22C55E" : "#A3A3A3"} strokeWidth="2"/>
-                  <path d="M12 7V12L15 15" stroke={isTimerActive ? "#22C55E" : "#A3A3A3"} strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-            </div>
-            <div className={`justify-center text-sm font-normal font-['Space_Grotesk'] leading-tight ${isTimerActive ? 'text-green-600' : 'text-neutral-400'}`}>
-              {formatTime(timeToDisplay)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === 'active-timed') {
-    return (
-      <div className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px]" onClick={handleTimerClick}>
+      <div className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px]">
         <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
           <div className="Thumb flex-1 h-10 p-2.5 bg-white rounded-sm flex justify-center items-center gap-2.5">
             <div className="Lucide size-6 relative overflow-hidden">
@@ -153,7 +130,9 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
                   <path d="M12 7V12L15 15" stroke="#22C55E" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
             </div>
-            <div className="00 justify-center text-green-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">{formatTime(timer)}</div>
+            <div className="justify-center text-sm font-normal font-['Space_Grotesk'] leading-tight text-green-600">
+              {formatTime(timer)}
+            </div>
           </div>
         </div>
       </div>
@@ -169,7 +148,7 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
         <motion.div
           className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute"
           style={thumbStyle}
-          drag={isActive ? "x" : false}
+          drag={isActive || isReadyTimed ? "x" : false}
           dragConstraints={thumbTravel > 0 ? { left: 0, right: thumbTravel } : { left: 0, right: 0 }}
           onDragEnd={handleDragEnd}
           animate={controls}
@@ -184,6 +163,12 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
               <div data-svg-wrapper data-layer="check" className="Check relative flex items-center justify-center">
                 <Check className="w-5 h-5 text-white" />
               </div>
+            )}
+            {isReadyTimed && (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="#A3A3A3" strokeWidth="2"/>
+                <path d="M12 7V12L15 15" stroke="#A3A3A3" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             )}
             {isActive && !isComplete && !swipedComplete && (
               <Check className="w-5 h-[14px] absolute left-[4.52px] top-[7.50px] text-transparent" />

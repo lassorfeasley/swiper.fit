@@ -25,13 +25,27 @@ const SetCard = ({
   // Create sets array from setConfigs and setData
   const sets = setConfigs.map((config, i) => {
     const fromParent = setData[i] || {};
+    const setType = fromParent.set_type ?? config.set_type ?? 'reps';
+    let status = fromParent.status ?? (i === 0 ? 'active' : 'locked');
+    
+    // Handle timed set status transitions
+    if (setType === 'timed') {
+      if (status === 'active') {
+        status = 'ready-timed-set';
+      } else if (status === 'counting-down') {
+        status = 'counting-down-timed';
+      }
+    }
+    
     return {
       id: i + 1,
       name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
       reps: fromParent.reps ?? config.reps,
       weight: fromParent.weight ?? config.weight,
       unit: config.unit || 'lbs',
-      status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
+      status,
+      set_type: setType,
+      timed_set_duration: fromParent.timed_set_duration ?? config.timed_set_duration,
     };
   });
 
@@ -55,20 +69,26 @@ const SetCard = ({
     if (onSetComplete) {
       const set = sets.find(s => s.id === setId);
       if (set) {
+        const isTimedSet = set.set_type === 'timed';
         onSetComplete({
           setId,
           exerciseId,
           reps: set.reps,
           weight: set.weight,
-          status: 'complete',
+          status: isTimedSet && set.status === 'ready-timed-set' ? 'counting-down' : 'complete',
         });
       }
     }
     if (onSetDataChange) {
-      onSetDataChange(setId, 'status', 'complete');
-      const nextSet = sets.find(s => s.id === setId + 1);
-      if (nextSet && nextSet.status === 'locked') {
-        onSetDataChange(setId + 1, 'status', 'active');
+      const set = sets.find(s => s.id === setId);
+      if (set && set.set_type === 'timed' && set.status === 'ready-timed-set') {
+        onSetDataChange(setId, 'status', 'counting-down');
+      } else {
+        onSetDataChange(setId, 'status', 'complete');
+        const nextSet = sets.find(s => s.id === setId + 1);
+        if (nextSet && nextSet.status === 'locked') {
+          onSetDataChange(setId + 1, 'status', 'active');
+        }
       }
     }
   };
@@ -198,12 +218,6 @@ const SetCard = ({
             const setConfig = setConfigs[idx] || {};
             const setType = setConfig.set_type || 'reps';
             const timedDuration = setConfig.timed_set_duration;
-            let swipeStatus = set.status;
-            if (setType === 'timed') {
-              if (set.status === 'locked') swipeStatus = 'inactive-timed';
-              else if (set.status === 'active') swipeStatus = 'active-timed';
-              else if (set.status === 'complete') swipeStatus = 'complete';
-            }
             return (
               <div key={set?.id ?? idx} className="mb-4">
                 <div className="flex justify-between items-center mb-2">
@@ -222,7 +236,7 @@ const SetCard = ({
                   </div>
                 </div>
                 <SwipeSwitch
-                  status={swipeStatus}
+                  status={set?.status}
                   onComplete={() => handleSetComplete(set?.id)}
                   duration={setType === 'timed' ? timedDuration : undefined}
                 />

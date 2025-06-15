@@ -103,8 +103,17 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkout]);
 
-  const handleSetDataChange = (exerciseId, setId, field, value) => {
-    updateWorkoutProgress(exerciseId, setId, field, value);
+  const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
+    // Support both legacy (setId, field, value) and new (updates array) signatures
+    if (Array.isArray(setIdOrUpdates)) {
+      setIdOrUpdates.forEach(update => {
+        Object.entries(update.changes).forEach(([field, value]) => {
+          updateWorkoutProgress(exerciseId, update.id, field, value);
+        });
+      });
+    } else {
+      updateWorkoutProgress(exerciseId, setIdOrUpdates, field, value);
+    }
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {

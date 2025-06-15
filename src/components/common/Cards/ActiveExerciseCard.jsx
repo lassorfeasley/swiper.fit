@@ -36,23 +36,35 @@ const ActiveExerciseCard = ({
   const sets = useMemo(() => {
     return initialSetConfigs.map((config, i) => {
       const fromParent = setData.find(d => d.id === i + 1 || d.id === String(i + 1)) || setData[i] || {};
+      const setType = fromParent.set_type ?? config.set_type ?? 'reps';
+      let status = fromParent.status ?? (i === 0 ? 'active' : 'locked');
+      
+      // Handle timed set status transitions
+      if (setType === 'timed') {
+        if (status === 'active') {
+          status = 'ready-timed-set';
+        } else if (status === 'counting-down') {
+          status = 'counting-down-timed';
+        }
+      }
+      
       return {
         id: i + 1,
         name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
         reps: fromParent.reps ?? config.reps,
         weight: fromParent.weight ?? config.weight,
         unit: fromParent.unit ?? (config.unit || 'lbs'),
-        status: fromParent.status ?? (i === 0 ? 'active' : 'locked'),
-        set_type: fromParent.set_type ?? config.set_type ?? 'reps',
+        status,
+        set_type: setType,
         timed_set_duration: fromParent.timed_set_duration ?? config.timed_set_duration,
       };
     });
   }, [initialSetConfigs, setData]);
 
   const allComplete = useMemo(() => sets.every(set => set.status === 'complete'), [sets]);
-  const anyActive = useMemo(() => sets.some(set => set.status === 'active'), [sets]);
+  const anyActive = useMemo(() => sets.some(set => set.status === 'active' || set.status === 'ready-timed-set'), [sets]);
   const activeSet = useMemo(
-    () => sets.find(set => set.status === 'active') || (sets.length > 0 ? sets[0] : undefined),
+    () => sets.find(set => set.status === 'active' || set.status === 'ready-timed-set') || (sets.length > 0 ? sets[0] : undefined),
     [sets]
   );
   const swipeStatus = useMemo(() => 
@@ -62,32 +74,64 @@ const ActiveExerciseCard = ({
 
   const handleSetComplete = useCallback(async (setIdx) => {
     if (!mountedRef.current) return;
-    const setToComplete = sets[setIdx];
+
+    const setToComplete = { ...sets[setIdx] };
     const nextSet = sets[setIdx + 1];
+    
+    // First, call onSetComplete for analytics if it exists.
     if (onSetComplete) {
-      Promise.resolve(onSetComplete(exerciseId, setToComplete)).catch(console.error);
-    }
-    if (onSetDataChange) {
-      Promise.resolve(onSetDataChange(exerciseId, setToComplete.id, 'status', 'complete')).catch(console.error);
-      if (nextSet && nextSet.status === 'locked') {
-        Promise.resolve(onSetDataChange(exerciseId, nextSet.id, 'status', 'active')).catch(console.error);
+      // For a timed set starting, we don't mark it complete yet.
+      // For all others, we do.
+      if (setToComplete.set_type !== 'timed' || setToComplete.status !== 'ready-timed-set') {
+        Promise.resolve(onSetComplete(exerciseId, { ...setToComplete, status: 'complete' })).catch(console.error);
       }
+    }
+
+    if (!onSetDataChange) return;
+
+    const updates = [];
+    if (setToComplete.set_type === 'timed') {
+      if (setToComplete.status === 'ready-timed-set') {
+        // Transition to counting down
+        updates.push({ id: setToComplete.id, changes: { status: 'counting-down-timed' } });
+      } else if (setToComplete.status === 'counting-down-timed') {
+        // Timer finished, mark as complete
+        updates.push({ id: setToComplete.id, changes: { status: 'complete' } });
+        if (nextSet && nextSet.status === 'locked') {
+          updates.push({ id: nextSet.id, changes: { status: 'active' } });
+        }
+      }
+    } else {
+      // For regular sets, just mark as complete
+      updates.push({ id: setToComplete.id, changes: { status: 'complete' } });
+      if (nextSet && nextSet.status === 'locked') {
+        updates.push({ id: nextSet.id, changes: { status: 'active' } });
+      }
+    }
+    
+    if (updates.length > 0) {
+      Promise.resolve(onSetDataChange(exerciseId, updates)).catch(console.error);
     }
   }, [exerciseId, onSetComplete, onSetDataChange, sets]);
 
   const handleActiveSetComplete = useCallback(async () => {
     if (!mountedRef.current) return;
-    const activeSetIndex = sets.findIndex(s => s.status === 'active');
-    if (activeSetIndex === -1) return;
-    const activeSetToComplete = sets[activeSetIndex];
-    const nextSet = sets[activeSetIndex + 1];
+    
     if (onSetComplete) {
-      Promise.resolve(onSetComplete(exerciseId, activeSetToComplete)).catch(console.error);
+      sets.forEach(set => {
+        if (set.status !== 'complete') {
+          Promise.resolve(onSetComplete(exerciseId, { ...set, status: 'complete' })).catch(console.error);
+        }
+      });
     }
+
     if (onSetDataChange) {
-      Promise.resolve(onSetDataChange(exerciseId, activeSetToComplete.id, 'status', 'complete')).catch(console.error);
-      if (nextSet && nextSet.status === 'locked') {
-        Promise.resolve(onSetDataChange(exerciseId, nextSet.id, 'status', 'active')).catch(console.error);
+      const updates = sets
+        .filter(set => set.status !== 'complete')
+        .map(set => ({ id: set.id, changes: { status: 'complete' } }));
+
+      if (updates.length > 0) {
+        Promise.resolve(onSetDataChange(exerciseId, updates)).catch(console.error);
       }
     }
   }, [exerciseId, onSetComplete, onSetDataChange, sets]);
@@ -108,16 +152,23 @@ const ActiveExerciseCard = ({
 
   const handleEditFormSave = useCallback(async (formValues) => {
     if (!mountedRef.current || openSetIndex === null) return;
+    
     const set_id_to_update = sets[openSetIndex].id;
+    const updates = [{
+      id: set_id_to_update,
+      changes: {
+        reps: formValues.reps,
+        weight: formValues.weight,
+        unit: formValues.unit,
+        set_type: formValues.set_type,
+        timed_set_duration: formValues.set_type === 'timed' ? formValues.timed_set_duration : undefined,
+      }
+    }];
+
     if (onSetDataChange) {
-      Promise.all([
-        onSetDataChange(exerciseId, set_id_to_update, 'reps', formValues.reps),
-        onSetDataChange(exerciseId, set_id_to_update, 'weight', formValues.weight),
-        onSetDataChange(exerciseId, set_id_to_update, 'unit', formValues.unit),
-        onSetDataChange(exerciseId, set_id_to_update, 'set_type', formValues.set_type),
-        onSetDataChange(exerciseId, set_id_to_update, 'timed_set_duration', formValues.set_type === 'timed' ? formValues.timed_set_duration : undefined)
-      ]).catch(console.error);
+      Promise.resolve(onSetDataChange(exerciseId, updates)).catch(console.error);
     }
+
     setOpenSetIndex(null);
     setIsEditSheetOpen(false);
   }, [exerciseId, onSetDataChange, openSetIndex, sets]);
@@ -141,8 +192,8 @@ const ActiveExerciseCard = ({
           const setType = set.set_type || 'reps';
           const timedDuration = set.timed_set_duration;
           let swipeStatus = set.status;
-          if (setType === 'timed' && set.status !== 'complete') {
-            swipeStatus = 'inactive-timed';
+          if (setType === 'timed') {
+            // No need to modify swipeStatus here as it's already set correctly in the sets useMemo
           }
           return (
             <React.Fragment key={set.id}>
@@ -220,7 +271,7 @@ const ActiveExerciseCard = ({
       </div>
       <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
         <SwipeSwitch 
-          status={swipeStatus} 
+          status={anyActive && activeSet?.set_type === 'timed' ? 'ready-timed-set' : swipeStatus} 
           onComplete={handleActiveSetComplete}
           duration={activeSet?.set_type === 'timed' ? activeSet.timed_set_duration : undefined}
         />
@@ -287,7 +338,14 @@ ActiveExerciseCard.propTypes = {
       reps: PropTypes.number,
       weight: PropTypes.number,
       unit: PropTypes.string,
-      status: PropTypes.oneOf(['active', 'locked', 'complete']),
+      status: PropTypes.oneOf([
+        'active',
+        'locked',
+        'complete',
+        'counting-down',
+        'ready-timed-set',
+        'counting-down-timed'
+      ]),
     })
   ),
 };
