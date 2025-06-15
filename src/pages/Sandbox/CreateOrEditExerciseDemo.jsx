@@ -17,7 +17,6 @@ const CreateOrEditExerciseDemo = () => {
     <>
       <PageHeader
         appHeaderTitle="Create or Edit Exercise Demo"
-        subheadText="Demo for exercise creation form development"
         showBackButton={true}
         showActionBar={false}
         showActionIcon={false}

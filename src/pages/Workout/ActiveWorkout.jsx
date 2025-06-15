@@ -125,7 +125,6 @@ const ActiveWorkout = () => {
     <AppLayout
       appHeaderTitle="Active Workout"
       subhead={true}
-      subheadText={activeWorkout?.name || 'Workout in Progress'}
       showBackButton={false}
       showActionBar={false}
       search={true}

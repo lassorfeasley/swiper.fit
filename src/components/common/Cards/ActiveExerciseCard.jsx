@@ -114,6 +114,30 @@ const ActiveExerciseCard = ({
     }
   }, [sets, exerciseId, onSetComplete, onSetDataChange]);
 
+  // Handler for completing a specific set (by index) in expanded view
+  const handleSetComplete = useCallback(async (setIdx) => {
+    if (!mountedRef.current) return;
+    const set = sets[setIdx];
+    if (!set) return;
+
+    try {
+      if (onSetComplete) {
+        await onSetComplete(exerciseId, set);
+      }
+      if (onSetDataChange) {
+        // Mark this set as complete
+        await onSetDataChange(exerciseId, set.id, 'status', 'complete');
+        // Unlock the next set if it exists and is locked
+        const nextSet = sets[setIdx + 1];
+        if (nextSet && nextSet.status === 'locked') {
+          await onSetDataChange(exerciseId, nextSet.id, 'status', 'active');
+        }
+      }
+    } catch (error) {
+      console.error('Error completing set:', error);
+    }
+  }, [sets, exerciseId, onSetComplete, onSetDataChange]);
+
   const handlePillClick = useCallback((idx) => {
     if (!mountedRef.current) return;
     const set = sets[idx];
@@ -161,22 +185,26 @@ const ActiveExerciseCard = ({
             </button>
           )}
         </div>
-        <div className="w-full">
+        <div className="w-full flex flex-col">
           {sets.map((set, idx) => (
-            <div key={set.id} className="Set self-stretch pl-3 pr-2 py-2 bg-white border-b-2 border-slate-100 justify-between items-center inline-flex">
-              <CardPill 
-                text={set.name} 
-                isActive={set.status === 'active'} 
-                isComplete={set.status === 'complete'} 
-                onClick={() => handlePillClick(idx)}
-              />
-              <div className="flex-1 text-center text-slate-600 text-base font-medium font-['Space_Grotesk'] leading-normal">
-                {`${set.weight}${set.unit} x ${set.reps}`}
+            <div key={set.id} className="Set self-stretch pl-3 pr-2 py-2 bg-white border-b-2 border-slate-100 flex flex-col gap-2">
+              <div className="Setrepsweightwrapper flex justify-between items-center">
+                <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+                  {set.name}
+                </div>
+                <CardPill
+                  reps={set.reps}
+                  weight={set.weight}
+                  unit={set.unit}
+                  complete={set.status === 'complete'}
+                  editable={true}
+                  onEdit={() => handlePillClick(idx)}
+                  className="Setpill"
+                />
               </div>
-              <SwipeSwitch 
-                status={set.status} 
-                onSwitch={handleActiveSetComplete} 
-              />
+              <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
+                <SwipeSwitch status={set.status} onComplete={() => handleSetComplete(idx)} />
+              </div>
             </div>
           ))}
         </div>

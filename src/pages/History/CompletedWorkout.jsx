@@ -95,7 +95,6 @@ const CompletedWorkout = () => {
     <AppLayout
       appHeaderTitle={workout?.workout_name}
       subhead={true}
-      subheadText={workout?.programs?.program_name}
       showBackButton={true}
       showActionBar={false}
       showActionIcon={false}

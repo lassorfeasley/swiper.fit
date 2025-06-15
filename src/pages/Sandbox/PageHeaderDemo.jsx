@@ -15,7 +15,6 @@ export default function PageHeaderDemo() {
     <>
       <PageHeader
         appHeaderTitle="Example app header title"
-        subheadText="example subhead text"
         actionBarText="Example action bar text"
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -48,7 +47,6 @@ export default function PageHeaderDemo() {
                   <li>actionBarText (string)</li>
                   <li>search (boolean)</li>
                   <li>subhead (boolean)</li>
-                  <li>subheadText (string)</li>
                   <li>onBack (function)</li>
                   <li>onAction (function)</li>
                   <li>searchValue (string)</li>
