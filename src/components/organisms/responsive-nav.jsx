@@ -19,7 +19,7 @@ import {
 import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
 import { useActiveWorkout } from '@/contexts/ActiveWorkoutContext';
 
-function ResponsiveNav({ navItems, onEnd }) {
+function ResponsiveNav({ navItems, onEnd = () => {} }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -186,10 +186,6 @@ ResponsiveNav.propTypes = {
     })
   ).isRequired,
   onEnd: PropTypes.func,
-};
-
-ResponsiveNav.defaultProps = {
-  onEnd: () => {},
 };
 
 export default ResponsiveNav; 
