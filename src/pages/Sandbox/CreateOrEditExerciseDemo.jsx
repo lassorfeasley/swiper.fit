@@ -20,7 +20,6 @@ const CreateOrEditExerciseDemo = () => {
         showBackButton={true}
         showActionBar={false}
         showActionIcon={false}
-        subhead={true}
         search={false}
         onBack={() => window.history.back()}
       />

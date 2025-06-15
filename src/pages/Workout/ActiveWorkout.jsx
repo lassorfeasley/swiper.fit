@@ -124,7 +124,6 @@ const ActiveWorkout = () => {
   return (
     <AppLayout
       appHeaderTitle="Active Workout"
-      subhead={true}
       showBackButton={false}
       showActionBar={false}
       search={true}

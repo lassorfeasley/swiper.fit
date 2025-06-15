@@ -112,7 +112,6 @@ const ProgramsIndex = () => {
       showActionBar={true}
       showActionIcon={false}
       showBackButton={false}
-      subhead={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
       searchValue={search}

@@ -99,7 +99,6 @@ const Workout = () => {
       showActionBar={false}
       showActionIcon={false}
       showBackButton={false}
-      subhead={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
       searchValue={search}

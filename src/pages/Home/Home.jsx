@@ -19,7 +19,6 @@ const Home = () => {
       showActionBar={false}
       showActionIcon={false}
       showBackButton={false}
-      subhead={false}
       search={false}
     >
       <div className="max-w-xl mx-auto mt-8 flex flex-col gap-4">

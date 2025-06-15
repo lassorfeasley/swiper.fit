@@ -72,7 +72,6 @@ const History = () => {
       showActionBar={false}
       showActionIcon={false}
       showBackButton={false}
-      subhead={false}
       search={true}
       searchPlaceholder="Search workouts"
       searchValue={search}
