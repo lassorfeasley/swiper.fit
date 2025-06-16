@@ -19,6 +19,7 @@ const ActiveExerciseCard = ({
   isUnscheduled,
   default_view = true,
   setData = [],
+  onSetProgrammaticUpdate,
 }) => {
   const [isExpanded, setIsExpanded] = useState(!default_view && initialSetConfigs.length > 1);
   const [openSetIndex, setOpenSetIndex] = useState(null);
@@ -189,6 +190,19 @@ const ActiveExerciseCard = ({
     setIsEditSheetOpen(false);
   }, [exerciseId, onSetDataChange, openSetIndex, sets]);
 
+  const handleEditFormSaveForFuture = useCallback(async (formValues) => {
+    if (!mountedRef.current || openSetIndex === null) return;
+    
+    // First, save the changes for today
+    handleEditFormSave(formValues);
+
+    // Then, call the programmatic update function if it exists
+    if (onSetProgrammaticUpdate) {
+      const set_to_update = sets[openSetIndex];
+      onSetProgrammaticUpdate(exerciseId, set_to_update.id, formValues);
+    }
+  }, [exerciseId, openSetIndex, sets, handleEditFormSave, onSetProgrammaticUpdate]);
+
   // If expanded view is true, render the detailed view
   if (isExpanded && initialSetConfigs.length > 1) {
     return (
@@ -204,6 +218,7 @@ const ActiveExerciseCard = ({
             <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
           </button>
         </div>
+        <div className="w-full">
         {sets.map((set, idx) => {
           const setType = set.set_type || 'reps';
           const timedDuration = set.timed_set_duration;
@@ -244,20 +259,17 @@ const ActiveExerciseCard = ({
             </React.Fragment>
           );
         })}
+        </div>
         {isUnscheduled && (
           <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
             Unscheduled Exercise
           </div>
         )}
         <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-            <SheetHeader className="mb-4">
-              <SheetTitle>Edit set</SheetTitle>
-              <SheetDescription>
-                Update the reps, weight, and unit for this set.
-              </SheetDescription>
-            </SheetHeader>
             <SetEditForm
+              formPrompt={openSetIndex !== null ? `Edit ${sets[openSetIndex].name}` : 'Edit set'}
               onSave={handleEditFormSave}
+              onSaveForFuture={isUnscheduled ? undefined : handleEditFormSaveForFuture}
               initialValues={editForm}
             />
         </SwiperSheet>
@@ -318,14 +330,10 @@ const ActiveExerciseCard = ({
         </div>
       )}
       <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-            <SheetDescription>
-              Update the reps, weight, and unit for this set.
-            </SheetDescription>
-          </SheetHeader>
           <SetEditForm
+            formPrompt={openSetIndex !== null ? `Edit ${sets[openSetIndex].name}` : 'Edit set'}
             onSave={handleEditFormSave}
+            onSaveForFuture={isUnscheduled ? undefined : handleEditFormSaveForFuture}
             initialValues={editForm}
           />
       </SwiperSheet>
@@ -364,6 +372,7 @@ ActiveExerciseCard.propTypes = {
       ]),
     })
   ),
+  onSetProgrammaticUpdate: PropTypes.func,
 };
 
 export default React.memo(ActiveExerciseCard); 

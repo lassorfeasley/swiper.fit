@@ -121,6 +121,37 @@ const ActiveWorkout = () => {
     saveSet(exerciseId, setConfig);
   };
 
+  const handleSetProgrammaticUpdate = async (exerciseId, setId, formValues) => {
+    if (!activeWorkout || !activeWorkout.programId) return;
+
+    try {
+      // Logic to update the program_sets table
+      // This is a simplified example. You might need to find the correct program_set ID
+      // based on the exerciseId and the set's order or its own ID if you store it.
+      const { data, error } = await supabase
+        .from('program_sets')
+        .update({
+          reps: formValues.reps,
+          weight: formValues.weight,
+          weight_unit: formValues.unit,
+          set_type: formValues.set_type,
+          timed_set_duration: formValues.timed_set_duration
+        })
+        .eq('program_id', activeWorkout.programId)
+        .eq('exercise_id', exerciseId)
+        // This 'eq' might need adjustment based on your schema.
+        // If you don't have a direct setId on program_sets, you might need to
+        // fetch them first and find the right one to update based on order.
+        .eq('id', setId); 
+
+      if (error) throw error;
+
+    } catch (error) {
+      console.error('Error updating program set:', error);
+      // Optionally, show an error to the user
+    }
+  };
+
   const handleEndWorkout = async () => {
     try {
       await contextEndWorkout();
@@ -153,6 +184,7 @@ const ActiveWorkout = () => {
               onSetComplete={handleSetComplete}
               setData={workoutProgress[ex.exercise_id] || []}
               onSetDataChange={handleSetDataChange}
+              onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
               isUnscheduled={false}
             />
           ))}
