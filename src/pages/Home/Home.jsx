@@ -1,8 +1,8 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=107-1611
 
-import AppLayout from '@/components/layout/AppLayout';
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import AppLayout from "@/components/layout/AppLayout";
+import { Alert, AlertTitle } from "@/components/atoms/alert";
+import { Button } from "@/components/atoms/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/supabaseClient";
 
@@ -25,11 +25,13 @@ const Home = () => {
         <Alert>
           <AlertTitle>You are logged in as {email}</AlertTitle>
         </Alert>
-        <Button onClick={handleLogout} variant="destructive">Log out</Button>
+        <Button onClick={handleLogout} variant="destructive">
+          Log out
+        </Button>
       </div>
       Home Page
     </AppLayout>
   );
 };
 
-export default Home; 
+export default Home;

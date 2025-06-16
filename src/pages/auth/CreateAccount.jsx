@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/atoms/button";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/atoms/card";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-import AppLayout from '@/components/layout/AppLayout';
+import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
 
@@ -52,7 +49,7 @@ export default function CreateAccount() {
               </div>
               <div
                 className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
               >
                 Log in
               </div>
@@ -102,7 +99,9 @@ export default function CreateAccount() {
               className="w-full h-[56px]"
               onClick={handleSignup}
             >
-              {signupMutation.isPending ? "Creating Account..." : "Create Account"}
+              {signupMutation.isPending
+                ? "Creating Account..."
+                : "Create Account"}
             </Button>
           </CardContent>
         </Card>

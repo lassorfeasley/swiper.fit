@@ -4,14 +4,19 @@ import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
-import ProgramCard from '@/components/common/Cards/ProgramCard';
+import ProgramCard from "@/components/common/Cards/ProgramCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
+import {
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/atoms/sheet";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import AppLayout from '@/components/layout/AppLayout';
+import { Input } from "@/components/atoms/input";
+import { Button } from "@/components/atoms/button";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import AppLayout from "@/components/layout/AppLayout";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -37,14 +42,16 @@ const ProgramsIndex = () => {
       // Fetch programs and their exercises for this user
       const { data, error } = await supabase
         .from("programs")
-        .select(`
+        .select(
+          `
           id,
           program_name,
           program_exercises (
             exercise_id,
             exercises ( name )
           )
-        `)
+        `
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
@@ -53,11 +60,11 @@ const ProgramsIndex = () => {
         return;
       }
       // Map exercises for each program
-      const programsWithExercises = (data || []).map(program => ({
+      const programsWithExercises = (data || []).map((program) => ({
         ...program,
         exerciseNames: (program.program_exercises || [])
-          .map(pe => pe.exercises?.name)
-          .filter(Boolean)
+          .map((pe) => pe.exercises?.name)
+          .filter(Boolean),
       }));
       setPrograms(programsWithExercises);
       setLoading(false);
@@ -79,7 +86,7 @@ const ProgramsIndex = () => {
       // Success: close sheet, refresh list, and redirect
       setShowSheet(false);
       setProgramName("");
-      setRefreshFlag(f => f + 1);
+      setRefreshFlag((f) => f + 1);
       navigate(`/programs/${program_id}/configure`);
     } catch (err) {
       alert(err.message || "Failed to create program");
@@ -89,11 +96,12 @@ const ProgramsIndex = () => {
   const isReady = programName.trim().length > 0;
 
   // Filter programs by search
-  const filteredPrograms = programs.filter(program => {
+  const filteredPrograms = programs.filter((program) => {
     const q = search.toLowerCase();
     return (
       program.program_name?.toLowerCase().includes(q) ||
-      (program.exerciseNames && program.exerciseNames.some(name => name.toLowerCase().includes(q)))
+      (program.exerciseNames &&
+        program.exerciseNames.some((name) => name.toLowerCase().includes(q)))
     );
   });
 
@@ -138,27 +146,31 @@ const ProgramsIndex = () => {
       {/* Sheet for creating a new program */}
       {showSheet && (
         <SwiperSheet open={showSheet} onOpenChange={setShowSheet}>
-            <SheetHeader className="text-left items-start">
-              <SheetTitle className="text-left">What should we call this program?</SheetTitle>
-              <SheetDescription className="text-left">Enter program name</SheetDescription>
-            </SheetHeader>
-            <Input
-              label="Program name"
-              value={programName}
-              onChange={e => setProgramName(e.target.value)}
-              placeholder="Enter program name"
-              ref={inputRef}
-              className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
-            />
-            <SheetFooter className="text-left items-start">
-              <Button
-                className="w-full text-left justify-start"
-                disabled={!isReady}
-                onClick={handleCreateProgram}
-              >
-                Create program
-              </Button>
-            </SheetFooter>
+          <SheetHeader className="text-left items-start">
+            <SheetTitle className="text-left">
+              What should we call this program?
+            </SheetTitle>
+            <SheetDescription className="text-left">
+              Enter program name
+            </SheetDescription>
+          </SheetHeader>
+          <Input
+            label="Program name"
+            value={programName}
+            onChange={(e) => setProgramName(e.target.value)}
+            placeholder="Enter program name"
+            ref={inputRef}
+            className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
+          />
+          <SheetFooter className="text-left items-start">
+            <Button
+              className="w-full text-left justify-start"
+              disabled={!isReady}
+              onClick={handleCreateProgram}
+            >
+              Create program
+            </Button>
+          </SheetFooter>
         </SwiperSheet>
       )}
     </AppLayout>
