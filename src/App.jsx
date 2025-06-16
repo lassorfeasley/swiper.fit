@@ -7,7 +7,7 @@ import Workout from "./pages/workout/workout";
 import ActiveWorkout from "./pages/workout/active-workout";
 import CompletedWorkout from "./pages/history/completed-workout";
 import ProgramBuilder from "./pages/programs/program-builder";
-import "./app.css";
+import "./App.css";
 import { NavBarVisibilityProvider } from "@/contexts/navbar-visibility-context";
 import React, { useEffect } from "react";
 import { AuthProvider } from "./contexts/auth-context";
