@@ -12,7 +12,7 @@ import {
   NavBarVisibilityProvider,
   useNavBarVisibility,
 } from "@/contexts/navbar-visibility-context";
-import React, { createContext, useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { AuthProvider } from "./contexts/auth-context";
 import Login from "./pages/auth/login";
 import CreateAccount from "./pages/auth/create-account";
@@ -20,12 +20,8 @@ import PasswordReset from "./pages/auth/password-reset";
 import UpdatePassword from "./pages/auth/update-password";
 import RequireAuth from "@/lib/auth/require-auth";
 import { ActiveWorkoutProvider } from "./contexts/active-workout-context";
+import { PageNameProvider } from "./contexts/page-name-context";
 import DemoPage from "./pages/sandbox/demo-page";
-
-export const PageNameContext = createContext({
-  setPageName: () => {},
-  pageName: "",
-});
 
 function AppContent() {
   const location = useLocation();
@@ -73,7 +69,6 @@ function AppContent() {
 const queryClient = new QueryClient();
 
 export default function App() {
-  const [pageName, setPageName] = useState("");
   useEffect(() => {
     if (import.meta.env.MODE === "development") {
       document.body.setAttribute("data-env", "development");
@@ -83,11 +78,11 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ActiveWorkoutProvider>
-          <PageNameContext.Provider value={{ pageName, setPageName }}>
+          <PageNameProvider>
             <NavBarVisibilityProvider>
               <AppContent />
             </NavBarVisibilityProvider>
-          </PageNameContext.Provider>
+          </PageNameProvider>
         </ActiveWorkoutProvider>
       </AuthProvider>
     </QueryClientProvider>
