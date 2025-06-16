@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, Link } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/home/home";
 import Programs from "./pages/programs/programs";
@@ -8,10 +8,7 @@ import ActiveWorkout from "./pages/workout/active-workout";
 import CompletedWorkout from "./pages/history/completed-workout";
 import ProgramBuilder from "./pages/programs/program-builder";
 import "./App.css";
-import {
-  NavBarVisibilityProvider,
-  useNavBarVisibility,
-} from "@/contexts/navbar-visibility-context";
+import { NavBarVisibilityProvider } from "@/contexts/navbar-visibility-context";
 import React, { useEffect } from "react";
 import { AuthProvider } from "./contexts/auth-context";
 import Login from "./pages/auth/login";
@@ -25,7 +22,6 @@ import DemoPage from "./pages/sandbox/demo-page";
 
 function AppContent() {
   const location = useLocation();
-  const { navBarVisible } = useNavBarVisibility();
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
     /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname) ||
