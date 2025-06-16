@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertDescription } from "@/components/ui/alert";
+import { Alert } from "@/components/atoms/alert";
+import { Button } from "@/components/atoms/button";
+import { Card, CardContent } from "@/components/atoms/card";
+import { AlertDescription } from "@/components/atoms/alert";
 import { AlertCircle, CheckCircle2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AppLayout from '@/components/layout/AppLayout';
+import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
-import { SwiperCard, SwiperCardContent } from "@/components/molecules/swiper-card";
+import {
+  SwiperCard,
+  SwiperCardContent,
+} from "@/components/molecules/swiper-card";
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -28,12 +31,15 @@ export default function UpdatePassword() {
 
     // Validate password strength
     if (newPassword.length < 6) {
-      setStatus({ type: "error", message: "Password must be at least 6 characters long" });
+      setStatus({
+        type: "error",
+        message: "Password must be at least 6 characters long",
+      });
       return;
     }
 
     const { error } = await supabase.auth.updateUser({
-      password: newPassword
+      password: newPassword,
     });
 
     if (error) {
@@ -44,7 +50,7 @@ export default function UpdatePassword() {
       setNewPassword("");
       setConfirmPassword("");
       // Navigate to home page after a short delay
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate("/"), 2000);
     }
   };
 
@@ -80,7 +86,7 @@ export default function UpdatePassword() {
                   type="password"
                   placeholder="Enter new password"
                   value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   required
                   icon={<Eye className="size-6 text-neutral-300" />}
                 />
@@ -93,7 +99,7 @@ export default function UpdatePassword() {
                   type="password"
                   placeholder="Confirm new password"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   icon={<Eye className="size-6 text-neutral-300" />}
                 />
@@ -107,4 +113,4 @@ export default function UpdatePassword() {
       </div>
     </AppLayout>
   );
-} 
+}

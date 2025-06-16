@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/atoms/button";
+import { Card, CardContent } from "@/components/atoms/card";
+import { Alert, AlertDescription } from "@/components/atoms/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AppLayout from '@/components/layout/AppLayout';
+import AppLayout from "@/components/layout/AppLayout";
 import { Link } from "react-router-dom";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -17,18 +17,21 @@ export default function PasswordReset() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: "", message: "" });
-    
+
     // Get the current origin (e.g., http://localhost:3000)
     const origin = window.location.origin;
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/update-password`
+      redirectTo: `${origin}/update-password`,
     });
-    
+
     if (error) {
       setStatus({ type: "error", message: error.message });
     } else {
-      setStatus({ type: "success", message: "Check your email for a password reset link." });
+      setStatus({
+        type: "success",
+        message: "Check your email for a password reset link.",
+      });
     }
   };
 
@@ -60,7 +63,7 @@ export default function PasswordReset() {
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <Button type="submit" className="w-full h-[56px]">
@@ -69,7 +72,7 @@ export default function PasswordReset() {
             </form>
             <div
               className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer text-center mt-2"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
             >
               Back to login
             </div>
@@ -78,4 +81,4 @@ export default function PasswordReset() {
       </div>
     </AppLayout>
   );
-} 
+}

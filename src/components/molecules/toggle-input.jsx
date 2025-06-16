@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/atoms/toggle-group";
 import { cn } from "@/lib/utils";
 
 const ToggleInput = ({
@@ -10,7 +10,12 @@ const ToggleInput = ({
   className = "",
 }) => {
   return (
-    <div className={cn("w-full inline-flex flex-col justify-start items-center gap-1", className)}>
+    <div
+      className={cn(
+        "w-full inline-flex flex-col justify-start items-center gap-1",
+        className
+      )}
+    >
       {label && (
         <div className="self-stretch text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal mb-1">
           {label}
@@ -42,4 +47,4 @@ const ToggleInput = ({
   );
 };
 
-export default ToggleInput; 
+export default ToggleInput;

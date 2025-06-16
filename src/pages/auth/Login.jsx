@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/atoms/button";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/atoms/alert";
 import { AlertCircle } from "lucide-react";
-import { SwiperCard, SwiperCardContent } from "@/components/molecules/swiper-card";
-import AppLayout from '@/components/layout/AppLayout';
+import {
+  SwiperCard,
+  SwiperCardContent,
+} from "@/components/molecules/swiper-card";
+import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
 
@@ -36,7 +39,8 @@ export default function Login() {
     onError: (error) => {
       const msg = error.message.toLowerCase();
       setEmailError(
-        msg.includes("email") || (!msg.includes("email") && !msg.includes("password"))
+        msg.includes("email") ||
+          (!msg.includes("email") && !msg.includes("password"))
       );
       setPasswordError(
         msg.includes("password") ||
@@ -64,7 +68,7 @@ export default function Login() {
               </div>
               <div
                 className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
-                onClick={() => navigate('/create-account')}
+                onClick={() => navigate("/create-account")}
               >
                 Sign up
               </div>
@@ -96,7 +100,7 @@ export default function Login() {
                 </div>
                 <div
                   className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
-                  onClick={() => navigate('/reset-password')}
+                  onClick={() => navigate("/reset-password")}
                 >
                   Forgot your password?
                 </div>

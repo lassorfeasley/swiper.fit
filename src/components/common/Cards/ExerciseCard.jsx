@@ -1,32 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import CardPill from '@/components/molecules/CardPill';
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import SetEditForm from '@/components/common/forms/SetEditForm';
-import CardWrapper from './Wrappers/CardWrapper';
-import { Reorder } from 'framer-motion';
-import AddNewExerciseForm from '../forms/AddNewExerciseForm';
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import CardPill from "@/components/molecules/CardPill";
+import { SheetHeader, SheetTitle } from "@/components/atoms/sheet";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import SetEditForm from "@/components/common/forms/SetEditForm";
+import CardWrapper from "./Wrappers/CardWrapper";
+import { Reorder } from "framer-motion";
+import AddNewExerciseForm from "../forms/AddNewExerciseForm";
 
-const ExerciseCard = ({ 
-  exerciseName, 
-  setConfigs = [], 
-  className = '', 
-  onEdit, 
-  onSetConfigsChange, 
-  mode = 'default',
+const ExerciseCard = ({
+  exerciseName,
+  setConfigs = [],
+  className = "",
+  onEdit,
+  onSetConfigsChange,
+  mode = "default",
   reorderable = false,
   reorderValue,
   onCardClick,
-  ...props 
+  ...props
 }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetIndex, setEditSetIndex] = useState(null);
-  const [editFormValues, setEditFormValues] = useState({ reps: 0, weight: 0, unit: 'lbs' });
+  const [editFormValues, setEditFormValues] = useState({
+    reps: 0,
+    weight: 0,
+    unit: "lbs",
+  });
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
   const [isDragging, setIsDragging] = useState(false);
 
-  const setsAreEditable = onSetConfigsChange !== undefined && mode !== 'completed';
+  const setsAreEditable =
+    onSetConfigsChange !== undefined && mode !== "completed";
 
   // Keep localSetConfigs in sync with setConfigs prop
   useEffect(() => {
@@ -43,8 +48,10 @@ const ExerciseCard = ({
 
   // Save edited set values
   const handleEditFormSave = (values) => {
-    setLocalSetConfigs(prev => {
-      const updated = prev.map((cfg, i) => i === editSetIndex ? { ...cfg, ...values } : cfg);
+    setLocalSetConfigs((prev) => {
+      const updated = prev.map((cfg, i) =>
+        i === editSetIndex ? { ...cfg, ...values } : cfg
+      );
       if (onSetConfigsChange) {
         onSetConfigsChange(updated);
       }
@@ -64,26 +71,36 @@ const ExerciseCard = ({
       data-layer="CardContentsWrapper"
       className="w-full p-4 bg-stone-50 rounded-lg"
       onClick={handleCardClick}
-      style={{ cursor: setsAreEditable && onCardClick ? 'pointer' : 'default' }}
+      style={{ cursor: setsAreEditable && onCardClick ? "pointer" : "default" }}
     >
-      <div data-layer="ExersiceCardContent" className="w-full flex flex-col gap-2">
-        <div data-layer="Exercise Name" className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7">
+      <div
+        data-layer="ExersiceCardContent"
+        className="w-full flex flex-col gap-2"
+      >
+        <div
+          data-layer="Exercise Name"
+          className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7"
+        >
           {exerciseName}
         </div>
-        <div data-layer="Frame 5" data-property-1="Default" className="w-full flex flex-wrap gap-2">
+        <div
+          data-layer="Frame 5"
+          data-property-1="Default"
+          className="w-full flex flex-wrap gap-2"
+        >
           {localSetConfigs.map((config, idx) => (
             <CardPill
               key={idx}
               reps={config.reps}
               weight={config.weight}
-              unit={config.unit || 'lbs'}
+              unit={config.unit || "lbs"}
               editable={setsAreEditable}
               onEdit={(e) => {
                 e.stopPropagation();
                 handleSetEdit(idx);
               }}
-              complete={mode === 'completed'}
-              className={mode === 'completed' ? 'bg-green-500 text-white' : ''}
+              complete={mode === "completed"}
+              className={mode === "completed" ? "bg-green-500 text-white" : ""}
             />
           ))}
         </div>
@@ -107,13 +124,13 @@ const ExerciseCard = ({
       )}
       {setsAreEditable && (
         <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-            <SheetHeader className="mb-4">
-              <SheetTitle>Edit set</SheetTitle>
-            </SheetHeader>
-            <SetEditForm
-              onSave={handleEditFormSave}
-              initialValues={editFormValues}
-            />
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit set</SheetTitle>
+          </SheetHeader>
+          <SetEditForm
+            onSave={handleEditFormSave}
+            initialValues={editFormValues}
+          />
         </SwiperSheet>
       )}
     </CardWrapper>
@@ -122,18 +139,20 @@ const ExerciseCard = ({
 
 ExerciseCard.propTypes = {
   exerciseName: PropTypes.string.isRequired,
-  setConfigs: PropTypes.arrayOf(PropTypes.shape({
-    reps: PropTypes.number,
-    weight: PropTypes.number,
-    unit: PropTypes.string
-  })),
+  setConfigs: PropTypes.arrayOf(
+    PropTypes.shape({
+      reps: PropTypes.number,
+      weight: PropTypes.number,
+      unit: PropTypes.string,
+    })
+  ),
   className: PropTypes.string,
   onEdit: PropTypes.func,
   onSetConfigsChange: PropTypes.func,
-  mode: PropTypes.oneOf(['default', 'completed']),
+  mode: PropTypes.oneOf(["default", "completed"]),
   reorderable: PropTypes.bool,
   reorderValue: PropTypes.any,
   onCardClick: PropTypes.func,
 };
 
-export default ExerciseCard; 
+export default ExerciseCard;

@@ -1,11 +1,4 @@
-import { Routes, Route, useLocation, Link } from "react-router-dom";
-// import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
-import {
-  Home as HomeIcon,
-  Star,
-  RotateCcw,
-  Play,
-} from "lucide-react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home/Home";
 import Programs from "./pages/Programs/Programs";
@@ -13,23 +6,21 @@ import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
-// import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
-import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
+import {
+  NavBarVisibilityProvider,
+  useNavBarVisibility,
+} from "@/contexts/NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from "react";
-// import SetCardDemo from "./pages/Sandbox/SetCardDemo";
-// import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from "./contexts/AuthContext";
 import Login from "./pages/auth/Login";
 import CreateAccount from "./pages/auth/CreateAccount";
 import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
-// import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
-import { ActiveWorkoutProvider, useActiveWorkout } from './contexts/ActiveWorkoutContext';
-import { Button } from "@/components/ui/button";
-import DemoPage from './pages/Sandbox/DemoPage';
+import { ActiveWorkoutProvider } from "./contexts/ActiveWorkoutContext";
+import DemoPage from "./pages/Sandbox/DemoPage";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -93,7 +84,10 @@ function AppContent() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Home />} />
             <Route path="/programs" element={<Programs />} />
-            <Route path="/programs/:programId/configure" element={<ProgramBuilder />} />
+            <Route
+              path="/programs/:programId/configure"
+              element={<ProgramBuilder />}
+            />
             <Route path="/history" element={<History />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
