@@ -1,23 +1,21 @@
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription,
+} from "../atoms/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
-import { Menu } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Button } from "../atoms/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarNav,
-  SidebarNavItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
-import { useActiveWorkout } from '@/contexts/ActiveWorkoutContext';
+import { SidebarFooter } from "../atoms/sidebar";
+import ActiveWorkoutNav from "../molecules/active-workout-nav";
+import { useActiveWorkout } from "../../contexts/active-workout-context";
 
 function ResponsiveNav({ navItems, onEnd = () => {} }) {
   const location = useLocation();
@@ -27,23 +25,23 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
   const { isWorkoutActive, endWorkout, activeWorkout } = useActiveWorkout();
 
   // Remove the 'Workout' item from navItems
-  const filteredNavItems = navItems.filter(item => item.label !== 'Workout');
+  const filteredNavItems = navItems.filter((item) => item.label !== "Workout");
 
   // Determine nav state
-  let workoutNavState = 'c2a';
+  let workoutNavState = "c2a";
   if (isWorkoutActive) {
-    if (location.pathname === '/workout/active') {
-      workoutNavState = 'active-workout';
+    if (location.pathname === "/workout/active") {
+      workoutNavState = "active-workout";
     } else {
-      workoutNavState = 'return-to-workout';
+      workoutNavState = "return-to-workout";
     }
-  } else if (location.pathname === '/workout') {
-    workoutNavState = 'programPrompt';
+  } else if (location.pathname === "/workout") {
+    workoutNavState = "programPrompt";
   }
 
   // Handler for C2A click
   const handleC2AClick = () => {
-    navigate('/workout');
+    navigate("/workout");
   };
 
   // Sidebar Content (shared)
@@ -53,24 +51,30 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
       <div className="flex-1 flex flex-col justify-center">
         <nav className="flex flex-col">
           {filteredNavItems.map((item) => {
-            const selected = new RegExp(`^${item.to}(\/|$)`).test(location.pathname);
+            const selected = new RegExp(`^${item.to}(\/|$)`).test(
+              location.pathname
+            );
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
                   "group flex items-center gap-1 px-6 py-3 text-xs font-semibold font-['Space_Grotesk'] transition-colors",
-                  selected 
-                    ? "bg-neutral-300 text-neutral-500" 
+                  selected
+                    ? "bg-neutral-300 text-neutral-500"
                     : "text-neutral-400 hover:bg-neutral-200/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 )}
                 aria-current={selected ? "page" : undefined}
               >
-                <span className={cn(
-                  "size-6 flex items-center justify-center",
-                  selected ? "text-neutral-500" : "text-neutral-400 group-hover:text-neutral-500"
-                )}>
+                <span
+                  className={cn(
+                    "size-6 flex items-center justify-center",
+                    selected
+                      ? "text-neutral-500"
+                      : "text-neutral-400 group-hover:text-neutral-500"
+                  )}
+                >
                   {item.icon}
                 </span>
                 <span className="leading-none">{item.label}</span>
@@ -97,9 +101,7 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className={cn(
-          "w-64 p-0 border-r bg-stone-100 flex flex-col h-full"
-        )}
+        className={cn("w-64 p-0 border-r bg-stone-100 flex flex-col h-full")}
       >
         <SheetTitle asChild>
           <VisuallyHidden>Sidebar</VisuallyHidden>
@@ -123,7 +125,12 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
         <SidebarContent />
         <SidebarFooter>
           <div className="w-full px-5 pb-8">
-            <ActiveWorkoutNav variant="sidebar" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
+            <ActiveWorkoutNav
+              variant="sidebar"
+              state={workoutNavState}
+              onClick={handleC2AClick}
+              onEnd={onEnd}
+            />
           </div>
         </SidebarFooter>
       </div>
@@ -134,11 +141,18 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
   const MobileNav = () => (
     <nav className="md:hidden fixed bottom-0 left-0 w-full bg-stone-100 border-t border-neutral-300 flex flex-col items-center px-6 py-3 z-50 h-32">
       <div className="w-full mb-[20px]">
-        <ActiveWorkoutNav variant="sidebar" state={workoutNavState} onClick={handleC2AClick} onEnd={onEnd} />
+        <ActiveWorkoutNav
+          variant="sidebar"
+          state={workoutNavState}
+          onClick={handleC2AClick}
+          onEnd={onEnd}
+        />
       </div>
       <div className="flex flex-1 max-w-[350px] justify-between items-center mx-auto w-full h-full">
         {filteredNavItems.map((item) => {
-          const selected = new RegExp(`^${item.to}(\/|$)`).test(location.pathname);
+          const selected = new RegExp(`^${item.to}(\/|$)`).test(
+            location.pathname
+          );
           return (
             <Link
               key={item.to}
@@ -147,16 +161,24 @@ function ResponsiveNav({ navItems, onEnd = () => {} }) {
               aria-current={selected ? "page" : undefined}
             >
               <div className="size-6 flex items-center justify-center">
-                <span className={cn(
-                  selected ? "text-neutral-500" : "text-neutral-400 group-hover:text-neutral-500"
-                )}>
+                <span
+                  className={cn(
+                    selected
+                      ? "text-neutral-500"
+                      : "text-neutral-400 group-hover:text-neutral-500"
+                  )}
+                >
                   {item.icon}
                 </span>
               </div>
-              <div className={cn(
-                "text-center text-xs font-semibold font-['Space_Grotesk'] leading-none",
-                selected ? "text-neutral-500" : "text-neutral-400 group-hover:text-neutral-500"
-              )}>
+              <div
+                className={cn(
+                  "text-center text-xs font-semibold font-['Space_Grotesk'] leading-none",
+                  selected
+                    ? "text-neutral-500"
+                    : "text-neutral-400 group-hover:text-neutral-500"
+                )}
+              >
                 {item.label}
               </div>
             </Link>
@@ -188,4 +210,4 @@ ResponsiveNav.propTypes = {
   onEnd: PropTypes.func,
 };
 
-export default ResponsiveNav; 
+export default ResponsiveNav;

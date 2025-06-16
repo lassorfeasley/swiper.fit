@@ -1,71 +1,31 @@
 import { Routes, Route, useLocation, Link } from "react-router-dom";
-// import { MdHome, MdDirectionsRun, MdHistory, MdAddCircle } from "react-icons/md";
-import {
-  Home as HomeIcon,
-  Star,
-  RotateCcw,
-  Play,
-} from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Home from "./pages/Home/Home";
-import Programs from "./pages/Programs/Programs";
-import History from "./pages/History/History";
-import Workout from "./pages/Workout/Workout";
-import ActiveWorkout from "./pages/Workout/ActiveWorkout";
-import CompletedWorkout from "./pages/History/CompletedWorkout";
-// import CreateOrEditExerciseDemo from "./pages/Sandbox/CreateOrEditExerciseDemo";
-import ProgramBuilder from "./pages/Programs/ProgramBuilder";
+import Home from "./pages/home/home";
+import Programs from "./pages/programs/programs";
+import History from "./pages/history/history";
+import Workout from "./pages/workout/workout";
+import ActiveWorkout from "./pages/workout/active-workout";
+import CompletedWorkout from "./pages/history/completed-workout";
+import ProgramBuilder from "./pages/programs/program-builder";
 import "./App.css";
-import { NavBarVisibilityProvider, useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
+import {
+  NavBarVisibilityProvider,
+  useNavBarVisibility,
+} from "@/contexts/navbar-visibility-context";
 import React, { createContext, useState, useEffect } from "react";
-// import SetCardDemo from "./pages/Sandbox/SetCardDemo";
-// import SwipeSwitchDemo from "./pages/Sandbox/SwipeSwitchDemo";
-import { AuthProvider } from './contexts/AuthContext';
-import Login from "./pages/auth/Login";
-import CreateAccount from "./pages/auth/CreateAccount";
-import PasswordReset from "./pages/auth/PasswordReset";
-import UpdatePassword from "./pages/auth/UpdatePassword";
-import RequireAuth from "@/lib/auth/RequireAuth";
-// import PageHeaderDemo from "./pages/Sandbox/PageHeaderDemo";
-import { ActiveWorkoutProvider, useActiveWorkout } from './contexts/ActiveWorkoutContext';
-import { Button } from "@/components/ui/button";
-import DemoPage from './pages/Sandbox/DemoPage';
+import { AuthProvider } from "./contexts/auth-context";
+import Login from "./pages/auth/login";
+import CreateAccount from "./pages/auth/create-account";
+import PasswordReset from "./pages/auth/password-reset";
+import UpdatePassword from "./pages/auth/update-password";
+import RequireAuth from "@/lib/auth/require-auth";
+import { ActiveWorkoutProvider } from "./contexts/active-workout-context";
+import DemoPage from "./pages/sandbox/demo-page";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
   pageName: "",
 });
-
-function PageNameFooter() {
-  const { pageName } = React.useContext(PageNameContext);
-  if (!pageName) return null;
-  return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 8,
-        left: 0,
-        width: "100vw",
-        textAlign: "center",
-        pointerEvents: "none",
-        zIndex: 9999,
-      }}
-    >
-      <span
-        style={{
-          background: "rgba(30,30,40,0.5)",
-          color: "#fff",
-          fontSize: 12,
-          borderRadius: 8,
-          padding: "2px 12px",
-          opacity: 0.7,
-        }}
-      >
-        {pageName}
-      </span>
-    </div>
-  );
-}
 
 function AppContent() {
   const location = useLocation();
@@ -93,7 +53,10 @@ function AppContent() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Home />} />
             <Route path="/programs" element={<Programs />} />
-            <Route path="/programs/:programId/configure" element={<ProgramBuilder />} />
+            <Route
+              path="/programs/:programId/configure"
+              element={<ProgramBuilder />}
+            />
             <Route path="/history" element={<History />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
