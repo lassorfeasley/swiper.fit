@@ -37,7 +37,7 @@ const ActiveWorkout = () => {
     workoutProgress,
     updateWorkoutProgress,
     saveSet,
-    updateSet
+    updateSet,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -114,17 +114,19 @@ const ActiveWorkout = () => {
       // New signature: an array of update objects
       updateWorkoutProgress(exerciseId, setIdOrUpdates);
       // Persist each update to the database if the set has an id
-      setIdOrUpdates.forEach(update => {
+      setIdOrUpdates.forEach((update) => {
         if (update.id) {
           updateSet(update.id, update.changes);
         }
       });
     } else {
       // Legacy signature: single field update, convert to new format
-      const updates = [{
-        id: setIdOrUpdates,
-        changes: { [field]: value }
-      }];
+      const updates = [
+        {
+          id: setIdOrUpdates,
+          changes: { [field]: value },
+        },
+      ];
       updateWorkoutProgress(exerciseId, updates);
       if (setIdOrUpdates) {
         updateSet(setIdOrUpdates, { [field]: value });
@@ -144,25 +146,24 @@ const ActiveWorkout = () => {
       // This is a simplified example. You might need to find the correct program_set ID
       // based on the exerciseId and the set's order or its own ID if you store it.
       const { data, error } = await supabase
-        .from('program_sets')
+        .from("program_sets")
         .update({
           reps: formValues.reps,
           weight: formValues.weight,
           weight_unit: formValues.unit,
           set_type: formValues.set_type,
-          timed_set_duration: formValues.timed_set_duration
+          timed_set_duration: formValues.timed_set_duration,
         })
-        .eq('program_id', activeWorkout.programId)
-        .eq('exercise_id', exerciseId)
+        .eq("program_id", activeWorkout.programId)
+        .eq("exercise_id", exerciseId)
         // This 'eq' might need adjustment based on your schema.
         // If you don't have a direct setId on program_sets, you might need to
         // fetch them first and find the right one to update based on order.
-        .eq('id', setId); 
+        .eq("id", setId);
 
       if (error) throw error;
-
     } catch (error) {
-      console.error('Error updating program set:', error);
+      console.error("Error updating program set:", error);
       // Optionally, show an error to the user
     }
   };

@@ -19,4 +19,4 @@ const SwiperSheet = ({ open, onOpenChange, children, className, ...props }) => {
   );
 };
 
-export { SwiperSheet };
+export default SwiperSheet;

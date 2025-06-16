@@ -17,12 +17,12 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
-import CardPill from "@/components/molecules/CardPill";
-import { SwiperSheet } from "@/components/ui/swiper-sheet";
-import SetEditForm from "@/components/common/forms/SetEditForm";
+import CardPill from "@/components/molecules/card-pill";
+import SwiperSheet from "@/components/atoms/swiper-sheet";
+import SetEditForm from "@/components/common/forms/set-edit-form";
 import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
-import CardWrapper from "./Wrappers/CardWrapper";
+import CardWrapper from "./wrappers/card-wrapper";
 
 const ActiveExerciseCard = ({
   exerciseId,
