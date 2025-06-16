@@ -9,10 +9,11 @@
 //
 // Before making any style changes, confirm directly with the user.
 // ==========================================
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Reorder } from 'framer-motion';
-import { cn } from '@/lib/utils';
+
+import React from "react";
+import PropTypes from "prop-types";
+import { Reorder } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const CardWrapper = ({
   children,
@@ -32,7 +33,10 @@ const CardWrapper = ({
 
   return (
     <div
-      className={cn('CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden', className)}
+      className={cn(
+        "CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden",
+        className
+      )}
       style={{ maxWidth: 500, ...(props.style || {}) }}
       {...divProps}
     >

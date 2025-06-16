@@ -153,38 +153,30 @@ export function ActiveWorkoutProvider({ children }) {
     setWorkoutProgress({});
   }, [activeWorkout, elapsedTime]);
 
-  const updateWorkoutProgress = useCallback(
-    async (exerciseId, setId, field, value) => {
-      // Optimistic UI update
-      // Coerce setId to a string (or number if possible)
-      let validSetId = setId;
-      if (typeof setId !== "string" && typeof setId !== "number") {
-        if (
-          typeof setId === "object" &&
-          setId !== null &&
-          "toString" in setId
-        ) {
-          validSetId = setId.toString();
+  const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
+    setWorkoutProgress((prev) => {
+      const prevSets = prev[exerciseId] || [];
+
+      // Create a mutable copy to work with
+      let newSets = [...prevSets];
+
+      updates.forEach((update) => {
+        // Coerce ID to string for consistent matching
+        const updateId = String(update.id);
+        const setIdx = newSets.findIndex((s) => String(s.id) === updateId);
+
+        if (setIdx !== -1) {
+          // Update existing set
+          newSets[setIdx] = { ...newSets[setIdx], ...update.changes };
         } else {
-          validSetId = String(setId);
+          // Add new set if not found
+          newSets.push({ id: update.id, ...update.changes });
         }
-      }
-      setWorkoutProgress((prev) => {
-        const prevSets = prev[exerciseId] || [];
-        const setIdx = prevSets.findIndex((s) => s.id === validSetId);
-        let newSets;
-        if (setIdx === -1) {
-          newSets = [...prevSets, { id: validSetId, [field]: value }];
-        } else {
-          newSets = prevSets.map((s, i) =>
-            i === setIdx ? { ...s, [field]: value } : s
-          );
-        }
-        return { ...prev, [exerciseId]: newSets };
       });
-    },
-    []
-  );
+
+      return { ...prev, [exerciseId]: newSets };
+    });
+  }, []);
 
   const saveSet = useCallback(
     async (exerciseId, setConfig) => {
@@ -223,6 +215,52 @@ export function ActiveWorkoutProvider({ children }) {
     [activeWorkout, user]
   );
 
+  const updateSet = useCallback(
+    async (setId, changes) => {
+      if (!activeWorkout?.id || !user?.id) {
+        console.error("Cannot update set: no active workout or user.");
+        return;
+      }
+      // Remove 'status' from changes before sending to Supabase
+      const { status, ...dbChanges } = changes;
+      // Don't send an empty update
+      if (!setId || Object.keys(dbChanges).length === 0) return;
+
+      const { data, error } = await supabase
+        .from("sets")
+        .update({
+          ...dbChanges,
+          reps:
+            dbChanges.reps !== undefined ? Number(dbChanges.reps) : undefined,
+          weight:
+            dbChanges.weight !== undefined
+              ? Number(dbChanges.weight)
+              : undefined,
+        })
+        .eq("id", setId)
+        .select(); // removed .single()
+
+      if (error) {
+        console.error("Error updating set:", error);
+      } else if (data && data.length === 1) {
+        // Update local state with the new set data
+        setWorkoutProgress((prev) => {
+          const newProgress = { ...prev };
+          for (const exerciseId in newProgress) {
+            newProgress[exerciseId] = newProgress[exerciseId].map((s) =>
+              String(s.id) === String(setId) ? { ...s, ...data[0] } : s
+            );
+          }
+          return newProgress;
+        });
+      } else {
+        // No row updated, or multiple rows (shouldn't happen)
+        console.warn("No set updated for id", setId);
+      }
+    },
+    [activeWorkout, user]
+  );
+
   return (
     <ActiveWorkoutContext.Provider
       value={{
@@ -236,6 +274,7 @@ export function ActiveWorkoutProvider({ children }) {
         workoutProgress,
         updateWorkoutProgress,
         saveSet,
+        updateSet,
         loading,
       }}
     >

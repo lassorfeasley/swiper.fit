@@ -30,9 +30,9 @@ const ActiveWorkout = () => {
   const {
     activeWorkout,
     isWorkoutActive,
-    // elapsedTime,
-    // isPaused,
-    // togglePause,
+    elapsedTime,
+    isPaused,
+    togglePause,
     endWorkout: contextEndWorkout,
     workoutProgress,
     updateWorkoutProgress,

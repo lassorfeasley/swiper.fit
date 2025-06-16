@@ -3,7 +3,13 @@ import { Sheet, SheetContent } from "@/components/atoms/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-const SwiperSheet = ({ open, onOpenChange, children, className, ...props }) => {
+export const SwiperSheet = ({
+  open,
+  onOpenChange,
+  children,
+  className,
+  ...props
+}) => {
   const isMobile = useIsMobile();
 
   return (

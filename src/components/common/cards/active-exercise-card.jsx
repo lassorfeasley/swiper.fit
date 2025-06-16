@@ -18,11 +18,11 @@ import React, {
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
 import CardPill from "@/components/molecules/card-pill";
-import SwiperSheet from "@/components/atoms/swiper-sheet";
+import { SwiperSheet } from "@/components/atoms/swiper-sheet";
 import SetEditForm from "@/components/common/forms/set-edit-form";
 import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
-import CardWrapper from "./wrappers/card-wrapper";
+import CardWrapper from "@/components/common/cards/wrappers/card-wrapper";
 
 const ActiveExerciseCard = ({
   exerciseId,
