@@ -16,6 +16,7 @@ const NumericInput = ({
   readOnly = false,
   id,
   allowTwoDecimals = false,
+  allowOneDecimal = false,
   unitLabel,
 }) => {
   const [internalValue, setInternalValue] = useState(value?.toString() ?? "");
@@ -23,10 +24,10 @@ const NumericInput = ({
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (value?.toString() !== internalValue) {
+    if (!isFocused && value?.toString() !== internalValue) {
       setInternalValue(value?.toString() ?? "");
     }
-  }, [value, internalValue]);
+  }, [value, isFocused, internalValue]);
 
   const getWrapperStyles = () => {
     const baseStyles = "self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-start items-center gap-0";
@@ -56,27 +57,41 @@ const NumericInput = ({
   const decrement = () => {
     if (readOnly) return;
     const newValue = Math.max(min, Number(value) - step);
-    onChange(newValue);
+    onChange(allowOneDecimal ? parseFloat(newValue.toFixed(1)) : newValue);
   };
 
   const increment = () => {
     if (readOnly) return;
     const newValue = Math.min(max, Number(value) + step);
-    onChange(newValue);
+    onChange(allowOneDecimal ? parseFloat(newValue.toFixed(1)) : newValue);
   };
 
   const handleInputChange = (e) => {
     if (readOnly) return;
     const val = e.target.value;
+
     if (val === "") {
       setInternalValue("");
+      onChange(min);
       return;
     }
-    const pattern = allowTwoDecimals ? /^-?\d*(\.\d{0,2})?$/ : /^-?\d*$/;
+
+    let pattern = /^-?\d*$/;
+    if (allowTwoDecimals) {
+      pattern = /^-?\d*(\.\d{0,2})?$/;
+    } else if (allowOneDecimal) {
+      pattern = /^-?\d*(\.\d{0,1})?$/;
+    }
+
     if (pattern.test(val)) {
       setInternalValue(val);
+      
+      if (val.endsWith('.') || val === '-' || val === '-.') {
+          return;
+      }
+
       const num = Number(val);
-      if (!isNaN(num) && val !== "-" && val !== "." && val !== "-." && val !== "0.") {
+      if (!isNaN(num)) {
         if (num >= min && num <= max) {
           onChange(num);
         }
@@ -90,7 +105,13 @@ const NumericInput = ({
     let num = Number(internalValue);
     if (isNaN(num)) num = min;
     num = Math.max(min, Math.min(max, num));
-    num = allowTwoDecimals ? Math.round(num * 100) / 100 : Math.round(num);
+    if (allowTwoDecimals) {
+      num = Math.round(num * 100) / 100;
+    } else if (allowOneDecimal) {
+      num = Math.round(num * 10) / 10;
+    } else {
+      num = Math.round(num);
+    }
     setInternalValue(num.toString());
     onChange(num);
   };
@@ -160,6 +181,7 @@ NumericInput.propTypes = {
   readOnly: PropTypes.bool,
   id: PropTypes.string,
   allowTwoDecimals: PropTypes.bool,
+  allowOneDecimal: PropTypes.bool,
   unitLabel: PropTypes.string,
 };
 

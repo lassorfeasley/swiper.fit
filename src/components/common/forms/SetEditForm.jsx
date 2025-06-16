@@ -83,14 +83,14 @@ const SetEditForm = ({
                 label="Reps"
                 value={reps}
                 onChange={(val) => handleValueChange('reps', val)}
-                unit="Reps"
+                unitLabel="Reps"
               />
             ) : (
               <NumericInput
                 label="Duration"
                 value={timed_set_duration}
                 onChange={(val) => handleValueChange('timed_set_duration', val)}
-                unit="Seconds"
+                unitLabel="Seconds"
                 step={5}
               />
             )}
@@ -102,15 +102,22 @@ const SetEditForm = ({
                 onChange={handleUnitChange}
             />
 
-            <NumericInput
-              label="Weight"
-              value={weight}
-              onChange={(val) => handleValueChange('weight', val)}
-              unit={unit === 'body' ? '' : unit.toUpperCase()}
-              step={0.1}
-              allowTwoDecimals={true}
-              disabled={unit === 'body'}
-            />
+            {unit === 'body' ? (
+              <div className="w-full inline-flex flex-col justify-start items-start gap-0">
+                <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
+                  <span className="text-slate-500 text-base font-normal font-['Space_Grotesk'] leading-normal">Bodyweight</span>
+                </div>
+              </div>
+            ) : (
+              <NumericInput
+                label="Weight"
+                value={weight}
+                onChange={(val) => handleValueChange('weight', val)}
+                unitLabel={unit}
+                step={1}
+                allowOneDecimal={true}
+              />
+            )}
 
           </div>
         </div>
