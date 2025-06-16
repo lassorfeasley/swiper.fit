@@ -95,8 +95,15 @@ const ActiveExerciseCard = ({
         // Transition to counting down
         updates.push({ id: setToComplete.id, changes: { status: 'counting-down-timed' } });
       } else if (setToComplete.status === 'counting-down-timed') {
-        // Timer finished, mark as complete
-        updates.push({ id: setToComplete.id, changes: { status: 'complete' } });
+        // Timer finished, mark as complete and persist set_type and timed_set_duration
+        updates.push({
+          id: setToComplete.id,
+          changes: {
+            status: 'complete',
+            set_type: setToComplete.set_type,
+            timed_set_duration: setToComplete.timed_set_duration,
+          }
+        });
         if (nextSet && nextSet.status === 'locked') {
           updates.push({ id: nextSet.id, changes: { status: 'active' } });
         }
@@ -154,6 +161,14 @@ const ActiveExerciseCard = ({
     if (!mountedRef.current || openSetIndex === null) return;
     
     const set_id_to_update = sets[openSetIndex].id;
+    let newStatus;
+    if (formValues.set_type === 'timed') {
+      // If the set was active or locked, set to ready-timed-set
+      const prevStatus = sets[openSetIndex].status;
+      if (prevStatus === 'active' || prevStatus === 'locked') {
+        newStatus = 'ready-timed-set';
+      }
+    }
     const updates = [{
       id: set_id_to_update,
       changes: {
@@ -162,6 +177,7 @@ const ActiveExerciseCard = ({
         unit: formValues.unit,
         set_type: formValues.set_type,
         timed_set_duration: formValues.set_type === 'timed' ? formValues.timed_set_duration : undefined,
+        ...(newStatus ? { status: newStatus } : {})
       }
     }];
 
@@ -176,16 +192,16 @@ const ActiveExerciseCard = ({
   // If expanded view is true, render the detailed view
   if (isExpanded && initialSetConfigs.length > 1) {
     return (
-      <CardWrapper className="Property1Expanded self-stretch rounded-xl flex flex-col justify-start items-start overflow-hidden gap-0">
-        <div className="Labelandexpand self-stretch p-3 bg-white inline-flex justify-start items-center overflow-hidden">
+      <CardWrapper className="Property1Expanded self-stretch p-3 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-4" style={{ maxWidth: 500 }}>
+        <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
             <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
             <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
               {sets.length === 1 ? 'One set' : sets.length === 2 ? 'Two sets' : sets.length === 3 ? 'Three sets' : `${sets.length} sets`}
             </div>
           </div>
-          <button type="button" onClick={() => setIsExpanded(false)} className="Lucide size-6 flex items-center justify-center relative overflow-hidden">
-            <Minimize2 className="w-4 h-4 outline outline-2 outline-offset-[-1px] outline-neutral-300" />
+          <button type="button" onClick={() => setIsExpanded(false)} className="SortDescending size-7 relative overflow-hidden">
+            <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
           </button>
         </div>
         {sets.map((set, idx) => {

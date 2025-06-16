@@ -143,28 +143,27 @@ export function ActiveWorkoutProvider({ children }) {
     setWorkoutProgress({});
   }, [activeWorkout, elapsedTime]);
 
-  const updateWorkoutProgress = useCallback(async (exerciseId, setId, field, value) => {
-    // Optimistic UI update
-    // Coerce setId to a string (or number if possible)
-    let validSetId = setId;
-    if (typeof setId !== 'string' && typeof setId !== 'number') {
-      if (typeof setId === 'object' && setId !== null && 'toString' in setId) {
-        validSetId = setId.toString();
-      } else {
-        validSetId = String(setId);
-      }
-    }
+  const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
     setWorkoutProgress(prev => {
       const prevSets = prev[exerciseId] || [];
-      const setIdx = prevSets.findIndex(s => s.id === validSetId);
-      let newSets;
-      if (setIdx === -1) {
-        newSets = [...prevSets, { id: validSetId, [field]: value }];
-      } else {
-        newSets = prevSets.map((s, i) =>
-          i === setIdx ? { ...s, [field]: value } : s
-        );
-      }
+      
+      // Create a mutable copy to work with
+      let newSets = [...prevSets];
+
+      updates.forEach(update => {
+        // Coerce ID to string for consistent matching
+        const updateId = String(update.id);
+        const setIdx = newSets.findIndex(s => String(s.id) === updateId);
+
+        if (setIdx !== -1) {
+          // Update existing set
+          newSets[setIdx] = { ...newSets[setIdx], ...update.changes };
+        } else {
+          // Add new set if not found
+          newSets.push({ id: update.id, ...update.changes });
+        }
+      });
+
       return { ...prev, [exerciseId]: newSets };
     });
   }, []);

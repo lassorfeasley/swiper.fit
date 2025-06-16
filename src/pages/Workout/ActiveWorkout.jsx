@@ -104,15 +104,16 @@ const ActiveWorkout = () => {
   }, [activeWorkout]);
 
   const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
-    // Support both legacy (setId, field, value) and new (updates array) signatures
     if (Array.isArray(setIdOrUpdates)) {
-      setIdOrUpdates.forEach(update => {
-        Object.entries(update.changes).forEach(([field, value]) => {
-          updateWorkoutProgress(exerciseId, update.id, field, value);
-        });
-      });
+      // New signature: an array of update objects
+      updateWorkoutProgress(exerciseId, setIdOrUpdates);
     } else {
-      updateWorkoutProgress(exerciseId, setIdOrUpdates, field, value);
+      // Legacy signature: single field update, convert to new format
+      const updates = [{
+        id: setIdOrUpdates,
+        changes: { [field]: value }
+      }];
+      updateWorkoutProgress(exerciseId, updates);
     }
   };
 

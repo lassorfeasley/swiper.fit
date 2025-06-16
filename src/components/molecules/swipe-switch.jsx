@@ -8,10 +8,9 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   const [thumbTravel, setThumbTravel] = useState(0);
   const [swipedComplete, setSwipedComplete] = useState(false);
   
-  // Internal state to manage timed sets
-  const [isTimerActive, setIsTimerActive] = useState(false);
   const [timer, setTimer] = useState(duration);
   const timerInterval = useRef(null);
+  const onCompleteRef = useRef(onComplete);
 
   // Use a smooth, non-bouncy tween for all transitions
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
@@ -41,22 +40,15 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
     if (status !== "active" && status !== "ready-timed-set") {
       setSwipedComplete(false);
     }
-    // Start timer automatically when transitioning to counting-down-timed
-    if (status === "counting-down-timed" && !isTimerActive) {
-      setTimer(duration); // Reset timer to duration when starting countdown
-      setIsTimerActive(true);
-    }
-  }, [status, duration, isTimerActive]);
+  }, [status]);
 
   useEffect(() => {
     if (status === "complete") {
       // Animate to rightmost, green
       controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
-      setIsTimerActive(false);
     } else if (swipedComplete) {
       // Animate to rightmost, green
       controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
-      setIsTimerActive(false);
     } else {
       // Animate to left, white
       controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
@@ -64,28 +56,30 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   }, [status, thumbTravel, controls, swipedComplete]);
 
   useEffect(() => {
-    // Only run the timer if this component's internal state says so
-    if (isTimerActive) {
-      if (timerInterval.current) clearInterval(timerInterval.current);
-      timerInterval.current = setInterval(() => {
-        setTimer(prev => {
-          if (prev > 1) return prev - 1;
-          
-          // When timer hits 0, clear interval and call onComplete
-          clearInterval(timerInterval.current);
-          if (onComplete) {
-            onComplete(); 
-          }
-          return 0;
-        });
-      }, 1000);
-    } else {
-      // Reset timer if it's not active
-      setTimer(duration);
-      if (timerInterval.current) clearInterval(timerInterval.current);
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    if (status !== 'counting-down-timed') {
+      clearInterval(timerInterval.current);
+      return;
     }
-    return () => { if (timerInterval.current) clearInterval(timerInterval.current); };
-  }, [isTimerActive, duration, onComplete]);
+
+    setTimer(duration); // Reset timer before starting.
+
+    timerInterval.current = setInterval(() => {
+      setTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(timerInterval.current);
+          if (onCompleteRef.current) onCompleteRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerInterval.current);
+  }, [status, duration]);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
