@@ -202,6 +202,44 @@ export function ActiveWorkoutProvider({ children }) {
     }
   }, [activeWorkout, user]);
 
+  const updateSet = useCallback(async (setId, changes) => {
+    if (!activeWorkout?.id || !user?.id) {
+      console.error("Cannot update set: no active workout or user.");
+      return;
+    }
+    // Remove 'status' from changes before sending to Supabase
+    const { status, ...dbChanges } = changes;
+    // Don't send an empty update
+    if (!setId || Object.keys(dbChanges).length === 0) return;
+
+    const { data, error } = await supabase
+      .from('sets')
+      .update({
+        ...dbChanges,
+        reps: dbChanges.reps !== undefined ? Number(dbChanges.reps) : undefined,
+        weight: dbChanges.weight !== undefined ? Number(dbChanges.weight) : undefined,
+      })
+      .eq('id', setId)
+      .select(); // removed .single()
+
+    if (error) {
+      console.error("Error updating set:", error);
+    } else if (data && data.length === 1) {
+      // Update local state with the new set data
+      setWorkoutProgress(prev => {
+        const newProgress = { ...prev };
+        for (const exerciseId in newProgress) {
+          newProgress[exerciseId] = newProgress[exerciseId].map(s =>
+            String(s.id) === String(setId) ? { ...s, ...data[0] } : s
+          );
+        }
+        return newProgress;
+      });
+    } else {
+      // No row updated, or multiple rows (shouldn't happen)
+      console.warn('No set updated for id', setId);
+    }
+  }, [activeWorkout, user]);
 
   return (
     <ActiveWorkoutContext.Provider 
@@ -216,6 +254,7 @@ export function ActiveWorkoutProvider({ children }) {
         workoutProgress,
         updateWorkoutProgress,
         saveSet,
+        updateSet,
         loading
       }}
     >

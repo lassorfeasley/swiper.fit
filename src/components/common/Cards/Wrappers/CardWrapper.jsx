@@ -21,7 +21,7 @@ const CardWrapper = ({
 
   return (
     <div
-      className={cn('CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto', className)}
+      className={cn('CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden', className)}
       style={{ maxWidth: 500, ...(props.style || {}) }}
       {...divProps}
     >

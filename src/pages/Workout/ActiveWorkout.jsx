@@ -35,7 +35,8 @@ const ActiveWorkout = () => {
     endWorkout: contextEndWorkout,
     workoutProgress,
     updateWorkoutProgress,
-    saveSet
+    saveSet,
+    updateSet
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -107,6 +108,12 @@ const ActiveWorkout = () => {
     if (Array.isArray(setIdOrUpdates)) {
       // New signature: an array of update objects
       updateWorkoutProgress(exerciseId, setIdOrUpdates);
+      // Persist each update to the database if the set has an id
+      setIdOrUpdates.forEach(update => {
+        if (update.id) {
+          updateSet(update.id, update.changes);
+        }
+      });
     } else {
       // Legacy signature: single field update, convert to new format
       const updates = [{
@@ -114,6 +121,9 @@ const ActiveWorkout = () => {
         changes: { [field]: value }
       }];
       updateWorkoutProgress(exerciseId, updates);
+      if (setIdOrUpdates) {
+        updateSet(setIdOrUpdates, { [field]: value });
+      }
     }
   };
 

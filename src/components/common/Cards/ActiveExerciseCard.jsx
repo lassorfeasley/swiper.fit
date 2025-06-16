@@ -35,31 +35,55 @@ const ActiveExerciseCard = ({
 
   // Derive sets from setData and initialSetConfigs
   const sets = useMemo(() => {
-    return initialSetConfigs.map((config, i) => {
-      const fromParent = setData.find(d => d.id === i + 1 || d.id === String(i + 1)) || setData[i] || {};
-      const setType = fromParent.set_type ?? config.set_type ?? 'reps';
-      let status = fromParent.status ?? (i === 0 ? 'active' : 'locked');
-      
-      // Handle timed set status transitions
-      if (setType === 'timed') {
-        if (status === 'active') {
-          status = 'ready-timed-set';
-        } else if (status === 'counting-down') {
-          status = 'counting-down-timed';
-        }
-      }
-      
-      return {
-        id: i + 1,
-        name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
-        reps: fromParent.reps ?? config.reps,
-        weight: fromParent.weight ?? config.weight,
-        unit: fromParent.unit ?? (config.unit || 'lbs'),
-        status,
-        set_type: setType,
-        timed_set_duration: fromParent.timed_set_duration ?? config.timed_set_duration,
-      };
+    // Step 1: Map sets based on props, taking status directly from setData.
+    let derivedSets = initialSetConfigs.map((config, i) => {
+        const fromParent = setData.find(d => d.id === i + 1 || d.id === String(i + 1)) || setData[i] || {};
+        return {
+            id: i + 1,
+            name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
+            reps: fromParent.reps ?? config.reps,
+            weight: fromParent.weight ?? config.weight,
+            unit: fromParent.unit ?? (config.unit || 'lbs'),
+            status: fromParent.status, // Directly from parent, may be undefined
+            set_type: fromParent.set_type ?? config.set_type ?? 'reps',
+            timed_set_duration: fromParent.timed_set_duration ?? config.timed_set_duration,
+        };
     });
+
+    // Step 2: Find the first set that isn't 'complete'.
+    const firstIncompleteIndex = derivedSets.findIndex(s => s.status !== 'complete');
+
+    // Step 3: Apply the logic to ensure a single active set.
+    derivedSets = derivedSets.map((set, i) => {
+        let status;
+        if (firstIncompleteIndex === -1) {
+            // All sets are complete, or there are no sets.
+            status = set.status || 'complete'; // Default to complete if all are done
+        } else {
+            if (i < firstIncompleteIndex) {
+                status = 'complete';
+            } else if (i === firstIncompleteIndex) {
+                // This is the active set. Preserve 'counting-down' states.
+                status = (set.status === 'counting-down' || set.status === 'counting-down-timed') ? set.status : 'active';
+            } else { // i > firstIncompleteIndex
+                status = 'locked';
+            }
+        }
+
+        // Step 4: Handle timed set status name changes.
+        if (set.set_type === 'timed') {
+            if (status === 'active') {
+                status = 'ready-timed-set';
+            } else if (status === 'counting-down') {
+                // This case is from old logic, let's ensure it maps correctly
+                status = 'counting-down-timed';
+            }
+        }
+        
+        return { ...set, status };
+    });
+
+    return derivedSets;
   }, [initialSetConfigs, setData]);
 
   const allComplete = useMemo(() => sets.every(set => set.status === 'complete'), [sets]);
@@ -206,8 +230,8 @@ const ActiveExerciseCard = ({
   // If expanded view is true, render the detailed view
   if (isExpanded && initialSetConfigs.length > 1) {
     return (
-      <CardWrapper className="Property1Expanded self-stretch p-3 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-4" style={{ maxWidth: 500 }}>
-        <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
+      <CardWrapper className="Property1Expanded self-stretch bg-white rounded-xl flex flex-col justify-start items-stretch gap-0" style={{ maxWidth: 500 }}>
+        <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
             <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
             <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
@@ -218,7 +242,7 @@ const ActiveExerciseCard = ({
             <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
           </button>
         </div>
-        <div className="w-full">
+        <div className="self-stretch h-0 border-b border-stone-200" />
         {sets.map((set, idx) => {
           const setType = set.set_type || 'reps';
           const timedDuration = set.timed_set_duration;
@@ -226,40 +250,36 @@ const ActiveExerciseCard = ({
           if (setType === 'timed') {
             // No need to modify swipeStatus here as it's already set correctly in the sets useMemo
           }
+          const isLastSet = idx === sets.length - 1;
           return (
-            <React.Fragment key={set.id}>
-              <div className="SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2">
-                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
-                  <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">{set.name}</div>
-                  <CardPill
-                    reps={set.reps}
-                    weight={set.weight}
-                    unit={set.unit}
-                    complete={set.status === 'complete'}
-                    editable={true}
-                    onEdit={() => handlePillClick(idx)}
-                    set_type={setType}
-                    timed_set_duration={timedDuration}
-                    className="Cardpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
-                  />
-                </div>
-                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
-                  <SwipeSwitch
-                    status={swipeStatus}
-                    onComplete={() => handleSetComplete(idx)}
-                    duration={timedDuration || 30}
-                  />
-                </div>
+            <div
+              key={set.id}
+              className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2 ${!isLastSet ? 'border-b border-stone-200' : ''}`}
+            >
+              <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
+                <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">{set.name}</div>
+                <CardPill
+                  reps={set.reps}
+                  weight={set.weight}
+                  unit={set.unit}
+                  complete={set.status === 'complete'}
+                  editable={true}
+                  onEdit={() => handlePillClick(idx)}
+                  set_type={setType}
+                  timed_set_duration={timedDuration}
+                  className="Cardpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+                />
               </div>
-              {idx < sets.length - 1 && (
-                <div className="Divider self-stretch flex flex-col justify-start items-start">
-                  <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
-                </div>
-              )}
-            </React.Fragment>
+              <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
+                <SwipeSwitch
+                  status={swipeStatus}
+                  onComplete={() => handleSetComplete(idx)}
+                  duration={timedDuration || 30}
+                />
+              </div>
+            </div>
           );
         })}
-        </div>
         {isUnscheduled && (
           <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
             Unscheduled Exercise
@@ -279,7 +299,7 @@ const ActiveExerciseCard = ({
 
   // Compact view
   return (
-    <CardWrapper className="Property1Compact self-stretch p-3 bg-stone-50 rounded-lg inline-flex flex-col justify-start items-start gap-4" style={{ maxWidth: 500 }}>
+    <CardWrapper className="Property1Compact self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4" style={{ maxWidth: 500 }}>
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
           <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">{exerciseName}</div>
