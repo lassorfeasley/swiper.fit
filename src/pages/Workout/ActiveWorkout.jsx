@@ -176,12 +176,12 @@ const ActiveWorkout = () => {
 
   return (
     <AppLayout
-      appHeaderTitle="Active Workout"
-      showBackButton={false}
       showActionBar={false}
-      search={true}
-      searchValue={search}
-      onSearchChange={setSearch}
+      pageNameEditable={true}
+      showBackButton={true}
+      appHeaderTitle={activeWorkout?.name || "Active Workout"}
+      onBack={handleEndWorkout}
+      pageContext="workout"
     >
       <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
       <CardWrapper>

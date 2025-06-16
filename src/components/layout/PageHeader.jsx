@@ -18,7 +18,7 @@ const headerResponsiveStyle = `
 
 export const PageHeader = forwardRef(({
   showActionBar = false,
-  showActionIcon = false,
+  pageNameEditable = false,
   showBackButton = false,
   appHeaderTitle = "Welcome to Swiper.fit!",
   actionBarText = "",
@@ -118,7 +118,7 @@ export const PageHeader = forwardRef(({
                   )}>
                     {appHeaderTitle}
                   </h1>
-                  {showActionIcon && !searchActive && (
+                  {pageNameEditable && !searchActive && (
                     <button
                       className="size-4 flex items-center justify-center text-stone-600 opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="Edit"
@@ -189,7 +189,7 @@ export const PageHeader = forwardRef(({
 
 PageHeader.propTypes = {
   showActionBar: PropTypes.bool,
-  showActionIcon: PropTypes.bool,
+  pageNameEditable: PropTypes.bool,
   showBackButton: PropTypes.bool,
   appHeaderTitle: PropTypes.string,
   actionBarText: PropTypes.string,
