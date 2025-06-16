@@ -3,15 +3,20 @@
 import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageNameContext } from "@/App";
-import ProgramCard from '@/components/common/Cards/ProgramCard';
-import { useAuth } from "@/contexts/AuthContext";
-import { SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
+import { PageNameContext } from "@/contexts/page-name-context";
+import ProgramCard from "@/components/common/cards/program-card";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/atoms/sheet";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import AppLayout from '@/components/layout/AppLayout';
+import { Input } from "@/components/atoms/input";
+import { Button } from "@/components/atoms/button";
+import CardWrapper from "@/components/common/cards/wrappers/card-wrapper";
+import AppLayout from "@/components/layout/app-layout";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);

@@ -3,18 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/navbar-visibility-context";
-import { PageNameContext } from "@/App";
-import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import ActiveExerciseCard from '@/components/common/Cards/ActiveExerciseCard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Play, Home, History, Star, RotateCcw } from 'lucide-react';
-import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
-import ResponsiveNav from '@/components/organisms/responsive-nav';
-import AppLayout from '@/components/layout/AppLayout';
-import ActiveWorkoutNav from '@/components/molecules/ActiveWorkoutNav';
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import { Card, CardContent } from '@/components/ui/card';
+import { PageNameContext } from "@/contexts/page-name-context";
+import { useActiveWorkout } from "@/contexts/active-workout-context";
+import CardWrapper from "@/components/common/cards/wrappers/card-wrapper";
+import ActiveExerciseCard from "@/components/common/cards/active-exercise-card";
+import { Play, Home, History, Star, RotateCcw } from "lucide-react";
+import AddNewExerciseForm from "@/components/common/forms/add-new-exercise-form";
+import ResponsiveNav from "@/components/organisms/responsive-nav";
+import AppLayout from "@/components/layout/app-layout";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 
 const navItems = [
   { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },

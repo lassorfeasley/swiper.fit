@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import CardPill from '@/components/molecules/CardPill';
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import SetEditForm from '@/components/common/forms/SetEditForm';
-import CardWrapper from './Wrappers/CardWrapper';
-import { Reorder } from 'framer-motion';
-import AddNewExerciseForm from '../forms/AddNewExerciseForm';
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import CardPill from "@/components/molecules/card-pill";
+import { SheetHeader, SheetTitle } from "@/components/atoms/sheet";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import SetEditForm from "@/components/common/forms/set-edit-form";
+import CardWrapper from "@/components/common/cards/wrappers/card-wrapper";
+import { Reorder } from "framer-motion";
 
 const ExerciseCard = ({
   exerciseName,

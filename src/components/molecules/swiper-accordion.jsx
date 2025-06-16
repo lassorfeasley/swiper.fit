@@ -13,10 +13,10 @@ const SwiperAccordion = React.forwardRef(({ className, ...props }, ref) => (
 SwiperAccordion.displayName = "SwiperAccordion";
 
 const SwiperAccordionItem = React.forwardRef(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item 
-    ref={ref} 
-    className={cn("border-b border-neutral-300 last:border-b-0", className)} 
-    {...props} 
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn("border-b border-neutral-300 last:border-b-0", className)}
+    {...props}
   />
 ));
 SwiperAccordionItem.displayName = "SwiperAccordionItem";
@@ -47,30 +47,18 @@ const SwiperAccordionContent = React.forwardRef(
   ({ className, children, ...props }, ref) => (
     <AccordionPrimitive.Content
       ref={ref}
-      className={cn(
-        "self-stretch h-12 inline-flex justify-between items-center gap-2.5 w-full px-2",
-        "text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal",
-        "transition-all [&[data-state=open]>svg]:rotate-180",
-        "hover:bg-slate-50",
-        className
-      )}
+      className="w-full overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
       {...props}
     >
-      <div className={cn("w-full py-4", className)}>{children}</div>
+      <div className={cn("w-full py-4 px-2", className)}>{children}</div>
     </AccordionPrimitive.Content>
   )
 );
 SwiperAccordionContent.displayName = "SwiperAccordionContent";
 
-const SwiperAccordionContent = React.forwardRef(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Content
-    ref={ref}
-    className="w-full overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
-    {...props}
-  >
-    <div className={cn("w-full py-4 px-2", className)}>
-      {children}
-    </div>
-  </AccordionPrimitive.Content>
-))
-SwiperAccordionContent.displayName = "SwiperAccordionContent"
+export {
+  SwiperAccordion,
+  SwiperAccordionItem,
+  SwiperAccordionTrigger,
+  SwiperAccordionContent,
+};

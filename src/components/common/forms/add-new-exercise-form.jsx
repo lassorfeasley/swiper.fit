@@ -8,9 +8,9 @@ import {
   SwiperAccordionTrigger,
   SwiperAccordionContent,
 } from "@/components/molecules/swiper-accordion";
-import ToggleInput from "@/components/molecules/toggle-input";
+import SwiperAccordionGroup from "@/components/molecules/swiper-accordion-group";
 import { SwiperButton } from "@/components/molecules/swiper-button";
-import SetBuilderForm from "./set-builder-form";
+import SetEditForm from "@/components/common/forms/set-edit-form";
 
 const unitOptions = [
   { label: "lbs", value: "lbs" },
@@ -36,26 +36,23 @@ const AddNewExerciseForm = ({
   const [setConfigs, setSetConfigs] = useState(
     Array.from(
       { length: initialSets || 3 },
-      (_, i) => initialSetConfigs[i] || { reps: 3, weight: 25, unit: "lbs" }
+      (_, i) =>
+        initialSetConfigs[i] || {
+          reps: 3,
+          weight: 25,
+          unit: "lbs",
+          set_type: "reps",
+        }
     )
   );
-  const [openSet, setOpenSet] = useState(undefined);
-  const [overrides, setOverrides] = useState(() =>
-    Array.from({ length: initialSets || 3 }, () => ({
-      reps: false,
-      weight: false,
-      unit: false,
-    }))
-  );
+  const [openSet, setOpenSet] = useState("defaults");
   const [setDefaults, setSetDefaults] = useState({
     reps: initialSetConfigs[0]?.reps ?? 3,
     weight: initialSetConfigs[0]?.weight ?? 25,
     unit: initialSetConfigs[0]?.unit ?? "lbs",
+    set_type: initialSetConfigs[0]?.set_type ?? "reps",
+    timed_set_duration: initialSetConfigs[0]?.timed_set_duration,
   });
-  const [setTypeDefault, setSetTypeDefault] = useState("reps");
-  const [setTypeOverrides, setSetTypeOverrides] = useState(() =>
-    Array.from({ length: sets || 3 }, () => "reps")
-  );
 
   useEffect(() => {
     setSetConfigs((prev) => {
@@ -67,69 +64,14 @@ const AddNewExerciseForm = ({
     });
   }, [sets, setDefaults]);
 
-  useEffect(() => {
-    setOverrides((prev) => {
-      const arr = Array.from(
-        { length: sets },
-        (_, i) => prev[i] || { reps: false, weight: false, unit: false }
-      );
-      return arr;
-    });
-  }, [sets]);
-
-  const getSetValue = (idx, field) => {
-    if (overrides[idx]?.[field]) return setConfigs[idx]?.[field];
-    return setDefaults[field];
-  };
-
-  const handleSetFieldChange = (idx, field, value) => {
+  const handleSetFieldChange = (idx, newValues) => {
     setSetConfigs((prev) =>
-      prev.map((cfg, i) => (i === idx ? { ...cfg, [field]: value } : cfg))
-    );
-    setOverrides((prev) =>
-      prev.map((ov, i) => (i === idx ? { ...ov, [field]: true } : ov))
+      prev.map((cfg, i) => (i === idx ? newValues : cfg))
     );
   };
 
-  const handleSetDefaultsChange = (field, value) => {
-    setSetDefaults((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSetTypeDefaultChange = (val) => {
-    setSetTypeDefault(val);
-    setSetDefaults((prev) => {
-      const next = { ...prev, set_type: val };
-      if (
-        val === "timed" &&
-        (!prev.timed_set_duration || prev.timed_set_duration <= 0)
-      ) {
-        next.timed_set_duration = 30;
-      }
-      if (val === "reps") {
-        next.timed_set_duration = undefined;
-      }
-      return next;
-    });
-  };
-
-  const handleSetTypeOverrideChange = (idx, val) => {
-    setSetTypeOverrides((prev) => prev.map((t, i) => (i === idx ? val : t)));
-    setSetConfigs((prev) =>
-      prev.map((cfg, i) => {
-        if (i !== idx) return cfg;
-        const next = { ...cfg, set_type: val };
-        if (
-          val === "timed" &&
-          (!cfg.timed_set_duration || cfg.timed_set_duration <= 0)
-        ) {
-          next.timed_set_duration = 30;
-        }
-        if (val === "reps") {
-          next.timed_set_duration = undefined;
-        }
-        return next;
-      })
-    );
+  const handleSetDefaultsChange = (newValues) => {
+    setSetDefaults(newValues);
   };
 
   const handleSave = (e) => {
@@ -159,9 +101,6 @@ const AddNewExerciseForm = ({
       <div className="CreateExercise self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-7">
         {formPrompt}
       </div>
-      <div className="Divider self-stretch flex flex-col justify-start items-start">
-        <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
-      </div>
       <div className="Frame13 self-stretch flex flex-col justify-start items-start gap-3">
         <TextInput
           value={exerciseName}
@@ -182,40 +121,10 @@ const AddNewExerciseForm = ({
           />
         </div>
       </div>
-      <div className="Divider self-stretch flex flex-col justify-start items-start">
-        <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
+      <div className="my-2 text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+        Set defaults are global - edit individual sets for more control.
       </div>
-      <div className="Frame10 self-stretch flex flex-col justify-start items-start gap-3">
-        <div className="SetDefaults self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">
-          Set defaults
-        </div>
-        <div className="TheseSettingsWillApplyToAllSetsUnlessYouEditThemIndividuallyBelow self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-          These settings will apply to all sets unless you edit them
-          individually below.{" "}
-        </div>
-        <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
-          <SetBuilderForm
-            setType={setTypeDefault}
-            onSetTypeChange={(val) => val && handleSetTypeDefaultChange(val)}
-            reps={setDefaults.reps}
-            timed_set_duration={setDefaults.timed_set_duration}
-            onRepsChange={(v) => handleSetDefaultsChange("reps", v)}
-            onTimedDurationChange={(v) =>
-              handleSetDefaultsChange("timed_set_duration", v)
-            }
-            weight={setDefaults.weight}
-            unit={setDefaults.unit}
-            onWeightChange={(v) => handleSetDefaultsChange("weight", v)}
-            onUnitChange={(unit) =>
-              unit && handleSetDefaultsChange("unit", unit)
-            }
-          />
-        </div>
-      </div>
-      <div className="Divider self-stretch flex flex-col justify-start items-start">
-        <div className="Divider self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
-      </div>
-      <div className="Frame9 self-stretch flex flex-col justify-start items-start">
+      <SwiperAccordionGroup>
         <SwiperAccordion
           type="single"
           collapsible
@@ -223,56 +132,64 @@ const AddNewExerciseForm = ({
           onValueChange={setOpenSet}
           className="w-full"
         >
-          {setConfigs.map((cfg, idx) => (
-            <SwiperAccordionItem key={idx} value={String(idx)}>
-              <SwiperAccordionTrigger>{`Set ${
-                [
-                  "one",
-                  "two",
-                  "three",
-                  "four",
-                  "five",
-                  "six",
-                  "seven",
-                  "eight",
-                  "nine",
-                  "ten",
-                ][idx] || idx + 1
-              }`}</SwiperAccordionTrigger>
-              <SwiperAccordionContent>
-                <div className="flex flex-col gap-4 py-2">
-                  <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
-                    <SetBuilderForm
-                      setType={setTypeOverrides[idx]}
-                      onSetTypeChange={(val) =>
-                        val && handleSetTypeOverrideChange(idx, val)
-                      }
-                      reps={getSetValue(idx, "reps")}
-                      timed_set_duration={
-                        setTypeOverrides[idx] === "timed"
-                          ? getSetValue(idx, "timed_set_duration") || 30
-                          : getSetValue(idx, "timed_set_duration")
-                      }
-                      onRepsChange={(v) => handleSetFieldChange(idx, "reps", v)}
-                      onTimedDurationChange={(v) =>
-                        handleSetFieldChange(idx, "timed_set_duration", v)
-                      }
-                      weight={getSetValue(idx, "weight")}
-                      unit={getSetValue(idx, "unit")}
-                      onWeightChange={(v) =>
-                        handleSetFieldChange(idx, "weight", v)
-                      }
-                      onUnitChange={(unit) =>
-                        unit && handleSetFieldChange(idx, "unit", unit)
-                      }
-                    />
+          <SwiperAccordionItem
+            value="defaults"
+            className="border-b border-neutral-300"
+          >
+            <SwiperAccordionTrigger>
+              <span className="font-bold">Set defaults</span>
+            </SwiperAccordionTrigger>
+            <SwiperAccordionContent>
+              <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
+                <SetEditForm
+                  isChildForm
+                  initialValues={setDefaults}
+                  onValuesChange={handleSetDefaultsChange}
+                />
+              </div>
+            </SwiperAccordionContent>
+          </SwiperAccordionItem>
+
+          {Array.from({ length: sets }).map((_, idx) => {
+            const setConfig = setConfigs[idx] || setDefaults;
+            return (
+              <SwiperAccordionItem
+                key={idx}
+                value={String(idx)}
+                className="border-b border-neutral-300"
+              >
+                <SwiperAccordionTrigger>{`Set ${
+                  [
+                    "one",
+                    "two",
+                    "three",
+                    "four",
+                    "five",
+                    "six",
+                    "seven",
+                    "eight",
+                    "nine",
+                    "ten",
+                  ][idx] || idx + 1
+                }`}</SwiperAccordionTrigger>
+                <SwiperAccordionContent>
+                  <div className="flex flex-col gap-4 py-2">
+                    <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
+                      <SetEditForm
+                        isChildForm
+                        initialValues={setConfig}
+                        onValuesChange={(newValues) =>
+                          handleSetFieldChange(idx, newValues)
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-              </SwiperAccordionContent>
-            </SwiperAccordionItem>
-          ))}
+                </SwiperAccordionContent>
+              </SwiperAccordionItem>
+            );
+          })}
         </SwiperAccordion>
-      </div>
+      </SwiperAccordionGroup>
       <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
         <SwiperButton
           type="submit"
@@ -316,6 +233,8 @@ AddNewExerciseForm.propTypes = {
       reps: PropTypes.number,
       weight: PropTypes.number,
       unit: PropTypes.oneOf(["kg", "lbs", "body"]),
+      set_type: PropTypes.string,
+      timed_set_duration: PropTypes.number,
     })
   ),
 };

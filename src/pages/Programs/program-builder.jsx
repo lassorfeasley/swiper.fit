@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import CardWrapper from "@/components/common/cards/wrappers/card-wrapper";
 import { Reorder } from "framer-motion";
-import { PageNameContext } from "@/App";
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
-import ExerciseCard from '@/components/common/Cards/ExerciseCard';
-import AppLayout from '@/components/layout/AppLayout';
+import { PageNameContext } from "@/contexts/page-name-context";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import AddNewExerciseForm from "@/components/common/forms/add-new-exercise-form";
+import ExerciseCard from "@/components/common/cards/exercise-card";
+import AppLayout from "@/components/layout/app-layout";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./auth-context";
+import { generateWorkoutName } from "@/lib/utils";
 
 const ActiveWorkoutContext = createContext();
 
@@ -91,12 +92,14 @@ export function ActiveWorkoutProvider({ children }) {
     async (program) => {
       if (!user) throw new Error("User not authenticated.");
 
+      const workoutName = generateWorkoutName();
+
       const { data: workout, error } = await supabase
         .from("workouts")
         .insert({
           user_id: user.id,
           program_id: program.id,
-          workout_name: program.program_name,
+          workout_name: workoutName,
           is_active: true,
         })
         .select()
@@ -110,7 +113,7 @@ export function ActiveWorkoutProvider({ children }) {
       const workoutData = {
         id: workout.id,
         programId: program.id,
-        name: program.program_name,
+        name: workoutName,
         startTime: workout.created_at,
       };
 
