@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import SwipeSwitch from "components/workout/SwipeSwitch";
 import MetricPill from "components/common/cards-and-tiles/metric-pill";
 import SlideUpForm from "components/common/forms/SlideUpForm";
-import WeightCompoundField from "components/common/forms/compound-fields/WeightCompoundField";
-import NumericInput from "components/common/forms/NumericInput";
-import Icon from "components/common/Icon";
+import WeightCompoundField from "components/common/forms/compound-fields/weight-compound-field";
+import NumericInput from "components/common/forms/numeric-input";
+import Icon from "components/common/icon";
 import PropTypes from "prop-types";
 
 const ActiveSetCard = ({

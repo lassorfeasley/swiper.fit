@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import SwipeSwitch from "components/workout/SwipeSwitch";
 import MetricPill from "components/common/cards-and-tiles/metric-pill";
-import SlideUpForm from "components/common/forms/SlideUpForm";
-import WeightCompoundField from "components/common/forms/compound-fields/WeightCompoundField";
-import NumericInput from "components/common/forms/NumericInput";
-import Icon from "components/common/Icon";
+import SlideUpForm from "components/common/forms/slide-up-form";
+import WeightCompoundField from "components/common/forms/compound-fields/weight-compound-field";
+import NumericInput from "components/common/forms/numeric-input";
+// import Icon from "components/common/icon";
 import PropTypes from "prop-types";
 import CardPill from "components/molecules/card-pill";
 
@@ -310,7 +310,7 @@ const SetCard = ({
               onClick={handleMetricSubmit}
               style={{ background: "none", border: "none", padding: 0 }}
             >
-              <Icon name="arrow_forward" size={32} />
+              {/* <Icon name="arrow_forward" size={32} /> */}
             </button>
           }
         >
