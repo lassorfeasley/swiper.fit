@@ -19,6 +19,8 @@ const SetEditForm = ({
   formPrompt = "Edit set",
   onSave,
   onSaveForFuture,
+  onValuesChange,
+  isChildForm,
   initialValues = { reps: 0, weight: 0, unit: 'lbs', set_type: 'reps' },
   className = '',
 }) => {
@@ -29,18 +31,23 @@ const SetEditForm = ({
   }, [initialValues]);
 
   const handleValueChange = (field, value) => {
-    setFormValues(prev => ({ ...prev, [field]: value }));
+    const newValues = { ...formValues, [field]: value };
+    setFormValues(newValues);
+    if (onValuesChange) {
+      onValuesChange(newValues);
+    }
   };
   
   const handleSetTypeChange = (val) => {
     if (!val) return;
-    setFormValues(prev => {
-      const next = { ...prev, set_type: val };
-      if (val === 'timed' && (!prev.timed_set_duration || prev.timed_set_duration === 0)) {
-        next.timed_set_duration = 30;
-      }
-      return next;
-    });
+    const newValues = { ...formValues, set_type: val };
+    if (val === 'timed' && (!formValues.timed_set_duration || formValues.timed_set_duration === 0)) {
+      newValues.timed_set_duration = 30;
+    }
+    setFormValues(newValues);
+    if (onValuesChange) {
+      onValuesChange(newValues);
+    }
   };
 
   const handleUnitChange = (val) => {
@@ -64,9 +71,71 @@ const SetEditForm = ({
 
   const { set_type = 'reps', reps = 0, weight = 0, unit = 'lbs', timed_set_duration = 30 } = formValues;
 
+  if (isChildForm) {
+    return (
+      <div className={`Setconfigurationform w-full inline-flex flex-col justify-start items-start gap-6 ${className}`}>
+        <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
+          <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
+            <div className="Frame14 self-stretch flex flex-col justify-start items-start gap-4">
+              
+              <ToggleInput
+                  label="Set type"
+                  options={setTypeOptions}
+                  value={set_type}
+                  onChange={handleSetTypeChange}
+              />
+
+              {set_type === 'reps' ? (
+                <NumericInput
+                  label="Reps"
+                  value={reps}
+                  onChange={(val) => handleValueChange('reps', val)}
+                  unitLabel="Reps"
+                />
+              ) : (
+                <NumericInput
+                  label="Duration"
+                  value={timed_set_duration}
+                  onChange={(val) => handleValueChange('timed_set_duration', val)}
+                  unitLabel="Seconds"
+                  step={5}
+                />
+              )}
+
+              <ToggleInput
+                  label="Weight unit"
+                  options={unitOptions}
+                  value={unit}
+                  onChange={handleUnitChange}
+              />
+
+              {unit === 'body' ? (
+                <div className="w-full inline-flex flex-col justify-start items-start gap-0">
+                  <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
+                    <span className="text-slate-500 text-base font-normal font-['Space_Grotesk'] leading-normal">Bodyweight</span>
+                  </div>
+                </div>
+              ) : (
+                <NumericInput
+                  label="Weight"
+                  value={weight}
+                  onChange={(val) => handleValueChange('weight', val)}
+                  unitLabel={unit}
+                  step={1}
+                  allowOneDecimal={true}
+                />
+              )}
+
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`Setconfigurationform w-full inline-flex flex-col justify-start items-start gap-6 ${className}`}>
-      <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>
+      {!isChildForm && <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>}
       <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
         <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
           <div className="Frame14 self-stretch flex flex-col justify-start items-start gap-4">
@@ -122,7 +191,7 @@ const SetEditForm = ({
           </div>
         </div>
       </div>
-      <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
+      {!isChildForm && <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
         {onSaveForFuture && <div className="UpdateProgram self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Update program?</div>}
         <SwiperButton onClick={handleSaveToday} variant="default" className="w-full">
           Just for today
@@ -132,15 +201,17 @@ const SetEditForm = ({
             For future workouts
           </SwiperButton>
         )}
-      </div>
+      </div>}
     </div>
   );
 };
 
 SetEditForm.propTypes = {
   formPrompt: PropTypes.string,
-  onSave: PropTypes.func.isRequired,
+  onSave: PropTypes.func,
   onSaveForFuture: PropTypes.func,
+  onValuesChange: PropTypes.func,
+  isChildForm: PropTypes.bool,
   initialValues: PropTypes.shape({
     reps: PropTypes.number,
     weight: PropTypes.number,

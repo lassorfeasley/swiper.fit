@@ -2,22 +2,14 @@
 
 import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import PageHeader from "@/components/layout/PageHeader";
+import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
 import ProgramCard from '@/components/common/Cards/ProgramCard';
-import { useQuery } from "@tanstack/react-query";
-import MainContainer from "@/components/layout/MainContainer";
-import { useNavBarVisibility } from '@/contexts/NavBarVisibilityContext';
 import { useAuth } from "@/contexts/AuthContext";
 import { SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
-import { SwiperSheet } from "@/components/ui/swiper-sheet";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import NumericInput from "@/components/molecules/numeric-input";
-import WeightCompoundField from "@/components/common/forms/WeightCompoundField";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import AppLayout from '@/components/layout/AppLayout';
 

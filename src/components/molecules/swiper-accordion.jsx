@@ -15,7 +15,7 @@ SwiperAccordion.displayName = "SwiperAccordion"
 const SwiperAccordionItem = React.forwardRef(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item 
     ref={ref} 
-    className={cn("border-b border-neutral-300", className)} 
+    className={cn("border-b border-neutral-300 last:border-b-0", className)} 
     {...props} 
   />
 ))
@@ -26,7 +26,7 @@ const SwiperAccordionTrigger = React.forwardRef(({ className, children, ...props
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "self-stretch h-12 inline-flex justify-between items-center gap-2.5 w-full",
+        "self-stretch h-12 inline-flex justify-between items-center gap-2.5 w-full px-2",
         "text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal",
         "transition-all [&[data-state=open]>svg]:rotate-180",
         "hover:bg-slate-50",
@@ -49,7 +49,7 @@ const SwiperAccordionContent = React.forwardRef(({ className, children, ...props
     className="w-full overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
-    <div className={cn("w-full py-4", className)}>
+    <div className={cn("w-full py-4 px-2", className)}>
       {children}
     </div>
   </AccordionPrimitive.Content>

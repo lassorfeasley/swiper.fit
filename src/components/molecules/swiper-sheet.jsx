@@ -18,6 +18,7 @@ const SwiperSheet = ({
         side={isMobile ? "bottom" : "right"} 
         className={cn(
           isMobile ? "h-[85vh]" : "w-[350px]",
+          "bg-stone-50",
           className
         )}
         {...props}

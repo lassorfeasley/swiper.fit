@@ -44,7 +44,7 @@ const NumericInput = ({
   };
 
   const getInputStyles = () => {
-    const baseStyles = "flex-1 text-center text-base font-normal font-['Space_Grotesk'] leading-normal bg-transparent border-none focus:outline-none focus:ring-0";
+    const baseStyles = "w-full text-center text-base font-normal font-['Space_Grotesk'] leading-normal bg-transparent border-none focus:outline-none focus:ring-0";
     if (readOnly) {
       return cn(baseStyles, "text-neutral-300");
     }
@@ -130,7 +130,6 @@ const NumericInput = ({
             className="flex-1 h-full flex justify-center items-center disabled:opacity-50 bg-transparent p-0 border-0 border-r border-neutral-300 first:rounded-l-sm"
             type="button"
             tabIndex={-1}
-            style={{ minWidth: 40 }}
           >
             <Minus className="w-4 h-4 text-neutral-400" strokeWidth={2} />
           </button>
@@ -145,7 +144,6 @@ const NumericInput = ({
             onFocus={() => setIsFocused(true)}
             readOnly={readOnly}
             className={getInputStyles()}
-            style={{ minWidth: 40 }}
           />
           {unitLabel && (
             <div className="text-center text-slate-500 text-sm font-normal font-['Space_Grotesk'] leading-tight">{unitLabel}</div>
@@ -158,7 +156,6 @@ const NumericInput = ({
             className="flex-1 h-full flex justify-center items-center disabled:opacity-50 bg-transparent p-0 border-0 border-l border-neutral-300 last:rounded-r-sm"
             type="button"
             tabIndex={-1}
-            style={{ minWidth: 40 }}
           >
             <Plus className="w-4 h-4 text-neutral-400" strokeWidth={2} />
           </button>

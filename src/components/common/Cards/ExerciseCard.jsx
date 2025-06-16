@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import CardPill from '@/components/molecules/CardPill';
 import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { SwiperSheet } from '@/components/ui/swiper-sheet';
+import { SwiperSheet } from '@/components/molecules/swiper-sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import CardWrapper from './Wrappers/CardWrapper';
 import { Reorder } from 'framer-motion';
+import AddNewExerciseForm from '../forms/AddNewExerciseForm';
 
 const ExerciseCard = ({ 
   exerciseName, 

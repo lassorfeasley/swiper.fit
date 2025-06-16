@@ -13,7 +13,9 @@ import { Play, Home, History, Star, RotateCcw } from 'lucide-react';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import ResponsiveNav from '@/components/organisms/responsive-nav';
 import AppLayout from '@/components/layout/AppLayout';
-import { SwiperSheet } from '@/components/ui/swiper-sheet';
+import ActiveWorkoutNav from '@/components/molecules/ActiveWorkoutNav';
+import { SwiperSheet } from '@/components/molecules/swiper-sheet';
+import { Card, CardContent } from '@/components/ui/card';
 
 const navItems = [
   { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },

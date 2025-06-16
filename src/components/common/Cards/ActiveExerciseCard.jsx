@@ -13,13 +13,13 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import SwipeSwitch from '@/components/molecules/swipe-switch';
 import CardPill from '@/components/molecules/CardPill';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { SwiperSheet } from '@/components/ui/swiper-sheet';
+import { SwiperSheet } from '@/components/molecules/swiper-sheet';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
 import NumericInput from '@/components/molecules/numeric-input';
 import PropTypes from 'prop-types';
 import { Maximize2, Minimize2 } from 'lucide-react';
-import CardWrapper from './Wrappers/CardWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 
 const ActiveExerciseCard = ({
   exerciseId,

@@ -1,14 +1,10 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
-import PageHeader from "@/components/layout/PageHeader";
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import { Reorder, useDragControls } from "framer-motion";
+import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { SwiperSheet } from '@/components/ui/swiper-sheet';
-import { SwiperCard, SwiperCardTitle } from '@/components/molecules/swiper-card';
-import { Badge } from '@/components/ui/badge';
+import { SwiperSheet } from '@/components/molecules/swiper-sheet';
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import AppLayout from '@/components/layout/AppLayout';
