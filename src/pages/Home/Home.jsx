@@ -16,10 +16,10 @@ const Home = () => {
   return (
     <AppLayout
       appHeaderTitle="Home"
-      showActionBar={false}
-      showActionIcon={false}
+      showAddButton={false}
       showBackButton={false}
       search={false}
+      pageContext="default"
     >
       <div className="max-w-xl mx-auto mt-8 flex flex-col gap-4">
         <Alert>

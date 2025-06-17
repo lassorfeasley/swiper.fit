@@ -69,13 +69,13 @@ const History = () => {
   return (
     <AppLayout
       appHeaderTitle="History"
-      showActionBar={false}
-      showActionIcon={false}
+      showAddButton={false}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search workouts"
       searchValue={search}
       onSearchChange={setSearch}
+      pageContext="history"
       data-component="AppHeader"
     >
       <CardWrapper>

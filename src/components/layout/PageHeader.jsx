@@ -1,11 +1,16 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=114-1276&t=9pgcPuKv7UdpdreN-4
 
 import PropTypes from "prop-types";
-import React, { useState, useRef, forwardRef } from "react";
-import { ArrowLeft, Pencil, Plus, Search, X } from 'lucide-react';
+import React, { useState, useRef, forwardRef, useEffect } from "react";
+import { ArrowLeft, Edit, Plus, Search, X, SlidersHorizontal, Settings2 } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import { Input } from "@/components/atoms/input";
+import { Label } from "@/components/atoms/label";
+import { SwiperButton } from "@/components/molecules/swiper-button";
+import { Trash2 } from 'lucide-react';
 
 // Add this before the component definition
 const headerResponsiveStyle = `
@@ -17,7 +22,8 @@ const headerResponsiveStyle = `
 `;
 
 export const PageHeader = forwardRef(({
-  showActionBar = false,
+  showAddButton = false,
+  addButtonText = "Add",
   pageNameEditable = false,
   showBackButton = false,
   appHeaderTitle = "Welcome to Swiper.fit!",
@@ -25,6 +31,9 @@ export const PageHeader = forwardRef(({
   search = false,
   onBack,
   onAction,
+  onTitleChange,
+  onDelete,
+  showDeleteOption = false,
   searchValue,
   onSearchChange,
   searchPlaceholder,
@@ -36,7 +45,14 @@ export const PageHeader = forwardRef(({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchActive, setSearchActive] = useState(false);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(appHeaderTitle);
   const searchInputRef = useRef(null);
+
+  // Update editing title when appHeaderTitle changes
+  useEffect(() => {
+    setEditingTitle(appHeaderTitle);
+  }, [appHeaderTitle]);
 
   const onBackHandler = () => {
     if (onBack) {
@@ -48,10 +64,29 @@ export const PageHeader = forwardRef(({
     }
   };
 
+  const handleTitleSave = () => {
+    if (onTitleChange && editingTitle.trim() !== appHeaderTitle) {
+      onTitleChange(editingTitle.trim());
+    }
+    setIsEditSheetOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+    }
+    setIsEditSheetOpen(false);
+  };
+
   // When searchActive becomes true, focus the input
   React.useEffect(() => {
     if (searchActive && searchInputRef.current) {
-      searchInputRef.current.focus();
+      // Small delay to ensure the input is fully rendered
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 10);
     }
   }, [searchActive]);
 
@@ -104,7 +139,7 @@ export const PageHeader = forwardRef(({
               onClick={onBackHandler}
               aria-label="Back"
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeft className="size-6" />
             </button>
           )}
           <div className="flex-1 h-10 flex justify-between items-center">
@@ -113,17 +148,18 @@ export const PageHeader = forwardRef(({
                 <div className="flex justify-start items-center gap-2">
                   {/* Hide title on mobile if search is active */}
                   <h1 className={cn(
-                    "text-stone-600 text-xl font-bold font-['Space_Grotesk'] leading-loose",
+                    "text-stone-600 text-xl font-medium font-['Space_Grotesk'] leading-loose",
                     searchActive ? "hidden sm:block" : ""
                   )}>
                     {appHeaderTitle}
                   </h1>
                   {pageNameEditable && !searchActive && (
                     <button
-                      className="size-4 flex items-center justify-center text-stone-600 opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="size-7 flex items-center justify-center text-stone-600 opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="Edit"
+                      onClick={() => setIsEditSheetOpen(true)}
                     >
-                      <Pencil className="size-3.5" />
+                      <Settings2 className="size-6" />
                     </button>
                   )}
                 </div>
@@ -170,25 +206,70 @@ export const PageHeader = forwardRef(({
                 </>
               )}
               {/* Only show action bar button if not searching */}
-              {showActionBar && (!searchActive) && (
+              {showAddButton && (!searchActive) && (
                 <button
-                  className="size-8 flex items-center justify-center text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="pl-2 pr-3 py-1 rounded-[40px] outline outline-1 outline-offset-[-1px] outline-stone-600 inline-flex justify-start items-center gap-1 text-stone-600 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={onAction}
                   aria-label="Add"
                 >
-                  <Plus className="size-7" />
+                  <div className="size-7 relative overflow-hidden">
+                    <Plus className="size-6 left-[2px] top-[2px] absolute" />
+                  </div>
+                  <div className="justify-start text-stone-600 text-xs font-medium font-['Space_Grotesk'] leading-none">{addButtonText}</div>
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Edit Title Sheet */}
+      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-lg font-medium text-stone-600">
+              Edit {pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : 'Page'}
+            </h2>
+          </div>
+          
+          <div className="space-y-2">
+            <Input
+              id="pageTitle"
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              placeholder="Enter page name"
+              className="w-full"
+            />
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <SwiperButton 
+              onClick={handleTitleSave}
+              className="w-full"
+              disabled={!editingTitle.trim() || editingTitle.trim() === appHeaderTitle}
+            >
+              Save Changes
+            </SwiperButton>
+            
+            {showDeleteOption && onDelete && (
+              <SwiperButton 
+                variant="destructive" 
+                onClick={handleDelete}
+                className="w-full"
+              >
+                Delete {pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : 'Item'}
+              </SwiperButton>
+            )}
+          </div>
+        </div>
+      </SwiperSheet>
     </>
   );
 });
 
 PageHeader.propTypes = {
-  showActionBar: PropTypes.bool,
+  showAddButton: PropTypes.bool,
+  addButtonText: PropTypes.string,
   pageNameEditable: PropTypes.bool,
   showBackButton: PropTypes.bool,
   appHeaderTitle: PropTypes.string,
@@ -196,6 +277,9 @@ PageHeader.propTypes = {
   search: PropTypes.bool,
   onBack: PropTypes.func,
   onAction: PropTypes.func,
+  onTitleChange: PropTypes.func,
+  onDelete: PropTypes.func,
+  showDeleteOption: PropTypes.bool,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   searchPlaceholder: PropTypes.string,

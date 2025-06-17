@@ -14,6 +14,7 @@ const CompletedWorkout = () => {
   const [sets, setSets] = useState([]);
   const [exercises, setExercises] = useState({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -91,19 +92,74 @@ const CompletedWorkout = () => {
   // Filter out exercises that have no valid sets
   const exercisesWithSets = Object.entries(setsByExercise).filter(([_, sets]) => sets.length > 0);
 
+  // Filter exercises based on search
+  const filteredExercisesWithSets = exercisesWithSets.filter(([exId, sets]) => {
+    const exerciseName = exercises[exId] || '[Exercise name]';
+    return exerciseName.toLowerCase().includes(search.toLowerCase());
+  });
+
+  const handleTitleChange = async (newTitle) => {
+    try {
+      const { error } = await supabase
+        .from("workouts")
+        .update({ workout_name: newTitle })
+        .eq("id", workoutId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      setWorkout(prev => ({ ...prev, workout_name: newTitle }));
+    } catch (err) {
+      alert("Failed to update workout name: " + err.message);
+    }
+  };
+
+  const handleDeleteWorkout = async () => {
+    if (!confirm("Are you sure you want to delete this workout? This action cannot be undone.")) {
+      return;
+    }
+    
+    try {
+      // Delete sets first
+      await supabase
+        .from("sets")
+        .delete()
+        .eq("workout_id", workoutId);
+      
+      // Delete the workout
+      const { error } = await supabase
+        .from("workouts")
+        .delete()
+        .eq("id", workoutId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      // Navigate back to history
+      window.history.back();
+    } catch (err) {
+      alert("Failed to delete workout: " + err.message);
+    }
+  };
+
   return (
     <AppLayout
       appHeaderTitle={workout?.workout_name}
+      pageNameEditable={true}
       showBackButton={true}
-      showActionBar={false}
-      showActionIcon={false}
-      search={false}
+      showAddButton={false}
+      onTitleChange={handleTitleChange}
+      onDelete={handleDeleteWorkout}
+      showDeleteOption={true}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
+      pageContext="workout"
     >
       {loading ? (
         <div className="p-6">Loading...</div>
       ) : (
         <CardWrapper className="px-4">
-          {exercisesWithSets.map(([exId, exerciseSets]) => (
+          {filteredExercisesWithSets.map(([exId, exerciseSets]) => (
             <div key={exId} className="w-full">
               <ExerciseCard
                 mode="completed"

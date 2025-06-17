@@ -17,6 +17,7 @@ import {
 } from "@/components/atoms/sheet";
 import { Play, Home, History, Star, RotateCcw } from "lucide-react";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
+import AddExerciseToProgramForm from "@/components/common/forms/AddExerciseToProgramForm";
 import ResponsiveNav from "@/components/organisms/responsive-nav";
 import AppLayout from "@/components/layout/AppLayout";
 import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
@@ -185,19 +186,175 @@ const ActiveWorkout = () => {
     }
   };
 
+  const handleTitleChange = async (newTitle) => {
+    try {
+      const { error } = await supabase
+        .from("workouts")
+        .update({ workout_name: newTitle })
+        .eq("id", activeWorkout.id);
+      
+      if (error) throw error;
+      // Update the active workout context with new name
+      // Note: You might need to add a method to update the workout name in the context
+    } catch (err) {
+      alert("Failed to update workout name: " + err.message);
+    }
+  };
+
+  const handleDeleteWorkout = async () => {
+    if (!confirm("Are you sure you want to delete this workout? This will end the workout without saving any progress.")) {
+      return;
+    }
+    
+    try {
+      // End the workout without saving (this will clear the context)
+      await contextEndWorkout();
+      navigate("/workout");
+    } catch (err) {
+      alert("Failed to delete workout: " + err.message);
+    }
+  };
+
+  // Filter exercises based on search
+  const filteredExercises = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleAddExercise = async (exerciseData, updateType = 'today') => {
+    try {
+      let { data: existing } = await supabase
+        .from("exercises")
+        .select("id")
+        .eq("name", exerciseData.name)
+        .maybeSingle();
+      let exercise_id = existing?.id;
+      if (!exercise_id) {
+        const { data: newEx, error: insertError } = await supabase
+          .from("exercises")
+          .insert([{ name: exerciseData.name }])
+          .select("id")
+          .single();
+        if (insertError || !newEx) throw new Error("Failed to create exercise");
+        exercise_id = newEx.id;
+      }
+      
+      const { data: progEx, error: progExError } = await supabase
+        .from("program_exercises")
+        .insert({
+          program_id: activeWorkout.programId,
+          exercise_id,
+          exercise_order: exercises.length + 1,
+        })
+        .select("id")
+        .single();
+      if (progExError || !progEx)
+        throw new Error("Failed to link exercise to program");
+      const program_exercise_id = progEx.id;
+      const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
+        program_exercise_id,
+        set_order: idx + 1,
+        reps: Number(cfg.reps),
+        weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
+      }));
+      if (setRows.length > 0) {
+        const { error: setError } = await supabase
+          .from("program_sets")
+          .insert(setRows);
+        if (setError)
+          throw new Error("Failed to save set details: " + setError.message);
+      }
+      
+      setShowAddExercise(false);
+      
+      // Refresh exercises to show the new one
+      await refreshExercises();
+    } catch (err) {
+      alert(err.message || "Failed to add exercise");
+    }
+  };
+
+  const handleAddExerciseToday = (exerciseData) => {
+    handleAddExercise(exerciseData, 'today');
+  };
+
+  const handleAddExerciseFuture = (exerciseData) => {
+    handleAddExercise(exerciseData, 'future');
+  };
+
+  const handleCancelAddExercise = () => {
+    setShowAddExercise(false);
+  };
+
+  const refreshExercises = async () => {
+    if (!activeWorkout) return;
+    
+    const { data: progExs, error } = await supabase
+      .from("program_exercises")
+      .select(
+        `
+        id,
+        exercise_id,
+        exercises(name),
+        program_sets(id, reps, weight, weight_unit, set_order)
+      `
+      )
+      .eq("program_id", activeWorkout.programId);
+
+    if (error || !progExs) {
+      setExercises([]);
+      return;
+    }
+
+    const exerciseIds = progExs.map((pe) => pe.exercise_id);
+    const { data: exercisesData, error: exercisesError } = await supabase
+      .from("exercises")
+      .select("id, name")
+      .in("id", exerciseIds);
+
+    if (exercisesError) {
+      setExercises([]);
+      return;
+    }
+
+    const cards = progExs.map((pe) => ({
+      id: pe.id,
+      exercise_id: pe.exercise_id,
+      name:
+        (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
+        "Unknown",
+      setConfigs: (pe.program_sets || [])
+        .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
+        .map((set) => ({
+          reps: set.reps,
+          weight: set.weight,
+          unit: set.weight_unit || "lbs",
+        })),
+    }));
+    setExercises(cards);
+  };
+
   return (
     <AppLayout
-      showActionBar={false}
+      showAddButton={true}
+      addButtonText="Add exercise"
       pageNameEditable={true}
       showBackButton={true}
       appHeaderTitle={activeWorkout?.name || "Active Workout"}
       onBack={handleEndWorkout}
+      onAction={() => setShowAddExercise(true)}
+      onTitleChange={handleTitleChange}
+      onDelete={handleDeleteWorkout}
+      showDeleteOption={true}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
       pageContext="workout"
     >
       <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
       <CardWrapper>
         <div className="w-full flex flex-col gap-4 p-4">
-          {exercises.map((ex) => (
+          {filteredExercises.map((ex) => (
             <ActiveExerciseCard
               key={ex.id}
               exerciseId={ex.exercise_id}
@@ -219,10 +376,12 @@ const ActiveWorkout = () => {
           open={showAddExercise}
           onOpenChange={() => setShowAddExercise(false)}
         >
-          <AddNewExerciseForm
+          <AddExerciseToProgramForm
             key="add-new"
             formPrompt="Add a new exercise"
-            onActionIconClick={() => {}}
+            onAddExercise={handleAddExerciseToday}
+            onAddExerciseFuture={handleAddExerciseFuture}
+            onCancel={handleCancelAddExercise}
             initialSets={3}
             initialSetConfigs={Array.from({ length: 3 }, () => ({
               reps: 10,
