@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, forwardRef, useEffect } from "react";
-import { ArrowLeft, Pencil, Plus, Search, X } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Search, X } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -150,11 +150,11 @@ export const PageHeader = forwardRef(({
                   </h1>
                   {pageNameEditable && !searchActive && (
                     <button
-                      className="size-4 flex items-center justify-center text-stone-600 opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="size-7 flex items-center justify-center text-stone-600 opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="Edit"
                       onClick={() => setIsEditSheetOpen(true)}
                     >
-                      <Pencil className="size-6" />
+                      <Edit className="size-6" />
                     </button>
                   )}
                 </div>
