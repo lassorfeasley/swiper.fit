@@ -1,6 +1,7 @@
 import React from 'react';
 import ToggleInput from '@/components/molecules/toggle-input';
 import NumericInput from '@/components/molecules/numeric-input';
+import { TextInput } from '@/components/molecules/text-input';
 
 const setTypeOptions = [
   { label: 'Reps', value: 'reps' },
@@ -13,6 +14,8 @@ const unitOptions = [
 ];
 
 export default function SetBuilderForm({
+  set_variant,
+  onSetVariantChange,
   setType,
   onSetTypeChange,
   reps,
@@ -27,6 +30,12 @@ export default function SetBuilderForm({
   return (
     <div className="Frame7 w-full self-stretch flex flex-col justify-start items-start gap-3">
       <div className="Frame14 w-full self-stretch flex flex-col justify-start items-start gap-4">
+        <TextInput
+          label="Name set (optional)"
+          value={set_variant}
+          onChange={onSetVariantChange}
+          customPlaceholder="e.g. Set one, Warm-up"
+        />
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">
           <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Set type</div>
           <ToggleInput
