@@ -78,7 +78,7 @@ const ActiveWorkout = () => {
           id,
           exercise_id,
           exercises(name),
-          program_sets(id, reps, weight, weight_unit, set_order)
+          program_sets(id, reps, weight, weight_unit, set_order, set_variant)
         `
         )
         .eq("program_id", activeWorkout.programId)
@@ -110,6 +110,7 @@ const ActiveWorkout = () => {
                 reps: set.reps,
                 weight: set.weight,
                 unit: set.weight_unit || "lbs",
+                set_variant: set.set_variant || `Set ${set.set_order}`,
               })),
           }));
           setExercises(cards);
@@ -260,6 +261,7 @@ const ActiveWorkout = () => {
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
         weight_unit: cfg.unit,
+        set_variant: `Set ${idx + 1}`,
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
@@ -300,7 +302,7 @@ const ActiveWorkout = () => {
         id,
         exercise_id,
         exercises(name),
-        program_sets(id, reps, weight, weight_unit, set_order)
+        program_sets(id, reps, weight, weight_unit, set_order, set_variant)
       `
       )
       .eq("program_id", activeWorkout.programId);
@@ -333,6 +335,7 @@ const ActiveWorkout = () => {
           reps: set.reps,
           weight: set.weight,
           unit: set.weight_unit || "lbs",
+          set_variant: set.set_variant || `Set ${set.set_order}`,
         })),
     }));
     setExercises(cards);

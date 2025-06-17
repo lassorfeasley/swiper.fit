@@ -41,6 +41,7 @@ export function ActiveWorkoutProvider({ children }) {
                 reps: s.reps,
                 weight: s.weight,
                 unit: s.weight_unit,
+                set_variant: s.set_variant,
                 status: 'complete', // Assume sets in DB are complete
               });
             });
@@ -177,7 +178,7 @@ export function ActiveWorkoutProvider({ children }) {
         return;
     }
 
-    const { reps, weight, unit } = setConfig;
+    const { reps, weight, unit, set_variant } = setConfig;
 
     const { data, error } = await supabase
         .from('sets')
@@ -186,7 +187,8 @@ export function ActiveWorkoutProvider({ children }) {
             exercise_id: exerciseId,
             reps: Number(reps),
             weight: Number(weight),
-            weight_unit: unit
+            weight_unit: unit,
+            set_variant,
         })
         .select()
         .single();
