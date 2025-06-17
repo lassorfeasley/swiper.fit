@@ -116,6 +116,23 @@ export function ActiveWorkoutProvider({ children }) {
     setIsPaused(false);
     setWorkoutProgress({});
     
+    const exercises = programExercises.reduce((acc, progEx) => {
+      acc[progEx.exercise_id] = {
+        name: progEx.exercises.name,
+        program_exercise_id: progEx.id,
+        sets: progEx.program_sets.map(ps => ({
+          id: null, // this will be the `sets` table id, populated on completion
+          program_set_id: ps.id, // Storing the program_set id.
+          reps: ps.reps,
+          weight: ps.weight,
+          unit: ps.weight_unit,
+          status: 'pending', // pending, active, complete
+          set_variant: ps.set_variant
+        })),
+      };
+      return acc;
+    }, {});
+
     return workoutData;
   }, [user]);
 
@@ -157,7 +174,7 @@ export function ActiveWorkoutProvider({ children }) {
       updates.forEach(update => {
         // Coerce ID to string for consistent matching
         const updateId = String(update.id);
-        const setIdx = newSets.findIndex(s => String(s.id) === updateId);
+        const setIdx = newSets.findIndex(s => s.tempId ? s.tempId === updateId : s.id === updateId);
 
         if (setIdx !== -1) {
           // Update existing set
@@ -178,17 +195,24 @@ export function ActiveWorkoutProvider({ children }) {
         return;
     }
 
-    const { reps, weight, unit, set_variant } = setConfig;
+    const { program_set_id, ...restOfSetConfig } = setConfig;
+
+    const newSet = {
+      ...restOfSetConfig,
+      status: 'complete',
+      logged_at: new Date().toISOString(),
+    };
 
     const { data, error } = await supabase
         .from('sets')
         .insert({
             workout_id: activeWorkout.id,
             exercise_id: exerciseId,
-            reps: Number(reps),
-            weight: Number(weight),
-            weight_unit: unit,
-            set_variant,
+            reps: Number(restOfSetConfig.reps),
+            weight: Number(restOfSetConfig.weight),
+            weight_unit: restOfSetConfig.unit,
+            set_variant: restOfSetConfig.set_variant,
+            program_set_id,
         })
         .select()
         .single();
@@ -212,37 +236,44 @@ export function ActiveWorkoutProvider({ children }) {
       console.error("Cannot update set: no active workout or user.");
       return;
     }
-    // Remove 'status' from changes before sending to Supabase
+    // In-session updates before a set is saved to the DB won't have a setId
+    if (!setId) return;
+
+    // Filter out local-only fields before sending to DB
     const { status, ...dbChanges } = changes;
-    // Don't send an empty update
-    if (!setId || Object.keys(dbChanges).length === 0) return;
 
-    const { data, error } = await supabase
-      .from('sets')
-      .update({
-        ...dbChanges,
-        reps: dbChanges.reps !== undefined ? Number(dbChanges.reps) : undefined,
-        weight: dbChanges.weight !== undefined ? Number(dbChanges.weight) : undefined,
-      })
-      .eq('id', setId)
-      .select(); // removed .single()
+    if (Object.keys(dbChanges).length === 0) return;
 
-    if (error) {
-      console.error("Error updating set:", error);
-    } else if (data && data.length === 1) {
-      // Update local state with the new set data
-      setWorkoutProgress(prev => {
-        const newProgress = { ...prev };
-        for (const exerciseId in newProgress) {
-          newProgress[exerciseId] = newProgress[exerciseId].map(s =>
-            String(s.id) === String(setId) ? { ...s, ...data[0] } : s
-          );
-        }
-        return newProgress;
-      });
-    } else {
-      // No row updated, or multiple rows (shouldn't happen)
-      console.warn('No set updated for id', setId);
+    try {
+      const { data, error } = await supabase
+        .from('sets')
+        .update({
+          ...dbChanges,
+          reps: dbChanges.reps !== undefined ? Number(dbChanges.reps) : undefined,
+          weight: dbChanges.weight !== undefined ? Number(dbChanges.weight) : undefined,
+        })
+        .eq('id', setId)
+        .select(); // removed .single()
+
+      if (error) {
+        console.error("Error updating set:", error);
+      } else if (data && data.length === 1) {
+        // Update local state with the new set data
+        setWorkoutProgress(prev => {
+          const newProgress = { ...prev };
+          for (const exerciseId in newProgress) {
+            newProgress[exerciseId] = newProgress[exerciseId].map(s =>
+              String(s.id) === String(setId) ? { ...s, ...data[0] } : s
+            );
+          }
+          return newProgress;
+        });
+      } else {
+        // No row updated, or multiple rows (shouldn't happen)
+        console.warn('No set updated for id', setId);
+      }
+    } catch (err) {
+      console.error("Error updating set:", err);
     }
   }, [activeWorkout, user]);
 
