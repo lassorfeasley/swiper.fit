@@ -61,6 +61,19 @@ const ExerciseCard = ({
     setEditSetIndex(null);
   };
 
+  const handleSetDelete = () => {
+    if (editSetIndex === null) return;
+    setLocalSetConfigs((prev) => {
+      const updated = prev.filter((_, i) => i !== editSetIndex);
+      if (onSetConfigsChange) {
+        onSetConfigsChange(updated);
+      }
+      return updated;
+    });
+    setEditSheetOpen(false);
+    setEditSetIndex(null);
+  };
+
   const handleCardClick = (e) => {
     if (isDragging) return;
     if (onCardClick) onCardClick(e);
@@ -94,6 +107,8 @@ const ExerciseCard = ({
               reps={config.reps}
               weight={config.weight}
               unit={config.unit || "lbs"}
+              set_type={config.set_type}
+              timed_set_duration={config.timed_set_duration}
               editable={setsAreEditable}
               onEdit={(e) => {
                 e.stopPropagation();
@@ -130,6 +145,8 @@ const ExerciseCard = ({
           <SetEditForm
             onSave={handleEditFormSave}
             initialValues={editFormValues}
+            saveButtonText="Save"
+            onDelete={handleSetDelete}
           />
         </SwiperSheet>
       )}
@@ -144,6 +161,8 @@ ExerciseCard.propTypes = {
       reps: PropTypes.number,
       weight: PropTypes.number,
       unit: PropTypes.string,
+      set_type: PropTypes.string,
+      timed_set_duration: PropTypes.number,
     })
   ),
   className: PropTypes.string,

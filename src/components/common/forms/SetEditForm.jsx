@@ -93,6 +93,8 @@ const SetEditForm = memo(({
   formPrompt = "Edit set",
   onSave,
   onSaveForFuture,
+  onDelete,
+  saveButtonText = "Just for today",
   onValuesChange,
   isChildForm,
   initialValues = { reps: 0, weight: 0, unit: 'lbs', set_type: 'reps', set_variant: '' },
@@ -200,11 +202,16 @@ const SetEditForm = memo(({
       {!isChildForm && <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
         {onSaveForFuture && <div className="UpdateProgram self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Update program?</div>}
         <SwiperButton onClick={handleSaveToday} variant="default" className="w-full">
-          Just for today
+          {saveButtonText}
         </SwiperButton>
         {onSaveForFuture && (
-          <SwiperButton onClick={handleSaveFuture} variant="destructive" className="w-full">
+          <SwiperButton onClick={handleSaveFuture} variant="outline" className="w-full">
             For future workouts
+          </SwiperButton>
+        )}
+        {onDelete && (
+          <SwiperButton onClick={onDelete} variant="destructive" className="w-full">
+            Delete Set
           </SwiperButton>
         )}
       </div>}
@@ -216,6 +223,8 @@ SetEditForm.propTypes = {
   formPrompt: PropTypes.string,
   onSave: PropTypes.func,
   onSaveForFuture: PropTypes.func,
+  onDelete: PropTypes.func,
+  saveButtonText: PropTypes.string,
   onValuesChange: PropTypes.func,
   isChildForm: PropTypes.bool,
   initialValues: PropTypes.shape({
@@ -225,6 +234,7 @@ SetEditForm.propTypes = {
     set_type: PropTypes.string,
     timed_set_duration: PropTypes.number,
     set_variant: PropTypes.string,
+    ui_id: PropTypes.number,
   }),
   className: PropTypes.string,
   showSetNameField: PropTypes.bool,
