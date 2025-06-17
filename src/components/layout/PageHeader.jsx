@@ -81,7 +81,12 @@ export const PageHeader = forwardRef(({
   // When searchActive becomes true, focus the input
   React.useEffect(() => {
     if (searchActive && searchInputRef.current) {
-      searchInputRef.current.focus();
+      // Small delay to ensure the input is fully rendered
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 10);
     }
   }, [searchActive]);
 

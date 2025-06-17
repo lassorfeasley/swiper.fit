@@ -185,19 +185,59 @@ const ActiveWorkout = () => {
     }
   };
 
+  const handleTitleChange = async (newTitle) => {
+    try {
+      const { error } = await supabase
+        .from("workouts")
+        .update({ workout_name: newTitle })
+        .eq("id", activeWorkout.id);
+      
+      if (error) throw error;
+      // Update the active workout context with new name
+      // Note: You might need to add a method to update the workout name in the context
+    } catch (err) {
+      alert("Failed to update workout name: " + err.message);
+    }
+  };
+
+  const handleDeleteWorkout = async () => {
+    if (!confirm("Are you sure you want to delete this workout? This will end the workout without saving any progress.")) {
+      return;
+    }
+    
+    try {
+      // End the workout without saving (this will clear the context)
+      await contextEndWorkout();
+      navigate("/workout");
+    } catch (err) {
+      alert("Failed to delete workout: " + err.message);
+    }
+  };
+
+  // Filter exercises based on search
+  const filteredExercises = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <AppLayout
-      showActionBar={false}
+      showAddButton={false}
       pageNameEditable={true}
       showBackButton={true}
       appHeaderTitle={activeWorkout?.name || "Active Workout"}
       onBack={handleEndWorkout}
+      onTitleChange={handleTitleChange}
+      onDelete={handleDeleteWorkout}
+      showDeleteOption={true}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
       pageContext="workout"
     >
       <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
       <CardWrapper>
         <div className="w-full flex flex-col gap-4 p-4">
-          {exercises.map((ex) => (
+          {filteredExercises.map((ex) => (
             <ActiveExerciseCard
               key={ex.id}
               exerciseId={ex.exercise_id}

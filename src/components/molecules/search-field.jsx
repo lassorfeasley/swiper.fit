@@ -9,16 +9,14 @@ const SearchField = React.forwardRef(({
   customPlaceholder,
   ...props
 }, ref) => {
-  const inputRef = useRef(null);
-
   return (
     <div
       className={`w-full h-full bg-white flex items-center ${className}`}
       {...props}
-      onClick={() => inputRef.current && inputRef.current.focus()}
+      onClick={() => ref && ref.current && ref.current.focus()}
     >
       <input
-        ref={inputRef}
+        ref={ref}
         type="text"
         value={value}
         onChange={onChange}

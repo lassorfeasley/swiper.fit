@@ -253,14 +253,66 @@ const ProgramBuilder = () => {
     }
   };
 
+  const handleTitleChange = async (newTitle) => {
+    try {
+      const { error } = await supabase
+        .from("programs")
+        .update({ program_name: newTitle })
+        .eq("id", programId);
+      
+      if (error) throw error;
+      setProgramName(newTitle);
+    } catch (err) {
+      alert("Failed to update program name: " + err.message);
+    }
+  };
+
+  const handleDeleteProgram = async () => {
+    if (!confirm("Are you sure you want to delete this program? This action cannot be undone.")) {
+      return;
+    }
+    
+    try {
+      // Delete program_sets first
+      await supabase
+        .from("program_sets")
+        .delete()
+        .eq("program_exercise_id", 
+          exercises.map(ex => ex.id)
+        );
+      
+      // Delete program_exercises
+      await supabase
+        .from("program_exercises")
+        .delete()
+        .eq("program_id", programId);
+      
+      // Delete the program
+      const { error } = await supabase
+        .from("programs")
+        .delete()
+        .eq("id", programId);
+      
+      if (error) throw error;
+      
+      navigate("/programs");
+    } catch (err) {
+      alert("Failed to delete program: " + err.message);
+    }
+  };
+
   return (
     <AppLayout
       appHeaderTitle={programName || "Program"}
-      showActionBar={true}
-      actionBarText="Add an exercise"
+      showAddButton={true}
+      addButtonText="Add exercise"
+      pageNameEditable={true}
       showBackButton={true}
       onBack={handleBack}
       onAction={() => setShowAddExercise(true)}
+      onTitleChange={handleTitleChange}
+      onDelete={handleDeleteProgram}
+      showDeleteOption={true}
       search={true}
       searchValue={search}
       onSearchChange={setSearch}
