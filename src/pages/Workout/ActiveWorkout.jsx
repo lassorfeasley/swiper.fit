@@ -78,7 +78,7 @@ const ActiveWorkout = () => {
           id,
           exercise_id,
           exercises(name),
-          program_sets(id, reps, weight, weight_unit, set_order)
+          program_sets(id, reps, weight, weight_unit, set_order, set_variant)
         `
         )
         .eq("program_id", activeWorkout.programId)
@@ -98,7 +98,11 @@ const ActiveWorkout = () => {
             return;
           }
 
-          const cards = progExs.map((pe) => ({
+          const uniqueProgExs = progExs.filter(
+            (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+          );
+
+          const cards = uniqueProgExs.map((pe) => ({
             id: pe.id,
             exercise_id: pe.exercise_id,
             name:
@@ -107,9 +111,11 @@ const ActiveWorkout = () => {
             setConfigs: (pe.program_sets || [])
               .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
               .map((set) => ({
+                id: set.id,
                 reps: set.reps,
                 weight: set.weight,
                 unit: set.weight_unit || "lbs",
+                set_variant: set.set_variant || `Set ${set.set_order}`,
               })),
           }));
           setExercises(cards);
@@ -125,7 +131,7 @@ const ActiveWorkout = () => {
       updateWorkoutProgress(exerciseId, setIdOrUpdates);
       // Persist each update to the database if the set has an id
       setIdOrUpdates.forEach((update) => {
-        if (update.id) {
+        if (update.id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(update.id)) {
           updateSet(update.id, update.changes);
         }
       });
@@ -151,25 +157,25 @@ const ActiveWorkout = () => {
   const handleSetProgrammaticUpdate = async (exerciseId, setId, formValues) => {
     if (!activeWorkout || !activeWorkout.programId) return;
 
+    // Ensure setId is a valid UUID
+    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(setId)) {
+      console.error('Invalid UUID for setId:', setId);
+      return;
+    }
+
     try {
-      // Logic to update the program_sets table
-      // This is a simplified example. You might need to find the correct program_set ID
-      // based on the exerciseId and the set's order or its own ID if you store it.
+      // Update only columns that exist in program_sets
       const { data, error } = await supabase
         .from("program_sets")
         .update({
           reps: formValues.reps,
           weight: formValues.weight,
-          weight_unit: formValues.unit,
+          weight_unit: formValues.unit, // use weight_unit, not unit
           set_type: formValues.set_type,
           timed_set_duration: formValues.timed_set_duration,
+          set_variant: formValues.set_variant, // set name
         })
-        .eq("program_id", activeWorkout.programId)
-        .eq("exercise_id", exerciseId)
-        // This 'eq' might need adjustment based on your schema.
-        // If you don't have a direct setId on program_sets, you might need to
-        // fetch them first and find the right one to update based on order.
-        .eq("id", setId);
+        .eq("id", setId); // only use id to identify the row
 
       if (error) throw error;
     } catch (error) {
@@ -260,6 +266,7 @@ const ActiveWorkout = () => {
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
         weight_unit: cfg.unit,
+        set_variant: `Set ${idx + 1}`,
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
@@ -300,7 +307,7 @@ const ActiveWorkout = () => {
         id,
         exercise_id,
         exercises(name),
-        program_sets(id, reps, weight, weight_unit, set_order)
+        program_sets(id, reps, weight, weight_unit, set_order, set_variant)
       `
       )
       .eq("program_id", activeWorkout.programId);
@@ -321,7 +328,11 @@ const ActiveWorkout = () => {
       return;
     }
 
-    const cards = progExs.map((pe) => ({
+    const uniqueProgExs = progExs.filter(
+      (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+    );
+
+    const cards = uniqueProgExs.map((pe) => ({
       id: pe.id,
       exercise_id: pe.exercise_id,
       name:
@@ -330,9 +341,11 @@ const ActiveWorkout = () => {
       setConfigs: (pe.program_sets || [])
         .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
         .map((set) => ({
+          id: set.id,
           reps: set.reps,
           weight: set.weight,
           unit: set.weight_unit || "lbs",
+          set_variant: set.set_variant || `Set ${set.set_order}`,
         })),
     }));
     setExercises(cards);

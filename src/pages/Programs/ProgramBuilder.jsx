@@ -41,7 +41,7 @@ const ProgramBuilder = () => {
       const { data: progExs, error } = await supabase
         .from("program_exercises")
         .select(
-          "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order)"
+          "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
         )
         .eq("program_id", programId)
         .order("exercise_order", { ascending: true });
@@ -62,6 +62,9 @@ const ProgramBuilder = () => {
             reps: set.reps,
             weight: set.weight,
             unit: set.weight_unit || "lbs",
+            set_variant: set.set_variant || `Set ${set.set_order}`,
+            set_type: set.set_type,
+            timed_set_duration: set.timed_set_duration,
           })),
       }));
       setExercises(items);
@@ -129,6 +132,9 @@ const ProgramBuilder = () => {
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
         weight_unit: cfg.unit,
+        set_variant: cfg.set_variant || `Set ${idx + 1}`,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
@@ -161,6 +167,9 @@ const ProgramBuilder = () => {
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
         weight_unit: cfg.unit,
+        set_variant: cfg.set_variant || `Set ${idx + 1}`,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
@@ -206,7 +215,7 @@ const ProgramBuilder = () => {
     const { data: progExs } = await supabase
       .from("program_exercises")
       .select(
-        "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order)"
+        "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
       )
       .eq("program_id", programId)
       .order("exercise_order", { ascending: true });
@@ -222,6 +231,9 @@ const ProgramBuilder = () => {
           reps: set.reps,
           weight: set.weight,
           unit: set.weight_unit || "lbs",
+          set_variant: set.set_variant || `Set ${set.set_order}`,
+          set_type: set.set_type,
+          timed_set_duration: set.timed_set_duration,
         })),
     }));
     setExercises(items);
@@ -257,6 +269,9 @@ const ProgramBuilder = () => {
       reps: Number(cfg.reps),
       weight: Number(cfg.weight),
       weight_unit: cfg.unit,
+      set_variant: cfg.set_variant || `Set ${idx + 1}`,
+      set_type: cfg.set_type,
+      timed_set_duration: cfg.timed_set_duration,
     }));
     if (setRows.length > 0) {
       await supabase.from('program_sets').insert(setRows);

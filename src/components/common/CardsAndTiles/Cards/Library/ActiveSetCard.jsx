@@ -26,7 +26,7 @@ const ActiveSetCard = ({
     const fromParent = setData[i] || {};
     return {
       id: i + 1,
-      name: `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
+      name: config.set_variant || `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
       reps: fromParent.reps ?? config.reps,
       weight: fromParent.weight ?? config.weight,
       unit: config.unit || 'lbs',
@@ -59,6 +59,8 @@ const ActiveSetCard = ({
           exerciseId,
           reps: set.reps,
           weight: set.weight,
+          unit: set.unit,
+          set_variant: set.name,
           status: 'complete',
         });
       }
@@ -142,6 +144,8 @@ const ActiveSetCard = ({
           exerciseId,
           reps: set.reps,
           weight: set.weight,
+          unit: set.unit,
+          set_variant: set.name,
           status: 'complete',
         });
       }
@@ -269,7 +273,8 @@ ActiveSetCard.propTypes = {
   setConfigs: PropTypes.arrayOf(PropTypes.shape({
     reps: PropTypes.number,
     weight: PropTypes.number,
-    unit: PropTypes.string
+    unit: PropTypes.string,
+    set_variant: PropTypes.string
   })),
   onSetComplete: PropTypes.func,
   exerciseId: PropTypes.string.isRequired,

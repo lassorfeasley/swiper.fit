@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
@@ -29,11 +29,19 @@ const AddNewExerciseForm = ({
 }) => {
   const [exerciseName, setExerciseName] = useState(initialName || '');
   const [sets, setSets] = useState(initialSets || 3);
-  const [setConfigs, setSetConfigs] = useState(
-    Array.from({ length: initialSets || 3 }, (_, i) =>
-      initialSetConfigs[i] || { reps: 3, weight: 25, unit: 'lbs', set_type: 'reps' }
-    )
-  );
+  const [setConfigs, setSetConfigs] = useState(() => {
+    const configs = initialSetConfigs.length > 0 ? initialSetConfigs : Array.from({ length: initialSets || 3 });
+    return configs.map((cfg, i) => ({
+      ui_id: Math.random(),
+      ...(cfg || {
+        reps: 3, 
+        weight: 25, 
+        unit: 'lbs', 
+        set_type: 'reps',
+      }),
+      set_variant: (cfg && cfg.set_variant) || `Set ${i + 1}`,
+    }));
+  });
   const [openSet, setOpenSet] = useState('defaults');
   const [setDefaults, setSetDefaults] = useState({
     reps: initialSetConfigs[0]?.reps ?? 3,
@@ -42,17 +50,50 @@ const AddNewExerciseForm = ({
     set_type: initialSetConfigs[0]?.set_type ?? 'reps',
     timed_set_duration: initialSetConfigs[0]?.timed_set_duration,
   });
+  const prevDefaultsRef = useRef(setDefaults);
 
   useEffect(() => {
+    const prevDefaults = prevDefaultsRef.current;
     setSetConfigs(prev => {
-      const arr = Array.from({ length: sets }, (_, i) => prev[i] || { ...setDefaults });
-      return arr;
+      let newConfigs = [...prev];
+      const currentLength = prev.length;
+
+      if (sets > currentLength) { // Add sets
+        const newSets = Array.from({ length: sets - currentLength }, (_, i) => ({
+          ...setDefaults,
+          set_variant: `Set ${currentLength + i + 1}`,
+          ui_id: Math.random()
+        }));
+        newConfigs = [...prev, ...newSets];
+      } else if (sets < currentLength) { // Remove sets
+        newConfigs = prev.slice(0, sets);
+      } else if (prevDefaults !== setDefaults) { // Defaults changed
+        newConfigs = prev.map(config => {
+          let hasChanged = false;
+          const updatedConfig = { ...config };
+          const keysToSync = ['reps', 'weight', 'unit', 'set_type', 'timed_set_duration'];
+          keysToSync.forEach(key => {
+            if (config[key] === prevDefaults[key]) {
+              updatedConfig[key] = setDefaults[key];
+              hasChanged = true;
+            }
+          });
+          return hasChanged ? updatedConfig : config;
+        });
+      }
+      
+      return newConfigs;
     });
+
+    prevDefaultsRef.current = setDefaults;
   }, [sets, setDefaults]);
 
-  const handleSetFieldChange = (idx, newValues) => {
-    setSetConfigs(prev => prev.map((cfg, i) => i === idx ? newValues : cfg));
-  };
+  const handleSetFieldChange = useCallback((changedSet) => {
+    setSetConfigs(prev => {
+      const newConfigs = prev.map(s => s.ui_id === changedSet.ui_id ? changedSet : s);
+      return newConfigs;
+    });
+  }, []);
 
   const handleSetDefaultsChange = (newValues) => {
     setSetDefaults(newValues);
@@ -112,23 +153,24 @@ const AddNewExerciseForm = ({
                   isChildForm
                   initialValues={setDefaults}
                   onValuesChange={handleSetDefaultsChange}
+                  showSetNameField={false}
                 />
               </div>
             </SwiperAccordionContent>
           </SwiperAccordionItem>
 
-          {Array.from({ length: sets }).map((_, idx) => {
-            const setConfig = setConfigs[idx] || setDefaults;
+          {setConfigs.map((setConfig, idx) => {
             return (
-              <SwiperAccordionItem key={idx} value={String(idx)} className="border-b border-neutral-300">
-                <SwiperAccordionTrigger>{`Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</SwiperAccordionTrigger>
+              <SwiperAccordionItem key={setConfig.ui_id} value={String(idx)} className="border-b border-neutral-300">
+                <SwiperAccordionTrigger>{setConfig.set_variant || `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</SwiperAccordionTrigger>
                 <SwiperAccordionContent>
                   <div className="flex flex-col gap-4 py-2">
                     <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
                       <SetEditForm
+                        key={setConfig.ui_id}
                         isChildForm
                         initialValues={setConfig}
-                        onValuesChange={(newValues) => handleSetFieldChange(idx, newValues)}
+                        onValuesChange={handleSetFieldChange}
                       />
                     </div>
                   </div>
@@ -170,6 +212,8 @@ AddNewExerciseForm.propTypes = {
       unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
       set_type: PropTypes.string,
       timed_set_duration: PropTypes.number,
+      set_variant: PropTypes.string,
+      ui_id: PropTypes.number,
     })
   ),
 };

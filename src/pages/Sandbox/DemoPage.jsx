@@ -27,7 +27,7 @@ const DemoPage = () => {
         alert(`Delete ${pageContext} action triggered!`);
     };
 
-    return (
+  return (
         <div>
             <PageHeader
                 showAddButton={showAddButton}
@@ -101,8 +101,8 @@ const DemoPage = () => {
                     </div>
                 </div>
             </div>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default DemoPage; 
