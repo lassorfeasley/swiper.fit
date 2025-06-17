@@ -44,12 +44,12 @@ export const PageHeader = forwardRef(({
   const location = useLocation();
   const [searchActive, setSearchActive] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(appHeaderTitle);
+  const [editingTitle, setEditingTitle] = useState(appHeaderTitle || '');
   const searchInputRef = useRef(null);
 
   // Update editing title when appHeaderTitle changes
   useEffect(() => {
-    setEditingTitle(appHeaderTitle);
+    setEditingTitle(appHeaderTitle || '');
   }, [appHeaderTitle]);
 
   const onBackHandler = () => {
@@ -63,7 +63,7 @@ export const PageHeader = forwardRef(({
   };
 
   const handleTitleSave = () => {
-    if (onTitleChange && editingTitle.trim() !== appHeaderTitle) {
+    if (onTitleChange && (editingTitle || '').trim() !== (appHeaderTitle || '')) {
       onTitleChange(editingTitle.trim());
     }
     setIsEditSheetOpen(false);
@@ -242,7 +242,7 @@ export const PageHeader = forwardRef(({
             <SwiperButton 
               onClick={handleTitleSave}
               className="w-full"
-              disabled={!editingTitle.trim() || editingTitle.trim() === appHeaderTitle}
+              disabled={!(editingTitle || '').trim() || (editingTitle || '').trim() === (appHeaderTitle || '')}
             >
               Save Changes
             </SwiperButton>

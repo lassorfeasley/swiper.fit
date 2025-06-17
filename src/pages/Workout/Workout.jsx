@@ -47,6 +47,7 @@ const Workout = () => {
             )
           `)
           .eq('user_id', user.id)
+          .neq('is_archived', true)
           .order('created_at', { ascending: false });
 
         if (error) {
