@@ -96,13 +96,13 @@ const Workout = () => {
   return (
     <AppLayout
       appHeaderTitle="Start Workout"
-      showActionBar={false}
-      showActionIcon={false}
+      showAddButton={false}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
       searchValue={search}
       onSearchChange={setSearch}
+      pageContext="workout"
     >
       <CardWrapper className="px-4">
         {loading ? (

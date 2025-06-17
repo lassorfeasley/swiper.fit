@@ -8,7 +8,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 export const AppHeader = ({
   showActionBar = true,
-  showActionIcon = true,
   showBackButton = true,
   appHeaderTitle = "Example app header title",
   actionBarText = "Example action bar text",
@@ -64,11 +63,6 @@ export const AppHeader = ({
           <div className="Heading flex-1 justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">
             {appHeaderTitle}
           </div>
-          {showActionIcon && (
-            <div className="Pencil w-6 h-6 relative overflow-hidden flex items-center justify-center">
-              <PencilSquareIcon className="w-6 h-6 text-zinc-700" />
-            </div>
-          )}
         </div>
         {subhead && (
           <div className="Subheading self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-none">
@@ -107,7 +101,6 @@ export const AppHeader = ({
 
 AppHeader.propTypes = {
   showActionBar: PropTypes.bool,
-  showActionIcon: PropTypes.bool,
   showBackButton: PropTypes.bool,
   appHeaderTitle: PropTypes.string,
   actionBarText: PropTypes.string,

@@ -108,9 +108,8 @@ const ProgramsIndex = () => {
   return (
     <AppLayout
       appHeaderTitle="Programs"
-      actionBarText="Create new program"
-      showActionBar={true}
-      showActionIcon={false}
+      showAddButton={true}
+      addButtonText="Add program"
       showBackButton={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
@@ -123,6 +122,7 @@ const ProgramsIndex = () => {
           if (inputRef.current) inputRef.current.focus();
         }, 100);
       }}
+      pageContext="programs"
       data-component="AppHeader"
     >
       <CardWrapper className="px-4">
