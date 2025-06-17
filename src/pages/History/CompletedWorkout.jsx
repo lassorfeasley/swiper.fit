@@ -119,25 +119,31 @@ const CompletedWorkout = () => {
     }
     
     try {
-      // Delete sets first
-      await supabase
+      // Manually delete associated sets first
+      const { error: setsError } = await supabase
         .from("sets")
         .delete()
         .eq("workout_id", workoutId);
+
+      if (setsError) {
+        throw new Error("Failed to delete associated sets: " + setsError.message);
+      }
       
-      // Delete the workout
-      const { error } = await supabase
+      // Then, delete the workout
+      const { error: workoutError } = await supabase
         .from("workouts")
         .delete()
         .eq("id", workoutId)
         .eq("user_id", user.id);
       
-      if (error) throw error;
+      if (workoutError) {
+        throw new Error("Failed to delete workout: " + workoutError.message);
+      }
       
       // Navigate back to history
       window.history.back();
     } catch (err) {
-      alert("Failed to delete workout: " + err.message);
+      alert(err.message);
     }
   };
 

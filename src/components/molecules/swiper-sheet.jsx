@@ -1,9 +1,9 @@
 import React from "react";
-import { Sheet, SheetContent } from "@/components/atoms/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/atoms/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-const SwiperSheet = ({ open, onOpenChange, children, className, ...props }) => {
+const SwiperSheet = ({ open, onOpenChange, children, className, title, description, ...props }) => {
   const isMobile = useIsMobile();
 
   return (
@@ -17,6 +17,12 @@ const SwiperSheet = ({ open, onOpenChange, children, className, ...props }) => {
         )}
         {...props}
       >
+        {(title || description) && (
+          <SheetHeader>
+            {title && <SheetTitle>{title}</SheetTitle>}
+            {description && <SheetDescription>{description}</SheetDescription>}
+          </SheetHeader>
+        )}
         {children}
       </SheetContent>
     </Sheet>

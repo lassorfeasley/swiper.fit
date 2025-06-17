@@ -2,15 +2,13 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, forwardRef, useEffect } from "react";
-import { ArrowLeft, Edit, Plus, Search, X, SlidersHorizontal, Settings2 } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Search, X, SlidersHorizontal, Settings2, Trash2 } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
-import { Input } from "@/components/atoms/input";
-import { Label } from "@/components/atoms/label";
+import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
-import { Trash2 } from 'lucide-react';
 
 // Add this before the component definition
 const headerResponsiveStyle = `
@@ -224,20 +222,18 @@ export const PageHeader = forwardRef(({
       </div>
       
       {/* Edit Title Sheet */}
-      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <div className="space-y-6">
+      <SwiperSheet
+        open={isEditSheetOpen}
+        onOpenChange={setIsEditSheetOpen}
+        title={`Edit ${pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : 'Page'}`}
+      >
+        <div className="space-y-6 pt-4">
           <div className="space-y-2">
-            <h2 className="text-lg font-medium text-stone-600">
-              Edit {pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : 'Page'}
-            </h2>
-          </div>
-          
-          <div className="space-y-2">
-            <Input
+            <TextInput
               id="pageTitle"
               value={editingTitle}
               onChange={(e) => setEditingTitle(e.target.value)}
-              placeholder="Enter page name"
+              customPlaceholder="Enter page name"
               className="w-full"
             />
           </div>
@@ -250,14 +246,14 @@ export const PageHeader = forwardRef(({
             >
               Save Changes
             </SwiperButton>
-            
             {showDeleteOption && onDelete && (
               <SwiperButton 
                 variant="destructive" 
                 onClick={handleDelete}
                 className="w-full"
               >
-                Delete {pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : 'Item'}
+                <Trash2 className="size-4 mr-2" />
+                Delete {pageContext === 'programs' ? 'Program' : pageContext === 'workout' ? 'Workout' : ''}
               </SwiperButton>
             )}
           </div>

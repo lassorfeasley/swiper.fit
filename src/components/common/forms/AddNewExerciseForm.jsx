@@ -79,7 +79,6 @@ const AddNewExerciseForm = ({
 
   return (
     <form className="Editexerciseform w-full max-w-sm box-border inline-flex flex-col justify-start items-start gap-6" onSubmit={handleSave}>
-      <div className="CreateExercise self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>
       <div className="Frame13 self-stretch flex flex-col justify-start items-start gap-3">
         <TextInput
           value={exerciseName}

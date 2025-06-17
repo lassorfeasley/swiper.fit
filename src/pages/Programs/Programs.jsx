@@ -53,6 +53,7 @@ const ProgramsIndex = () => {
         `
         )
         .eq("user_id", user.id)
+        .eq("is_archived", false)
         .order("created_at", { ascending: false });
       if (error) {
         setPrograms([]);

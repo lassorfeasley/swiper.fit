@@ -268,36 +268,21 @@ const ProgramBuilder = () => {
   };
 
   const handleDeleteProgram = async () => {
-    if (!confirm("Are you sure you want to delete this program? This action cannot be undone.")) {
+    if (!confirm("Are you sure you want to archive this program? It will be removed from your active programs, but its history will be preserved.")) {
       return;
     }
     
     try {
-      // Delete program_sets first
-      await supabase
-        .from("program_sets")
-        .delete()
-        .eq("program_exercise_id", 
-          exercises.map(ex => ex.id)
-        );
-      
-      // Delete program_exercises
-      await supabase
-        .from("program_exercises")
-        .delete()
-        .eq("program_id", programId);
-      
-      // Delete the program
       const { error } = await supabase
         .from("programs")
-        .delete()
+        .update({ is_archived: true })
         .eq("id", programId);
       
       if (error) throw error;
       
       navigate("/programs");
     } catch (err) {
-      alert("Failed to delete program: " + err.message);
+      alert("Failed to archive program: " + err.message);
     }
   };
 
@@ -345,7 +330,12 @@ const ProgramBuilder = () => {
         )}
       </CardWrapper>
       {(showAddExercise || editingExercise) && (
-        <SwiperSheet open={showAddExercise || !!editingExercise} onOpenChange={handleModalClose}>
+        <SwiperSheet
+          open={showAddExercise || !!editingExercise}
+          onOpenChange={handleModalClose}
+          title={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+        >
+          <div className="pt-4">
             <AddNewExerciseForm
               key={editingExercise ? editingExercise.id : 'add-new'}
               formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
@@ -355,6 +345,7 @@ const ProgramBuilder = () => {
               initialSets={editingExercise?.setConfigs?.length}
               initialSetConfigs={editingExercise?.setConfigs}
             />
+          </div>
         </SwiperSheet>
       )}
     </AppLayout>
