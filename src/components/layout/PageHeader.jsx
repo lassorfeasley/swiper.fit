@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, forwardRef, useEffect } from "react";
-import { ArrowLeft, Edit, Plus, Search, X } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Search, X, SlidersHorizontal, Settings2 } from 'lucide-react';
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -159,7 +159,7 @@ export const PageHeader = forwardRef(({
                       aria-label="Edit"
                       onClick={() => setIsEditSheetOpen(true)}
                     >
-                      <Edit className="size-6" />
+                      <Settings2 className="size-6" />
                     </button>
                   )}
                 </div>

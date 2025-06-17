@@ -167,16 +167,19 @@ const AddExerciseToProgramForm = ({
             type="button" 
             onClick={handleSaveToday}
             className="w-full"
+            disabled={!exerciseName.trim()}
+            variant={!exerciseName.trim() ? "ghost" : "default"}
           >
-            1. Just for today
+            Just for today
           </SwiperButton>
           <SwiperButton 
             type="button" 
-            variant="outline"
+            variant={!exerciseName.trim() ? "ghost" : "outline"}
             onClick={handleSaveFuture}
             className="w-full"
+            disabled={!exerciseName.trim()}
           >
-            2. For future workouts
+            For future workouts
           </SwiperButton>
           <SwiperButton 
             type="button" 
@@ -184,7 +187,7 @@ const AddExerciseToProgramForm = ({
             onClick={onCancel}
             className="w-full"
           >
-            3. Cancel
+            Cancel
           </SwiperButton>
         </div>
       </div>

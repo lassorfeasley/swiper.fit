@@ -269,13 +269,6 @@ const ActiveWorkout = () => {
       
       // Refresh exercises to show the new one
       await refreshExercises();
-      
-      // Show success message based on update type
-      if (updateType === 'today') {
-        alert("Exercise added to today's workout!");
-      } else if (updateType === 'future') {
-        alert("Exercise added to program for future workouts!");
-      }
     } catch (err) {
       alert(err.message || "Failed to add exercise");
     }
