@@ -283,48 +283,13 @@ const ProgramBuilder = () => {
 
   const handleConfirmDeleteProgram = async () => {
     try {
-      // Step 1: Get all program_exercise IDs for the current program.
-      const { data: programExercises, error: peError } = await supabase
-        .from("program_exercises")
-        .select("id")
-        .eq("program_id", programId);
-
-      if (peError) {
-        throw new Error(`Failed to fetch program exercises: ${peError.message}`);
-      }
-
-      if (programExercises && programExercises.length > 0) {
-        const programExerciseIds = programExercises.map(pe => pe.id);
-
-        // Step 2: Delete their associated sets.
-        const { error: setsError } = await supabase
-          .from("program_sets")
-          .delete()
-          .in("program_exercise_id", programExerciseIds);
-
-        if (setsError) {
-          throw new Error(`Failed to delete program sets: ${setsError.message}`);
-        }
-        
-        // Step 3: Delete the program exercises themselves.
-        const { error: progExError } = await supabase
-          .from("program_exercises")
-          .delete()
-          .eq("program_id", programId);
-
-        if (progExError) {
-          throw new Error(`Failed to delete program exercises: ${progExError.message}`);
-        }
-      }
-
-      // Step 4: Finally, delete the program.
-      const { error: programError } = await supabase
+      const { error } = await supabase
         .from("programs")
-        .delete()
+        .update({ is_archived: true })
         .eq("id", programId);
       
-      if (programError) {
-        throw programError;
+      if (error) {
+        throw error;
       }
       
       navigate("/programs");
