@@ -87,6 +87,7 @@ const ActiveExerciseCard = ({
         set_type: fromParent.set_type ?? config.set_type ?? "reps",
         timed_set_duration:
           fromParent.timed_set_duration ?? config.timed_set_duration,
+        set_variant: fromParent.set_variant ?? config.set_variant,
       };
     });
 
@@ -376,7 +377,7 @@ const ActiveExerciseCard = ({
             >
               <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
                 <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-                  {set.name}
+                  {set.set_variant || set.name}
                 </div>
                 <CardPill
                   reps={set.reps}
