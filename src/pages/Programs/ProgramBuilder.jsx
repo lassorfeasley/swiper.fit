@@ -8,6 +8,7 @@ import { SwiperSheet } from '@/components/molecules/swiper-sheet';
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import AppLayout from '@/components/layout/AppLayout';
+import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -19,6 +20,8 @@ const ProgramBuilder = () => {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState(null);
   const [search, setSearch] = useState("");
+  const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] = useState(false);
+  const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] = useState(false);
   const isUnmounted = useRef(false);
 
   useEffect(() => {
@@ -173,7 +176,12 @@ const ProgramBuilder = () => {
     }
   };
 
-  const handleDeleteExercise = async () => {
+  const handleDeleteExercise = () => {
+    if (!editingExercise) return;
+    setDeleteExerciseConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteExercise = async () => {
     try {
       if (!editingExercise) return;
       
@@ -189,6 +197,8 @@ const ProgramBuilder = () => {
       await refreshExercises();
     } catch (err) {
       alert(err.message || "Failed to delete exercise");
+    } finally {
+      setDeleteExerciseConfirmOpen(false);
     }
   };
 
@@ -267,88 +277,107 @@ const ProgramBuilder = () => {
     }
   };
 
-  const handleDeleteProgram = async () => {
-    if (!confirm("Are you sure you want to archive this program? It will be removed from your active programs, but its history will be preserved.")) {
-      return;
-    }
-    
+  const handleDeleteProgram = () => {
+    setDeleteProgramConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteProgram = async () => {
     try {
       const { error } = await supabase
         .from("programs")
-        .update({ is_archived: true })
+        .delete()
         .eq("id", programId);
       
       if (error) throw error;
       
       navigate("/programs");
     } catch (err) {
-      alert("Failed to archive program: " + err.message);
+      alert("Failed to delete program: " + err.message);
     }
   };
 
   return (
-    <AppLayout
-      appHeaderTitle={programName || "Program"}
-      showAddButton={true}
-      addButtonText="Add exercise"
-      pageNameEditable={true}
-      showBackButton={true}
-      onBack={handleBack}
-      onAction={() => setShowAddExercise(true)}
-      onTitleChange={handleTitleChange}
-      onDelete={handleDeleteProgram}
-      showDeleteOption={true}
-      search={true}
-      searchValue={search}
-      onSearchChange={setSearch}
-      pageContext="programBuilder"
-      data-component="AppHeader"
-    >
-      <CardWrapper className="px-4">
-        {loading ? (
-          <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : filteredExercises.length === 0 && !loading ? (
-          <div className="text-gray-400 text-center py-8">
-            No exercises found. Try adding one!
-          </div>
-        ) : (
-          <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 w-full">
-            {filteredExercises.map((ex) => (
-              <ExerciseCard
-                key={ex.id}
-                mode="default"
-                exerciseName={ex.name}
-                setConfigs={ex.setConfigs}
-                onEdit={() => setEditingExercise(ex)}
-                onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
-                reorderable={true}
-                reorderValue={ex}
-                onCardClick={() => setEditingExercise(ex)}
+    <>
+      <AppLayout
+        appHeaderTitle={programName || "Program"}
+        showAddButton={true}
+        addButtonText="Add exercise"
+        pageNameEditable={true}
+        showBackButton={true}
+        onBack={handleBack}
+        onAction={() => setShowAddExercise(true)}
+        onTitleChange={handleTitleChange}
+        onDelete={handleDeleteProgram}
+        showDeleteOption={true}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        pageContext="programBuilder"
+        data-component="AppHeader"
+      >
+        <CardWrapper className="px-4">
+          {loading ? (
+            <div className="text-gray-400 text-center py-8">Loading...</div>
+          ) : filteredExercises.length === 0 && !loading ? (
+            <div className="text-gray-400 text-center py-8">
+              No exercises found. Try adding one!
+            </div>
+          ) : (
+            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 w-full">
+              {filteredExercises.map((ex) => (
+                <ExerciseCard
+                  key={ex.id}
+                  mode="default"
+                  exerciseName={ex.name}
+                  setConfigs={ex.setConfigs}
+                  onEdit={() => setEditingExercise(ex)}
+                  onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
+                  reorderable={true}
+                  reorderValue={ex}
+                  onCardClick={() => setEditingExercise(ex)}
+                />
+              ))}
+            </Reorder.Group>
+          )}
+        </CardWrapper>
+        {(showAddExercise || editingExercise) && (
+          <SwiperSheet
+            open={showAddExercise || !!editingExercise}
+            onOpenChange={handleModalClose}
+            title={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+          >
+            <div className="pt-4">
+              <AddNewExerciseForm
+                key={editingExercise ? editingExercise.id : 'add-new'}
+                formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
+                onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
+                onDelete={editingExercise ? handleDeleteExercise : undefined}
+                initialName={editingExercise?.name}
+                initialSets={editingExercise?.setConfigs?.length}
+                initialSetConfigs={editingExercise?.setConfigs}
               />
-            ))}
-          </Reorder.Group>
+            </div>
+          </SwiperSheet>
         )}
-      </CardWrapper>
-      {(showAddExercise || editingExercise) && (
-        <SwiperSheet
-          open={showAddExercise || !!editingExercise}
-          onOpenChange={handleModalClose}
-          title={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-        >
-          <div className="pt-4">
-            <AddNewExerciseForm
-              key={editingExercise ? editingExercise.id : 'add-new'}
-              formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-              onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
-              onDelete={editingExercise ? handleDeleteExercise : undefined}
-              initialName={editingExercise?.name}
-              initialSets={editingExercise?.setConfigs?.length}
-              initialSetConfigs={editingExercise?.setConfigs}
-            />
-          </div>
-        </SwiperSheet>
-      )}
-    </AppLayout>
+      </AppLayout>
+      <SwiperAlertDialog
+        open={isDeleteProgramConfirmOpen}
+        onOpenChange={setDeleteProgramConfirmOpen}
+        onConfirm={handleConfirmDeleteProgram}
+        title="Confirm deletion"
+        description="Deleting this program will not affect your completed workout history"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+      <SwiperAlertDialog
+        open={isDeleteExerciseConfirmOpen}
+        onOpenChange={setDeleteExerciseConfirmOpen}
+        onConfirm={handleConfirmDeleteExercise}
+        title="Are you sure you want to delete this exercise?"
+        description="This action cannot be undone and the exercise will be removed from this program."
+        confirmText="Delete"
+      />
+    </>
   );
 };
 
