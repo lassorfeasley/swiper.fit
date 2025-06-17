@@ -23,6 +23,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import { Card, CardContent } from "@/components/atoms/card";
+import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 
 const navItems = [
   { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
@@ -50,6 +51,7 @@ const ActiveWorkout = () => {
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [search, setSearch] = useState("");
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
 
   useEffect(() => {
@@ -201,17 +203,19 @@ const ActiveWorkout = () => {
     }
   };
 
-  const handleDeleteWorkout = async () => {
-    if (!confirm("Are you sure you want to delete this workout? This will end the workout without saving any progress.")) {
-      return;
-    }
-    
+  const handleDeleteWorkout = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       // End the workout without saving (this will clear the context)
       await contextEndWorkout();
       navigate("/workout");
     } catch (err) {
       alert("Failed to delete workout: " + err.message);
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -335,63 +339,74 @@ const ActiveWorkout = () => {
   };
 
   return (
-    <AppLayout
-      showAddButton={true}
-      addButtonText="Add exercise"
-      pageNameEditable={true}
-      showBackButton={true}
-      appHeaderTitle={activeWorkout?.name || "Active Workout"}
-      onBack={handleEndWorkout}
-      onAction={() => setShowAddExercise(true)}
-      onTitleChange={handleTitleChange}
-      onDelete={handleDeleteWorkout}
-      showDeleteOption={true}
-      search={true}
-      searchValue={search}
-      onSearchChange={setSearch}
-      pageContext="workout"
-    >
-      <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
-      <CardWrapper>
-        <div className="w-full flex flex-col gap-4 p-4">
-          {filteredExercises.map((ex) => (
-            <ActiveExerciseCard
-              key={ex.id}
-              exerciseId={ex.exercise_id}
-              exerciseName={ex.name}
-              default_view={true}
-              initialSetConfigs={ex.setConfigs}
-              onSetComplete={handleSetComplete}
-              setData={workoutProgress[ex.exercise_id] || []}
-              onSetDataChange={handleSetDataChange}
-              onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-              isUnscheduled={false}
-            />
-          ))}
-        </div>
-      </CardWrapper>
+    <>
+      <AppLayout
+        showAddButton={true}
+        addButtonText="Add exercise"
+        pageNameEditable={true}
+        showBackButton={true}
+        appHeaderTitle={activeWorkout?.name || "Active Workout"}
+        onBack={handleEndWorkout}
+        onAction={() => setShowAddExercise(true)}
+        onTitleChange={handleTitleChange}
+        onDelete={handleDeleteWorkout}
+        showDeleteOption={true}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        pageContext="workout"
+      >
+        <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
+        <CardWrapper>
+          <div className="w-full flex flex-col gap-4 p-4">
+            {filteredExercises.map((ex) => (
+              <ActiveExerciseCard
+                key={ex.id}
+                exerciseId={ex.exercise_id}
+                exerciseName={ex.name}
+                default_view={true}
+                initialSetConfigs={ex.setConfigs}
+                onSetComplete={handleSetComplete}
+                setData={workoutProgress[ex.exercise_id] || []}
+                onSetDataChange={handleSetDataChange}
+                onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                isUnscheduled={false}
+              />
+            ))}
+          </div>
+        </CardWrapper>
 
-      {showAddExercise && (
-        <SwiperSheet
-          open={showAddExercise}
-          onOpenChange={() => setShowAddExercise(false)}
-        >
-          <AddExerciseToProgramForm
-            key="add-new"
-            formPrompt="Add a new exercise"
-            onAddExercise={handleAddExerciseToday}
-            onAddExerciseFuture={handleAddExerciseFuture}
-            onCancel={handleCancelAddExercise}
-            initialSets={3}
-            initialSetConfigs={Array.from({ length: 3 }, () => ({
-              reps: 10,
-              weight: 0,
-              unit: "kg",
-            }))}
-          />
-        </SwiperSheet>
-      )}
-    </AppLayout>
+        {showAddExercise && (
+          <SwiperSheet
+            open={showAddExercise}
+            onOpenChange={() => setShowAddExercise(false)}
+          >
+            <AddExerciseToProgramForm
+              key="add-new"
+              formPrompt="Add a new exercise"
+              onAddExercise={handleAddExerciseToday}
+              onAddExerciseFuture={handleAddExerciseFuture}
+              onCancel={handleCancelAddExercise}
+              initialSets={3}
+              initialSetConfigs={Array.from({ length: 3 }, () => ({
+                reps: 10,
+                weight: 0,
+                unit: "kg",
+              }))}
+            />
+          </SwiperSheet>
+        )}
+      </AppLayout>
+      <SwiperAlertDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete Workout?"
+        description="Are you sure you want to delete this workout? This will end the workout without saving any progress."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+    </>
   );
 };
 

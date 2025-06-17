@@ -9,7 +9,7 @@ const swiperButtonVariants = cva(
     variants: {
       variant: {
         default: "bg-slate-600 text-white hover:bg-slate-500",
-        destructive: "bg-red-400 text-white hover:bg-red-500",
+        destructive: "!bg-red-400 text-white hover:!bg-red-500",
         outline:
           "border-neutral-300 bg-white text-slate-600 hover:bg-neutral-100",
       },
@@ -26,13 +26,6 @@ const SwiperButton = React.forwardRef(
       <Button
         ref={ref}
         className={cn(swiperButtonVariants({ variant, className }))}
-        variant={
-          variant === "default"
-            ? "default"
-            : variant === "destructive"
-            ? "destructive"
-            : "outline"
-        }
         {...props}
       />
     );

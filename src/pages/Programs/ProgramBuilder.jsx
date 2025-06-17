@@ -365,7 +365,7 @@ const ProgramBuilder = () => {
         onOpenChange={setDeleteProgramConfirmOpen}
         onConfirm={handleConfirmDeleteProgram}
         title="Confirm deletion"
-        description="Deleting this program will not affect your completed workout history"
+        description="Deleting this program will not affect your completed workout history."
         confirmText="Delete"
         cancelText="Cancel"
       />

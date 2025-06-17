@@ -7,6 +7,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { useAuth } from "@/contexts/AuthContext";
+import SwiperAlertDialog from '@/components/molecules/swiper-alert-dialog';
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -15,6 +16,7 @@ const CompletedWorkout = () => {
   const [exercises, setExercises] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -113,11 +115,11 @@ const CompletedWorkout = () => {
     }
   };
 
-  const handleDeleteWorkout = async () => {
-    if (!confirm("Are you sure you want to delete this workout? This action cannot be undone.")) {
-      return;
-    }
-    
+  const handleDeleteWorkout = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       // Manually delete associated sets first
       const { error: setsError } = await supabase
@@ -144,39 +146,52 @@ const CompletedWorkout = () => {
       window.history.back();
     } catch (err) {
       alert(err.message);
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
   return (
-    <AppLayout
-      appHeaderTitle={workout?.workout_name}
-      pageNameEditable={true}
-      showBackButton={true}
-      showAddButton={false}
-      onTitleChange={handleTitleChange}
-      onDelete={handleDeleteWorkout}
-      showDeleteOption={true}
-      search={true}
-      searchValue={search}
-      onSearchChange={setSearch}
-      pageContext="workout"
-    >
-      {loading ? (
-        <div className="p-6">Loading...</div>
-      ) : (
-        <CardWrapper className="px-4">
-          {filteredExercisesWithSets.map(([exId, exerciseSets]) => (
-            <div key={exId} className="w-full">
-              <ExerciseCard
-                mode="completed"
-                exerciseName={exercises[exId] || '[Exercise name]'}
-                setConfigs={exerciseSets}
-              />
-            </div>
-          ))}
-        </CardWrapper>
-      )}
-    </AppLayout>
+    <>
+      <AppLayout
+        appHeaderTitle={workout?.workout_name}
+        pageNameEditable={true}
+        showBackButton={true}
+        showAddButton={false}
+        onTitleChange={handleTitleChange}
+        onDelete={handleDeleteWorkout}
+        showDeleteOption={true}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        pageContext="workout"
+      >
+        {loading ? (
+          <div className="p-6">Loading...</div>
+        ) : (
+          <CardWrapper className="px-4">
+            {filteredExercisesWithSets.map(([exId, exerciseSets]) => (
+              <div key={exId} className="w-full">
+                <ExerciseCard
+                  mode="completed"
+                  exerciseName={exercises[exId] || '[Exercise name]'}
+                  setConfigs={exerciseSets}
+                />
+              </div>
+            ))}
+          </CardWrapper>
+        )}
+      </AppLayout>
+      <SwiperAlertDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete workout?"
+        description="This workout and its sets will be deleted permanently."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+    </>
   );
 };
 
