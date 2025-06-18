@@ -168,20 +168,19 @@ export function ActiveWorkoutProvider({ children }) {
     setWorkoutProgress(prev => {
       const prevSets = prev[exerciseId] || [];
       
-      // Create a mutable copy to work with
       let newSets = [...prevSets];
 
       updates.forEach(update => {
-        // Coerce ID to string for consistent matching
-        const updateId = String(update.id);
-        const setIdx = newSets.findIndex(s => s.tempId ? s.tempId === updateId : s.id === updateId);
+        const programSetId = String(update.changes.program_set_id);
+        const setIdx = newSets.findIndex(s => String(s.program_set_id) === programSetId);
 
         if (setIdx !== -1) {
           // Update existing set
           newSets[setIdx] = { ...newSets[setIdx], ...update.changes };
         } else {
-          // Add new set if not found
-          newSets.push({ id: update.id, ...update.changes });
+          // Add new set if not found, ensuring exercise array is initialized
+          if (!newSets) newSets = [];
+          newSets.push({ ...update.changes, id: update.id });
         }
       });
 
@@ -229,7 +228,7 @@ export function ActiveWorkoutProvider({ children }) {
       // Update local state with the actual ID from the database
       setWorkoutProgress(prev => {
         const newSets = (prev[exerciseId] || []).map(s => 
-          s.id === setConfig.id ? { ...s, ...data } : s
+          s.program_set_id === setConfig.program_set_id ? { ...s, ...data } : s
         );
         return { ...prev, [exerciseId]: newSets };
       });
@@ -247,9 +246,31 @@ export function ActiveWorkoutProvider({ children }) {
     // Filter out local-only fields before sending to DB
     const { status, ...dbChanges } = changes;
 
+    if (dbChanges.unit) {
+      dbChanges.weight_unit = dbChanges.unit;
+      delete dbChanges.unit;
+    }
+
     if (Object.keys(dbChanges).length === 0) return;
 
     try {
+      // First, check if a row with this ID even exists.
+      const { data: existingSet, error: checkError } = await supabase
+        .from('sets')
+        .select('id')
+        .eq('id', setId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking for set before update:", checkError);
+        return;
+      }
+
+      if (!existingSet) {
+        console.warn(`Skipping database update for set with id ${setId} because it has not been saved yet. The changes have been applied locally.`);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('sets')
         .update({
@@ -274,7 +295,7 @@ export function ActiveWorkoutProvider({ children }) {
           return newProgress;
         });
       } else {
-        // No row updated, or multiple rows (shouldn't happen)
+        // This case should now be rare because we check for existence first.
         console.warn('No set updated for id', setId);
       }
     } catch (err) {

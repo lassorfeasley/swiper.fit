@@ -20,12 +20,21 @@ const ActiveSetCard = ({
   const [editMetric, setEditMetric] = useState(null); // { metric: 'sets'|'reps'|'weight', setIdx: number|null }
   const [weightUnit, setWeightUnit] = useState(setConfigs[0]?.unit || 'lbs');
   const [editValue, setEditValue] = useState('');
+  const setsRef = useRef(null);
 
   // Create sets array from setConfigs and setData
   const sets = setConfigs.map((config, i) => {
-    const fromParent = setData[i] || {};
+    // Use either the database ID (config.id) or create a fallback ID
+    const configId = config.id || `fallback-${i}`;
+    const fromParent = setData.find(d => 
+      d.program_set_id === configId || 
+      (d.program_set_id === config.id && config.id) ||
+      (!d.program_set_id && d.id === configId)
+    ) || {};
+    
     return {
-      id: i + 1,
+      id: fromParent.id || configId,
+      program_set_id: configId,
       name: config.set_variant || `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][i] || i+1}`,
       reps: fromParent.reps ?? config.reps,
       weight: fromParent.weight ?? config.weight,
@@ -34,17 +43,26 @@ const ActiveSetCard = ({
     };
   });
 
+  setsRef.current = sets;
+
   // Update sets array if setConfigs changes
   React.useEffect(() => {
     if (onSetDataChange) {
       for (let i = 0; i < setConfigs.length; i++) {
-        if (!setData[i]) {
-          onSetDataChange(i + 1, 'reps', setConfigs[i].reps);
-          onSetDataChange(i + 1, 'weight', setConfigs[i].weight);
+        const config = setConfigs[i];
+        const configId = config.id || `fallback-${i}`;
+        const existingData = setData.find(d => 
+          d.program_set_id === configId || 
+          (d.program_set_id === config.id && config.id) ||
+          (!d.program_set_id && d.id === configId)
+        );
+        if (!existingData) {
+          onSetDataChange(configId, 'reps', config.reps);
+          onSetDataChange(configId, 'weight', config.weight);
         }
       }
     }
-  }, [setConfigs]);
+  }, [setConfigs, setData]);
 
   const toggleFocusedView = () => {
     setFocusedView(!focused_view);
@@ -55,32 +73,82 @@ const ActiveSetCard = ({
       const set = sets.find(s => s.id === setId);
       if (set) {
         onSetComplete({
-          setId,
+          setId: set.program_set_id, // Use program_set_id for consistency
           exerciseId,
           reps: set.reps,
           weight: set.weight,
           unit: set.unit,
           set_variant: set.name,
           status: 'complete',
+          program_set_id: set.program_set_id,
         });
       }
     }
     if (onSetDataChange) {
-      onSetDataChange(setId, 'status', 'complete');
-      const nextSet = sets.find(s => s.id === setId + 1);
-      if (nextSet && nextSet.status === 'locked') {
-        onSetDataChange(setId + 1, 'status', 'active');
+      const set = sets.find(s => s.id === setId);
+      if (set) {
+        // Update current set to complete
+        const updates = [{
+          id: setId,
+          changes: { 
+            status: 'complete',
+            program_set_id: set.program_set_id
+          }
+        }];
+        
+        // Check if there's a next set to unlock
+        const currentSetIndex = sets.findIndex(s => s.id === setId);
+        const nextSet = sets[currentSetIndex + 1];
+        if (nextSet && nextSet.status === 'locked') {
+          updates.push({
+            id: nextSet.id,
+            changes: { 
+              status: 'active',
+              program_set_id: nextSet.program_set_id
+            }
+          });
+        }
+        
+        onSetDataChange(exerciseId, updates);
+      } else {
+        // Fallback to legacy format
+        onSetDataChange(setId, 'status', 'complete');
+        const currentSetIndex = sets.findIndex(s => s.id === setId);
+        const nextSet = sets[currentSetIndex + 1];
+        if (nextSet && nextSet.status === 'locked') {
+          onSetDataChange(nextSet.id, 'status', 'active');
+        }
       }
     }
   };
 
   const updateSetValue = (setId, field, value) => {
     if (onSetDataChange) {
-      onSetDataChange(setId, field, value);
+      // Find the set to get its program_set_id
+      const set = sets.find(s => s.id === setId);
+      if (set) {
+        // Use the new array format that includes program_set_id
+        const updates = [{
+          id: setId,
+          changes: { 
+            [field]: value,
+            program_set_id: set.program_set_id
+          }
+        }];
+        onSetDataChange(exerciseId, updates);
+      } else {
+        // Fallback to legacy format
+        onSetDataChange(setId, field, value);
+      }
     }
   };
   
   const activeSet = sets.find(set => set.status === 'active') || sets[0];
+
+  // Calculate overall status for compact view
+  const allSetsComplete = sets.every(set => set.status === 'complete');
+  const hasActiveSets = sets.some(set => set.status === 'active');
+  const overallStatus = allSetsComplete ? 'complete' : (hasActiveSets ? 'active' : 'locked');
 
   // Overlay/modal logic
   const handleMetricPillClick = (metric, setIdx = null) => {
@@ -136,26 +204,39 @@ const ActiveSetCard = ({
 
   // Add this new function for default view swipe
   const handleCompleteAllSets = () => {
-    sets.forEach(set => {
-      // Call onSetComplete for each set, as if it were individually completed
+    const currentSets = setsRef.current;
+    if (!currentSets) return;
+    
+    // Find all incomplete sets and complete them all
+    const incompleteSets = currentSets.filter(set => set.status !== 'complete');
+    
+    // Call onSetComplete for each incomplete set
+    incompleteSets.forEach(set => {
       if (onSetComplete) {
         onSetComplete({
-          setId: set.id,
+          setId: set.program_set_id, // Use program_set_id for consistency
           exerciseId,
           reps: set.reps,
           weight: set.weight,
           unit: set.unit,
           set_variant: set.name,
           status: 'complete',
+          program_set_id: set.program_set_id,
         });
       }
-      // Update the status of each set to 'complete' via onSetDataChange
-      if (onSetDataChange) {
-        onSetDataChange(set.id, 'status', 'complete');
-      }
     });
-    // Optionally, if you have a visual cue for the main switch itself beyond its own state,
-    // you might set forceComplete for it here, though status prop should handle it.
+    
+    // Batch all status updates together
+    if (onSetDataChange && incompleteSets.length > 0) {
+      const updates = incompleteSets.map(set => ({
+        id: set.id,
+        changes: { 
+          status: 'complete',
+          program_set_id: set.program_set_id
+        }
+      }));
+      onSetDataChange(exerciseId, updates);
+    }
   };
 
   return (
@@ -215,7 +296,7 @@ const ActiveSetCard = ({
         </div>
       ) : (
         <SwipeSwitch 
-          status={activeSet?.status ?? 'locked'} 
+          status={overallStatus} 
           onComplete={handleCompleteAllSets} 
         />
       )}

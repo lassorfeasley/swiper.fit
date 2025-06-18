@@ -49,6 +49,7 @@ const ActiveExerciseCard = ({
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: "lbs" });
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const mountedRef = useRef(true);
+  const setsRef = useRef([]);
 
   useEffect(() => {
     return () => {
@@ -61,9 +62,7 @@ const ActiveExerciseCard = ({
     const combined = initialSetConfigs.map((config, i) => {
       const fromParent = setData.find(
         (d) =>
-          (d.id && d.id === config.id) ||
-          (d.program_set_id && d.program_set_id === config.id) ||
-          d.set_order === config.set_order
+          d.program_set_id === config.id
       ) || {};
       
       const id = fromParent.id || config.id;
@@ -76,21 +75,19 @@ const ActiveExerciseCard = ({
         tempId: id ? null : tempId,
         reps: fromParent.reps ?? config.reps,
         weight: fromParent.weight ?? config.weight,
-        unit: fromParent.unit ?? config.weight_unit ?? "lbs",
-        status: fromParent.status || "pending",
+        weight_unit: fromParent.weight_unit ?? fromParent.unit ?? config.weight_unit ?? "lbs",
+        status: fromParent.status ? fromParent.status : (i === 0 ? 'active' : 'locked'),
         set_variant: fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
-        program_set_id: fromParent.program_set_id || config.id
+        program_set_id: config.id
       };
     });
 
-    if (combined.length > 0 && !combined.some(s => s.status === 'active')) {
-      const firstPending = combined.find(s => s.status === 'pending');
-      if (firstPending) {
-        firstPending.status = 'active';
-      }
-    }
     return combined;
   }, [initialSetConfigs, setData]);
+
+  useEffect(() => {
+    setsRef.current = sets;
+  }, [sets]);
 
   const allComplete = useMemo(
     () => sets.every((set) => set.status === "complete"),
@@ -104,10 +101,17 @@ const ActiveExerciseCard = ({
     [sets]
   );
   const activeSet = useMemo(
-    () =>
-      sets.find(
+    () => {
+      const active = sets.find(
         (set) => set.status === "active" || set.status === "ready-timed-set"
-      ) || (sets.length > 0 ? sets[0] : undefined),
+      );
+      if (active) return active;
+
+      const firstLocked = sets.find((set) => set.status === "locked");
+      if (firstLocked) return firstLocked;
+      
+      return sets.length > 0 ? sets[0] : undefined;
+    },
     [sets]
   );
   const swipeStatus = useMemo(
@@ -154,17 +158,20 @@ const ActiveExerciseCard = ({
               status: "complete",
               set_type: setToComplete.set_type,
               timed_set_duration: setToComplete.timed_set_duration,
+              set_variant: setToComplete.set_variant,
             },
           });
           if (nextSet && nextSet.status === "locked") {
-            updates.push({ id: nextSet.id, changes: { status: "active" } });
+            const { tempId, ...restOfNextSet } = nextSet;
+            updates.push({ id: nextSet.id, changes: { ...restOfNextSet, status: "active" } });
           }
         }
       } else {
         // For regular sets, just mark as complete
-        updates.push({ id: setToComplete.id, changes: { status: "complete" } });
+        updates.push({ id: setToComplete.id, changes: { status: "complete", set_variant: setToComplete.set_variant, program_set_id: setToComplete.program_set_id } });
         if (nextSet && nextSet.status === "locked") {
-          updates.push({ id: nextSet.id, changes: { status: "active" } });
+          const { tempId, ...restOfNextSet } = nextSet;
+          updates.push({ id: nextSet.id, changes: { ...restOfNextSet, status: "active" } });
         }
       }
 
@@ -180,26 +187,30 @@ const ActiveExerciseCard = ({
   const handleActiveSetComplete = useCallback(async () => {
     if (!mountedRef.current) return;
 
+    // Collect all sets that are not complete
+    const incompleteSets = sets.filter((s) => s.status !== "complete");
+    if (incompleteSets.length === 0) return;
+
+    // Prepare batch updates
+    const updates = incompleteSets.map((set) => ({
+      id: set.id,
+      changes: {
+        status: "complete",
+        program_set_id: set.program_set_id,
+        set_variant: set.set_variant,
+      },
+    }));
+
+    // Call analytics for each set
     if (onSetComplete) {
-      sets.forEach((set) => {
-        if (set.status !== "complete") {
-          Promise.resolve(
-            onSetComplete(exerciseId, { ...set, status: "complete" })
-          ).catch(console.error);
-        }
+      incompleteSets.forEach((set) => {
+        onSetComplete(exerciseId, { ...set, status: "complete" });
       });
     }
 
+    // Batch update all sets
     if (onSetDataChange) {
-      const updates = sets
-        .filter((set) => set.status !== "complete")
-        .map((set) => ({ id: set.id, changes: { status: "complete" } }));
-
-      if (updates.length > 0) {
-        Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
-          console.error
-        );
-      }
+      onSetDataChange(exerciseId, updates);
     }
   }, [exerciseId, onSetComplete, onSetDataChange, sets]);
 
@@ -210,7 +221,7 @@ const ActiveExerciseCard = ({
       setEditForm({
         reps: set.reps,
         weight: set.weight,
-        unit: set.unit,
+        unit: set.weight_unit,
         set_type: set.set_type || initialSetConfigs[idx]?.set_type || "reps",
         timed_set_duration:
           set.timed_set_duration ||
@@ -231,31 +242,32 @@ const ActiveExerciseCard = ({
       const set_to_update = sets[openSetIndex];
       const set_id_to_update = set_to_update.id;
       const newStatus = formValues.completed ? "complete" : set_to_update.status;
+      const set_variant_to_save =
+        formValues.set_variant || set_to_update.set_variant;
 
-      if (!set_id_to_update.toString().startsWith("temp-")) {
-        const updates = [
-          {
-            id: set_id_to_update,
-            changes: {
-              reps: formValues.reps,
-              weight: formValues.weight,
-              weight_unit: formValues.unit,
-              set_variant: formValues.set_variant,
-              set_type: formValues.set_type,
-              timed_set_duration:
-                formValues.set_type === "timed"
-                  ? formValues.timed_set_duration
-                  : undefined,
-              ...(newStatus !== set_to_update.status ? { status: newStatus } : {}),
-            },
+      const updates = [
+        {
+          id: set_id_to_update,
+          changes: {
+            reps: formValues.reps,
+            weight: formValues.weight,
+            weight_unit: formValues.unit,
+            set_variant: set_variant_to_save,
+            set_type: formValues.set_type,
+            timed_set_duration:
+              formValues.set_type === "timed"
+                ? formValues.timed_set_duration
+                : undefined,
+            ...(newStatus !== set_to_update.status ? { status: newStatus } : {}),
+            program_set_id: set_to_update.program_set_id,
           },
-        ];
+        },
+      ];
 
-        if (onSetDataChange) {
-          Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
-            console.error
-          );
-        }
+      if (onSetDataChange) {
+        Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
+          console.error
+        );
       }
 
       setOpenSetIndex(null);
@@ -320,10 +332,6 @@ const ActiveExerciseCard = ({
         {sets.map((set, idx) => {
           const setType = set.set_type || "reps";
           const timedDuration = set.timed_set_duration;
-          let swipeStatus = set.status;
-          if (setType === "timed") {
-            // No need to modify swipeStatus here as it's already set correctly in the sets useMemo
-          }
           const isLastSet = idx === sets.length - 1;
           return (
             <div
@@ -339,7 +347,7 @@ const ActiveExerciseCard = ({
                 <SetBadge
                   reps={set.reps}
                   weight={set.weight}
-                  unit={set.unit}
+                  unit={set.weight_unit}
                   complete={set.status === "complete"}
                   editable={true}
                   onEdit={() => handlePillClick(idx)}
@@ -349,7 +357,7 @@ const ActiveExerciseCard = ({
               </div>
               <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
                 <SwipeSwitch
-                  status={swipeStatus}
+                  status={set.status}
                   onComplete={() => handleSetComplete(idx)}
                   duration={timedDuration || 30}
                 />
@@ -366,7 +374,7 @@ const ActiveExerciseCard = ({
           <SetEditForm
             formPrompt={
               openSetIndex !== null
-                ? `Edit ${sets[openSetIndex].name}`
+                ? `Edit ${sets[openSetIndex].set_variant}`
                 : "Edit set"
             }
             onSave={handleEditFormSave}
@@ -426,7 +434,7 @@ const ActiveExerciseCard = ({
           }
         />
       </div>
-      <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center overflow-hidden">
+      <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
         {sets.map((set, idx) => {
           const setType = set.set_type || "reps";
           const timedDuration = set.timed_set_duration;
@@ -438,7 +446,7 @@ const ActiveExerciseCard = ({
               onEdit={() => handlePillClick(idx)}
               reps={set.reps}
               weight={set.weight}
-              unit={set.unit}
+              unit={set.weight_unit}
               complete={set.status === "complete"}
               editable={true}
               set_type={setType}
@@ -456,7 +464,7 @@ const ActiveExerciseCard = ({
         <SetEditForm
           formPrompt={
             openSetIndex !== null
-              ? `Edit ${sets[openSetIndex].name}`
+              ? `Edit ${sets[openSetIndex].set_variant}`
               : "Edit set"
           }
           onSave={handleEditFormSave}
@@ -491,7 +499,7 @@ ActiveExerciseCard.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       reps: PropTypes.number,
       weight: PropTypes.number,
-      unit: PropTypes.string,
+      weight_unit: PropTypes.string,
       status: PropTypes.oneOf([
         "active",
         "locked",
@@ -500,6 +508,7 @@ ActiveExerciseCard.propTypes = {
         "ready-timed-set",
         "counting-down-timed",
       ]),
+      unit: PropTypes.string,
     })
   ),
   onSetProgrammaticUpdate: PropTypes.func,
