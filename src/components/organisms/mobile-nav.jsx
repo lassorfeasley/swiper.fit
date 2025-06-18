@@ -1,4 +1,4 @@
-import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
+import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -10,7 +10,7 @@ const MobileNav = () => {
 
   return (
     <nav className="flex flex-col items-center fixed bottom-0 left-0 w-full bg-stone-100 border-t border-neutral-300 md:hidden p-4 z-50 gap-4">
-      <ActiveWorkoutNav variant="mobile" />
+      <ActiveWorkoutNav />
       <div className="flex flex-1 max-w-[350px] justify-between items-center mx-auto w-full h-full">
         {navItems.map((item) => {
           const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
