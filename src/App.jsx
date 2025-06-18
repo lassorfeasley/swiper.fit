@@ -21,42 +21,13 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
 import { ActiveWorkoutProvider } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
+import MobileNav from "./components/organisms/mobile-nav";
+import SideBarNav from "./components/organisms/side-bar-nav";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
   pageName: "",
 });
-
-function PageNameFooter() {
-  const { pageName } = React.useContext(PageNameContext);
-  if (!pageName) return null;
-  return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 8,
-        left: 0,
-        width: "100vw",
-        textAlign: "center",
-        pointerEvents: "none",
-        zIndex: 9999,
-      }}
-    >
-      <span
-        style={{
-          background: "rgba(30,30,40,0.5)",
-          color: "#fff",
-          fontSize: 12,
-          borderRadius: 8,
-          padding: "2px 12px",
-          opacity: 0.7,
-        }}
-      >
-        {pageName}
-      </span>
-    </div>
-  );
-}
 
 function AppContent() {
   const location = useLocation();
@@ -69,6 +40,13 @@ function AppContent() {
     location.pathname === "/create-account" ||
     location.pathname === "/reset-password" ||
     location.pathname === "/update-password";
+
+  // Check if current route is authenticated
+  const isAuthenticatedRoute = ![
+    "/login",
+    "/create-account",
+    "/reset-password",
+  ].includes(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -97,6 +75,9 @@ function AppContent() {
           </Route>
         </Routes>
       </main>
+      {/* Mobile Nav - only show on authenticated routes */}
+      {isAuthenticatedRoute && <MobileNav />}
+      {isAuthenticatedRoute && <SideBarNav />}
     </div>
   );
 }

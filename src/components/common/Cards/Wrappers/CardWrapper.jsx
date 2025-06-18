@@ -9,20 +9,20 @@
 //
 // Before making any style changes, confirm directly with the user.
 // ==========================================
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Reorder } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import React from "react";
+import PropTypes from "prop-types";
+import { Reorder } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const CardWrapper = ({ 
-  children, 
-  className = '', 
+const CardWrapper = ({
+  children,
+  className = "",
   cardTitle,
   reorderable = false,
   items = [],
   onReorder = () => {},
   headerRef,
-  ...props 
+  ...props
 }) => {
   const divProps = { ...props };
   delete divProps.reorderable;
@@ -32,7 +32,10 @@ const CardWrapper = ({
 
   return (
     <div
-      className={cn('CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden', className)}
+      className={cn(
+        "CardWrapper w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden",
+        className
+      )}
       style={{ maxWidth: 500, ...(props.style || {}) }}
       {...divProps}
     >
@@ -42,19 +45,24 @@ const CardWrapper = ({
         </div>
       )}
       {reorderable ? (
-        <Reorder.Group axis="y" values={items} onReorder={onReorder} className="w-full flex flex-col gap-4">
+        <Reorder.Group
+          axis="y"
+          values={items}
+          onReorder={onReorder}
+          className="w-full flex flex-col gap-4"
+        >
           {React.Children.map(children, (child, idx) =>
-            React.isValidElement(child)
-              ? (
-                  <Reorder.Item
-                    key={items[idx]?.id || idx}
-                    value={items[idx]}
-                    className="w-full"
-                  >
-                    {child}
-                  </Reorder.Item>
-                )
-              : child
+            React.isValidElement(child) ? (
+              <Reorder.Item
+                key={items[idx]?.id || idx}
+                value={items[idx]}
+                className="w-full"
+              >
+                {child}
+              </Reorder.Item>
+            ) : (
+              child
+            )
           )}
         </Reorder.Group>
       ) : (
@@ -74,4 +82,4 @@ CardWrapper.propTypes = {
   headerRef: PropTypes.object,
 };
 
-export default CardWrapper; 
+export default CardWrapper;
