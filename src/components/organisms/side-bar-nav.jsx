@@ -1,4 +1,4 @@
-import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
+import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { SidebarFooter } from "@/components/atoms/sidebar";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -55,8 +55,8 @@ const SideBarNav = () => {
       <div className="flex flex-col h-full w-full">
         <Content />
         <SidebarFooter>
-          <div className="w-full px-5 pb-8">
-            <ActiveWorkoutNav variant="sidebar" />
+          <div className="w-full px-1 pb-8">
+            <ActiveWorkoutNav />
           </div>
         </SidebarFooter>
       </div>

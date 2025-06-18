@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -11,22 +11,31 @@ export function cn(...inputs) {
  */
 export const generateWorkoutName = () => {
   const now = new Date();
-  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
-  
+  const day = now.toLocaleDateString("en-US", { weekday: "long" });
+
   // Get hour in 24-hour format
   const hour = now.getHours();
-  
+
   // Determine time of day
   let timeOfDay;
   if (hour >= 5 && hour < 12) {
-    timeOfDay = 'Morning';
+    timeOfDay = "Morning";
   } else if (hour >= 12 && hour < 17) {
-    timeOfDay = 'Afternoon';
+    timeOfDay = "Afternoon";
   } else if (hour >= 17 && hour < 21) {
-    timeOfDay = 'Evening';
+    timeOfDay = "Evening";
   } else {
-    timeOfDay = 'Night';
+    timeOfDay = "Night";
   }
-  
+
   return `${day} ${timeOfDay} Workout`;
+};
+
+// Format seconds into MM:SS
+export const formatSeconds = (totalSeconds) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
 };
