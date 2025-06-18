@@ -42,8 +42,16 @@ const Workout = () => {
             id,
             program_name,
             program_exercises (
+              id,
               exercise_id,
-              exercises ( name )
+              exercises ( name ),
+              program_sets (
+                id,
+                reps,
+                weight,
+                weight_unit,
+                set_variant
+              )
             )
           `)
           .eq('user_id', user.id)

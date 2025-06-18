@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { SwiperCard, SwiperCardContent } from '@/components/molecules/swiper-card';
-import CardPill from '@/components/molecules/CardPill';
+import SetBadge from '@/components/molecules/SetBadge';
 
 const ProgramCard = ({ programName, exerciseNames = [], className = '', ...props }) => {
   return (
@@ -12,7 +12,7 @@ const ProgramCard = ({ programName, exerciseNames = [], className = '', ...props
         </div>
         <div className="flex flex-wrap gap-2 content-center">
           {exerciseNames.map((name, idx) => (
-            <CardPill
+            <SetBadge
               key={idx}
               variant="exercises"
               label={name}

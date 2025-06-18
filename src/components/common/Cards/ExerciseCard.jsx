@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import CardPill from "@/components/molecules/CardPill";
+import SetBadge from "@/components/molecules/SetBadge";
 import { SheetHeader, SheetTitle } from "@/components/atoms/sheet";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
@@ -102,7 +102,7 @@ const ExerciseCard = ({
           className="w-full flex flex-wrap gap-2"
         >
           {localSetConfigs.map((config, idx) => (
-            <CardPill
+            <SetBadge
               key={idx}
               reps={config.reps}
               weight={config.weight}
