@@ -72,7 +72,7 @@ export default function ActiveWorkoutNav() {
   return (
     <Card
       className={cn(
-        "w-full p-2 inline-flex flex-col justify-start items-start gap-5 overflow-hidden mb-2",
+        "w-full p-2 inline-flex flex-col justify-start items-start gap-5 overflow-hidden mb-2 cursor-pointer",
         WORKOUT_NAV_STYLES[workoutNavState].backgroundColor,
         WORKOUT_NAV_STYLES[workoutNavState].textColor
       )}

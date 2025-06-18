@@ -354,7 +354,7 @@ const ActiveWorkout = () => {
         pageContext="workout"
       >
         <CardWrapper>
-          <div className="w-full flex flex-col gap-4 p-4">
+          <div className="w-full flex flex-col gap-4">
             {filteredExercises.map((ex) => (
               <ActiveExerciseCard
                 key={ex.id}

@@ -17,15 +17,8 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
-import {
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/atoms/sheet";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import WeightCompoundField from "@/components/common/forms/WeightCompoundField";
-import NumericInput from "@/components/molecules/numeric-input";
 import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -60,11 +53,9 @@ const ActiveExerciseCard = ({
   // Derive sets from setData and initialSetConfigs
   const sets = useMemo(() => {
     const combined = initialSetConfigs.map((config, i) => {
-      const fromParent = setData.find(
-        (d) =>
-          d.program_set_id === config.id
-      ) || {};
-      
+      const fromParent =
+        setData.find((d) => d.program_set_id === config.id) || {};
+
       const id = fromParent.id || config.id;
       const tempId = `temp-${i}`;
 
@@ -75,10 +66,19 @@ const ActiveExerciseCard = ({
         tempId: id ? null : tempId,
         reps: fromParent.reps ?? config.reps,
         weight: fromParent.weight ?? config.weight,
-        weight_unit: fromParent.weight_unit ?? fromParent.unit ?? config.weight_unit ?? "lbs",
-        status: fromParent.status ? fromParent.status : (i === 0 ? 'active' : 'locked'),
-        set_variant: fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
-        program_set_id: config.id
+        weight_unit:
+          fromParent.weight_unit ??
+          fromParent.unit ??
+          config.weight_unit ??
+          "lbs",
+        status: fromParent.status
+          ? fromParent.status
+          : i === 0
+          ? "active"
+          : "locked",
+        set_variant:
+          fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
+        program_set_id: config.id,
       };
     });
 
@@ -100,20 +100,17 @@ const ActiveExerciseCard = ({
       ),
     [sets]
   );
-  const activeSet = useMemo(
-    () => {
-      const active = sets.find(
-        (set) => set.status === "active" || set.status === "ready-timed-set"
-      );
-      if (active) return active;
+  const activeSet = useMemo(() => {
+    const active = sets.find(
+      (set) => set.status === "active" || set.status === "ready-timed-set"
+    );
+    if (active) return active;
 
-      const firstLocked = sets.find((set) => set.status === "locked");
-      if (firstLocked) return firstLocked;
-      
-      return sets.length > 0 ? sets[0] : undefined;
-    },
-    [sets]
-  );
+    const firstLocked = sets.find((set) => set.status === "locked");
+    if (firstLocked) return firstLocked;
+
+    return sets.length > 0 ? sets[0] : undefined;
+  }, [sets]);
   const swipeStatus = useMemo(
     () => (allComplete ? "complete" : anyActive ? "active" : "locked"),
     [allComplete, anyActive]
@@ -163,15 +160,28 @@ const ActiveExerciseCard = ({
           });
           if (nextSet && nextSet.status === "locked") {
             const { tempId, ...restOfNextSet } = nextSet;
-            updates.push({ id: nextSet.id, changes: { ...restOfNextSet, status: "active" } });
+            updates.push({
+              id: nextSet.id,
+              changes: { ...restOfNextSet, status: "active" },
+            });
           }
         }
       } else {
         // For regular sets, just mark as complete
-        updates.push({ id: setToComplete.id, changes: { status: "complete", set_variant: setToComplete.set_variant, program_set_id: setToComplete.program_set_id } });
+        updates.push({
+          id: setToComplete.id,
+          changes: {
+            status: "complete",
+            set_variant: setToComplete.set_variant,
+            program_set_id: setToComplete.program_set_id,
+          },
+        });
         if (nextSet && nextSet.status === "locked") {
           const { tempId, ...restOfNextSet } = nextSet;
-          updates.push({ id: nextSet.id, changes: { ...restOfNextSet, status: "active" } });
+          updates.push({
+            id: nextSet.id,
+            changes: { ...restOfNextSet, status: "active" },
+          });
         }
       }
 
@@ -241,7 +251,9 @@ const ActiveExerciseCard = ({
 
       const set_to_update = sets[openSetIndex];
       const set_id_to_update = set_to_update.id;
-      const newStatus = formValues.completed ? "complete" : set_to_update.status;
+      const newStatus = formValues.completed
+        ? "complete"
+        : set_to_update.status;
       const set_variant_to_save =
         formValues.set_variant || set_to_update.set_variant;
 
@@ -258,7 +270,9 @@ const ActiveExerciseCard = ({
               formValues.set_type === "timed"
                 ? formValues.timed_set_duration
                 : undefined,
-            ...(newStatus !== set_to_update.status ? { status: newStatus } : {}),
+            ...(newStatus !== set_to_update.status
+              ? { status: newStatus }
+              : {}),
             program_set_id: set_to_update.program_set_id,
           },
         },
@@ -286,7 +300,11 @@ const ActiveExerciseCard = ({
       // Then, call the programmatic update function if it exists
       if (onSetProgrammaticUpdate) {
         const set_to_update = sets[openSetIndex];
-        onSetProgrammaticUpdate(exerciseId, set_to_update.program_set_id, formValues);
+        onSetProgrammaticUpdate(
+          exerciseId,
+          set_to_update.program_set_id,
+          formValues
+        );
       }
     },
     [

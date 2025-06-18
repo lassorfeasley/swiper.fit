@@ -4,9 +4,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
+import StaticCard from "@/components/organisms/static-card";
 
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -94,14 +94,13 @@ const History = () => {
               );
             })
             .map((w) => (
-              <WorkoutCard
+              <StaticCard
                 key={w.id}
-                workoutName={w.workout_name || "Unnamed Workout"}
-                programName={w.programs?.program_name || ""}
-                exerciseCount={w.exerciseCount}
+                name={w.workout_name || "Unnamed Workout"}
+                labels={[w.programs?.program_name] || []}
+                count={w.exerciseCount}
                 duration={formatDuration(w.duration_seconds)}
                 onClick={() => navigate(`/history/${w.id}`)}
-                className="hover:bg-gray-200 transition-colors"
               />
             ))
         )}
