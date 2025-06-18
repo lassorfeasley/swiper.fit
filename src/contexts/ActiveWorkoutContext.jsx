@@ -116,7 +116,7 @@ export function ActiveWorkoutProvider({ children }) {
     setIsPaused(false);
     setWorkoutProgress({});
     
-    const exercises = programExercises.reduce((acc, progEx) => {
+    const exercises = program.program_exercises.reduce((acc, progEx) => {
       acc[progEx.exercise_id] = {
         name: progEx.exercises.name,
         program_exercise_id: progEx.id,
@@ -195,7 +195,7 @@ export function ActiveWorkoutProvider({ children }) {
         return;
     }
 
-    const { program_set_id, ...restOfSetConfig } = setConfig;
+    const { id: program_set_id, ...restOfSetConfig } = setConfig;
 
     const newSet = {
       ...restOfSetConfig,
@@ -203,17 +203,22 @@ export function ActiveWorkoutProvider({ children }) {
       logged_at: new Date().toISOString(),
     };
 
+    const payload = {
+        workout_id: activeWorkout.id,
+        exercise_id: exerciseId,
+        reps: Number(restOfSetConfig.reps),
+        weight: Number(restOfSetConfig.weight),
+        weight_unit: restOfSetConfig.unit,
+        set_variant: restOfSetConfig.set_variant,
+    };
+
+    if (program_set_id) {
+        payload.program_set_id = program_set_id;
+    }
+
     const { data, error } = await supabase
         .from('sets')
-        .insert({
-            workout_id: activeWorkout.id,
-            exercise_id: exerciseId,
-            reps: Number(restOfSetConfig.reps),
-            weight: Number(restOfSetConfig.weight),
-            weight_unit: restOfSetConfig.unit,
-            set_variant: restOfSetConfig.set_variant,
-            program_set_id,
-        })
+        .insert(payload)
         .select()
         .single();
     

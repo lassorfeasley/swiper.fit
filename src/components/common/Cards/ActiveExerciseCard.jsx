@@ -345,7 +345,6 @@ const ActiveExerciseCard = ({
                   onEdit={() => handlePillClick(idx)}
                   set_type={setType}
                   timed_set_duration={timedDuration}
-                  className="px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
                 />
               </div>
               <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
@@ -444,7 +443,6 @@ const ActiveExerciseCard = ({
               editable={true}
               set_type={setType}
               timed_set_duration={timedDuration}
-              className="px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
             />
           );
         })}
