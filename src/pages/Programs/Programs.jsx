@@ -4,7 +4,6 @@ import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
-import ProgramCard from "@/components/common/Cards/ProgramCard";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   SheetHeader,
@@ -17,6 +16,7 @@ import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
+import StaticCard from "@/components/organisms/static-card";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -126,7 +126,7 @@ const ProgramsIndex = () => {
       pageContext="programs"
       data-component="AppHeader"
     >
-      <CardWrapper className="px-4">
+      <CardWrapper>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (
@@ -135,10 +135,10 @@ const ProgramsIndex = () => {
           </div>
         ) : (
           filteredPrograms.map((program) => (
-            <ProgramCard
+            <StaticCard
               key={program.id}
-              programName={program.program_name}
-              exerciseNames={program.exerciseNames}
+              name={program.program_name}
+              labels={program.exerciseNames}
               onClick={() => navigate(`/programs/${program.id}/configure`)}
             />
           ))

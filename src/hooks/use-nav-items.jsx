@@ -1,8 +1,6 @@
-import { Home, RotateCcw, Star, Play } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { Home, RotateCcw, Star } from "lucide-react";
 
 export const useNavItems = () => {
-  const { pathname } = useLocation();
   const navItems = [
     { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
     { to: "/programs", label: "Programs", icon: <Star className="w-7 h-7" /> },
@@ -12,14 +10,6 @@ export const useNavItems = () => {
       icon: <RotateCcw className="w-7 h-7" />,
     },
   ];
-
-  if (pathname.includes("workout/active")) {
-    navItems.push({
-      to: "/workout",
-      label: "Workout",
-      icon: <Play className="w-7 h-7" />,
-    });
-  }
 
   return navItems;
 };
