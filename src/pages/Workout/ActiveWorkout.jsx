@@ -1,47 +1,22 @@
 import React, { useState, useEffect, useContext } from "react";
-import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/atoms/sheet";
-import { Play, Home, History, Star, RotateCcw } from "lucide-react";
-import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AddExerciseToProgramForm from "@/components/common/forms/AddExerciseToProgramForm";
-import ResponsiveNav from "@/components/organisms/responsive-nav";
 import AppLayout from "@/components/layout/AppLayout";
-import ActiveWorkoutNav from "@/components/molecules/ActiveWorkoutNav";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
-import { Card, CardContent } from "@/components/atoms/card";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
-
-const navItems = [
-  { to: "/", label: "Home", icon: <Home className="w-7 h-7" /> },
-  { to: "/programs", label: "Programs", icon: <Star className="w-7 h-7" /> },
-  { to: "/history", label: "History", icon: <RotateCcw className="w-7 h-7" /> },
-  { to: "/workout", label: "Workout", icon: <Play className="w-7 h-7" /> },
-];
 
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
-  const { user } = useAuth();
   const navigate = useNavigate();
   const {
     activeWorkout,
     isWorkoutActive,
-    elapsedTime,
-    isPaused,
-    togglePause,
     endWorkout: contextEndWorkout,
     workoutProgress,
     updateWorkoutProgress,
@@ -131,7 +106,12 @@ const ActiveWorkout = () => {
       updateWorkoutProgress(exerciseId, setIdOrUpdates);
       // Persist each update to the database if the set has an id
       setIdOrUpdates.forEach((update) => {
-        if (update.id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(update.id)) {
+        if (
+          update.id &&
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+            update.id
+          )
+        ) {
           updateSet(update.id, update.changes);
         }
       });
@@ -158,8 +138,12 @@ const ActiveWorkout = () => {
     if (!activeWorkout || !activeWorkout.programId) return;
 
     // Ensure setId is a valid UUID
-    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(setId)) {
-      console.error('Invalid UUID for setId:', setId);
+    if (
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        setId
+      )
+    ) {
+      console.error("Invalid UUID for setId:", setId);
       return;
     }
 
@@ -200,7 +184,7 @@ const ActiveWorkout = () => {
         .from("workouts")
         .update({ workout_name: newTitle })
         .eq("id", activeWorkout.id);
-      
+
       if (error) throw error;
       // Update the active workout context with new name
       // Note: You might need to add a method to update the workout name in the context
@@ -230,7 +214,7 @@ const ActiveWorkout = () => {
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddExercise = async (exerciseData, updateType = 'today') => {
+  const handleAddExercise = async (exerciseData, updateType = "today") => {
     try {
       let { data: existing } = await supabase
         .from("exercises")
@@ -247,7 +231,7 @@ const ActiveWorkout = () => {
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
       }
-      
+
       const { data: progEx, error: progExError } = await supabase
         .from("program_exercises")
         .insert({
@@ -275,9 +259,9 @@ const ActiveWorkout = () => {
         if (setError)
           throw new Error("Failed to save set details: " + setError.message);
       }
-      
+
       setShowAddExercise(false);
-      
+
       // Refresh exercises to show the new one
       await refreshExercises();
     } catch (err) {
@@ -286,11 +270,11 @@ const ActiveWorkout = () => {
   };
 
   const handleAddExerciseToday = (exerciseData) => {
-    handleAddExercise(exerciseData, 'today');
+    handleAddExercise(exerciseData, "today");
   };
 
   const handleAddExerciseFuture = (exerciseData) => {
-    handleAddExercise(exerciseData, 'future');
+    handleAddExercise(exerciseData, "future");
   };
 
   const handleCancelAddExercise = () => {
@@ -299,7 +283,7 @@ const ActiveWorkout = () => {
 
   const refreshExercises = async () => {
     if (!activeWorkout) return;
-    
+
     const { data: progExs, error } = await supabase
       .from("program_exercises")
       .select(
@@ -369,7 +353,6 @@ const ActiveWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
       >
-        <ResponsiveNav navItems={navItems} onEnd={handleEndWorkout} />
         <CardWrapper>
           <div className="w-full flex flex-col gap-4 p-4">
             {filteredExercises.map((ex) => (

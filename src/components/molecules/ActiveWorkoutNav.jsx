@@ -5,30 +5,26 @@ import {
   PauseCircle,
   StopCircle,
   Circle,
-  Play,
-  Pause,
-  Square,
   ArrowRight,
 } from "lucide-react";
 import { Card } from "@/components/atoms/card";
-import { Button } from "@/components/atoms/button";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
-// Props: state: 'c2a' | 'programPrompt' | 'active-workout' | 'return-to-workout', variant: 'sidebar' | 'mobile', onClick: function
-export default function ActiveWorkoutNav({
-  state = "c2a",
-  variant = "sidebar",
-  onClick,
-  onEnd,
-}) {
+export default function ActiveWorkoutNav({ variant = "sidebar" }) {
   const {
     elapsedTime,
     isPaused,
     togglePause,
+    isWorkoutActive,
     endWorkout: contextEndWorkout,
   } = useActiveWorkout();
   const navigate = useNavigate();
+
+  const handleC2AClick = () => {
+    navigate("/workout");
+  };
 
   // Format seconds into MM:SS
   const formatTime = (totalSeconds) => {
@@ -39,23 +35,57 @@ export default function ActiveWorkoutNav({
       .padStart(2, "0")}`;
   };
 
-  const handleEnd = onEnd || contextEndWorkout;
+  const handleEndWorkout = async () => {
+    try {
+      await contextEndWorkout();
+      navigate("/history");
+    } catch (error) {
+      console.error("Error ending workout:", error);
+      alert("There was an error ending your workout. Please try again.");
+    }
+  };
 
   const handleReturnToWorkout = () => {
     navigate("/workout/active");
   };
 
-  // Sidebar style: colored, rounded, full-width bar (no Card)
+  let workoutNavState = "c2a";
+  if (isWorkoutActive) {
+    if (location.pathname === "/workout/active") {
+      workoutNavState = "activeWorkout";
+    } else {
+      workoutNavState = "returnToWorkout";
+    }
+  } else if (location.pathname === "/workout") {
+    workoutNavState = "programPrompt";
+  }
+
+  const WORKOUT_NAV_STYLES = {
+    c2a: {
+      backgroundColor: "bg-red-500",
+      textColor: "text-white",
+    },
+    programPrompt: {
+      backgroundColor: "bg-orange-500",
+      textColor: "text-white",
+    },
+    returnToWorkout: {
+      backgroundColor: "bg-green-600",
+      textColor: "text-white",
+    },
+    activeWorkout: {
+      backgroundColor: "bg-green-600",
+      textColor: "text-white",
+    },
+  };
+
   if (variant === "sidebar") {
     return (
-      <div className="w-full">
-        {state === "c2a" && (
+      <div className="w-full cursor-pointer">
+        {workoutNavState === "c2a" && (
           <div
             className="w-full h-12 p-3 bg-red-500 rounded-[8px] backdrop-blur-[2px] flex items-center gap-2 cursor-pointer hover:bg-red-600 transition-colors"
-            onClick={onClick}
-            tabIndex={0}
-            role="button"
-            aria-label="Record a workout"
+            onClick={handleC2AClick}
           >
             <PlayCircle className="Lucide size-6 text-white" />
             <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
@@ -63,7 +93,7 @@ export default function ActiveWorkoutNav({
             </span>
           </div>
         )}
-        {state === "programPrompt" && (
+        {workoutNavState === "programPrompt" && (
           <div className="w-full h-12 p-3 bg-orange-500 rounded-[8px] backdrop-blur-[2px] flex items-center gap-2">
             <ChevronRightCircle className="Lucide size-6 text-white" />
             <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
@@ -71,14 +101,10 @@ export default function ActiveWorkoutNav({
             </span>
           </div>
         )}
-        {state === "return-to-workout" && (
+        {workoutNavState === "returnToWorkout" && (
           <div
-            data-layer="Property 1=return-to-workout"
-            className="Property1ReturnToWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-start gap-2 overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
+            className="w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-start gap-2 overflow-hidden cursor-pointer hover:bg-green-700 transition-colors"
             onClick={handleReturnToWorkout}
-            role="button"
-            tabIndex={0}
-            aria-label="Return to active workout"
           >
             <span className="flex items-center">
               <ArrowRight className="size-5 text-white" />
@@ -88,29 +114,17 @@ export default function ActiveWorkoutNav({
             </span>
           </div>
         )}
-        {state === "active-workout" && (
-          <div
-            data-layer="Property 1=active-workout"
-            className="Property1ActiveWorkout w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-between overflow-hidden"
-          >
-            <div
-              data-layer="max-width-wrapper"
-              className="MaxWidthWrapper flex flex-1 items-center justify-between"
-            >
-              <div
-                data-layer="icon-timer-wrapper"
-                className="IconTimerWrapper flex items-center gap-2"
-              >
+        {workoutNavState === "activeWorkout" && (
+          <div className="w-full h-12 p-3 bg-green-600 rounded-[8px] backdrop-blur-[2px] flex items-center justify-between overflow-hidden">
+            <div className="flex flex-1 items-center justify-between">
+              <div className="flex items-center gap-2">
                 <span className="flex items-center h-6">
                   <Circle
                     className="size-3 text-stone-100"
                     fill="currentColor"
                   />
                 </span>
-                <div
-                  data-layer="timer"
-                  className="Timer flex items-center text-white text-sm font-normal font-['Space_Grotesk'] leading-tight"
-                >
+                <div className="flex items-center text-white text-sm font-normal font-['Space_Grotesk'] leading-tight">
                   {formatTime(elapsedTime)}
                 </div>
               </div>
@@ -131,7 +145,7 @@ export default function ActiveWorkoutNav({
                 </button>
                 <button
                   className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
-                  onClick={handleEnd}
+                  onClick={handleEndWorkout}
                   aria-label="End workout"
                 >
                   <StopCircle className="size-8" />
@@ -143,41 +157,38 @@ export default function ActiveWorkoutNav({
       </div>
     );
   }
-  // Mobile style: Card (as before)
+
   return (
     <Card
-      data-layer="ActiveWorkoutNav"
-      className="Activeworkoutnav w-[513px] p-5 inline-flex flex-col justify-start items-start gap-5 overflow-hidden"
+      className={cn(
+        "w-full p-2 inline-flex flex-col justify-start items-start gap-5 overflow-hidden mb-2",
+        WORKOUT_NAV_STYLES[workoutNavState].backgroundColor,
+        WORKOUT_NAV_STYLES[workoutNavState].textColor
+      )}
     >
-      {state === "c2a" && (
+      {workoutNavState === "c2a" && (
         <div
-          className="flex items-center gap-2 cursor-pointer hover:bg-red-100 p-2 rounded"
-          onClick={onClick}
-          tabIndex={0}
-          role="button"
-          aria-label="Record a workout"
+          className="flex items-center gap-2 p-2 rounded"
+          onClick={handleC2AClick}
         >
-          <PlayCircle className="Lucide size-6 text-red-500" />
+          <PlayCircle className="Lucide size-6 text-white" />
           <span className="text-xs font-semibold font-['Space_Grotesk'] leading-none">
             Record a workout
           </span>
         </div>
       )}
-      {state === "programPrompt" && (
-        <div className="flex items-center gap-2">
-          <ChevronRightCircle className="Lucide size-6 text-orange-500" />
+      {workoutNavState === "programPrompt" && (
+        <div className="flex items-center gap-2 p-2 rounded">
+          <ChevronRightCircle className="Lucide size-6 text-white" />
           <span className="text-xs font-semibold font-['Space_Grotesk'] leading-none">
             Select a program
           </span>
         </div>
       )}
-      {state === "return-to-workout" && (
+      {workoutNavState === "returnToWorkout" && (
         <div
-          className="w-full p-2 bg-green-600 rounded-lg flex items-center gap-2 cursor-pointer hover:bg-green-700 transition-colors"
+          className="flex items-center gap-2 p-2 rounded"
           onClick={handleReturnToWorkout}
-          role="button"
-          tabIndex={0}
-          aria-label="Return to active workout"
         >
           <ArrowRight className="size-4 text-white" />
           <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
@@ -185,8 +196,8 @@ export default function ActiveWorkoutNav({
           </span>
         </div>
       )}
-      {state === "active-workout" && (
-        <div className="w-full p-2 bg-green-600 rounded-lg flex justify-between items-center">
+      {workoutNavState === "activeWorkout" && (
+        <div className="flex justify-between items-center gap-2 p-2 rounded w-full">
           <div className="flex items-center gap-1">
             <Circle className="size-3 text-stone-100" fill="currentColor" />
             <span className="text-white text-sm font-normal font-['Space_Grotesk'] leading-tight">
@@ -207,7 +218,7 @@ export default function ActiveWorkoutNav({
             </button>
             <button
               className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
-              onClick={handleEnd}
+              onClick={handleEndWorkout}
               aria-label="End workout"
             >
               <StopCircle className="size-8" />

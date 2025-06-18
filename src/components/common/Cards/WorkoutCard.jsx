@@ -1,16 +1,29 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { SwiperCard, SwiperCardContent } from '@/components/molecules/swiper-card';
+import React from "react";
+import PropTypes from "prop-types";
+import {
+  SwiperCard,
+  SwiperCardContent,
+} from "@/components/molecules/swiper-card";
 
-const WorkoutCard = ({ workoutName, programName = '', exerciseCount, duration, className = '', ...props }) => {
+const WorkoutCard = ({
+  workoutName,
+  programName = "",
+  exerciseCount,
+  duration,
+  className = "",
+  ...props
+}) => {
   return (
-    <SwiperCard className={`w-full max-w-[500px] p-4 bg-stone-50 rounded-lg flex flex-col gap-2 overflow-hidden cursor-pointer ${className}`} {...props}>
+    <SwiperCard
+      className={`w-full max-w-[500px] p-4 bg-stone-50 rounded-lg flex flex-col gap-2 overflow-hidden cursor-pointer ${className}`}
+      {...props}
+    >
       <SwiperCardContent className="flex flex-col gap-2 p-0">
-        <div className="w-96 text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7 truncate">
+        <div className="text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7 truncate">
           {workoutName}
         </div>
         {programName && (
-          <div className="w-96 text-slate-950 text-sm font-normal font-['Space_Grotesk'] leading-tight truncate">
+          <div className="text-slate-950 text-sm font-normal font-['Space_Grotesk'] leading-tight truncate">
             {programName}
           </div>
         )}
@@ -32,4 +45,4 @@ WorkoutCard.propTypes = {
   className: PropTypes.string,
 };
 
-export default WorkoutCard; 
+export default WorkoutCard;

@@ -1,22 +1,18 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-389
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/supabaseClient';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import PageHeader from '@/components/layout/PageHeader';
-import MainContainer from '@/components/layout/MainContainer';
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import WorkoutCard from '@/components/common/Cards/WorkoutCard';
+import React, { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/supabaseClient";
+import { useNavigate, useLocation } from "react-router-dom";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from '@/components/layout/AppLayout';
+import AppLayout from "@/components/layout/AppLayout";
 
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return [h, m, s]
-    .map(unit => String(unit).padStart(2, '0'))
-    .join(':');
+  return [h, m, s].map((unit) => String(unit).padStart(2, "0")).join(":");
 }
 
 const History = () => {
@@ -36,27 +32,33 @@ const History = () => {
     }
     // Fetch workouts with program information and sets in a single query
     const { data: workoutsData, error } = await supabase
-      .from('workouts')
-      .select(`
+      .from("workouts")
+      .select(
+        `
         *,
         programs(program_name),
         sets(id, exercise_id)
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      `
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Error fetching workouts:', error);
+      console.error("Error fetching workouts:", error);
       setWorkouts([]);
       setLoading(false);
       return;
     }
 
     // Process the data
-    const processedWorkouts = (workoutsData || []).map(workout => ({
-      ...workout,
-      exerciseCount: new Set(workout.sets?.map(set => set.exercise_id) || []).size
-    })).filter(w => w.sets && w.sets.length > 0);
+    const processedWorkouts = (workoutsData || [])
+      .map((workout) => ({
+        ...workout,
+        exerciseCount: new Set(
+          workout.sets?.map((set) => set.exercise_id) || []
+        ).size,
+      }))
+      .filter((w) => w.sets && w.sets.length > 0);
 
     setWorkouts(processedWorkouts);
     setLoading(false);
@@ -78,12 +80,12 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      <CardWrapper>
+      <CardWrapper className="mb-[150px]">
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
           workouts
-            .filter(w => {
+            .filter((w) => {
               const q = search.toLowerCase();
               return (
                 w.workout_name?.toLowerCase().includes(q) ||
@@ -91,11 +93,11 @@ const History = () => {
                 String(w.exerciseCount).includes(q)
               );
             })
-            .map(w => (
+            .map((w) => (
               <WorkoutCard
                 key={w.id}
-                workoutName={w.workout_name || 'Unnamed Workout'}
-                programName={w.programs?.program_name || ''}
+                workoutName={w.workout_name || "Unnamed Workout"}
+                programName={w.programs?.program_name || ""}
                 exerciseCount={w.exerciseCount}
                 duration={formatDuration(w.duration_seconds)}
                 onClick={() => navigate(`/history/${w.id}`)}
@@ -108,4 +110,4 @@ const History = () => {
   );
 };
 
-export default History; 
+export default History;
