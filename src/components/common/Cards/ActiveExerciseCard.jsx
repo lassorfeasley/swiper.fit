@@ -17,7 +17,6 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
-import CardPill from "@/components/molecules/CardPill";
 import {
   SheetHeader,
   SheetTitle,
@@ -30,6 +29,7 @@ import NumericInput from "@/components/molecules/numeric-input";
 import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import SetBadge from "@/components/molecules/SetBadge";
 
 const ActiveExerciseCard = ({
   exerciseId,
@@ -336,7 +336,7 @@ const ActiveExerciseCard = ({
                 <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
                   {set.set_variant || set.name}
                 </div>
-                <CardPill
+                <SetBadge
                   reps={set.reps}
                   weight={set.weight}
                   unit={set.unit}
@@ -345,7 +345,7 @@ const ActiveExerciseCard = ({
                   onEdit={() => handlePillClick(idx)}
                   set_type={setType}
                   timed_set_duration={timedDuration}
-                  className="Cardpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+                  className="px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
                 />
               </div>
               <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
@@ -432,7 +432,7 @@ const ActiveExerciseCard = ({
           const setType = set.set_type || "reps";
           const timedDuration = set.timed_set_duration;
           return (
-            <CardPill
+            <SetBadge
               key={`${set.id ?? `temp-${idx}`}-${idx}`}
               set={set}
               onClick={() => handlePillClick(idx)}
@@ -444,7 +444,7 @@ const ActiveExerciseCard = ({
               editable={true}
               set_type={setType}
               timed_set_duration={timedDuration}
-              className="Setpill px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
+              className="px-2 py-0.5 bg-grey-200 rounded-[20px] flex justify-start items-center"
             />
           );
         })}

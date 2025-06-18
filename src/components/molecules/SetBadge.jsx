@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Badge } from "@/components/atoms/badge";
 
 /**
- * CardPill - Component for displaying a pill format for sets or exercises
+ * SetBadge - Component for displaying a pill format for sets or exercises
  *
  * Props:
  * - variant: 'sets' | 'exercises' (default: 'sets')
@@ -18,7 +18,7 @@ import { Badge } from "@/components/atoms/badge";
  * - set_type: string (optional) - Type of set ('reps' or 'timed')
  * - timed_set_duration: number (optional) - Duration of timed set in seconds
  */
-const CardPill = ({
+const SetBadge = ({
   variant = "sets",
   reps,
   weight,
@@ -153,7 +153,7 @@ const CardPill = ({
   );
 };
 
-CardPill.propTypes = {
+SetBadge.propTypes = {
   variant: PropTypes.oneOf(["sets", "exercises"]),
   reps: PropTypes.number,
   weight: PropTypes.number,
@@ -169,4 +169,4 @@ CardPill.propTypes = {
   timed_set_duration: PropTypes.number,
 };
 
-export default CardPill;
+export default SetBadge;

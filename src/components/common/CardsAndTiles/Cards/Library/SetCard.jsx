@@ -6,7 +6,7 @@ import WeightCompoundField from 'components/common/forms/compound-fields/WeightC
 import NumericInput from 'components/common/forms/NumericInput';
 import Icon from 'components/common/Icon';
 import PropTypes from 'prop-types';
-import CardPill from 'components/molecules/CardPill';
+import SetBadge from '@/components/molecules/SetBadge';
 
 const SetCard = ({ 
   exerciseName = 'Military press', 
@@ -223,7 +223,7 @@ const SetCard = ({
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-lg">{set?.name}</span>
                   <div className="flex gap-4">
-                    <CardPill
+                    <SetBadge
                       reps={set?.reps}
                       weight={set?.weight}
                       unit={set?.unit}
