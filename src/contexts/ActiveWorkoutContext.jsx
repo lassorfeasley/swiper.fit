@@ -38,9 +38,11 @@ export function ActiveWorkoutProvider({ children }) {
               if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
               progress[s.exercise_id].push({
                 id: s.id,
+                program_set_id: s.program_set_id,
                 reps: s.reps,
                 weight: s.weight,
                 unit: s.weight_unit,
+                weight_unit: s.weight_unit,
                 set_variant: s.set_variant,
                 status: 'complete', // Assume sets in DB are complete
               });
