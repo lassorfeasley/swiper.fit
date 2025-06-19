@@ -187,6 +187,11 @@ const ActiveExerciseCard = ({
         }
       }
 
+      // Log local set completion for clarity
+      if (setToComplete.status !== "counting-down-timed") {
+        console.log(`${setToComplete.set_variant} of ${exerciseName} logged to local.`);
+      }
+
       if (updates.length > 0) {
         Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
           console.error

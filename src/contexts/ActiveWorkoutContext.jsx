@@ -269,7 +269,7 @@ export function ActiveWorkoutProvider({ children }) {
       }
 
       if (!existingSet) {
-        console.warn(`Skipping database update for set with id ${setId} because it has not been saved yet. The changes have been applied locally.`);
+        // Set has not yet been saved to the database; no update necessary.
         return;
       }
 
@@ -297,8 +297,7 @@ export function ActiveWorkoutProvider({ children }) {
           return newProgress;
         });
       } else {
-        // This case should now be rare because we check for existence first.
-        console.warn('No set updated for id', setId);
+        // No rows updated (rare once existence is checked). Silently ignore.
       }
     } catch (err) {
       console.error("Error updating set:", err);

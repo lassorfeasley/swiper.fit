@@ -131,7 +131,11 @@ const ActiveWorkout = () => {
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {
-    saveSet(exerciseId, setConfig);
+    const exerciseName = exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
+    // Call saveSet and then log upon completion
+    Promise.resolve(saveSet(exerciseId, setConfig)).then(() => {
+      console.log(`${setConfig.set_variant} of ${exerciseName} logged to database.`);
+    });
   };
 
   const handleSetProgrammaticUpdate = async (exerciseId, setId, formValues) => {
