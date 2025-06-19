@@ -11,14 +11,14 @@ const SwiperSheet = ({ open, onOpenChange, children, className, title, descripti
       <SheetContent
         side={isMobile ? "bottom" : "right"}
         className={cn(
-          isMobile ? "h-[85vh]" : "w-[350px]",
-          "bg-stone-50",
+          isMobile ? "h-[85vh] w-full" : "w-[500px] sm:max-w-none",
+          "bg-stone-50 px-0 gap-0 flex flex-col",
           className
         )}
         {...props}
       >
         {(title || description) && (
-          <SheetHeader>
+          <SheetHeader className="sticky top-0 z-10 bg-stone-50 border-b">
             {title && <SheetTitle>{title}</SheetTitle>}
             {description && <SheetDescription>{description}</SheetDescription>}
           </SheetHeader>

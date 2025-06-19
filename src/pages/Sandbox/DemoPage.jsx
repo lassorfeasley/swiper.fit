@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import SetBuilderForm from "@/components/common/forms/SetBuilderForm";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
-import { Repeat2, Weight as WeightIcon } from "lucide-react";
+import { Repeat2, Weight as WeightIcon, Timer } from "lucide-react";
 import { SheetHeader, SheetTitle, SheetClose } from "@/components/atoms/sheet";
 import { Separator as Divider } from "@/components/atoms/separator";
 import useSetConfig from "@/hooks/use-set-config";
@@ -28,7 +28,7 @@ const DemoPage = () => {
         removeLastSet,
     } = useSetConfig(3);
 
-    const { setType, reps, timedDuration, weight, unit } = defaults;
+    const { set_type, reps, timed_set_duration, weight, unit } = defaults;
 
     // Exercise name and sets inputs
     const [exerciseName, setExerciseName] = useState("");
@@ -47,6 +47,7 @@ const DemoPage = () => {
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState(null);
     const [editingName, setEditingName] = useState("");
+    const [editingFields, setEditingFields] = useState({});
 
     // ref to focus exercise name when sheet opens
     const exerciseNameRef = useRef(null);
@@ -61,16 +62,16 @@ const DemoPage = () => {
     }, [showSheet]);
 
     const handleSetTypeChange = (val) => {
-        updateDefault('setType', val);
+        updateDefault('set_type', val);
         if (val === 'timed') {
-            updateDefault('timedDuration', 30);
+            updateDefault('timed_set_duration', 30);
         }
     };
 
     const handleRepsChange = (val)=> updateDefault('reps', val);
     const handleWeightChange=(val)=> updateDefault('weight', val);
     const handleUnitChange=(val)=> updateDefault('unit', val);
-    const handleTimedDurationChange=(val)=> updateDefault('timedDuration', val);
+    const handleTimedDurationChange=(val)=> updateDefault('timed_set_duration', val);
 
     return (
         <div className="p-8 md:ml-64">
@@ -94,7 +95,7 @@ const DemoPage = () => {
                             <div className="flex items-center justify-between px-6 py-3">
                                 <button onClick={() => setShowSheet(false)} className="text-red-600 font-medium">Cancel</button>
                                 <h2 className="font-semibold">Create</h2>
-                                <button disabled className="text-neutral-400 font-medium">Review</button>
+                                <button disabled className="text-neutral-400 font-medium">Add</button>
                             </div>
                         </div>
 
@@ -134,10 +135,10 @@ const DemoPage = () => {
                                     hideDivider={true}
                                     set_variant=""
                                     onSetVariantChange={()=>{}}
-                                    setType={setType}
+                                    setType={set_type}
                                     onSetTypeChange={handleSetTypeChange}
                                     reps={reps}
-                                    timed_set_duration={timedDuration}
+                                    timed_set_duration={timed_set_duration}
                                     onRepsChange={handleRepsChange}
                                     onTimedDurationChange={handleTimedDurationChange}
                                     weight={weight}
@@ -158,14 +159,22 @@ const DemoPage = () => {
                                     <div key={idx} className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer" onClick={()=>{
                                         setEditingIndex(idx);
                                         const merged=getSetMerged(idx);
+                                        setEditingFields({
+                                            set_type: merged.set_type,
+                                            reps: merged.reps,
+                                            timed_set_duration: merged.timed_set_duration,
+                                            weight: merged.weight,
+                                            unit: merged.unit,
+                                            set_variant: sets[idx].set_variant || "",
+                                        });
                                         setEditSheetOpen(true);
-                                        setEditingName(sets[idx].name || `Set ${idx+1}`);
+                                        setEditingName(sets[idx].set_variant || `Set ${idx+1}`);
                                     }}>
-                                        <span className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-none">{`Set ${idx + 1}`}</span>
+                                        <span className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-none">{sets[idx].set_variant || `Set ${idx + 1}`}</span>
                                         <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">
                                             <div className="px-2 bg-stone-100 flex items-center gap-0.5">
-                                                <Repeat2 className="w-4 h-4 text-slate-600" strokeWidth={1.5} />
-                                                <span className="text-slate-600 text-sm font-normal leading-tight">{getSetMerged(idx).reps}</span>
+                                                {getSetMerged(idx).set_type==='timed'? <Timer className="w-4 h-4 text-slate-600" strokeWidth={1.5}/> : <Repeat2 className="w-4 h-4 text-slate-600" strokeWidth={1.5} />}
+                                                <span className="text-slate-600 text-sm font-normal leading-tight">{getSetMerged(idx).set_type==='timed'? getSetMerged(idx).timed_set_duration : getSetMerged(idx).reps}</span>
                                             </div>
                                             <div className="px-2 bg-stone-100 flex items-center gap-0.5 border-l border-neutral-300">
                                                 <WeightIcon className="w-4 h-4 text-slate-600" strokeWidth={1.5} />
@@ -192,7 +201,13 @@ const DemoPage = () => {
                             <div className="flex items-center justify-between px-6 py-3">
                                 <button onClick={()=>setEditSheetOpen(false)} className="text-red-500 font-medium">Cancel</button>
                                 <h2 className="font-bold text-lg">Edit</h2>
-                                <button disabled className="text-neutral-400 font-medium">Confirm</button>
+                                <button onClick={()=>{
+                                    // save edits
+                                    const idx=editingIndex;
+                                    const fields=editingFields;
+                                    Object.entries(fields).forEach(([k,v])=>updateSetField(idx,k,v));
+                                    setEditSheetOpen(false);
+                                }} className="text-green-600 font-medium">Save changes</button>
                             </div>
                         </div>
 
@@ -201,7 +216,7 @@ const DemoPage = () => {
                             <TextInput
                                 label="Name set"
                                 value={editingName}
-                                onChange={(e)=>setEditingName(e.target.value)}
+                                onChange={(e)=>{setEditingName(e.target.value); setEditingFields(f=>({...f,set_variant:e.target.value}))}}
                                 customPlaceholder="e.g. Warm-up"
                             />
                             <SetBuilderForm
@@ -209,16 +224,16 @@ const DemoPage = () => {
                                 hideDivider={true}
                                 set_variant=""
                                 onSetVariantChange={()=>{}}
-                                setType={getSetMerged(editingIndex).setType}
-                                onSetTypeChange={(val)=>updateSetField(editingIndex,'setType',val)}
-                                reps={getSetMerged(editingIndex).reps}
-                                timed_set_duration={getSetMerged(editingIndex).timedDuration}
-                                onRepsChange={(val)=>updateSetField(editingIndex,'reps',val)}
-                                onTimedDurationChange={(val)=>updateSetField(editingIndex,'timedDuration',val)}
-                                weight={getSetMerged(editingIndex).weight}
-                                unit={getSetMerged(editingIndex).unit}
-                                onWeightChange={(val)=>updateSetField(editingIndex,'weight',val)}
-                                onUnitChange={(val)=>updateSetField(editingIndex,'unit',val)}
+                                setType={editingFields.set_type}
+                                onSetTypeChange={(val)=>setEditingFields(f=>({...f,set_type:val}))}
+                                reps={editingFields.reps}
+                                timed_set_duration={editingFields.timed_set_duration}
+                                onRepsChange={(val)=>setEditingFields(f=>({...f,reps:val}))}
+                                onTimedDurationChange={(val)=>setEditingFields(f=>({...f,timed_set_duration:val}))}
+                                weight={editingFields.weight}
+                                unit={editingFields.unit}
+                                onWeightChange={(val)=>setEditingFields(f=>({...f,weight:val}))}
+                                onUnitChange={(val)=>setEditingFields(f=>({...f,unit:val}))}
                             />
                         </div>
                     </SheetContent>

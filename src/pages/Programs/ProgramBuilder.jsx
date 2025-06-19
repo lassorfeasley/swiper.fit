@@ -357,25 +357,47 @@ const ProgramBuilder = () => {
             </Reorder.Group>
           )}
         </CardWrapper>
-        {(showAddExercise || editingExercise) && (
-          <SwiperSheet
-            open={showAddExercise || !!editingExercise}
-            onOpenChange={handleModalClose}
-            title={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-          >
-            <div className="pt-4">
-              <AddNewExerciseForm
-                key={editingExercise ? editingExercise.id : 'add-new'}
-                formPrompt={showAddExercise ? "Add a new exercise" : "Edit exercise"}
-                onActionIconClick={showAddExercise ? handleAddExercise : handleEditExercise}
-                onDelete={editingExercise ? handleDeleteExercise : undefined}
-                initialName={editingExercise?.name}
-                initialSets={editingExercise?.setConfigs?.length}
-                initialSetConfigs={editingExercise?.setConfigs}
-              />
-            </div>
-          </SwiperSheet>
-        )}
+        {(showAddExercise || editingExercise) && (() => {
+          const formRef = React.createRef();
+          const isAdding = showAddExercise;
+          return (
+            <SwiperSheet
+              open={showAddExercise || !!editingExercise}
+              onOpenChange={handleModalClose}
+              className="px-0 gap-0"
+            >
+              {/* Custom sticky header */}
+              <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-5 py-3">
+                <button onClick={handleModalClose} className="text-red-500 font-medium">
+                  Cancel
+                </button>
+                <h2 className="font-bold text-lg">
+                  {isAdding ? "Create" : "Edit"}
+                </h2>
+                <button
+                  onClick={() => formRef.current?.requestSubmit?.()}
+                  className="text-green-600 font-medium"
+                >
+                  {isAdding ? "Add" : "Save changes"}
+                </button>
+              </div>
+
+              {/* Scrollable body */}
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <AddNewExerciseForm
+                  ref={formRef}
+                  key={editingExercise ? editingExercise.id : 'add-new'}
+                  formPrompt={isAdding ? "Add a new exercise" : "Edit exercise"}
+                  onActionIconClick={isAdding ? handleAddExercise : handleEditExercise}
+                  onDelete={editingExercise ? handleDeleteExercise : undefined}
+                  initialName={editingExercise?.name}
+                  initialSets={editingExercise?.setConfigs?.length}
+                  initialSetConfigs={editingExercise?.setConfigs}
+                />
+              </div>
+            </SwiperSheet>
+          );
+        })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}
