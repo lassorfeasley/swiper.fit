@@ -1,108 +1,231 @@
-import React, { useState } from 'react';
-import PageHeader from '@/components/layout/PageHeader';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { Toggle } from '@/components/atoms/toggle';
+import { Sheet, SheetContent } from "@/components/atoms/sheet";
+import { Button } from "@/components/atoms/button";
+import { Separator } from "@/components/atoms/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SetBuilderForm from "@/components/common/forms/SetBuilderForm";
+import { TextInput } from "@/components/molecules/text-input";
+import NumericInput from "@/components/molecules/numeric-input";
+import { Repeat2, Weight as WeightIcon } from "lucide-react";
+import { SheetHeader, SheetTitle, SheetClose } from "@/components/atoms/sheet";
+import { Separator as Divider } from "@/components/atoms/separator";
+import useSetConfig from "@/hooks/use-set-config";
 
 const DemoPage = () => {
-    const [showAddButton, setShowAddButton] = useState(false);
-    const [addButtonText, setAddButtonText] = useState("Add program");
-    const [pageNameEditable, setPageNameEditable] = useState(false);
-    const [showDeleteOption, setShowDeleteOption] = useState(false);
-    const [showBackButton, setShowBackButton] = useState(true);
-    const [appHeaderTitle, setAppHeaderTitle] = useState("Demo Page");
-    const [search, setSearch] = useState(true);
-    const [searchValue, setSearchValue] = useState("");
-    const [searchPlaceholder, setSearchPlaceholder] = useState("Search...");
-    const [pageContext, setPageContext] = useState("default");
+    const [showSheet, setShowSheet] = useState(false);
+    const isMobile = useIsMobile();
 
-    const pageContextOptions = ["default", "programs", "history", "workout", "workoutDetail", "programBuilder"];
+    // State for SetBuilderForm demo
+    const {
+        defaults,
+        sets,
+        updateDefault,
+        updateSetField,
+        getSetMerged,
+        addSet,
+        removeLastSet,
+    } = useSetConfig(3);
 
-    const handleTitleChange = (newTitle) => {
-        setAppHeaderTitle(newTitle);
-        alert(`Title changed to: ${newTitle}`);
+    const { setType, reps, timedDuration, weight, unit } = defaults;
+
+    // Exercise name and sets inputs
+    const [exerciseName, setExerciseName] = useState("");
+    const setsCount = sets.length;
+    const handleSetsChange = (val)=>{
+        if(val>sets.length){
+            Array.from({length: val-sets.length}).forEach(()=>addSet());
+        } else if(val<sets.length){
+            Array.from({length: sets.length-val}).forEach(()=>removeLastSet());
+        }
+    };
+    // after hook declaration
+    const { addSet: addSetItem, removeLastSet: removeSetItem } = useSetConfig(0);
+
+    // Edit set sheet
+    const [editSheetOpen, setEditSheetOpen] = useState(false);
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [editingName, setEditingName] = useState("");
+
+    // ref to focus exercise name when sheet opens
+    const exerciseNameRef = useRef(null);
+
+    // focus on open
+    useEffect(() => {
+        if (showSheet) {
+            setTimeout(() => {
+                exerciseNameRef.current?.select?.();
+            }, 100);
+        }
+    }, [showSheet]);
+
+    const handleSetTypeChange = (val) => {
+        updateDefault('setType', val);
+        if (val === 'timed') {
+            updateDefault('timedDuration', 30);
+        }
     };
 
-    const handleDelete = () => {
-        alert(`Delete ${pageContext} action triggered!`);
-    };
+    const handleRepsChange = (val)=> updateDefault('reps', val);
+    const handleWeightChange=(val)=> updateDefault('weight', val);
+    const handleUnitChange=(val)=> updateDefault('unit', val);
+    const handleTimedDurationChange=(val)=> updateDefault('timedDuration', val);
 
-  return (
-        <div>
-            <PageHeader
-                showAddButton={showAddButton}
-                addButtonText={addButtonText}
-                pageNameEditable={pageNameEditable}
-                showBackButton={showBackButton}
-                appHeaderTitle={appHeaderTitle}
-                search={search}
-                onBack={() => alert("Back button clicked!")}
-                onAction={() => alert("Action button clicked!")}
-                onTitleChange={handleTitleChange}
-                onDelete={handleDelete}
-                showDeleteOption={showDeleteOption}
-                searchValue={searchValue}
-                onSearchChange={setSearchValue}
-                searchPlaceholder={searchPlaceholder}
-                sidebarWidth={0} // Set to 0 for demo page to be full width
-                pageContext={pageContext}
-            />
-            <div className="p-4 mt-20">
-                <h2 className="text-xl font-bold mb-4">PageHeader Controls</h2>
-                <div className="space-y-4 max-w-sm">
-                    <div className="flex items-center space-x-2">
-                        <Toggle id="showAddButton" pressed={showAddButton} onPressedChange={setShowAddButton} aria-label="Toggle add button"/>
-                        <Label htmlFor="showAddButton">Show Add Button</Label>
-                    </div>
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="addButtonText">Add Button Text</Label>
-                        <Input id="addButtonText" type="text" value={addButtonText} onChange={(e) => setAddButtonText(e.target.value)} disabled={!showAddButton} />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Toggle id="pageNameEditable" pressed={pageNameEditable} onPressedChange={setPageNameEditable} aria-label="Toggle page name editable"/>
-                        <Label htmlFor="pageNameEditable">Page Name Editable</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Toggle id="showDeleteOption" pressed={showDeleteOption} onPressedChange={setShowDeleteOption} aria-label="Toggle delete option"/>
-                        <Label htmlFor="showDeleteOption">Show Delete Option</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Toggle id="showBackButton" pressed={showBackButton} onPressedChange={setShowBackButton} aria-label="Toggle back button"/>
-                        <Label htmlFor="showBackButton">Show Back Button</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Toggle id="search" pressed={search} onPressedChange={setSearch} aria-label="Toggle search"/>
-                        <Label htmlFor="search">Enable Search</Label>
-                    </div>
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="appHeaderTitle">Header Title</Label>
-                        <Input id="appHeaderTitle" type="text" value={appHeaderTitle} onChange={(e) => setAppHeaderTitle(e.target.value)} />
-                    </div>
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="searchValue">Search Value</Label>
-                        <Input id="searchValue" type="text" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} disabled={!search} />
-                    </div>
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="searchPlaceholder">Search Placeholder</Label>
-                        <Input id="searchPlaceholder" type="text" value={searchPlaceholder} onChange={(e) => setSearchPlaceholder(e.target.value)} disabled={!search}/>
-                    </div>
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="pageContext">Page Context</Label>
-                        <select
-                            id="pageContext"
-                            value={pageContext}
-                            onChange={(e) => setPageContext(e.target.value)}
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {pageContextOptions.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-    </div>
-  );
+    return (
+        <div className="p-8 md:ml-64">
+            <Button onClick={() => setShowSheet(true)} className="bg-emerald-500 hover:bg-emerald-600">
+                Open Exercise Sheet
+            </Button>
+
+            {/* Demo of new scrolling sheet with sticky header */}
+            {showSheet && (
+                <Sheet open={showSheet} onOpenChange={setShowSheet}>
+                    <SheetContent
+                        side={isMobile ? "bottom" : "right"}
+                        className={
+                            isMobile
+                                ? "h-[85vh] w-full bg-stone-50 px-0"
+                                : "w-[500px] bg-stone-50 px-0 gap-0"
+                        }
+                    >
+                        {/* Sticky header */}
+                        <div className="sticky top-0 z-10 bg-stone-50 border-b">
+                            <div className="flex items-center justify-between px-6 py-3">
+                                <button onClick={() => setShowSheet(false)} className="text-red-600 font-medium">Cancel</button>
+                                <h2 className="font-semibold">Create</h2>
+                                <button disabled className="text-neutral-400 font-medium">Review</button>
+                            </div>
+                        </div>
+
+                        {/* Scrollable body */}
+                        <div className="flex-1 overflow-y-auto space-y-8 pb-8">
+                            {/* Exercise name and Sets section */}
+                            <div className="px-6 pt-6 flex flex-col gap-6">
+                                <TextInput
+                                    label="Exercise name"
+                                    value={exerciseName}
+                                    onChange={(e)=>setExerciseName(e.target.value)}
+                                    ref={exerciseNameRef}
+                                    autoFocus
+                                />
+
+                                <div className="flex flex-col gap-2 w-full">
+                                    <span className="text-slate-600 text-sm font-normal leading-none font-['Space_Grotesk']">Sets</span>
+                                    <NumericInput
+                                        value={setsCount}
+                                        onChange={handleSetsChange}
+                                        min={0}
+                                        max={99}
+                                        unitLabel="Sets"
+                                        className="w-full"
+                                    />
+                                </div>
+                            </div>
+                            <Separator />
+                            {/* Set Builder Form Demo */}
+                            <div className="px-6">
+                                <div className="mb-4 text-base font-medium font-['Space_Grotesk'] leading-tight">
+                                    <span className="text-slate-600">Set defaults </span>
+                                    <span className="text-neutral-300">Initialize sets then configure and name individual sets below.</span>
+                                </div>
+                                <SetBuilderForm
+                                    hideSetVariantInput={true}
+                                    hideDivider={true}
+                                    set_variant=""
+                                    onSetVariantChange={()=>{}}
+                                    setType={setType}
+                                    onSetTypeChange={handleSetTypeChange}
+                                    reps={reps}
+                                    timed_set_duration={timedDuration}
+                                    onRepsChange={handleRepsChange}
+                                    onTimedDurationChange={handleTimedDurationChange}
+                                    weight={weight}
+                                    unit={unit}
+                                    onWeightChange={handleWeightChange}
+                                    onUnitChange={handleUnitChange}
+                                />
+                            </div>
+                            <Separator />
+                            {/* Customize sets section */}
+                            <div className="px-6 pt-5 pb-0 !mt-0 flex flex-col gap-3">
+                                <div className="text-base font-medium font-['Space_Grotesk'] leading-tight">
+                                    <span className="text-slate-600">Customize sets </span>
+                                    <span className="text-neutral-300">Tap a set to name and configure weight, reps, and more.</span>
+                                </div>
+
+                                {Array.from({ length: setsCount }).map((_, idx) => (
+                                    <div key={idx} className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer" onClick={()=>{
+                                        setEditingIndex(idx);
+                                        const merged=getSetMerged(idx);
+                                        setEditSheetOpen(true);
+                                        setEditingName(sets[idx].name || `Set ${idx+1}`);
+                                    }}>
+                                        <span className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-none">{`Set ${idx + 1}`}</span>
+                                        <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">
+                                            <div className="px-2 bg-stone-100 flex items-center gap-0.5">
+                                                <Repeat2 className="w-4 h-4 text-slate-600" strokeWidth={1.5} />
+                                                <span className="text-slate-600 text-sm font-normal leading-tight">{getSetMerged(idx).reps}</span>
+                                            </div>
+                                            <div className="px-2 bg-stone-100 flex items-center gap-0.5 border-l border-neutral-300">
+                                                <WeightIcon className="w-4 h-4 text-slate-600" strokeWidth={1.5} />
+                                                <span className="text-slate-600 text-sm font-normal leading-tight">{getSetMerged(idx).unit === 'body' ? 'body' : getSetMerged(idx).weight}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            )}
+
+            {/* Edit Set Sheet */}
+            {editSheetOpen && (
+                <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
+                    <SheetContent
+                        side={isMobile ? "bottom" : "right"}
+                        className={isMobile ? "h-[85vh] w-full bg-stone-50 px-0" : "w-[500px] bg-stone-50 px-0 gap-0"}
+                    >
+                        {/* Sticky header for edit */}
+                        <div className="sticky top-0 z-10 bg-stone-50 border-b">
+                            <div className="flex items-center justify-between px-6 py-3">
+                                <button onClick={()=>setEditSheetOpen(false)} className="text-red-500 font-medium">Cancel</button>
+                                <h2 className="font-bold text-lg">Edit</h2>
+                                <button disabled className="text-neutral-400 font-medium">Confirm</button>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+                            <TextInput
+                                label="Name set"
+                                value={editingName}
+                                onChange={(e)=>setEditingName(e.target.value)}
+                                customPlaceholder="e.g. Warm-up"
+                            />
+                            <SetBuilderForm
+                                hideSetVariantInput={true}
+                                hideDivider={true}
+                                set_variant=""
+                                onSetVariantChange={()=>{}}
+                                setType={getSetMerged(editingIndex).setType}
+                                onSetTypeChange={(val)=>updateSetField(editingIndex,'setType',val)}
+                                reps={getSetMerged(editingIndex).reps}
+                                timed_set_duration={getSetMerged(editingIndex).timedDuration}
+                                onRepsChange={(val)=>updateSetField(editingIndex,'reps',val)}
+                                onTimedDurationChange={(val)=>updateSetField(editingIndex,'timedDuration',val)}
+                                weight={getSetMerged(editingIndex).weight}
+                                unit={getSetMerged(editingIndex).unit}
+                                onWeightChange={(val)=>updateSetField(editingIndex,'weight',val)}
+                                onUnitChange={(val)=>updateSetField(editingIndex,'unit',val)}
+                            />
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            )}
+        </div>
+    );
 };
 
-export default DemoPage; 
+export default DemoPage;
