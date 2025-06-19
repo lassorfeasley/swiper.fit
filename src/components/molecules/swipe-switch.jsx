@@ -42,17 +42,21 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
     }
   }, [status]);
 
+  // Keep the thumb at its current drag position when active to prevent flicker.
   useEffect(() => {
-    if (status === "complete") {
-      // Animate to rightmost, green
+    // If the set is complete or locally marked as swipedComplete, ensure it sits in the completed position.
+    if (status === "complete" || swipedComplete) {
       controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
-    } else if (swipedComplete) {
-      // Animate to rightmost, green
-      controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
-    } else {
-      // Animate to left, white
-      controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      return;
     }
+
+    // If the set is locked, always reset to the left (white).
+    if (status === "locked") {
+      controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      return;
+    }
+
+    // For 'active' and other transient states, do not force a reset—let the drag position persist.
   }, [status, thumbTravel, controls, swipedComplete]);
 
   useEffect(() => {
@@ -89,9 +93,15 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
 
   const handleDragEnd = (_, info) => {
     if ((status === "active" || status === "ready-timed-set") && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
+      // Snap the thumb to the rightmost position instantly to avoid flicker
+      controls.set({ x: thumbTravel, backgroundColor: "#22C55E" });
+
+      // Mark as swiped complete locally (for immediate visual feedback)
       if (status !== 'ready-timed-set') {
         setSwipedComplete(true);
       }
+
+      // Notify parent after the visual state is locked in
       onComplete();
     } else {
       controls.start({ x: 0, transition: tweenConfig });
