@@ -159,10 +159,11 @@ const ActiveExerciseCard = ({
             },
           });
           if (nextSet && nextSet.status === "locked") {
+            const nextStatus = nextSet.set_type === "timed" ? "ready-timed-set" : "active";
             const { tempId, ...restOfNextSet } = nextSet;
             updates.push({
               id: nextSet.id,
-              changes: { ...restOfNextSet, status: "active" },
+              changes: { ...restOfNextSet, status: nextStatus },
             });
           }
         }
@@ -177,10 +178,11 @@ const ActiveExerciseCard = ({
           },
         });
         if (nextSet && nextSet.status === "locked") {
+          const nextStatus = nextSet.set_type === "timed" ? "ready-timed-set" : "active";
           const { tempId, ...restOfNextSet } = nextSet;
           updates.push({
             id: nextSet.id,
-            changes: { ...restOfNextSet, status: "active" },
+            changes: { ...restOfNextSet, status: nextStatus },
           });
         }
       }
@@ -353,7 +355,7 @@ const ActiveExerciseCard = ({
           const isLastSet = idx === sets.length - 1;
           return (
             <div
-              key={`${set.id ?? `temp-${idx}`}-${idx}`}
+              key={`${set.program_set_id ?? set.tempId ?? `idx-${idx}`}`}
               className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2 ${
                 !isLastSet ? "border-b border-stone-200" : ""
               }`}
@@ -363,6 +365,7 @@ const ActiveExerciseCard = ({
                   {set.set_variant || set.name}
                 </div>
                 <SetBadge
+                  key={`badge-${set.program_set_id ?? set.tempId ?? idx}`}
                   reps={set.reps}
                   weight={set.weight}
                   unit={set.weight_unit}
@@ -458,7 +461,7 @@ const ActiveExerciseCard = ({
           const timedDuration = set.timed_set_duration;
           return (
             <SetBadge
-              key={`${set.id ?? `temp-${idx}`}-${idx}`}
+              key={`${set.program_set_id ?? set.tempId ?? idx}`}
               set={set}
               onClick={() => handlePillClick(idx)}
               onEdit={() => handlePillClick(idx)}
