@@ -37,7 +37,6 @@ export default function SetBuilderForm({
             label="Name set (optional)"
             value={set_variant}
             onChange={onSetVariantChange}
-            customPlaceholder="e.g. Set one, Warm-up"
           />
         ) }
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">

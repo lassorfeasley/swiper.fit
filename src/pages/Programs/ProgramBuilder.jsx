@@ -24,6 +24,7 @@ const ProgramBuilder = () => {
   const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] = useState(false);
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] = useState(false);
   const isUnmounted = useRef(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     setPageName("ProgramBuilder");
@@ -371,11 +372,11 @@ const ProgramBuilder = () => {
                 showLeftAction
                 leftText="Cancel"
                 leftAction={handleModalClose}
-                title={isAdding ? "Create" : "Edit"}
+                title={isAdding ? "Exercise" : "Edit"}
                 showRightAction
                 rightText={isAdding ? "Add" : "Save"}
                 rightAction={() => formRef.current?.requestSubmit?.()}
-                rightEnabled={true}
+                rightEnabled={dirty}
               />
 
               <div className="flex-1 overflow-y-auto">
@@ -388,7 +389,9 @@ const ProgramBuilder = () => {
                   initialName={editingExercise?.name}
                   initialSets={editingExercise?.setConfigs?.length}
                   initialSetConfigs={editingExercise?.setConfigs}
-                  onDirtyChange={()=>{/* enable logic if needed */}}
+                  onDirtyChange={setDirty}
+                  hideActionButtons
+                  showAddToProgramToggle={false}
                 />
               </div>
             </SwiperSheet>

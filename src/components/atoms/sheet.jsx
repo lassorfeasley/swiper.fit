@@ -63,11 +63,12 @@ const FormHeader = ({
   showLeftAction = true,
   showRightAction = true,
   showBackIcon = false,
+  rightEnabled = true,
   ...props
 }) => (
   <div
     className={cn(
-      "self-stretch p-4 border-b border-neutral-300 inline-flex justify-center items-center gap-5",
+      "self-stretch p-3 border-b border-neutral-300 inline-flex justify-center items-center gap-5",
       className
     )}
     {...props}
@@ -82,7 +83,7 @@ const FormHeader = ({
           )}
           <button
             onClick={leftAction}
-            className="w-[91.33px] justify-center text-red-500 text-base font-medium font-vietnam leading-tight"
+            className="text-red-500 text-base font-medium font-vietnam leading-tight text-left"
           >
             {leftText}
           </button>
@@ -102,7 +103,11 @@ const FormHeader = ({
       {showRightAction && (
         <button
           onClick={rightAction}
-          className="text-neutral-400 text-base font-medium font-vietnam leading-tight"
+          className={cn(
+            "text-base font-medium font-vietnam leading-tight",
+            rightEnabled ? "text-green-600" : "text-neutral-400"
+          )}
+          disabled={!rightEnabled}
         >
           {rightText}
         </button>

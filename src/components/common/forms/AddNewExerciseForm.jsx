@@ -35,6 +35,8 @@ const AddNewExerciseForm = React.forwardRef(({
   initialSets = 3,
   initialSetConfigs = [],
   onDirtyChange,
+  hideActionButtons = false,
+  showAddToProgramToggle = true,
 }, ref) => {
   /* ------------------------------------------------------------------ */
   //  Local state – name & set config hook
@@ -75,12 +77,14 @@ const AddNewExerciseForm = React.forwardRef(({
   }, []);
 
   useEffect(() => {
+    const nameFilled = exerciseName.trim() !== "";
     const nameDirty = exerciseName.trim() !== initialNameRef.current.trim();
     const setDirty = sets.some((_, idx) => {
       const merged = getSetMerged(idx);
       return JSON.stringify(merged) !== JSON.stringify(initialSetConfigs[idx] || {});
     });
-    onDirtyChange?.(nameDirty || setDirty);
+    // Ready to save/add only when a name is present AND either the name changed or sets changed
+    onDirtyChange?.(nameFilled && (nameDirty || setDirty));
   }, [exerciseName, sets, onDirtyChange]);
 
   /* ------------------------------------------------------------------ */
@@ -107,20 +111,23 @@ const AddNewExerciseForm = React.forwardRef(({
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingFields, setEditingFields] = useState({});
-  const [editingName, setEditingName] = useState("");
+  const [editingDirty, setEditingDirty] = useState(false);
 
   const openEditSheet = (idx) => {
     setEditingIndex(idx);
     const merged = getSetMerged(idx);
-    setEditingFields({ ...merged });
-    setEditingName(sets[idx].set_variant || `Set ${idx + 1}`);
+    const initialFields = { ...merged };
+    if (!initialFields.set_variant || initialFields.set_variant.trim() === "") {
+      initialFields.set_variant = `Set ${idx + 1}`;
+    }
+    setEditingFields(initialFields);
+    setEditingDirty(false);
     setEditSheetOpen(true);
   };
 
   const saveEditSheet = () => {
     const idx = editingIndex;
     Object.entries(editingFields).forEach(([k, v]) => updateSetField(idx, k, v));
-    if (editingName) updateSetField(idx, "set_variant", editingName);
     setEditSheetOpen(false);
   };
 
@@ -235,14 +242,19 @@ const AddNewExerciseForm = React.forwardRef(({
         </div>
 
         {/* Add to program toggle */}
-        <div className="flex flex-col gap-2 pt-2">
-          <span className="text-slate-600 text-label">Add to program?</span>
-          <ToggleInput
-            options={[{ label: "Just for today", value: "today" }, { label: "For future programs", value: "future" }]}
-            value={addType}
-            onChange={(val) => val && setAddType(val)}
-          />
-        </div>
+        {showAddToProgramToggle && (
+          <div className="flex flex-col gap-2 pt-2">
+            <span className="text-slate-600 text-label">Add to program?</span>
+            <ToggleInput
+              options={[
+                { label: "Just for today", value: "today" },
+                { label: "Permanently", value: "future" },
+              ]}
+              value={addType}
+              onChange={(val) => val && setAddType(val)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Set defaults */}
@@ -305,24 +317,39 @@ const AddNewExerciseForm = React.forwardRef(({
             rightText="Save"
             rightAction={saveEditSheet}
             showBackIcon={false}
+            rightEnabled={editingDirty}
           />
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-            <TextInput
-              label="Name set"
-              value={editingName}
-              onChange={(e) => setEditingName(e.target.value)}
-              customPlaceholder="e.g. Warm-up"
-            />
             <SetEditForm
               isChildForm
               hideDivider
               initialValues={editingFields}
               onValuesChange={(vals) => setEditingFields(vals)}
+              onDirtyChange={setEditingDirty}
             />
           </div>
         </SwiperSheet>
+      )}
+
+      {/* Footer actions */}
+      {!hideActionButtons && (
+        <div className="mt-6 flex flex-col gap-3">
+          <SwiperButton
+            type="submit"
+            variant="default"
+            disabled={!exerciseName.trim()}
+            className={`w-full ${exerciseName.trim() ? "!bg-green-600 hover:!bg-green-500" : "!bg-neutral-300"}`}
+          >
+            {onDelete ? "Save changes" : "Add exercise"}
+          </SwiperButton>
+          {onDelete && (
+            <SwiperButton variant="destructive" onClick={onDelete} className="w-full">
+              Delete exercise
+            </SwiperButton>
+          )}
+        </div>
       )}
     </form>
   );
@@ -345,6 +372,7 @@ AddNewExerciseForm.propTypes = {
     })
   ),
   onDirtyChange: PropTypes.func,
+  hideActionButtons: PropTypes.bool,
 };
 
 export default AddNewExerciseForm; 

@@ -27,6 +27,7 @@ const ExerciseCard = ({
     weight: 0,
     unit: "lbs",
   });
+  const [formDirty, setFormDirty] = useState(false);
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -138,16 +139,29 @@ const ExerciseCard = ({
         cardContent
       )}
       {setsAreEditable && (
-        <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <FormHeader className="mb-4">
-            <SheetTitle>Edit set</SheetTitle>
-          </FormHeader>
-          <SetEditForm
-            onSave={handleEditFormSave}
-            initialValues={editFormValues}
-            saveButtonText="Save"
-            onDelete={handleSetDelete}
+        <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} className="px-0 gap-0">
+          <FormHeader
+            showLeftAction
+            leftText="Cancel"
+            leftAction={() => setEditSheetOpen(false)}
+            title="Edit set"
+            showRightAction
+            rightText="Save"
+            rightAction={() => {
+              // trigger internal form save via ref or expose handler by passing to form
+            }}
+            rightEnabled={formDirty}
           />
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <SetEditForm
+              hideActionButtons
+              hideInternalHeader
+              onDirtyChange={setFormDirty}
+              onSave={handleEditFormSave}
+              onDelete={handleSetDelete}
+              initialValues={editFormValues}
+            />
+          </div>
         </SwiperSheet>
       )}
     </CardWrapper>

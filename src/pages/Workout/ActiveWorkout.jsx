@@ -392,7 +392,7 @@ const ActiveWorkout = () => {
                 >
                   Cancel
                 </button>
-                <h2 className="font-bold text-lg">Create</h2>
+                <h2 className="font-bold text-lg">Exercise</h2>
                 <button
                   onClick={() => formRef.current?.requestSubmit?.()}
                   className="text-green-600 font-medium"

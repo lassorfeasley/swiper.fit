@@ -37,7 +37,6 @@ const FormContent = ({
         value={set_variant}
         onChange={(e) => handleLocalChange('set_variant', e.target.value)}
         onBlur={syncWithParent}
-        customPlaceholder="e.g. Set one, Warm-up"
       />}
       <ToggleInput
           label="Set type"
