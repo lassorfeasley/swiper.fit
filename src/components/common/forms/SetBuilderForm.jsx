@@ -26,16 +26,20 @@ export default function SetBuilderForm({
   unit,
   onWeightChange,
   onUnitChange,
+  hideSetVariantInput = false,
+  hideDivider = false,
 }) {
   return (
     <div className="Frame7 w-full self-stretch flex flex-col justify-start items-start gap-3">
       <div className="Frame14 w-full self-stretch flex flex-col justify-start items-start gap-4">
-        <TextInput
-          label="Name set (optional)"
-          value={set_variant}
-          onChange={onSetVariantChange}
-          customPlaceholder="e.g. Set one, Warm-up"
-        />
+        { !hideSetVariantInput && (
+          <TextInput
+            label="Name set (optional)"
+            value={set_variant}
+            onChange={onSetVariantChange}
+            customPlaceholder="e.g. Set one, Warm-up"
+          />
+        ) }
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">
           <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Set type</div>
           <ToggleInput
@@ -55,9 +59,11 @@ export default function SetBuilderForm({
             unitLabel={setType === 'reps' ? 'reps' : 'seconds'}
           />
         </div>
-        <div className="Divider w-full self-stretch flex flex-col justify-start items-start">
-          <div className="Divider w-full self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
-        </div>
+        { !hideDivider && (
+          <div className="Divider w-full self-stretch flex flex-col justify-start items-start">
+            <div className="Divider w-full self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-200"></div>
+          </div>
+        ) }
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">
           <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight unit</div>
           <ToggleInput

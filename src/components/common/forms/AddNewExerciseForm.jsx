@@ -1,203 +1,316 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
-import { SwiperAccordion, SwiperAccordionItem, SwiperAccordionTrigger, SwiperAccordionContent } from "@/components/molecules/swiper-accordion";
-import SwiperAccordionGroup from "@/components/molecules/swiper-accordion-group";
-import ToggleInput from '@/components/molecules/toggle-input';
-import { SwiperButton } from '@/components/molecules/swiper-button';
-import SetEditForm from './SetEditForm';
+import { SwiperButton } from "@/components/molecules/swiper-button";
+import { Separator } from "@/components/atoms/separator";
+import useSetConfig from "@/hooks/use-set-config";
+import SetBuilderForm from "./SetBuilderForm";
+import SetEditForm from "./SetEditForm";
+import { Sheet, SheetContent } from "@/components/atoms/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
 
-const unitOptions = [
-  { label: 'lbs', value: 'lbs' },
-  { label: 'kg', value: 'kg' },
-  { label: 'body', value: 'body' },
+// Utility arrays for human-friendly set names
+const setWords = [
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
 ];
 
-const setTypeOptions = [
-  { label: 'Reps', value: 'reps' },
-  { label: 'Timed', value: 'timed' },
-];
-
-const AddNewExerciseForm = ({
+const AddNewExerciseForm = React.forwardRef(({
   onActionIconClick,
   onDelete,
   formPrompt = "Add to program",
-  initialName = '',
+  initialName = "",
   initialSets = 3,
   initialSetConfigs = [],
-}) => {
-  const [exerciseName, setExerciseName] = useState(initialName || '');
-  const [sets, setSets] = useState(initialSets || 3);
-  const [setConfigs, setSetConfigs] = useState(() => {
-    const configs = initialSetConfigs.length > 0 ? initialSetConfigs : Array.from({ length: initialSets || 3 });
-    return configs.map((cfg, i) => ({
-      ui_id: Math.random(),
-      ...(cfg || {
-        reps: 3, 
-        weight: 25, 
-        unit: 'lbs', 
-        set_type: 'reps',
-      }),
-      set_variant: (cfg && cfg.set_variant) || `Set ${i + 1}`,
-    }));
-  });
-  const [openSet, setOpenSet] = useState('defaults');
-  const [setDefaults, setSetDefaults] = useState({
-    reps: initialSetConfigs[0]?.reps ?? 3,
-    weight: initialSetConfigs[0]?.weight ?? 25,
-    unit: initialSetConfigs[0]?.unit ?? 'lbs',
-    set_type: initialSetConfigs[0]?.set_type ?? 'reps',
-    timed_set_duration: initialSetConfigs[0]?.timed_set_duration,
-  });
-  const prevDefaultsRef = useRef(setDefaults);
+}, ref) => {
+  /* ------------------------------------------------------------------ */
+  //  Local state – name & set config hook
+  /* ------------------------------------------------------------------ */
 
-  useEffect(() => {
-    const prevDefaults = prevDefaultsRef.current;
-    setSetConfigs(prev => {
-      let newConfigs = [...prev];
-      const currentLength = prev.length;
+  const [exerciseName, setExerciseName] = useState(initialName);
 
-      if (sets > currentLength) { // Add sets
-        const newSets = Array.from({ length: sets - currentLength }, (_, i) => ({
-          ...setDefaults,
-          set_variant: `Set ${currentLength + i + 1}`,
-          ui_id: Math.random()
-        }));
-        newConfigs = [...prev, ...newSets];
-      } else if (sets < currentLength) { // Remove sets
-        newConfigs = prev.slice(0, sets);
-      } else if (prevDefaults !== setDefaults) { // Defaults changed
-        newConfigs = prev.map(config => {
-          let hasChanged = false;
-          const updatedConfig = { ...config };
-          const keysToSync = ['reps', 'weight', 'unit', 'set_type', 'timed_set_duration'];
-          keysToSync.forEach(key => {
-            if (config[key] === prevDefaults[key]) {
-              updatedConfig[key] = setDefaults[key];
-              hasChanged = true;
-            }
-          });
-          return hasChanged ? updatedConfig : config;
-        });
+  // Build initial defaults from the first supplied set config (if any)
+  const initialDefaults = initialSetConfigs[0]
+    ? {
+        set_type: initialSetConfigs[0].set_type ?? "reps",
+        reps: initialSetConfigs[0].reps ?? 12,
+        timed_set_duration: initialSetConfigs[0].timed_set_duration ?? 30,
+        weight: initialSetConfigs[0].weight ?? 25,
+        unit: initialSetConfigs[0].unit ?? "lbs",
       }
-      
-      return newConfigs;
-    });
+    : undefined;
 
-    prevDefaultsRef.current = setDefaults;
-  }, [sets, setDefaults]);
+  const {
+    defaults,
+    sets,
+    updateDefault,
+    updateSetField,
+    getSetMerged,
+    addSet,
+    removeLastSet,
+  } = useSetConfig(initialSets, initialDefaults);
 
-  const handleSetFieldChange = useCallback((changedSet) => {
-    setSetConfigs(prev => {
-      const newConfigs = prev.map(s => s.ui_id === changedSet.ui_id ? changedSet : s);
-      return newConfigs;
-    });
+  // Merge incoming per-set configs into hook state on mount
+  useEffect(() => {
+    if (initialSetConfigs.length > 0) {
+      initialSetConfigs.forEach((cfg, idx) => {
+        Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k, v));
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSetDefaultsChange = (newValues) => {
-    setSetDefaults(newValues);
+  /* ------------------------------------------------------------------ */
+  //  Derived values & helpers
+  /* ------------------------------------------------------------------ */
+
+  const setsCount = sets.length;
+
+  const handleSetsChange = (val) => {
+    if (val > setsCount) {
+      Array.from({ length: val - setsCount }).forEach(() => addSet());
+    } else if (val < setsCount) {
+      Array.from({ length: setsCount - val }).forEach(() => removeLastSet());
+    }
   };
+
+  /* ------------------------------------------------------------------ */
+  //  Per-set editor sheet
+  /* ------------------------------------------------------------------ */
+
+  const isMobile = useIsMobile();
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingFields, setEditingFields] = useState({});
+  const [editingName, setEditingName] = useState("");
+
+  const openEditSheet = (idx) => {
+    setEditingIndex(idx);
+    const merged = getSetMerged(idx);
+    setEditingFields({ ...merged });
+    setEditingName(sets[idx].set_variant || `Set ${idx + 1}`);
+    setEditSheetOpen(true);
+  };
+
+  const saveEditSheet = () => {
+    const idx = editingIndex;
+    Object.entries(editingFields).forEach(([k, v]) => updateSetField(idx, k, v));
+    if (editingName) updateSetField(idx, "set_variant", editingName);
+    setEditSheetOpen(false);
+  };
+
+  /* ------------------------------------------------------------------ */
+  //  Save / cancel
+  /* ------------------------------------------------------------------ */
 
   const handleSave = (e) => {
     e.preventDefault();
+
     if (!exerciseName.trim()) {
-      alert('Exercise name is required.');
+      alert("Exercise name is required.");
       return;
     }
-    if (sets < 1) {
-      alert('At least one set is required.');
+
+    if (setsCount < 1) {
+      alert("At least one set is required.");
       return;
     }
-    if (typeof onActionIconClick === 'function') {
+
+    const setConfigs = sets.map((_, idx) => getSetMerged(idx));
+
+    if (onActionIconClick) {
       onActionIconClick({
-        name: exerciseName,
+        name: exerciseName.trim(),
+        sets: setsCount,
         setConfigs,
-        sets,
       });
     }
   };
 
+  /* ------------------------------------------------------------------ */
+  //  Focus behaviour – autofocus name when mounted
+  /* ------------------------------------------------------------------ */
+
+  const nameRef = useRef(null);
+  useEffect(() => {
+    nameRef.current?.select?.();
+  }, []);
+
+  /* ------------------------------------------------------------------ */
+  //  Render helpers
+  /* ------------------------------------------------------------------ */
+
+  const renderSetCard = (idx) => {
+    const merged = getSetMerged(idx);
+    const isTimed = merged.set_type === "timed";
+
+    return (
+      <div
+        key={idx}
+        className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer"
+        onClick={() => openEditSheet(idx)}
+      >
+        <span className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-none">
+          {sets[idx].set_variant || `Set ${idx + 1}`}
+        </span>
+        <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">
+          <div className="px-2 bg-stone-100 flex items-center gap-0.5">
+            {isTimed ? (
+              <Timer className="size-4 text-slate-600" strokeWidth={1.5} />
+            ) : (
+              <Repeat2 className="size-4 text-slate-600" strokeWidth={1.5} />
+            )}
+            <span className="text-slate-600 text-sm leading-tight">
+              {isTimed ? merged.timed_set_duration : merged.reps}
+            </span>
+          </div>
+          <div className="px-2 bg-stone-100 flex items-center gap-0.5 border-l border-neutral-300">
+            <WeightIcon className="size-4 text-slate-600" strokeWidth={1.5} />
+            <span className="text-slate-600 text-sm leading-tight">
+              {merged.unit === "body" ? "body" : merged.weight}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ------------------------------------------------------------------ */
+  //  JSX
+  /* ------------------------------------------------------------------ */
+
   return (
-    <form className="Editexerciseform w-full max-w-sm box-border inline-flex flex-col justify-start items-start gap-6" onSubmit={handleSave}>
-      <div className="Frame13 self-stretch flex flex-col justify-start items-start gap-3">
+    <form
+      ref={ref}
+      className="w-full px-5 box-border inline-flex flex-col gap-6"
+      onSubmit={handleSave}
+    >
+      {/* Exercise name & sets */}
+      <div className="flex flex-col gap-3">
         <TextInput
+          ref={nameRef}
           value={exerciseName}
-          onChange={e => setExerciseName(e.target.value)}
+          onChange={(e) => setExerciseName(e.target.value)}
           customPlaceholder="Exercise name"
-          className="Textinput self-stretch rounded-sm flex flex-col justify-center items-start gap-1"
+          autoFocus
         />
-        <div className="NumericField self-stretch h-20 flex flex-col justify-start items-start gap-1">
-          <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Sets</div>
+        <div className="flex flex-col gap-1">
+          <span className="text-slate-600 text-base leading-normal">Sets</span>
           <NumericInput
-            value={sets}
-            onChange={setSets}
+            value={setsCount}
+            onChange={handleSetsChange}
             min={1}
             max={10}
-            className="Incrimentermetricwrapper self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
+            className="w-full"
           />
         </div>
       </div>
-      <div className="my-2 text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
-        Set defaults are global - edit individual sets for more control.
-      </div>
-      <SwiperAccordionGroup>
-        <SwiperAccordion type="single" collapsible value={openSet} onValueChange={setOpenSet} className="w-full">
-          <SwiperAccordionItem value="defaults" className="border-b border-neutral-300">
-            <SwiperAccordionTrigger>
-              <span className="font-bold">Set defaults</span>
-            </SwiperAccordionTrigger>
-            <SwiperAccordionContent>
-              <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
-                <SetEditForm
-                  isChildForm
-                  initialValues={setDefaults}
-                  onValuesChange={handleSetDefaultsChange}
-                  showSetNameField={false}
-                />
-              </div>
-            </SwiperAccordionContent>
-          </SwiperAccordionItem>
 
-          {setConfigs.map((setConfig, idx) => {
-            return (
-              <SwiperAccordionItem key={setConfig.ui_id} value={String(idx)} className="border-b border-neutral-300">
-                <SwiperAccordionTrigger>{setConfig.set_variant || `Set ${['one','two','three','four','five','six','seven','eight','nine','ten'][idx] || idx+1}`}</SwiperAccordionTrigger>
-                <SwiperAccordionContent>
-                  <div className="flex flex-col gap-4 py-2">
-                    <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
-                      <SetEditForm
-                        key={setConfig.ui_id}
-                        isChildForm
-                        initialValues={setConfig}
-                        onValuesChange={handleSetFieldChange}
-                      />
-                    </div>
-                  </div>
-                </SwiperAccordionContent>
-              </SwiperAccordionItem>
-            );
-          })}
-        </SwiperAccordion>
-      </SwiperAccordionGroup>
-      <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
-        <SwiperButton type="submit" className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-slate-600 rounded-sm inline-flex justify-center items-center gap-2.5">
-          {formPrompt === 'Edit exercise' ? 'Save exercise' : 'Add to program'}
-        </SwiperButton>
-        {formPrompt === 'Edit exercise' && (
-          <SwiperButton type="button" variant="destructive" onClick={onDelete} className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-red-400 rounded-sm inline-flex justify-center items-center gap-2.5">
-            Delete exercise
-          </SwiperButton>
-        )}
-        {formPrompt !== 'Edit exercise' && (
-          <SwiperButton type="button" variant="destructive" onClick={onDelete} className="Swiperbuttonutilitywrapper self-stretch h-10 px-4 py-2 bg-red-400 rounded-sm inline-flex justify-center items-center gap-2.5">
-            Cancel
-          </SwiperButton>
-        )}
+      {/* Informational blurb */}
+      <div className="text-slate-600 text-sm leading-tight">
+        Set defaults are global – edit individual sets for more control.
       </div>
+
+      {/* Set defaults */}
+      <SetBuilderForm
+        hideSetVariantInput
+        hideDivider
+        set_variant=""
+        onSetVariantChange={() => {}}
+        setType={defaults.set_type}
+        onSetTypeChange={(val) => {
+          updateDefault("set_type", val);
+          if (val === "timed" && !defaults.timed_set_duration) {
+            updateDefault("timed_set_duration", 30);
+          }
+        }}
+        reps={defaults.reps}
+        timed_set_duration={defaults.timed_set_duration}
+        onRepsChange={(val) => updateDefault("reps", val)}
+        onTimedDurationChange={(val) =>
+          updateDefault("timed_set_duration", val)
+        }
+        weight={defaults.weight}
+        unit={defaults.unit}
+        onWeightChange={(val) => updateDefault("weight", val)}
+        onUnitChange={(val) => updateDefault("unit", val)}
+      />
+
+      <Separator className="-mx-5" />
+
+      {/* Customize sets */}
+      <div className="flex flex-col gap-3 pb-2">
+        <div className="text-base leading-tight">
+          <span className="text-slate-600 font-medium">Customize sets </span>
+          <span className="text-neutral-300">Tap a set to name and configure weight, reps, and more.</span>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: setsCount }).map((_, idx) => renderSetCard(idx))}
+        </div>
+      </div>
+
+      {/* Per-set edit sheet */}
+      {editSheetOpen && (
+        <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
+          <SheetContent
+            side={isMobile ? "bottom" : "right"}
+            className={
+              isMobile
+                ? "h-[85vh] w-full bg-stone-50 px-0"
+                : "w-[500px] bg-stone-50 px-0 gap-0"
+            }
+          >
+            {/* Sticky header */}
+            <div className="sticky top-0 z-10 bg-stone-50 border-b">
+              <div className="flex items-center justify-between px-6 py-3">
+                <button
+                  onClick={() => setEditSheetOpen(false)}
+                  className="text-red-500 font-medium"
+                >
+                  Cancel
+                </button>
+                <h2 className="font-bold text-lg">Edit</h2>
+                <button
+                  onClick={saveEditSheet}
+                  className="text-green-600 font-medium"
+                >
+                  Save changes
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+              <TextInput
+                label="Name set"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                customPlaceholder="e.g. Warm-up"
+              />
+              <SetEditForm
+                isChildForm
+                hideDivider
+                initialValues={editingFields}
+                onValuesChange={(vals) => setEditingFields(vals)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </form>
   );
-};
+});
 
 AddNewExerciseForm.propTypes = {
   onActionIconClick: PropTypes.func,
@@ -209,11 +322,10 @@ AddNewExerciseForm.propTypes = {
     PropTypes.shape({
       reps: PropTypes.number,
       weight: PropTypes.number,
-      unit: PropTypes.oneOf(['kg', 'lbs', 'body']),
+      unit: PropTypes.oneOf(["kg", "lbs", "body"]),
       set_type: PropTypes.string,
       timed_set_duration: PropTypes.number,
       set_variant: PropTypes.string,
-      ui_id: PropTypes.number,
     })
   ),
 };
