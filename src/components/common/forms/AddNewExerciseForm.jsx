@@ -34,12 +34,14 @@ const AddNewExerciseForm = React.forwardRef(({
   initialName = "",
   initialSets = 3,
   initialSetConfigs = [],
+  onDirtyChange,
 }, ref) => {
   /* ------------------------------------------------------------------ */
   //  Local state – name & set config hook
   /* ------------------------------------------------------------------ */
 
   const [exerciseName, setExerciseName] = useState(initialName);
+  const initialNameRef = React.useRef(initialName);
 
   // Build initial defaults from the first supplied set config (if any)
   const initialDefaults = initialSetConfigs[0]
@@ -71,6 +73,15 @@ const AddNewExerciseForm = React.forwardRef(({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const nameDirty = exerciseName.trim() !== initialNameRef.current.trim();
+    const setDirty = sets.some((_, idx) => {
+      const merged = getSetMerged(idx);
+      return JSON.stringify(merged) !== JSON.stringify(initialSetConfigs[idx] || {});
+    });
+    onDirtyChange?.(nameDirty || setDirty);
+  }, [exerciseName, sets, onDirtyChange]);
 
   /* ------------------------------------------------------------------ */
   //  Derived values & helpers
@@ -333,6 +344,7 @@ AddNewExerciseForm.propTypes = {
       set_variant: PropTypes.string,
     })
   ),
+  onDirtyChange: PropTypes.func,
 };
 
 export default AddNewExerciseForm; 

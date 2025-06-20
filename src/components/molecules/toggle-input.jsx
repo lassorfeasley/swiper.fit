@@ -32,8 +32,7 @@ const ToggleInput = ({
             key={option.value}
             value={option.value}
             className={cn(
-              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 text-body text-slate-600 border-0 rounded-none shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0",
-              value === option.value ? "bg-slate-200" : "bg-stone-50",
+              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 text-body text-slate-600 border-0 rounded-none shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 data-[state=on]:bg-neutral-300 data-[state=off]:bg-white",
               idx !== options.length - 1 && "border-r border-neutral-300"
             )}
             style={{ minWidth: 0 }}

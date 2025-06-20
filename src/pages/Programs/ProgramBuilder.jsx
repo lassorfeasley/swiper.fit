@@ -5,6 +5,7 @@ import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
 import { SwiperSheet } from '@/components/molecules/swiper-sheet';
+import { FormHeader } from '@/components/atoms/sheet';
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from '@/components/common/Cards/ExerciseCard';
 import AppLayout from '@/components/layout/AppLayout';
@@ -366,23 +367,17 @@ const ProgramBuilder = () => {
               onOpenChange={handleModalClose}
               className="px-0 gap-0"
             >
-              {/* Custom sticky header */}
-              <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-5 py-3">
-                <button onClick={handleModalClose} className="text-red-500 font-medium">
-                  Cancel
-                </button>
-                <h2 className="font-bold text-lg">
-                  {isAdding ? "Create" : "Edit"}
-                </h2>
-                <button
-                  onClick={() => formRef.current?.requestSubmit?.()}
-                  className="text-green-600 font-medium"
-                >
-                  {isAdding ? "Add" : "Save changes"}
-                </button>
-              </div>
+              <FormHeader
+                showLeftAction
+                leftText="Cancel"
+                leftAction={handleModalClose}
+                title={isAdding ? "Create" : "Edit"}
+                showRightAction
+                rightText={isAdding ? "Add" : "Save"}
+                rightAction={() => formRef.current?.requestSubmit?.()}
+                rightEnabled={true}
+              />
 
-              {/* Scrollable body */}
               <div className="flex-1 overflow-y-auto">
                 <AddNewExerciseForm
                   ref={formRef}
@@ -393,6 +388,7 @@ const ProgramBuilder = () => {
                   initialName={editingExercise?.name}
                   initialSets={editingExercise?.setConfigs?.length}
                   initialSetConfigs={editingExercise?.setConfigs}
+                  onDirtyChange={()=>{/* enable logic if needed */}}
                 />
               </div>
             </SwiperSheet>

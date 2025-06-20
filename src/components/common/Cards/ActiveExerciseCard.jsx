@@ -42,6 +42,7 @@ const ActiveExerciseCard = ({
   const [openSetIndex, setOpenSetIndex] = useState(null);
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: "lbs" });
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
 
@@ -294,6 +295,7 @@ const ActiveExerciseCard = ({
 
       setOpenSetIndex(null);
       setIsEditSheetOpen(false);
+      setFormDirty(true);
     },
     [exerciseId, onSetDataChange, openSetIndex, sets]
   );
@@ -402,12 +404,17 @@ const ActiveExerciseCard = ({
             showLeftAction
             leftText="Cancel"
             leftAction={() => setIsEditSheetOpen(false)}
-            title={openSetIndex !== null ? `Edit ${sets[openSetIndex].set_variant}` : "Edit"}
-            showRightAction={false}
-            showBackIcon={false}
+            title="Edit set"
+            showRightAction={true}
+            rightText="Save"
+            rightAction={handleEditFormSave}
+            rightEnabled={formDirty}
           />
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <SetEditForm
+              hideActionButtons
+              hideInternalHeader
+              onDirtyChange={setFormDirty}
               formPrompt={
                 openSetIndex !== null
                   ? `Edit ${sets[openSetIndex].set_variant}`
@@ -502,12 +509,17 @@ const ActiveExerciseCard = ({
           showLeftAction
           leftText="Cancel"
           leftAction={() => setIsEditSheetOpen(false)}
-          title={openSetIndex !== null ? `Edit ${sets[openSetIndex].set_variant}` : "Edit"}
-          showRightAction={false}
-          showBackIcon={false}
+          title="Edit set"
+          showRightAction={true}
+          rightText="Save"
+          rightAction={handleEditFormSave}
+          rightEnabled={formDirty}
         />
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <SetEditForm
+            hideActionButtons
+            hideInternalHeader
+            onDirtyChange={setFormDirty}
             formPrompt={
               openSetIndex !== null
                 ? `Edit ${sets[openSetIndex].set_variant}`

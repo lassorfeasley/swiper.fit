@@ -32,7 +32,8 @@ const FormContent = ({
   return (
     <div className="Frame14 self-stretch flex flex-col justify-start items-start gap-4">
       {showSetNameField && <TextInput
-        label="Name set (optional)"
+        label="Set name"
+        optional
         value={set_variant}
         onChange={(e) => handleLocalChange('set_variant', e.target.value)}
         onBlur={syncWithParent}
@@ -100,8 +101,18 @@ const SetEditForm = memo(({
   initialValues = { reps: 0, weight: 0, unit: 'lbs', set_type: 'reps', set_variant: '' },
   className = '',
   showSetNameField = true,
+  hideActionButtons = false,
+  hideInternalHeader = false,
+  onDirtyChange,
 }) => {
   const [formValues, setFormValues] = useState(initialValues);
+  const initialRef = React.useRef(initialValues);
+
+  // track dirty
+  React.useEffect(() => {
+    const dirty = JSON.stringify(formValues) !== JSON.stringify(initialRef.current);
+    onDirtyChange?.(dirty);
+  }, [formValues, onDirtyChange]);
 
   const handleLocalChange = (field, value) => {
     setFormValues(prev => ({ ...prev, [field]: value }));
@@ -143,12 +154,13 @@ const SetEditForm = memo(({
     }
   };
 
-  const handleSaveToday = () => {
-    onSave(formValues);
-  };
+  const weightOnChange = showSetNameField ? (val) => handleLocalChange('weight', val) : (val) => handleImmediateSync('weight', val);
 
-  const handleSaveFuture = () => {
-    if (onSaveForFuture) {
+  // Toggle for saving scope
+  const [addType, setAddType] = useState('today');
+
+  const handleSave = () => {
+    if (addType === 'future' && onSaveForFuture) {
       onSaveForFuture(formValues);
     } else {
       onSave(formValues);
@@ -157,7 +169,6 @@ const SetEditForm = memo(({
 
   const repsOnChange = showSetNameField ? (val) => handleLocalChange('reps', val) : (val) => handleImmediateSync('reps', val);
   const durationOnChange = showSetNameField ? (val) => handleLocalChange('timed_set_duration', val) : (val) => handleImmediateSync('timed_set_duration', val);
-  const weightOnChange = showSetNameField ? (val) => handleLocalChange('weight', val) : (val) => handleImmediateSync('weight', val);
 
   if (isChildForm) {
     return (
@@ -183,7 +194,11 @@ const SetEditForm = memo(({
 
   return (
     <div className={`Setconfigurationform w-full inline-flex flex-col justify-start items-start gap-6 ${className}`}>
-      {!isChildForm && <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>}
+      {!isChildForm && !hideInternalHeader && (
+        <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium font-['Space_Grotesk'] leading-7">
+          {formPrompt}
+        </div>
+      )}
       <div className="Atomicsetbuilderform w-full flex flex-col justify-start items-start gap-6">
         <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
           <FormContent
@@ -199,22 +214,37 @@ const SetEditForm = memo(({
           />
         </div>
       </div>
-      {!isChildForm && <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
-        {onSaveForFuture && <div className="UpdateProgram self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Update program?</div>}
-        <SwiperButton onClick={handleSaveToday} variant="default" className="w-full">
-          {saveButtonText}
-        </SwiperButton>
-        {onSaveForFuture && (
-          <SwiperButton onClick={handleSaveFuture} variant="outline" className="w-full">
-            For future workouts
-          </SwiperButton>
-        )}
-        {onDelete && (
-          <SwiperButton onClick={onDelete} variant="destructive" className="w-full">
-            Delete Set
-          </SwiperButton>
-        )}
-      </div>}
+      {!isChildForm && (
+        <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
+          {onSaveForFuture && (
+            <ToggleInput
+              label="Keep new settings?"
+              options={[
+                { label: 'Just for today', value: 'today' },
+                { label: 'Permanently', value: 'future' },
+              ]}
+              value={addType}
+              onChange={(val) => val && setAddType(val)}
+            />
+          )}
+          {!hideActionButtons && (
+            <>
+              <SwiperButton onClick={handleSave} variant="default" className="w-full">
+                Save
+              </SwiperButton>
+              {onDelete && (
+                <SwiperButton
+                  onClick={onDelete}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Delete Set
+                </SwiperButton>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -238,6 +268,9 @@ SetEditForm.propTypes = {
   }),
   className: PropTypes.string,
   showSetNameField: PropTypes.bool,
+  hideActionButtons: PropTypes.bool,
+  hideInternalHeader: PropTypes.bool,
+  onDirtyChange: PropTypes.func,
 };
 
 export default SetEditForm; 
