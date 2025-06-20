@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
+import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { Separator } from "@/components/atoms/separator";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
 import SetEditForm from "./SetEditForm";
-import { Sheet, SheetContent } from "@/components/atoms/sheet";
+import { Sheet, SheetContent, FormHeader } from "@/components/atoms/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
@@ -85,6 +86,8 @@ const AddNewExerciseForm = React.forwardRef(({
     }
   };
 
+  const [addType, setAddType] = useState("today");
+
   /* ------------------------------------------------------------------ */
   //  Per-set editor sheet
   /* ------------------------------------------------------------------ */
@@ -130,11 +133,14 @@ const AddNewExerciseForm = React.forwardRef(({
     const setConfigs = sets.map((_, idx) => getSetMerged(idx));
 
     if (onActionIconClick) {
-      onActionIconClick({
-        name: exerciseName.trim(),
-        sets: setsCount,
-        setConfigs,
-      });
+      onActionIconClick(
+        {
+          name: exerciseName.trim(),
+          sets: setsCount,
+          setConfigs,
+        },
+        addType
+      );
     }
   };
 
@@ -216,6 +222,16 @@ const AddNewExerciseForm = React.forwardRef(({
             unitLabel="Sets"
           />
         </div>
+
+        {/* Add to program toggle */}
+        <div className="flex flex-col gap-2 pt-2">
+          <span className="text-slate-600 text-label">Add to program?</span>
+          <ToggleInput
+            options={[{ label: "Just for today", value: "today" }, { label: "For future programs", value: "future" }]}
+            value={addType}
+            onChange={(val) => val && setAddType(val)}
+          />
+        </div>
       </div>
 
       {/* Set defaults */}
@@ -268,22 +284,17 @@ const AddNewExerciseForm = React.forwardRef(({
           onOpenChange={setEditSheetOpen}
           className="px-0 gap-0"
         >
-          {/* Custom sticky header */}
-          <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-6 py-3">
-            <button
-              onClick={() => setEditSheetOpen(false)}
-              className="text-red-500 font-medium"
-            >
-              Cancel
-            </button>
-            <h2 className="font-bold text-heading-md leading-tight">Edit</h2>
-            <button
-              onClick={saveEditSheet}
-              className="text-green-600 font-medium"
-            >
-              Save changes
-            </button>
-          </div>
+          {/* Header */}
+          <FormHeader
+            showLeftAction
+            leftText="Cancel"
+            leftAction={() => setEditSheetOpen(false)}
+            title="Edit"
+            showRightAction
+            rightText="Save"
+            rightAction={saveEditSheet}
+            showBackIcon={false}
+          />
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">

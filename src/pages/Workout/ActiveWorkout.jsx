@@ -6,7 +6,7 @@ import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
-import AddExerciseToProgramForm from "@/components/common/forms/AddExerciseToProgramForm";
+import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
@@ -376,26 +376,52 @@ const ActiveWorkout = () => {
           </div>
         </CardWrapper>
 
-        {showAddExercise && (
-          <SwiperSheet
-            open={showAddExercise}
-            onOpenChange={() => setShowAddExercise(false)}
-          >
-            <AddExerciseToProgramForm
-              key="add-new"
-              formPrompt="Add a new exercise"
-              onAddExercise={handleAddExerciseToday}
-              onAddExerciseFuture={handleAddExerciseFuture}
-              onCancel={handleCancelAddExercise}
-              initialSets={3}
-              initialSetConfigs={Array.from({ length: 3 }, () => ({
-                reps: 10,
-                weight: 0,
-                unit: "kg",
-              }))}
-            />
-          </SwiperSheet>
-        )}
+        {showAddExercise && (()=>{
+          const formRef = React.createRef();
+          return (
+            <SwiperSheet
+              open={showAddExercise}
+              onOpenChange={() => setShowAddExercise(false)}
+              className="px-0 gap-0"
+            >
+              {/* Sticky header similar to ProgramBuilder */}
+              <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-5 py-3">
+                <button
+                  onClick={() => setShowAddExercise(false)}
+                  className="text-red-500 font-medium"
+                >
+                  Cancel
+                </button>
+                <h2 className="font-bold text-lg">Create</h2>
+                <button
+                  onClick={() => formRef.current?.requestSubmit?.()}
+                  className="text-green-600 font-medium"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Scrollable body */}
+              <div className="flex-1 overflow-y-auto">
+                <AddNewExerciseForm
+                  ref={formRef}
+                  key="add-exercise"
+                  formPrompt="Add a new exercise"
+                  onActionIconClick={(data, type)=>{
+                    if(type==='future') handleAddExerciseFuture(data);
+                    else handleAddExerciseToday(data);
+                  }}
+                  initialSets={3}
+                  initialSetConfigs={Array.from({ length: 3 }, () => ({
+                    reps: 10,
+                    weight: 25,
+                    unit: "lbs",
+                  }))}
+                />
+              </div>
+            </SwiperSheet>
+          );
+        })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}

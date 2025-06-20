@@ -103,7 +103,6 @@ const AddExerciseToProgramForm = ({
           value={exerciseName}
           onChange={e => setExerciseName(e.target.value)}
           customPlaceholder="Exercise name"
-          className="Textinput self-stretch rounded-sm flex flex-col justify-center items-start gap-1"
         />
         <div className="NumericField self-stretch h-20 flex flex-col justify-start items-start gap-1">
           <div className="FieldLabel justify-start text-slate-600 text-label">Sets</div>
@@ -112,7 +111,6 @@ const AddExerciseToProgramForm = ({
             onChange={setSets}
             min={1}
             max={10}
-            className="Incrimentermetricwrapper self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
           />
         </div>
       </div>

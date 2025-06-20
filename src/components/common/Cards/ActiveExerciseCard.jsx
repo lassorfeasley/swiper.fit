@@ -23,6 +23,7 @@ import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetBadge from "@/components/molecules/SetBadge";
+import { FormHeader } from "@/components/atoms/sheet";
 
 const ActiveExerciseCard = ({
   exerciseId,
@@ -396,19 +397,29 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SetEditForm
-            formPrompt={
-              openSetIndex !== null
-                ? `Edit ${sets[openSetIndex].set_variant}`
-                : "Edit set"
-            }
-            onSave={handleEditFormSave}
-            onSaveForFuture={
-              isUnscheduled ? undefined : handleEditFormSaveForFuture
-            }
-            initialValues={editForm}
+        <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen} className="px-0 gap-0">
+          <FormHeader
+            showLeftAction
+            leftText="Cancel"
+            leftAction={() => setIsEditSheetOpen(false)}
+            title={openSetIndex !== null ? `Edit ${sets[openSetIndex].set_variant}` : "Edit"}
+            showRightAction={false}
+            showBackIcon={false}
           />
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <SetEditForm
+              formPrompt={
+                openSetIndex !== null
+                  ? `Edit ${sets[openSetIndex].set_variant}`
+                  : "Edit set"
+              }
+              onSave={handleEditFormSave}
+              onSaveForFuture={
+                isUnscheduled ? undefined : handleEditFormSaveForFuture
+              }
+              initialValues={editForm}
+            />
+          </div>
         </SwiperSheet>
       </CardWrapper>
     );
@@ -486,19 +497,29 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SetEditForm
-          formPrompt={
-            openSetIndex !== null
-              ? `Edit ${sets[openSetIndex].set_variant}`
-              : "Edit set"
-          }
-          onSave={handleEditFormSave}
-          onSaveForFuture={
-            isUnscheduled ? undefined : handleEditFormSaveForFuture
-          }
-          initialValues={editForm}
+      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen} className="px-0 gap-0">
+        <FormHeader
+          showLeftAction
+          leftText="Cancel"
+          leftAction={() => setIsEditSheetOpen(false)}
+          title={openSetIndex !== null ? `Edit ${sets[openSetIndex].set_variant}` : "Edit"}
+          showRightAction={false}
+          showBackIcon={false}
         />
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <SetEditForm
+            formPrompt={
+              openSetIndex !== null
+                ? `Edit ${sets[openSetIndex].set_variant}`
+                : "Edit set"
+            }
+            onSave={handleEditFormSave}
+            onSaveForFuture={
+              isUnscheduled ? undefined : handleEditFormSaveForFuture
+            }
+            initialValues={editForm}
+          />
+        </div>
       </SwiperSheet>
     </CardWrapper>
   );

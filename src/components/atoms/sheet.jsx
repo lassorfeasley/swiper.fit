@@ -62,21 +62,27 @@ const FormHeader = ({
   title,
   showLeftAction = true,
   showRightAction = true,
+  showBackIcon = false,
   ...props
 }) => (
   <div
-    className={cn("self-stretch p-4 border-b border-neutral-300 inline-flex justify-center items-center gap-5", className)}
+    className={cn(
+      "self-stretch p-4 border-b border-neutral-300 inline-flex justify-center items-center gap-5",
+      className
+    )}
     {...props}
   >
     <div className="flex-1 flex justify-start items-center">
       {showLeftAction && (
         <>
-          <div className="w-6 h-6 relative overflow-hidden">
-            <div className="w-1.5 h-3 left-[9px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600" />
-          </div>
-          <button 
+          {showBackIcon && (
+            <div className="w-6 h-6 relative overflow-hidden">
+              <div className="w-1.5 h-3 left-[9px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600" />
+            </div>
+          )}
+          <button
             onClick={leftAction}
-            className="w-[91.33px] justify-center text-red-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+            className="w-[91.33px] justify-center text-red-500 text-base font-medium font-vietnam leading-tight"
           >
             {leftText}
           </button>
@@ -84,18 +90,19 @@ const FormHeader = ({
       )}
     </div>
     <div className="flex-1 flex justify-center items-center gap-2.5">
-      {title && (
-        <div className="justify-center text-slate-600 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+      {title ? (
+        <div className="justify-center text-slate-600 text-xl font-medium font-vietnam leading-normal">
           {title}
         </div>
+      ) : (
+        children
       )}
-      {!title && children}
     </div>
     <div className="flex-1 text-right justify-center">
       {showRightAction && (
-        <button 
+        <button
           onClick={rightAction}
-          className="text-neutral-400 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+          className="text-neutral-400 text-base font-medium font-vietnam leading-tight"
         >
           {rightText}
         </button>

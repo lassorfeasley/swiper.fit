@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 const defaultValues = {
   set_type: 'reps',
-  reps: 12,
+  reps: 10,
   timed_set_duration: 30,
   weight: 25,
   unit: 'lbs',

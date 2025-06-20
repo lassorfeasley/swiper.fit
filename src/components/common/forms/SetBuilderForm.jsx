@@ -46,7 +46,6 @@ export default function SetBuilderForm({
             options={setTypeOptions}
             value={setType}
             onChange={onSetTypeChange}
-            className="Frame4 w-full self-stretch rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden"
           />
         </div>
         <div className="NumericField w-full self-stretch flex flex-col justify-start items-start gap-1">
@@ -55,7 +54,6 @@ export default function SetBuilderForm({
             onChange={setType === 'reps' ? onRepsChange : onTimedDurationChange}
             min={0}
             max={999}
-            className="Incrimentermetricwrapper w-full self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
             unitLabel={setType === 'reps' ? 'reps' : 'seconds'}
           />
         </div>
@@ -70,7 +68,6 @@ export default function SetBuilderForm({
             options={unitOptions}
             value={unit}
             onChange={onUnitChange}
-            className="Frame4 w-full self-stretch rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden"
           />
         </div>
         <div className="NumericField w-full self-stretch flex flex-col justify-start items-start gap-1">
@@ -79,7 +76,6 @@ export default function SetBuilderForm({
             onChange={onWeightChange}
             min={0}
             max={999}
-            className="Incrimentermetricwrapper w-full self-stretch h-12 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1"
             incrementing={unit !== 'body'}
             unitLabel={unit !== 'body' ? unit : undefined}
           />
