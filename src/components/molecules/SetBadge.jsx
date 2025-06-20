@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Clock, Repeat2, Weight, Check } from "lucide-react";
+import { Clock, Repeat2, Weight } from "lucide-react";
 
 const SetBadgeSegment = ({ icon, value, isFirst, isLast }) => {
   const IconComponent = icon;
@@ -35,7 +35,6 @@ const SetBadge = ({
   className = "",
   onClick,
   style,
-  complete = false,
   editable = false,
   onEdit,
   set_type = "reps",
@@ -85,23 +84,6 @@ const SetBadge = ({
     ${className}
   `.trim();
 
-  // Completed variant
-  if (complete) {
-    return (
-      <div
-        className={`${badgeClasses} bg-green-500 w-12`}
-        onClick={handleClick}
-        style={style}
-        role={editable || onClick ? "button" : undefined}
-        tabIndex={editable || onClick ? 0 : undefined}
-      >
-        <div className="flex-1 self-stretch px-2 bg-green-500 flex justify-center items-center gap-0.5">
-            <Check className="size-4 text-white" strokeWidth={2} />
-        </div>
-      </div>
-    );
-  }
-
   // Exercise Label variant
   if (variant === "exercises") {
     return (
@@ -141,7 +123,6 @@ SetBadge.propTypes = {
   className: PropTypes.string,
   onClick: PropTypes.func,
   style: PropTypes.object,
-  complete: PropTypes.bool,
   editable: PropTypes.bool,
   onEdit: PropTypes.func,
   set_type: PropTypes.string,

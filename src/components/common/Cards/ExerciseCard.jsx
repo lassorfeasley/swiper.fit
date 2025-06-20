@@ -7,6 +7,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import CardWrapper from "./Wrappers/CardWrapper";
 import { Reorder } from "framer-motion";
 import AddNewExerciseForm from "../forms/AddNewExerciseForm";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 
 const ExerciseCard = ({
   exerciseName,
@@ -27,12 +28,13 @@ const ExerciseCard = ({
     weight: 0,
     unit: "lbs",
   });
+  const [currentFormValues, setCurrentFormValues] = useState(editFormValues);
   const [formDirty, setFormDirty] = useState(false);
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
   const [isDragging, setIsDragging] = useState(false);
 
-  const setsAreEditable =
-    onSetConfigsChange !== undefined && mode !== "completed";
+  // Sets are editable whenever an onSetConfigsChange handler is provided
+  const setsAreEditable = onSetConfigsChange !== undefined;
 
   // Keep localSetConfigs in sync with setConfigs prop
   useEffect(() => {
@@ -44,6 +46,7 @@ const ExerciseCard = ({
     if (!setsAreEditable) return;
     setEditSetIndex(idx);
     setEditFormValues(localSetConfigs[idx]);
+    setCurrentFormValues(localSetConfigs[idx]);
     setEditSheetOpen(true);
   };
 
@@ -115,7 +118,6 @@ const ExerciseCard = ({
                 e.stopPropagation();
                 handleSetEdit(idx);
               }}
-              complete={mode === "completed"}
               className={mode === "completed" ? "bg-green-500 text-white" : ""}
             />
           ))}
@@ -147,20 +149,29 @@ const ExerciseCard = ({
             title="Edit set"
             showRightAction
             rightText="Save"
-            rightAction={() => {
-              // trigger internal form save via ref or expose handler by passing to form
-            }}
             rightEnabled={formDirty}
+            rightAction={() => handleEditFormSave(currentFormValues)}
           />
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <SetEditForm
-              hideActionButtons
               hideInternalHeader
+              hideActionButtons
               onDirtyChange={setFormDirty}
+              onValuesChange={setCurrentFormValues}
               onSave={handleEditFormSave}
-              onDelete={handleSetDelete}
               initialValues={editFormValues}
             />
+            {onSetConfigsChange && (
+              <div className="mt-4">
+                <SwiperButton
+                  onClick={handleSetDelete}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Delete Set
+                </SwiperButton>
+              </div>
+            )}
           </div>
         </SwiperSheet>
       )}

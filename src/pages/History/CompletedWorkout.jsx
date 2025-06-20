@@ -46,7 +46,7 @@ const CompletedWorkout = () => {
       // Fetch sets for this workout
       const { data: setsData } = await supabase
         .from("sets")
-        .select("id, exercise_id, reps, weight, weight_unit, order")
+        .select("id, exercise_id, reps, weight, weight_unit, order, set_type, timed_set_duration, set_variant")
         .eq("workout_id", workoutId)
         .order("order", { ascending: true });
 
@@ -64,6 +64,7 @@ const CompletedWorkout = () => {
         .map((set) => ({
           ...set,
           unit: set.weight_unit, // Do not default to 'lbs', allow undefined/null
+          set_variant: set.set_variant ?? set.name ?? '',
         }));
       setSets(validSets);
 
@@ -170,6 +171,82 @@ const CompletedWorkout = () => {
     }
   };
 
+  // Handle edits to sets within an exercise
+  const handleSetConfigsChange = (exerciseId) => async (updatedConfigs) => {
+    try {
+      // Retrieve the existing sets for this exercise
+      const originalConfigs = sets.filter(
+        (s) => s.exercise_id === exerciseId
+      );
+
+      const updatedIds = updatedConfigs.map((c) => c.id);
+
+      // Delete sets that were removed
+      const toDelete = originalConfigs.filter(
+        (c) => !updatedIds.includes(c.id)
+      );
+      if (toDelete.length > 0) {
+        const { error: delError } = await supabase
+          .from("sets")
+          .delete()
+          .in(
+            "id",
+            toDelete.map((s) => s.id)
+          );
+        if (delError) throw delError;
+      }
+
+      // Upsert (update) existing sets and insert new ones
+      for (const cfg of updatedConfigs) {
+        const { id, reps, weight, unit, set_type, timed_set_duration, set_variant } = cfg;
+        if (id) {
+          const { error: updError } = await supabase
+            .from("sets")
+            .update({
+              reps,
+              weight,
+              weight_unit: unit,
+              set_type,
+              timed_set_duration,
+              set_variant,
+            })
+            .eq("id", id);
+          if (updError) throw updError;
+        } else {
+          const { error: insError } = await supabase
+            .from("sets")
+            .insert({
+              workout_id: workoutId,
+              exercise_id: exerciseId,
+              reps,
+              weight,
+              weight_unit: unit,
+              set_type,
+              timed_set_duration,
+              set_variant,
+              order: 0, // Placeholder; you may want to calculate order properly
+            });
+          if (insError) throw insError;
+        }
+      }
+
+      // Update local state
+      setSets((prev) => {
+        // Remove old records for this exercise
+        const remainder = prev.filter((s) => s.exercise_id !== exerciseId);
+        // Ensure each updated config has exercise_id
+        const updatedWithExercise = updatedConfigs.map((c) => ({
+          ...c,
+          exercise_id: exerciseId,
+        }));
+        return [...remainder, ...updatedWithExercise];
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update sets: " + err.message);
+    }
+  };
+
   return (
     <>
       <AppLayout
@@ -195,6 +272,7 @@ const CompletedWorkout = () => {
                   mode="completed"
                   exerciseName={exercises[exId] || "[Exercise name]"}
                   setConfigs={exerciseSets}
+                  onSetConfigsChange={handleSetConfigsChange(exId)}
                 />
               </div>
             ))}
