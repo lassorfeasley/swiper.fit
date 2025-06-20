@@ -20,7 +20,7 @@ const WeightCompoundField = ({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <label className="font-medium">{label}</label>
+      <label className="text-label">{label}</label>
       <NumericInput
         value={
           value.weight !== undefined && value.unit !== "body"

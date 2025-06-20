@@ -52,15 +52,58 @@ const SheetContent = React.forwardRef(({ side = "right", className, children, ..
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
-const SheetHeader = ({
+const FormHeader = ({
   className,
+  children,
+  leftAction,
+  leftText = "Cancel",
+  rightAction,
+  rightText = "Add",
+  title,
+  showLeftAction = true,
+  showRightAction = true,
   ...props
 }) => (
   <div
-    className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
-    {...props} />
+    className={cn("self-stretch p-4 border-b border-neutral-300 inline-flex justify-center items-center gap-5", className)}
+    {...props}
+  >
+    <div className="flex-1 flex justify-start items-center">
+      {showLeftAction && (
+        <>
+          <div className="w-6 h-6 relative overflow-hidden">
+            <div className="w-1.5 h-3 left-[9px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600" />
+          </div>
+          <button 
+            onClick={leftAction}
+            className="w-[91.33px] justify-center text-red-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+          >
+            {leftText}
+          </button>
+        </>
+      )}
+    </div>
+    <div className="flex-1 flex justify-center items-center gap-2.5">
+      {title && (
+        <div className="justify-center text-slate-600 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+          {title}
+        </div>
+      )}
+      {!title && children}
+    </div>
+    <div className="flex-1 text-right justify-center">
+      {showRightAction && (
+        <button 
+          onClick={rightAction}
+          className="text-neutral-400 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+        >
+          {rightText}
+        </button>
+      )}
+    </div>
+  </div>
 )
-SheetHeader.displayName = "SheetHeader"
+FormHeader.displayName = "FormHeader"
 
 const SheetFooter = ({
   className,
@@ -75,7 +118,7 @@ SheetFooter.displayName = "SheetFooter"
 const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("text-heading-md text-foreground", className)}
     {...props} />
 ))
 SheetTitle.displayName = SheetPrimitive.Title.displayName
@@ -95,7 +138,7 @@ export {
   SheetTrigger,
   SheetClose,
   SheetContent,
-  SheetHeader,
+  FormHeader,
   SheetFooter,
   SheetTitle,
   SheetDescription,

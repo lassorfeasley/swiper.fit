@@ -20,7 +20,7 @@ SwiperCardHeader.displayName = "SwiperCardHeader"
 const SwiperCardTitle = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight", className)}
+    className={cn("text-heading-md", className)}
     {...props} />
 ))
 SwiperCardTitle.displayName = "SwiperCardTitle"

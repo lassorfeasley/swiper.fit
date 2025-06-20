@@ -146,7 +146,7 @@ export const PageHeader = forwardRef(({
                 <div className="flex justify-start items-center gap-2">
                   {/* Hide title on mobile if search is active */}
                   <h1 className={cn(
-                    "text-stone-600 text-xl font-medium font-['Space_Grotesk'] leading-loose",
+                    "text-stone-600 text-heading-md",
                     searchActive ? "hidden sm:block" : ""
                   )}>
                     {appHeaderTitle}

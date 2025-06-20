@@ -97,7 +97,7 @@ const AddExerciseToProgramForm = ({
 
   return (
     <form className="Editexerciseform w-full max-w-sm box-border inline-flex flex-col justify-start items-start gap-6">
-      <div className="CreateExercise self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>
+      <div className="CreateExercise self-stretch justify-start text-slate-600 text-heading-lg font-medium font-['Space_Grotesk'] leading-7">{formPrompt}</div>
       <div className="Frame13 self-stretch flex flex-col justify-start items-start gap-3">
         <TextInput
           value={exerciseName}
@@ -106,7 +106,7 @@ const AddExerciseToProgramForm = ({
           className="Textinput self-stretch rounded-sm flex flex-col justify-center items-start gap-1"
         />
         <div className="NumericField self-stretch h-20 flex flex-col justify-start items-start gap-1">
-          <div className="FieldLabel justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Sets</div>
+          <div className="FieldLabel justify-start text-slate-600 text-label">Sets</div>
           <NumericInput
             value={sets}
             onChange={setSets}
@@ -116,7 +116,7 @@ const AddExerciseToProgramForm = ({
           />
         </div>
       </div>
-      <div className="my-2 text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+      <div className="my-2 text-slate-600 text-heading-sm font-normal font-['Space_Grotesk'] leading-tight">
         Set defaults are global - edit individual sets for more control.
       </div>
       <SwiperAccordionGroup>
@@ -160,7 +160,7 @@ const AddExerciseToProgramForm = ({
       
       <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
         <div className="w-full space-y-3">
-          <div className="text-slate-600 text-base font-medium font-['Space_Grotesk'] leading-normal">
+          <div className="text-slate-600 text-body font-medium font-['Space_Grotesk'] leading-tight">
             Update program?
           </div>
           <SwiperButton 

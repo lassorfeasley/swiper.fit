@@ -41,7 +41,7 @@ export default function SetBuilderForm({
           />
         ) }
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">
-          <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Set type</div>
+          <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-label">Set type</div>
           <ToggleInput
             options={setTypeOptions}
             value={setType}
@@ -65,7 +65,7 @@ export default function SetBuilderForm({
           </div>
         ) }
         <div className="Togglegroup w-full self-stretch flex flex-col justify-start items-center gap-1">
-          <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal">Weight unit</div>
+          <div className="FieldLabel w-full self-stretch justify-start text-slate-600 text-label">Weight unit</div>
           <ToggleInput
             options={unitOptions}
             value={unit}

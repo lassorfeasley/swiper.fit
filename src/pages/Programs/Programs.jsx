@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  SheetHeader,
+  FormHeader,
   SheetTitle,
   SheetFooter,
   SheetDescription,
@@ -147,14 +147,14 @@ const ProgramsIndex = () => {
       {/* Sheet for creating a new program */}
       {showSheet && (
         <SwiperSheet open={showSheet} onOpenChange={setShowSheet}>
-          <SheetHeader className="text-left items-start">
+          <FormHeader className="text-left items-start">
             <SheetTitle className="text-left">
               What should we call this program?
             </SheetTitle>
             <SheetDescription className="text-left">
               Enter program name
             </SheetDescription>
-          </SheetHeader>
+          </FormHeader>
           <Input
             label="Program name"
             value={programName}

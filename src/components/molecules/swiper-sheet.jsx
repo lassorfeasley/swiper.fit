@@ -1,5 +1,5 @@
 import React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/atoms/sheet";
+import { Sheet, SheetContent, FormHeader, SheetTitle, SheetDescription } from "@/components/atoms/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -11,17 +11,17 @@ const SwiperSheet = ({ open, onOpenChange, children, className, title, descripti
       <SheetContent
         side={isMobile ? "bottom" : "right"}
         className={cn(
-          isMobile ? "h-[85vh] w-full" : "w-[500px] sm:max-w-none",
+          isMobile ? "h-[85vh] w-full" : "w-[350px] sm:max-w-none",
           "bg-stone-50 px-0 gap-0 flex flex-col",
           className
         )}
         {...props}
       >
         {(title || description) && (
-          <SheetHeader className="sticky top-0 z-10 bg-stone-50 border-b">
+          <FormHeader className="sticky top-0 z-10 bg-stone-50 border-b">
             {title && <SheetTitle>{title}</SheetTitle>}
             {description && <SheetDescription>{description}</SheetDescription>}
-          </SheetHeader>
+          </FormHeader>
         )}
         {children}
       </SheetContent>

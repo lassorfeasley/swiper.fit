@@ -1,4 +1,3 @@
-@import "./styles/typography.css";
 @import "./styles/colors.css";
 
 @tailwind base;
@@ -89,17 +88,8 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-stone-200 text-foreground;
-  }
-}
-
-
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
     @apply bg-background text-foreground;
   }
 }
+
+

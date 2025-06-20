@@ -332,7 +332,7 @@ const ActiveExerciseCard = ({
       >
         <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-            <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">
+            <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
               {exerciseName}
             </div>
             <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
@@ -422,7 +422,7 @@ const ActiveExerciseCard = ({
     >
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-          <div className="Workoutname self-stretch justify-start text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-normal">
+          <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
             {exerciseName}
           </div>
           <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">

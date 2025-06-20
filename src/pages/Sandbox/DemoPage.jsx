@@ -9,7 +9,7 @@ import SetBuilderForm from "@/components/common/forms/SetBuilderForm";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
 import { Repeat2, Weight as WeightIcon, Timer } from "lucide-react";
-import { SheetHeader, SheetTitle, SheetClose } from "@/components/atoms/sheet";
+import { FormHeader, SheetTitle, SheetClose } from "@/components/atoms/sheet";
 import { Separator as Divider } from "@/components/atoms/separator";
 import useSetConfig from "@/hooks/use-set-config";
 

@@ -44,7 +44,7 @@ const NumericInput = ({
   };
 
   const getInputStyles = () => {
-    const baseStyles = "w-full text-center text-base font-normal font-['Space_Grotesk'] leading-normal bg-transparent border-none focus:outline-none focus:ring-0";
+    const baseStyles = "w-full text-center text-body bg-transparent border-none focus:outline-none focus:ring-0";
     if (readOnly) {
       return cn(baseStyles, "text-neutral-300");
     }
@@ -146,7 +146,7 @@ const NumericInput = ({
             className={getInputStyles()}
           />
           {unitLabel && (
-            <div className="text-center text-slate-500 text-sm font-normal font-['Space_Grotesk'] leading-tight">{unitLabel}</div>
+            <div className="text-center text-slate-500 text-label">{unitLabel}</div>
           )}
         </div>
         {incrementing && (

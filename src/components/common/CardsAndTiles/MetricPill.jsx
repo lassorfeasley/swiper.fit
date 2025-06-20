@@ -28,12 +28,12 @@ const MetricPill = ({ values = [], value, unit, className = '', onClick }) => {
               className={`w-8 h-6 min-w-6 px-1 border-r-[0.5px] border-slate-500 inline-flex flex-col justify-center items-center gap-2.5`}
               data-layer={`Metric${idx+1}Wrapper`}
             >
-              <div className="text-center justify-center text-slate-500 text-xs font-bold font-[Space_Grotesk] leading-3" data-layer={`Metric${idx+1}`}>{val}</div>
+              <div className="text-center justify-center text-slate-500 text-label" data-layer={`Metric${idx+1}`}>{val}</div>
             </div>
           ))}
         </div>
         <div className="w-11 self-stretch px-2 bg-slate-500 flex justify-center items-center gap-2.5" data-layer="UnitWrapper">
-          <div className="text-center justify-center text-stone-50 text-xs font-light font-[Space_Grotesk] uppercase leading-3" data-layer="Unit">{unit}</div>
+          <div className="text-center justify-center text-stone-50 text-label uppercase" data-layer="Unit">{unit}</div>
         </div>
       </div>
     </div>

@@ -71,7 +71,7 @@ const FormContent = ({
       {unit === 'body' ? (
         <div className="w-full inline-flex flex-col justify-start items-start gap-0">
           <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
-            <span className="text-slate-500 text-base font-normal font-['Space_Grotesk'] leading-normal">Bodyweight</span>
+            <span className="text-slate-500 text-body">Bodyweight</span>
           </div>
         </div>
       ) : (

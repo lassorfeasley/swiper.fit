@@ -22,30 +22,30 @@ const TextInput = React.forwardRef(
 
     const getInputStyles = () => {
       const baseStyles =
-        "h-12 p-4 !bg-white rounded-sm outline outline-1 outline-offset-[-1px] text-base font-normal font-['Space_Grotesk'] leading-normal";
+        "h-12 p-4 !bg-white rounded-sm outline outline-1 outline-offset-[-1px] text-body";
 
       if (disabled) {
         return cn(baseStyles, "outline-neutral-300 text-neutral-300");
       }
 
       if (error) {
-        return cn(baseStyles, "outline-red-400 text-slate-600");
+        return cn(baseStyles, "outline-red-400 text-neutral-600");
       }
 
       if (isFocused) {
-        return cn(baseStyles, "outline-slate-600 text-slate-600");
+        return cn(baseStyles, "outline-neutral-600 text-neutral-600");
       }
 
       if (isHovered) {
-        return cn(baseStyles, "outline-slate-600 text-slate-500");
+        return cn(baseStyles, "outline-neutral-600 text-neutral-500");
       }
 
-      return cn(baseStyles, "outline-neutral-300 text-slate-500");
+      return cn(baseStyles, "outline-neutral-300 text-neutral-500");
     };
 
     const getLabelStyles = () => {
       const baseStyles =
-        "text-base font-normal font-['Space_Grotesk'] leading-normal";
+        "text-label";
 
       if (disabled) {
         return cn(baseStyles, "text-neutral-300");
@@ -55,7 +55,7 @@ const TextInput = React.forwardRef(
         return cn(baseStyles, "text-red-400");
       }
 
-      return cn(baseStyles, "text-slate-600");
+      return cn(baseStyles, "text-neutral-600");
     };
 
     return (
@@ -81,7 +81,7 @@ const TextInput = React.forwardRef(
             </div>
           )}
         </div>
-        {error && <span className="text-red-400 text-sm">{error}</span>}
+        {error && <span className="text-red-400 text-label">{error}</span>}
       </div>
     );
   }

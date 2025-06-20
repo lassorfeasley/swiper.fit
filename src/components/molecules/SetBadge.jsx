@@ -8,10 +8,10 @@ const SetBadgeSegment = ({ icon, value, isFirst, isLast }) => {
   const borderClass = !isFirst ? 'border-l border-neutral-300' : '';
   
   return (
-    <div className={`self-stretch px-2 bg-stone-100 flex justify-center items-center gap-0.5 ${borderRadius} ${borderClass}`}>
-      <IconComponent className="size-4 text-slate-600" strokeWidth={1.5} />
+    <div className={`self-stretch px-2 bg-neutral-100 flex justify-center items-center gap-0.5 ${borderRadius} ${borderClass}`}>
+      <IconComponent className="size-4 text-neutral-500" strokeWidth={1.5} />
       {value && (
-        <span className="text-center justify-center items-center text-slate-600 text-sm font-normal font-['Space_Grotesk']">
+        <span className="text-center text-neutral-500 text-label">
           {value}
         </span>
       )}
@@ -111,7 +111,7 @@ const SetBadge = ({
         tabIndex={onClick ? 0 : undefined}
         role={onClick ? "button" : undefined}
       >
-        <span className="text-center text-gray-600 text-xs font-semibold font-['Space_Grotesk'] leading-none">
+        <span className="text-center text-gray-600 text-label">
           {label}
         </span>
       </div>

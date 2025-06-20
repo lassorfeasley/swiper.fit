@@ -7,7 +7,7 @@ const StaticCard = ({ key, name, labels, onClick, count, duration }) => {
       className="bg-white rounded-lg p-4 flex flex-col gap-3 w-full cursor-pointer hover:bg-gray-50 transition-all duration-300 hover:shadow-md"
       onClick={onClick}
     >
-      <h2 className="text-slate-950 text-xl font-medium font-['Space_Grotesk'] leading-normal">
+      <h2 className="text-slate-950 text-heading-md">
         {name}
       </h2>
       {labels && labels.length > 0 && (

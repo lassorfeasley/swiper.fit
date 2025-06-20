@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import SetBadge from "@/components/molecules/SetBadge";
-import { SheetHeader, SheetTitle } from "@/components/atoms/sheet";
+import { FormHeader, SheetTitle } from "@/components/atoms/sheet";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import CardWrapper from "./Wrappers/CardWrapper";
@@ -92,7 +92,7 @@ const ExerciseCard = ({
       >
         <div
           data-layer="Exercise Name"
-          className="w-full text-slate-950 text-lg font-medium font-['Space_Grotesk'] leading-7"
+          className="w-full text-slate-950 text-heading-md"
         >
           {exerciseName}
         </div>
@@ -139,9 +139,9 @@ const ExerciseCard = ({
       )}
       {setsAreEditable && (
         <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetHeader className="mb-4">
+          <FormHeader className="mb-4">
             <SheetTitle>Edit set</SheetTitle>
-          </SheetHeader>
+          </FormHeader>
           <SetEditForm
             onSave={handleEditFormSave}
             initialValues={editFormValues}

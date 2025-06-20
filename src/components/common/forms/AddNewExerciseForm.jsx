@@ -10,6 +10,7 @@ import SetEditForm from "./SetEditForm";
 import { Sheet, SheetContent } from "@/components/atoms/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
+import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 
 // Utility arrays for human-friendly set names
 const setWords = [
@@ -160,23 +161,23 @@ const AddNewExerciseForm = React.forwardRef(({
         className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer"
         onClick={() => openEditSheet(idx)}
       >
-        <span className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-none">
+        <span className="text-slate-600 text-label font-normal font-['Space_Grotesk'] leading-none">
           {sets[idx].set_variant || `Set ${idx + 1}`}
         </span>
         <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">
-          <div className="px-2 bg-stone-100 flex items-center gap-0.5">
+          <div className="px-2 bg-neutral-100 flex items-center gap-0.5">
             {isTimed ? (
-              <Timer className="size-4 text-slate-600" strokeWidth={1.5} />
+              <Timer className="size-4 text-neutral-500" strokeWidth={1.5} />
             ) : (
-              <Repeat2 className="size-4 text-slate-600" strokeWidth={1.5} />
+              <Repeat2 className="size-4 text-neutral-500" strokeWidth={1.5} />
             )}
-            <span className="text-slate-600 text-sm leading-tight">
+            <span className="text-neutral-500 text-heading-sm font-medium leading-tight">
               {isTimed ? merged.timed_set_duration : merged.reps}
             </span>
           </div>
-          <div className="px-2 bg-stone-100 flex items-center gap-0.5 border-l border-neutral-300">
-            <WeightIcon className="size-4 text-slate-600" strokeWidth={1.5} />
-            <span className="text-slate-600 text-sm leading-tight">
+          <div className="px-2 bg-neutral-100 flex items-center gap-0.5 border-l border-neutral-300">
+            <WeightIcon className="size-4 text-neutral-500" strokeWidth={1.5} />
+            <span className="text-neutral-500 text-heading-sm font-medium leading-tight">
               {merged.unit === "body" ? "body" : merged.weight}
             </span>
           </div>
@@ -192,65 +193,65 @@ const AddNewExerciseForm = React.forwardRef(({
   return (
     <form
       ref={ref}
-      className="w-full px-5 box-border inline-flex flex-col gap-6"
+      className="w-full px-5 box-border inline-flex flex-col gap-0"
       onSubmit={handleSave}
     >
       {/* Exercise name & sets */}
-      <div className="flex flex-col gap-3">
+      <div className="-mx-5 px-5 flex flex-col gap-3 border-b border-neutral-300 py-4">
         <TextInput
+          label="Exercise name"
           ref={nameRef}
           value={exerciseName}
           onChange={(e) => setExerciseName(e.target.value)}
-          customPlaceholder="Exercise name"
+          customPlaceholder=""
           autoFocus
         />
         <div className="flex flex-col gap-1">
-          <span className="text-slate-600 text-base leading-normal">Sets</span>
           <NumericInput
             value={setsCount}
             onChange={handleSetsChange}
             min={1}
             max={10}
             className="w-full"
+            unitLabel="Sets"
           />
         </div>
       </div>
 
-      {/* Informational blurb */}
-      <div className="text-slate-600 text-sm leading-tight">
-        Set defaults are global – edit individual sets for more control.
+      {/* Set defaults */}
+      <div className="-mx-5 px-5 flex flex-col gap-3 border-b border-neutral-300 py-4">
+        <div className="text-body leading-tight">
+          <span className="text-slate-600 font-medium">Set defaults </span>
+          <span className="text-neutral-300">Initialize sets then configure and name individual sets below.</span>
+        </div>
+        <SetBuilderForm
+          hideSetVariantInput
+          hideDivider
+          set_variant=""
+          onSetVariantChange={() => {}}
+          setType={defaults.set_type}
+          onSetTypeChange={(val) => {
+            updateDefault("set_type", val);
+            if (val === "timed" && !defaults.timed_set_duration) {
+              updateDefault("timed_set_duration", 30);
+            }
+          }}
+          reps={defaults.reps}
+          timed_set_duration={defaults.timed_set_duration}
+          onRepsChange={(val) => updateDefault("reps", val)}
+          onTimedDurationChange={(val) =>
+            updateDefault("timed_set_duration", val)
+          }
+          weight={defaults.weight}
+          unit={defaults.unit}
+          onWeightChange={(val) => updateDefault("weight", val)}
+          onUnitChange={(val) => updateDefault("unit", val)}
+        />
       </div>
 
-      {/* Set defaults */}
-      <SetBuilderForm
-        hideSetVariantInput
-        hideDivider
-        set_variant=""
-        onSetVariantChange={() => {}}
-        setType={defaults.set_type}
-        onSetTypeChange={(val) => {
-          updateDefault("set_type", val);
-          if (val === "timed" && !defaults.timed_set_duration) {
-            updateDefault("timed_set_duration", 30);
-          }
-        }}
-        reps={defaults.reps}
-        timed_set_duration={defaults.timed_set_duration}
-        onRepsChange={(val) => updateDefault("reps", val)}
-        onTimedDurationChange={(val) =>
-          updateDefault("timed_set_duration", val)
-        }
-        weight={defaults.weight}
-        unit={defaults.unit}
-        onWeightChange={(val) => updateDefault("weight", val)}
-        onUnitChange={(val) => updateDefault("unit", val)}
-      />
-
-      <Separator className="-mx-5" />
-
       {/* Customize sets */}
-      <div className="flex flex-col gap-3 pb-2">
-        <div className="text-base leading-tight">
+      <div className="-mx-5 px-5 flex flex-col gap-3 py-4">
+        <div className="text-body leading-tight">
           <span className="text-slate-600 font-medium">Customize sets </span>
           <span className="text-neutral-300">Tap a set to name and configure weight, reps, and more.</span>
         </div>
@@ -262,51 +263,44 @@ const AddNewExerciseForm = React.forwardRef(({
 
       {/* Per-set edit sheet */}
       {editSheetOpen && (
-        <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetContent
-            side={isMobile ? "bottom" : "right"}
-            className={
-              isMobile
-                ? "h-[85vh] w-full bg-stone-50 px-0"
-                : "w-[500px] bg-stone-50 px-0 gap-0"
-            }
-          >
-            {/* Sticky header */}
-            <div className="sticky top-0 z-10 bg-stone-50 border-b">
-              <div className="flex items-center justify-between px-6 py-3">
-                <button
-                  onClick={() => setEditSheetOpen(false)}
-                  className="text-red-500 font-medium"
-                >
-                  Cancel
-                </button>
-                <h2 className="font-bold text-lg">Edit</h2>
-                <button
-                  onClick={saveEditSheet}
-                  className="text-green-600 font-medium"
-                >
-                  Save changes
-                </button>
-              </div>
-            </div>
+        <SwiperSheet
+          open={editSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          className="px-0 gap-0"
+        >
+          {/* Custom sticky header */}
+          <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-6 py-3">
+            <button
+              onClick={() => setEditSheetOpen(false)}
+              className="text-red-500 font-medium"
+            >
+              Cancel
+            </button>
+            <h2 className="font-bold text-heading-md leading-tight">Edit</h2>
+            <button
+              onClick={saveEditSheet}
+              className="text-green-600 font-medium"
+            >
+              Save changes
+            </button>
+          </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-              <TextInput
-                label="Name set"
-                value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
-                customPlaceholder="e.g. Warm-up"
-              />
-              <SetEditForm
-                isChildForm
-                hideDivider
-                initialValues={editingFields}
-                onValuesChange={(vals) => setEditingFields(vals)}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+            <TextInput
+              label="Name set"
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              customPlaceholder="e.g. Warm-up"
+            />
+            <SetEditForm
+              isChildForm
+              hideDivider
+              initialValues={editingFields}
+              onValuesChange={(vals) => setEditingFields(vals)}
+            />
+          </div>
+        </SwiperSheet>
       )}
     </form>
   );

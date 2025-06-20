@@ -383,7 +383,7 @@ const ProgramBuilder = () => {
               </div>
 
               {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="flex-1 overflow-y-auto">
                 <AddNewExerciseForm
                   ref={formRef}
                   key={editingExercise ? editingExercise.id : 'add-new'}

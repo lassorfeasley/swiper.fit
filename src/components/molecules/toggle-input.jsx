@@ -17,7 +17,7 @@ const ToggleInput = ({
       )}
     >
       {label && (
-        <div className="self-stretch text-slate-600 text-base font-normal font-['Space_Grotesk'] leading-normal mb-1">
+        <div className="self-stretch text-slate-500 text-label mb-1">
           {label}
         </div>
       )}
@@ -25,15 +25,15 @@ const ToggleInput = ({
         type="single"
         value={value}
         onValueChange={onChange}
-        className="gap-0 self-stretch rounded-sm border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0 bg-white"
+        className="gap-0 self-stretch rounded-sm border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0"
       >
         {options.map((option, idx) => (
           <ToggleGroupItem
             key={option.value}
             value={option.value}
             className={cn(
-              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 font-normal font-['Space_Grotesk'] text-base text-slate-600 border-0 rounded-none shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:bg-white hover:text-slate-600",
-              value === option.value ? "bg-slate-200" : "bg-white",
+              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 text-body text-slate-600 border-0 rounded-none shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0",
+              value === option.value ? "bg-slate-200" : "bg-stone-50",
               idx !== options.length - 1 && "border-r border-neutral-300"
             )}
             style={{ minWidth: 0 }}
