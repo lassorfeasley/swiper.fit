@@ -131,10 +131,13 @@ const ActiveWorkout = () => {
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {
-    const exerciseName = exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
+    const exerciseName =
+      exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
     // Call saveSet and then log upon completion
     Promise.resolve(saveSet(exerciseId, setConfig)).then(() => {
-      console.log(`${setConfig.set_variant} of ${exerciseName} logged to database.`);
+      console.log(
+        `${setConfig.set_variant} of ${exerciseName} logged to database.`
+      );
     });
   };
 
@@ -346,7 +349,7 @@ const ActiveWorkout = () => {
         addButtonText="Add exercise"
         pageNameEditable={true}
         showBackButton={true}
-        appHeaderTitle={activeWorkout?.name || "Active Workout"}
+        appHeaderTitle={"back"}
         onBack={handleEndWorkout}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}

@@ -11,12 +11,12 @@ import {
   SheetFooter,
   SheetDescription,
 } from "@/components/atoms/sheet";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import StaticCard from "@/components/organisms/static-card";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
