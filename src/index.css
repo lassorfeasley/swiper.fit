@@ -31,11 +31,27 @@ body {
 /* Mobile viewport height fix */
 :root {
   --vh: 100vh;
+  --mobile-vh: calc(100vh - env(keyboard-inset-height, 0px));
 }
 
 @media (max-width: 768px) {
   :root {
     --vh: 100dvh;
+    --mobile-vh: calc(100dvh - env(keyboard-inset-height, 0px));
+  }
+}
+
+/* Prevent viewport height changes on mobile */
+@media (max-width: 768px) {
+  html,
+  body {
+    height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    height: 100dvh;
+    overflow-x: hidden;
   }
 }
 
