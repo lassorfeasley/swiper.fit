@@ -49,36 +49,41 @@ function AppContent() {
   ].includes(location.pathname);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
-      {/* Main Content */}
-      <main className="flex-grow">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/create-account" element={<CreateAccount />} />
-          <Route path="/reset-password" element={<PasswordReset />} />
+    <>
+      <div className="min-h-screen">
+        {/* Main Content */}
+        <main>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/create-account" element={<CreateAccount />} />
+            <Route path="/reset-password" element={<PasswordReset />} />
 
-          {/* Protected routes wrapper */}
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/programs" element={<Programs />} />
-            <Route
-              path="/programs/:programId/configure"
-              element={<ProgramBuilder />}
-            />
-            <Route path="/history" element={<History />} />
-            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
-            <Route path="/workout" element={<Workout />} />
-            <Route path="/workout/active" element={<ActiveWorkout />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
-            <Route path="/demo" element={<DemoPage />} />
-          </Route>
-        </Routes>
-      </main>
-      {/* Mobile Nav - only show on authenticated routes */}
+            {/* Protected routes wrapper */}
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/programs" element={<Programs />} />
+              <Route
+                path="/programs/:programId/configure"
+                element={<ProgramBuilder />}
+              />
+              <Route path="/history" element={<History />} />
+              <Route
+                path="/history/:workoutId"
+                element={<CompletedWorkout />}
+              />
+              <Route path="/workout" element={<Workout />} />
+              <Route path="/workout/active" element={<ActiveWorkout />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/demo" element={<DemoPage />} />
+            </Route>
+          </Routes>
+        </main>
+      </div>
+      {/* Mobile Nav - only show on authenticated routes, positioned independently */}
       {isAuthenticatedRoute && <MobileNav />}
       {isAuthenticatedRoute && <SideBarNav />}
-    </div>
+    </>
   );
 }
 

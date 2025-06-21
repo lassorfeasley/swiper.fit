@@ -324,8 +324,6 @@ const ProgramBuilder = () => {
     }
   };
 
-  console.log(showAddExercise);
-
   return (
     <>
       <AppLayout
