@@ -8,8 +8,8 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -131,10 +131,13 @@ const ActiveWorkout = () => {
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {
-    const exerciseName = exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
+    const exerciseName =
+      exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
     // Call saveSet and then log upon completion
     Promise.resolve(saveSet(exerciseId, setConfig)).then(() => {
-      console.log(`${setConfig.set_variant} of ${exerciseName} logged to database.`);
+      console.log(
+        `${setConfig.set_variant} of ${exerciseName} logged to database.`
+      );
     });
   };
 
@@ -346,7 +349,7 @@ const ActiveWorkout = () => {
         addButtonText="Add exercise"
         pageNameEditable={true}
         showBackButton={true}
-        appHeaderTitle={activeWorkout?.name || "Active Workout"}
+        appHeaderTitle={"back"}
         onBack={handleEndWorkout}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}
@@ -376,52 +379,52 @@ const ActiveWorkout = () => {
           </div>
         </CardWrapper>
 
-        {showAddExercise && (()=>{
-          const formRef = React.createRef();
-          return (
-            <SwiperSheet
-              open={showAddExercise}
-              onOpenChange={() => setShowAddExercise(false)}
-              className="px-0 gap-0"
-            >
-              {/* Sticky header similar to ProgramBuilder */}
-              <div className="sticky top-0 z-10 bg-stone-50 border-b flex items-center justify-between px-5 py-3">
-                <button
-                  onClick={() => setShowAddExercise(false)}
-                  className="text-red-500 font-medium"
-                >
-                  Cancel
-                </button>
-                <h2 className="font-bold text-lg">Exercise</h2>
-                <button
-                  onClick={() => formRef.current?.requestSubmit?.()}
-                  className="text-green-600 font-medium"
-                >
-                  Add
-                </button>
-              </div>
+        {showAddExercise &&
+          (() => {
+            const formRef = React.createRef();
+            return (
+              <DrawerManager
+                open={showAddExercise}
+                onOpenChange={() => setShowAddExercise(false)}
+              >
+                {/* Sticky header similar to ProgramBuilder */}
+                <div className="sticky top-0 z-10 border-b flex items-center justify-between py-3">
+                  <button
+                    onClick={() => setShowAddExercise(false)}
+                    className="text-red-500 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <h2 className="font-bold text-lg mr-4">Exercise</h2>
+                  <button
+                    onClick={() => formRef.current?.requestSubmit?.()}
+                    className="text-green-600 font-medium"
+                  >
+                    Add
+                  </button>
+                </div>
 
-              {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto">
-                <AddNewExerciseForm
-                  ref={formRef}
-                  key="add-exercise"
-                  formPrompt="Add a new exercise"
-                  onActionIconClick={(data, type)=>{
-                    if(type==='future') handleAddExerciseFuture(data);
-                    else handleAddExerciseToday(data);
-                  }}
-                  initialSets={3}
-                  initialSetConfigs={Array.from({ length: 3 }, () => ({
-                    reps: 10,
-                    weight: 25,
-                    unit: "lbs",
-                  }))}
-                />
-              </div>
-            </SwiperSheet>
-          );
-        })()}
+                {/* Scrollable body */}
+                <div className="flex-1 overflow-y-auto">
+                  <AddNewExerciseForm
+                    ref={formRef}
+                    key="add-exercise"
+                    formPrompt="Add a new exercise"
+                    onActionIconClick={(data, type) => {
+                      if (type === "future") handleAddExerciseFuture(data);
+                      else handleAddExerciseToday(data);
+                    }}
+                    initialSets={3}
+                    initialSetConfigs={Array.from({ length: 3 }, () => ({
+                      reps: 10,
+                      weight: 25,
+                      unit: "lbs",
+                    }))}
+                  />
+                </div>
+              </DrawerManager>
+            );
+          })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}

@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import { FormHeader } from '@/components/atoms/sheet';
+import { FormHeader } from "@/components/atoms/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
-import ExerciseCard from '@/components/common/Cards/ExerciseCard';
-import AppLayout from '@/components/layout/AppLayout';
+import ExerciseCard from "@/components/common/Cards/ExerciseCard";
+import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -21,8 +21,10 @@ const ProgramBuilder = () => {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState(null);
   const [search, setSearch] = useState("");
-  const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] = useState(false);
-  const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] = useState(false);
+  const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] =
+    useState(false);
+  const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
+    useState(false);
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
 
@@ -92,7 +94,7 @@ const ProgramBuilder = () => {
 
   const handleBack = () => {
     if (exercises.length === 0) {
-      alert('You must add at least one exercise to save this program.');
+      alert("You must add at least one exercise to save this program.");
       return;
     }
     saveOrder();
@@ -195,15 +197,15 @@ const ProgramBuilder = () => {
   const handleConfirmDeleteExercise = async () => {
     try {
       if (!editingExercise) return;
-      
+
       // Delete the program exercise and its associated sets
       const { error: deleteError } = await supabase
         .from("program_exercises")
         .delete()
         .eq("id", editingExercise.id);
-      
+
       if (deleteError) throw new Error("Failed to delete exercise");
-      
+
       setEditingExercise(null);
       await refreshExercises();
     } catch (err) {
@@ -252,18 +254,24 @@ const ProgramBuilder = () => {
 
   // Handler to update setConfigs for an exercise and persist to Supabase
   const handleSetConfigsChange = async (exerciseId, newSetConfigs) => {
-    setExercises(prev => prev.map(ex =>
-      ex.exercise_id === exerciseId ? { ...ex, setConfigs: newSetConfigs } : ex
-    ));
+    setExercises((prev) =>
+      prev.map((ex) =>
+        ex.exercise_id === exerciseId
+          ? { ...ex, setConfigs: newSetConfigs }
+          : ex
+      )
+    );
     // Find the program_exercise_id for this exercise
-    const programExercise = exercises.find(ex => ex.exercise_id === exerciseId);
+    const programExercise = exercises.find(
+      (ex) => ex.exercise_id === exerciseId
+    );
     if (!programExercise) return;
     const program_exercise_id = programExercise.id;
     // Delete old sets
     await supabase
-      .from('program_sets')
+      .from("program_sets")
       .delete()
-      .eq('program_exercise_id', program_exercise_id);
+      .eq("program_exercise_id", program_exercise_id);
     // Insert new sets
     const setRows = (newSetConfigs || []).map((cfg, idx) => ({
       program_exercise_id,
@@ -276,7 +284,7 @@ const ProgramBuilder = () => {
       timed_set_duration: cfg.timed_set_duration,
     }));
     if (setRows.length > 0) {
-      await supabase.from('program_sets').insert(setRows);
+      await supabase.from("program_sets").insert(setRows);
     }
   };
 
@@ -286,7 +294,7 @@ const ProgramBuilder = () => {
         .from("programs")
         .update({ program_name: newTitle })
         .eq("id", programId);
-      
+
       if (error) throw error;
       setProgramName(newTitle);
     } catch (err) {
@@ -304,16 +312,18 @@ const ProgramBuilder = () => {
         .from("programs")
         .update({ is_archived: true })
         .eq("id", programId);
-      
+
       if (error) {
         throw error;
       }
-      
+
       navigate("/programs");
     } catch (err) {
       alert("Failed to delete program: " + err.message);
     }
   };
+
+  console.log(showAddExercise);
 
   return (
     <>
@@ -334,7 +344,7 @@ const ProgramBuilder = () => {
         pageContext="programBuilder"
         data-component="AppHeader"
       >
-        <CardWrapper className="px-4">
+        <CardWrapper>
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredExercises.length === 0 && !loading ? (
@@ -342,7 +352,12 @@ const ProgramBuilder = () => {
               No exercises found. Try adding one!
             </div>
           ) : (
-            <Reorder.Group axis="y" values={filteredExercises} onReorder={setExercises} className="flex flex-col gap-4 w-full">
+            <Reorder.Group
+              axis="y"
+              values={filteredExercises}
+              onReorder={setExercises}
+              className="flex flex-col gap-4 w-full"
+            >
               {filteredExercises.map((ex) => (
                 <ExerciseCard
                   key={ex.id}
@@ -350,7 +365,9 @@ const ProgramBuilder = () => {
                   exerciseName={ex.name}
                   setConfigs={ex.setConfigs}
                   onEdit={() => setEditingExercise(ex)}
-                  onSetConfigsChange={newSetConfigs => handleSetConfigsChange(ex.exercise_id, newSetConfigs)}
+                  onSetConfigsChange={(newSetConfigs) =>
+                    handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                  }
                   reorderable={true}
                   reorderValue={ex}
                   onCardClick={() => setEditingExercise(ex)}
@@ -359,44 +376,50 @@ const ProgramBuilder = () => {
             </Reorder.Group>
           )}
         </CardWrapper>
-        {(showAddExercise || editingExercise) && (() => {
-          const formRef = React.createRef();
-          const isAdding = showAddExercise;
-          return (
-            <SwiperSheet
-              open={showAddExercise || !!editingExercise}
-              onOpenChange={handleModalClose}
-              className="px-0 gap-0"
-            >
-              <FormHeader
-                showLeftAction
-                leftText="Cancel"
-                leftAction={handleModalClose}
-                title={isAdding ? "Exercise" : "Edit"}
-                showRightAction
-                rightText={isAdding ? "Add" : "Save"}
-                rightAction={() => formRef.current?.requestSubmit?.()}
-                rightEnabled={dirty}
-              />
-
-              <div className="flex-1 overflow-y-auto">
-                <AddNewExerciseForm
-                  ref={formRef}
-                  key={editingExercise ? editingExercise.id : 'add-new'}
-                  formPrompt={isAdding ? "Add a new exercise" : "Edit exercise"}
-                  onActionIconClick={isAdding ? handleAddExercise : handleEditExercise}
-                  onDelete={editingExercise ? handleDeleteExercise : undefined}
-                  initialName={editingExercise?.name}
-                  initialSets={editingExercise?.setConfigs?.length}
-                  initialSetConfigs={editingExercise?.setConfigs}
-                  onDirtyChange={setDirty}
-                  hideActionButtons
-                  showAddToProgramToggle={false}
+        {(showAddExercise || editingExercise) &&
+          (() => {
+            const formRef = React.createRef();
+            const isAdding = showAddExercise;
+            return (
+              <DrawerManager
+                open={showAddExercise || !!editingExercise}
+                onOpenChange={handleModalClose}
+              >
+                <FormHeader
+                  showLeftAction
+                  leftText="Cancel"
+                  leftAction={handleModalClose}
+                  title={isAdding ? "Exercise" : "Edit"}
+                  showRightAction
+                  rightText={isAdding ? "Add" : "Save"}
+                  rightAction={() => formRef.current?.requestSubmit?.()}
+                  rightEnabled={dirty}
                 />
-              </div>
-            </SwiperSheet>
-          );
-        })()}
+
+                <div className="flex-1 overflow-y-auto flex flex-col gap-6 mt-4 mb-8">
+                  <AddNewExerciseForm
+                    ref={formRef}
+                    key={editingExercise ? editingExercise.id : "add-new"}
+                    formPrompt={
+                      isAdding ? "Add a new exercise" : "Edit exercise"
+                    }
+                    onActionIconClick={
+                      isAdding ? handleAddExercise : handleEditExercise
+                    }
+                    onDelete={
+                      editingExercise ? handleDeleteExercise : undefined
+                    }
+                    initialName={editingExercise?.name}
+                    initialSets={editingExercise?.setConfigs?.length}
+                    initialSetConfigs={editingExercise?.setConfigs}
+                    onDirtyChange={setDirty}
+                    hideActionButtons
+                    showAddToProgramToggle={false}
+                  />
+                </div>
+              </DrawerManager>
+            );
+          })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}

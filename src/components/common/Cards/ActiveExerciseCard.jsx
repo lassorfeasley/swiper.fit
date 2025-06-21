@@ -17,13 +17,13 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import PropTypes from "prop-types";
 import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ActiveExerciseCard = ({
   exerciseId,
@@ -161,7 +161,8 @@ const ActiveExerciseCard = ({
             },
           });
           if (nextSet && nextSet.status === "locked") {
-            const nextStatus = nextSet.set_type === "timed" ? "ready-timed-set" : "active";
+            const nextStatus =
+              nextSet.set_type === "timed" ? "ready-timed-set" : "active";
             const { tempId, ...restOfNextSet } = nextSet;
             updates.push({
               id: nextSet.id,
@@ -180,7 +181,8 @@ const ActiveExerciseCard = ({
           },
         });
         if (nextSet && nextSet.status === "locked") {
-          const nextStatus = nextSet.set_type === "timed" ? "ready-timed-set" : "active";
+          const nextStatus =
+            nextSet.set_type === "timed" ? "ready-timed-set" : "active";
           const { tempId, ...restOfNextSet } = nextSet;
           updates.push({
             id: nextSet.id,
@@ -191,7 +193,9 @@ const ActiveExerciseCard = ({
 
       // Log local set completion for clarity
       if (setToComplete.status !== "counting-down-timed") {
-        console.log(`${setToComplete.set_variant} of ${exerciseName} logged to local.`);
+        console.log(
+          `${setToComplete.set_variant} of ${exerciseName} logged to local.`
+        );
       }
 
       if (updates.length > 0) {
@@ -399,7 +403,7 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen} className="px-0 gap-0">
+        <DrawerManager open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
           <FormHeader
             showLeftAction
             leftText="Cancel"
@@ -427,7 +431,7 @@ const ActiveExerciseCard = ({
               initialValues={editForm}
             />
           </div>
-        </SwiperSheet>
+        </DrawerManager>
       </CardWrapper>
     );
   }
@@ -504,7 +508,7 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <SwiperSheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen} className="px-0 gap-0">
+      <DrawerManager open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <FormHeader
           showLeftAction
           leftText="Cancel"
@@ -532,7 +536,7 @@ const ActiveExerciseCard = ({
             initialValues={editForm}
           />
         </div>
-      </SwiperSheet>
+      </DrawerManager>
     </CardWrapper>
   );
 };

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import SetBadge from "@/components/molecules/SetBadge";
-import { FormHeader, SheetTitle } from "@/components/atoms/sheet";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import { FormHeader } from "@/components/atoms/sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import CardWrapper from "./Wrappers/CardWrapper";
 import { Reorder } from "framer-motion";
-import AddNewExerciseForm from "../forms/AddNewExerciseForm";
 import { SwiperButton } from "@/components/molecules/swiper-button";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ExerciseCard = ({
   exerciseName,
@@ -141,7 +140,7 @@ const ExerciseCard = ({
         cardContent
       )}
       {setsAreEditable && (
-        <SwiperSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} className="px-0 gap-0">
+        <DrawerManager open={editSheetOpen} onOpenChange={setEditSheetOpen}>
           <FormHeader
             showLeftAction
             leftText="Cancel"
@@ -173,7 +172,7 @@ const ExerciseCard = ({
               </div>
             )}
           </div>
-        </SwiperSheet>
+        </DrawerManager>
       )}
     </CardWrapper>
   );
