@@ -153,7 +153,7 @@ const ProgramsIndex = () => {
           ref={inputRef}
           className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
         />
-        <SheetFooter className="text-left items-start">
+        <SheetFooter className="text-left items-start mb-8">
           <Button
             className="w-full text-left justify-start"
             disabled={!isReady}

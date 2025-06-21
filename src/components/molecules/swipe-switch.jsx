@@ -1,13 +1,17 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock } from "lucide-react";
 
-export default function SwipeSwitch({ status = "locked", onComplete, duration = 30 }) {
+export default function SwipeSwitch({
+  status = "locked",
+  onComplete,
+  duration = 30,
+}) {
   const controls = useAnimation();
   const trackRef = useRef(null);
   const [thumbTravel, setThumbTravel] = useState(0);
   const [swipedComplete, setSwipedComplete] = useState(false);
-  
+
   const [timer, setTimer] = useState(duration);
   const timerInterval = useRef(null);
   const onCompleteRef = useRef(onComplete);
@@ -31,8 +35,8 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   useEffect(() => {
     updateThumbTravel();
     const handleResize = () => updateThumbTravel();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Reset swipedComplete when parent status changes
@@ -46,13 +50,21 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   useEffect(() => {
     // If the set is complete or locally marked as swipedComplete, ensure it sits in the completed position.
     if (status === "complete" || swipedComplete) {
-      controls.start({ x: thumbTravel, backgroundColor: "#22C55E", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      controls.start({
+        x: thumbTravel,
+        backgroundColor: "#22C55E",
+        transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } },
+      });
       return;
     }
 
     // If the set is locked, always reset to the left (white).
     if (status === "locked") {
-      controls.start({ x: 0, backgroundColor: "#FFFFFF", transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } } });
+      controls.start({
+        x: 0,
+        backgroundColor: "#FFFFFF",
+        transition: { ...tweenConfig, backgroundColor: { ...tweenConfig } },
+      });
       return;
     }
 
@@ -64,7 +76,7 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   }, [onComplete]);
 
   useEffect(() => {
-    if (status !== 'counting-down-timed') {
+    if (status !== "counting-down-timed") {
       clearInterval(timerInterval.current);
       return;
     }
@@ -72,7 +84,7 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
     setTimer(duration); // Reset timer before starting.
 
     timerInterval.current = setInterval(() => {
-      setTimer(prev => {
+      setTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timerInterval.current);
           if (onCompleteRef.current) onCompleteRef.current();
@@ -86,18 +98,24 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
   }, [status, duration]);
 
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
-    const s = (secs % 60).toString().padStart(2, '0');
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
   const handleDragEnd = (_, info) => {
-    if ((status === "active" || status === "ready-timed-set") && info.offset.x >= DRAG_COMPLETE_THRESHOLD && onComplete) {
+    if (
+      (status === "active" || status === "ready-timed-set") &&
+      info.offset.x >= DRAG_COMPLETE_THRESHOLD &&
+      onComplete
+    ) {
       // Snap the thumb to the rightmost position instantly to avoid flicker
       controls.set({ x: thumbTravel, backgroundColor: "#22C55E" });
 
       // Mark as swiped complete locally (for immediate visual feedback)
-      if (status !== 'ready-timed-set') {
+      if (status !== "ready-timed-set") {
         setSwipedComplete(true);
       }
 
@@ -116,11 +134,11 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
 
   // Always use left for positioning, animate x
   const thumbStyle = {
-    borderRadius: '0.125rem',
+    borderRadius: "0.125rem",
     zIndex: 2,
-    height: 'calc(100% - 16px)',
+    height: "calc(100% - 16px)",
     top: 8,
-    left: RAIL_HORIZONTAL_PADDING_PER_SIDE
+    left: RAIL_HORIZONTAL_PADDING_PER_SIDE,
   };
 
   if (isCountingDown) {
@@ -129,12 +147,29 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
         <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
           <div className="Thumb flex-1 h-10 p-2.5 bg-white rounded-sm flex justify-center items-center gap-2.5">
             <div className="Lucide size-6 relative overflow-hidden">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="9" stroke="#22C55E" strokeWidth="2"/>
-                  <path d="M12 7V12L15 15" stroke="#22C55E" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="#22C55E"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 7V12L15 15"
+                  stroke="#22C55E"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
-            <div className="justify-center text-sm font-normal font-['Space_Grotesk'] leading-tight text-green-600">
+            <div className="justify-center text-sm font-normal leading-tight text-green-600">
               {formatTime(timer)}
             </div>
           </div>
@@ -145,15 +180,19 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
 
   return (
     <div className="self-stretch h-14 bg-neutral-300 rounded-sm inline-flex flex-col justify-center items-start gap-1 w-full">
-      <div 
-        ref={trackRef} 
+      <div
+        ref={trackRef}
         className="Rail self-stretch flex-1 p-2 rounded-[10px] inline-flex items-center relative overflow-hidden min-w-[56px]"
       >
         <motion.div
           className="Thumb w-14 bg-white rounded-sm flex justify-center items-center gap-2.5 absolute"
           style={thumbStyle}
           drag={isActive || isReadyTimed ? "x" : false}
-          dragConstraints={thumbTravel > 0 ? { left: 0, right: thumbTravel } : { left: 0, right: 0 }}
+          dragConstraints={
+            thumbTravel > 0
+              ? { left: 0, right: thumbTravel }
+              : { left: 0, right: 0 }
+          }
           onDragEnd={handleDragEnd}
           animate={controls}
           whileDrag={{ cursor: "grabbing" }}
@@ -164,14 +203,35 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
               <Lock className="w-5 h-6 absolute left-[4.50px] top-[3px] text-neutral-300" />
             )}
             {(isComplete || swipedComplete) && (
-              <div data-svg-wrapper data-layer="check" className="Check relative flex items-center justify-center">
+              <div
+                data-svg-wrapper
+                data-layer="check"
+                className="Check relative flex items-center justify-center"
+              >
                 <Check className="w-5 h-5 text-white" />
               </div>
             )}
             {isReadyTimed && (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="9" stroke="#A3A3A3" strokeWidth="2"/>
-                <path d="M12 7V12L15 15" stroke="#A3A3A3" strokeWidth="2" strokeLinecap="round"/>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="#A3A3A3"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 7V12L15 15"
+                  stroke="#A3A3A3"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             )}
             {isActive && !isComplete && !swipedComplete && (
@@ -182,4 +242,4 @@ export default function SwipeSwitch({ status = "locked", onComplete, duration = 
       </div>
     </div>
   );
-} 
+}

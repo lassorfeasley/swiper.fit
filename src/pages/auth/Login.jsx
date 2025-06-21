@@ -63,11 +63,11 @@ export default function Login() {
           <SwiperCardContent className="flex flex-col gap-5 p-5">
             {/* Header row */}
             <div className="self-stretch inline-flex justify-between items-center">
-              <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9">
+              <div className="text-slate-600 text-xl font-medium leading-9">
                 Login to your account
               </div>
               <div
-                className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
+                className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
                 onClick={() => navigate("/create-account")}
               >
                 Sign up
@@ -76,7 +76,7 @@ export default function Login() {
             {/* Email field label */}
             <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
               <div className="self-stretch inline-flex justify-between items-start">
-                <div className="flex-1 text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                <div className="flex-1 text-slate-600 text-sm font-bold leading-tight">
                   Email
                 </div>
               </div>
@@ -95,11 +95,11 @@ export default function Login() {
             {/* Password field label and forgot link */}
             <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
               <div className="self-stretch inline-flex justify-between items-start">
-                <div className="text-slate-600 text-sm font-bold font-['Space_Grotesk'] leading-tight">
+                <div className="text-slate-600 text-sm font-bold leading-tight">
                   Password
                 </div>
                 <div
-                  className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer"
+                  className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
                   onClick={() => navigate("/reset-password")}
                 >
                   Forgot your password?

@@ -342,7 +342,7 @@ const ActiveExerciseCard = ({
             <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
               {exerciseName}
             </div>
-            <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+            <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
               {sets.length === 1
                 ? "One set"
                 : sets.length === 2
@@ -373,7 +373,7 @@ const ActiveExerciseCard = ({
               }`}
             >
               <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
-                <div className="SetOne justify-center text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+                <div className="SetOne justify-center text-slate-600 text-sm font-normal leading-tight">
                   {set.set_variant || set.name}
                 </div>
                 <SetBadge
@@ -447,7 +447,7 @@ const ActiveExerciseCard = ({
           <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
             {exerciseName}
           </div>
-          <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight">
+          <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
             {sets.length === 1
               ? "One set"
               : sets.length === 2

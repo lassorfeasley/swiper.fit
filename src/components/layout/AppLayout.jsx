@@ -33,6 +33,7 @@ export default function AppLayout({
           style={{
             "--mobile-nav-height": "80px",
             marginTop: headerHeight + 24,
+            marginBottom: "100px",
           }}
           className="flex-1 p-4 pb-[var(--mobile-nav-height)] md:pb-0"
         >

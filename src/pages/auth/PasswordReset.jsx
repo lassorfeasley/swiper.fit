@@ -40,10 +40,10 @@ export default function PasswordReset() {
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="flex flex-col gap-5 p-5">
-            <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9 mb-2">
+            <div className="text-slate-600 text-xl font-medium leading-9 mb-2">
               Forgot your password?
             </div>
-            <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] mb-4">
+            <div className="text-slate-600 text-sm font-normal mb-4">
               Enter your email and we'll send you a link to reset your password.
             </div>
             {status.type === "error" && (
@@ -71,7 +71,7 @@ export default function PasswordReset() {
               </Button>
             </form>
             <div
-              className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] leading-tight cursor-pointer text-center mt-2"
+              className="text-slate-600 text-sm font-normal leading-tight cursor-pointer text-center mt-2"
               onClick={() => navigate("/login")}
             >
               Back to login

@@ -193,10 +193,10 @@ const AddNewExerciseForm = React.forwardRef(
       return (
         <div
           key={idx}
-          className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer"
+          className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer overflow-scroll"
           onClick={() => openEditSheet(idx)}
         >
-          <span className="text-slate-600 text-label font-normal font-['Space_Grotesk'] leading-none">
+          <span className="text-slate-600 text-label font-normal leading-none">
             {sets[idx].set_variant || `Set ${idx + 1}`}
           </span>
           <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">

@@ -206,7 +206,7 @@ export const PageHeader = forwardRef(
                             onChange={(e) => onSearchChange(e.target.value)}
                             onBlur={handleSearchBlur}
                             placeholder={getSearchPlaceholder()}
-                            className="w-full h-14 px-4 py-2 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-slate-500 text-base font-normal font-['Space_Grotesk'] leading-normal focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                            className="w-full h-14 px-4 py-2 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-slate-500 text-base font-normal leading-normal focus:outline-none focus:ring-2 focus:ring-neutral-300"
                           />
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-300">
                             <Search className="size-4" />
@@ -233,7 +233,7 @@ export const PageHeader = forwardRef(
                     <div className="size-7 relative overflow-hidden">
                       <Plus className="size-6 left-[2px] top-[2px] absolute" />
                     </div>
-                    <div className="justify-start text-stone-600 text-xs font-medium font-['Space_Grotesk'] leading-none">
+                    <div className="justify-start text-stone-600 text-xs font-medium leading-none">
                       {addButtonText}
                     </div>
                   </button>

@@ -82,8 +82,8 @@ export default function ActiveWorkoutNav() {
           className="flex items-center gap-2 p-2 rounded"
           onClick={handleC2AClick}
         >
-          <PlayCircle className="Lucide size-6 text-white" />
-          <span className="text-xs font-semibold font-['Space_Grotesk'] leading-none">
+          <PlayCircle className="size-6 text-white" />
+          <span className="text-xs font-semibold leading-none">
             Record a workout
           </span>
         </div>
@@ -91,7 +91,7 @@ export default function ActiveWorkoutNav() {
       {workoutNavState === "programPrompt" && (
         <div className="flex items-center gap-2 p-2 rounded">
           <ChevronRightCircle className="Lucide size-6 text-white" />
-          <span className="text-xs font-semibold font-['Space_Grotesk'] leading-none">
+          <span className="text-xs font-semibold leading-none">
             Select a program
           </span>
         </div>
@@ -102,7 +102,7 @@ export default function ActiveWorkoutNav() {
           onClick={handleReturnToWorkout}
         >
           <ArrowRight className="size-4 text-white" />
-          <span className="text-white text-xs font-semibold font-['Space_Grotesk'] leading-none">
+          <span className="text-white text-xs font-semibold leading-none">
             Return to workout
           </span>
         </div>
@@ -111,7 +111,7 @@ export default function ActiveWorkoutNav() {
         <div className="flex justify-between items-center gap-2 p-2 rounded w-full">
           <div className="flex items-center gap-1">
             <Circle className="size-3 text-stone-100" fill="currentColor" />
-            <span className="text-white text-sm font-normal font-['Space_Grotesk'] leading-tight">
+            <span className="text-white text-sm font-normal leading-tight">
               {formatSeconds(elapsedTime)}
             </span>
           </div>
