@@ -5,23 +5,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const DrawerManager = ({ children, open, onOpenChange }) => {
   const isMobile = useIsMobile();
-  console.log(isMobile);
+
   return (
     <div>
       {isMobile ? (
-        <Drawer
-          open={open}
-          onOpenChange={onOpenChange}
-          className="flex lg:hidden"
-        >
-          <DrawerContent className="h-[85vh] p-4">{children}</DrawerContent>
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="h-[95vh] p-4">{children}</DrawerContent>
         </Drawer>
       ) : (
-        <SwiperSheet
-          open={open}
-          onOpenChange={onOpenChange}
-          className="hidden lg:flex"
-        >
+        <SwiperSheet open={open} onOpenChange={onOpenChange} className="p-4">
           {children}
         </SwiperSheet>
       )}

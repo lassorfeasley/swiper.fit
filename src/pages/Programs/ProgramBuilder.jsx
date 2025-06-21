@@ -4,12 +4,12 @@ import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
-import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import { FormHeader } from '@/components/atoms/sheet';
+import { FormHeader } from "@/components/atoms/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -344,7 +344,7 @@ const ProgramBuilder = () => {
         pageContext="programBuilder"
         data-component="AppHeader"
       >
-        <CardWrapper className="px-4">
+        <CardWrapper>
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredExercises.length === 0 && !loading ? (
@@ -376,44 +376,50 @@ const ProgramBuilder = () => {
             </Reorder.Group>
           )}
         </CardWrapper>
-        {(showAddExercise || editingExercise) && (() => {
-          const formRef = React.createRef();
-          const isAdding = showAddExercise;
-          return (
-            <SwiperSheet
-              open={showAddExercise || !!editingExercise}
-              onOpenChange={handleModalClose}
-              className="px-0 gap-0"
-            >
-              <FormHeader
-                showLeftAction
-                leftText="Cancel"
-                leftAction={handleModalClose}
-                title={isAdding ? "Exercise" : "Edit"}
-                showRightAction
-                rightText={isAdding ? "Add" : "Save"}
-                rightAction={() => formRef.current?.requestSubmit?.()}
-                rightEnabled={dirty}
-              />
-
-              <div className="flex-1 overflow-y-auto">
-                <AddNewExerciseForm
-                  ref={formRef}
-                  key={editingExercise ? editingExercise.id : 'add-new'}
-                  formPrompt={isAdding ? "Add a new exercise" : "Edit exercise"}
-                  onActionIconClick={isAdding ? handleAddExercise : handleEditExercise}
-                  onDelete={editingExercise ? handleDeleteExercise : undefined}
-                  initialName={editingExercise?.name}
-                  initialSets={editingExercise?.setConfigs?.length}
-                  initialSetConfigs={editingExercise?.setConfigs}
-                  onDirtyChange={setDirty}
-                  hideActionButtons
-                  showAddToProgramToggle={false}
+        {(showAddExercise || editingExercise) &&
+          (() => {
+            const formRef = React.createRef();
+            const isAdding = showAddExercise;
+            return (
+              <DrawerManager
+                open={showAddExercise || !!editingExercise}
+                onOpenChange={handleModalClose}
+              >
+                <FormHeader
+                  showLeftAction
+                  leftText="Cancel"
+                  leftAction={handleModalClose}
+                  title={isAdding ? "Exercise" : "Edit"}
+                  showRightAction
+                  rightText={isAdding ? "Add" : "Save"}
+                  rightAction={() => formRef.current?.requestSubmit?.()}
+                  rightEnabled={dirty}
                 />
-              </div>
-            </SwiperSheet>
-          );
-        })()}
+
+                <div className="flex-1 overflow-y-auto flex flex-col gap-6 mt-4 mb-8">
+                  <AddNewExerciseForm
+                    ref={formRef}
+                    key={editingExercise ? editingExercise.id : "add-new"}
+                    formPrompt={
+                      isAdding ? "Add a new exercise" : "Edit exercise"
+                    }
+                    onActionIconClick={
+                      isAdding ? handleAddExercise : handleEditExercise
+                    }
+                    onDelete={
+                      editingExercise ? handleDeleteExercise : undefined
+                    }
+                    initialName={editingExercise?.name}
+                    initialSets={editingExercise?.setConfigs?.length}
+                    initialSetConfigs={editingExercise?.setConfigs}
+                    onDirtyChange={setDirty}
+                    hideActionButtons
+                    showAddToProgramToggle={false}
+                  />
+                </div>
+              </DrawerManager>
+            );
+          })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}

@@ -5,12 +5,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  FormHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetDescription,
-} from "@/components/atoms/sheet";
+import { FormHeader, SheetTitle, SheetFooter } from "@/components/atoms/sheet";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -144,36 +139,30 @@ const ProgramsIndex = () => {
           ))
         )}
       </CardWrapper>
-      {/* Sheet for creating a new program */}
-      {showSheet && (
-        <SwiperSheet open={showSheet} onOpenChange={setShowSheet}>
-          <FormHeader className="text-left items-start">
-            <SheetTitle className="text-left">
-              What should we call this program?
-            </SheetTitle>
-            <SheetDescription className="text-left">
-              Enter program name
-            </SheetDescription>
-          </FormHeader>
-          <Input
-            label="Program name"
-            value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
-            placeholder="Enter program name"
-            ref={inputRef}
-            className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
-          />
-          <SheetFooter className="text-left items-start">
-            <Button
-              className="w-full text-left justify-start"
-              disabled={!isReady}
-              onClick={handleCreateProgram}
-            >
-              Create program
-            </Button>
-          </SheetFooter>
-        </SwiperSheet>
-      )}
+
+      <DrawerManager open={showSheet} onOpenChange={setShowSheet}>
+        <FormHeader className="text-left items-start" />
+        <SheetTitle className="text-center mt-6 mb-2">
+          What should we call this program?
+        </SheetTitle>
+        <Input
+          label="Program name"
+          value={programName}
+          onChange={(e) => setProgramName(e.target.value)}
+          placeholder="Enter program name"
+          ref={inputRef}
+          className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
+        />
+        <SheetFooter className="text-left items-start">
+          <Button
+            className="w-full text-left justify-start"
+            disabled={!isReady}
+            onClick={handleCreateProgram}
+          >
+            Create program
+          </Button>
+        </SheetFooter>
+      </DrawerManager>
     </AppLayout>
   );
 };
