@@ -390,7 +390,7 @@ const ProgramBuilder = () => {
             rightEnabled={dirty}
           />
 
-          <div className="overflow-y-auto px-1">
+          <div className="min-h-full overflow-y-scroll px-1">
             <div className="flex flex-col gap-6 mt-4 mb-8">
               <AddNewExerciseForm
                 ref={formRef}
