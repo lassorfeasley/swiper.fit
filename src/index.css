@@ -11,6 +11,22 @@ body {
   @apply bg-stone-200;
 }
 
+/* Prevent mobile drawer scaling issues */
+@media (max-width: 768px) {
+  body {
+    position: relative;
+    transform: none !important;
+    transform-origin: unset !important;
+  }
+
+  /* Ensure mobile nav stays fixed regardless of drawer state */
+  .mobile-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    transform: none !important;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

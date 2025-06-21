@@ -9,7 +9,7 @@ const MobileNav = () => {
   const { pathname } = useLocation();
 
   return (
-    <nav className="flex flex-col items-center fixed bottom-0 left-0 right-0 w-full bg-stone-100 border-t border-neutral-300 md:hidden p-4 z-50 gap-4">
+    <nav className="mobile-nav flex flex-col items-center fixed bottom-0 left-0 right-0 w-full bg-stone-100 border-t border-neutral-300 md:hidden p-4 z-[100] gap-4">
       <ActiveWorkoutNav />
       <div className="flex flex-1 max-w-[350px] justify-between items-center mx-auto w-full h-full">
         {navItems.map((item) => {
