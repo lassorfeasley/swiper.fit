@@ -21,7 +21,7 @@ const Content = () => {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "group flex items-center gap-1 px-6 py-3 text-xs font-semibold font-['Space_Grotesk'] transition-colors",
+                  "group flex items-center gap-1 px-6 py-3 text-xs font-semibold transition-colors",
                   selected
                     ? "bg-neutral-300 text-neutral-500"
                     : "text-neutral-400 hover:bg-neutral-200/50",

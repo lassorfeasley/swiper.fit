@@ -34,7 +34,7 @@ const MobileNav = () => {
               </div>
               <div
                 className={cn(
-                  "text-center text-xs font-semibold font-['Space_Grotesk'] leading-none",
+                  "text-center text-xs font-semibold leading-none",
                   selected
                     ? "text-neutral-500"
                     : "text-neutral-400 group-hover:text-neutral-500"

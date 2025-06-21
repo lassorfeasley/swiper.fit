@@ -27,6 +27,7 @@ const ProgramBuilder = () => {
     useState(false);
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
+  const formRef = useRef(null);
 
   useEffect(() => {
     setPageName("ProgramBuilder");
@@ -376,50 +377,43 @@ const ProgramBuilder = () => {
             </Reorder.Group>
           )}
         </CardWrapper>
-        {(showAddExercise || editingExercise) &&
-          (() => {
-            const formRef = React.createRef();
-            const isAdding = showAddExercise;
-            return (
-              <DrawerManager
-                open={showAddExercise || !!editingExercise}
-                onOpenChange={handleModalClose}
-              >
-                <FormHeader
-                  showLeftAction
-                  leftText="Cancel"
-                  leftAction={handleModalClose}
-                  title={isAdding ? "Exercise" : "Edit"}
-                  showRightAction
-                  rightText={isAdding ? "Add" : "Save"}
-                  rightAction={() => formRef.current?.requestSubmit?.()}
-                  rightEnabled={dirty}
-                />
+        <DrawerManager
+          open={showAddExercise || !!editingExercise}
+          onOpenChange={handleModalClose}
+        >
+          <FormHeader
+            showLeftAction
+            leftText="Cancel"
+            leftAction={handleModalClose}
+            title={showAddExercise ? "Exercise" : "Edit"}
+            showRightAction
+            rightText={showAddExercise ? "Add" : "Save"}
+            rightAction={() => formRef.current?.requestSubmit?.()}
+            rightEnabled={dirty}
+          />
 
-                <div className="flex-1 overflow-y-auto flex flex-col gap-6 mt-4 mb-8">
-                  <AddNewExerciseForm
-                    ref={formRef}
-                    key={editingExercise ? editingExercise.id : "add-new"}
-                    formPrompt={
-                      isAdding ? "Add a new exercise" : "Edit exercise"
-                    }
-                    onActionIconClick={
-                      isAdding ? handleAddExercise : handleEditExercise
-                    }
-                    onDelete={
-                      editingExercise ? handleDeleteExercise : undefined
-                    }
-                    initialName={editingExercise?.name}
-                    initialSets={editingExercise?.setConfigs?.length}
-                    initialSetConfigs={editingExercise?.setConfigs}
-                    onDirtyChange={setDirty}
-                    hideActionButtons
-                    showAddToProgramToggle={false}
-                  />
-                </div>
-              </DrawerManager>
-            );
-          })()}
+          <div className="flex-1 overflow-y-auto px-1">
+            <div className="flex flex-col gap-6 mt-4 mb-8">
+              <AddNewExerciseForm
+                ref={formRef}
+                key={editingExercise ? editingExercise.id : "add-new"}
+                formPrompt={
+                  showAddExercise ? "Add a new exercise" : "Edit exercise"
+                }
+                onActionIconClick={
+                  showAddExercise ? handleAddExercise : handleEditExercise
+                }
+                onDelete={editingExercise ? handleDeleteExercise : undefined}
+                initialName={editingExercise?.name}
+                initialSets={editingExercise?.setConfigs?.length}
+                initialSetConfigs={editingExercise?.setConfigs}
+                onDirtyChange={setDirty}
+                hideActionButtons
+                showAddToProgramToggle={false}
+              />
+            </div>
+          </div>
+        </DrawerManager>
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}

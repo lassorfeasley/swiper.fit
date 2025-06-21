@@ -59,10 +59,10 @@ export default function UpdatePassword() {
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <SwiperCard className="w-full max-w-md mx-4">
           <SwiperCardContent className="flex flex-col gap-5 p-5">
-            <div className="text-slate-600 text-xl font-medium font-['Space_Grotesk'] leading-9 mb-2">
+            <div className="text-slate-600 text-xl font-medium leading-9 mb-2">
               Update Password
             </div>
-            <div className="text-slate-600 text-sm font-normal font-['Space_Grotesk'] mb-4">
+            <div className="text-slate-600 text-sm font-normal mb-4">
               Set a new password for your account
             </div>
             {status.type === "error" && (
@@ -79,7 +79,7 @@ export default function UpdatePassword() {
             )}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
+                <label className="text-slate-600 text-sm font-bold">
                   New Password
                 </label>
                 <TextInput
@@ -92,7 +92,7 @@ export default function UpdatePassword() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-slate-600 text-sm font-bold font-['Space_Grotesk']">
+                <label className="text-slate-600 text-sm font-bold">
                   Confirm Password
                 </label>
                 <TextInput

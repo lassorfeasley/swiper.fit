@@ -10,7 +10,9 @@ const DrawerManager = ({ children, open, onOpenChange }) => {
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="h-[95vh] p-4">{children}</DrawerContent>
+          <DrawerContent className="p-4 flex flex-col max-h-[90vh]">
+            {children}
+          </DrawerContent>
         </Drawer>
       ) : (
         <SwiperSheet open={open} onOpenChange={onOpenChange} className="p-4">
