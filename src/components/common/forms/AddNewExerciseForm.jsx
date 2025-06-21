@@ -8,23 +8,8 @@ import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
 import SetEditForm from "./SetEditForm";
 import { FormHeader } from "@/components/atoms/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
 import DrawerManager from "@/components/organisms/drawer-manager";
-
-// Utility arrays for human-friendly set names
-const setWords = [
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-];
 
 const AddNewExerciseForm = React.forwardRef(
   (
@@ -113,7 +98,6 @@ const AddNewExerciseForm = React.forwardRef(
     //  Per-set editor sheet
     /* ------------------------------------------------------------------ */
 
-    const isMobile = useIsMobile();
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState(null);
     const [editingFields, setEditingFields] = useState({});
@@ -227,10 +211,6 @@ const AddNewExerciseForm = React.forwardRef(
       );
     };
 
-    /* ------------------------------------------------------------------ */
-    //  JSX
-    /* ------------------------------------------------------------------ */
-
     return (
       <form
         ref={ref}
@@ -283,27 +263,8 @@ const AddNewExerciseForm = React.forwardRef(
             </span>
           </div>
           <SetBuilderForm
-            hideSetVariantInput
-            hideDivider
-            set_variant=""
-            onSetVariantChange={() => {}}
-            setType={defaults.set_type}
-            onSetTypeChange={(val) => {
-              updateDefault("set_type", val);
-              if (val === "timed" && !defaults.timed_set_duration) {
-                updateDefault("timed_set_duration", 30);
-              }
-            }}
-            reps={defaults.reps}
-            timed_set_duration={defaults.timed_set_duration}
-            onRepsChange={(val) => updateDefault("reps", val)}
-            onTimedDurationChange={(val) =>
-              updateDefault("timed_set_duration", val)
-            }
-            weight={defaults.weight}
-            unit={defaults.unit}
-            onWeightChange={(val) => updateDefault("weight", val)}
-            onUnitChange={(val) => updateDefault("unit", val)}
+            initialDefaults={defaults}
+            onDefaultsChange={updateDefault}
           />
         </div>
 
