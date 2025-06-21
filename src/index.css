@@ -28,6 +28,17 @@ body {
   }
 }
 
+/* Mobile viewport height fix */
+:root {
+  --vh: 100vh;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --vh: 100dvh;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
