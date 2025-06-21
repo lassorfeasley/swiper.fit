@@ -29,7 +29,6 @@ const Home = () => {
           Log out
         </Button>
       </div>
-      Home Page
     </AppLayout>
   );
 };
