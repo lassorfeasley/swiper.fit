@@ -10,8 +10,8 @@ const DrawerManager = ({ children, open, onOpenChange }) => {
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="p-4 flex flex-col max-h-[90vh] z-[100]">
-            {children}
+          <DrawerContent className="p-4 flex flex-col min-h-0 max-h-[90dvh] z-[100]">
+            <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
           </DrawerContent>
         </Drawer>
       ) : (

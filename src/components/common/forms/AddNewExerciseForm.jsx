@@ -215,7 +215,6 @@ const AddNewExerciseForm = React.forwardRef(
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
             customPlaceholder=""
-            autoFocus
           />
           <div className="flex flex-col gap-1">
             <NumericInput
