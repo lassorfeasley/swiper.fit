@@ -140,8 +140,16 @@ const ProgramsIndex = () => {
         )}
       </CardWrapper>
 
-      <DrawerManager open={showSheet} onOpenChange={setShowSheet}>
-        <FormHeader className="text-left items-start" />
+      <DrawerManager
+        open={showSheet}
+        onOpenChange={setShowSheet}
+        title=""
+        leftAction={() => setShowSheet(false)}
+        rightAction={handleCreateProgram}
+        rightEnabled={isReady}
+        rightText="Add"
+        leftText="Cancel"
+      >
         <SheetTitle className="text-center mt-6 mb-2">
           What should we call this program?
         </SheetTitle>

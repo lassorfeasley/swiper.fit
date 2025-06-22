@@ -140,17 +140,16 @@ const ExerciseCard = ({
         cardContent
       )}
       {setsAreEditable && (
-        <DrawerManager open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <FormHeader
-            showLeftAction
-            leftText="Cancel"
-            leftAction={() => setEditSheetOpen(false)}
-            title="Edit set"
-            showRightAction
-            rightText="Save"
-            rightEnabled={formDirty}
-            rightAction={() => handleEditFormSave(currentFormValues)}
-          />
+        <DrawerManager
+          open={editSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          title="Edit set"
+          leftAction={() => setEditSheetOpen(false)}
+          rightAction={() => handleEditFormSave(currentFormValues)}
+          rightEnabled={formDirty}
+          rightText="Save"
+          leftText="Cancel"
+        >
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <SetEditForm
               hideInternalHeader

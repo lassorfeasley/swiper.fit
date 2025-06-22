@@ -161,21 +161,21 @@ const AddNewExerciseForm = React.forwardRef(
     //  Render helpers
     /* ------------------------------------------------------------------ */
 
-    const renderSetCard = (idx) => {
+    const SetCard = ({ idx }) => {
       const merged = getSetMerged(idx);
       const isTimed = merged.set_type === "timed";
 
       return (
         <div
           key={idx}
-          className="w-full p-3 rounded-sm outline outline-1 outline-neutral-300 flex justify-between items-center bg-white cursor-pointer overflow-scroll"
+          className="w-full rounded-sm flex justify-between items-center bg-white cursor-pointer p-4 border border-neutral-300 hover:border-neutral-400"
           onClick={() => openEditSheet(idx)}
         >
           <span className="text-slate-600 text-label font-normal leading-none">
             {sets[idx].set_variant || `Set ${idx + 1}`}
           </span>
-          <div className="h-7 min-w-12 bg-neutral-300 rounded-sm outline outline-1 outline-neutral-300 flex items-stretch overflow-hidden">
-            <div className="px-2 bg-neutral-100 flex items-center gap-0.5">
+          <div className="bg-neutral-300 flex rounded-sm outline outline-1 outline-neutral-300 ">
+            <div className=" bg-neutral-100 flex items-center gap-0.5 p-2">
               {isTimed ? (
                 <Timer className="size-4 text-neutral-500" strokeWidth={1.5} />
               ) : (
@@ -188,7 +188,7 @@ const AddNewExerciseForm = React.forwardRef(
                 {isTimed ? merged.timed_set_duration : merged.reps}
               </span>
             </div>
-            <div className="px-2 bg-neutral-100 flex items-center gap-0.5 border-l border-neutral-300">
+            <div className=" bg-neutral-100 flex items-center gap-0.5 border-l border-neutral-300 p-2">
               <WeightIcon
                 className="size-4 text-neutral-500"
                 strokeWidth={1.5}
@@ -267,29 +267,24 @@ const AddNewExerciseForm = React.forwardRef(
           </div>
 
           <div className="flex flex-col gap-3">
-            {Array.from({ length: setsCount }).map((_, idx) =>
-              renderSetCard(idx)
-            )}
+            {Array.from({ length: setsCount }).map((_, idx) => (
+              <SetCard key={idx} idx={idx} />
+            ))}
           </div>
         </div>
 
         {/* Per-set edit sheet */}
         {editSheetOpen && (
-          <DrawerManager open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-            {/* Header */}
-            <FormHeader
-              showLeftAction
-              leftText="Cancel"
-              leftAction={() => setEditSheetOpen(false)}
-              title="Edit"
-              showRightAction
-              rightText="Save"
-              rightAction={saveEditSheet}
-              showBackIcon={false}
-              rightEnabled={editingDirty}
-            />
-
-            {/* Body */}
+          <DrawerManager
+            open={editSheetOpen}
+            onOpenChange={setEditSheetOpen}
+            title="Edit set"
+            leftAction={() => setEditSheetOpen(false)}
+            rightAction={saveEditSheet}
+            rightEnabled={editingDirty}
+            rightText="Save"
+            leftText="Cancel"
+          >
             <div className="flex-1 overflow-y-auto flex flex-col gap-6">
               <SetEditForm
                 isChildForm
