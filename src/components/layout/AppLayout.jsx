@@ -34,8 +34,9 @@ export default function AppLayout({
             "--mobile-nav-height": "80px",
             marginTop: headerHeight + 24,
             marginBottom: "100px",
+            overflowY: "scroll",
           }}
-          className="flex-1 p-4 pb-[var(--mobile-nav-height)] md:pb-0"
+          className="flex-1 p-4 pb-[80px] md:pb-0"
         >
           {children}
         </main>

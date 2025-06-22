@@ -75,7 +75,7 @@ const FormHeader = ({
 }) => (
   <div
     className={cn(
-      "mt-4 mb-4 lg:mt-0 self-stretch p-3 border-b border-neutral-300 inline-flex justify-center items-center gap-5",
+      "mt-4 mb-4 lg:mt-0 self-stretch p-3 border-b border-neutral-300 inline-flex justify-center items-center gap-5 w-full",
       className
     )}
     {...props}
