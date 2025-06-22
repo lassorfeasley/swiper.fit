@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import NumericInput from "@/components/molecules/numeric-input";
@@ -158,15 +158,6 @@ const AddNewExerciseForm = React.forwardRef(
     };
 
     /* ------------------------------------------------------------------ */
-    //  Focus behaviour – autofocus name when mounted
-    /* ------------------------------------------------------------------ */
-
-    const nameRef = useRef(null);
-    useEffect(() => {
-      nameRef.current?.select?.();
-    }, []);
-
-    /* ------------------------------------------------------------------ */
     //  Render helpers
     /* ------------------------------------------------------------------ */
 
@@ -221,7 +212,6 @@ const AddNewExerciseForm = React.forwardRef(
         <div className="flex flex-col gap-3 border-b border-neutral-300 py-4">
           <TextInput
             label="Exercise name"
-            ref={nameRef}
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
             customPlaceholder=""

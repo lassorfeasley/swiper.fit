@@ -414,7 +414,7 @@ const ActiveExerciseCard = ({
             rightAction={handleEditFormSave}
             rightEnabled={formDirty}
           />
-          <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-full">
             <SetEditForm
               hideActionButtons
               hideInternalHeader
@@ -482,7 +482,7 @@ const ActiveExerciseCard = ({
           }
         />
       </div>
-      <div className="Setpillwrapper self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
+      <div className="self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
         {sets.map((set, idx) => {
           const setType = set.set_type || "reps";
           const timedDuration = set.timed_set_duration;
