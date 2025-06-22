@@ -386,25 +386,13 @@ const ActiveWorkout = () => {
               <DrawerManager
                 open={showAddExercise}
                 onOpenChange={() => setShowAddExercise(false)}
+                title="Exercise"
+                leftAction={() => setShowAddExercise(false)}
+                rightAction={() => formRef.current?.requestSubmit?.()}
+                rightEnabled={true}
+                rightText="Add"
+                leftText="Cancel"
               >
-                {/* Sticky header similar to ProgramBuilder */}
-                <div className="sticky top-0 z-10 border-b flex items-center justify-between py-3">
-                  <button
-                    onClick={() => setShowAddExercise(false)}
-                    className="text-red-500 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <h2 className="font-bold text-lg mr-4">Exercise</h2>
-                  <button
-                    onClick={() => formRef.current?.requestSubmit?.()}
-                    className="text-green-600 font-medium"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                {/* Scrollable body */}
                 <div className="flex-1 overflow-y-auto">
                   <AddNewExerciseForm
                     ref={formRef}

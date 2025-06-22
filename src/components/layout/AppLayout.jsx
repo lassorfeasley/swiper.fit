@@ -35,7 +35,7 @@ export default function AppLayout({
             marginTop: headerHeight + 24,
             marginBottom: "100px",
           }}
-          className="flex-1 p-4 pb-[80px] md:pb-0 overflow-y-auto md:overflow-y-scroll"
+          className="flex-1 p-4 pb-[80px] md:pb-0 overflow-y-auto"
         >
           {children}
         </main>

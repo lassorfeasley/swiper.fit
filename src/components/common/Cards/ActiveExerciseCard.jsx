@@ -403,17 +403,16 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <DrawerManager open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <FormHeader
-            showLeftAction
-            leftText="Cancel"
-            leftAction={() => setIsEditSheetOpen(false)}
-            title="Edit set"
-            showRightAction={true}
-            rightText="Save"
-            rightAction={handleEditFormSave}
-            rightEnabled={formDirty}
-          />
+        <DrawerManager
+          open={isEditSheetOpen}
+          onOpenChange={setIsEditSheetOpen}
+          title="Edit set"
+          leftAction={() => setIsEditSheetOpen(false)}
+          rightAction={handleEditFormSave}
+          rightEnabled={formDirty}
+          rightText="Save"
+          leftText="Cancel"
+        >
           <div className="flex-1 overflow-y-auto px-5 py-4 min-h-full">
             <SetEditForm
               hideActionButtons
@@ -508,17 +507,16 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <DrawerManager open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <FormHeader
-          showLeftAction
-          leftText="Cancel"
-          leftAction={() => setIsEditSheetOpen(false)}
-          title="Edit set"
-          showRightAction={true}
-          rightText="Save"
-          rightAction={handleEditFormSave}
-          rightEnabled={formDirty}
-        />
+      <DrawerManager
+        open={isEditSheetOpen}
+        onOpenChange={setIsEditSheetOpen}
+        title="Edit set"
+        leftAction={() => setIsEditSheetOpen(false)}
+        rightAction={handleEditFormSave}
+        rightEnabled={formDirty}
+        rightText="Save"
+        leftText="Cancel"
+      >
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <SetEditForm
             hideActionButtons

@@ -61,14 +61,11 @@ SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const FormHeader = ({
   className,
-  children,
   leftAction,
-  leftText = "Cancel",
   rightAction,
+  leftText = "Cancel",
   rightText = "Add",
   title,
-  showLeftAction = true,
-  showRightAction = true,
   showBackIcon = false,
   rightEnabled = true,
   ...props
@@ -81,7 +78,7 @@ const FormHeader = ({
     {...props}
   >
     <div className="flex-1 flex justify-start items-center">
-      {showLeftAction && (
+      {leftAction && (
         <>
           {showBackIcon && (
             <div className="w-6 h-6 relative overflow-hidden">
@@ -98,16 +95,14 @@ const FormHeader = ({
       )}
     </div>
     <div className="flex-1 flex justify-center items-center gap-2.5">
-      {title ? (
+      {title && (
         <div className="justify-center text-slate-600 text-xl font-medium font-vietnam leading-normal">
           {title}
         </div>
-      ) : (
-        children
       )}
     </div>
     <div className="flex-1 text-right justify-center">
-      {showRightAction && (
+      {rightAction && (
         <button
           onClick={rightAction}
           className={cn(

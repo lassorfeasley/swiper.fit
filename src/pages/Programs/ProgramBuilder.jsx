@@ -378,21 +378,15 @@ const ProgramBuilder = () => {
         <DrawerManager
           open={showAddExercise || !!editingExercise}
           onOpenChange={handleModalClose}
+          title={showAddExercise ? "Exercise" : "Edit"}
+          leftAction={handleModalClose}
+          rightAction={() => formRef.current?.requestSubmit?.()}
+          rightEnabled={dirty}
+          rightText={showAddExercise ? "Add" : "Save"}
+          leftText="Cancel"
         >
-          <div className="flex flex-col h-full overflow-y-scroll">
-            <FormHeader
-              className="sticky top-0 z-10 bg-white border-b border-neutral-300 flex-shrink-0"
-              showLeftAction
-              leftText="Cancel"
-              leftAction={handleModalClose}
-              title={showAddExercise ? "Exercise" : "Edit"}
-              showRightAction
-              rightText={showAddExercise ? "Add" : "Save"}
-              rightAction={() => formRef.current?.requestSubmit?.()}
-              rightEnabled={dirty}
-            />
-
-            <div className="overflow-y-scroll px-1 h-[650px]">
+          <div className="flex flex-col h-full overflow-y-scroll md:overflow-y-auto">
+            <div className="overflow-y-scroll md:overflow-auto px-1 h-[650px] md:h-full">
               <AddNewExerciseForm
                 ref={formRef}
                 key={editingExercise ? editingExercise.id : "add-new"}

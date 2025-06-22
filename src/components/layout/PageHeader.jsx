@@ -244,7 +244,13 @@ export const PageHeader = forwardRef(
         </div>
 
         {/* Edit Title Sheet */}
-        <DrawerManager open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <DrawerManager
+          open={isEditSheetOpen}
+          onOpenChange={setIsEditSheetOpen}
+          title="Edit"
+          leftAction={() => setIsEditSheetOpen(false)}
+          rightAction={handleTitleSave}
+        >
           <div className="space-y-6 pt-4">
             <div className="space-y-2">
               <TextInput
