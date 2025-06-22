@@ -379,19 +379,20 @@ const ProgramBuilder = () => {
           open={showAddExercise || !!editingExercise}
           onOpenChange={handleModalClose}
         >
-          <FormHeader
-            showLeftAction
-            leftText="Cancel"
-            leftAction={handleModalClose}
-            title={showAddExercise ? "Exercise" : "Edit"}
-            showRightAction
-            rightText={showAddExercise ? "Add" : "Save"}
-            rightAction={() => formRef.current?.requestSubmit?.()}
-            rightEnabled={dirty}
-          />
+          <div className="flex flex-col h-full overflow-y-scroll">
+            <FormHeader
+              className="sticky top-0 z-10 bg-white border-b border-neutral-300 flex-shrink-0"
+              showLeftAction
+              leftText="Cancel"
+              leftAction={handleModalClose}
+              title={showAddExercise ? "Exercise" : "Edit"}
+              showRightAction
+              rightText={showAddExercise ? "Add" : "Save"}
+              rightAction={() => formRef.current?.requestSubmit?.()}
+              rightEnabled={dirty}
+            />
 
-          <div className="min-h-full overflow-y-scroll px-1">
-            <div className="flex flex-col gap-6 mt-4 mb-8">
+            <div className="overflow-y-scroll px-1 h-[650px]">
               <AddNewExerciseForm
                 ref={formRef}
                 key={editingExercise ? editingExercise.id : "add-new"}

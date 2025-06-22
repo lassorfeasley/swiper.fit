@@ -25,36 +25,6 @@ body {
   }
 }
 
-/* Fallback for browsers that don't support 100dvh */
-@supports not (height: 100dvh) {
-  @media (max-width: 768px) {
-    html,
-    body {
-      height: 100vh;
-    }
-
-    #root {
-      height: 100vh;
-    }
-  }
-}
-
-/* Ensure drawer content properly resizes with viewport changes */
-@media (max-width: 768px) {
-  [data-vaul-drawer-wrapper] {
-    height: 100dvh !important;
-  }
-
-  [data-vaul-drawer] {
-    height: 100dvh !important;
-  }
-
-  [data-vaul-drawer-content] {
-    max-height: 100dvh !important;
-    height: auto !important;
-  }
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
