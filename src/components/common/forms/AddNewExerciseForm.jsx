@@ -31,6 +31,7 @@ const AddNewExerciseForm = React.forwardRef(
     /* ------------------------------------------------------------------ */
 
     const [exerciseName, setExerciseName] = useState(initialName);
+    const [section, setSection] = useState("training");
     const initialNameRef = React.useRef(initialName);
 
     // Build initial defaults from the first supplied set config (if any)
@@ -149,6 +150,7 @@ const AddNewExerciseForm = React.forwardRef(
         onActionIconClick(
           {
             name: exerciseName.trim(),
+            section,
             sets: setsCount,
             setConfigs,
           },
@@ -215,6 +217,15 @@ const AddNewExerciseForm = React.forwardRef(
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
             customPlaceholder=""
+          />
+          <ToggleInput
+            value={section}
+            onChange={(value) => value && setSection(value)}
+            options={[
+              { label: "Warmup", value: "warmup" },
+              { label: "Training", value: "training" },
+              { label: "Cooldown", value: "cooldown" },
+            ]}
           />
           <div className="flex flex-col gap-1">
             <NumericInput

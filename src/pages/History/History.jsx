@@ -57,8 +57,7 @@ const History = () => {
         exerciseCount: new Set(
           workout.sets?.map((set) => set.exercise_id) || []
         ).size,
-      }))
-      .filter((w) => w.sets && w.sets.length > 0);
+      }));
 
     setWorkouts(processedWorkouts);
     setLoading(false);
@@ -80,7 +79,7 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      <CardWrapper className="mb-[150px] card-container">
+      <CardWrapper className="mb-[150px] card-container" marginTop={0}>
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
@@ -100,7 +99,7 @@ const History = () => {
                 name={w.workout_name || "Unnamed Workout"}
                 labels={[w.programs?.program_name] || []}
                 count={w.exerciseCount}
-                duration={formatDuration(w.duration_seconds)}
+                duration={formatDuration(w.duration_seconds || 0)}
                 onClick={() => navigate(`/history/${w.id}`)}
               />
             ))

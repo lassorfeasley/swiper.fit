@@ -14,6 +14,12 @@ import PropTypes from "prop-types";
 import { Reorder } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+// ========= Global CardWrapper spacing constants =========
+// Adjust these three numbers to control default spacing everywhere.
+export const CARD_WRAPPER_GAP_PX = 20; // space between individual cards
+export const CARD_WRAPPER_MARGIN_TOP_PX = 20; // space above the first card
+export const CARD_WRAPPER_MARGIN_BOTTOM_PX = 20; // space below the last card
+
 const CardWrapper = ({
   children,
   className = "",
@@ -22,6 +28,9 @@ const CardWrapper = ({
   items = [],
   onReorder = () => {},
   headerRef,
+  gap = CARD_WRAPPER_GAP_PX,
+  marginTop = CARD_WRAPPER_MARGIN_TOP_PX,
+  marginBottom = CARD_WRAPPER_MARGIN_BOTTOM_PX,
   ...props
 }) => {
   const divProps = { ...props };
@@ -30,13 +39,20 @@ const CardWrapper = ({
   delete divProps.onReorder;
   delete divProps.headerRef;
 
+  // Style object that sets gap between children and outer margin
+  const spacingStyle = {
+    rowGap: gap,
+    marginTop: marginTop,
+    marginBottom: marginBottom,
+  };
+
   return (
     <div
       className={cn(
-        "w-full rounded-xl flex flex-col justify-start items-center gap-5 mx-auto overflow-hidden",
+        "w-full rounded-xl flex flex-col justify-start items-center mx-auto overflow-hidden",
         className
       )}
-      style={{ maxWidth: 500, ...(props.style || {}) }}
+      style={{ maxWidth: 500, ...spacingStyle, ...(props.style || {}) }}
       {...divProps}
     >
       {cardTitle && (
@@ -49,7 +65,8 @@ const CardWrapper = ({
           axis="y"
           values={items}
           onReorder={onReorder}
-          className="w-full flex flex-col gap-5"
+          className="w-full flex flex-col"
+          style={{ rowGap: gap }}
         >
           {React.Children.map(children, (child, idx) =>
             React.isValidElement(child) ? (
@@ -80,6 +97,9 @@ CardWrapper.propTypes = {
   items: PropTypes.array,
   onReorder: PropTypes.func,
   headerRef: PropTypes.object,
+  gap: PropTypes.number,
+  marginTop: PropTypes.number,
+  marginBottom: PropTypes.number,
 };
 
 export default CardWrapper;

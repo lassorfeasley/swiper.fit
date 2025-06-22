@@ -28,7 +28,7 @@ const StaticCard = ({ id, name, labels = [], count, duration, onClick }) => {
 };
 
 StaticCard.propTypes = {
-  id: PropTypes.string.isRequired,
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   name: PropTypes.string.isRequired,
   labels: PropTypes.arrayOf(PropTypes.string),
   count: PropTypes.number,

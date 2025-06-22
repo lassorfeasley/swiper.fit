@@ -336,6 +336,7 @@ const ActiveExerciseCard = ({
       <CardWrapper
         className="Property1Expanded self-stretch bg-white rounded-xl flex flex-col justify-start items-stretch gap-0"
         style={{ maxWidth: 500 }}
+        gap={0} marginTop={0} marginBottom={0}
       >
         <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
           <div className="Label flex-1 inline-flex flex-col justify-start items-start">
@@ -440,6 +441,7 @@ const ActiveExerciseCard = ({
     <CardWrapper
       className="Property1Compact self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4"
       style={{ maxWidth: 500 }}
+      gap={0} marginTop={0} marginBottom={0}
     >
       <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
         <div className="Label flex-1 inline-flex flex-col justify-start items-start">

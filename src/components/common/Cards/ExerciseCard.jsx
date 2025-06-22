@@ -126,7 +126,7 @@ const ExerciseCard = ({
   );
 
   return (
-    <CardWrapper className={className}>
+    <CardWrapper className={className} gap={0} marginTop={0} marginBottom={0}>
       {reorderable ? (
         <Reorder.Item
           value={reorderValue}

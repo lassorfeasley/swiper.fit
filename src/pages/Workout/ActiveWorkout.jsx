@@ -360,13 +360,14 @@ const ActiveWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
       >
-        <div className="p-4 md:p-0 card-container">
+        <div className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5">
           {filteredExercises.map((exercise) => (
-            <CardWrapper key={exercise.id} className="mb-4">
+            <CardWrapper key={exercise.id} gap={0} marginTop={0} marginBottom={0}>
               <ActiveExerciseCard
                 exerciseId={exercise.exercise_id}
                 exerciseName={exercise.name}
                 initialSetConfigs={exercise.setConfigs}
+                setData={workoutProgress[exercise.exercise_id] || []}
                 onSetComplete={handleSetComplete}
                 onSetDataChange={handleSetDataChange}
                 onSetProgrammaticUpdate={handleSetProgrammaticUpdate}

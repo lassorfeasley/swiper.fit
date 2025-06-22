@@ -132,6 +132,7 @@ const ProgramsIndex = () => {
           filteredPrograms.map((program) => (
             <StaticCard
               key={program.id}
+              id={program.id}
               name={program.program_name}
               labels={program.exerciseNames}
               onClick={() => navigate(`/programs/${program.id}/configure`)}

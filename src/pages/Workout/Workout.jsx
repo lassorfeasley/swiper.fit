@@ -123,6 +123,7 @@ const Workout = () => {
           filteredPrograms.map((program) => (
             <StaticCard
               key={program.id}
+              id={program.id}
               name={program.program_name}
               labels={program.exerciseNames}
               onClick={() => handleStartWorkout(program)}

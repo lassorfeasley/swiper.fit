@@ -343,21 +343,24 @@ const ProgramBuilder = () => {
         pageContext="programBuilder"
         data-component="AppHeader"
       >
-        <CardWrapper>
-          {loading ? (
-            <div className="text-gray-400 text-center py-8">Loading...</div>
-          ) : filteredExercises.length === 0 && !loading ? (
-            <div className="text-gray-400 text-center py-8">
-              No exercises found. Try adding one!
-            </div>
-          ) : (
-            <Reorder.Group
-              axis="y"
-              values={filteredExercises}
-              onReorder={setExercises}
-              className="flex flex-col gap-4 w-full"
-            >
-              {filteredExercises.map((ex) => (
+        <div
+          style={{
+            paddingBottom: "100px",
+          }}
+        >
+          <CardWrapper
+            reorderable
+            items={filteredExercises}
+            onReorder={setExercises}
+          >
+            {loading ? (
+              <div className="text-gray-400 text-center py-8">Loading...</div>
+            ) : filteredExercises.length === 0 && !loading ? (
+              <div className="text-gray-400 text-center py-8">
+                No exercises found. Try adding one!
+              </div>
+            ) : (
+              filteredExercises.map((ex) => (
                 <ExerciseCard
                   key={ex.id}
                   mode="default"
@@ -371,10 +374,10 @@ const ProgramBuilder = () => {
                   reorderValue={ex}
                   onCardClick={() => setEditingExercise(ex)}
                 />
-              ))}
-            </Reorder.Group>
-          )}
-        </CardWrapper>
+              ))
+            )}
+          </CardWrapper>
+        </div>
         <DrawerManager
           open={showAddExercise || !!editingExercise}
           onOpenChange={handleModalClose}
