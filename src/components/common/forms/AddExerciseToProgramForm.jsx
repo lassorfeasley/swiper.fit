@@ -12,17 +12,6 @@ import SwiperAccordionGroup from "@/components/molecules/swiper-accordion-group"
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SetEditForm from "./SetEditForm";
 
-const unitOptions = [
-  { label: "lbs", value: "lbs" },
-  { label: "kg", value: "kg" },
-  { label: "body", value: "body" },
-];
-
-const setTypeOptions = [
-  { label: "Reps", value: "reps" },
-  { label: "Timed", value: "timed" },
-];
-
 const AddExerciseToProgramForm = ({
   onAddExercise,
   onAddExerciseFuture,

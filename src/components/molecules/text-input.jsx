@@ -18,7 +18,6 @@ const TextInput = React.forwardRef(
     },
     ref
   ) => {
-    const [isFocused, setIsFocused] = React.useState(false);
     const [isHovered, setIsHovered] = React.useState(false);
 
     const getInputStyles = () => {
@@ -30,22 +29,30 @@ const TextInput = React.forwardRef(
       const baseStyles = disabled ? cn(baseBase, "p-4") : cn(baseBase, "p-3");
 
       if (disabled) {
-        return cn(baseStyles, "border-neutral-300 outline-neutral-300 text-neutral-300 placeholder:text-neutral-300");
+        return cn(
+          baseStyles,
+          "border-neutral-300 outline-neutral-300 text-neutral-300 placeholder:text-neutral-300"
+        );
       }
 
       if (error) {
-        return cn(baseStyles, "border-red-400 outline-red-400 text-slate-600 placeholder:text-slate-600");
-      }
-
-      if (isFocused) {
-        return cn(baseStyles, "border-slate-600 outline-slate-600 text-slate-600 placeholder:text-slate-600");
+        return cn(
+          baseStyles,
+          "border-red-400 outline-red-400 text-slate-600 placeholder:text-slate-600"
+        );
       }
 
       if (isHovered) {
-        return cn(baseStyles, "border-slate-600 outline-slate-600 text-slate-500 placeholder:text-slate-500");
+        return cn(
+          baseStyles,
+          "border-slate-600 outline-slate-600 text-slate-500 placeholder:text-slate-500"
+        );
       }
 
-      return cn(baseStyles, "border-neutral-300 outline-neutral-300 text-slate-500 placeholder:text-slate-500");
+      return cn(
+        baseStyles,
+        "border-neutral-300 outline-neutral-300 text-slate-500 placeholder:text-slate-500"
+      );
     };
 
     const getLabelStyles = () => {
@@ -83,8 +90,6 @@ const TextInput = React.forwardRef(
             ref={ref}
             className={getInputStyles()}
             disabled={disabled}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             placeholder={customPlaceholder}
             {...props}
           />

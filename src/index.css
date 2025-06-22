@@ -11,47 +11,47 @@ body {
   @apply bg-stone-200;
 }
 
-/* Prevent mobile drawer scaling issues */
-@media (max-width: 768px) {
-  body {
-    position: relative;
-    height: 100vh;
-    transform: none !important;
-    transform-origin: unset !important;
-  }
+/* Mobile viewport height fix for keyboard handling */
+@supports (height: 100dvh) {
+  @media (max-width: 768px) {
+    html,
+    body {
+      height: 100dvh;
+    }
 
-  /* Ensure mobile nav stays fixed regardless of drawer state */
-  .mobile-nav {
-    position: fixed !important;
-    bottom: 0 !important;
-    transform: none !important;
+    #root {
+      height: 100dvh;
+    }
   }
 }
 
-/* Mobile viewport height fix */
-:root {
-  --vh: 100vh;
-  --mobile-vh: calc(100vh - env(keyboard-inset-height, 0px));
-}
+/* Fallback for browsers that don't support 100dvh */
+@supports not (height: 100dvh) {
+  @media (max-width: 768px) {
+    html,
+    body {
+      height: 100vh;
+    }
 
-@media (max-width: 768px) {
-  :root {
-    --vh: 100dvh;
-    --mobile-vh: calc(100dvh - env(keyboard-inset-height, 0px));
+    #root {
+      height: 100vh;
+    }
   }
 }
 
-/* Prevent viewport height changes on mobile */
+/* Ensure drawer content properly resizes with viewport changes */
 @media (max-width: 768px) {
-  html,
-  body {
-    height: 100dvh;
-    overflow-x: hidden;
+  [data-vaul-drawer-wrapper] {
+    height: 100dvh !important;
   }
 
-  #root {
-    height: 100dvh;
-    overflow-x: hidden;
+  [data-vaul-drawer] {
+    height: 100dvh !important;
+  }
+
+  [data-vaul-drawer-content] {
+    max-height: 100dvh !important;
+    height: auto !important;
   }
 }
 
