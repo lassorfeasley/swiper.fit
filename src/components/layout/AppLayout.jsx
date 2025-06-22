@@ -22,7 +22,7 @@ export default function AppLayout({
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-stone-200">
+    <div className="min-h-screen flex bg-stone-200 md:h-screen">
       <div
         className={
           showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"
@@ -34,9 +34,8 @@ export default function AppLayout({
             "--mobile-nav-height": "80px",
             marginTop: headerHeight + 24,
             marginBottom: "100px",
-            overflowY: "scroll",
           }}
-          className="flex-1 p-4 pb-[80px] md:pb-0"
+          className="flex-1 p-4 pb-[80px] md:pb-0 overflow-y-auto md:overflow-y-scroll"
         >
           {children}
         </main>

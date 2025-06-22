@@ -16,11 +16,14 @@ body {
   @media (max-width: 768px) {
     html,
     body {
-      height: 100dvh;
+      max-height: 100dvh;
+      overflow-x: hidden;
     }
 
     #root {
-      height: 100dvh;
+      max-height: 100dvh;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
   }
 }
