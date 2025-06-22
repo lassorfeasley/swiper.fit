@@ -360,24 +360,20 @@ const ActiveWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
       >
-        <CardWrapper>
-          <div className="w-full flex flex-col gap-4">
-            {filteredExercises.map((ex) => (
+        <div className="p-4 md:p-0 card-container">
+          {filteredExercises.map((exercise) => (
+            <CardWrapper key={exercise.id} className="mb-4">
               <ActiveExerciseCard
-                key={ex.id}
-                exerciseId={ex.exercise_id}
-                exerciseName={ex.name}
-                default_view={true}
-                initialSetConfigs={ex.setConfigs}
+                exerciseId={exercise.exercise_id}
+                exerciseName={exercise.name}
+                initialSetConfigs={exercise.setConfigs}
                 onSetComplete={handleSetComplete}
-                setData={workoutProgress[ex.exercise_id] || []}
                 onSetDataChange={handleSetDataChange}
                 onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                isUnscheduled={false}
               />
-            ))}
-          </div>
-        </CardWrapper>
+            </CardWrapper>
+          ))}
+        </div>
 
         {showAddExercise &&
           (() => {

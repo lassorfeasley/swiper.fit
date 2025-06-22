@@ -33,7 +33,7 @@ const CardWrapper = ({
   return (
     <div
       className={cn(
-        "w-full rounded-xl flex flex-col justify-start items-center gap-4 mx-auto overflow-hidden",
+        "w-full rounded-xl flex flex-col justify-start items-center gap-5 mx-auto overflow-hidden",
         className
       )}
       style={{ maxWidth: 500, ...(props.style || {}) }}
@@ -49,7 +49,7 @@ const CardWrapper = ({
           axis="y"
           values={items}
           onReorder={onReorder}
-          className="w-full flex flex-col gap-4"
+          className="w-full flex flex-col gap-5"
         >
           {React.Children.map(children, (child, idx) =>
             React.isValidElement(child) ? (

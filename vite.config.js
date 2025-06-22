@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { fileURLToPath, URL } from "url";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,12 +9,17 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
+  optimizeDeps: {
+    include: ["vaul"],
+  },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      components: path.resolve(__dirname, "src/components"),
-      common: path.resolve(__dirname, "src/components/common"),
-      pages: path.resolve(__dirname, "src/pages"),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      components: fileURLToPath(new URL("./src/components", import.meta.url)),
+      common: fileURLToPath(
+        new URL("./src/components/common", import.meta.url)
+      ),
+      pages: fileURLToPath(new URL("./src/pages", import.meta.url)),
     },
   },
 });

@@ -1,35 +1,39 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-const StaticCard = ({ key, name, labels, onClick, count, duration }) => {
+const StaticCard = ({ id, name, labels = [], count, duration, onClick }) => {
   return (
     <div
-      key={key}
-      className="bg-white rounded-lg p-4 flex flex-col gap-3 w-full cursor-pointer hover:bg-gray-50 transition-all duration-300 hover:shadow-md"
+      key={id}
+      data-component="StaticCard"
+      className="bg-white rounded-lg shadow-sm p-4 w-full flex justify-between items-center cursor-pointer"
       onClick={onClick}
     >
-      <h2 className="text-slate-950 text-heading-md">
-        {name}
-      </h2>
-      {labels && labels.length > 0 && (
-        <div className="flex gap-2">
-          {labels.map((label) => (
-            <div
-              key={label}
-              className="px-2 py-0.5 rounded-md flex items-center bg-gray-200 text-xs w-fit font-semibold"
-            >
+      <div className="flex-1">
+        <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
+        <div className="flex items-center text-sm text-gray-500 mt-1">
+          {labels.map((label, index) => (
+            <span key={index} className="mr-2">
               {label}
-            </div>
+            </span>
           ))}
         </div>
-      )}
-      {count && duration && (
-        <div className="flex gap-2 items-center text-sm text-gray-500">
-          <div>{count} exercises</div> <span>|</span>
-          <div>{duration}</div>
-        </div>
-      )}
+      </div>
+      <div className="text-right">
+        <p className="text-gray-800">{count} exercises</p>
+        <p className="text-gray-500 text-sm">{duration}</p>
+      </div>
     </div>
   );
+};
+
+StaticCard.propTypes = {
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  labels: PropTypes.arrayOf(PropTypes.string),
+  count: PropTypes.number,
+  duration: PropTypes.string,
+  onClick: PropTypes.func,
 };
 
 export default StaticCard;

@@ -80,7 +80,7 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      <CardWrapper className="mb-[150px]">
+      <CardWrapper className="mb-[150px] card-container">
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
@@ -96,6 +96,7 @@ const History = () => {
             .map((w) => (
               <StaticCard
                 key={w.id}
+                id={w.id}
                 name={w.workout_name || "Unnamed Workout"}
                 labels={[w.programs?.program_name] || []}
                 count={w.exerciseCount}
