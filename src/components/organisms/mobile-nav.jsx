@@ -14,7 +14,7 @@ const MobileNav = () => {
     >
       <div className="absolute inset-0 -z-10 bg-stone-200/70 backdrop-blur-md [mask-image:linear-gradient(to_bottom,transparent_0,black_40%)]" />
       <ActiveWorkoutNav />
-      <div className="flex flex-1 max-w-[350px] justify-center items-center mx-auto w-full h-full gap-5">
+      <div className="flex flex-1 max-w-[350px] justify-evenly items-center mx-auto w-full h-full gap-5">
         {navItems.map((item) => {
           const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
           return (
