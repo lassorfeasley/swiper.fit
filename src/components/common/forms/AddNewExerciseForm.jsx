@@ -296,8 +296,9 @@ const AddNewExerciseForm = React.forwardRef(
             rightEnabled={editingDirty}
             rightText="Save"
             leftText="Cancel"
+            padding={0}
           >
-            <div className="flex-1 overflow-y-auto flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-6">
               <SetEditForm
                 isChildForm
                 hideDivider

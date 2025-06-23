@@ -407,8 +407,9 @@ const ActiveWorkout = () => {
                 rightEnabled={true}
                 rightText="Add"
                 leftText="Cancel"
+                padding={0}
               >
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto px-5 py-5">
                   <AddNewExerciseForm
                     ref={formRef}
                     key="add-exercise"

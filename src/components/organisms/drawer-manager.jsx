@@ -23,9 +23,10 @@ const DrawerManager = ({
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="p-4 max-h-[90dvh] z-[100]">
+          <DrawerContent className={`${padding === 0 ? 'p-0' : 'p-4'} max-h-[90dvh] z-[100]`}>
             {leftAction && (
               <FormHeader
+                className={padding === 0 ? 'm-0' : undefined}
                 leftText={leftText}
                 leftAction={leftAction}
                 title={title}
@@ -45,6 +46,7 @@ const DrawerManager = ({
         >
           {leftAction && (
             <FormHeader
+              className={padding === 0 ? 'm-0' : undefined}
               leftText={leftText}
               leftAction={leftAction}
               title={title}

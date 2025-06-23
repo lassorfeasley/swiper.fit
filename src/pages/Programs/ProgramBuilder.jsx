@@ -11,6 +11,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import DrawerManager from "@/components/organisms/drawer-manager";
 import SectionNav from "@/components/molecules/section-nav";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -422,9 +423,10 @@ const ProgramBuilder = () => {
           rightEnabled={dirty}
           rightText={showAddExercise ? "Add" : "Save"}
           leftText="Cancel"
+          padding={0}
         >
           <div className="flex flex-col h-full overflow-y-scroll md:overflow-y-auto">
-            <div className="overflow-y-scroll md:overflow-auto px-1 h-[650px] md:h-full">
+            <div className="overflow-y-scroll md:overflow-auto px-5 py-5 h-[650px] md:h-full">
               <AddNewExerciseForm
                 ref={formRef}
                 key={editingExercise ? editingExercise.id : "add-new"}
@@ -449,6 +451,18 @@ const ProgramBuilder = () => {
                 hideActionButtons
                 showAddToProgramToggle={false}
               />
+              {editingExercise && (
+                <>
+                  <div className="border-t border-neutral-300 my-6" />
+                  <SwiperButton
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDeleteExercise}
+                  >
+                    Delete exercise
+                  </SwiperButton>
+                </>
+              )}
             </div>
           </div>
         </DrawerManager>
