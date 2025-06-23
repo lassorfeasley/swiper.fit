@@ -5,9 +5,8 @@ import {
   PauseCircle,
   StopCircle,
   Circle,
-  ArrowRight,
+  Undo2,
 } from "lucide-react";
-import { Card } from "@/components/atoms/card";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate } from "react-router-dom";
 import { cn, formatSeconds } from "@/lib/utils";
@@ -51,92 +50,82 @@ export default function ActiveWorkoutNav() {
     workoutNavState = "programPrompt";
   }
 
-  const WORKOUT_NAV_STYLES = {
-    c2a: {
-      backgroundColor: "bg-red-500",
-      textColor: "text-white",
-    },
-    programPrompt: {
-      backgroundColor: "bg-orange-500",
-      textColor: "text-white",
-    },
-    returnToWorkout: {
-      backgroundColor: "bg-green-600",
-      textColor: "text-white",
-    },
-    activeWorkout: {
-      backgroundColor: "bg-green-600",
-      textColor: "text-white",
-    },
-  };
-  return (
-    <Card
-      className={cn(
-        "w-full p-2 inline-flex flex-col justify-start items-start gap-5 overflow-hidden mb-2 cursor-pointer",
-        WORKOUT_NAV_STYLES[workoutNavState].backgroundColor,
-        WORKOUT_NAV_STYLES[workoutNavState].textColor
-      )}
-    >
-      {workoutNavState === "c2a" && (
-        <div
-          className="flex items-center gap-2 p-2 rounded"
-          onClick={handleC2AClick}
-        >
-          <PlayCircle className="size-6 text-white" />
-          <span className="text-xs font-semibold leading-none">
-            Record a workout
-          </span>
-        </div>
-      )}
-      {workoutNavState === "programPrompt" && (
-        <div className="flex items-center gap-2 p-2 rounded">
-          <ChevronRightCircle className="Lucide size-6 text-white" />
-          <span className="text-xs font-semibold leading-none">
-            Select a program
-          </span>
-        </div>
-      )}
-      {workoutNavState === "returnToWorkout" && (
-        <div
-          className="flex items-center gap-2 p-2 rounded"
-          onClick={handleReturnToWorkout}
-        >
-          <ArrowRight className="size-4 text-white" />
-          <span className="text-white text-xs font-semibold leading-none">
-            Return to workout
-          </span>
-        </div>
-      )}
-      {workoutNavState === "activeWorkout" && (
-        <div className="flex justify-between items-center gap-2 p-2 rounded w-full">
-          <div className="flex items-center gap-1">
-            <Circle className="size-3 text-stone-100" fill="currentColor" />
-            <span className="text-white text-sm font-normal leading-tight">
-              {formatSeconds(elapsedTime)}
+  const isBetween =
+    workoutNavState === "activeWorkout" ||
+    workoutNavState === "returnToWorkout";
+
+  const baseContainerClasses =
+    "h-12 px-3 py-2 bg-white rounded-lg shadow-[0px_0px_11.3px_0px_rgba(163,163,163,0.5)] inline-flex items-center overflow-hidden w-full cursor-pointer";
+
+  const renderContent = () => {
+    switch (workoutNavState) {
+      case "c2a":
+        return (
+          <div
+            className={cn(baseContainerClasses, "justify-start gap-2")}
+            onClick={handleC2AClick}
+          >
+            <PlayCircle className="size-7 text-red-400" />
+            <span className="text-neutral-700 text-sm font-medium leading-none">
+              Record a workout
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
-              onClick={togglePause}
-              aria-label={isPaused ? "Resume" : "Pause"}
-            >
-              {isPaused ? (
-                <PlayCircle className="size-8" />
-              ) : (
-                <PauseCircle className="size-8" />
-              )}
-            </button>
-            <button
-              className="size-8 flex items-center justify-center text-white hover:opacity-80 transition-opacity"
-              onClick={handleEndWorkout}
-              aria-label="End workout"
-            >
-              <StopCircle className="size-8" />
-            </button>
+        );
+      case "programPrompt":
+        return (
+          <div className={cn(baseContainerClasses, "justify-start gap-2")}>
+            <ChevronRightCircle className="size-7 text-orange-600" />
+            <span className="text-neutral-700 text-sm font-medium leading-none">
+              Select a program
+            </span>
           </div>
-        </div>
-      )}
-    </Card>
-  );
+        );
+      case "returnToWorkout":
+        return (
+          <div
+            className={cn(baseContainerClasses, "justify-between")}
+            onClick={handleReturnToWorkout}
+          >
+            <div className="flex-1 flex justify-start items-center gap-1">
+              <Undo2 className="size-5 text-green-600" />
+              <span className="text-neutral-700 text-sm font-medium leading-none">
+                Return to workout
+              </span>
+            </div>
+          </div>
+        );
+      case "activeWorkout":
+        return (
+          <div className={cn(baseContainerClasses, "justify-between")}>
+            <div className="flex justify-start items-center gap-1">
+              <Circle className="size-4 text-green-500 fill-current" />
+              <span className="text-neutral-700 text-sm font-medium leading-none">
+                {formatSeconds(elapsedTime)}
+              </span>
+            </div>
+            <div className="flex justify-start items-center gap-2">
+              {isPaused ? (
+                <PlayCircle
+                  className="size-7 text-orange-500"
+                  onClick={togglePause}
+                />
+              ) : (
+                <PauseCircle
+                  className="size-7 text-orange-500"
+                  onClick={togglePause}
+                />
+              )}
+              <StopCircle
+                className="size-7 text-red-400"
+                onClick={handleEndWorkout}
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return <>{renderContent()}</>;
 }

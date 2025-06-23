@@ -23,6 +23,7 @@ import { ActiveWorkoutProvider } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
+import Account from "./pages/Account/Account";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -71,6 +72,7 @@ function AppContent() {
             <Route path="/workout" element={<Workout />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
           </Route>
         </Routes>
