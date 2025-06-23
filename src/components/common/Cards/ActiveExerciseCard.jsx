@@ -425,36 +425,38 @@ const ActiveExerciseCard = ({
             Unscheduled Exercise
           </div>
         )}
-        <DrawerManager
-          open={isEditSheetOpen}
-          onOpenChange={setIsEditSheetOpen}
-          title="Edit set"
-          leftAction={() => setIsEditSheetOpen(false)}
-          rightAction={() => handleEditFormSave(editForm)}
-          rightEnabled={formDirty}
-          rightText="Save"
-          leftText="Cancel"
-          padding={0}
-        >
-          <div className="flex-1 overflow-y-auto min-h-full px-0 py-0">
-            <SetEditForm
-              hideActionButtons
-              hideInternalHeader
-              onDirtyChange={setFormDirty}
-              onValuesChange={setEditForm}
-              formPrompt={
-                openSetIndex !== null
-                  ? `Edit ${sets[openSetIndex].set_variant}`
-                  : "Edit set"
-              }
-              onSave={handleEditFormSave}
-              onSaveForFuture={
-                isUnscheduled ? undefined : handleEditFormSaveForFuture
-              }
-              initialValues={editForm}
-            />
-          </div>
-        </DrawerManager>
+        {isEditSheetOpen && (
+          <DrawerManager
+            open={isEditSheetOpen}
+            onOpenChange={setIsEditSheetOpen}
+            title="Edit set"
+            leftAction={() => setIsEditSheetOpen(false)}
+            rightAction={() => handleEditFormSave(editForm)}
+            rightEnabled={formDirty}
+            rightText="Save"
+            leftText="Cancel"
+            padding={0}
+          >
+            <div className="flex-1 overflow-y-auto min-h-full px-0 py-0">
+              <SetEditForm
+                hideActionButtons
+                hideInternalHeader
+                onDirtyChange={setFormDirty}
+                onValuesChange={setEditForm}
+                formPrompt={
+                  openSetIndex !== null
+                    ? `Edit ${sets[openSetIndex].set_variant}`
+                    : "Edit set"
+                }
+                onSave={handleEditFormSave}
+                onSaveForFuture={
+                  isUnscheduled ? undefined : handleEditFormSaveForFuture
+                }
+                initialValues={editForm}
+              />
+            </div>
+          </DrawerManager>
+        )}
       </CardWrapper>
     );
   }
@@ -532,36 +534,38 @@ const ActiveExerciseCard = ({
           Unscheduled Exercise
         </div>
       )}
-      <DrawerManager
-        open={isEditSheetOpen}
-        onOpenChange={setIsEditSheetOpen}
-        title="Edit set"
-        leftAction={() => setIsEditSheetOpen(false)}
-        rightAction={() => handleEditFormSave(editForm)}
-        rightEnabled={formDirty}
-        rightText="Save"
-        leftText="Cancel"
-        padding={0}
-      >
-        <div className="flex-1 overflow-y-auto px-0 py-0">
-          <SetEditForm
-            hideActionButtons
-            hideInternalHeader
-            onDirtyChange={setFormDirty}
-            onValuesChange={setEditForm}
-            formPrompt={
-              openSetIndex !== null
-                ? `Edit ${sets[openSetIndex].set_variant}`
-                : "Edit set"
-            }
-            onSave={handleEditFormSave}
-            onSaveForFuture={
-              isUnscheduled ? undefined : handleEditFormSaveForFuture
-            }
-            initialValues={editForm}
-          />
-        </div>
-      </DrawerManager>
+      {isEditSheetOpen && (
+        <DrawerManager
+          open={isEditSheetOpen}
+          onOpenChange={setIsEditSheetOpen}
+          title="Edit set"
+          leftAction={() => setIsEditSheetOpen(false)}
+          rightAction={() => handleEditFormSave(editForm)}
+          rightEnabled={formDirty}
+          rightText="Save"
+          leftText="Cancel"
+          padding={0}
+        >
+          <div className="flex-1 overflow-y-auto px-0 py-0">
+            <SetEditForm
+              hideActionButtons
+              hideInternalHeader
+              onDirtyChange={setFormDirty}
+              onValuesChange={setEditForm}
+              formPrompt={
+                openSetIndex !== null
+                  ? `Edit ${sets[openSetIndex].set_variant}`
+                  : "Edit set"
+              }
+              onSave={handleEditFormSave}
+              onSaveForFuture={
+                isUnscheduled ? undefined : handleEditFormSaveForFuture
+              }
+              initialValues={editForm}
+            />
+          </div>
+        </DrawerManager>
+      )}
     </CardWrapper>
   );
 };
