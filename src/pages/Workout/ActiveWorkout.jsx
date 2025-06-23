@@ -30,6 +30,7 @@ const ActiveWorkout = () => {
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
   const [sectionFilter, setSectionFilter] = useState("warmup");
+  const [canAddExercise, setCanAddExercise] = useState(false);
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -239,7 +240,7 @@ const ActiveWorkout = () => {
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
           .from("exercises")
-          .insert([{ name: exerciseData.name, section: sectionFilter === "workout" ? "training" : sectionFilter }])
+          .insert([{ name: exerciseData.name, section: exerciseData.section }])
           .select("id")
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
@@ -397,6 +398,7 @@ const ActiveWorkout = () => {
         {showAddExercise &&
           (() => {
             const formRef = React.createRef();
+
             return (
               <DrawerManager
                 open={showAddExercise}
@@ -404,7 +406,7 @@ const ActiveWorkout = () => {
                 title="Exercise"
                 leftAction={() => setShowAddExercise(false)}
                 rightAction={() => formRef.current?.requestSubmit?.()}
-                rightEnabled={true}
+                rightEnabled={canAddExercise}
                 rightText="Add"
                 leftText="Cancel"
                 padding={0}
@@ -419,11 +421,14 @@ const ActiveWorkout = () => {
                       else handleAddExerciseToday(data);
                     }}
                     initialSets={3}
+                    initialSection={(sectionFilter === "workout" ? "training" : sectionFilter)}
                     initialSetConfigs={Array.from({ length: 3 }, () => ({
                       reps: 10,
                       weight: 25,
                       unit: "lbs",
                     }))}
+                    hideActionButtons={true}
+                    onDirtyChange={(ready) => setCanAddExercise(ready)}
                   />
                 </div>
               </DrawerManager>

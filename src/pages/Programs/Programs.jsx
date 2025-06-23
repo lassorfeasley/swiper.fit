@@ -10,7 +10,7 @@ import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
-import StaticCard from "@/components/organisms/static-card";
+import ProgramCard from "@/components/common/Cards/ProgramCard";
 import DrawerManager from "@/components/organisms/drawer-manager";
 
 const ProgramsIndex = () => {
@@ -130,12 +130,14 @@ const ProgramsIndex = () => {
           </div>
         ) : (
           filteredPrograms.map((program) => (
-            <StaticCard
+            <ProgramCard
               key={program.id}
               id={program.id}
               name={program.program_name}
-              labels={program.exerciseNames}
-              onClick={() => navigate(`/programs/${program.id}/configure`)}
+              exerciseCount={(program.exerciseNames || []).length}
+              leftText="Swipe to edit"
+              swipeStatus="active"
+              onSwipeComplete={() => navigate(`/programs/${program.id}/configure`)}
             />
           ))
         )}

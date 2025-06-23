@@ -7,7 +7,7 @@ import { supabase } from "@/supabaseClient";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
-import StaticCard from "@/components/organisms/static-card";
+import ProgramCard from "@/components/common/Cards/ProgramCard";
 
 const Workout = () => {
   const [programs, setPrograms] = useState([]);
@@ -61,12 +61,21 @@ const Workout = () => {
           setPrograms([]);
         } else {
           console.log("Successfully fetched programs:", data);
-          const programsWithExercises = (data || []).map((program) => ({
-            ...program,
-            exerciseNames: (program.program_exercises || [])
-              .map((pe) => pe.exercises?.name)
-              .filter(Boolean),
-          }));
+          const programsWithExercises = (data || []).map((program) => {
+            const exerciseCount = (program.program_exercises || []).length;
+            const setCount = (program.program_exercises || []).reduce(
+              (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
+              0
+            );
+            return {
+              ...program,
+              exerciseCount,
+              setCount,
+              exerciseNames: (program.program_exercises || [])
+                .map((pe) => pe.exercises?.name)
+                .filter(Boolean),
+            };
+          });
           setPrograms(programsWithExercises);
         }
       } catch (err) {
@@ -121,12 +130,16 @@ const Workout = () => {
           </div>
         ) : (
           filteredPrograms.map((program) => (
-            <StaticCard
+            <ProgramCard
               key={program.id}
               id={program.id}
               name={program.program_name}
-              labels={program.exerciseNames}
-              onClick={() => handleStartWorkout(program)}
+              exerciseCount={program.exerciseCount}
+              setCount={program.setCount}
+              leftText="Swipe to begin"
+              rightText={""}
+              swipeStatus="active"
+              onSwipeComplete={() => handleStartWorkout(program)}
             />
           ))
         )}
