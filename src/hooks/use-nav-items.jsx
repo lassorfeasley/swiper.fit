@@ -1,4 +1,4 @@
-import { Home, RotateCcw, Star } from "lucide-react";
+import { Home, RotateCcw, Star, CircleUser } from "lucide-react";
 
 export const useNavItems = () => {
   const navItems = [
@@ -8,6 +8,11 @@ export const useNavItems = () => {
       to: "/history",
       label: "History",
       icon: <RotateCcw className="size-5" />,
+    },
+    {
+      to: "/account",
+      label: "Account",
+      icon: <CircleUser className="size-5" />,
     },
   ];
 
