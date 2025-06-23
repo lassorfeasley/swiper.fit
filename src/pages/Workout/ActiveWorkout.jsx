@@ -410,6 +410,7 @@ const ActiveWorkout = () => {
                 rightText="Add"
                 leftText="Cancel"
                 padding={0}
+                className="add-exercise-drawer"
               >
                 <div className="flex-1 overflow-y-auto">
                   <AddNewExerciseForm

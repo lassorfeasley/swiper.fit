@@ -321,6 +321,7 @@ const AddNewExerciseForm = React.forwardRef(
           rightText="Save"
           leftText="Cancel"
           padding={0}
+          className="edit-set-drawer"
         >
           <FormSectionWrapper className="flex-1 overflow-y-auto p-4">
             <SetEditForm

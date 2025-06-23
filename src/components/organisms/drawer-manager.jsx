@@ -4,6 +4,7 @@ import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FormHeader } from "../atoms/sheet";
 import PropTypes from "prop-types";
+import { cn } from "@/lib/utils";
 
 const DrawerManager = ({
   children,
@@ -16,6 +17,7 @@ const DrawerManager = ({
   leftText,
   rightText,
   padding = 4,
+  className,
 }) => {
   const isMobile = useIsMobile();
 
@@ -23,10 +25,15 @@ const DrawerManager = ({
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className={`${padding === 0 ? 'p-0' : 'p-4'} max-h-[90dvh] z-[100]`}>
+          <DrawerContent
+            className={cn(
+              `${padding === 0 ? "p-0" : "p-4"} max-h-[90dvh] z-[100]`,
+              className
+            )}
+          >
             {leftAction && (
               <FormHeader
-                className={padding === 0 ? 'm-0' : undefined}
+                className={padding === 0 ? "m-0" : undefined}
                 leftText={leftText}
                 leftAction={leftAction}
                 title={title}
@@ -42,11 +49,11 @@ const DrawerManager = ({
         <SwiperSheet
           open={open}
           onOpenChange={onOpenChange}
-          className={`z-[100] ${padding === 0 ? 'p-0' : 'p-4'}`}
+          className={cn(`z-[100] ${padding === 0 ? "p-0" : "p-4"}`, className)}
         >
           {leftAction && (
             <FormHeader
-              className={padding === 0 ? 'm-0' : undefined}
+              className={padding === 0 ? "m-0" : undefined}
               leftText={leftText}
               leftAction={leftAction}
               title={title}
@@ -64,6 +71,7 @@ const DrawerManager = ({
 
 DrawerManager.propTypes = {
   padding: PropTypes.oneOf([0, 4]),
+  className: PropTypes.string,
 };
 
 export default DrawerManager;

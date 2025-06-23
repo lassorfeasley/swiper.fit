@@ -416,14 +416,14 @@ const ProgramBuilder = () => {
         </div>
         <DrawerManager
           open={showAddExercise || !!editingExercise}
-          onOpenChange={handleModalClose}
+          onOpenChange={(open) => {
+            handleModalClose();
+          }}
           title={showAddExercise ? "Exercise" : "Edit"}
           leftAction={handleModalClose}
-          rightAction={() => formRef.current?.requestSubmit?.()}
+          rightAction={() => formRef.current.requestSubmit()}
           rightEnabled={dirty}
-          rightText={showAddExercise ? "Add" : "Save"}
-          leftText="Cancel"
-          padding={0}
+          className="add-exercise-drawer"
         >
           <div className="flex flex-col h-full overflow-y-scroll md:overflow-y-auto">
             <div className="overflow-y-scroll md:overflow-auto h-[650px] md:h-full">
