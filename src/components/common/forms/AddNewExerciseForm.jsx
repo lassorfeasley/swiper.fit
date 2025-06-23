@@ -10,6 +10,7 @@ import SetEditForm from "./SetEditForm";
 import { FormHeader } from "@/components/atoms/sheet";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
 import DrawerManager from "@/components/organisms/drawer-manager";
+import FormSectionWrapper from "./wrappers/FormSectionWrapper";
 
 const AddNewExerciseForm = React.forwardRef(
   (
@@ -212,7 +213,7 @@ const AddNewExerciseForm = React.forwardRef(
         onSubmit={handleSave}
       >
         {/* Exercise name & sets */}
-        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4 px-4">
+        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
           <TextInput
             label="Exercise name"
             value={exerciseName}
@@ -253,10 +254,10 @@ const AddNewExerciseForm = React.forwardRef(
               />
             </div>
           )}
-        </div>
+        </FormSectionWrapper>
 
-        {/* Set defaults */}
-        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4 px-4">
+        {/* Default set configs */}
+        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
           <div className="text-body leading-tight">
             <span className="text-slate-600 font-medium">Set defaults </span>
             <span className="text-neutral-300">
@@ -267,52 +268,25 @@ const AddNewExerciseForm = React.forwardRef(
             initialDefaults={defaults}
             onDefaultsChange={updateDefault}
           />
-        </div>
+        </FormSectionWrapper>
 
-        {/* Customize sets */}
-        <div className="flex flex-col gap-3 py-4 px-4">
+        {/* Per-set configs */}
+        <FormSectionWrapper className="py-4 px-4">
           <div className="text-body leading-tight">
             <span className="text-slate-600 font-medium">Customize sets </span>
             <span className="text-neutral-300">
               Tap a set to name and configure weight, reps, and more.
             </span>
           </div>
-
           <div className="flex flex-col gap-3">
             {Array.from({ length: setsCount }).map((_, idx) => (
               <SetCard key={idx} idx={idx} />
             ))}
           </div>
-        </div>
+        </FormSectionWrapper>
 
-        {/* Per-set edit sheet */}
-        {editSheetOpen && (
-          <DrawerManager
-            open={editSheetOpen}
-            onOpenChange={setEditSheetOpen}
-            title="Edit set"
-            leftAction={() => setEditSheetOpen(false)}
-            rightAction={saveEditSheet}
-            rightEnabled={editingDirty}
-            rightText="Save"
-            leftText="Cancel"
-            padding={0}
-          >
-            <div className="flex-1 overflow-y-auto flex flex-col gap-6">
-              <SetEditForm
-                isChildForm
-                hideDivider
-                initialValues={editingFields}
-                onValuesChange={(vals) => setEditingFields(vals)}
-                onDirtyChange={setEditingDirty}
-              />
-            </div>
-          </DrawerManager>
-        )}
-
-        {/* Footer actions */}
         {!hideActionButtons && (
-          <div className="mt-6 flex flex-col gap-3 px-4 pb-4">
+          <FormSectionWrapper className="px-4 pb-4">
             <SwiperButton
               type="submit"
               variant="default"
@@ -334,8 +308,29 @@ const AddNewExerciseForm = React.forwardRef(
                 Delete exercise
               </SwiperButton>
             )}
-          </div>
+          </FormSectionWrapper>
         )}
+
+        <DrawerManager
+          open={editSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          title="Edit set"
+          leftAction={() => setEditSheetOpen(false)}
+          rightAction={saveEditSheet}
+          rightEnabled={editingDirty}
+          rightText="Save"
+          leftText="Cancel"
+          padding={0}
+        >
+          <FormSectionWrapper className="flex-1 overflow-y-auto p-4">
+            <SetEditForm
+              isChildForm
+              initialValues={editingFields}
+              onValuesChange={(vals) => setEditingFields(vals)}
+              onDirtyChange={setEditingDirty}
+            />
+          </FormSectionWrapper>
+        </DrawerManager>
       </form>
     );
   }

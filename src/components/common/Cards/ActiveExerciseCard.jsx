@@ -24,6 +24,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
 import DrawerManager from "@/components/organisms/drawer-manager";
+import FormSectionWrapper from "../forms/wrappers/FormSectionWrapper";
 
 const ActiveExerciseCard = ({
   exerciseId,
@@ -351,194 +352,166 @@ const ActiveExerciseCard = ({
     ]
   );
 
-  // If expanded view is true, render the detailed view
-  if (isExpanded && initialSetConfigs.length > 1) {
-    return (
-      <CardWrapper
-        className="Property1Expanded self-stretch bg-white rounded-xl flex flex-col justify-start items-stretch gap-0"
-        style={{ maxWidth: 500 }}
-        gap={0} marginTop={0} marginBottom={0}
-      >
-        <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
-          <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-            <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
-              {exerciseName}
+  return (
+    <>
+      {isExpanded && initialSetConfigs.length > 1 ? (
+        <CardWrapper
+          className="Property1Expanded self-stretch bg-white rounded-xl flex flex-col justify-start items-stretch gap-0"
+          style={{ maxWidth: 500 }}
+          gap={0}
+          marginTop={0}
+          marginBottom={0}
+        >
+          <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
+            <div className="Label flex-1 inline-flex flex-col justify-start items-start">
+              <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
+                {exerciseName}
+              </div>
+              <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
+                {sets.length === 1
+                  ? "One set"
+                  : sets.length === 2
+                  ? "Two sets"
+                  : sets.length === 3
+                  ? "Three sets"
+                  : `${sets.length} sets`}
+              </div>
             </div>
-            <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
-              {sets.length === 1
-                ? "One set"
-                : sets.length === 2
-                ? "Two sets"
-                : sets.length === 3
-                ? "Three sets"
-                : `${sets.length} sets`}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsExpanded(false)}
-            className="SortDescending size-7 relative overflow-hidden"
-          >
-            <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
-          </button>
-        </div>
-        <div className="self-stretch h-0 border-b border-stone-200" />
-        {sets.map((set, idx) => {
-          const setType = set.set_type || "reps";
-          const timedDuration = set.timed_set_duration;
-          const isLastSet = idx === sets.length - 1;
-          return (
-            <div
-              key={`${set.program_set_id ?? set.tempId ?? `idx-${idx}`}`}
-              className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2 ${
-                !isLastSet ? "border-b border-stone-200" : ""
-              }`}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(false)}
+              className="SortDescending size-7 relative overflow-hidden"
             >
-              <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
-                <div className="SetOne justify-center text-slate-600 text-sm font-normal leading-tight">
-                  {set.set_variant || set.name}
+              <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
+            </button>
+          </div>
+          <div className="self-stretch h-0 border-b border-stone-200" />
+          {sets.map((set, idx) => {
+            const setType = set.set_type || "reps";
+            const timedDuration = set.timed_set_duration;
+            const isLastSet = idx === sets.length - 1;
+            return (
+              <div
+                key={`${set.program_set_id ?? set.tempId ?? `idx-${idx}`}`}
+                className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2 ${
+                  !isLastSet ? "border-b border-stone-200" : ""
+                }`}
+              >
+                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
+                  <div className="SetOne justify-center text-slate-600 text-sm font-normal leading-tight">
+                    {set.set_variant || set.name}
+                  </div>
+                  <SetBadge
+                    key={`badge-${set.program_set_id ?? set.tempId ?? idx}`}
+                    reps={set.reps}
+                    weight={set.weight}
+                    unit={set.weight_unit}
+                    complete={set.status === "complete"}
+                    editable={true}
+                    onEdit={() => handlePillClick(idx)}
+                    set_type={setType}
+                    timed_set_duration={timedDuration}
+                  />
                 </div>
+                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
+                  <SwipeSwitch
+                    status={set.status}
+                    onComplete={() => handleSetComplete(idx)}
+                    duration={timedDuration || 30}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          {isUnscheduled && (
+            <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
+              Unscheduled Exercise
+            </div>
+          )}
+        </CardWrapper>
+      ) : (
+        // Compact view
+        <CardWrapper
+          className="Property1Compact self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4"
+          style={{ maxWidth: 500 }}
+          gap={0}
+          marginTop={0}
+          marginBottom={0}
+        >
+          <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
+            <div className="Label flex-1 inline-flex flex-col justify-start items-start">
+              <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
+                {exerciseName}
+              </div>
+              <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
+                {sets.length === 1
+                  ? "One set"
+                  : sets.length === 2
+                  ? "Two sets"
+                  : sets.length === 3
+                  ? "Three sets"
+                  : `${sets.length} sets`}
+              </div>
+            </div>
+            {initialSetConfigs.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(true)}
+                className="SortDescending size-7 relative overflow-hidden"
+              >
+                <Maximize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
+              </button>
+            )}
+          </div>
+          {activeSet && (
+            <SwipeSwitch
+              status={activeSet.status}
+              onComplete={handleActiveSetComplete}
+              duration={
+                activeSet.set_type === "timed"
+                  ? activeSet.timed_set_duration
+                  : undefined
+              }
+            />
+          )}
+          <div className="self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
+            {sets.map((set, idx) => {
+              const setType = set.set_type || "reps";
+              const timedDuration = set.timed_set_duration;
+              return (
                 <SetBadge
-                  key={`badge-${set.program_set_id ?? set.tempId ?? idx}`}
+                  key={`${set.program_set_id ?? set.tempId ?? idx}`}
+                  set={set}
+                  onClick={() => handlePillClick(idx)}
+                  onEdit={() => handlePillClick(idx)}
                   reps={set.reps}
                   weight={set.weight}
                   unit={set.weight_unit}
                   complete={set.status === "complete"}
                   editable={true}
-                  onEdit={() => handlePillClick(idx)}
                   set_type={setType}
                   timed_set_duration={timedDuration}
                 />
-              </div>
-              <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
-                <SwipeSwitch
-                  status={set.status}
-                  onComplete={() => handleSetComplete(idx)}
-                  duration={timedDuration || 30}
-                />
-              </div>
+              );
+            })}
+          </div>
+          {isUnscheduled && (
+            <div className="text-center text-sm text-gray-500 mt-2">
+              Unscheduled Exercise
             </div>
-          );
-        })}
-        {isUnscheduled && (
-          <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
-            Unscheduled Exercise
-          </div>
-        )}
-        {isEditSheetOpen && (
-          <DrawerManager
-            open={isEditSheetOpen}
-            onOpenChange={setIsEditSheetOpen}
-            title="Edit set"
-            leftAction={() => setIsEditSheetOpen(false)}
-            rightAction={() => handleEditFormSave(editForm)}
-            rightEnabled={formDirty}
-            rightText="Save"
-            leftText="Cancel"
-            padding={0}
-          >
-            <div className="flex-1 overflow-y-auto min-h-full px-0 py-0">
-              <SetEditForm
-                hideActionButtons
-                hideInternalHeader
-                onDirtyChange={setFormDirty}
-                onValuesChange={setEditForm}
-                formPrompt={
-                  openSetIndex !== null
-                    ? `Edit ${sets[openSetIndex].set_variant}`
-                    : "Edit set"
-                }
-                onSave={handleEditFormSave}
-                onSaveForFuture={
-                  isUnscheduled ? undefined : handleEditFormSaveForFuture
-                }
-                initialValues={editForm}
-              />
-            </div>
-          </DrawerManager>
-        )}
-      </CardWrapper>
-    );
-  }
-
-  // Compact view
-  return (
-    <CardWrapper
-      className="Property1Compact self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4"
-      style={{ maxWidth: 500 }}
-      gap={0} marginTop={0} marginBottom={0}
-    >
-      <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
-        <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-          <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
-            {exerciseName}
-          </div>
-          <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
-            {sets.length === 1
-              ? "One set"
-              : sets.length === 2
-              ? "Two sets"
-              : sets.length === 3
-              ? "Three sets"
-              : `${sets.length} sets`}
-          </div>
-        </div>
-        {initialSetConfigs.length > 1 && (
-          <button
-            type="button"
-            onClick={() => setIsExpanded(true)}
-            className="SortDescending size-7 relative overflow-hidden"
-          >
-            <Maximize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
-          </button>
-        )}
-      </div>
-      <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start gap-1">
-        <SwipeSwitch
-          status={
-            anyActive && activeSet?.set_type === "timed"
-              ? "ready-timed-set"
-              : swipeStatus
-          }
-          onComplete={handleActiveSetComplete}
-          duration={
-            activeSet?.set_type === "timed"
-              ? activeSet.timed_set_duration
-              : undefined
-          }
-        />
-      </div>
-      <div className="self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
-        {sets.map((set, idx) => {
-          const setType = set.set_type || "reps";
-          const timedDuration = set.timed_set_duration;
-          return (
-            <SetBadge
-              key={`${set.program_set_id ?? set.tempId ?? idx}`}
-              set={set}
-              onClick={() => handlePillClick(idx)}
-              onEdit={() => handlePillClick(idx)}
-              reps={set.reps}
-              weight={set.weight}
-              unit={set.weight_unit}
-              complete={set.status === "complete"}
-              editable={true}
-              set_type={setType}
-              timed_set_duration={timedDuration}
-            />
-          );
-        })}
-      </div>
-      {isUnscheduled && (
-        <div className="text-center text-sm text-gray-500 mt-2">
-          Unscheduled Exercise
-        </div>
+          )}
+        </CardWrapper>
       )}
+
       {isEditSheetOpen && (
         <DrawerManager
           open={isEditSheetOpen}
           onOpenChange={setIsEditSheetOpen}
-          title="Edit set"
+          title={
+            openSetIndex !== null
+              ? `Edit ${sets[openSetIndex].set_variant}`
+              : "Edit set"
+          }
           leftAction={() => setIsEditSheetOpen(false)}
           rightAction={() => handleEditFormSave(editForm)}
           rightEnabled={formDirty}
@@ -546,27 +519,18 @@ const ActiveExerciseCard = ({
           leftText="Cancel"
           padding={0}
         >
-          <div className="flex-1 overflow-y-auto px-0 py-0">
+          <FormSectionWrapper className="p-4">
             <SetEditForm
-              hideActionButtons
-              hideInternalHeader
-              onDirtyChange={setFormDirty}
+              isChildForm
+              hideDivider
               onValuesChange={setEditForm}
-              formPrompt={
-                openSetIndex !== null
-                  ? `Edit ${sets[openSetIndex].set_variant}`
-                  : "Edit set"
-              }
-              onSave={handleEditFormSave}
-              onSaveForFuture={
-                isUnscheduled ? undefined : handleEditFormSaveForFuture
-              }
+              onDirtyChange={setFormDirty}
               initialValues={editForm}
             />
-          </div>
+          </FormSectionWrapper>
         </DrawerManager>
       )}
-    </CardWrapper>
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ import NumericInput from "@/components/molecules/numeric-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { TextInput } from "@/components/molecules/text-input";
+import FormSectionWrapper from "./wrappers/FormSectionWrapper";
 
 const setTypeOptions = [
   { label: "Reps", value: "reps" },
@@ -37,7 +38,7 @@ const FormContent = ({
   } = formValues;
 
   return (
-    <div className="Frame14 self-stretch flex flex-col justify-start items-start gap-4">
+    <>
       {showSetNameField && (
         <TextInput
           label="Set name"
@@ -94,7 +95,7 @@ const FormContent = ({
           allowOneDecimal={true}
         />
       )}
-    </div>
+    </>
   );
 };
 
@@ -201,54 +202,42 @@ const SetEditForm = memo(
 
     if (isChildForm) {
       return (
-        <div
-          className={`w-full inline-flex flex-col justify-start items-start gap-6 px-4 ${className}`}
-        >
-          <div className="w-full flex flex-col justify-start items-start gap-6">
-            <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
-              <FormContent
-                formValues={formValues}
-                showSetNameField={showSetNameField}
-                handleLocalChange={handleLocalChange}
-                handleSetTypeChange={handleSetTypeChange}
-                handleUnitChange={handleUnitChange}
-                syncWithParent={syncWithParent}
-                repsOnChange={repsOnChange}
-                durationOnChange={durationOnChange}
-                weightOnChange={weightOnChange}
-              />
-            </div>
-          </div>
-        </div>
+        <FormContent
+          formValues={formValues}
+          showSetNameField={showSetNameField}
+          handleLocalChange={handleLocalChange}
+          handleSetTypeChange={handleSetTypeChange}
+          handleUnitChange={handleUnitChange}
+          syncWithParent={syncWithParent}
+          repsOnChange={repsOnChange}
+          durationOnChange={durationOnChange}
+          weightOnChange={weightOnChange}
+        />
       );
     }
 
     return (
-      <div
-        className={`w-full inline-flex flex-col justify-start items-start gap-6 px-4 ${className}`}
-      >
+      <div className={`w-full flex flex-col justify-start items-start gap-0 ${className}`}>
         {!isChildForm && !hideInternalHeader && (
           <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium leading-7">
             {formPrompt}
           </div>
         )}
-        <div className="w-full flex flex-col justify-start items-start gap-6">
-          <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
-            <FormContent
-              formValues={formValues}
-              showSetNameField={showSetNameField}
-              handleLocalChange={handleLocalChange}
-              handleSetTypeChange={handleSetTypeChange}
-              handleUnitChange={handleUnitChange}
-              syncWithParent={syncWithParent}
-              repsOnChange={repsOnChange}
-              durationOnChange={durationOnChange}
-              weightOnChange={weightOnChange}
-            />
-          </div>
-        </div>
+        <FormSectionWrapper>
+          <FormContent
+            formValues={formValues}
+            showSetNameField={showSetNameField}
+            handleLocalChange={handleLocalChange}
+            handleSetTypeChange={handleSetTypeChange}
+            handleUnitChange={handleUnitChange}
+            syncWithParent={syncWithParent}
+            repsOnChange={repsOnChange}
+            durationOnChange={durationOnChange}
+            weightOnChange={weightOnChange}
+          />
+        </FormSectionWrapper>
         {!isChildForm && (
-          <div className="Frame6 self-stretch flex flex-col justify-start items-start gap-3">
+          <div className="flex flex-col gap-3 border-t border-neutral-300 pt-4 pb-4">
             {onSaveForFuture && (
               <ToggleInput
                 label="Keep new settings?"

@@ -152,23 +152,27 @@ const ExerciseCard = ({
           padding={0}
         >
           <div className="flex-1 overflow-y-auto">
-            <SetEditForm
-              hideInternalHeader
-              hideActionButtons
-              onDirtyChange={setFormDirty}
-              onValuesChange={setCurrentFormValues}
-              onSave={handleEditFormSave}
-              initialValues={editFormValues}
-            />
+            <div className="p-4">
+              <SetEditForm
+                hideInternalHeader
+                hideActionButtons
+                onDirtyChange={setFormDirty}
+                onValuesChange={setCurrentFormValues}
+                onSave={handleEditFormSave}
+                initialValues={editFormValues}
+              />
+            </div>
             {onSetConfigsChange && (
-              <div className="mt-4">
-                <SwiperButton
-                  onClick={handleSetDelete}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  Delete Set
-                </SwiperButton>
+              <div className="border-t border-neutral-300">
+                <div className="p-4">
+                  <SwiperButton
+                    onClick={handleSetDelete}
+                    variant="destructive"
+                    className="w-full"
+                  >
+                    Delete Set
+                  </SwiperButton>
+                </div>
               </div>
             )}
           </div>
