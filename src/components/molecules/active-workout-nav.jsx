@@ -5,7 +5,7 @@ import {
   PauseCircle,
   StopCircle,
   Circle,
-  ArrowRight,
+  Undo2,
 } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate } from "react-router-dom";
@@ -87,7 +87,7 @@ export default function ActiveWorkoutNav() {
             onClick={handleReturnToWorkout}
           >
             <div className="flex-1 flex justify-start items-center gap-1">
-              <ArrowRight className="size-5 text-green-600" />
+              <Undo2 className="size-5 text-green-600" />
               <span className="text-neutral-700 text-sm font-medium leading-none">
                 Return to workout
               </span>
