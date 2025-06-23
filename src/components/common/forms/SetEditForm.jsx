@@ -131,7 +131,11 @@ const SetEditForm = memo(
     }, [formValues, onDirtyChange]);
 
     const handleLocalChange = (field, value) => {
-      setFormValues((prev) => ({ ...prev, [field]: value }));
+      setFormValues((prev) => {
+        const newVals = { ...prev, [field]: value };
+        if (onValuesChange) onValuesChange(newVals);
+        return newVals;
+      });
     };
 
     const syncWithParent = () => {

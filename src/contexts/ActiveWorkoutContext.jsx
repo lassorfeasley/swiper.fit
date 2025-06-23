@@ -173,15 +173,16 @@ export function ActiveWorkoutProvider({ children }) {
       let newSets = [...prevSets];
 
       updates.forEach(update => {
-        const programSetId = String(update.changes.program_set_id);
-        const setIdx = newSets.findIndex(s => String(s.program_set_id) === programSetId);
+        const targetProgramSetId = update.changes.program_set_id;
+        const targetId = update.id;
+        const setIdx = newSets.findIndex(s => {
+          if (targetProgramSetId) return String(s.program_set_id) === String(targetProgramSetId);
+          return String(s.id) === String(targetId);
+        });
 
         if (setIdx !== -1) {
-          // Update existing set
           newSets[setIdx] = { ...newSets[setIdx], ...update.changes };
         } else {
-          // Add new set if not found, ensuring exercise array is initialized
-          if (!newSets) newSets = [];
           newSets.push({ ...update.changes, id: update.id });
         }
       });

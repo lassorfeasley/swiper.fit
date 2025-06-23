@@ -76,7 +76,9 @@ const ActiveExerciseCard = ({
         status: fromParent.status
           ? fromParent.status
           : i === 0
-          ? "active"
+          ? config.set_type === "timed" || fromParent.set_type === "timed"
+            ? "ready-timed-set"
+            : "active"
           : "locked",
         set_variant:
           fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
@@ -264,9 +266,28 @@ const ActiveExerciseCard = ({
 
       const set_to_update = sets[openSetIndex];
       const set_id_to_update = set_to_update.id;
-      const newStatus = formValues.completed
-        ? "complete"
-        : set_to_update.status;
+      // Derive new status based on set_type and current state
+      let newStatus = set_to_update.status;
+      if (formValues.completed) {
+        newStatus = "complete";
+      } else {
+        // Switching to timed: move to ready-timed-set if not complete
+        if (
+          formValues.set_type === "timed" &&
+          ["active", "locked"].includes(set_to_update.status)
+        ) {
+          newStatus = "ready-timed-set";
+        }
+        // Switching from timed to reps: reset counting/ready states back to active
+        if (
+          formValues.set_type !== "timed" &&
+          ["ready-timed-set", "counting-down-timed"].includes(
+            set_to_update.status
+          )
+        ) {
+          newStatus = "active";
+        }
+      }
       const set_variant_to_save =
         formValues.set_variant || set_to_update.set_variant;
 
@@ -301,7 +322,7 @@ const ActiveExerciseCard = ({
       setIsEditSheetOpen(false);
       setFormDirty(true);
     },
-    [exerciseId, onSetDataChange, openSetIndex, sets]
+    [exerciseId, onSetDataChange, openSetIndex, sets, editForm]
   );
 
   const handleEditFormSaveForFuture = useCallback(
@@ -409,7 +430,7 @@ const ActiveExerciseCard = ({
           onOpenChange={setIsEditSheetOpen}
           title="Edit set"
           leftAction={() => setIsEditSheetOpen(false)}
-          rightAction={handleEditFormSave}
+          rightAction={() => handleEditFormSave(editForm)}
           rightEnabled={formDirty}
           rightText="Save"
           leftText="Cancel"
@@ -420,6 +441,7 @@ const ActiveExerciseCard = ({
               hideActionButtons
               hideInternalHeader
               onDirtyChange={setFormDirty}
+              onValuesChange={setEditForm}
               formPrompt={
                 openSetIndex !== null
                   ? `Edit ${sets[openSetIndex].set_variant}`
@@ -515,7 +537,7 @@ const ActiveExerciseCard = ({
         onOpenChange={setIsEditSheetOpen}
         title="Edit set"
         leftAction={() => setIsEditSheetOpen(false)}
-        rightAction={handleEditFormSave}
+        rightAction={() => handleEditFormSave(editForm)}
         rightEnabled={formDirty}
         rightText="Save"
         leftText="Cancel"
@@ -526,6 +548,7 @@ const ActiveExerciseCard = ({
             hideActionButtons
             hideInternalHeader
             onDirtyChange={setFormDirty}
+            onValuesChange={setEditForm}
             formPrompt={
               openSetIndex !== null
                 ? `Edit ${sets[openSetIndex].set_variant}`
