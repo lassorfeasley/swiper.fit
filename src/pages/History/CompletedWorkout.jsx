@@ -8,6 +8,10 @@ import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useAuth } from "@/contexts/AuthContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import DrawerManager from "@/components/organisms/drawer-manager";
+import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
+import { TextInput } from "@/components/molecules/text-input";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -17,6 +21,8 @@ const CompletedWorkout = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isEditWorkoutOpen, setEditWorkoutOpen] = useState(false);
+  const [workoutName, setWorkoutName] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -97,6 +103,12 @@ const CompletedWorkout = () => {
     if (workoutId) fetchData();
   }, [workoutId, user]);
 
+  useEffect(() => {
+    if (workout) {
+      setWorkoutName(workout.workout_name);
+    }
+  }, [workout]);
+
   // Group sets by exercise_id, but only include exercises that have valid sets
   const setsByExercise = {};
   sets.forEach((set) => {
@@ -117,16 +129,17 @@ const CompletedWorkout = () => {
     return exerciseName.toLowerCase().includes(search.toLowerCase());
   });
 
-  const handleTitleChange = async (newTitle) => {
+  const handleSaveWorkoutName = async () => {
     try {
       const { error } = await supabase
         .from("workouts")
-        .update({ workout_name: newTitle })
+        .update({ workout_name: workoutName })
         .eq("id", workoutId)
         .eq("user_id", user.id);
 
       if (error) throw error;
-      setWorkout((prev) => ({ ...prev, workout_name: newTitle }));
+      setWorkout((prev) => ({ ...prev, workout_name: workoutName }));
+      setEditWorkoutOpen(false);
     } catch (err) {
       alert("Failed to update workout name: " + err.message);
     }
@@ -250,12 +263,11 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         appHeaderTitle={workout?.workout_name}
-        pageNameEditable={true}
+        pageNameEditable={false}
         showBackButton={true}
         showAddButton={false}
-        onTitleChange={handleTitleChange}
-        onDelete={handleDeleteWorkout}
-        showDeleteOption={true}
+        showEditOption={true}
+        onEdit={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
@@ -278,6 +290,32 @@ const CompletedWorkout = () => {
           </CardWrapper>
         )}
       </AppLayout>
+      <DrawerManager
+        open={isEditWorkoutOpen}
+        onOpenChange={setEditWorkoutOpen}
+        title="Edit Workout"
+        rightAction={handleSaveWorkoutName}
+        rightText="Save"
+        leftAction={() => setEditWorkoutOpen(false)}
+        leftText="Cancel"
+      >
+        <FormSectionWrapper className="p-4">
+          <TextInput
+            label="Workout Name"
+            value={workoutName}
+            onChange={(e) => setWorkoutName(e.target.value)}
+          />
+        </FormSectionWrapper>
+        <div className="p-4 border-t border-neutral-300">
+          <SwiperButton
+            onClick={handleDeleteWorkout}
+            variant="destructive"
+            className="w-full"
+          >
+            Delete Workout
+          </SwiperButton>
+        </div>
+      </DrawerManager>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}

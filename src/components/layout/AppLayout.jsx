@@ -5,6 +5,13 @@ import PropTypes from "prop-types";
 export default function AppLayout({
   children,
   showSidebar = true,
+  onDelete,
+  showDeleteOption = false,
+  onEdit,
+  showEditOption,
+  search = false,
+  searchValue,
+  onSearchChange,
   ...headerProps
 }) {
   const headerRef = useRef(null);
@@ -46,4 +53,11 @@ export default function AppLayout({
 AppLayout.propTypes = {
   children: PropTypes.node,
   showSidebar: PropTypes.bool,
+  onDelete: PropTypes.func,
+  showDeleteOption: PropTypes.bool,
+  onEdit: PropTypes.func,
+  showEditOption: PropTypes.bool,
+  search: PropTypes.bool,
+  searchValue: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };

@@ -2,7 +2,18 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, forwardRef, useEffect } from "react";
-import { ArrowLeft, Plus, Search, X, Settings2, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  X,
+  Settings2,
+  Trash2,
+  MoreVertical,
+  ChevronLeft,
+  PlusCircle,
+  Edit2,
+} from "lucide-react";
 import SearchField from "@/components/molecules/search-field";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -10,6 +21,8 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import DrawerManager from "../organisms/drawer-manager";
 import SectionNav from "@/components/molecules/section-nav";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/atoms/button";
 
 // Add this before the component definition
 const headerResponsiveStyle = `
@@ -44,6 +57,8 @@ export const PageHeader = forwardRef(
       showSectionNav = false,
       sectionNavValue,
       onSectionNavChange,
+      onEdit,
+      showEditOption = false,
       ...props
     },
     ref
@@ -183,6 +198,21 @@ export const PageHeader = forwardRef(
                       >
                         <Settings2 className="size-6" />
                       </button>
+                    )}
+                    {showEditOption && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={onEdit}>
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            <span>Edit</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>
@@ -332,6 +362,8 @@ PageHeader.propTypes = {
   showSectionNav: PropTypes.bool,
   sectionNavValue: PropTypes.string,
   onSectionNavChange: PropTypes.func,
+  onEdit: PropTypes.func,
+  showEditOption: PropTypes.bool,
 };
 
 export default PageHeader;
