@@ -19,7 +19,7 @@ export default function AppLayout({
     updateHeaderHeight();
     window.addEventListener("resize", updateHeaderHeight);
     return () => window.removeEventListener("resize", updateHeaderHeight);
-  }, []);
+  }, [headerProps]); // Re-run if props that affect height change
 
   return (
     <div className="min-h-screen flex bg-stone-200 md:h-screen">

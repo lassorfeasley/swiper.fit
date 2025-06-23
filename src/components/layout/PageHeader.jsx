@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import DrawerManager from "../organisms/drawer-manager";
+import SectionNav from "@/components/molecules/section-nav";
 
 // Add this before the component definition
 const headerResponsiveStyle = `
@@ -40,6 +41,9 @@ export const PageHeader = forwardRef(
       className,
       sidebarWidth = 256,
       pageContext = "default",
+      showSectionNav = false,
+      sectionNavValue,
+      onSectionNavChange,
       ...props
     },
     ref
@@ -142,7 +146,7 @@ export const PageHeader = forwardRef(
         <div
           ref={ref}
           className={cn(
-            "fixed top-0 right-0 z-50 bg-stone-200 border-b border-neutral-100 page-header-fixed",
+            "fixed top-0 right-0 z-50 bg-stone-200 border-b border-neutral-100 page-header-fixed flex flex-col",
             className
           )}
           style={{ left: sidebarWidth }}
@@ -241,6 +245,9 @@ export const PageHeader = forwardRef(
               </div>
             </div>
           </div>
+          {showSectionNav && (
+            <SectionNav value={sectionNavValue} onChange={onSectionNavChange} />
+          )}
         </div>
 
         {/* Edit Title Sheet */}
@@ -322,6 +329,9 @@ PageHeader.propTypes = {
     "workoutDetail",
     "programBuilder",
   ]),
+  showSectionNav: PropTypes.bool,
+  sectionNavValue: PropTypes.string,
+  onSectionNavChange: PropTypes.func,
 };
 
 export default PageHeader;

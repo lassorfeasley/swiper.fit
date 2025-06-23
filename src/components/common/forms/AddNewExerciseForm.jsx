@@ -19,6 +19,7 @@ const AddNewExerciseForm = React.forwardRef(
       formPrompt = "Add to program",
       initialName = "",
       initialSets = 3,
+      initialSection = "training",
       initialSetConfigs = [],
       onDirtyChange,
       hideActionButtons = false,
@@ -31,7 +32,7 @@ const AddNewExerciseForm = React.forwardRef(
     /* ------------------------------------------------------------------ */
 
     const [exerciseName, setExerciseName] = useState(initialName);
-    const [section, setSection] = useState("training");
+    const [section, setSection] = useState(initialSection);
     const initialNameRef = React.useRef(initialName);
 
     // Build initial defaults from the first supplied set config (if any)
@@ -345,6 +346,7 @@ AddNewExerciseForm.propTypes = {
   formPrompt: PropTypes.string,
   initialName: PropTypes.string,
   initialSets: PropTypes.number,
+  initialSection: PropTypes.oneOf(["training", "warmup", "cooldown"]),
   initialSetConfigs: PropTypes.arrayOf(
     PropTypes.shape({
       reps: PropTypes.number,

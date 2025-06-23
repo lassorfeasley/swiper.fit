@@ -10,6 +10,7 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import DrawerManager from "@/components/organisms/drawer-manager";
+import SectionNav from "@/components/molecules/section-nav";
 
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -28,6 +29,7 @@ const ActiveWorkout = () => {
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
+  const [sectionFilter, setSectionFilter] = useState("warmup");
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -50,10 +52,9 @@ const ActiveWorkout = () => {
         .from("program_exercises")
         .select(
           `
-          id,
-          exercise_id,
-          exercises(name),
-          program_sets(id, reps, weight, weight_unit, set_order, set_variant)
+          *,
+          exercises(name, section),
+          program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
         `
         )
         .eq("program_id", activeWorkout.programId)
@@ -80,6 +81,10 @@ const ActiveWorkout = () => {
           const cards = uniqueProgExs.map((pe) => ({
             id: pe.id,
             exercise_id: pe.exercise_id,
+            section: (() => {
+              const raw = ((pe.exercises || {}).section || "").toLowerCase();
+              return raw === "training" ? "workout" : raw;
+            })(),
             name:
               (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
               "Unknown",
@@ -88,9 +93,11 @@ const ActiveWorkout = () => {
               .map((set) => ({
                 id: set.id,
                 reps: set.reps,
-                weight: set.weight,
-                unit: set.weight_unit || "lbs",
+                weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
+                unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
                 set_variant: set.set_variant || `Set ${set.set_order}`,
+                set_type: set.set_type,
+                timed_set_duration: set.timed_set_duration,
               })),
           }));
           setExercises(cards);
@@ -217,9 +224,9 @@ const ActiveWorkout = () => {
   };
 
   // Filter exercises based on search
-  const filteredExercises = exercises.filter((ex) =>
-    ex.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredExercises = exercises
+    .filter((ex) => ex.section === sectionFilter)
+    .filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
 
   const handleAddExercise = async (exerciseData, updateType = "today") => {
     try {
@@ -232,14 +239,17 @@ const ActiveWorkout = () => {
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
           .from("exercises")
-          .insert([{ name: exerciseData.name }])
+          .insert([{ name: exerciseData.name, section: sectionFilter === "workout" ? "training" : sectionFilter }])
           .select("id")
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
       }
 
-      const { data: progEx, error: progExError } = await supabase
+      let progEx;
+      let progExError;
+      // Attempt insert with section attribute first
+      ({ data: progEx, error: progExError } = await supabase
         .from("program_exercises")
         .insert({
           program_id: activeWorkout.programId,
@@ -247,7 +257,8 @@ const ActiveWorkout = () => {
           exercise_order: exercises.length + 1,
         })
         .select("id")
-        .single();
+        .single());
+
       if (progExError || !progEx)
         throw new Error("Failed to link exercise to program");
       const program_exercise_id = progEx.id;
@@ -295,10 +306,9 @@ const ActiveWorkout = () => {
       .from("program_exercises")
       .select(
         `
-        id,
-        exercise_id,
-        exercises(name),
-        program_sets(id, reps, weight, weight_unit, set_order, set_variant)
+        *,
+        exercises(name, section),
+        program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
       `
       )
       .eq("program_id", activeWorkout.programId);
@@ -326,6 +336,10 @@ const ActiveWorkout = () => {
     const cards = uniqueProgExs.map((pe) => ({
       id: pe.id,
       exercise_id: pe.exercise_id,
+      section: (() => {
+        const raw = ((pe.exercises || {}).section || "").toLowerCase();
+        return raw === "training" ? "workout" : raw;
+      })(),
       name:
         (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
         "Unknown",
@@ -334,9 +348,11 @@ const ActiveWorkout = () => {
         .map((set) => ({
           id: set.id,
           reps: set.reps,
-          weight: set.weight,
-          unit: set.weight_unit || "lbs",
+          weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
+          unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
           set_variant: set.set_variant || `Set ${set.set_order}`,
+          set_type: set.set_type,
+          timed_set_duration: set.timed_set_duration,
         })),
     }));
     setExercises(cards);
@@ -348,9 +364,8 @@ const ActiveWorkout = () => {
         showAddButton={true}
         addButtonText="Add exercise"
         pageNameEditable={true}
-        showBackButton={true}
-        appHeaderTitle={"back"}
-        onBack={handleEndWorkout}
+        showBackButton={false}
+        appHeaderTitle={activeWorkout?.name || "Workout"}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}
         onDelete={handleDeleteWorkout}
@@ -359,6 +374,9 @@ const ActiveWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
+        showSectionNav={true}
+        sectionNavValue={sectionFilter}
+        onSectionNavChange={setSectionFilter}
       >
         <div className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5">
           {filteredExercises.map((exercise) => (

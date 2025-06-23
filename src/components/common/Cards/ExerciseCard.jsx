@@ -149,6 +149,7 @@ const ExerciseCard = ({
           rightEnabled={formDirty}
           rightText="Save"
           leftText="Cancel"
+          padding={0}
         >
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <SetEditForm

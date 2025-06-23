@@ -10,6 +10,7 @@ import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import DrawerManager from "@/components/organisms/drawer-manager";
+import SectionNav from "@/components/molecules/section-nav";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -28,6 +29,7 @@ const ProgramBuilder = () => {
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
+  const [sectionFilter, setSectionFilter] = useState("workout");
 
   useEffect(() => {
     setPageName("ProgramBuilder");
@@ -46,7 +48,7 @@ const ProgramBuilder = () => {
       const { data: progExs, error } = await supabase
         .from("program_exercises")
         .select(
-          "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
+          "id, exercise_id, exercise_order, exercises(name, section), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
         )
         .eq("program_id", programId)
         .order("exercise_order", { ascending: true });
@@ -59,18 +61,22 @@ const ProgramBuilder = () => {
         id: pe.id,
         exercise_id: pe.exercise_id,
         name: pe.exercises?.name || "[Exercise name]",
+        section: pe.exercises?.section || "training",
         sets: pe.program_sets?.length || 0,
         order: pe.exercise_order || 0,
         setConfigs: (pe.program_sets || [])
           .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
-          .map((set) => ({
-            reps: set.reps,
-            weight: set.weight,
-            unit: set.weight_unit || "lbs",
-            set_variant: set.set_variant || `Set ${set.set_order}`,
-            set_type: set.set_type,
-            timed_set_duration: set.timed_set_duration,
-          })),
+          .map((set) => {
+            const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+            return {
+              reps: set.reps,
+              weight: unit === 'body' ? 0 : set.weight,
+              unit,
+              set_variant: set.set_variant || `Set ${set.set_order}`,
+              set_type: set.set_type,
+              timed_set_duration: set.timed_set_duration,
+            };
+          }),
       }));
       setExercises(items);
       setLoading(false);
@@ -113,7 +119,7 @@ const ProgramBuilder = () => {
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
           .from("exercises")
-          .insert([{ name: exerciseData.name }])
+          .insert([{ name: exerciseData.name, section: exerciseData.section || "training" }])
           .select("id")
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
@@ -160,7 +166,7 @@ const ProgramBuilder = () => {
       if (!editingExercise) return;
       await supabase
         .from("exercises")
-        .update({ name: exerciseData.name })
+        .update({ name: exerciseData.name, section: exerciseData.section })
         .eq("id", editingExercise.exercise_id);
       await supabase
         .from("program_sets")
@@ -220,7 +226,7 @@ const ProgramBuilder = () => {
     const { data: progExs } = await supabase
       .from("program_exercises")
       .select(
-        "id, exercise_id, exercise_order, exercises(name), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
+        "id, exercise_id, exercise_order, exercises(name, section), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
       )
       .eq("program_id", programId)
       .order("exercise_order", { ascending: true });
@@ -228,25 +234,32 @@ const ProgramBuilder = () => {
       id: pe.id,
       exercise_id: pe.exercise_id,
       name: pe.exercises?.name || "[Exercise name]",
+      section: pe.exercises?.section || "training",
       sets: pe.program_sets?.length || 0,
       order: pe.exercise_order || 0,
       setConfigs: (pe.program_sets || [])
         .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
-        .map((set) => ({
-          reps: set.reps,
-          weight: set.weight,
-          unit: set.weight_unit || "lbs",
-          set_variant: set.set_variant || `Set ${set.set_order}`,
-          set_type: set.set_type,
-          timed_set_duration: set.timed_set_duration,
-        })),
+        .map((set) => {
+          const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+          return {
+            reps: set.reps,
+            weight: unit === 'body' ? 0 : set.weight,
+            unit,
+            set_variant: set.set_variant || `Set ${set.set_order}`,
+            set_type: set.set_type,
+            timed_set_duration: set.timed_set_duration,
+          };
+        }),
     }));
     setExercises(items);
   };
 
-  const filteredExercises = exercises.filter((ex) =>
-    ex.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredExercises = exercises
+    .filter((ex) => {
+      const target = sectionFilter === "workout" ? "training" : sectionFilter;
+      return ex.section === target;
+    })
+    .filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
 
   const handleModalClose = () => {
     setShowAddExercise(false);
@@ -324,6 +337,25 @@ const ProgramBuilder = () => {
     }
   };
 
+  // Persist new order to Supabase immediately after reorder
+  const handleReorder = async (newOrder) => {
+    // Update local state first for immediate UI feedback
+    const updated = newOrder.map((ex, idx) => ({ ...ex, order: idx + 1 }));
+    setExercises(updated);
+
+    // Persist only the items whose order changed
+    await Promise.all(
+      updated.map((ex, idx) => {
+        if (ex.order !== idx + 1) return null; // already correct
+        // upsert may not be needed, just update
+        return supabase
+          .from("program_exercises")
+          .update({ exercise_order: idx + 1 })
+          .eq("id", ex.id);
+      })
+    );
+  };
+
   return (
     <>
       <AppLayout
@@ -342,6 +374,9 @@ const ProgramBuilder = () => {
         onSearchChange={setSearch}
         pageContext="programBuilder"
         data-component="AppHeader"
+        showSectionNav={true}
+        sectionNavValue={sectionFilter}
+        onSectionNavChange={setSectionFilter}
       >
         <div
           style={{
@@ -351,7 +386,7 @@ const ProgramBuilder = () => {
           <CardWrapper
             reorderable
             items={filteredExercises}
-            onReorder={setExercises}
+            onReorder={handleReorder}
           >
             {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -401,6 +436,13 @@ const ProgramBuilder = () => {
                 }
                 onDelete={editingExercise ? handleDeleteExercise : undefined}
                 initialName={editingExercise?.name}
+                initialSection={
+                  showAddExercise
+                    ? sectionFilter === "workout"
+                      ? "training"
+                      : sectionFilter
+                    : editingExercise?.section
+                }
                 initialSets={editingExercise?.setConfigs?.length}
                 initialSetConfigs={editingExercise?.setConfigs}
                 onDirtyChange={setDirty}

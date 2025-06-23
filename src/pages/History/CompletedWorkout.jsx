@@ -52,20 +52,29 @@ const CompletedWorkout = () => {
 
       // Only keep sets that have reps and weight logged and are valid numbers
       const validSets = (setsData || [])
-        .filter(
-          (set) =>
-            typeof set.reps === "number" &&
+        .filter((set) => {
+          if (set.set_type === 'timed') {
+            return (
+              typeof set.timed_set_duration === 'number' &&
+              !isNaN(set.timed_set_duration) &&
+              set.timed_set_duration > 0
+            );
+          }
+          return (
+            typeof set.reps === 'number' &&
             !isNaN(set.reps) &&
-            set.reps > 0 &&
-            typeof set.weight === "number" &&
-            !isNaN(set.weight) &&
-            set.weight >= 0
-        )
-        .map((set) => ({
-          ...set,
-          unit: set.weight_unit, // Do not default to 'lbs', allow undefined/null
-          set_variant: set.set_variant ?? set.name ?? '',
-        }));
+            set.reps > 0
+          );
+        })
+        .map((set) => {
+          const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+          return {
+            ...set,
+            weight: unit === 'body' ? 0 : set.weight,
+            unit,
+            set_variant: set.set_variant ?? set.name ?? '',
+          };
+        });
       setSets(validSets);
 
       // Get unique exercise_ids from valid sets only
@@ -94,17 +103,7 @@ const CompletedWorkout = () => {
     if (!setsByExercise[set.exercise_id]) {
       setsByExercise[set.exercise_id] = [];
     }
-    // Only add sets that have valid reps and weight
-    if (
-      typeof set.reps === "number" &&
-      !isNaN(set.reps) &&
-      set.reps > 0 &&
-      typeof set.weight === "number" &&
-      !isNaN(set.weight) &&
-      set.weight >= 0
-    ) {
-      setsByExercise[set.exercise_id].push(set);
-    }
+    setsByExercise[set.exercise_id].push(set);
   });
 
   // Filter out exercises that have no valid sets
