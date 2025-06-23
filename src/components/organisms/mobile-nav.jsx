@@ -21,7 +21,7 @@ const MobileNav = () => {
             <Link
               key={item.to}
               to={item.to}
-              className="w-14 inline-flex flex-col justify-start items-center gap-1 group"
+              className="w-14 inline-flex flex-col justify-start items-center group"
               aria-current={selected ? "page" : undefined}
             >
               <div className="size-6 flex items-center justify-center">
@@ -37,7 +37,7 @@ const MobileNav = () => {
               </div>
               <div
                 className={cn(
-                  "text-center text-xs font-semibold leading-none",
+                  "text-center text-xs font-medium leading-none",
                   selected
                     ? "text-neutral-500"
                     : "text-neutral-400 group-hover:text-neutral-500"
