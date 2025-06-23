@@ -452,8 +452,7 @@ const ProgramBuilder = () => {
                 showAddToProgramToggle={false}
               />
               {editingExercise && (
-                <>
-                  <div className="border-t border-neutral-300 my-6" />
+                <div className="flex flex-col gap-3 border-t border-neutral-300 py-4 px-4">
                   <SwiperButton
                     variant="destructive"
                     className="w-full"
@@ -461,7 +460,7 @@ const ProgramBuilder = () => {
                   >
                     Delete exercise
                   </SwiperButton>
-                </>
+                </div>
               )}
             </div>
           </div>

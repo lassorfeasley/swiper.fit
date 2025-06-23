@@ -312,7 +312,7 @@ const AddNewExerciseForm = React.forwardRef(
 
         {/* Footer actions */}
         {!hideActionButtons && (
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-6 flex flex-col gap-3 px-4 pb-4">
             <SwiperButton
               type="submit"
               variant="default"
