@@ -415,7 +415,7 @@ const ActiveExerciseCard = ({
           leftText="Cancel"
           padding={0}
         >
-          <div className="flex-1 overflow-y-auto px-5 py-5 min-h-full">
+          <div className="flex-1 overflow-y-auto min-h-full px-0 py-0">
             <SetEditForm
               hideActionButtons
               hideInternalHeader
@@ -521,7 +521,7 @@ const ActiveExerciseCard = ({
         leftText="Cancel"
         padding={0}
       >
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto px-0 py-0">
           <SetEditForm
             hideActionButtons
             hideInternalHeader

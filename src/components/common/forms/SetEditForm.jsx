@@ -198,7 +198,7 @@ const SetEditForm = memo(
     if (isChildForm) {
       return (
         <div
-          className={`w-full inline-flex flex-col justify-start items-start gap-6 ${className}`}
+          className={`w-full inline-flex flex-col justify-start items-start gap-6 px-4 ${className}`}
         >
           <div className="w-full flex flex-col justify-start items-start gap-6">
             <div className="Frame7 self-stretch flex flex-col justify-start items-start gap-3">
@@ -221,7 +221,7 @@ const SetEditForm = memo(
 
     return (
       <div
-        className={`w-full inline-flex flex-col justify-start items-start gap-6 ${className}`}
+        className={`w-full inline-flex flex-col justify-start items-start gap-6 px-4 ${className}`}
       >
         {!isChildForm && !hideInternalHeader && (
           <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium leading-7">

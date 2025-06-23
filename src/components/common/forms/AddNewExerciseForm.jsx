@@ -212,7 +212,7 @@ const AddNewExerciseForm = React.forwardRef(
         onSubmit={handleSave}
       >
         {/* Exercise name & sets */}
-        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4">
+        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4 px-4">
           <TextInput
             label="Exercise name"
             value={exerciseName}
@@ -256,7 +256,7 @@ const AddNewExerciseForm = React.forwardRef(
         </div>
 
         {/* Set defaults */}
-        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4">
+        <div className="flex flex-col gap-3 border-b border-neutral-300 py-4 px-4">
           <div className="text-body leading-tight">
             <span className="text-slate-600 font-medium">Set defaults </span>
             <span className="text-neutral-300">
@@ -270,7 +270,7 @@ const AddNewExerciseForm = React.forwardRef(
         </div>
 
         {/* Customize sets */}
-        <div className="flex flex-col gap-3 py-4 px-[1px]">
+        <div className="flex flex-col gap-3 py-4 px-4">
           <div className="text-body leading-tight">
             <span className="text-slate-600 font-medium">Customize sets </span>
             <span className="text-neutral-300">
@@ -298,7 +298,7 @@ const AddNewExerciseForm = React.forwardRef(
             leftText="Cancel"
             padding={0}
           >
-            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-6">
               <SetEditForm
                 isChildForm
                 hideDivider

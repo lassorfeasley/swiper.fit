@@ -426,7 +426,7 @@ const ProgramBuilder = () => {
           padding={0}
         >
           <div className="flex flex-col h-full overflow-y-scroll md:overflow-y-auto">
-            <div className="overflow-y-scroll md:overflow-auto px-5 py-5 h-[650px] md:h-full">
+            <div className="overflow-y-scroll md:overflow-auto h-[650px] md:h-full">
               <AddNewExerciseForm
                 ref={formRef}
                 key={editingExercise ? editingExercise.id : "add-new"}
