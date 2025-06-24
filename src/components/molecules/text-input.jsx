@@ -18,8 +18,6 @@ const TextInput = React.forwardRef(
     },
     ref
   ) => {
-    const [isHovered, setIsHovered] = React.useState(false);
-
     const getInputStyles = () => {
       // Base field style (height / spacing / typography / colours according to spec)
       const baseBase =
@@ -42,13 +40,7 @@ const TextInput = React.forwardRef(
         );
       }
 
-      if (isHovered) {
-        return cn(
-          baseStyles,
-          "border-slate-600 outline-slate-600 text-slate-500 placeholder:text-slate-500"
-        );
-      }
-
+      // Normal (non-error) state; styling on hover handled via group-hover classes
       return cn(
         baseStyles,
         "border-neutral-300 outline-neutral-300 text-slate-500 placeholder:text-slate-500"
@@ -81,11 +73,7 @@ const TextInput = React.forwardRef(
             )}
           </div>
         )}
-        <div
-          className={cn("relative w-full", className)}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className={cn("relative w-full group", className)}>
           <Input
             ref={ref}
             className={getInputStyles()}
