@@ -1,17 +1,17 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-360
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
-import ExerciseCard from "@/components/common/Cards/ExerciseCard";
-import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useAuth } from "@/contexts/AuthContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import DrawerManager from "@/components/organisms/drawer-manager";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
+import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTable";
+import SetEditForm from "@/components/common/forms/SetEditForm";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -24,6 +24,12 @@ const CompletedWorkout = () => {
   const [isEditWorkoutOpen, setEditWorkoutOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
   const { user } = useAuth();
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editSetExerciseId, setEditSetExerciseId] = useState(null);
+  const [editSetIndex, setEditSetIndex] = useState(null);
+  const [editFormValues, setEditFormValues] = useState({});
+  const [currentFormValues, setCurrentFormValues] = useState({});
+  const [formDirty, setFormDirty] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,10 +97,10 @@ const CompletedWorkout = () => {
       if (exerciseIds.length > 0) {
         const { data: exercisesData } = await supabase
           .from("exercises")
-          .select("id, name")
+          .select("id, name, section")
           .in("id", exerciseIds);
         (exercisesData || []).forEach((e) => {
-          exercisesObj[e.id] = e.name;
+          exercisesObj[e.id] = { name: e.name, section: e.section || "training" };
         });
       }
       setExercises(exercisesObj);
@@ -125,9 +131,25 @@ const CompletedWorkout = () => {
 
   // Filter exercises based on search
   const filteredExercisesWithSets = exercisesWithSets.filter(([exId, sets]) => {
-    const exerciseName = exercises[exId] || "[Exercise name]";
+    const exerciseName = exercises[exId]?.name || "[Exercise name]";
     return exerciseName.toLowerCase().includes(search.toLowerCase());
   });
+
+  // Transform data for table rows
+  const tableRows = useMemo(() =>
+    filteredExercisesWithSets.map(([exId, exerciseSets]) => {
+      const exInfo = exercises[exId] || { name: "[Exercise name]", section: "training" };
+      // Capitalize first letter for display
+      const sectionLabel = exInfo.section
+        ? exInfo.section.charAt(0).toUpperCase() + exInfo.section.slice(1)
+        : "Training";
+      return {
+        id: exId,
+        exercise: exInfo.name,
+        section: sectionLabel,
+        setLog: exerciseSets,
+      };
+    }), [filteredExercisesWithSets, exercises]);
 
   const handleSaveWorkoutName = async () => {
     try {
@@ -259,6 +281,33 @@ const CompletedWorkout = () => {
     }
   };
 
+  const openSetEdit = (exerciseId, setIdx, setConfig) => {
+    setEditSetExerciseId(exerciseId);
+    setEditSetIndex(setIdx);
+    setEditFormValues(setConfig);
+    setCurrentFormValues(setConfig);
+    setEditSheetOpen(true);
+  };
+
+  const handleEditFormSave = (values) => {
+    if (editSetExerciseId === null || editSetIndex === null) return;
+    // Build updated configs for this exercise
+    const exerciseSets = sets.filter((s) => s.exercise_id === editSetExerciseId);
+    const updatedConfigs = exerciseSets.map((cfg, idx) =>
+      idx === editSetIndex ? { ...cfg, ...values } : cfg
+    );
+    handleSetConfigsChange(editSetExerciseId)(updatedConfigs);
+    setEditSheetOpen(false);
+  };
+
+  const handleSetDelete = () => {
+    if (editSetExerciseId === null || editSetIndex === null) return;
+    const exerciseSets = sets.filter((s) => s.exercise_id === editSetExerciseId);
+    const updatedConfigs = exerciseSets.filter((_, idx) => idx !== editSetIndex);
+    handleSetConfigsChange(editSetExerciseId)(updatedConfigs);
+    setEditSheetOpen(false);
+  };
+
   return (
     <>
       <AppLayout
@@ -276,18 +325,7 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
-          <CardWrapper>
-            {filteredExercisesWithSets.map(([exId, exerciseSets]) => (
-              <div key={exId} className="w-full">
-                <ExerciseCard
-                  mode="completed"
-                  exerciseName={exercises[exId] || "[Exercise name]"}
-                  setConfigs={exerciseSets}
-                  onSetConfigsChange={handleSetConfigsChange(exId)}
-                />
-              </div>
-            ))}
-          </CardWrapper>
+          <CompletedWorkoutTable data={tableRows} onEditSet={openSetEdit} />
         )}
       </AppLayout>
       <DrawerManager
@@ -325,6 +363,42 @@ const CompletedWorkout = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+      {/* Drawer for editing a set */}
+      <DrawerManager
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        title="Edit set"
+        leftAction={() => setEditSheetOpen(false)}
+        rightAction={() => handleEditFormSave(currentFormValues)}
+        rightEnabled={formDirty}
+        rightText="Save"
+        leftText="Cancel"
+        padding={0}
+      >
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <SetEditForm
+              hideInternalHeader
+              hideActionButtons
+              onDirtyChange={setFormDirty}
+              onValuesChange={setCurrentFormValues}
+              onSave={handleEditFormSave}
+              initialValues={editFormValues}
+            />
+          </div>
+          <div className="border-t border-neutral-300">
+            <div className="p-4">
+              <SwiperButton
+                onClick={handleSetDelete}
+                variant="destructive"
+                className="w-full"
+              >
+                Delete Set
+              </SwiperButton>
+            </div>
+          </div>
+        </div>
+      </DrawerManager>
     </>
   );
 };
