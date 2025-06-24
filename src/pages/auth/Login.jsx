@@ -12,6 +12,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -34,6 +35,7 @@ export default function Login() {
       setEmailError(false);
       setPasswordError(false);
       setErrorMessage("");
+      toast.success("Logged in successfully");
       navigate("/");
     },
     onError: (error) => {
@@ -48,6 +50,7 @@ export default function Login() {
       );
       setErrorMessage(error.message);
       console.error("Login error:", error);
+      toast.error(error.message);
     },
   });
 

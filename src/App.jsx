@@ -24,6 +24,7 @@ import DemoPage from "./pages/Sandbox/DemoPage";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
 import Account from "./pages/Account/Account";
+import { Toaster } from "sonner";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -81,6 +82,9 @@ function AppContent() {
       {/* Mobile Nav - positioned fixed within the screen container */}
       {isAuthenticatedRoute && <MobileNav />}
       {isAuthenticatedRoute && <SideBarNav />}
+
+      {/* Global toast notifications */}
+      <Toaster richColors position="top-center" />
     </div>
   );
 }

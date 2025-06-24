@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
@@ -23,12 +24,18 @@ export default function CreateAccount() {
     },
     onSuccess: () => {
       setErrorMessage("");
-      setSuccessMessage("Check your email to confirm your account.");
+      const msg =
+        import.meta.env.VITE_SUPABASE_REQUIRE_CONFIRM === "false"
+          ? "Account created! Welcome aboard."
+          : "Account created! Check your email to confirm your address.";
+      setSuccessMessage(msg);
+      toast.success(msg);
     },
     onError: (error) => {
       setErrorMessage(error.message);
       setSuccessMessage("");
       console.error("Signup error:", error);
+      toast.error(error.message);
     },
   });
 
