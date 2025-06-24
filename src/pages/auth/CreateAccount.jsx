@@ -30,6 +30,8 @@ export default function CreateAccount() {
           : "Account created! Check your email to confirm your address.";
       setSuccessMessage(msg);
       toast.success(msg);
+      // Navigate to home page now that the user is authenticated
+      navigate("/");
     },
     onError: (error) => {
       setErrorMessage(error.message);
