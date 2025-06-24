@@ -263,7 +263,7 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         appHeaderTitle={workout?.workout_name}
-        pageNameEditable={false}
+        pageNameEditable={true}
         showBackButton={true}
         showAddButton={false}
         showEditOption={true}
