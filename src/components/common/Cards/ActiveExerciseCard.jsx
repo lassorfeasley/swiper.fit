@@ -32,6 +32,7 @@ const ActiveExerciseCard = ({
   initialSetConfigs = [],
   onSetComplete,
   onSetDataChange,
+  onExerciseComplete,
   isUnscheduled,
   default_view = true,
   setData = [],
@@ -87,7 +88,23 @@ const ActiveExerciseCard = ({
       };
     });
 
-    return combined;
+    // Ensure the correct active/locked statuses after merging
+    let pendingFound = false;
+    const adjusted = combined.map((set) => {
+      if (set.status === "complete") {
+        return set;
+      }
+      if (!pendingFound) {
+        pendingFound = true;
+        return {
+          ...set,
+          status:
+            set.set_type === "timed" ? "ready-timed-set" : "active",
+        };
+      }
+      return { ...set, status: "locked" };
+    });
+    return adjusted;
   }, [initialSetConfigs, setData]);
 
   useEffect(() => {
@@ -120,6 +137,19 @@ const ActiveExerciseCard = ({
     () => (allComplete ? "complete" : anyActive ? "active" : "locked"),
     [allComplete, anyActive]
   );
+
+  // Notify parent once when exercise becomes fully complete
+  const notifiedRef = useRef(false);
+  useEffect(() => {
+    if (allComplete && !notifiedRef.current) {
+      notifiedRef.current = true;
+      onExerciseComplete?.(exerciseId);
+    }
+    if (!allComplete && notifiedRef.current) {
+      // Allow re-notification if sets are undone
+      notifiedRef.current = false;
+    }
+  }, [allComplete, exerciseId, onExerciseComplete]);
 
   const handleSetComplete = useCallback(
     async (setIdx) => {
@@ -548,6 +578,7 @@ ActiveExerciseCard.propTypes = {
   ),
   onSetComplete: PropTypes.func,
   onSetDataChange: PropTypes.func,
+  onExerciseComplete: PropTypes.func,
   isUnscheduled: PropTypes.bool,
   default_view: PropTypes.bool,
   setData: PropTypes.arrayOf(

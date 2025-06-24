@@ -54,6 +54,7 @@ export function ActiveWorkoutProvider({ children }) {
             programId: data.program_id,
             name: data.programs?.program_name || data.workout_name || 'Workout',
             startTime: data.created_at,
+            lastExerciseId: data.last_exercise_id || null,
           };
           
           setActiveWorkout(workoutData);
@@ -110,6 +111,7 @@ export function ActiveWorkoutProvider({ children }) {
       programId: program.id,
       name: workoutName,
       startTime: workout.created_at,
+      lastExerciseId: null,
     };
 
     setActiveWorkout(workoutData);
@@ -305,6 +307,22 @@ export function ActiveWorkoutProvider({ children }) {
     }
   }, [activeWorkout, user]);
 
+  const updateLastExercise = useCallback(async (exerciseId) => {
+    if (!activeWorkout?.id) return;
+
+    // Optimistically update state first
+    setActiveWorkout(prev => ({ ...prev, lastExerciseId: exerciseId }));
+
+    try {
+      await supabase
+        .from('workouts')
+        .update({ last_exercise_id: exerciseId })
+        .eq('id', activeWorkout.id);
+    } catch (err) {
+      console.error('Failed to update last_exercise_id:', err);
+    }
+  }, [activeWorkout]);
+
   return (
     <ActiveWorkoutContext.Provider 
       value={{ 
@@ -319,6 +337,7 @@ export function ActiveWorkoutProvider({ children }) {
         updateWorkoutProgress,
         saveSet,
         updateSet,
+        updateLastExercise,
         loading
       }}
     >
