@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
@@ -23,6 +23,7 @@ const ActiveWorkout = () => {
     updateWorkoutProgress,
     saveSet,
     updateSet,
+    updateLastExercise,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -31,6 +32,9 @@ const ActiveWorkout = () => {
   const { setNavBarVisible } = useNavBarVisibility();
   const [sectionFilter, setSectionFilter] = useState("warmup");
   const [canAddExercise, setCanAddExercise] = useState(false);
+
+  // Ref to ensure automatic scroll only happens once per mount
+  const autoScrolledRef = useRef(false);
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -108,6 +112,33 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkout]);
 
+  // After exercises are loaded, automatically navigate to the last exercise if applicable (only once)
+  useEffect(() => {
+    if (autoScrolledRef.current) return; // already done for this mount
+    if (!activeWorkout?.lastExerciseId) return; // nothing to scroll to
+    if (!exercises.length) return; // exercises not loaded yet
+
+    const targetExercise = exercises.find(
+      (ex) => ex.exercise_id === activeWorkout.lastExerciseId
+    );
+    if (!targetExercise) return;
+
+    // Switch the section nav to the correct section so the card is visible
+    setSectionFilter(targetExercise.section);
+
+    // Delay scrolling slightly to ensure UI has updated
+    setTimeout(() => {
+      const el = document.getElementById(
+        `exercise-${targetExercise.exercise_id}`
+      );
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 200);
+
+    autoScrolledRef.current = true;
+  }, [exercises, activeWorkout?.lastExerciseId]);
+
   const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
       // New signature: an array of update objects
@@ -139,6 +170,9 @@ const ActiveWorkout = () => {
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {
+    // Update last exercise interacted with
+    updateLastExercise?.(exerciseId);
+
     const exerciseName =
       exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
     // Call saveSet and then log upon completion
@@ -381,7 +415,13 @@ const ActiveWorkout = () => {
       >
         <div className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5">
           {filteredExercises.map((exercise) => (
-            <CardWrapper key={exercise.id} gap={0} marginTop={0} marginBottom={0}>
+            <CardWrapper
+              key={exercise.id}
+              id={`exercise-${exercise.exercise_id}`}
+              gap={0}
+              marginTop={0}
+              marginBottom={0}
+            >
               <ActiveExerciseCard
                 exerciseId={exercise.exercise_id}
                 exerciseName={exercise.name}
