@@ -22,7 +22,7 @@ export default function CreateAccount() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setErrorMessage("");
       const msg =
         import.meta.env.VITE_SUPABASE_REQUIRE_CONFIRM === "false"
@@ -30,7 +30,14 @@ export default function CreateAccount() {
           : "Account created! Check your email to confirm your address.";
       setSuccessMessage(msg);
       toast.success(msg);
-      // Navigate to home page now that the user is authenticated
+
+      // Ensure the session is fully populated by signing in explicitly.
+      try {
+        await supabase.auth.signInWithPassword({ email, password });
+      } catch (e) {
+        console.error("Post-signup login failed", e);
+      }
+
       navigate("/");
     },
     onError: (error) => {
