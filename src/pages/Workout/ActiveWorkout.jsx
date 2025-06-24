@@ -5,6 +5,7 @@ import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import { CARD_WRAPPER_GAP_PX } from "@/components/common/Cards/Wrappers/CardWrapper";
 import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -32,9 +33,14 @@ const ActiveWorkout = () => {
   const { setNavBarVisible } = useNavBarVisibility();
   const [sectionFilter, setSectionFilter] = useState("warmup");
   const [canAddExercise, setCanAddExercise] = useState(false);
+  const [completedExercises, setCompletedExercises] = useState(new Set());
+  const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
 
   // Ref to ensure automatic scroll only happens once per mount
   const autoScrolledRef = useRef(false);
+  const listRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
+  const TOP_BUFFER_PX = -2; // slight negative offset to tuck card flush with nav
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -138,6 +144,57 @@ const ActiveWorkout = () => {
 
     autoScrolledRef.current = true;
   }, [exercises, activeWorkout?.lastExerciseId]);
+
+  // Snap-to-card logic when user stops scrolling inside workout
+  useEffect(() => {
+    const containerEl = listRef.current?.closest('main');
+    if (!containerEl) return;
+
+    const handleScroll = () => {
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      // Wait until user stops scrolling for 150ms
+      scrollTimeoutRef.current = setTimeout(() => {
+        if (!listRef.current) return;
+        const scrollParent = listRef.current.closest('main');
+        if (!scrollParent) return;
+        const contRect = scrollParent.getBoundingClientRect();
+        const listStyle = window.getComputedStyle(listRef.current);
+        // We will align based on the distance between card top and container top.
+        // Find the card whose top is closest to container top
+        let closestCard = null;
+        let minDistance = Infinity;
+        listRef.current?.querySelectorAll('[data-exercise-card="true"]').forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const distance = Math.abs(rect.top - contRect.top);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestCard = card;
+          }
+        });
+
+        if (closestCard) {
+          const cardRect = closestCard.getBoundingClientRect();
+          const listStyleSnap = window.getComputedStyle(listRef.current);
+          const paddingSnap = parseInt(listStyleSnap.paddingTop || 0, 10) || 0;
+          const marginSnap = parseInt(listStyleSnap.marginTop || 0, 10) || 0;
+          const topSpaceSnap = paddingSnap + marginSnap + TOP_BUFFER_PX;
+          const delta = cardRect.top - (contRect.top + topSpaceSnap);
+          if (Math.abs(delta) > 1) {
+            scrollParent.scrollBy({ top: delta, behavior: "smooth" });
+          }
+        }
+      }, 150);
+    };
+
+    containerEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      containerEl.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, [exercises]);
 
   const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
@@ -393,6 +450,95 @@ const ActiveWorkout = () => {
     setExercises(cards);
   };
 
+  const focusCard = (cardEl) => {
+    if (!cardEl || !listRef.current) return;
+    const scrollParent = listRef.current.closest('main');
+    if (!scrollParent) return;
+    const containerRect = scrollParent.getBoundingClientRect();
+    const cardRect = cardEl.getBoundingClientRect();
+    const listStyle = window.getComputedStyle(listRef.current);
+    const paddingTopPx = parseInt(listStyle.paddingTop || 0, 10) || 0;
+    const marginTopPx = parseInt(listStyle.marginTop || 0, 10) || 0;
+    const topSpace = paddingTopPx + marginTopPx + TOP_BUFFER_PX;
+    const delta = cardRect.top - (containerRect.top + topSpace);
+    if (Math.abs(delta) > 1) {
+      scrollParent.scrollBy({ top: delta, behavior: 'smooth' });
+    }
+  };
+
+  const sectionsOrder = ["warmup", "workout", "cooldown"];
+
+  const handleExerciseCompleteNavigate = (exerciseId) => {
+    // update completed set
+    setCompletedExercises((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(exerciseId);
+
+      // Auto-end workout check
+      if (!workoutAutoEnded) {
+        const allIds = exercises.map((e) => e.exercise_id);
+        const allDone = allIds.every((id) => newSet.has(id));
+        if (allDone) {
+          setWorkoutAutoEnded(true);
+          (async () => {
+            try {
+              await contextEndWorkout();
+              navigate("/history");
+            } catch (err) {
+              console.error("Auto end workout failed", err);
+            }
+          })();
+        }
+      }
+
+      return newSet;
+    });
+
+    // Determine current exercise and section
+    const idx = exercises.findIndex((e) => e.exercise_id === exerciseId);
+    if (idx === -1) return;
+    const currentSection = exercises[idx].section;
+
+    // Helper to check if exercise complete
+    const isExerciseComplete = (ex) => completedExercises.has(ex.exercise_id) || ex.exercise_id === exerciseId;
+
+    // 1. Look forward in same section for incomplete
+    for (let i = idx + 1; i < exercises.length; i++) {
+      const ex = exercises[i];
+      if (ex.section !== currentSection) break; // beyond current section
+      if (!isExerciseComplete(ex)) {
+        setSectionFilter(currentSection);
+        setTimeout(() => focusCard(document.getElementById(`exercise-${ex.exercise_id}`)), 100);
+        return;
+      }
+    }
+
+    // 2. Look backward in same section for incomplete (nearest previous)
+    for (let i = idx - 1; i >= 0; i--) {
+      const ex = exercises[i];
+      if (ex.section !== currentSection) break; // before section begins
+      if (!isExerciseComplete(ex)) {
+        setSectionFilter(currentSection);
+        setTimeout(() => focusCard(document.getElementById(`exercise-${ex.exercise_id}`)), 100);
+        return;
+      }
+    }
+
+    // 3. All exercises in current section complete: move to next section with incomplete exercises
+    const currentSectionIndex = sectionsOrder.indexOf(currentSection);
+    for (let j = currentSectionIndex + 1; j < sectionsOrder.length; j++) {
+      const sectionName = sectionsOrder[j];
+      const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
+      if (targetEx) {
+        setSectionFilter(sectionName);
+        // Wait for section nav update then focus
+        setTimeout(() => focusCard(document.getElementById(`exercise-${targetEx.exercise_id}`)), 150);
+        return;
+      }
+    }
+    // No remaining incomplete exercises
+  };
+
   return (
     <>
       <AppLayout
@@ -413,11 +559,16 @@ const ActiveWorkout = () => {
         sectionNavValue={sectionFilter}
         onSectionNavChange={setSectionFilter}
       >
-        <div className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5">
+        <div
+          ref={listRef}
+          className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5"
+        >
           {filteredExercises.map((exercise) => (
             <CardWrapper
               key={exercise.id}
               id={`exercise-${exercise.exercise_id}`}
+              data-exercise-card="true"
+              onClick={(e) => focusCard(e.currentTarget)}
               gap={0}
               marginTop={0}
               marginBottom={0}
@@ -430,6 +581,7 @@ const ActiveWorkout = () => {
                 onSetComplete={handleSetComplete}
                 onSetDataChange={handleSetDataChange}
                 onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                onExerciseComplete={handleExerciseCompleteNavigate}
               />
             </CardWrapper>
           ))}
