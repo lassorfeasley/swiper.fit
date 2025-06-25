@@ -142,7 +142,7 @@ const ActiveWorkout = () => {
 
   // Snap-to-card logic when user stops scrolling inside workout
   useEffect(() => {
-    const containerEl = listRef.current?.closest('main');
+    const containerEl = getScrollContainer();
     if (!containerEl) return;
 
     const handleScroll = () => {
@@ -153,7 +153,7 @@ const ActiveWorkout = () => {
       // Wait until user stops scrolling for 150ms
       scrollTimeoutRef.current = setTimeout(() => {
         if (!listRef.current) return;
-        const scrollParent = listRef.current.closest('main');
+        const scrollParent = getScrollContainer();
         if (!scrollParent) return;
         const contRect = scrollParent.getBoundingClientRect();
         const listStyle = window.getComputedStyle(listRef.current);
@@ -183,9 +183,12 @@ const ActiveWorkout = () => {
       }, 150);
     };
 
-    containerEl.addEventListener("scroll", handleScroll, { passive: true });
+    // If we're listening on the document's scrolling element, attach to window for compatibility
+    const targetForListener = containerEl === document.scrollingElement ? window : containerEl;
+    targetForListener.addEventListener("scroll", handleScroll, { passive: true });
+
     return () => {
-      containerEl.removeEventListener("scroll", handleScroll);
+      targetForListener.removeEventListener("scroll", handleScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
   }, [exercises]);
@@ -447,7 +450,7 @@ const ActiveWorkout = () => {
   // Scroll helper that aligns the given card flush to the scroll container's top (plus padding + TOP_BUFFER_PX)
   function focusCard(cardEl) {
     if (!cardEl || !listRef.current) return;
-    const scrollParent = listRef.current.closest("main");
+    const scrollParent = getScrollContainer();
     if (!scrollParent) return;
     const containerRect = scrollParent.getBoundingClientRect();
     const cardRect = cardEl.getBoundingClientRect();
@@ -457,7 +460,12 @@ const ActiveWorkout = () => {
     const topSpace = paddingTopPx + TOP_BUFFER_PX;
     const delta = cardRect.top - (containerRect.top + topSpace);
     if (Math.abs(delta) > 1) {
-      scrollParent.scrollBy({ top: delta, behavior: "smooth" });
+      const isWindowScroll = scrollParent === document.scrollingElement;
+      if (isWindowScroll) {
+        window.scrollBy({ top: delta, behavior: "smooth" });
+      } else {
+        scrollParent.scrollBy({ top: delta, behavior: "smooth" });
+      }
     }
   }
 
@@ -532,6 +540,16 @@ const ActiveWorkout = () => {
       }
     }
     // No remaining incomplete exercises
+  };
+
+  // Helper to determine the element that actually scrolls (main element in desktop, body/document on some mobile browsers)
+  const getScrollContainer = () => {
+    const mainEl = listRef.current?.closest("main");
+    if (mainEl && mainEl.scrollHeight - mainEl.clientHeight > 1) {
+      return mainEl;
+    }
+    // Fallback to the browser's scrolling element (typically <html> or <body>)
+    return document.scrollingElement || document.documentElement;
   };
 
   return (
