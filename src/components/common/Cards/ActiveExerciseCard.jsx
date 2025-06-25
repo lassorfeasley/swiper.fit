@@ -25,6 +25,9 @@ import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "../forms/wrappers/FormSectionWrapper";
+import ToggleInput from "@/components/molecules/toggle-input";
+import { SwiperButton } from "@/components/molecules/swiper-button";
+import { TextInput } from "@/components/molecules/text-input";
 
 const ActiveExerciseCard = ({
   exerciseId,
@@ -45,6 +48,7 @@ const ActiveExerciseCard = ({
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: "lbs" });
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
+  const [addType, setAddType] = useState("today");
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
 
@@ -382,6 +386,32 @@ const ActiveExerciseCard = ({
     ]
   );
 
+  const handleSetDelete = useCallback(async () => {
+    if (!mountedRef.current || openSetIndex === null) return;
+
+    const set_to_delete = sets[openSetIndex];
+    const set_id_to_delete = set_to_delete.id;
+
+    const updates = [
+      {
+        id: set_id_to_delete,
+        changes: {
+          status: "deleted",
+          program_set_id: null,
+          set_variant: null,
+        },
+      },
+    ];
+
+    if (onSetDataChange) {
+      onSetDataChange(exerciseId, updates);
+    }
+
+    setOpenSetIndex(null);
+    setIsEditSheetOpen(false);
+    setFormDirty(true);
+  }, [exerciseId, onSetDataChange, openSetIndex, sets]);
+
   return (
     <>
       {isExpanded && initialSetConfigs.length > 1 ? (
@@ -537,27 +567,63 @@ const ActiveExerciseCard = ({
         <SwiperForm
           open={isEditSheetOpen}
           onOpenChange={setIsEditSheetOpen}
-          title={
-            openSetIndex !== null
-              ? `Edit ${sets[openSetIndex].set_variant}`
-              : "Edit set"
-          }
+          title="Edit"
           leftAction={() => setIsEditSheetOpen(false)}
           rightAction={() => handleEditFormSave(editForm)}
           rightEnabled={formDirty}
           rightText="Save"
           leftText="Cancel"
-          padding={0}
         >
-          <FormSectionWrapper className="p-4">
+          {/* Set name */}
+          <SwiperForm.Section>
+            <TextInput
+              label="Set name"
+              optional
+              value={editForm.set_variant || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEditForm((prev) => ({ ...prev, set_variant: val }));
+                setFormDirty(true);
+              }}
+            />
+          </SwiperForm.Section>
+
+          {/* Main editing fields without name */}
+          <SwiperForm.Section>
             <SetEditForm
               isChildForm
-              hideDivider
+              showSetNameField={false}
               onValuesChange={setEditForm}
               onDirtyChange={setFormDirty}
               initialValues={editForm}
             />
-          </FormSectionWrapper>
+          </SwiperForm.Section>
+
+          {/* Add to program toggle */}
+          {onSetProgrammaticUpdate && (
+            <SwiperForm.Section>
+              <ToggleInput
+                label="Add to program?"
+                options={[
+                  { label: "Just for today", value: "today" },
+                  { label: "Permanently", value: "future" },
+                ]}
+                value={addType}
+                onChange={(val) => val && setAddType(val)}
+              />
+            </SwiperForm.Section>
+          )}
+
+          {/* Delete button */}
+          <SwiperForm.Section bordered={false}>
+            <SwiperButton
+              onClick={handleSetDelete}
+              variant="destructive"
+              className="w-full"
+            >
+              Delete Set
+            </SwiperButton>
+          </SwiperForm.Section>
         </SwiperForm>
       )}
     </>

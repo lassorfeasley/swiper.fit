@@ -50,6 +50,12 @@ function AppContent() {
     "/reset-password",
   ].includes(location.pathname);
 
+  // Detect public shared views (history list or workout)
+  const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
+  const isPublicWorkoutView =
+    /^\/history\/[0-9a-fA-F-]{6,}$/.test(location.pathname) && location.pathname.includes("/history/");
+  const hideNavForPublic = isPublicHistoryView || isPublicWorkoutView;
+
   return (
     <div className="min-h-screen relative">
       {/* Main Content */}
@@ -82,9 +88,9 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Mobile Nav - positioned fixed within the screen container */}
-      {isAuthenticatedRoute && <MobileNav />}
-      {isAuthenticatedRoute && <SideBarNav />}
+      {/* Mobile & Side nav – hidden for public shared links */}
+      {isAuthenticatedRoute && !hideNavForPublic && <MobileNav />}
+      {isAuthenticatedRoute && !hideNavForPublic && <SideBarNav />}
 
       {/* Global toast notifications */}
       <Toaster richColors position="top-center" />

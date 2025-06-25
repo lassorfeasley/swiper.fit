@@ -14,6 +14,7 @@ import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTa
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { toast } from "sonner";
+import { Share2 } from "lucide-react";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -357,9 +358,8 @@ const CompletedWorkout = () => {
       title="Share"
       leftAction={() => onOpenChange(false)}
       leftText="Close"
-      padding={4}
     >
-      <div className="flex flex-col gap-4 py-4">
+      <SwiperForm.Section>
         <ToggleInput
           options={[{ label: "Public link", value: true }]}
           value={isPublic ? true : null}
@@ -378,14 +378,14 @@ const CompletedWorkout = () => {
             </SwiperButton>
           </div>
         )}
-      </div>
+      </SwiperForm.Section>
     </SwiperForm>
   );
 
   return (
     <>
       <AppLayout
-        showSidebar={true}
+        showSidebar={isOwner}
         appHeaderTitle={workout?.workout_name}
         pageNameEditable={!readOnly && true}
         showBackButton={true}
@@ -421,14 +421,14 @@ const CompletedWorkout = () => {
         leftAction={() => setEditWorkoutOpen(false)}
         leftText="Cancel"
       >
-        <FormSectionWrapper className="p-4">
+        <SwiperForm.Section>
           <TextInput
             label="Workout Name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
           />
-        </FormSectionWrapper>
-        <div className="p-4 border-t border-neutral-300">
+        </SwiperForm.Section>
+        <SwiperForm.Section bordered={false}>
           <SwiperButton
             onClick={handleDeleteWorkout}
             variant="destructive"
@@ -436,7 +436,7 @@ const CompletedWorkout = () => {
           >
             Delete Workout
           </SwiperButton>
-        </div>
+        </SwiperForm.Section>
       </SwiperForm>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}

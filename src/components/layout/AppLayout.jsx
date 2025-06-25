@@ -17,6 +17,9 @@ export default function AppLayout({
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
 
+  const sidebarWidthPx = 256; // Tailwind w-64
+  const sidebarWidth = showSidebar ? sidebarWidthPx : 0;
+
   useEffect(() => {
     function updateHeaderHeight() {
       if (headerRef.current) {
@@ -30,19 +33,14 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen flex bg-stone-200 md:h-screen">
-      <div
-        className={
-          showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"
-        }
-      >
-        {showSidebar && (
-          <PageHeader
-            ref={headerRef}
-            {...headerProps}
-            onDelete={onDelete}
-            showDeleteOption={showDeleteOption}
-          />
-        )}
+      <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
+        <PageHeader
+          ref={headerRef}
+          sidebarWidth={sidebarWidth}
+          {...headerProps}
+          onDelete={onDelete}
+          showDeleteOption={showDeleteOption}
+        />
         <main
           style={{
             "--mobile-nav-height": "80px",
