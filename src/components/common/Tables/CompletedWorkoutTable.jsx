@@ -54,9 +54,9 @@ const CompletedWorkoutTable = ({ data = [], onEditSet }) => {
   });
 
   return (
-    <div className="overflow-x-auto rounded-md border border-neutral-200 m-[20px] max-w-[1200px]">
+    <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white my-[20px] mx-auto max-w-[1200px] max-w-[calc(100%-40px)]">
       <table className="w-full text-sm">
-        <thead className="bg-neutral-100 sticky top-0 z-10">
+        <thead className="hidden md:table-header-group bg-neutral-100 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
@@ -78,9 +78,23 @@ const CompletedWorkoutTable = ({ data = [], onEditSet }) => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="bg-white border-b border-neutral-300 last:border-none">
+            <tr
+              key={row.id}
+              className="flex flex-col gap-2 px-5 py-3 bg-white border-b border-neutral-300 last:border-none md:table-row md:gap-0 md:px-0 md:py-0 md:bg-transparent"
+            >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className={clsx("px-5 py-3 align-top whitespace-nowrap", cell.column.id === "setLog" && "text-right")}>
+                <td
+                  key={cell.id}
+                  className={clsx(
+                    "block sm:table-cell whitespace-nowrap", // become block on mobile
+                    cell.column.id === "exercise" &&
+                      "flex-1 w-48 text-base font-medium text-neutral-950 leading-tight md:px-5 md:py-3 md:text-xs md:leading-none",
+                    cell.column.id === "section" &&
+                      "w-48 text-xs font-medium text-neutral-600 leading-none md:px-5 md:py-3",
+                    cell.column.id === "setLog" &&
+                      "inline-flex items-center gap-3 flex-nowrap md:ml-auto md:table-cell md:text-right md:px-5 md:py-3"
+                  )}
+                >
                   {flexRender(
                     cell.column.columnDef.cell ?? cell.column.columnDef.header,
                     cell.getContext()
@@ -104,7 +118,7 @@ CompletedWorkoutTable.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     })
   ),
-  onEditSet: PropTypes.func.isRequired,
+  onEditSet: PropTypes.func,
 };
 
 export default CompletedWorkoutTable; 

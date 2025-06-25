@@ -30,6 +30,7 @@ const CompletedWorkout = () => {
   const [editFormValues, setEditFormValues] = useState({});
   const [currentFormValues, setCurrentFormValues] = useState({});
   const [formDirty, setFormDirty] = useState(false);
+  const readOnly = !user || (workout && workout.user_id !== user.id);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,8 +52,7 @@ const CompletedWorkout = () => {
         `
         )
         .eq("id", workoutId)
-        .eq("user_id", user.id)
-        .single();
+        .eq("user_id", user.id);
       setWorkout(workoutData);
 
       // Fetch sets for this workout
@@ -177,7 +177,8 @@ const CompletedWorkout = () => {
       const { error: setsError } = await supabase
         .from("sets")
         .delete()
-        .eq("workout_id", workoutId);
+        .eq("workout_id", workoutId)
+        .eq("user_id", user.id);
 
       if (setsError) {
         throw new Error(
@@ -308,14 +309,37 @@ const CompletedWorkout = () => {
     setEditSheetOpen(false);
   };
 
+  const handleShare = async () => {
+    if (!workout) return;
+    const shareUrl = `${window.location.origin}/history/${workoutId}`;
+    try {
+      if (!workout.is_public) {
+        const { error } = await supabase
+          .from('workouts')
+          .update({ is_public: true })
+          .eq('id', workoutId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+        setWorkout((prev) => ({ ...prev, is_public: true }));
+      }
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard');
+    } catch (err) {
+      alert('Failed to share: ' + err.message);
+    }
+  };
+
   return (
     <>
       <AppLayout
+        showSidebar={!readOnly}
         appHeaderTitle={workout?.workout_name}
-        pageNameEditable={true}
+        pageNameEditable={!readOnly && true}
         showBackButton={true}
-        showAddButton={false}
-        showEditOption={true}
+        showAddButton={!readOnly}
+        addButtonText="Share"
+        onAction={handleShare}
+        showEditOption={!readOnly}
         onEdit={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
@@ -325,7 +349,11 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
-          <CompletedWorkoutTable data={tableRows} onEditSet={openSetEdit} />
+          (!readOnly ? (
+            <CompletedWorkoutTable data={tableRows} onEditSet={openSetEdit} />
+          ) : (
+            <CompletedWorkoutTable data={tableRows} />
+          ))
         )}
       </AppLayout>
       <DrawerManager
