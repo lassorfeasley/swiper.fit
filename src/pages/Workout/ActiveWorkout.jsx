@@ -132,15 +132,10 @@ const ActiveWorkout = () => {
     // Switch the section nav to the correct section so the card is visible
     setSectionFilter(targetExercise.section);
 
-    // Delay scrolling slightly to ensure UI has updated
+    // Delay and then use focusCard for consistent positioning logic
     setTimeout(() => {
-      const el = document.getElementById(
-        `exercise-${targetExercise.exercise_id}`
-      );
-      if (el && typeof el.scrollIntoView === "function") {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 200);
+      focusCard(document.getElementById(`exercise-${targetExercise.exercise_id}`));
+    }, 250);
 
     autoScrolledRef.current = true;
   }, [exercises, activeWorkout?.lastExerciseId]);
@@ -449,7 +444,8 @@ const ActiveWorkout = () => {
     setExercises(cards);
   };
 
-  const focusCard = (cardEl) => {
+  // Scroll helper that aligns the given card flush to the scroll container's top (plus padding + TOP_BUFFER_PX)
+  function focusCard(cardEl) {
     if (!cardEl || !listRef.current) return;
     const scrollParent = listRef.current.closest("main");
     if (!scrollParent) return;
@@ -457,12 +453,13 @@ const ActiveWorkout = () => {
     const cardRect = cardEl.getBoundingClientRect();
     const listStyle = window.getComputedStyle(listRef.current);
     const paddingTopPx = parseInt(listStyle.paddingTop || 0, 10) || 0;
+    // Margin is intentionally excluded so cards align flush with the wrapper top (plus padding only)
     const topSpace = paddingTopPx + TOP_BUFFER_PX;
     const delta = cardRect.top - (containerRect.top + topSpace);
     if (Math.abs(delta) > 1) {
       scrollParent.scrollBy({ top: delta, behavior: "smooth" });
     }
-  };
+  }
 
   const sectionsOrder = ["warmup", "workout", "cooldown"];
 
