@@ -52,9 +52,7 @@ function AppContent() {
 
   // Detect public shared views (history list or workout)
   const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
-  const isPublicWorkoutView =
-    /^\/history\/[0-9a-fA-F-]{6,}$/.test(location.pathname) && location.pathname.includes("/history/");
-  const hideNavForPublic = isPublicHistoryView || isPublicWorkoutView;
+  const hideNavForPublic = isPublicHistoryView;
 
   return (
     <div className="min-h-screen relative">
@@ -80,11 +78,11 @@ function AppContent() {
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
+            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
           </Route>
 
           {/* Public shared history route (unauthenticated) */}
           <Route path="/history/public/:userId" element={<History />} />
-          <Route path="/history/:workoutId" element={<CompletedWorkout />} />
         </Routes>
       </main>
 

@@ -35,8 +35,12 @@ const CompletedWorkout = () => {
   const [formDirty, setFormDirty] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [ownerName, setOwnerName] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   const readOnly = !user || (workout && workout.user_id !== user.id);
-  const isOwner = user && workout && workout.user_id === user.id;
+
+  useEffect(() => {
+    setIsOwner(user && workout && workout.user_id === user.id);
+  }, [user, workout]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -125,7 +129,7 @@ const CompletedWorkout = () => {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name")
+        .select("first_name", "last_name")
         .eq("id", workout.user_id)
         .single();
       if (data) {
@@ -438,7 +442,7 @@ const CompletedWorkout = () => {
         leftAction={() => setEditWorkoutOpen(false)}
         leftText="Cancel"
       >
-        <SwiperForm.Section>
+        <SwiperForm.Section bordered={true}>
           <TextInput
             label="Workout Name"
             value={workoutName}

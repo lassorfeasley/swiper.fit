@@ -12,6 +12,8 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import ProgramCard from "@/components/common/Cards/ProgramCard";
 import SwiperForm from "@/components/molecules/swiper-form";
+import { TextInput } from "@/components/molecules/text-input";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -150,29 +152,17 @@ const ProgramsIndex = () => {
         leftAction={() => setShowSheet(false)}
         rightAction={handleCreateProgram}
         rightEnabled={isReady}
-        rightText="Add"
+        rightText="Create"
         leftText="Cancel"
       >
-        <SheetTitle className="text-center mt-6 mb-2">
-          What should we call this program?
-        </SheetTitle>
-        <Input
-          label="Program name"
-          value={programName}
-          onChange={(e) => setProgramName(e.target.value)}
-          placeholder="Enter program name"
-          ref={inputRef}
-          className="h-11 px-2.5 py-1 bg-stone-50 rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 text-left mt-4 mb-4"
-        />
-        <SheetFooter className="text-left items-start mb-8">
-          <Button
-            className="w-full text-left justify-start"
-            disabled={!isReady}
-            onClick={handleCreateProgram}
-          >
-            Create program
-          </Button>
-        </SheetFooter>
+        <SwiperForm.Section>
+          <TextInput
+            label="Name program"
+            value={programName}
+            onChange={(e) => setProgramName(e.target.value)}
+            ref={inputRef}
+          />
+        </SwiperForm.Section>
       </SwiperForm>
     </AppLayout>
   );

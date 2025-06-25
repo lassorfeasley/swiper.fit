@@ -293,34 +293,38 @@ export const PageHeader = forwardRef(
           leftText="Cancel"
           rightText="Save"
         >
-          <div className="space-y-6 pt-4">
-            <div className="space-y-2">
+          <div>
+            {/* ----------------------------------------------------------- */}
+            {/*  Edit title & delete sections                              */}
+            {/* ----------------------------------------------------------- */}
+
+            <SwiperForm.Section>
               <TextInput
                 id="pageTitle"
+                label={
+                  pageContext === "programs" || pageContext === "program-builder"
+                    ? "Program name"
+                    : "Page name"
+                }
                 value={editingTitle}
                 onChange={(e) => setEditingTitle(e.target.value)}
                 customPlaceholder="Enter page name"
                 className="w-full"
               />
-            </div>
+            </SwiperForm.Section>
 
-            <div className="flex flex-col gap-3">
-              {showDeleteOption && onDelete && (
+            {showDeleteOption && onDelete && (
+              <SwiperForm.Section>
                 <SwiperButton
                   variant="destructive"
                   onClick={handleDelete}
                   className="w-full"
                 >
                   <Trash2 className="size-4 mr-2" />
-                  Delete{" "}
-                  {pageContext === "programs"
-                    ? "Program"
-                    : pageContext === "workout"
-                    ? "Workout"
-                    : ""}
+                  Delete program
                 </SwiperButton>
-              )}
-            </div>
+              </SwiperForm.Section>
+            )}
           </div>
         </SwiperForm>
       </>

@@ -12,6 +12,7 @@ import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
+import { TextInput } from "@/components/molecules/text-input";
 
 const ProgramBuilder = () => {
   const { programId } = useParams();
@@ -25,6 +26,7 @@ const ProgramBuilder = () => {
   const [search, setSearch] = useState("");
   const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] =
     useState(false);
+  const [isEditProgramOpen, setEditProgramOpen] = useState(false);
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
   const isUnmounted = useRef(false);
@@ -304,21 +306,17 @@ const ProgramBuilder = () => {
   };
 
   const handleTitleChange = async (newTitle) => {
-    try {
-      const { error } = await supabase
-        .from("programs")
-        .update({ program_name: newTitle })
-        .eq("id", programId);
-
-      if (error) throw error;
-      setProgramName(newTitle);
-    } catch (err) {
-      alert("Failed to update program name: " + err.message);
-    }
+    setProgramName(newTitle);
+    await supabase
+      .from("programs")
+      .update({ program_name: newTitle })
+      .eq("id", programId);
+    setEditProgramOpen(false);
   };
 
   const handleDeleteProgram = () => {
     setDeleteProgramConfirmOpen(true);
+    setEditProgramOpen(false);
   };
 
   const handleConfirmDeleteProgram = async () => {
@@ -360,21 +358,17 @@ const ProgramBuilder = () => {
   return (
     <>
       <AppLayout
-        appHeaderTitle={programName || "Program"}
-        showAddButton={true}
-        addButtonText="Add exercise"
+        appHeaderTitle={programName}
         pageNameEditable={true}
-        showBackButton={true}
-        onBack={handleBack}
         onAction={() => setShowAddExercise(true)}
-        onTitleChange={handleTitleChange}
+        onBack={handleBack}
+        onEdit={() => setEditProgramOpen(true)}
+        showEditOption={true}
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
-        search={true}
-        searchValue={search}
-        onSearchChange={setSearch}
-        pageContext="programBuilder"
-        data-component="AppHeader"
+        addButtonText="Add exercise"
+        showBackButton
+        pageContext="program-builder"
         showSectionNav={true}
         sectionNavValue={sectionFilter}
         onSectionNavChange={setSectionFilter}
@@ -466,6 +460,34 @@ const ProgramBuilder = () => {
           </div>
         </SwiperForm>
       </AppLayout>
+
+      <SwiperForm
+        open={isEditProgramOpen}
+        onOpenChange={setEditProgramOpen}
+        title="Edit"
+        leftAction={() => setEditProgramOpen(false)}
+        leftText="Cancel"
+        rightAction={() => handleTitleChange(programName)}
+        rightText="Save"
+      >
+        <SwiperForm.Section>
+          <TextInput
+            label="Program name"
+            value={programName}
+            onChange={(e) => setProgramName(e.target.value)}
+          />
+        </SwiperForm.Section>
+        <SwiperForm.Section>
+          <SwiperButton
+            variant="destructive"
+            onClick={handleDeleteProgram}
+            className="w-full"
+          >
+            Delete program
+          </SwiperButton>
+        </SwiperForm.Section>
+      </SwiperForm>
+
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}
         onOpenChange={setDeleteProgramConfirmOpen}
