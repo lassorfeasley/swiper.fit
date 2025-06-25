@@ -45,10 +45,7 @@ const CompletedWorkout = () => {
         .select(`*, programs(program_name)`)
         .eq("id", workoutId);
 
-      // If no user logged in, require the workout to be public
-      if (!user) {
-        workoutQuery = workoutQuery.eq("is_public", true);
-      }
+      // If no user, rely on RLS to only expose workouts that are globally shared or explicitly public
 
       const { data: workoutData } = await workoutQuery.single();
 
