@@ -12,6 +12,8 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTable";
 import SetEditForm from "@/components/common/forms/SetEditForm";
+import ShareWorkoutDialog from "@/components/dialogs/ShareWorkoutDialog";
+import { Share2 } from "lucide-react";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -30,7 +32,9 @@ const CompletedWorkout = () => {
   const [editFormValues, setEditFormValues] = useState({});
   const [currentFormValues, setCurrentFormValues] = useState({});
   const [formDirty, setFormDirty] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const readOnly = !user || (workout && workout.user_id !== user.id);
+  const isOwner = user && workout && workout.user_id === user.id;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,14 +49,9 @@ const CompletedWorkout = () => {
       // Fetch workout with program information
       const { data: workoutData } = await supabase
         .from("workouts")
-        .select(
-          `
-          *,
-          programs(program_name)
-        `
-        )
+        .select(`*, programs(program_name)`)
         .eq("id", workoutId)
-        .eq("user_id", user.id);
+        .single();
       setWorkout(workoutData);
 
       // Fetch sets for this workout
@@ -309,35 +308,55 @@ const CompletedWorkout = () => {
     setEditSheetOpen(false);
   };
 
-  const handleShare = async () => {
-    if (!workout) return;
-    const shareUrl = `${window.location.origin}/history/${workoutId}`;
+  const ensurePublic = async () => {
+    if (!workout.is_public) {
+      const { error } = await supabase
+        .from('workouts')
+        .update({ is_public: true })
+        .eq('id', workoutId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setWorkout((prev) => ({ ...prev, is_public: true }));
+    }
+  };
+
+  const handleShare = () => {
+    setShareDialogOpen(true);
+  };
+
+  const handleTogglePublic = async (val) => {
     try {
-      if (!workout.is_public) {
-        const { error } = await supabase
-          .from('workouts')
-          .update({ is_public: true })
-          .eq('id', workoutId)
-          .eq('user_id', user.id);
-        if (error) throw error;
-        setWorkout((prev) => ({ ...prev, is_public: true }));
-      }
-      await navigator.clipboard.writeText(shareUrl);
-      alert('Link copied to clipboard');
-    } catch (err) {
-      alert('Failed to share: ' + err.message);
+      await supabase
+        .from('workouts')
+        .update({ is_public: val })
+        .eq('id', workoutId)
+        .eq('user_id', user.id);
+      setWorkout((prev) => ({ ...prev, is_public: val }));
+    } catch (e) {
+      alert('Failed: ' + e.message);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await ensurePublic();
+      await navigator.clipboard.writeText(`${window.location.origin}/history/${workoutId}`);
+      alert('Link copied');
+    } catch (e) {
+      alert('Error copying: ' + e.message);
     }
   };
 
   return (
     <>
       <AppLayout
-        showSidebar={!readOnly}
+        showSidebar={true}
         appHeaderTitle={workout?.workout_name}
         pageNameEditable={!readOnly && true}
         showBackButton={true}
-        showAddButton={!readOnly}
+        showAddButton={isOwner}
         addButtonText="Share"
+        addButtonIcon={Share2}
         onAction={handleShare}
         showEditOption={!readOnly}
         onEdit={() => setEditWorkoutOpen(true)}
@@ -427,6 +446,14 @@ const CompletedWorkout = () => {
           </div>
         </div>
       </DrawerManager>
+      <ShareWorkoutDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        isPublic={workout?.is_public}
+        shareUrl={`${window.location.origin}/history/${workoutId}`}
+        onCopy={handleCopyLink}
+        onTogglePublic={handleTogglePublic}
+      />
     </>
   );
 };

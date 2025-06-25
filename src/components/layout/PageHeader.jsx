@@ -5,6 +5,7 @@ import React, { useState, useRef, forwardRef, useEffect } from "react";
 import {
   ArrowLeft,
   Plus,
+  Share2,
   Search,
   X,
   Settings2,
@@ -38,6 +39,7 @@ export const PageHeader = forwardRef(
     {
       showAddButton = false,
       addButtonText = "Add",
+      addButtonIcon: AddButtonIcon = Plus,
       pageNameEditable = false,
       showBackButton = false,
       appHeaderTitle = "Welcome to Swiper.fit!",
@@ -265,7 +267,7 @@ export const PageHeader = forwardRef(
                     aria-label="Add"
                   >
                     <div className="size-7 relative overflow-hidden">
-                      <Plus className="size-6 left-[2px] top-[2px] absolute" />
+                      <AddButtonIcon className="size-6 left-[2px] top-[2px] absolute" />
                     </div>
                     <div className="justify-start text-stone-600 text-xs font-medium leading-none">
                       {addButtonText}
@@ -336,6 +338,7 @@ export const PageHeader = forwardRef(
 PageHeader.propTypes = {
   showAddButton: PropTypes.bool,
   addButtonText: PropTypes.string,
+  addButtonIcon: PropTypes.elementType,
   pageNameEditable: PropTypes.bool,
   showBackButton: PropTypes.bool,
   appHeaderTitle: PropTypes.string,
