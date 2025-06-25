@@ -179,8 +179,7 @@ const ActiveWorkout = () => {
           const cardRect = closestCard.getBoundingClientRect();
           const listStyleSnap = window.getComputedStyle(listRef.current);
           const paddingSnap = parseInt(listStyleSnap.paddingTop || 0, 10) || 0;
-          const marginSnap = parseInt(listStyleSnap.marginTop || 0, 10) || 0;
-          const topSpaceSnap = paddingSnap + marginSnap + TOP_BUFFER_PX;
+          const topSpaceSnap = paddingSnap + TOP_BUFFER_PX;
           const delta = cardRect.top - (contRect.top + topSpaceSnap);
           if (Math.abs(delta) > 1) {
             scrollParent.scrollBy({ top: delta, behavior: "smooth" });
@@ -452,17 +451,16 @@ const ActiveWorkout = () => {
 
   const focusCard = (cardEl) => {
     if (!cardEl || !listRef.current) return;
-    const scrollParent = listRef.current.closest('main');
+    const scrollParent = listRef.current.closest("main");
     if (!scrollParent) return;
     const containerRect = scrollParent.getBoundingClientRect();
     const cardRect = cardEl.getBoundingClientRect();
     const listStyle = window.getComputedStyle(listRef.current);
     const paddingTopPx = parseInt(listStyle.paddingTop || 0, 10) || 0;
-    const marginTopPx = parseInt(listStyle.marginTop || 0, 10) || 0;
-    const topSpace = paddingTopPx + marginTopPx + TOP_BUFFER_PX;
+    const topSpace = paddingTopPx + TOP_BUFFER_PX;
     const delta = cardRect.top - (containerRect.top + topSpace);
     if (Math.abs(delta) > 1) {
-      scrollParent.scrollBy({ top: delta, behavior: 'smooth' });
+      scrollParent.scrollBy({ top: delta, behavior: "smooth" });
     }
   };
 
@@ -561,7 +559,7 @@ const ActiveWorkout = () => {
       >
         <div
           ref={listRef}
-          className="p-4 md:p-0 mt-5 card-container flex flex-col gap-5"
+          className="p-4 md:p-0 card-container flex flex-col gap-5"
         >
           {filteredExercises.map((exercise) => (
             <CardWrapper
