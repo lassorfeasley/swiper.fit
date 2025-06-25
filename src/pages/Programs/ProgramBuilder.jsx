@@ -9,7 +9,7 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 
@@ -414,7 +414,7 @@ const ProgramBuilder = () => {
             )}
           </CardWrapper>
         </div>
-        <DrawerManager
+        <SwiperForm
           open={showAddExercise || !!editingExercise}
           onOpenChange={(open) => {
             handleModalClose();
@@ -464,7 +464,7 @@ const ProgramBuilder = () => {
               )}
             </div>
           </div>
-        </DrawerManager>
+        </SwiperForm>
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteProgramConfirmOpen}

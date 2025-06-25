@@ -11,7 +11,7 @@ import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import ProgramCard from "@/components/common/Cards/ProgramCard";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -143,7 +143,7 @@ const ProgramsIndex = () => {
         )}
       </CardWrapper>
 
-      <DrawerManager
+      <SwiperForm
         open={showSheet}
         onOpenChange={setShowSheet}
         title=""
@@ -173,7 +173,7 @@ const ProgramsIndex = () => {
             Create program
           </Button>
         </SheetFooter>
-      </DrawerManager>
+      </SwiperForm>
     </AppLayout>
   );
 };

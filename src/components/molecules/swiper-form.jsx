@@ -5,8 +5,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FormHeader } from "../atoms/sheet";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
+import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 
-const DrawerManager = ({
+const SwiperForm = ({
   children,
   open,
   onOpenChange,
@@ -16,7 +17,7 @@ const DrawerManager = ({
   rightEnabled,
   leftText,
   rightText,
-  padding = 4,
+  padding = 0,
   className,
 }) => {
   const isMobile = useIsMobile();
@@ -26,10 +27,7 @@ const DrawerManager = ({
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent
-            className={cn(
-              `${padding === 0 ? "p-0" : "p-4"} max-h-[90dvh] z-[100]`,
-              className
-            )}
+            className={cn("p-0 max-h-[90dvh] z-[100]", className)}
           >
             {leftAction && (
               <FormHeader
@@ -49,7 +47,7 @@ const DrawerManager = ({
         <SwiperSheet
           open={open}
           onOpenChange={onOpenChange}
-          className={cn(`z-[100] ${padding === 0 ? "p-0" : "p-4"}`, className)}
+          className={cn("z-[100] p-0", className)}
         >
           {leftAction && (
             <FormHeader
@@ -69,9 +67,35 @@ const DrawerManager = ({
   );
 };
 
-DrawerManager.propTypes = {
+SwiperForm.propTypes = {
   padding: PropTypes.oneOf([0, 4]),
   className: PropTypes.string,
 };
 
-export default DrawerManager;
+// Convenient section wrapper for form content
+const SwiperFormSection = ({ children, bordered = true, className }) => {
+  return (
+    <FormSectionWrapper
+      className={cn(
+        "py-4 px-4",
+        bordered && "border-b border-neutral-300 last:border-b-0",
+        className
+      )}
+    >
+      {children}
+    </FormSectionWrapper>
+  );
+};
+
+SwiperFormSection.propTypes = {
+  children: PropTypes.node.isRequired,
+  bordered: PropTypes.bool,
+  className: PropTypes.string,
+};
+
+// Attach as a static property so callers can do <SwiperForm.Section>
+SwiperForm.Section = SwiperFormSection;
+
+export { SwiperFormSection };
+
+export default SwiperForm; 

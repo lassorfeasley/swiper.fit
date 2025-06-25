@@ -23,7 +23,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "../forms/wrappers/FormSectionWrapper";
 
 const ActiveExerciseCard = ({
@@ -534,7 +534,7 @@ const ActiveExerciseCard = ({
       )}
 
       {isEditSheetOpen && (
-        <DrawerManager
+        <SwiperForm
           open={isEditSheetOpen}
           onOpenChange={setIsEditSheetOpen}
           title={
@@ -558,7 +558,7 @@ const ActiveExerciseCard = ({
               initialValues={editForm}
             />
           </FormSectionWrapper>
-        </DrawerManager>
+        </SwiperForm>
       )}
     </>
   );

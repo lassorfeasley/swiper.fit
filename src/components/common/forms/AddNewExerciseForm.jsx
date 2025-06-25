@@ -9,7 +9,7 @@ import SetBuilderForm from "./SetBuilderForm";
 import SetEditForm from "./SetEditForm";
 import { FormHeader } from "@/components/atoms/sheet";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "./wrappers/FormSectionWrapper";
 
 const AddNewExerciseForm = React.forwardRef(
@@ -311,27 +311,29 @@ const AddNewExerciseForm = React.forwardRef(
           </FormSectionWrapper>
         )}
 
-        <DrawerManager
-          open={editSheetOpen}
-          onOpenChange={setEditSheetOpen}
-          title="Edit set"
-          leftAction={() => setEditSheetOpen(false)}
-          rightAction={saveEditSheet}
-          rightEnabled={editingDirty}
-          rightText="Save"
-          leftText="Cancel"
-          padding={0}
-          className="edit-set-drawer"
-        >
-          <FormSectionWrapper className="flex-1 overflow-y-auto p-4">
-            <SetEditForm
-              isChildForm
-              initialValues={editingFields}
-              onValuesChange={(vals) => setEditingFields(vals)}
-              onDirtyChange={setEditingDirty}
-            />
-          </FormSectionWrapper>
-        </DrawerManager>
+        {editSheetOpen && (
+          <SwiperForm
+            open={editSheetOpen}
+            onOpenChange={setEditSheetOpen}
+            title="Edit set"
+            leftAction={() => setEditSheetOpen(false)}
+            rightAction={saveEditSheet}
+            rightEnabled={editingDirty}
+            rightText="Save"
+            leftText="Cancel"
+            padding={0}
+            className="edit-set-drawer"
+          >
+            <FormSectionWrapper className="flex-1 overflow-y-auto p-4">
+              <SetEditForm
+                isChildForm
+                initialValues={editingFields}
+                onValuesChange={(vals) => setEditingFields(vals)}
+                onDirtyChange={setEditingDirty}
+              />
+            </FormSectionWrapper>
+          </SwiperForm>
+        )}
       </form>
     );
   }

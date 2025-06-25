@@ -6,7 +6,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import CardWrapper from "./Wrappers/CardWrapper";
 import { Reorder } from "framer-motion";
 import { SwiperButton } from "@/components/molecules/swiper-button";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 
 const ExerciseCard = ({
   exerciseName,
@@ -140,7 +140,7 @@ const ExerciseCard = ({
         cardContent
       )}
       {setsAreEditable && (
-        <DrawerManager
+        <SwiperForm
           open={editSheetOpen}
           onOpenChange={setEditSheetOpen}
           title="Edit set"
@@ -176,7 +176,7 @@ const ExerciseCard = ({
               </div>
             )}
           </div>
-        </DrawerManager>
+        </SwiperForm>
       )}
     </CardWrapper>
   );

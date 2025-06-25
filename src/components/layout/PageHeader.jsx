@@ -20,7 +20,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
-import DrawerManager from "../organisms/drawer-manager";
+import SwiperForm from "../molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/atoms/button";
@@ -283,7 +283,7 @@ export const PageHeader = forwardRef(
         </div>
 
         {/* Edit Title Sheet */}
-        <DrawerManager
+        <SwiperForm
           open={isEditSheetOpen}
           onOpenChange={setIsEditSheetOpen}
           title="Edit"
@@ -322,7 +322,7 @@ export const PageHeader = forwardRef(
               )}
             </div>
           </div>
-        </DrawerManager>
+        </SwiperForm>
       </>
     );
   }

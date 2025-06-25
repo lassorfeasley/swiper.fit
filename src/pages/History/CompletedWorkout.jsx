@@ -6,7 +6,7 @@ import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
@@ -351,7 +351,7 @@ const CompletedWorkout = () => {
 
   // Local dialog for sharing
   const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
-    <DrawerManager
+    <SwiperForm
       open={open}
       onOpenChange={onOpenChange}
       title="Share"
@@ -379,7 +379,7 @@ const CompletedWorkout = () => {
           </div>
         )}
       </div>
-    </DrawerManager>
+    </SwiperForm>
   );
 
   return (
@@ -412,7 +412,7 @@ const CompletedWorkout = () => {
           ))
         )}
       </AppLayout>
-      <DrawerManager
+      <SwiperForm
         open={isEditWorkoutOpen}
         onOpenChange={setEditWorkoutOpen}
         title="Edit Workout"
@@ -437,7 +437,7 @@ const CompletedWorkout = () => {
             Delete Workout
           </SwiperButton>
         </div>
-      </DrawerManager>
+      </SwiperForm>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
@@ -448,7 +448,7 @@ const CompletedWorkout = () => {
         cancelText="Cancel"
       />
       {/* Drawer for editing a set */}
-      <DrawerManager
+      <SwiperForm
         open={editSheetOpen}
         onOpenChange={setEditSheetOpen}
         title="Edit set"
@@ -482,7 +482,7 @@ const CompletedWorkout = () => {
             </div>
           </div>
         </div>
-      </DrawerManager>
+      </SwiperForm>
       <ShareWorkoutDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}

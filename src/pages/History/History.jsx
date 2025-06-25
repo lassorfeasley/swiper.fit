@@ -8,7 +8,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import ToggleInput from "@/components/molecules/toggle-input";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import StaticCard from "@/components/organisms/static-card";
@@ -93,15 +93,14 @@ const History = () => {
 
   // Local dialog for sharing history
   const ShareHistoryDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
-    <DrawerManager
+    <SwiperForm
       open={open}
       onOpenChange={onOpenChange}
       title="Share"
       leftAction={() => onOpenChange(false)}
       leftText="Close"
-      padding={4}
     >
-      <div className="flex flex-col gap-4 py-4">
+      <SwiperForm.Section>
         <ToggleInput
           options={[{ label: "Public link", value: true }]}
           value={isPublic ? true : null}
@@ -120,8 +119,8 @@ const History = () => {
             </SwiperButton>
           </div>
         )}
-      </div>
-    </DrawerManager>
+      </SwiperForm.Section>
+    </SwiperForm>
   );
 
   /* ------------------------------------------------------------------

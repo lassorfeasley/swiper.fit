@@ -10,7 +10,7 @@ import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
-import DrawerManager from "@/components/organisms/drawer-manager";
+import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 
 const ActiveWorkout = () => {
@@ -592,7 +592,7 @@ const ActiveWorkout = () => {
             const formRef = React.createRef();
 
             return (
-              <DrawerManager
+              <SwiperForm
                 open={showAddExercise}
                 onOpenChange={() => setShowAddExercise(false)}
                 title="Exercise"
@@ -624,7 +624,7 @@ const ActiveWorkout = () => {
                     onDirtyChange={(ready) => setCanAddExercise(ready)}
                   />
                 </div>
-              </DrawerManager>
+              </SwiperForm>
             );
           })()}
       </AppLayout>
