@@ -69,13 +69,15 @@ function AppContent() {
               element={<ProgramBuilder />}
             />
             <Route path="/history" element={<History />} />
-            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             <Route path="/workout" element={<Workout />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
           </Route>
+
+          {/* Public shared workout route */}
+          <Route path="/history/:workoutId" element={<CompletedWorkout />} />
         </Routes>
       </main>
 

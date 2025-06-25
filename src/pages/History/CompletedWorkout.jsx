@@ -39,19 +39,25 @@ const CompletedWorkout = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      // Build workout query: owners can see their workouts; others can only see public ones
+      let workoutQuery = supabase
+        .from("workouts")
+        .select(`*, programs(program_name)`)
+        .eq("id", workoutId);
+
+      // If no user logged in, require the workout to be public
       if (!user) {
+        workoutQuery = workoutQuery.eq("is_public", true);
+      }
+
+      const { data: workoutData } = await workoutQuery.single();
+
+      // If workout not found (e.g., not public), stop here
+      if (!workoutData) {
         setWorkout(null);
-        setSets([]);
-        setExercises({});
         setLoading(false);
         return;
       }
-      // Fetch workout with program information
-      const { data: workoutData } = await supabase
-        .from("workouts")
-        .select(`*, programs(program_name)`)
-        .eq("id", workoutId)
-        .single();
       setWorkout(workoutData);
 
       // Fetch sets for this workout
