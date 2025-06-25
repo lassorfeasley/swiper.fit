@@ -12,8 +12,8 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTable";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import ShareWorkoutDialog from "@/components/dialogs/ShareWorkoutDialog";
-import { Share2 } from "lucide-react";
+import ToggleInput from "@/components/molecules/toggle-input";
+import { toast } from "sonner";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -165,7 +165,7 @@ const CompletedWorkout = () => {
       setWorkout((prev) => ({ ...prev, workout_name: workoutName }));
       setEditWorkoutOpen(false);
     } catch (err) {
-      alert("Failed to update workout name: " + err.message);
+      toast.error("Failed to update workout name: " + err.message);
     }
   };
 
@@ -201,7 +201,7 @@ const CompletedWorkout = () => {
       // Navigate back to history
       window.history.back();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setDeleteConfirmOpen(false);
     }
@@ -279,7 +279,7 @@ const CompletedWorkout = () => {
       });
     } catch (err) {
       console.error(err);
-      alert("Failed to update sets: " + err.message);
+      toast.error("Failed to update sets: " + err.message);
     }
   };
 
@@ -335,7 +335,7 @@ const CompletedWorkout = () => {
         .eq('user_id', user.id);
       setWorkout((prev) => ({ ...prev, is_public: val }));
     } catch (e) {
-      alert('Failed: ' + e.message);
+      toast.error('Failed: ' + e.message);
     }
   };
 
@@ -343,11 +343,44 @@ const CompletedWorkout = () => {
     try {
       await ensurePublic();
       await navigator.clipboard.writeText(`${window.location.origin}/history/${workoutId}`);
-      alert('Link copied');
+      toast.success('Link copied');
     } catch (e) {
-      alert('Error copying: ' + e.message);
+      toast.error('Error copying: ' + e.message);
     }
   };
+
+  // Local dialog for sharing
+  const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
+    <DrawerManager
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Share"
+      leftAction={() => onOpenChange(false)}
+      leftText="Close"
+      padding={4}
+    >
+      <div className="flex flex-col gap-4 py-4">
+        <ToggleInput
+          options={[{ label: "Public link", value: true }]}
+          value={isPublic ? true : null}
+          onChange={() => onTogglePublic(!isPublic)}
+        />
+        {isPublic && (
+          <div className="w-full inline-flex gap-2 items-center">
+            <input
+              readOnly
+              className="flex-1 h-10 px-3 rounded-sm border border-neutral-300 text-sm"
+              value={shareUrl}
+              onFocus={(e) => e.target.select()}
+            />
+            <SwiperButton variant="secondary" onClick={onCopy} className="shrink-0">
+              Copy
+            </SwiperButton>
+          </div>
+        )}
+      </div>
+    </DrawerManager>
+  );
 
   return (
     <>

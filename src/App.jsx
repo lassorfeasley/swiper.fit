@@ -6,7 +6,6 @@ import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
-import PublicHistory from "./pages/History/PublicHistory";
 import ProgramBuilder from "./pages/Programs/ProgramBuilder";
 import "./App.css";
 import {
@@ -77,8 +76,8 @@ function AppContent() {
             <Route path="/demo" element={<DemoPage />} />
           </Route>
 
-          {/* Public shared workout route */}
-          <Route path="/history/public/:userId" element={<PublicHistory />} />
+          {/* Public shared history route (unauthenticated) */}
+          <Route path="/history/public/:userId" element={<History />} />
           <Route path="/history/:workoutId" element={<CompletedWorkout />} />
         </Routes>
       </main>
