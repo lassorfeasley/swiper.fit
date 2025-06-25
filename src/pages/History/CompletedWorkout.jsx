@@ -34,6 +34,7 @@ const CompletedWorkout = () => {
   const [currentFormValues, setCurrentFormValues] = useState({});
   const [formDirty, setFormDirty] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
   const readOnly = !user || (workout && workout.user_id !== user.id);
   const isOwner = user && workout && workout.user_id === user.id;
 
@@ -117,6 +118,22 @@ const CompletedWorkout = () => {
       setWorkoutName(workout.workout_name);
     }
   }, [workout]);
+
+  // Fetch owner name when not owner
+  useEffect(() => {
+    if (!workout || isOwner) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", workout.user_id)
+        .single();
+      if (data) {
+        const name = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+        setOwnerName(name || "User");
+      }
+    })();
+  }, [workout, isOwner]);
 
   // Group sets by exercise_id, but only include exercises that have valid sets
   const setsByExercise = {};
@@ -386,7 +403,7 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         showSidebar={isOwner}
-        appHeaderTitle={workout?.workout_name}
+        appHeaderTitle={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={!readOnly && true}
         showBackButton={true}
         showAddButton={isOwner}

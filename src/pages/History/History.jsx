@@ -22,6 +22,7 @@ const History = () => {
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ownerName, setOwnerName] = useState("");
 
   // Determine whose history we're viewing and whether it's the owner
   const targetUserId = paramUserId || user?.id;
@@ -46,7 +47,13 @@ const History = () => {
       if (!error && data) {
         setShareAll(Boolean(data.share_all_workouts));
       } else if (error) {
-        console.error("Error fetching share preference:", error);
+        if (error.code === "PGRST116") {
+          // No profile row yet – create default
+          await supabase.from("profiles").insert({ id: user.id });
+          setShareAll(false);
+        } else {
+          console.error("Error fetching share preference:", error);
+        }
       }
     };
 
@@ -158,9 +165,27 @@ const History = () => {
     fetchData();
   }, [targetUserId]);
 
+  /* ------------------------------------------------------------------
+    Fetch owner name for public view
+  ------------------------------------------------------------------*/
+  useEffect(() => {
+    if (viewingOwn || !targetUserId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", targetUserId)
+        .single();
+      if (data) {
+        const name = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+        setOwnerName(name || "User");
+      }
+    })();
+  }, [viewingOwn, targetUserId]);
+
   return (
     <AppLayout
-      appHeaderTitle="History"
+      appHeaderTitle={viewingOwn ? "History" : `${ownerName || "User"}'s workout history`}
       showSidebar={viewingOwn}
       showAddButton={viewingOwn}
       addButtonText="Share"
