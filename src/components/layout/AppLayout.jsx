@@ -35,7 +35,14 @@ export default function AppLayout({
           showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"
         }
       >
-        {showSidebar && <PageHeader ref={headerRef} {...headerProps} />}
+        {showSidebar && (
+          <PageHeader
+            ref={headerRef}
+            {...headerProps}
+            onDelete={onDelete}
+            showDeleteOption={showDeleteOption}
+          />
+        )}
         <main
           style={{
             "--mobile-nav-height": "80px",

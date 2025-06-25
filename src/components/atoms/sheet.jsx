@@ -64,7 +64,7 @@ const FormHeader = ({
   leftAction,
   rightAction,
   leftText = "Cancel",
-  rightText = "Add",
+  rightText = "Save",
   title,
   showBackIcon = false,
   rightEnabled = true,

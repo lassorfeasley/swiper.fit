@@ -289,6 +289,9 @@ export const PageHeader = forwardRef(
           title="Edit"
           leftAction={() => setIsEditSheetOpen(false)}
           rightAction={handleTitleSave}
+          rightEnabled={Boolean((editingTitle || "").trim()) && (editingTitle || "").trim() !== (appHeaderTitle || "")}
+          leftText="Cancel"
+          rightText="Save"
         >
           <div className="space-y-6 pt-4">
             <div className="space-y-2">
@@ -302,16 +305,6 @@ export const PageHeader = forwardRef(
             </div>
 
             <div className="flex flex-col gap-3">
-              <SwiperButton
-                onClick={handleTitleSave}
-                className="w-full"
-                disabled={
-                  !(editingTitle || "").trim() ||
-                  (editingTitle || "").trim() === (appHeaderTitle || "")
-                }
-              >
-                Save Changes
-              </SwiperButton>
               {showDeleteOption && onDelete && (
                 <SwiperButton
                   variant="destructive"

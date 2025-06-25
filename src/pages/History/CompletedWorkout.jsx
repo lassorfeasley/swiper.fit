@@ -182,8 +182,7 @@ const CompletedWorkout = () => {
       const { error: setsError } = await supabase
         .from("sets")
         .delete()
-        .eq("workout_id", workoutId)
-        .eq("user_id", user.id);
+        .eq("workout_id", workoutId);
 
       if (setsError) {
         throw new Error(
@@ -370,6 +369,8 @@ const CompletedWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
+        showDeleteOption={!readOnly}
+        onDelete={handleDeleteWorkout}
       >
         {loading ? (
           <div className="p-6">Loading...</div>
