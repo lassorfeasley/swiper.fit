@@ -211,7 +211,7 @@ const History = () => {
       data-component="AppHeader"
     >
       {/* Calendar Log */}
-      {viewingOwn && !loading && (
+      {!loading && (
         <CalendarWorkoutLog
           workouts={workouts}
           date={selectedDate}

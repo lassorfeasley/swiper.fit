@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar } from "@/components/ui/calendar";
+import { SwiperCalendar } from "@/components/molecules/swiper-calendar";
 import { Card, CardContent, CardFooter } from "@/components/atoms/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -16,7 +16,18 @@ import { Plus } from "lucide-react";
  * - setDate:   Setter for the selected date (Date | undefined) → void.
  */
 const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
-  // Filter workouts that match the selected date (by calendar day)
+  // Pre-compute set of calendar days that have at least one workout
+  const workoutDates = React.useMemo(() => {
+    const map = new Map();
+    workouts.forEach((w) => {
+      const d = new Date(w.created_at);
+      // Normalize to midnight for uniqueness by day
+      const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      map.set(key, d);
+    });
+    return Array.from(map.values());
+  }, [workouts]);
+
   const events = React.useMemo(() => {
     if (!date) return [];
     return workouts.filter((w) => {
@@ -29,12 +40,17 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
     <Card className="w-fit py-4 mx-auto mb-6" data-component="CalendarWorkoutLog">
       {/* Calendar */}
       <CardContent className="px-4">
-        <Calendar
+        <SwiperCalendar
           mode="single"
           selected={date}
           onSelect={setDate}
           className="bg-transparent p-0"
           required
+          modifiers={{ hasWorkout: workoutDates }}
+          modifiersClassNames={{
+            hasWorkout:
+              "after:content-[''] after:absolute after:bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-primary",
+          }}
         />
       </CardContent>
 
