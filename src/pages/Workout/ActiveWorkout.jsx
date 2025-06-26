@@ -39,6 +39,7 @@ const ActiveWorkout = () => {
   const [canAddExercise, setCanAddExercise] = useState(false);
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
+  const [initialScrollTargetId, setInitialScrollTargetId] = useState(null);
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
@@ -83,20 +84,33 @@ const ActiveWorkout = () => {
     if (!activeWorkout?.lastExerciseId) return;
     if (!exercises.length) return;
 
-    const targetEl = document.getElementById(
-      `exercise-${activeWorkout.lastExerciseId}`
+    const targetExercise = exercises.find(
+      (ex) => ex.exercise_id === activeWorkout.lastExerciseId
     );
-    if (targetEl) {
-      // Ensure correct section is visible first
-      const targetExercise = exercises.find(
-        (ex) => ex.exercise_id === activeWorkout.lastExerciseId
-      );
-      if (targetExercise) setSectionFilter(targetExercise.section);
-      // Slight delay to allow section change render
-      setTimeout(() => scrollCardIntoView(targetEl, "auto"), 150);
-      hasAutoScrolledRef.current = true;
+
+    if (targetExercise) {
+      setInitialScrollTargetId(targetExercise.exercise_id);
+      setSectionFilter(targetExercise.section);
+      hasAutoScrolledRef.current = true; // Mark as done so this only runs once
     }
   }, [exercises, activeWorkout?.lastExerciseId]);
+
+  // After the section has been updated and component re-rendered, perform the scroll.
+  useEffect(() => {
+    if (!initialScrollTargetId) return;
+
+    // A small timeout to ensure the DOM is fully painted after section change
+    const scrollTimeout = setTimeout(() => {
+      const targetEl = document.getElementById(`exercise-${initialScrollTargetId}`);
+      if (targetEl) {
+        scrollCardIntoView(targetEl, "auto");
+      }
+      // Reset the target so this doesn't run on subsequent section changes
+      setInitialScrollTargetId(null);
+    }, 150);
+
+    return () => clearTimeout(scrollTimeout);
+  }, [initialScrollTargetId]);
 
   useEffect(() => {
     if (!isWorkoutActive) {
