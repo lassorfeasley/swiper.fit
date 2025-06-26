@@ -1,7 +1,7 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-360
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +57,7 @@ const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shar
 ShareWorkoutDialog.displayName = "ShareWorkoutDialog";
 
 const CompletedWorkout = () => {
+  const navigate = useNavigate();
   const { workoutId } = useParams();
   const [workout, setWorkout] = useState(null);
   const [sets, setSets] = useState([]);
@@ -261,7 +262,7 @@ const CompletedWorkout = () => {
       }
 
       // Navigate back to history
-      window.history.back();
+      navigate('/history');
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -418,6 +419,7 @@ const CompletedWorkout = () => {
         appHeaderTitle={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={!readOnly && true}
         showBackButton={true}
+        onBack={() => navigate('/history')}
         showAddButton={isOwner}
         addButtonText="Share"
         addButtonIcon={Share2}

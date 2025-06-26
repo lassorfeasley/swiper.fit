@@ -19,6 +19,7 @@ export default function ActiveWorkoutNav() {
     togglePause,
     isWorkoutActive,
     endWorkout: contextEndWorkout,
+    activeWorkout,
   } = useActiveWorkout();
 
   const handleC2AClick = () => {
@@ -26,9 +27,14 @@ export default function ActiveWorkoutNav() {
   };
 
   const handleEndWorkout = async () => {
+    const workoutId = activeWorkout?.id;
     try {
+      if (workoutId) {
+        navigate(`/history/${workoutId}`);
+      } else {
+        navigate("/history");
+      }
       await contextEndWorkout();
-      navigate("/history");
     } catch (error) {
       console.error("Error ending workout:", error);
       alert("There was an error ending your workout. Please try again.");

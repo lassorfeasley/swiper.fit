@@ -278,9 +278,14 @@ const ActiveWorkout = () => {
   };
 
   const handleEndWorkout = async () => {
+    const workoutId = activeWorkout?.id;
     try {
+      if (workoutId) {
+        navigate(`/history/${workoutId}`);
+      } else {
+        navigate("/history");
+      }
       await contextEndWorkout();
-      navigate("/history");
     } catch (error) {
       console.error("Error ending workout:", error);
       alert("There was an error ending your workout. Please try again.");
@@ -499,12 +504,13 @@ const ActiveWorkout = () => {
         if (allDone) {
           setWorkoutAutoEnded(true);
           (async () => {
-            try {
-              await contextEndWorkout();
+            const workoutId = activeWorkout?.id;
+            if (workoutId) {
+              navigate(`/history/${workoutId}`);
+            } else {
               navigate("/history");
-            } catch (err) {
-              console.error("Auto end workout failed", err);
             }
+            await contextEndWorkout();
           })();
         }
       }
