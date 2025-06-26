@@ -226,7 +226,11 @@ const History = () => {
                   const s = sec % 60;
                   return [h, m, s].map((u) => String(u).padStart(2, "0")).join(":");
                 })()}
-                onClick={() => navigate(`/history/${w.id}`)}
+                onClick={() =>
+                  viewingOwn
+                    ? navigate(`/history/${w.id}`)
+                    : navigate(`/history/public/workout/${w.id}`)
+                }
               />
             ))
         )}

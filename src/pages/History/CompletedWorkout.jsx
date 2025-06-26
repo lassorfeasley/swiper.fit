@@ -364,7 +364,7 @@ const CompletedWorkout = () => {
   const handleCopyLink = async () => {
     try {
       await ensurePublic();
-      await navigator.clipboard.writeText(`${window.location.origin}/history/${workoutId}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/history/public/workout/${workoutId}`);
       toast.success('Link copied');
     } catch (e) {
       toast.error('Error copying: ' + e.message);
@@ -508,7 +508,7 @@ const CompletedWorkout = () => {
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
         isPublic={workout?.is_public}
-        shareUrl={`${window.location.origin}/history/${workoutId}`}
+        shareUrl={`${window.location.origin}/history/public/workout/${workoutId}`}
         onCopy={handleCopyLink}
         onTogglePublic={handleTogglePublic}
       />

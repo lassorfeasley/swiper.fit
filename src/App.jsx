@@ -83,6 +83,8 @@ function AppContent() {
 
           {/* Public shared history route (unauthenticated) */}
           <Route path="/history/public/:userId" element={<History />} />
+          {/* Public shared single workout view (unauthenticated) */}
+          <Route path="/history/public/workout/:workoutId" element={<CompletedWorkout />} />
         </Routes>
       </main>
 
