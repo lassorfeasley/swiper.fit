@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import StaticCard from "@/components/organisms/static-card";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { TextInput } from "@/components/molecules/text-input";
@@ -207,7 +208,7 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      <CardWrapper className="mb-[150px] card-container" marginTop={0}>
+      <DeckWrapper className="mb-[150px]">
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : (
@@ -221,28 +222,29 @@ const History = () => {
               );
             })
             .map((w) => (
-              <StaticCard
-                key={w.id}
-                id={w.id}
-                name={w.workout_name || "Unnamed Workout"}
-                labels={[w.programs?.program_name] || []}
-                count={w.exerciseCount}
-                duration={(() => {
-                  const sec = w.duration_seconds || 0;
-                  const h = Math.floor(sec / 3600);
-                  const m = Math.floor((sec % 3600) / 60);
-                  const s = sec % 60;
-                  return [h, m, s].map((u) => String(u).padStart(2, "0")).join(":");
-                })()}
-                onClick={() =>
-                  viewingOwn
-                    ? navigate(`/history/${w.id}`)
-                    : navigate(`/history/public/workout/${w.id}`)
-                }
-              />
+              <CardWrapper key={w.id} gap={0} marginTop={0} marginBottom={0}>
+                <StaticCard
+                  id={w.id}
+                  name={w.workout_name || "Unnamed Workout"}
+                  labels={[w.programs?.program_name] || []}
+                  count={w.exerciseCount}
+                  duration={(() => {
+                    const sec = w.duration_seconds || 0;
+                    const h = Math.floor(sec / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    const s = sec % 60;
+                    return [h, m, s].map((u) => String(u).padStart(2, "0")).join(":");
+                  })()}
+                  onClick={() =>
+                    viewingOwn
+                      ? navigate(`/history/${w.id}`)
+                      : navigate(`/history/public/workout/${w.id}`)
+                  }
+                />
+              </CardWrapper>
             ))
         )}
-      </CardWrapper>
+      </DeckWrapper>
       {viewingOwn && (
         <ShareHistoryDialog
           open={shareDialogOpen}

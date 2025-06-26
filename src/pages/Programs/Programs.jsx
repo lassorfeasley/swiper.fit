@@ -9,6 +9,7 @@ import { FormHeader, SheetTitle, SheetFooter } from "@/components/atoms/sheet";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import ProgramCard from "@/components/common/Cards/ProgramCard";
 import SwiperForm from "@/components/molecules/swiper-form";
@@ -123,27 +124,28 @@ const ProgramsIndex = () => {
       pageContext="programs"
       data-component="AppHeader"
     >
-      <CardWrapper>
+      <DeckWrapper>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (
-          <div className="text-gray-400 text-center py-8">
-            No programs found.
-          </div>
+          <div className="text-gray-400 text-center py-8">No programs found.</div>
         ) : (
           filteredPrograms.map((program) => (
-            <ProgramCard
-              key={program.id}
-              id={program.id}
-              name={program.program_name}
-              exerciseCount={(program.exerciseNames || []).length}
-              leftText="Swipe to edit"
-              swipeStatus="active"
-              onSwipeComplete={() => navigate(`/programs/${program.id}/configure`)}
-            />
+            <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
+              <ProgramCard
+                id={program.id}
+                name={program.program_name}
+                exerciseCount={(program.exerciseNames || []).length}
+                leftText="Swipe to edit"
+                swipeStatus="active"
+                onSwipeComplete={() =>
+                  navigate(`/programs/${program.id}/configure`)
+                }
+              />
+            </CardWrapper>
           ))
         )}
-      </CardWrapper>
+      </DeckWrapper>
 
       <SwiperForm
         open={showSheet}
