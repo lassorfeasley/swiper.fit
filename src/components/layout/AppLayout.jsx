@@ -12,6 +12,7 @@ export default function AppLayout({
   search = false,
   searchValue,
   onSearchChange,
+  enableScrollSnap = false,
   ...headerProps
 }) {
   const headerRef = useRef(null);
@@ -23,13 +24,24 @@ export default function AppLayout({
   useEffect(() => {
     function updateHeaderHeight() {
       if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
+        const h = headerRef.current.offsetHeight;
+        setHeaderHeight(h);
+        // Expose as CSS var for global use (e.g., scroll-margin-top)
+        document.documentElement.style.setProperty("--header-height", `${h}px`);
       }
     }
     updateHeaderHeight();
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(updateHeaderHeight);
+      if (headerRef.current) ro.observe(headerRef.current);
+    }
     window.addEventListener("resize", updateHeaderHeight);
-    return () => window.removeEventListener("resize", updateHeaderHeight);
-  }, [headerProps]); // Re-run if props that affect height change
+    return () => {
+      window.removeEventListener("resize", updateHeaderHeight);
+      if (ro) ro.disconnect();
+    };
+  }, [headerProps]);
 
   return (
     <div className="min-h-screen flex bg-stone-200 md:h-screen">
@@ -45,6 +57,11 @@ export default function AppLayout({
           style={{
             "--mobile-nav-height": "80px",
             marginTop: headerHeight,
+            ...(enableScrollSnap
+              ? {
+                  scrollSnapType: "y mandatory",
+                }
+              : {}),
           }}
           className="flex-1 px-4 md:px-6 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
         >
@@ -65,4 +82,5 @@ AppLayout.propTypes = {
   search: PropTypes.bool,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
+  enableScrollSnap: PropTypes.bool,
 };

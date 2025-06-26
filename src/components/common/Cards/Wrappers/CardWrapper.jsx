@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 // ========= Global CardWrapper spacing constants =========
 // Adjust these three numbers to control default spacing everywhere.
-export const CARD_WRAPPER_GAP_PX = 20; // space between individual cards
+export const CARD_WRAPPER_GAP_PX = 0; // default gap removed as per new design
 export const CARD_WRAPPER_MARGIN_TOP_PX = 20; // space above the first card
 export const CARD_WRAPPER_MARGIN_BOTTOM_PX = 20; // space below the last card
 
@@ -39,11 +39,12 @@ const CardWrapper = ({
   delete divProps.onReorder;
   delete divProps.headerRef;
 
-  // Style object that sets gap between children and outer margin
+  // Style object controlling spacing
   const spacingStyle = {
     rowGap: gap,
     marginTop: marginTop,
     marginBottom: marginBottom,
+    paddingTop: 20, // ensure 20px internal top padding as requested
   };
 
   return (

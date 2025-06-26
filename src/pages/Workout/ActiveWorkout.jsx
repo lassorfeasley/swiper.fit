@@ -5,7 +5,7 @@ import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import { CARD_WRAPPER_GAP_PX } from "@/components/common/Cards/Wrappers/CardWrapper";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -40,11 +40,63 @@ const ActiveWorkout = () => {
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
 
-  // Ref to ensure automatic scroll only happens once per mount
-  const autoScrolledRef = useRef(false);
+  // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
-  const scrollTimeoutRef = useRef(null);
-  const TOP_BUFFER_PX = -2; // slight negative offset to tuck card flush with nav
+
+  // === Scroll-snap helpers (new implementation) ===
+  const hasAutoScrolledRef = useRef(false);
+
+  const scrollCardIntoView = (cardEl, behavior = "smooth") => {
+    if (!cardEl) return;
+
+    const mainEl = cardEl.closest("main");
+    const rootEl = cardEl.closest("#root");
+
+    // Find the true scroll container by checking which one is actually overflowing.
+    // This correctly finds #root on mobile and main on desktop.
+    let scrollContainer = document.documentElement; // Fallback
+    if (rootEl && rootEl.scrollHeight > rootEl.clientHeight) {
+      scrollContainer = rootEl;
+    }
+    if (mainEl && mainEl.scrollHeight > mainEl.clientHeight) {
+      scrollContainer = mainEl; // Override for desktop
+    }
+
+    const containerRect =
+      scrollContainer === document.documentElement
+        ? { top: 0 }
+        : scrollContainer.getBoundingClientRect();
+    const cardRect = cardEl.getBoundingClientRect();
+
+    const scrollAmount =
+      cardRect.top - containerRect.top + scrollContainer.scrollTop;
+
+    scrollContainer.scrollTo({
+      top: scrollAmount,
+      behavior,
+    });
+  };
+
+  // After exercises load, restore last interacted exercise (once per mount)
+  useEffect(() => {
+    if (hasAutoScrolledRef.current) return;
+    if (!activeWorkout?.lastExerciseId) return;
+    if (!exercises.length) return;
+
+    const targetEl = document.getElementById(
+      `exercise-${activeWorkout.lastExerciseId}`
+    );
+    if (targetEl) {
+      // Ensure correct section is visible first
+      const targetExercise = exercises.find(
+        (ex) => ex.exercise_id === activeWorkout.lastExerciseId
+      );
+      if (targetExercise) setSectionFilter(targetExercise.section);
+      // Slight delay to allow section change render
+      setTimeout(() => scrollCardIntoView(targetEl, "auto"), 150);
+      hasAutoScrolledRef.current = true;
+    }
+  }, [exercises, activeWorkout?.lastExerciseId]);
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -122,82 +174,7 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkout]);
 
-  // After exercises are loaded, automatically navigate to the last exercise if applicable (only once)
-  useEffect(() => {
-    if (autoScrolledRef.current) return; // already done for this mount
-    if (!activeWorkout?.lastExerciseId) return; // nothing to scroll to
-    if (!exercises.length) return; // exercises not loaded yet
-
-    const targetExercise = exercises.find(
-      (ex) => ex.exercise_id === activeWorkout.lastExerciseId
-    );
-    if (!targetExercise) return;
-
-    // Switch the section nav to the correct section so the card is visible
-    setSectionFilter(targetExercise.section);
-
-    // Delay and then use focusCard for consistent positioning logic
-    setTimeout(() => {
-      focusCard(document.getElementById(`exercise-${targetExercise.exercise_id}`));
-    }, 250);
-
-    autoScrolledRef.current = true;
-  }, [exercises, activeWorkout?.lastExerciseId]);
-
-  // Snap-to-card logic when user stops scrolling inside workout
-  useEffect(() => {
-    debug('Registering scroll snap listener');
-    const containerEl = getScrollContainer();
-    if (!containerEl) return;
-
-    const handleScroll = () => {
-      debug('Scroll event detected');
-      if (!listRef.current) { debug('listRef missing'); return; }
-      const scrollParent = getScrollContainer();
-      if (!scrollParent) return;
-      const isWindowScroll = scrollParent === document.scrollingElement || scrollParent === document.documentElement || scrollParent === document.body;
-      const containerTop = isWindowScroll
-        ? (listRef.current?.closest("main")?.getBoundingClientRect().top ?? 0)
-        : scrollParent.getBoundingClientRect().top;
-      const listStyle = window.getComputedStyle(listRef.current);
-      // We will align based on the distance between card top and container top.
-      // Find the card whose top is closest to container top
-      let closestCard = null;
-      let minDistance = Infinity;
-      listRef.current?.querySelectorAll('[data-exercise-card="true"]').forEach((card) => {
-        const rect = card.getBoundingClientRect();
-        const distance = Math.abs(rect.top - containerTop);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestCard = card;
-        }
-      });
-
-      if (closestCard) {
-        const cardRect = closestCard.getBoundingClientRect();
-        const listStyleSnap = window.getComputedStyle(listRef.current);
-        const paddingSnap = parseInt(listStyleSnap.paddingTop || 0, 10) || 0;
-        const topSpaceSnap = paddingSnap + TOP_BUFFER_PX;
-        const delta = cardRect.top - (containerTop + topSpaceSnap);
-        debug('closestCard', { cardRectTop: cardRect.top, containerTop, delta });
-        if (Math.abs(delta) > 1) {
-          scrollCardToTop(closestCard);
-        }
-      }
-    };
-
-    // If we're listening on the document's scrolling element, attach to window for compatibility
-    const targetForListener = (containerEl === document.scrollingElement || containerEl === document.documentElement || containerEl === document.body)
-      ? window
-      : containerEl;
-    targetForListener.addEventListener("scroll", handleScroll, { passive: true });
-    debug('Scroll listener attached to', targetForListener === window ? 'window' : targetForListener);
-
-    return () => {
-      targetForListener.removeEventListener("scroll", handleScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, [exercises]);
+  // TODO: re-implement automatic navigation to last interacted exercise
 
   const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
@@ -458,37 +435,6 @@ const ActiveWorkout = () => {
     setExercises(cards);
   };
 
-  // Scroll helper that aligns the given card flush to the scroll container's top (plus padding + TOP_BUFFER_PX)
-  const scrollCardToTop = (cardEl) => {
-    if (!cardEl) return;
-    const scrollParent = getScrollContainer();
-    const isWindowScroll = scrollParent === document.scrollingElement || scrollParent === document.documentElement || scrollParent === document.body;
-    // First, bring the card flush to the very top of the scroll container
-    cardEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-
-    // Determine required offset to place card just below header
-    let offset = TOP_BUFFER_PX; // desktop default (negative slight tuck)
-    const headerEl = document.querySelector('.page-header-fixed');
-    if (isWindowScroll && headerEl) {
-      const headerHeight = headerEl.offsetHeight || 0;
-      const desiredGap = 20; // distance below header
-      offset = headerHeight + desiredGap; // scroll downward
-    }
-
-    const target = isWindowScroll ? window : scrollParent;
-    try {
-      if (offset !== 0) target.scrollBy({ top: offset, behavior: 'smooth' });
-    } catch (_) {
-      if (offset !== 0) target.scrollBy(0, offset);
-    }
-  };
-
-  const focusCard = (cardEl) => {
-    debug('focusCard invoked', cardEl);
-    if (!cardEl) return;
-    scrollCardToTop(cardEl);
-  };
-
   const sectionsOrder = ["warmup", "workout", "cooldown"];
 
   const handleExerciseCompleteNavigate = (exerciseId) => {
@@ -532,7 +478,7 @@ const ActiveWorkout = () => {
       if (ex.section !== currentSection) break; // beyond current section
       if (!isExerciseComplete(ex)) {
         setSectionFilter(currentSection);
-        setTimeout(() => focusCard(document.getElementById(`exercise-${ex.exercise_id}`)), 100);
+        // TODO: scroll to upcoming incomplete exercise
         return;
       }
     }
@@ -543,7 +489,7 @@ const ActiveWorkout = () => {
       if (ex.section !== currentSection) break; // before section begins
       if (!isExerciseComplete(ex)) {
         setSectionFilter(currentSection);
-        setTimeout(() => focusCard(document.getElementById(`exercise-${ex.exercise_id}`)), 100);
+        // TODO: scroll to previous incomplete exercise
         return;
       }
     }
@@ -555,60 +501,11 @@ const ActiveWorkout = () => {
       const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
       if (targetEx) {
         setSectionFilter(sectionName);
-        // Wait for section nav update then focus
-        setTimeout(() => focusCard(document.getElementById(`exercise-${targetEx.exercise_id}`)), 150);
+        // TODO: scroll to first incomplete exercise in next section
         return;
       }
     }
     // No remaining incomplete exercises
-  };
-
-  // Helper to determine the element that actually scrolls (main element in desktop, body/document on some mobile browsers)
-  const getScrollContainer = () => {
-    const mainEl = listRef.current?.closest("main");
-    if (mainEl) {
-      const style = window.getComputedStyle(mainEl);
-      const overflowY = style.overflowY;
-      if (["auto", "scroll", "overlay"].includes(overflowY)) {
-        return mainEl;
-      }
-      if (mainEl.scrollHeight - mainEl.clientHeight > 1) {
-        return mainEl;
-      }
-    }
-    // Fallback to the browser's scrolling element (typically <html> or <body>)
-    return document.scrollingElement || document.documentElement;
-  };
-
-  const safeScrollBy = (scrollTarget, deltaY) => {
-    if (!deltaY) return;
-
-    // Window / document scrolling
-    const isWindow = scrollTarget === window || scrollTarget === document.scrollingElement || scrollTarget === document.body;
-
-    // Native smooth scrolling when supported (browser & element)
-    const canSmoothScroll = () => {
-      try {
-        scrollTarget.scrollBy({ top: 0, behavior: "instant" });
-        return true;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    if (canSmoothScroll()) {
-      try {
-        scrollTarget.scrollBy({ top: deltaY, behavior: "smooth" });
-        return;
-      } catch (_) {}
-    }
-
-    // Fallbacks
-    if (isWindow) {
-      window.scrollTo(0, window.scrollY + deltaY);
-    } else {
-      scrollTarget.scrollTop += deltaY;
-    }
   };
 
   return (
@@ -630,17 +527,15 @@ const ActiveWorkout = () => {
         showSectionNav={true}
         sectionNavValue={sectionFilter}
         onSectionNavChange={setSectionFilter}
+        enableScrollSnap={true}
       >
-        <div
-          ref={listRef}
-          className="p-4 md:p-0 card-container flex flex-col gap-5"
-        >
+        <DeckWrapper ref={listRef}>
           {filteredExercises.map((exercise) => (
             <CardWrapper
               key={exercise.id}
               id={`exercise-${exercise.exercise_id}`}
               data-exercise-card="true"
-              onClick={(e) => focusCard(e.currentTarget)}
+              onClick={(e) => scrollCardIntoView(e.currentTarget, "smooth")}
               gap={0}
               marginTop={0}
               marginBottom={0}
@@ -657,7 +552,7 @@ const ActiveWorkout = () => {
               />
             </CardWrapper>
           ))}
-        </div>
+        </DeckWrapper>
 
         {showAddExercise &&
           (() => {
