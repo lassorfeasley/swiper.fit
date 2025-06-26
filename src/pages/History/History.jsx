@@ -15,6 +15,7 @@ import StaticCard from "@/components/organisms/static-card";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { TextInput } from "@/components/molecules/text-input";
 import { Copy } from "lucide-react";
+import CalendarWorkoutLog from "@/components/common/History/CalendarWorkoutLog";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -26,6 +27,7 @@ const History = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Determine whose history we're viewing and whether it's the owner
   const targetUserId = paramUserId || user?.id;
@@ -208,6 +210,15 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
+      {/* Calendar Log */}
+      {viewingOwn && !loading && (
+        <CalendarWorkoutLog
+          workouts={workouts}
+          date={selectedDate}
+          setDate={setSelectedDate}
+        />
+      )}
+
       <DeckWrapper className="mb-[150px]">
         {loading ? (
           <div className="p-6">Loading...</div>
