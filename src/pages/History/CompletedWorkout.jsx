@@ -12,9 +12,49 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTable";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import ToggleInput from "@/components/molecules/toggle-input";
+import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Share2 } from "lucide-react";
+import { Share2, Copy } from "lucide-react";
+
+// Share dialog extracted outside of the component scope so it preserves identity between renders
+const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
+  <SwiperForm
+    open={open}
+    onOpenChange={onOpenChange}
+    title="Share"
+    leftAction={() => onOpenChange(false)}
+    leftText="Close"
+  >
+    {/* Description section */}
+    <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+      <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
+        Publish your workout <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
+      </p>
+    </SwiperForm.Section>
+
+    {/* Controls section */}
+    <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+      <SwiperFormSwitch
+        label="Public link"
+        checked={isPublic}
+        onCheckedChange={onTogglePublic}
+      />
+
+      {isPublic && (
+        <TextInput
+          label="Click to copy"
+          value={shareUrl}
+          readOnly
+          onFocus={(e) => e.target.select()}
+          onClick={onCopy}
+          icon={<Copy />}
+        />
+      )}
+    </SwiperForm.Section>
+  </SwiperForm>
+);
+
+ShareWorkoutDialog.displayName = "ShareWorkoutDialog";
 
 const CompletedWorkout = () => {
   const { workoutId } = useParams();
@@ -370,38 +410,6 @@ const CompletedWorkout = () => {
       toast.error('Error copying: ' + e.message);
     }
   };
-
-  // Local dialog for sharing
-  const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
-    <SwiperForm
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Share"
-      leftAction={() => onOpenChange(false)}
-      leftText="Close"
-    >
-      <SwiperForm.Section>
-        <ToggleInput
-          options={[{ label: "Public link", value: true }]}
-          value={isPublic ? true : null}
-          onChange={() => onTogglePublic(!isPublic)}
-        />
-        {isPublic && (
-          <div className="w-full inline-flex gap-2 items-center">
-            <input
-              readOnly
-              className="flex-1 h-10 px-3 rounded-sm border border-neutral-300 text-sm"
-              value={shareUrl}
-              onFocus={(e) => e.target.select()}
-            />
-            <SwiperButton variant="secondary" onClick={onCopy} className="shrink-0">
-              Copy
-            </SwiperButton>
-          </div>
-        )}
-      </SwiperForm.Section>
-    </SwiperForm>
-  );
 
   return (
     <>

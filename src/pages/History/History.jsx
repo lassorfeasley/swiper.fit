@@ -7,11 +7,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
-import ToggleInput from "@/components/molecules/toggle-input";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import StaticCard from "@/components/organisms/static-card";
+import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
+import { TextInput } from "@/components/molecules/text-input";
+import { Copy } from "lucide-react";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -107,24 +109,30 @@ const History = () => {
       leftAction={() => onOpenChange(false)}
       leftText="Close"
     >
-      <SwiperForm.Section>
-        <ToggleInput
-          options={[{ label: "Public link", value: true }]}
-          value={isPublic ? true : null}
-          onChange={() => onTogglePublic(!isPublic)}
+      {/* Description */}
+      <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+        <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
+          Publish your workout history <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
+        </p>
+      </SwiperForm.Section>
+
+      {/* Controls */}
+      <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+        <SwiperFormSwitch
+          label="Public link"
+          checked={isPublic}
+          onCheckedChange={onTogglePublic}
         />
+
         {isPublic && (
-          <div className="w-full inline-flex gap-2 items-center">
-            <input
-              readOnly
-              className="flex-1 h-10 px-3 rounded-sm border border-neutral-300 text-sm"
-              value={shareUrl}
-              onFocus={(e) => e.target.select()}
-            />
-            <SwiperButton variant="secondary" onClick={onCopy} className="shrink-0">
-              Copy
-            </SwiperButton>
-          </div>
+          <TextInput
+            label="Click to copy"
+            value={shareUrl}
+            readOnly
+            onFocus={(e) => e.target.select()}
+            onClick={onCopy}
+            icon={<Copy />}
+          />
         )}
       </SwiperForm.Section>
     </SwiperForm>

@@ -54,7 +54,7 @@ const CompletedWorkoutTable = ({ data = [], onEditSet }) => {
   });
 
   return (
-    <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white my-[20px] mx-auto max-w-[1200px] max-w-[calc(100%-40px)]">
+    <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white my-[20px] mx-auto max-w-[1200px]">
       <table className="w-full text-sm">
         <thead className="hidden md:table-header-group bg-neutral-100 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (

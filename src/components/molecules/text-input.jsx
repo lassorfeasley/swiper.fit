@@ -14,6 +14,7 @@ const TextInput = React.forwardRef(
       label,
       variant,
       optional = false,
+      onClick,
       ...props
     },
     ref
@@ -61,6 +62,8 @@ const TextInput = React.forwardRef(
       return cn(baseStyles, "text-slate-500");
     };
 
+    const iconPresent = !!icon;
+
     return (
       <div className="w-full inline-flex flex-col justify-start items-start gap-2">
         {label && (
@@ -76,13 +79,26 @@ const TextInput = React.forwardRef(
         <div className={cn("relative w-full group", className)}>
           <Input
             ref={ref}
-            className={getInputStyles()}
+            className={cn(
+              getInputStyles(),
+              iconPresent && "pr-14" // leave space for the icon container (w-12 + gap)
+            )}
             disabled={disabled}
             placeholder={customPlaceholder}
+            onClick={onClick}
             {...props}
           />
-          {icon && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          {iconPresent && (
+            <div
+              className={cn(
+                "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l",
+                disabled && "border-neutral-300 text-neutral-300",
+                !disabled && error && "border-red-400 text-slate-600",
+                !disabled && !error &&
+                  "border-neutral-300 text-slate-500 group-hover:border-slate-600 group-focus-within:border-slate-600"
+              )}
+              onClick={onClick}
+            >
               {typeof icon === "boolean" ? <Eye /> : icon}
             </div>
           )}
