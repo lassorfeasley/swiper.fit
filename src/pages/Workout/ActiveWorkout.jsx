@@ -50,11 +50,17 @@ const ActiveWorkout = () => {
   const scrollCardIntoView = (cardEl, behavior = "smooth") => {
     if (!cardEl) return;
 
+    // 1. Get header height from our CSS variable for precise alignment.
+    const headerHeight = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--header-height"
+      ) || "0",
+      10
+    );
+
+    // 2. Find the true scroll container (works for both mobile and desktop).
     const mainEl = cardEl.closest("main");
     const rootEl = cardEl.closest("#root");
-
-    // Find the true scroll container by checking which one is actually overflowing.
-    // This correctly finds #root on mobile and main on desktop.
     let scrollContainer = document.documentElement; // Fallback
     if (rootEl && rootEl.scrollHeight > rootEl.clientHeight) {
       scrollContainer = rootEl;
@@ -63,17 +69,15 @@ const ActiveWorkout = () => {
       scrollContainer = mainEl; // Override for desktop
     }
 
-    const containerRect =
-      scrollContainer === document.documentElement
-        ? { top: 0 }
-        : scrollContainer.getBoundingClientRect();
-    const cardRect = cardEl.getBoundingClientRect();
+    // 3. Get the card's current position relative to the viewport.
+    const cardTop = cardEl.getBoundingClientRect().top;
 
-    const scrollAmount =
-      cardRect.top - containerRect.top + scrollContainer.scrollTop;
+    // 4. Calculate the exact distance to scroll.
+    const scrollDistance = cardTop - headerHeight;
 
-    scrollContainer.scrollTo({
-      top: scrollAmount,
+    // 5. Scroll the container by that precise amount.
+    scrollContainer.scrollBy({
+      top: scrollDistance,
       behavior,
     });
   };
