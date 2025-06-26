@@ -13,6 +13,10 @@ import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 
+const DEBUG_LOG = false; // set to true to enable verbose logging
+
+function debug(...args) { if (DEBUG_LOG) console.log('[ActiveWorkout]', ...args); }
+
 const ActiveWorkout = () => {
   const { setPageName } = useContext(PageNameContext);
   const navigate = useNavigate();
@@ -142,50 +146,52 @@ const ActiveWorkout = () => {
 
   // Snap-to-card logic when user stops scrolling inside workout
   useEffect(() => {
+    debug('Registering scroll snap listener');
     const containerEl = getScrollContainer();
     if (!containerEl) return;
 
     const handleScroll = () => {
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      // Wait until user stops scrolling for 150ms
-      scrollTimeoutRef.current = setTimeout(() => {
-        if (!listRef.current) return;
-        const scrollParent = getScrollContainer();
-        if (!scrollParent) return;
-        const contRect = scrollParent.getBoundingClientRect();
-        const listStyle = window.getComputedStyle(listRef.current);
-        // We will align based on the distance between card top and container top.
-        // Find the card whose top is closest to container top
-        let closestCard = null;
-        let minDistance = Infinity;
-        listRef.current?.querySelectorAll('[data-exercise-card="true"]').forEach((card) => {
-          const rect = card.getBoundingClientRect();
-          const distance = Math.abs(rect.top - contRect.top);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestCard = card;
-          }
-        });
-
-        if (closestCard) {
-          const cardRect = closestCard.getBoundingClientRect();
-          const listStyleSnap = window.getComputedStyle(listRef.current);
-          const paddingSnap = parseInt(listStyleSnap.paddingTop || 0, 10) || 0;
-          const topSpaceSnap = paddingSnap + TOP_BUFFER_PX;
-          const delta = cardRect.top - (contRect.top + topSpaceSnap);
-          if (Math.abs(delta) > 1) {
-            scrollParent.scrollBy({ top: delta, behavior: "smooth" });
-          }
+      debug('Scroll event detected');
+      if (!listRef.current) { debug('listRef missing'); return; }
+      const scrollParent = getScrollContainer();
+      if (!scrollParent) return;
+      const isWindowScroll = scrollParent === document.scrollingElement || scrollParent === document.documentElement || scrollParent === document.body;
+      const containerTop = isWindowScroll
+        ? (listRef.current?.closest("main")?.getBoundingClientRect().top ?? 0)
+        : scrollParent.getBoundingClientRect().top;
+      const listStyle = window.getComputedStyle(listRef.current);
+      // We will align based on the distance between card top and container top.
+      // Find the card whose top is closest to container top
+      let closestCard = null;
+      let minDistance = Infinity;
+      listRef.current?.querySelectorAll('[data-exercise-card="true"]').forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const distance = Math.abs(rect.top - containerTop);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestCard = card;
         }
-      }, 150);
+      });
+
+      if (closestCard) {
+        const cardRect = closestCard.getBoundingClientRect();
+        const listStyleSnap = window.getComputedStyle(listRef.current);
+        const paddingSnap = parseInt(listStyleSnap.paddingTop || 0, 10) || 0;
+        const topSpaceSnap = paddingSnap + TOP_BUFFER_PX;
+        const delta = cardRect.top - (containerTop + topSpaceSnap);
+        debug('closestCard', { cardRectTop: cardRect.top, containerTop, delta });
+        if (Math.abs(delta) > 1) {
+          scrollCardToTop(closestCard);
+        }
+      }
     };
 
     // If we're listening on the document's scrolling element, attach to window for compatibility
-    const targetForListener = containerEl === document.scrollingElement ? window : containerEl;
+    const targetForListener = (containerEl === document.scrollingElement || containerEl === document.documentElement || containerEl === document.body)
+      ? window
+      : containerEl;
     targetForListener.addEventListener("scroll", handleScroll, { passive: true });
+    debug('Scroll listener attached to', targetForListener === window ? 'window' : targetForListener);
 
     return () => {
       targetForListener.removeEventListener("scroll", handleScroll);
@@ -448,26 +454,35 @@ const ActiveWorkout = () => {
   };
 
   // Scroll helper that aligns the given card flush to the scroll container's top (plus padding + TOP_BUFFER_PX)
-  function focusCard(cardEl) {
-    if (!cardEl || !listRef.current) return;
+  const scrollCardToTop = (cardEl) => {
+    if (!cardEl) return;
     const scrollParent = getScrollContainer();
-    if (!scrollParent) return;
-    const containerRect = scrollParent.getBoundingClientRect();
-    const cardRect = cardEl.getBoundingClientRect();
-    const listStyle = window.getComputedStyle(listRef.current);
-    const paddingTopPx = parseInt(listStyle.paddingTop || 0, 10) || 0;
-    // Margin is intentionally excluded so cards align flush with the wrapper top (plus padding only)
-    const topSpace = paddingTopPx + TOP_BUFFER_PX;
-    const delta = cardRect.top - (containerRect.top + topSpace);
-    if (Math.abs(delta) > 1) {
-      const isWindowScroll = scrollParent === document.scrollingElement;
-      if (isWindowScroll) {
-        window.scrollBy({ top: delta, behavior: "smooth" });
-      } else {
-        scrollParent.scrollBy({ top: delta, behavior: "smooth" });
-      }
+    const isWindowScroll = scrollParent === document.scrollingElement || scrollParent === document.documentElement || scrollParent === document.body;
+    // First, bring the card flush to the very top of the scroll container
+    cardEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+
+    // Determine required offset to place card just below header
+    let offset = TOP_BUFFER_PX; // desktop default (negative slight tuck)
+    const headerEl = document.querySelector('.page-header-fixed');
+    if (isWindowScroll && headerEl) {
+      const headerHeight = headerEl.offsetHeight || 0;
+      const desiredGap = 20; // distance below header
+      offset = headerHeight + desiredGap; // scroll downward
     }
-  }
+
+    const target = isWindowScroll ? window : scrollParent;
+    try {
+      if (offset !== 0) target.scrollBy({ top: offset, behavior: 'smooth' });
+    } catch (_) {
+      if (offset !== 0) target.scrollBy(0, offset);
+    }
+  };
+
+  const focusCard = (cardEl) => {
+    debug('focusCard invoked', cardEl);
+    if (!cardEl) return;
+    scrollCardToTop(cardEl);
+  };
 
   const sectionsOrder = ["warmup", "workout", "cooldown"];
 
@@ -545,11 +560,49 @@ const ActiveWorkout = () => {
   // Helper to determine the element that actually scrolls (main element in desktop, body/document on some mobile browsers)
   const getScrollContainer = () => {
     const mainEl = listRef.current?.closest("main");
-    if (mainEl && mainEl.scrollHeight - mainEl.clientHeight > 1) {
-      return mainEl;
+    if (mainEl) {
+      const style = window.getComputedStyle(mainEl);
+      const overflowY = style.overflowY;
+      if (["auto", "scroll", "overlay"].includes(overflowY)) {
+        return mainEl;
+      }
+      if (mainEl.scrollHeight - mainEl.clientHeight > 1) {
+        return mainEl;
+      }
     }
     // Fallback to the browser's scrolling element (typically <html> or <body>)
     return document.scrollingElement || document.documentElement;
+  };
+
+  const safeScrollBy = (scrollTarget, deltaY) => {
+    if (!deltaY) return;
+
+    // Window / document scrolling
+    const isWindow = scrollTarget === window || scrollTarget === document.scrollingElement || scrollTarget === document.body;
+
+    // Native smooth scrolling when supported (browser & element)
+    const canSmoothScroll = () => {
+      try {
+        scrollTarget.scrollBy({ top: 0, behavior: "instant" });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (canSmoothScroll()) {
+      try {
+        scrollTarget.scrollBy({ top: deltaY, behavior: "smooth" });
+        return;
+      } catch (_) {}
+    }
+
+    // Fallbacks
+    if (isWindow) {
+      window.scrollTo(0, window.scrollY + deltaY);
+    } else {
+      scrollTarget.scrollTop += deltaY;
+    }
   };
 
   return (
