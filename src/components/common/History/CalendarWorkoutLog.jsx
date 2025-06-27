@@ -126,7 +126,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
           disabled={disabledMatcher}
           modifiersClassNames={{
             hasWorkout:
-              "bg-green-500 text-white rounded-sm hover:bg-green-500 focus:bg-green-500 data-[selected]:!bg-green-500 data-[selected]:!text-white",
+              "!bg-green-500 !text-white rounded-sm hover:shadow-sm focus:!bg-green-500 data-[selected]:!bg-green-500 data-[selected]:!text-white data-[selected]:shadow-calendar-selected",
             future: "text-slate-400 opacity-60",
           }}
         />

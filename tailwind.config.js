@@ -109,6 +109,9 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      boxShadow: {
+        'calendar-selected': '0px 0px 8.3px 0px rgba(2,6,24,0.40)',
+      },
     },
   },
   plugins: [

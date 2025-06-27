@@ -67,7 +67,7 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
     weekday: "text-neutral-400 text-xs font-medium uppercase tracking-wide flex-1 select-none rounded-md",
     day: "text-slate-600 text-sm font-extrabold disabled:opacity-100",
     day_today: "outline outline-1 outline-stone-400 text-slate-600 rounded-sm",
-    day_selected: "rounded-sm shadow-[0_0_8px_rgba(2,6,24,0.4)] !bg-transparent !text-slate-600",
+    day_selected: "!bg-green-500 !text-white rounded-sm shadow-calendar-selected",
     day_disabled: "",
     day_outside: "invisible",
   };
