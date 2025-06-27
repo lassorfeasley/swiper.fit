@@ -321,7 +321,7 @@ export const PageHeader = forwardRef(
                   className="w-full"
                 >
                   <Trash2 className="size-4 mr-2" />
-                  Delete program
+                  {pageContext === "programs" || pageContext === "programBuilder" ? "Delete program" : "Delete workout"}
                 </SwiperButton>
               </SwiperForm.Section>
             )}

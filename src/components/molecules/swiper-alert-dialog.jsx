@@ -13,6 +13,7 @@ import { SwiperButton } from './swiper-button';
 
 const SwiperAlertDialog = ({
   open,
+  isOpen,
   onOpenChange,
   onConfirm,
   title,
@@ -20,8 +21,10 @@ const SwiperAlertDialog = ({
   confirmText = "Confirm",
   cancelText = "Cancel"
 }) => {
+  const controlledOpen = typeof open !== "undefined" ? open : isOpen;
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={controlledOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
