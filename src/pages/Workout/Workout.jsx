@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/supabaseClient";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import ProgramCard from "@/components/common/Cards/ProgramCard";
 
@@ -121,7 +122,7 @@ const Workout = () => {
       onSearchChange={setSearch}
       pageContext="workout"
     >
-      <CardWrapper>
+      <DeckWrapper paddingX={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (
@@ -130,20 +131,21 @@ const Workout = () => {
           </div>
         ) : (
           filteredPrograms.map((program) => (
-            <ProgramCard
-              key={program.id}
-              id={program.id}
-              name={program.program_name}
-              exerciseCount={program.exerciseCount}
-              setCount={program.setCount}
-              leftText="Swipe to begin"
-              rightText={""}
-              swipeStatus="active"
-              onSwipeComplete={() => handleStartWorkout(program)}
-            />
+            <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
+              <ProgramCard
+                id={program.id}
+                name={program.program_name}
+                exerciseCount={program.exerciseCount}
+                setCount={program.setCount}
+                leftText="Swipe to begin"
+                rightText={""}
+                swipeStatus="active"
+                onSwipeComplete={() => handleStartWorkout(program)}
+              />
+            </CardWrapper>
           ))
         )}
-      </CardWrapper>
+      </DeckWrapper>
     </AppLayout>
   );
 };

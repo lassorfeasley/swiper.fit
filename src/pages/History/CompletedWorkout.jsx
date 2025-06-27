@@ -15,6 +15,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
 import { Share2, Copy } from "lucide-react";
+import MainContentSection from "@/components/layout/MainContentSection";
 
 // Share dialog extracted outside of the component scope so it preserves identity between renders
 const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
@@ -435,85 +436,64 @@ const CompletedWorkout = () => {
       >
         {loading ? (
           <div className="p-6">Loading...</div>
+        ) : workout ? (
+          <MainContentSection>
+            <CompletedWorkoutTable
+              columns={[
+                { accessorKey: "exercise", header: "Exercise" },
+                { accessorKey: "section", header: "Section" },
+                { accessorKey: "setLog", header: "Set Log" },
+              ]}
+              data={tableRows}
+              onRowClick={readOnly ? undefined : openSetEdit}
+            />
+
+            <SwiperAlertDialog
+              isOpen={isDeleteConfirmOpen}
+              onOpenChange={setDeleteConfirmOpen}
+              onConfirm={handleConfirmDelete}
+              title="Delete workout?"
+              description="This workout and its sets will be deleted permanently."
+              confirmText="Delete"
+              cancelText="Cancel"
+            />
+
+            <SwiperForm
+              open={isEditWorkoutOpen}
+              onOpenChange={setEditWorkoutOpen}
+              onSubmit={handleSaveWorkoutName}
+              title="Edit workout"
+              leftAction={() => setEditWorkoutOpen(false)}
+              leftText="Cancel"
+              rightText="Save"
+            >
+              <SwiperForm.Section>
+                <TextInput
+                  label="Workout name"
+                  value={workoutName}
+                  onChange={(e) => setWorkoutName(e.target.value)}
+                />
+              </SwiperForm.Section>
+            </SwiperForm>
+
+            {editSheetOpen && (
+              <SetEditForm
+                isOpen={editSheetOpen}
+                onOpenChange={setEditSheetOpen}
+                onSave={handleEditFormSave}
+                onDelete={handleSetDelete}
+                initialValues={editFormValues}
+                setExternalFormValues={setCurrentFormValues}
+                onFormDirty={setFormDirty}
+              />
+            )}
+          </MainContentSection>
         ) : (
-          (!readOnly ? (
-            <CompletedWorkoutTable data={tableRows} onEditSet={openSetEdit} />
-          ) : (
-            <CompletedWorkoutTable data={tableRows} />
-          ))
+          <div className="flex h-full w-full items-center justify-center">
+            <p>Workout not found.</p>
+          </div>
         )}
       </AppLayout>
-      <SwiperForm
-        open={isEditWorkoutOpen}
-        onOpenChange={setEditWorkoutOpen}
-        title="Edit Workout"
-        rightAction={handleSaveWorkoutName}
-        rightText="Save"
-        leftAction={() => setEditWorkoutOpen(false)}
-        leftText="Cancel"
-      >
-        <SwiperForm.Section bordered={true}>
-          <TextInput
-            label="Workout Name"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-          />
-        </SwiperForm.Section>
-        <SwiperForm.Section bordered={false}>
-          <SwiperButton
-            onClick={handleDeleteWorkout}
-            variant="destructive"
-            className="w-full"
-          >
-            Delete Workout
-          </SwiperButton>
-        </SwiperForm.Section>
-      </SwiperForm>
-      <SwiperAlertDialog
-        open={isDeleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        onConfirm={handleConfirmDelete}
-        title="Delete workout?"
-        description="This workout and its sets will be deleted permanently."
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
-      {/* Drawer for editing a set */}
-      <SwiperForm
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-        title="Edit set"
-        leftAction={() => setEditSheetOpen(false)}
-        rightAction={() => handleEditFormSave(currentFormValues)}
-        rightEnabled={formDirty}
-        rightText="Save"
-        leftText="Cancel"
-        padding={0}
-      >
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <SetEditForm
-              hideInternalHeader
-              hideActionButtons
-              onDirtyChange={setFormDirty}
-              onValuesChange={setCurrentFormValues}
-              onSave={handleEditFormSave}
-              initialValues={editFormValues}
-            />
-          </div>
-          <div className="border-t border-neutral-300">
-            <div className="p-4">
-              <SwiperButton
-                onClick={handleSetDelete}
-                variant="destructive"
-                className="w-full"
-              >
-                Delete Set
-              </SwiperButton>
-            </div>
-          </div>
-        </div>
-      </SwiperForm>
       <ShareWorkoutDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}

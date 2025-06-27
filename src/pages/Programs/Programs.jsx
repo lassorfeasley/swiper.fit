@@ -15,6 +15,7 @@ import ProgramCard from "@/components/common/Cards/ProgramCard";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
+import MainContentSection from "@/components/layout/MainContentSection";
 
 const ProgramsIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -124,7 +125,7 @@ const ProgramsIndex = () => {
       pageContext="programs"
       data-component="AppHeader"
     >
-      <DeckWrapper>
+      <DeckWrapper paddingX={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (

@@ -147,20 +147,47 @@ export function ActiveWorkoutProvider({ children }) {
   const endWorkout = useCallback(async () => {
     if (!activeWorkout?.id) return;
 
-    const { error } = await supabase
-      .from('workouts')
-      .update({
-        is_active: false,
-        duration_seconds: elapsedTime,
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', activeWorkout.id);
+    try {
+      // Check if any sets have been logged for this workout
+      const { count: setCount, error: countError } = await supabase
+        .from('sets')
+        .select('*', { count: 'exact', head: true })
+        .eq('workout_id', activeWorkout.id);
 
-    if (error) {
-      console.error("Error ending workout:", error);
-      // Optionally, notify user
+      if (countError) {
+        console.error('Error counting sets for workout:', countError);
+      }
+
+      if (setCount === 0) {
+        // No sets logged – delete the workout entirely instead of marking complete
+        const { error: deleteError } = await supabase
+          .from('workouts')
+          .delete()
+          .eq('id', activeWorkout.id);
+
+        if (deleteError) {
+          console.error('Error deleting empty workout:', deleteError);
+        }
+      } else {
+        // Sets exist – mark workout as completed
+        const { error } = await supabase
+          .from('workouts')
+          .update({
+            is_active: false,
+            duration_seconds: elapsedTime,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', activeWorkout.id);
+
+        if (error) {
+          console.error('Error ending workout:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error ending workout:', err);
     }
 
+    // Reset local state regardless of outcome
     setIsWorkoutActive(false);
     setActiveWorkout(null);
     setElapsedTime(0);
