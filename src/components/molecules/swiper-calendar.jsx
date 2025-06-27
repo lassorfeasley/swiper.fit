@@ -61,11 +61,13 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
     months: `${baseMonthsClasses} gap-10`.trim(),
     nav: "hidden",
     caption_label: "text-sm font-extrabold text-slate-500",
+    month_caption: "justify-start text-left",
     week: "mt-1 flex w-full gap-2 p-1",
     weekdays: "flex gap-2",
     weekday: "text-neutral-400 text-xs font-medium uppercase tracking-wide flex-1 select-none rounded-md",
-    day: "text-slate-600 text-sm font-extrabold disabled:opacity-100 aria-selected:!bg-transparent aria-selected:!text-slate-600",
+    day: "text-slate-600 text-sm font-extrabold disabled:opacity-100",
     day_today: "outline outline-1 outline-stone-400 text-slate-600 rounded-sm",
+    day_selected: "rounded-sm shadow-[0_0_8px_rgba(2,6,24,0.4)] !bg-transparent !text-slate-600",
     day_disabled: "",
     day_outside: "invisible",
   };
@@ -74,6 +76,11 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
     numberOfMonths: months,
     ...props,
     classNames: calendarClassNames,
+    formatters: {
+      ...(props.formatters || {}),
+      formatCaption: (date) =>
+        date.toLocaleString("en-US", { month: "long" }),
+    },
   };
 
   if (!("month" in props) && !("defaultMonth" in props)) {
