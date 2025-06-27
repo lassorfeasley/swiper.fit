@@ -31,12 +31,12 @@ const ProgramCard = ({
       data-component="ProgramCard"
       className="Programcardcontents w-full max-w-[500px] bg-white rounded-xl inline-flex flex-col justify-start items-start"
     >
-      {/* Header Row */}
-      <div className="self-stretch px-4 pt-4 inline-flex justify-between items-start">
-        <div className="text-slate-600 text-lg font-medium leading-tight truncate">
+      {/* Header: Workout Name full width */}
+      <div className="w-full px-4 pt-4 flex flex-col items-start gap-2">
+        <div className="w-full text-slate-950 text-lg font-medium leading-tight font-['Be_Vietnam_Pro']">
           {name}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-row flex-wrap gap-2 w-full">
           {typeof exerciseCount === "number" && (
             <div className="px-2 py-1 bg-slate-200 rounded-sm flex justify-center items-center">
               <span className="text-slate-500 text-xs font-medium leading-none whitespace-nowrap">

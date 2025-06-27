@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { useNavigate } from "react-router-dom";
+import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 
 /**
  * CalendarWorkoutLog
@@ -158,20 +159,16 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
       </div>
 
       {/* Events list */}
-      <div className="flex w-full flex-col items-center gap-4 px-3 py-5">
+      <div className="flex w-full flex-col items-center gap-4 px-3 py-5 justify-center">
         {events.length === 0 ? (
           <div className="text-sm text-muted-foreground">No workouts logged</div>
         ) : (
           events.map((w) => {
             const workoutDate = new Date(w.created_at);
-            const timeString = workoutDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-            // Relative descriptor (Today / X days ago)
             const todayMidnight = new Date();
             todayMidnight.setHours(0, 0, 0, 0);
             const diffDays = Math.floor((todayMidnight - new Date(workoutDate.getFullYear(), workoutDate.getMonth(), workoutDate.getDate())) / 86400000);
             const relativeLabel = diffDays === 0 ? "Today" : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-
             return (
               <div
                 key={w.id}
@@ -194,21 +191,13 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
                     );
                   }
                 }}
-                className="cursor-pointer w-full max-w-[500px] p-4 bg-white rounded-lg inline-flex justify-center items-end gap-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px]"
               >
-                <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="text-lg font-medium leading-tight text-slate-950">
-                      {w.workout_name || "Workout"}
-                    </div>
-                    <div className="text-sm font-medium leading-none text-slate-950">
-                      {w.programs?.program_name || w.muscle_group || "Workout"}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-sm font-medium leading-none text-neutral-500">
-                  {relativeLabel}
-                </div>
+                <WorkoutCard
+                  name={w.workout_name || "Workout"}
+                  subtitle={w.programs?.program_name || w.muscle_group || "Workout"}
+                  relativeLabel={relativeLabel}
+                />
               </div>
             );
           })
