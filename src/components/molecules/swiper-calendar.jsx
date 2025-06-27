@@ -69,11 +69,11 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
     day_today: "outline outline-1 outline-stone-400 text-slate-600 rounded-sm",
     day_selected: "!bg-green-500 !text-white rounded-sm shadow-calendar-selected",
     day_disabled: "",
-    day_outside: "invisible",
   };
 
   const calendarProps = {
     numberOfMonths: months,
+    showOutsideDays: true,
     ...props,
     classNames: calendarClassNames,
     formatters: {
