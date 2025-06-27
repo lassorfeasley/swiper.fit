@@ -105,14 +105,29 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
 
   const navigate = useNavigate();
 
+  // Handler for calendar date click
+  const handleCalendarSelect = (selected) => {
+    if (filterMode === "all") {
+      setFilterMode("day");
+      setDate(selected);
+    } else if (mode === "single") {
+      setDate(selected);
+    } else {
+      setRange(selected);
+    }
+  };
+
+  // When 'Show all' is selected, no days should be selected
+  const calendarSelected = filterMode === "all" ? undefined : (mode === "single" ? date : range);
+
   return (
     <Card className="w-full pt-0 mb-6 bg-transparent border-none shadow-none rounded-none" data-component="CalendarWorkoutLog">
       {/* Calendar */}
-      <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-0">
+      <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
         <SwiperCalendar
           mode={mode}
-          selected={mode === "single" ? date : range}
-          onSelect={mode === "single" ? setDate : setRange}
+          selected={calendarSelected}
+          onSelect={handleCalendarSelect}
           className="bg-transparent p-0"
           required
           modifiers={{
