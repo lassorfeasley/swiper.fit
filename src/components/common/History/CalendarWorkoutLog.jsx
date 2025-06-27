@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/atoms/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ToggleInput from "@/components/molecules/toggle-input";
+import { useNavigate } from "react-router-dom";
 
 /**
  * CalendarWorkoutLog
@@ -15,8 +16,9 @@ import ToggleInput from "@/components/molecules/toggle-input";
  * - workouts: Array of workout objects containing at least `created_at` and `workout_name`.
  * - date:      Currently selected Date instance.
  * - setDate:   Setter for the selected date (Date | undefined) → void.
+ * - viewingOwn: Boolean indicating whether the user is viewing their own workouts.
  */
-const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
+const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true }) => {
   // selection mode for calendar: "single" | "range"
   const [mode, setMode] = React.useState("single");
   const [range, setRange] = React.useState({ from: undefined, to: undefined });
@@ -101,10 +103,12 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
     [workoutDates]
   );
 
+  const navigate = useNavigate();
+
   return (
-    <Card className="w-full max-w-[1200px] pt-0 mx-auto mb-6 bg-transparent border-none shadow-none rounded-none" data-component="CalendarWorkoutLog">
+    <Card className="w-full pt-0 mb-6 bg-transparent border-none shadow-none rounded-none" data-component="CalendarWorkoutLog">
       {/* Calendar */}
-      <CardContent className="px-4 space-y-2 flex flex-col items-center bg-white">
+      <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-0">
         <SwiperCalendar
           mode={mode}
           selected={mode === "single" ? date : range}
@@ -125,7 +129,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
       </CardContent>
 
       {/* Toggle Group */}
-      <div className="w-full bg-white flex justify-center pb-3">
+      <div className="w-full bg-white flex justify-center pb-3 px-3 md:px-0">
         <ToggleInput
           value={filterMode}
           onChange={(val) => val && setFilterMode(val)}
@@ -156,7 +160,26 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate }) => {
             return (
               <div
                 key={w.id}
-                className="w-full max-w-[500px] p-4 bg-white rounded-lg inline-flex justify-center items-end gap-2"
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  navigate(
+                    viewingOwn
+                      ? `/history/${w.id}`
+                      : `/history/public/workout/${w.id}`
+                  )
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(
+                      viewingOwn
+                        ? `/history/${w.id}`
+                        : `/history/public/workout/${w.id}`
+                    );
+                  }
+                }}
+                className="cursor-pointer w-full max-w-[500px] p-4 bg-white rounded-lg inline-flex justify-center items-end gap-2 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
                   <div className="flex flex-col gap-2 w-full">

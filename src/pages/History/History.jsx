@@ -199,7 +199,7 @@ const History = () => {
     <AppLayout
       className="bg-white"
       appHeaderTitle={viewingOwn ? "History" : `${ownerName || "User"}'s workout history`}
-      showSidebar={viewingOwn}
+      showSidebar={!paramUserId}
       showAddButton={viewingOwn}
       addButtonText="Share"
       addButtonIcon={Share2}
@@ -218,6 +218,7 @@ const History = () => {
           workouts={workouts}
           date={selectedDate}
           setDate={setSelectedDate}
+          viewingOwn={viewingOwn}
         />
       )}
 
