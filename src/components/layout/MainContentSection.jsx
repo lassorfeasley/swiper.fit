@@ -1,0 +1,9 @@
+import { cn } from "@/lib/utils";
+
+export default function MainContentSection({ children, className = "", as: Component = "section", ...props }) {
+  return (
+    <Component className={cn("px-4 md:px-6", className)} {...props}>
+      {children}
+    </Component>
+  );
+} 

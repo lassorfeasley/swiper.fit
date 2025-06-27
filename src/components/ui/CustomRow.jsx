@@ -64,7 +64,7 @@ export function CustomRow(props) {
         return (
           <td key={i} colSpan={7} className="p-0">
              <div
-                className="bg-white shadow-calendar-selected rounded-sm h-full"
+                className="bg-red-500 rounded-sm h-full"
                 style={wrapperStyle}
               />
           </td>

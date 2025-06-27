@@ -63,7 +63,7 @@ export default function AppLayout({
                 }
               : {}),
           }}
-          className="flex-1 px-4 md:px-6 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
+          className="flex-1 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
         >
           {children}
         </main>

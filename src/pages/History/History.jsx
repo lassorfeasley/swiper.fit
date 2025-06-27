@@ -16,6 +16,7 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { TextInput } from "@/components/molecules/text-input";
 import { Copy } from "lucide-react";
 import CalendarWorkoutLog from "@/components/common/History/CalendarWorkoutLog";
+import MainContentSection from "@/components/layout/MainContentSection";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -196,6 +197,7 @@ const History = () => {
 
   return (
     <AppLayout
+      className="bg-white"
       appHeaderTitle={viewingOwn ? "History" : `${ownerName || "User"}'s workout history`}
       showSidebar={viewingOwn}
       showAddButton={viewingOwn}
@@ -219,43 +221,6 @@ const History = () => {
         />
       )}
 
-      <DeckWrapper className="mb-[150px]">
-        {loading ? (
-          <div className="p-6">Loading...</div>
-        ) : (
-          workouts
-            .filter((w) => {
-              const q = search.toLowerCase();
-              return (
-                w.workout_name?.toLowerCase().includes(q) ||
-                w.programs?.program_name?.toLowerCase().includes(q) ||
-                String(w.exerciseCount).includes(q)
-              );
-            })
-            .map((w) => (
-              <CardWrapper key={w.id} gap={0} marginTop={0} marginBottom={0}>
-                <StaticCard
-                  id={w.id}
-                  name={w.workout_name || "Unnamed Workout"}
-                  labels={[w.programs?.program_name] || []}
-                  count={w.exerciseCount}
-                  duration={(() => {
-                    const sec = w.duration_seconds || 0;
-                    const h = Math.floor(sec / 3600);
-                    const m = Math.floor((sec % 3600) / 60);
-                    const s = sec % 60;
-                    return [h, m, s].map((u) => String(u).padStart(2, "0")).join(":");
-                  })()}
-                  onClick={() =>
-                    viewingOwn
-                      ? navigate(`/history/${w.id}`)
-                      : navigate(`/history/public/workout/${w.id}`)
-                  }
-                />
-              </CardWrapper>
-            ))
-        )}
-      </DeckWrapper>
       {viewingOwn && (
         <ShareHistoryDialog
           open={shareDialogOpen}

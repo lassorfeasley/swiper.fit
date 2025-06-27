@@ -54,21 +54,33 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
     return new Date(baseDate.getFullYear(), baseDate.getMonth() - (months - 1), 1);
   }, [baseDate, months]);
 
-  let calendarClassNames = props.classNames || {};
   const baseMonthsClasses = "relative flex flex-col md:flex-row justify-center";
-  calendarClassNames = {
-    ...calendarClassNames,
+
+  // Default calendar styling; can be overridden by parent via props.classNames
+  const defaultClassNames = {
     months: `${baseMonthsClasses} gap-10`.trim(),
     nav: "hidden",
-    caption_label: "text-sm font-extrabold text-slate-500",
+    caption_label: "text-muted-foreground font-medium",
     month_caption: "justify-start text-left",
     week: "mt-1 flex w-full gap-2 p-1",
     weekdays: "flex gap-2",
-    weekday: "text-neutral-400 text-xs font-medium uppercase tracking-wide flex-1 select-none rounded-md",
-    day: "text-slate-600 text-sm font-extrabold disabled:opacity-100",
-    day_today: "outline outline-1 outline-stone-400 text-slate-600 rounded-sm",
-    day_selected: "!bg-green-500 !text-white rounded-sm shadow-calendar-selected",
-    day_disabled: "",
+    weekday:
+      "text-neutral-400 text-xs font-medium uppercase tracking-wide flex-1 select-none rounded-md",
+
+    // Core day styles
+    day: "text-foreground",
+    day_selected: "text-white",
+    day_range_start: "text-white",
+    day_range_middle: "text-white",
+    day_range_end: "text-white",
+    day_today: "border border-primary rounded-sm",
+    day_outside: "text-muted opacity-40",
+    day_disabled: "opacity-50",
+  };
+
+  const calendarClassNames = {
+    ...defaultClassNames,
+    ...(props.classNames || {}), // allow parent overrides
   };
 
   const calendarProps = {
@@ -80,6 +92,8 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
       ...(props.formatters || {}),
       formatCaption: (date) =>
         date.toLocaleString("en-US", { month: "long" }),
+      formatWeekdayName: (date) =>
+        date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
     },
   };
 
