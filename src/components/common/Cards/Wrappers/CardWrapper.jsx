@@ -59,7 +59,11 @@ const CardWrapper = React.forwardRef(({
     <div
       ref={ref}
       className={cn(
-        "w-full flex flex-col justify-start items-stretch mx-auto overflow-visible bg-transparent border-l border-r border-neutral-300",
+        "w-full flex flex-col justify-start items-stretch mx-auto bg-transparent border-l border-r border-neutral-300",
+        {
+          "rounded-t-lg overflow-hidden border-t": index === 0,
+          "overflow-visible": index !== 0,
+        },
         className
       )}
       style={{ maxWidth: 500, ...spacingStyle, ...(props.style || {}) }}

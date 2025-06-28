@@ -203,7 +203,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
           })
         )}
       </div>
-    </Card>
+ts    </Card>
   );
 };
 

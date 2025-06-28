@@ -571,10 +571,15 @@ const ActiveWorkout = () => {
                 );
                 const isFocused = focusedIndex === index;
 
-                const collapsedHeight = 64;
-                let topOffset = 80;
-                if (focusedIndex !== -1 && index > focusedIndex) {
-                  topOffset = 80 + focusedCardHeight;
+                const STACKING_OFFSET_PX = 8;
+                let topOffset = 80 + index * STACKING_OFFSET_PX;
+
+                if (focusedIndex !== -1) {
+                  const collapsedHeight = 80; 
+                  const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
+                  if (index > focusedIndex) {
+                    topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
+                  }
                 }
 
                 return (

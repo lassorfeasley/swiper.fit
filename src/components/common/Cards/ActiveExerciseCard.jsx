@@ -27,6 +27,7 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ActiveExerciseCard = React.forwardRef(({
   exerciseId,
@@ -120,7 +121,7 @@ const ActiveExerciseCard = React.forwardRef(({
     () => sets.every((set) => set.status === "complete"),
     [sets]
   );
-  
+
   // Notify parent once when exercise becomes fully complete
   const notifiedRef = useRef(false);
   useEffect(() => {
@@ -301,7 +302,7 @@ const ActiveExerciseCard = React.forwardRef(({
   const cardStatus = allComplete ? "complete" : "default";
 
   return (
-    <CardWrapper
+        <CardWrapper
       ref={ref}
       id={`exercise-${exerciseId}`}
       status={cardStatus}
@@ -314,11 +315,12 @@ const ActiveExerciseCard = React.forwardRef(({
       topOffset={topOffset}
     >
       <div
-        className={`w-full bg-white flex flex-col justify-start items-start border-t border-l border-r border-neutral-300 rounded-t-lg ${
-          isFocused
-            ? "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]"
-            : ""
-        }`}
+        className={cn(
+          "w-full bg-white flex flex-col justify-start items-start",
+          isFocused && "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
+          index !== 0 && "rounded-t-lg border-t border-l border-r border-neutral-300"
+        )}
+        style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
       >
         {/* Label Section */}
         <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
@@ -356,7 +358,7 @@ const ActiveExerciseCard = React.forwardRef(({
             Tap to edit set. Swipe to complete.
           </div>
         </div>
-      </div>
+            </div>
 
       {openSetIndex !== null && (
         <SwiperForm
@@ -367,7 +369,7 @@ const ActiveExerciseCard = React.forwardRef(({
             title="Edit Set"
             subtitle={sets[openSetIndex]?.set_variant}
           />
-          <SetEditForm
+            <SetEditForm
             formValues={editForm}
             onFormChange={handleEditFormChange}
             onToggleChange={handleToggleChange}
@@ -378,10 +380,10 @@ const ActiveExerciseCard = React.forwardRef(({
                   Apply changes to this workout or update the program for future
                   workouts.
                 </p>
-                <ToggleInput
+              <ToggleInput
                   value={addType}
                   onValueChange={setAddType}
-                  options={[
+                options={[
                     { label: "This Workout", value: "today" },
                     { label: "This & Future", value: "future" },
                   ]}
