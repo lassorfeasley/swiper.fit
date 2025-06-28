@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
@@ -40,6 +40,18 @@ const ActiveWorkout = () => {
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
   const [initialScrollTargetId, setInitialScrollTargetId] = useState(null);
+  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  const [focusedCardHeight, setFocusedCardHeight] = useState(0);
+
+  const focusedCardRef = useCallback((node) => {
+    if (node !== null) {
+      const resizeObserver = new ResizeObserver(() => {
+        setFocusedCardHeight(node.offsetHeight);
+      });
+      resizeObserver.observe(node);
+      return () => resizeObserver.disconnect();
+    }
+  }, []);
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
@@ -547,30 +559,58 @@ const ActiveWorkout = () => {
         onSectionNavChange={setSectionFilter}
         enableScrollSnap={true}
       >
-        <DeckWrapper ref={listRef}>
-          {filteredExercises.map((exercise) => (
-            <CardWrapper
-              key={exercise.id}
-              id={`exercise-${exercise.exercise_id}`}
-              data-exercise-card="true"
-              onClick={(e) => scrollCardIntoView(e.currentTarget, "smooth")}
-              gap={0}
-              marginTop={0}
-              marginBottom={0}
-            >
-              <ActiveExerciseCard
-                exerciseId={exercise.exercise_id}
-                exerciseName={exercise.name}
-                initialSetConfigs={exercise.setConfigs}
-                setData={workoutProgress[exercise.exercise_id] || []}
-                onSetComplete={handleSetComplete}
-                onSetDataChange={handleSetDataChange}
-                onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                onExerciseComplete={handleExerciseCompleteNavigate}
-              />
-            </CardWrapper>
-          ))}
-        </DeckWrapper>
+        <div ref={listRef}>
+          {filteredExercises.length > 0 ? (
+            <DeckWrapper>
+              {filteredExercises.map((ex, index) => {
+                const exerciseProgress = workoutProgress[ex.exercise_id] || {
+                  sets: [],
+                };
+                const focusedIndex = filteredExercises.findIndex(
+                  (e) => e.exercise_id === focusedExerciseId
+                );
+                const isFocused = focusedIndex === index;
+
+                const collapsedHeight = 64;
+                let topOffset = 80;
+                if (focusedIndex !== -1 && index > focusedIndex) {
+                  topOffset = 80 + focusedCardHeight - collapsedHeight;
+                }
+
+                return (
+                  <ActiveExerciseCard
+                    ref={isFocused ? focusedCardRef : null}
+                    key={ex.id}
+                    exerciseId={ex.exercise_id}
+                    exerciseName={ex.name}
+                    initialSetConfigs={ex.setConfigs}
+                    setData={exerciseProgress.sets}
+                    onSetComplete={handleSetComplete}
+                    onSetDataChange={handleSetDataChange}
+                    onExerciseComplete={() =>
+                      handleExerciseCompleteNavigate(ex.exercise_id)
+                    }
+                    isUnscheduled={!!activeWorkout?.is_unscheduled}
+                    onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                    isFocused={isFocused}
+                    onFocus={() => {
+                      setFocusedExerciseId(ex.exercise_id);
+                      updateLastExercise?.(ex.exercise_id);
+                    }}
+                    index={index}
+                    focusedIndex={focusedIndex}
+                    totalCards={filteredExercises.length}
+                    topOffset={topOffset}
+                  />
+                );
+              })}
+            </DeckWrapper>
+          ) : (
+            <div className="text-center py-10">
+              <p>No exercises found.</p>
+            </div>
+          )}
+        </div>
 
         {showAddExercise &&
           (() => {

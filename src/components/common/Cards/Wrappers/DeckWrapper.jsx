@@ -21,7 +21,7 @@ const DeckWrapper = forwardRef(
       rowGap: gap,
       paddingLeft: paddingX,
       paddingRight: paddingX,
-      paddingTop: 0,
+      paddingTop: 80,
       paddingBottom: 0,
       ...(props.style || {}),
     };

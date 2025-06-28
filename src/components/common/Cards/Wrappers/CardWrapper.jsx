@@ -17,10 +17,10 @@ import { cn } from "@/lib/utils";
 // ========= Global CardWrapper spacing constants =========
 // Adjust these three numbers to control default spacing everywhere.
 export const CARD_WRAPPER_GAP_PX = 0; // default gap removed as per new design
-export const CARD_WRAPPER_MARGIN_TOP_PX = 20; // space above the first card
-export const CARD_WRAPPER_MARGIN_BOTTOM_PX = 20; // space below the last card
+export const CARD_WRAPPER_MARGIN_TOP_PX = 0; // space above the first card
+export const CARD_WRAPPER_MARGIN_BOTTOM_PX = 0; // space below the last card
 
-const CardWrapper = ({
+const CardWrapper = React.forwardRef(({
   children,
   className = "",
   cardTitle,
@@ -31,26 +31,35 @@ const CardWrapper = ({
   gap = CARD_WRAPPER_GAP_PX,
   marginTop = CARD_WRAPPER_MARGIN_TOP_PX,
   marginBottom = CARD_WRAPPER_MARGIN_BOTTOM_PX,
+  index,
+  focusedIndex,
+  totalCards,
+  topOffset = 80,
   ...props
-}) => {
+}, ref) => {
   const divProps = { ...props };
   delete divProps.reorderable;
   delete divProps.items;
   delete divProps.onReorder;
   delete divProps.headerRef;
 
+  const zIndex = index + 1; // first card lowest, last highest
+
   // Style object controlling spacing
   const spacingStyle = {
     rowGap: gap,
     marginTop: marginTop,
     marginBottom: marginBottom,
-    paddingTop: 20, // ensure 20px internal top padding as requested
+    position: "sticky",
+    top: topOffset,
+    zIndex: zIndex,
   };
 
   return (
     <div
+      ref={ref}
       className={cn(
-        "w-full rounded-xl flex flex-col justify-start items-center mx-auto overflow-hidden",
+        "w-full flex flex-col justify-start items-stretch mx-auto overflow-visible bg-transparent border-l border-r border-neutral-300",
         className
       )}
       style={{ maxWidth: 500, ...spacingStyle, ...(props.style || {}) }}
@@ -88,7 +97,7 @@ const CardWrapper = ({
       )}
     </div>
   );
-};
+});
 
 CardWrapper.propTypes = {
   children: PropTypes.node.isRequired,
@@ -101,6 +110,10 @@ CardWrapper.propTypes = {
   gap: PropTypes.number,
   marginTop: PropTypes.number,
   marginBottom: PropTypes.number,
+  index: PropTypes.number,
+  focusedIndex: PropTypes.number,
+  totalCards: PropTypes.number,
+  topOffset: PropTypes.number,
 };
 
 export default CardWrapper;

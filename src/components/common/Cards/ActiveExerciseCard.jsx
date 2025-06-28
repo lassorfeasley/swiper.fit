@@ -19,17 +19,16 @@ import React, {
 import SwipeSwitch from "@/components/molecules/swipe-switch";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import PropTypes from "prop-types";
-import { Maximize2, Minimize2 } from "lucide-react";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "../forms/wrappers/FormSectionWrapper";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
+import { Check } from "lucide-react";
 
-const ActiveExerciseCard = ({
+const ActiveExerciseCard = React.forwardRef(({
   exerciseId,
   exerciseName,
   initialSetConfigs = [],
@@ -37,13 +36,15 @@ const ActiveExerciseCard = ({
   onSetDataChange,
   onExerciseComplete,
   isUnscheduled,
-  default_view = true,
   setData = [],
   onSetProgrammaticUpdate,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(
-    !default_view && initialSetConfigs.length > 1
-  );
+  isFocused,
+  onFocus,
+  index,
+  focusedIndex,
+  totalCards,
+  topOffset,
+}, ref) => {
   const [openSetIndex, setOpenSetIndex] = useState(null);
   const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: "lbs" });
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
@@ -119,29 +120,7 @@ const ActiveExerciseCard = ({
     () => sets.every((set) => set.status === "complete"),
     [sets]
   );
-  const anyActive = useMemo(
-    () =>
-      sets.some(
-        (set) => set.status === "active" || set.status === "ready-timed-set"
-      ),
-    [sets]
-  );
-  const activeSet = useMemo(() => {
-    const active = sets.find(
-      (set) => set.status === "active" || set.status === "ready-timed-set"
-    );
-    if (active) return active;
-
-    const firstLocked = sets.find((set) => set.status === "locked");
-    if (firstLocked) return firstLocked;
-
-    return sets.length > 0 ? sets[0] : undefined;
-  }, [sets]);
-  const swipeStatus = useMemo(
-    () => (allComplete ? "complete" : anyActive ? "active" : "locked"),
-    [allComplete, anyActive]
-  );
-
+  
   // Notify parent once when exercise becomes fully complete
   const notifiedRef = useRef(false);
   useEffect(() => {
@@ -244,427 +223,211 @@ const ActiveExerciseCard = ({
     [exerciseId, onSetComplete, onSetDataChange, sets]
   );
 
-  const handleActiveSetComplete = useCallback(async () => {
-    if (!mountedRef.current) return;
+  const openEditSheet = (index) => {
+    const setToEdit = sets[index];
+    setOpenSetIndex(index);
+    setEditForm({
+      reps: setToEdit.reps,
+      weight: setToEdit.weight,
+      unit: setToEdit.weight_unit,
+      set_variant: setToEdit.set_variant,
+      set_type: setToEdit.set_type,
+      timed_set_duration: setToEdit.timed_set_duration,
+      program_set_id: setToEdit.program_set_id, // Store program_set_id for future use
+    });
+    setIsEditSheetOpen(true);
+    setFormDirty(false); // Reset dirty state on open
+  };
 
-    // Collect all sets that are not complete
-    const incompleteSets = sets.filter((s) => s.status !== "complete");
-    if (incompleteSets.length === 0) return;
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+    setFormDirty(true); // Mark form as dirty on change
+  };
 
-    // Prepare batch updates
-    const updates = incompleteSets.map((set) => ({
-      id: set.id,
-      changes: {
-        status: "complete",
-        program_set_id: set.program_set_id,
-        set_variant: set.set_variant,
-      },
-    }));
+  const handleToggleChange = (field) => (value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    setFormDirty(true);
+  };
 
-    // Call analytics for each set
-    if (onSetComplete) {
-      incompleteSets.forEach((set) => {
-        onSetComplete(exerciseId, { ...set, status: "complete" });
-      });
+  const handleSaveSet = async () => {
+    if (!formDirty) {
+      setIsEditSheetOpen(false);
+      return;
     }
 
-    // Batch update all sets
-    if (onSetDataChange) {
-      onSetDataChange(exerciseId, updates);
+    const setBeingEdited = sets[openSetIndex];
+    if (!setBeingEdited || !setBeingEdited.id) {
+      console.error("No valid set to update.", { openSetIndex, sets });
+      setIsEditSheetOpen(false);
+      return;
     }
-  }, [exerciseId, onSetComplete, onSetDataChange, sets]);
 
-  const handlePillClick = useCallback(
-    (idx) => {
-      if (!mountedRef.current) return;
-      const set = sets[idx];
-      setEditForm({
-        reps: set.reps,
-        weight: set.weight,
-        unit: set.weight_unit,
-        set_type: set.set_type || initialSetConfigs[idx]?.set_type || "reps",
-        timed_set_duration:
-          set.timed_set_duration ||
-          initialSetConfigs[idx]?.timed_set_duration ||
-          30,
-        set_variant: set.set_variant || set.name,
-      });
-      setOpenSetIndex(idx);
-      setIsEditSheetOpen(true);
-    },
-    [sets, initialSetConfigs]
-  );
+    const isProgramUpdate = addType === "future";
 
-  const handleEditFormSave = useCallback(
-    async (formValues) => {
-      if (!mountedRef.current || openSetIndex === null) return;
-
-      const set_to_update = sets[openSetIndex];
-      const set_id_to_update = set_to_update.id;
-      // Derive new status based on set_type and current state
-      let newStatus = set_to_update.status;
-      if (formValues.completed) {
-        newStatus = "complete";
-      } else {
-        // Switching to timed: move to ready-timed-set if not complete
-        if (
-          formValues.set_type === "timed" &&
-          ["active", "locked"].includes(set_to_update.status)
-        ) {
-          newStatus = "ready-timed-set";
-        }
-        // Switching from timed to reps: reset counting/ready states back to active
-        if (
-          formValues.set_type !== "timed" &&
-          ["ready-timed-set", "counting-down-timed"].includes(
-            set_to_update.status
-          )
-        ) {
-          newStatus = "active";
-        }
+    if (isProgramUpdate) {
+      // Logic for updating the program template
+      if (onSetProgrammaticUpdate) {
+        onSetProgrammaticUpdate(
+          exerciseId,
+          setBeingEdited.program_set_id,
+          editForm
+        );
       }
-      const set_variant_to_save =
-        formValues.set_variant || set_to_update.set_variant;
-
+    } else {
+      // Existing logic for updating the current workout's set
       const updates = [
         {
-          id: set_id_to_update,
+          id: setBeingEdited.id,
           changes: {
-            reps: formValues.reps,
-            weight: formValues.weight,
-            weight_unit: formValues.unit,
-            set_variant: set_variant_to_save,
-            set_type: formValues.set_type,
-            timed_set_duration:
-              formValues.set_type === "timed"
-                ? formValues.timed_set_duration
-                : undefined,
-            ...(newStatus !== set_to_update.status
-              ? { status: newStatus }
-              : {}),
-            program_set_id: set_to_update.program_set_id,
+            reps: editForm.reps,
+            weight: editForm.weight,
+            weight_unit: editForm.unit,
           },
         },
       ];
-
       if (onSetDataChange) {
-        Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
-          console.error
-        );
+        onSetDataChange(exerciseId, updates);
       }
-
-      setOpenSetIndex(null);
-      setIsEditSheetOpen(false);
-      setFormDirty(true);
-    },
-    [exerciseId, onSetDataChange, openSetIndex, sets, editForm]
-  );
-
-  const handleEditFormSaveForFuture = useCallback(
-    async (formValues) => {
-      if (!mountedRef.current || openSetIndex === null) return;
-
-      // First, save the changes for today
-      handleEditFormSave(formValues);
-
-      // Then, call the programmatic update function if it exists
-      if (onSetProgrammaticUpdate) {
-        const set_to_update = sets[openSetIndex];
-        onSetProgrammaticUpdate(
-          exerciseId,
-          set_to_update.program_set_id,
-          formValues
-        );
-      }
-    },
-    [
-      exerciseId,
-      openSetIndex,
-      sets,
-      handleEditFormSave,
-      onSetProgrammaticUpdate,
-    ]
-  );
-
-  const handleSetDelete = useCallback(async () => {
-    if (!mountedRef.current || openSetIndex === null) return;
-
-    const set_to_delete = sets[openSetIndex];
-    const set_id_to_delete = set_to_delete.id;
-
-    const updates = [
-      {
-        id: set_id_to_delete,
-        changes: {
-          status: "deleted",
-          program_set_id: null,
-          set_variant: null,
-        },
-      },
-    ];
-
-    if (onSetDataChange) {
-      onSetDataChange(exerciseId, updates);
     }
 
-    setOpenSetIndex(null);
     setIsEditSheetOpen(false);
-    setFormDirty(true);
-  }, [exerciseId, onSetDataChange, openSetIndex, sets]);
+    setOpenSetIndex(null);
+    setFormDirty(false); // Reset dirty state
+  };
+
+  const MemoizedSwipeSwitch = React.memo(SwipeSwitch);
+
+  const cardStatus = allComplete ? "complete" : "default";
 
   return (
-    <>
-      {isExpanded && initialSetConfigs.length > 1 ? (
-        <CardWrapper
-          className="Property1Expanded self-stretch bg-white rounded-xl flex flex-col justify-start items-stretch gap-0"
-          style={{ maxWidth: 500 }}
-          gap={0}
-          marginTop={0}
-          marginBottom={0}
-        >
-          <div className="Labelandexpand self-stretch p-3 inline-flex justify-start items-start overflow-hidden">
-            <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-              <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
-                {exerciseName}
-              </div>
-              <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
-                {sets.length === 1
-                  ? "One set"
-                  : sets.length === 2
-                  ? "Two sets"
-                  : sets.length === 3
-                  ? "Three sets"
-                  : `${sets.length} sets`}
-              </div>
+    <CardWrapper
+      ref={ref}
+      id={`exercise-${exerciseId}`}
+      status={cardStatus}
+      className="w-full bg-white"
+      onClick={onFocus}
+      index={index}
+      isFocused={isFocused}
+      focusedIndex={focusedIndex}
+      totalCards={totalCards}
+      topOffset={topOffset}
+    >
+      <div
+        className={`w-full bg-white flex flex-col justify-start items-start border-t border-l border-r border-neutral-300 rounded-t-lg ${
+          isFocused
+            ? "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]"
+            : ""
+        }`}
+      >
+        {/* Label Section */}
+        <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
+          <div className="flex-1 flex flex-col">
+            <div className="text-neutral-600 text-lg font-medium leading-tight">
+              {exerciseName}
             </div>
-            <button
-              type="button"
-              onClick={() => setIsExpanded(false)}
-              className="SortDescending size-7 relative overflow-hidden"
-            >
-              <Minimize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
-            </button>
+            <div className="text-neutral-400 text-sm font-medium leading-none">
+              {sets.length} {sets.length === 1 ? "set" : "sets"}
+            </div>
           </div>
-          <div className="self-stretch h-0 border-b border-stone-200" />
-          {sets.map((set, idx) => {
-            const setType = set.set_type || "reps";
-            const timedDuration = set.timed_set_duration;
-            const isLastSet = idx === sets.length - 1;
-            return (
-              <div
-                key={`${set.program_set_id ?? set.tempId ?? `idx-${idx}`}`}
-                className={`SetsLog self-stretch p-3 bg-white flex flex-col justify-start items-start gap-2 ${
-                  !isLastSet ? "border-b border-stone-200" : ""
-                }`}
-              >
-                <div className="Setrepsweightwrapper self-stretch inline-flex justify-between items-center">
-                  <div className="SetOne justify-center text-slate-600 text-sm font-normal leading-tight">
-                    {set.set_variant || set.name}
-                  </div>
-                  <SetBadge
-                    key={`badge-${set.program_set_id ?? set.tempId ?? idx}`}
-                    reps={set.reps}
-                    weight={set.weight}
-                    unit={set.weight_unit}
-                    complete={set.status === "complete"}
-                    editable={true}
-                    onEdit={() => handlePillClick(idx)}
-                    set_type={setType}
-                    timed_set_duration={timedDuration}
-                  />
-                </div>
-                <div className="Swipeswitch self-stretch bg-neutral-300 rounded-sm flex flex-col justify-start items-start">
-                  <SwipeSwitch
-                    status={set.status}
-                    onComplete={() => handleSetComplete(idx)}
-                    duration={timedDuration || 30}
-                  />
-                </div>
-              </div>
-            );
-          })}
-          {isUnscheduled && (
-            <div className="text-center text-sm text-gray-500 mt-2 p-3 bg-white w-full">
-              Unscheduled Exercise
-            </div>
-          )}
-        </CardWrapper>
-      ) : (
-        // Compact view
-        <CardWrapper
-          className="Property1Compact self-stretch p-3 bg-white rounded-xl inline-flex flex-col justify-start items-start gap-4"
-          style={{ maxWidth: 500 }}
-          gap={0}
-          marginTop={0}
-          marginBottom={0}
-        >
-          <div className="Labelandexpand self-stretch inline-flex justify-start items-start overflow-hidden">
-            <div className="Label flex-1 inline-flex flex-col justify-start items-start">
-              <div className="Workoutname self-stretch justify-start text-slate-600 text-heading-md">
-                {exerciseName}
-              </div>
-              <div className="Setnumber self-stretch justify-start text-slate-600 text-sm font-normal leading-tight">
-                {sets.length === 1
-                  ? "One set"
-                  : sets.length === 2
-                  ? "Two sets"
-                  : sets.length === 3
-                  ? "Three sets"
-                  : `${sets.length} sets`}
-              </div>
-            </div>
-            {initialSetConfigs.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setIsExpanded(true)}
-                className="SortDescending size-7 relative overflow-hidden"
-              >
-                <Maximize2 className="w-6 h-5 left-[3px] top-[4.50px] absolute text-neutral-400" />
-              </button>
+          <div className="size-8 flex items-center justify-center">
+            {allComplete && <Check className="w-6 h-6 text-green-500" />}
+            {!allComplete && !isFocused && (
+              <Check className="w-6 h-6 text-neutral-300" />
             )}
           </div>
-          {activeSet && (
-            <SwipeSwitch
-              status={activeSet.status}
-              onComplete={handleActiveSetComplete}
-              duration={
-                activeSet.set_type === "timed"
-                  ? activeSet.timed_set_duration
-                  : undefined
-              }
-            />
-          )}
-          <div className="self-stretch inline-flex justify-start items-center gap-3 flex-wrap content-center">
-            {sets.map((set, idx) => {
-              const setType = set.set_type || "reps";
-              const timedDuration = set.timed_set_duration;
-              return (
-                <SetBadge
-                  key={`${set.program_set_id ?? set.tempId ?? idx}`}
-                  set={set}
-                  onClick={() => handlePillClick(idx)}
-                  onEdit={() => handlePillClick(idx)}
-                  reps={set.reps}
-                  weight={set.weight}
-                  unit={set.weight_unit}
-                  complete={set.status === "complete"}
-                  editable={true}
-                  set_type={setType}
-                  timed_set_duration={timedDuration}
-                />
-              );
-            })}
-          </div>
-          {isUnscheduled && (
-            <div className="text-center text-sm text-gray-500 mt-2">
-              Unscheduled Exercise
-            </div>
-          )}
-        </CardWrapper>
-      )}
+        </div>
 
-      {isEditSheetOpen && (
-        <SwiperForm
-          open={isEditSheetOpen}
-          onOpenChange={setIsEditSheetOpen}
-          title="Edit"
-          leftAction={() => setIsEditSheetOpen(false)}
-          rightAction={() => handleEditFormSave(editForm)}
-          rightEnabled={formDirty}
-          rightText="Save"
-          leftText="Cancel"
+        {/* Swiper Section (collapsible) */}
+        <div
+          className={`self-stretch px-3 flex flex-col justify-start items-start gap-3 overflow-hidden transition-all ease-in-out duration-300 ${
+            isFocused ? "max-h-[1000px] pb-3" : "max-h-0"
+          }`}
         >
-          {/* Set name */}
-          <SwiperForm.Section>
-            <TextInput
-              label="Set name"
-              optional
-              value={editForm.set_variant || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                setEditForm((prev) => ({ ...prev, set_variant: val }));
-                setFormDirty(true);
-              }}
+          {sets.map((set, index) => (
+            <MemoizedSwipeSwitch
+              key={set.id || `set-${index}`}
+              set={set}
+              onComplete={() => handleSetComplete(index)}
+              onClick={() => openEditSheet(index)}
             />
-          </SwiperForm.Section>
+          ))}
+          <div className="self-stretch text-center text-neutral-400 text-sm font-medium leading-none py-2">
+            Tap to edit set. Swipe to complete.
+          </div>
+        </div>
+      </div>
 
-          {/* Main editing fields without name */}
-          <SwiperForm.Section>
-            <SetEditForm
-              isChildForm
-              showSetNameField={false}
-              onValuesChange={setEditForm}
-              onDirtyChange={setFormDirty}
-              initialValues={editForm}
-            />
-          </SwiperForm.Section>
-
-          {/* Add to program toggle */}
-          {onSetProgrammaticUpdate && (
-            <SwiperForm.Section>
-              <ToggleInput
-                label="Add to program?"
-                options={[
-                  { label: "Just for today", value: "today" },
-                  { label: "Permanently", value: "future" },
-                ]}
-                value={addType}
-                onChange={(val) => val && setAddType(val)}
-              />
-            </SwiperForm.Section>
-          )}
-
-          {/* Delete button */}
-          <SwiperForm.Section bordered={false}>
+      {openSetIndex !== null && (
+        <SwiperForm
+          isOpen={isEditSheetOpen}
+          onClose={() => setIsEditSheetOpen(false)}
+        >
+          <FormHeader
+            title="Edit Set"
+            subtitle={sets[openSetIndex]?.set_variant}
+          />
+          <SetEditForm
+            formValues={editForm}
+            onFormChange={handleEditFormChange}
+            onToggleChange={handleToggleChange}
+          >
+            {isUnscheduled && (
+              <FormSectionWrapper>
+                <p className="text-sm text-gray-500 mb-2">
+                  Apply changes to this workout or update the program for future
+                  workouts.
+                </p>
+                <ToggleInput
+                  value={addType}
+                  onValueChange={setAddType}
+                  options={[
+                    { label: "This Workout", value: "today" },
+                    { label: "This & Future", value: "future" },
+                  ]}
+                />
+              </FormSectionWrapper>
+            )}
+          </SetEditForm>
+          <div className="flex space-x-2 p-4">
             <SwiperButton
-              onClick={handleSetDelete}
-              variant="destructive"
-              className="w-full"
+              onClick={() => setIsEditSheetOpen(false)}
+              variant="secondary"
+              className="flex-1"
             >
-              Delete Set
+              Cancel
             </SwiperButton>
-          </SwiperForm.Section>
+            <SwiperButton
+              onClick={handleSaveSet}
+              className="flex-1"
+              disabled={!formDirty}
+            >
+              Save
+            </SwiperButton>
+          </div>
         </SwiperForm>
       )}
-    </>
+    </CardWrapper>
   );
-};
+});
 
 ActiveExerciseCard.propTypes = {
   exerciseId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     .isRequired,
   exerciseName: PropTypes.string.isRequired,
-  initialSetConfigs: PropTypes.arrayOf(
-    PropTypes.shape({
-      reps: PropTypes.number,
-      weight: PropTypes.number,
-      unit: PropTypes.string,
-      isComplete: PropTypes.bool,
-    })
-  ),
+  initialSetConfigs: PropTypes.array,
   onSetComplete: PropTypes.func,
   onSetDataChange: PropTypes.func,
   onExerciseComplete: PropTypes.func,
   isUnscheduled: PropTypes.bool,
-  default_view: PropTypes.bool,
-  setData: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      reps: PropTypes.number,
-      weight: PropTypes.number,
-      weight_unit: PropTypes.string,
-      status: PropTypes.oneOf([
-        "active",
-        "locked",
-        "complete",
-        "counting-down",
-        "ready-timed-set",
-        "counting-down-timed",
-      ]),
-      unit: PropTypes.string,
-    })
-  ),
+  setData: PropTypes.array,
   onSetProgrammaticUpdate: PropTypes.func,
+  isFocused: PropTypes.bool,
+  onFocus: PropTypes.func,
+  index: PropTypes.number,
+  focusedIndex: PropTypes.number,
+  totalCards: PropTypes.number,
+  topOffset: PropTypes.number,
 };
 
-export default React.memo(ActiveExerciseCard);
+export default ActiveExerciseCard;
