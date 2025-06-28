@@ -574,7 +574,7 @@ const ActiveWorkout = () => {
                 const collapsedHeight = 64;
                 let topOffset = 80;
                 if (focusedIndex !== -1 && index > focusedIndex) {
-                  topOffset = 80 + focusedCardHeight - collapsedHeight;
+                  topOffset = 80 + focusedCardHeight;
                 }
 
                 return (
