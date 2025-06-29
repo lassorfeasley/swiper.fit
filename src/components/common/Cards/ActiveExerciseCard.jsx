@@ -95,20 +95,16 @@ const ActiveExerciseCard = React.forwardRef(({
     });
 
     // Ensure the correct active/locked statuses after merging
-    let pendingFound = false;
     const adjusted = combined.map((set) => {
       if (set.status === "complete") {
         return set;
       }
-      if (!pendingFound) {
-        pendingFound = true;
-        return {
-          ...set,
-          status:
-            set.set_type === "timed" ? "ready-timed-set" : "active",
-        };
-      }
-      return { ...set, status: "locked" };
+      // If not complete, it's either active or ready for a timed set.
+      return {
+        ...set,
+        status:
+          set.set_type === "timed" ? "ready-timed-set" : "active",
+      };
     });
     return adjusted;
   }, [initialSetConfigs, setData]);
@@ -177,15 +173,6 @@ const ActiveExerciseCard = React.forwardRef(({
               set_variant: setToComplete.set_variant,
             },
           });
-          if (nextSet && nextSet.status === "locked") {
-            const nextStatus =
-              nextSet.set_type === "timed" ? "ready-timed-set" : "active";
-            const { tempId, ...restOfNextSet } = nextSet;
-            updates.push({
-              id: nextSet.id,
-              changes: { ...restOfNextSet, status: nextStatus },
-            });
-          }
         }
       } else {
         // For regular sets, just mark as complete
@@ -197,15 +184,6 @@ const ActiveExerciseCard = React.forwardRef(({
             program_set_id: setToComplete.program_set_id,
           },
         });
-        if (nextSet && nextSet.status === "locked") {
-          const nextStatus =
-            nextSet.set_type === "timed" ? "ready-timed-set" : "active";
-          const { tempId, ...restOfNextSet } = nextSet;
-          updates.push({
-            id: nextSet.id,
-            changes: { ...restOfNextSet, status: nextStatus },
-          });
-        }
       }
 
       // Log local set completion for clarity
@@ -297,8 +275,6 @@ const ActiveExerciseCard = React.forwardRef(({
     setFormDirty(false); // Reset dirty state
   };
 
-  const MemoizedSwipeSwitch = React.memo(SwipeSwitch);
-
   const cardStatus = allComplete ? "complete" : "default";
 
   return (
@@ -347,7 +323,7 @@ const ActiveExerciseCard = React.forwardRef(({
           }`}
         >
           {sets.map((set, index) => (
-            <MemoizedSwipeSwitch
+            <SwipeSwitch
               key={set.id || `set-${index}`}
               set={set}
               onComplete={() => handleSetComplete(index)}

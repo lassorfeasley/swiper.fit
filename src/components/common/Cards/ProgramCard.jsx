@@ -57,7 +57,7 @@ const ProgramCard = ({
       {/* Swipe Switch & footer */}
       <div className="self-stretch px-5 py-4 flex flex-col gap-2">
         {/* Swipe control */}
-        <SwipeSwitch status={swipeStatus} onComplete={onSwipeComplete} />
+        <SwipeSwitch set={{ status: swipeStatus }} onComplete={onSwipeComplete} />
 
         {/* Bottom text row */}
         {(leftText || rightText) && (

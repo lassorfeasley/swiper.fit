@@ -43,15 +43,22 @@ const ActiveWorkout = () => {
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
   const [focusedCardHeight, setFocusedCardHeight] = useState(0);
 
-  const focusedCardRef = useCallback((node) => {
+  const [focusedNode, setFocusedNode] = useState(null);
+  const focusedCardRef = useCallback(node => {
     if (node !== null) {
-      const resizeObserver = new ResizeObserver(() => {
-        setFocusedCardHeight(node.offsetHeight);
-      });
-      resizeObserver.observe(node);
-      return () => resizeObserver.disconnect();
+      setFocusedNode(node);
     }
   }, []);
+
+  useEffect(() => {
+    if (focusedNode) {
+      const resizeObserver = new ResizeObserver(() => {
+        setFocusedCardHeight(focusedNode.offsetHeight);
+      });
+      resizeObserver.observe(focusedNode);
+      return () => resizeObserver.disconnect();
+    }
+  }, [focusedNode]);
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
