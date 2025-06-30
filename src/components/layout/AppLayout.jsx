@@ -13,6 +13,7 @@ export default function AppLayout({
   searchValue,
   onSearchChange,
   enableScrollSnap = false,
+  noTopPadding = false,
   title,
   ...headerProps
 }) {
@@ -44,43 +45,39 @@ export default function AppLayout({
     };
   }, [headerProps]);
 
+  // List of props that PageHeader actually accepts
+  const allowedHeaderProps = [
+    'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare',
+    'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'searchValue', 'onSearchChange', 'className',
+  ];
+
+  const filteredHeaderProps = Object.fromEntries(
+    Object.entries(headerProps).filter(([key]) => allowedHeaderProps.includes(key))
+  );
+
   return (
     <div className="min-h-screen flex bg-white md:h-screen">
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
         <PageHeader
           ref={headerRef}
-          sidebarWidth={sidebarWidth}
           title={title}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: showSidebar ? sidebarWidth : 0,
-            right: 0,
-            zIndex: 50,
-            width: `calc(100% - ${showSidebar ? sidebarWidth : 0}px)`
-          }}
-          {...headerProps}
+          showSidebar={showSidebar}
+          {...filteredHeaderProps}
           onDelete={onDelete}
           showDeleteOption={showDeleteOption}
           searchValue={searchValue}
           onSearchChange={onSearchChange}
         />
         <main
+          data-scroll-snap-enabled={enableScrollSnap}
+          data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            ...(enableScrollSnap
-              ? {
-                  scrollSnapType: "y mandatory",
-                }
-              : {}),
+            paddingTop: noTopPadding ? '0px' : headerHeight,
           }}
-          className="flex-1 overflow-y-auto"
+          className={`flex-1 overflow-y-auto ${noTopPadding ? '!pt-0' : ''}`}
         >
-          <div className="w-full">
-            <div className="max-w-[500px] mx-auto px-4">
-            </div>
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>
@@ -98,5 +95,6 @@ AppLayout.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   enableScrollSnap: PropTypes.bool,
+  noTopPadding: PropTypes.bool,
   title: PropTypes.string,
 };

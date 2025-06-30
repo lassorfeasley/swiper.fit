@@ -265,23 +265,31 @@ export function ActiveWorkoutProvider({ children }) {
 
     const { id: program_set_id, ...restOfSetConfig } = setConfig;
 
-    const newSet = {
-      ...restOfSetConfig,
-      status: 'complete',
-      logged_at: new Date().toISOString(),
-    };
-
     const payload = {
         workout_id: activeWorkout.id,
         exercise_id: exerciseId,
-        reps: Number(restOfSetConfig.reps),
-        weight: Number(restOfSetConfig.weight),
-        weight_unit: restOfSetConfig.unit,
         set_variant: restOfSetConfig.set_variant,
     };
 
+    if (restOfSetConfig.reps !== undefined) {
+        payload.reps = Number(restOfSetConfig.reps);
+    }
+
+    if (restOfSetConfig.weight !== undefined) {
+        payload.weight = Number(restOfSetConfig.weight);
+        payload.weight_unit = restOfSetConfig.unit;
+    }
+
     if (program_set_id) {
         payload.program_set_id = program_set_id;
+    }
+
+    // Include timed set fields when relevant
+    if (restOfSetConfig.set_type) {
+        payload.set_type = restOfSetConfig.set_type;
+    }
+    if (restOfSetConfig.timed_set_duration !== undefined) {
+        payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
     }
 
     const { data, error } = await supabase
@@ -292,14 +300,25 @@ export function ActiveWorkoutProvider({ children }) {
     
     if (error) {
         console.error("Error saving set:", error);
-        // Here you might want to handle the error, e.g., by reverting the optimistic update
+        throw error;
     } else {
       // Update local state with the actual ID from the database
       setWorkoutProgress(prev => {
-        const newSets = (prev[exerciseId] || []).map(s => 
-          s.program_set_id === setConfig.program_set_id ? { ...s, ...data } : s
-        );
-        return { ...prev, [exerciseId]: newSets };
+        const exerciseProgress = prev[exerciseId] || [];
+        const setIndex = exerciseProgress.findIndex(s => String(s.program_set_id) === String(setConfig.program_set_id));
+
+        const newExerciseProgress = [...exerciseProgress];
+
+        if (setIndex !== -1) {
+            // Found the set, update it. Merge existing, new DB data, and ensure status from the initiating call is respected.
+            newExerciseProgress[setIndex] = { ...newExerciseProgress[setIndex], ...data, status: setConfig.status };
+        } else {
+            // Did not find set (due to state batching), so add it.
+            // Build the set from `setConfig` (which has the correct status) and `data` (which has the DB ID).
+            newExerciseProgress.push({ ...setConfig, ...data });
+        }
+
+        return { ...prev, [exerciseId]: newExerciseProgress };
       });
     }
   }, [activeWorkout, user]);

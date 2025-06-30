@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import CardWrapper from "./Wrappers/CardWrapper";
-import { Reorder } from "framer-motion";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
 
@@ -126,19 +124,8 @@ const ExerciseCard = ({
   );
 
   return (
-    <CardWrapper className={className} gap={0} marginTop={0} marginBottom={0}>
-      {reorderable ? (
-        <Reorder.Item
-          value={reorderValue}
-          className="w-full"
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={() => setIsDragging(false)}
-        >
-          {cardContent}
-        </Reorder.Item>
-      ) : (
-        cardContent
-      )}
+    <>
+      {cardContent}
       {setsAreEditable && (
         <SwiperForm
           open={editSheetOpen}
@@ -178,7 +165,7 @@ const ExerciseCard = ({
           </div>
         </SwiperForm>
       )}
-    </CardWrapper>
+    </>
   );
 };
 

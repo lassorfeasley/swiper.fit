@@ -41,6 +41,10 @@ const CardWrapper = React.forwardRef(({
   delete divProps.items;
   delete divProps.onReorder;
   delete divProps.headerRef;
+  delete divProps.index;
+  delete divProps.focusedIndex;
+  delete divProps.totalCards;
+  delete divProps.topOffset;
 
   const zIndex = index + 1; // first card lowest, last highest
 

@@ -42,8 +42,10 @@ const ActiveExerciseCard = React.forwardRef(({
   setData = [],
   onSetProgrammaticUpdate,
   isFocused,
+  isExpanded,
   onFocus,
   onSetPress,
+  onEditExercise,
   index,
   focusedIndex,
   totalCards,
@@ -163,7 +165,10 @@ const ActiveExerciseCard = React.forwardRef(({
           // Transition to counting down
           updates.push({
             id: setToComplete.id,
-            changes: { status: "counting-down-timed" },
+            changes: {
+              status: "counting-down-timed",
+              program_set_id: setToComplete.program_set_id,
+            },
           });
         } else if (setToComplete.status === "counting-down-timed") {
           // Timer finished, mark as complete and persist set_type and timed_set_duration
@@ -174,6 +179,7 @@ const ActiveExerciseCard = React.forwardRef(({
               set_type: setToComplete.set_type,
               timed_set_duration: setToComplete.timed_set_duration,
               set_variant: setToComplete.set_variant,
+              program_set_id: setToComplete.program_set_id,
             },
           });
         }
@@ -281,21 +287,27 @@ const ActiveExerciseCard = React.forwardRef(({
   const cardStatus = allComplete ? "complete" : "default";
 
   return (
-        <CardWrapper
+    <CardWrapper
       ref={ref}
       id={`exercise-${exerciseId}`}
       status={cardStatus}
       className={`w-full ${index !== 0 ? 'bg-white' : ''}`}
-      onClick={onFocus}
+      onClick={() => {
+        if (isFocused) {
+          onEditExercise?.();
+        } else {
+          onFocus?.();
+        }
+      }}
       index={index}
-      isFocused={isFocused}
       focusedIndex={focusedIndex}
       totalCards={totalCards}
-      topOffset={topOffset}
     >
       <div
         className={cn(
           "w-full bg-white flex flex-col justify-start items-start rounded-t-lg",
+          // Apply rounded bottom corners only if this is the last card in the section
+          index === totalCards - 1 && "rounded-b-lg",
           "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
           index !== 0 && "border-t border-l border-r border-neutral-300"
         )}
@@ -321,7 +333,7 @@ const ActiveExerciseCard = React.forwardRef(({
         {/* Swiper Section (collapsible) */}
         <div
           className={`grid w-full transition-[grid-template-rows] ease-in-out ${
-            isFocused ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+            isFocused || isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
           }`}
           style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
         >
@@ -332,7 +344,8 @@ const ActiveExerciseCard = React.forwardRef(({
                   key={set.id || `set-${index}`}
                   set={set}
                   onComplete={() => handleSetComplete(index)}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (onSetPress) {
                       onSetPress(exerciseId, set, index);
                     }
@@ -353,7 +366,7 @@ const ActiveExerciseCard = React.forwardRef(({
             </div>
           </div>
         </div>
-            </div>
+      </div>
 
       {openSetIndex !== null && (
         <SwiperForm
@@ -420,8 +433,10 @@ ActiveExerciseCard.propTypes = {
   setData: PropTypes.array,
   onSetProgrammaticUpdate: PropTypes.func,
   isFocused: PropTypes.bool,
+  isExpanded: PropTypes.bool,
   onFocus: PropTypes.func,
   onSetPress: PropTypes.func,
+  onEditExercise: PropTypes.func,
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,

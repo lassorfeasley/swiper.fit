@@ -197,7 +197,6 @@ const History = () => {
 
   return (
     <AppLayout
-      className="bg-white"
       title="History"
       showSidebar={!paramUserId}
       showShare={viewingOwn}
@@ -210,15 +209,17 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      {/* Calendar Log */}
-      {!loading && (
-        <CalendarWorkoutLog
-          workouts={workouts}
-          date={selectedDate}
-          setDate={setSelectedDate}
-          viewingOwn={viewingOwn}
-        />
-      )}
+      <MainContentSection>
+        {/* Calendar Log */}
+        {!loading && (
+          <CalendarWorkoutLog
+            workouts={workouts}
+            date={selectedDate}
+            setDate={setSelectedDate}
+            viewingOwn={viewingOwn}
+          />
+        )}
+      </MainContentSection>
 
       {viewingOwn && (
         <ShareHistoryDialog

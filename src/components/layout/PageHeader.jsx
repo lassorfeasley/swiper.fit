@@ -1,18 +1,19 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/FitAI?node-id=114-1276&t=9pgcPuKv7UdpdreN-4
 
 import PropTypes from "prop-types";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { ArrowLeft, Search, Settings2, Plus, Share2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
-const PageHeader = ({
+const PageHeader = forwardRef(({
   showBackButton = false,
   title = "Page",
   showSearch = false,
   showSettings = false,
   showAdd = false,
   showShare = false,
+  showSidebar = false,
   onBack,
   onSearch,
   onSettings,
@@ -21,8 +22,7 @@ const PageHeader = ({
   searchValue = "",
   onSearchChange = () => {},
   className,
-  ...props
-}) => {
+}, ref) => {
   const [searchActive, setSearchActive] = useState(false);
   const searchInputRef = useRef(null);
 
@@ -34,12 +34,15 @@ const PageHeader = ({
   }, [searchActive]);
 
   return (
-    <div
+    <header
+      ref={ref}
       className={cn(
-        "self-stretch min-h-14 px-5 pt-5 backdrop-blur-xs inline-flex justify-between items-center",
+        "fixed top-0 z-50 self-stretch min-h-14 px-5 pt-5 bg-transparent inline-flex justify-between items-center",
+        showSidebar
+          ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
+          : "left-0 w-full",
         className
       )}
-      {...props}
     >
       <div className={cn("flex justify-start items-center gap-2.5", searchActive ? "hidden sm:flex" : "")}>
         {showBackButton && (
@@ -124,9 +127,9 @@ const PageHeader = ({
           </div>
         )
       )}
-    </div>
+    </header>
   );
-};
+});
 
 PageHeader.propTypes = {
   showBackButton: PropTypes.bool,
@@ -135,6 +138,7 @@ PageHeader.propTypes = {
   showSettings: PropTypes.bool,
   showAdd: PropTypes.bool,
   showShare: PropTypes.bool,
+  showSidebar: PropTypes.bool,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,
@@ -144,5 +148,7 @@ PageHeader.propTypes = {
   onSearchChange: PropTypes.func,
   className: PropTypes.string,
 };
+
+PageHeader.displayName = "PageHeader";
 
 export default PageHeader;

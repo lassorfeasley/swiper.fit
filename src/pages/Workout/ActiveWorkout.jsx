@@ -53,6 +53,8 @@ const ActiveWorkout = () => {
   const [editingSet, setEditingSet] = useState(null);
   const [formDirty, setFormDirty] = useState(false);
   const [currentFormValues, setCurrentFormValues] = useState({});
+  const [editingExercise, setEditingExercise] = useState(null);
+  const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
 
   useEffect(() => {
     if (focusedNode) {
@@ -485,6 +487,11 @@ const ActiveWorkout = () => {
     setEditingSet(null);
   };
 
+  const handleSaveExerciseEdit = (data) => {
+    // TODO: persist edits; for now, close sheet
+    setEditingExercise(null);
+  };
+
   return (
     <>
       <AppLayout
@@ -506,13 +513,14 @@ const ActiveWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
         enableScrollSnap={true}
+        noTopPadding={true}
       >
         <div ref={listRef}>
           {exercisesBySection.length > 0 ? (
             exercisesBySection.map(({ section, exercises: sectionExercises }) => (
               <div
                 key={section}
-                className="bg-white shadow-2xl z-20 relative mx-auto px-4 pt-6"
+                className="bg-white shadow-2xl z-20 relative mx-auto px-4 pt-6 pb-10"
                 style={{ boxShadow: '0 8px 40px 0 rgba(64,64,64,0.40)' }}
               >
                 <div className="max-w-[500px] mx-auto w-full">
@@ -527,6 +535,7 @@ const ActiveWorkout = () => {
                       (e) => e.exercise_id === focusedExerciseId
                     );
                     const isFocused = focusedIndex === index;
+                    const isExpanded = isFocused || index === sectionExercises.length - 1;
 
                     const STACKING_OFFSET_PX = 64;
                     let topOffset = 80 + index * STACKING_OFFSET_PX;
@@ -556,9 +565,11 @@ const ActiveWorkout = () => {
                         isUnscheduled={!!activeWorkout?.is_unscheduled}
                         onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
                         isFocused={isFocused}
+                        isExpanded={isExpanded}
                         onFocus={() => {
                           if (!isFocused) changeFocus(ex.exercise_id);
                         }}
+                        onEditExercise={() => setEditingExercise(ex)}
                         index={index}
                         focusedIndex={focusedIndex}
                         totalCards={sectionExercises.length}
@@ -616,6 +627,40 @@ const ActiveWorkout = () => {
               </SwiperForm>
             );
           })()}
+
+        {/* Exercise edit sheet */}
+        {editingExercise && (() => {
+          const formRef = React.createRef();
+          return (
+            <SwiperForm
+              open={!!editingExercise}
+              onOpenChange={() => setEditingExercise(null)}
+              title="Edit"
+              leftAction={() => setEditingExercise(null)}
+              leftText="Close"
+              rightAction={() => formRef.current?.requestSubmit?.()}
+              rightText="Save"
+              rightEnabled={editingExerciseDirty}
+              padding={0}
+              className="edit-exercise-drawer"
+            >
+              <div className="flex-1 overflow-y-auto">
+                <AddNewExerciseForm
+                  ref={formRef}
+                  key={`edit-${editingExercise.id}`}
+                  formPrompt="Edit exercise"
+                  initialName={editingExercise.name}
+                  initialSection={editingExercise.section === 'workout' ? 'training' : editingExercise.section}
+                  initialSets={editingExercise.setConfigs?.length}
+                  initialSetConfigs={editingExercise.setConfigs}
+                  hideActionButtons={true}
+                  onActionIconClick={handleSaveExerciseEdit}
+                  onDirtyChange={setEditingExerciseDirty}
+                />
+              </div>
+            </SwiperForm>
+          );
+        })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}

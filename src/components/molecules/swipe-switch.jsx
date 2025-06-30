@@ -1,6 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import { Check, Lock, Repeat2, Weight } from "lucide-react";
+import { Check, Lock, Repeat2, Weight, Clock } from "lucide-react";
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -29,6 +29,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   const [trackWidth, setTrackWidth] = useState(0);
   const [swipedComplete, setSwipedComplete] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const dragMoved = useRef(false);
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
 
   const duration = timed_set_duration || 30;
@@ -237,7 +238,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   return (
     <div
       className={`self-stretch h-16 bg-neutral-200 rounded-sm flex flex-col justify-center w-full cursor-pointer ${className}`}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!dragMoved.current) {
+          onClick?.(e);
+        }
+      }}
     >
       <div
         ref={trackRef}
@@ -250,7 +256,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
           dragElastic={0}
           dragMomentum={false}
           dragConstraints={{ left: 0, right: thumbTravel }}
-          onDragStart={() => setIsDragging(true)}
+          onDragStart={() => { setIsDragging(true); dragMoved.current = false; }}
+          onDrag={(e, info) => {
+            if (Math.abs(info.delta.x) > 2 || Math.abs(info.delta.y) > 2) {
+              dragMoved.current = true;
+            }
+          }}
           onDragEnd={handleDragEnd}
           animate={controls}
           whileDrag={{ cursor: "grabbing" }}
@@ -280,10 +291,19 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
             <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">{set_variant}</div>
             <div className="inline-flex justify-end items-center gap-2">
-              <div className="flex justify-center items-center gap-0.5">
-                <Repeat2 className="size-4 text-neutral-500" />
-                <div className="text-center text-neutral-500 text-lg font-bold">{reps}</div>
-              </div>
+              {set_type === 'timed' ? (
+                <div className="flex justify-center items-center gap-0.5">
+                  <Clock className="size-4 text-neutral-500" />
+                  <div className="text-center text-neutral-500 text-lg font-bold">
+                    {duration >= 60 ? formatTime(duration) : `${duration}`}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center items-center gap-0.5">
+                  <Repeat2 className="size-4 text-neutral-500" />
+                  <div className="text-center text-neutral-500 text-lg font-bold">{reps}</div>
+                </div>
+              )}
               {weight > 0 && weight_unit !== 'body' && (
                 <div className="flex justify-center items-center gap-0.5">
                   <Weight className="size-4 text-neutral-500" />

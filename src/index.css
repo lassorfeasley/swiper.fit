@@ -136,10 +136,14 @@ body:has(.edit-set-drawer[data-state="open"]) .fixed.inset-0[data-aria-hidden="t
 }
 
 /* === Scroll snap for ActiveWorkout === */
-main {
-  scroll-snap-type: y proximity;
+main[data-scroll-snap-enabled="true"] {
+  scroll-snap-type: y mandatory;
   /* Snap zone starts exactly at header bottom */
   scroll-padding-top: var(--header-height, 0px);
+}
+
+main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
+  scroll-padding-top: 0px;
 }
 
 [data-exercise-card="true"] {
