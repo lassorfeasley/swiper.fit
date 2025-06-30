@@ -40,61 +40,65 @@ const FormContent = ({
   return (
     <>
       {showSetNameField && (
-        <TextInput
-          label="Set name"
-          optional
-          value={set_variant}
-          onChange={(e) => handleLocalChange("set_variant", e.target.value)}
-          onBlur={syncWithParent}
-        />
+        <FormSectionWrapper>
+          <TextInput
+            label="Set name"
+            optional
+            value={set_variant}
+            onChange={(e) => handleLocalChange("set_variant", e.target.value)}
+            onBlur={syncWithParent}
+          />
+        </FormSectionWrapper>
       )}
-      <ToggleInput
-        label="Set type"
-        options={setTypeOptions}
-        value={set_type}
-        onChange={handleSetTypeChange}
-      />
-      {set_type === "reps" ? (
-        <NumericInput
-          label="Reps"
-          value={reps}
-          onChange={repsOnChange}
-          onBlur={showSetNameField ? syncWithParent : undefined}
-          unitLabel="Reps"
+      <FormSectionWrapper>
+        <ToggleInput
+          label="Set type"
+          options={setTypeOptions}
+          value={set_type}
+          onChange={handleSetTypeChange}
         />
-      ) : (
-        <NumericInput
-          label="Duration"
-          value={timed_set_duration}
-          onChange={durationOnChange}
-          onBlur={showSetNameField ? syncWithParent : undefined}
-          unitLabel="Seconds"
-          step={5}
+        {set_type === "reps" ? (
+          <NumericInput
+            label="Reps"
+            value={reps}
+            onChange={repsOnChange}
+            onBlur={showSetNameField ? syncWithParent : undefined}
+            unitLabel="Reps"
+          />
+        ) : (
+          <NumericInput
+            label="Duration"
+            value={timed_set_duration}
+            onChange={durationOnChange}
+            onBlur={showSetNameField ? syncWithParent : undefined}
+            unitLabel="Seconds"
+            step={5}
+          />
+        )}
+        <ToggleInput
+          label="Weight unit"
+          options={unitOptions}
+          value={unit}
+          onChange={handleUnitChange}
         />
-      )}
-      <ToggleInput
-        label="Weight unit"
-        options={unitOptions}
-        value={unit}
-        onChange={handleUnitChange}
-      />
-      {unit === "body" ? (
-        <div className="w-full inline-flex flex-col justify-start items-start gap-0">
-          <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
-            <span className="text-slate-500 text-body">Bodyweight</span>
+        {unit === "body" ? (
+          <div className="w-full inline-flex flex-col justify-start items-start gap-0">
+            <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
+              <span className="text-slate-500 text-body">Bodyweight</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <NumericInput
-          label="Weight"
-          value={weight}
-          onChange={weightOnChange}
-          onBlur={showSetNameField ? syncWithParent : undefined}
-          unitLabel={unit}
-          step={1}
-          allowOneDecimal={true}
-        />
-      )}
+        ) : (
+          <NumericInput
+            label="Weight"
+            value={weight}
+            onChange={weightOnChange}
+            onBlur={showSetNameField ? syncWithParent : undefined}
+            unitLabel={unit}
+            step={1}
+            allowOneDecimal={true}
+          />
+        )}
+      </FormSectionWrapper>
     </>
   );
 };
@@ -223,53 +227,34 @@ const SetEditForm = memo(
             {formPrompt}
           </div>
         )}
-        <FormSectionWrapper>
-          <FormContent
-            formValues={formValues}
-            showSetNameField={showSetNameField}
-            handleLocalChange={handleLocalChange}
-            handleSetTypeChange={handleSetTypeChange}
-            handleUnitChange={handleUnitChange}
-            syncWithParent={syncWithParent}
-            repsOnChange={repsOnChange}
-            durationOnChange={durationOnChange}
-            weightOnChange={weightOnChange}
-          />
-        </FormSectionWrapper>
+        <FormContent
+          formValues={formValues}
+          showSetNameField={showSetNameField}
+          handleLocalChange={handleLocalChange}
+          handleSetTypeChange={handleSetTypeChange}
+          handleUnitChange={handleUnitChange}
+          syncWithParent={syncWithParent}
+          repsOnChange={repsOnChange}
+          durationOnChange={durationOnChange}
+          weightOnChange={weightOnChange}
+        />
         {!isChildForm && (
-          <div className="flex flex-col gap-3 border-t border-neutral-300 pt-4 pb-4">
-            {onSaveForFuture && (
-              <ToggleInput
-                label="Keep new settings?"
-                options={[
-                  { label: "Just for today", value: "today" },
-                  { label: "Permanently", value: "future" },
-                ]}
-                value={addType}
-                onChange={(val) => val && setAddType(val)}
-              />
-            )}
+          <FormSectionWrapper>
+            <ToggleInput
+              label="Keep new settings?"
+              options={[{ label: 'Just for today', value: 'today' }, { label: 'Permanently', value: 'future' }]}
+              value={addType}
+              onChange={setAddType}
+            />
             {!hideActionButtons && (
-              <>
-                <SwiperButton
-                  onClick={handleSave}
-                  variant="default"
-                  className="w-full"
-                >
-                  Save
-                </SwiperButton>
-                {onDelete && (
-                  <SwiperButton
-                    onClick={onDelete}
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    Delete Set
-                  </SwiperButton>
-                )}
-              </>
+              <SwiperButton
+                onClick={handleSave}
+                disabled={!onSave && !onSaveForFuture}
+              >
+                {addType === "future" ? saveButtonText : "Save"}
+              </SwiperButton>
             )}
-          </div>
+          </FormSectionWrapper>
         )}
       </div>
     );

@@ -43,6 +43,7 @@ const ActiveExerciseCard = React.forwardRef(({
   onSetProgrammaticUpdate,
   isFocused,
   onFocus,
+  onSetPress,
   index,
   focusedIndex,
   totalCards,
@@ -331,8 +332,19 @@ const ActiveExerciseCard = React.forwardRef(({
                   key={set.id || `set-${index}`}
                   set={set}
                   onComplete={() => handleSetComplete(index)}
-                  onClick={() => openEditSheet(index)}
+                  onClick={() => {
+                    if (onSetPress) {
+                      onSetPress(exerciseId, set, index);
+                    }
+                  }}
                   className="w-full"
+                  reps={set.reps}
+                  weight={set.weight}
+                  unit={set.weight_unit}
+                  status={set.status}
+                  onSwipe={() => handleSetComplete(index)}
+                  disabled={!isFocused}
+                  countdownDuration={set.timed_set_duration}
                 />
               ))}
               <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
@@ -409,6 +421,7 @@ ActiveExerciseCard.propTypes = {
   onSetProgrammaticUpdate: PropTypes.func,
   isFocused: PropTypes.bool,
   onFocus: PropTypes.func,
+  onSetPress: PropTypes.func,
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,

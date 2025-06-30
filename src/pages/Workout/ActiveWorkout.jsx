@@ -11,6 +11,7 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
+import SetEditForm from "@/components/common/forms/SetEditForm";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -47,6 +48,11 @@ const ActiveWorkout = () => {
       setFocusedNode(node);
     }
   }, []);
+
+  const [isEditSheetOpen, setEditSheetOpen] = useState(false);
+  const [editingSet, setEditingSet] = useState(null);
+  const [formDirty, setFormDirty] = useState(false);
+  const [currentFormValues, setCurrentFormValues] = useState({});
 
   useEffect(() => {
     if (focusedNode) {
@@ -446,6 +452,39 @@ const ActiveWorkout = () => {
     }, collapseDurationMs);
   }, [updateLastExercise]);
 
+  const openSetEdit = (exerciseId, setConfig, index) => {
+    setEditingSet({ exerciseId, setConfig, index });
+    setEditSheetOpen(true);
+    setCurrentFormValues(setConfig);
+  };
+
+  const handleEditFormSave = (newValues) => {
+    if (!editingSet) return;
+
+    const { exerciseId, index } = editingSet;
+    
+    // Find the specific exercise and its progress
+    const exerciseProgress = workoutProgress[exerciseId] || [];
+
+    // Create the updated set object, preserving original id if it exists
+    const updatedSet = { ...exerciseProgress[index], ...newValues, id: exerciseProgress[index].id };
+
+    // Create the update payload for `updateWorkoutProgress`
+    const updates = [{
+      id: updatedSet.id,
+      changes: newValues
+    }];
+
+    updateWorkoutProgress(exerciseId, updates);
+
+    if(updatedSet.id) {
+      updateSet(updatedSet.id, newValues);
+    }
+
+    setEditSheetOpen(false);
+    setEditingSet(null);
+  };
+
   return (
     <>
       <AppLayout
@@ -453,7 +492,7 @@ const ActiveWorkout = () => {
         addButtonText="Add exercise"
         pageNameEditable={true}
         showBackButton={false}
-        title={activeWorkout?.workout_name || "Workout"}
+        title=""
         showAdd={true}
         showSettings={true}
         onAdd={() => setShowAddExercise(true)}
@@ -513,6 +552,7 @@ const ActiveWorkout = () => {
                         onExerciseComplete={() =>
                           handleExerciseCompleteNavigate(ex.exercise_id)
                         }
+                        onSetPress={openSetEdit}
                         isUnscheduled={!!activeWorkout?.is_unscheduled}
                         onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
                         isFocused={isFocused}
@@ -586,6 +626,28 @@ const ActiveWorkout = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {isEditSheetOpen && (
+        <SwiperForm
+          open={isEditSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          title="Edit Set"
+          leftAction={() => setEditSheetOpen(false)}
+          rightAction={() => handleEditFormSave(currentFormValues)}
+          rightEnabled={formDirty}
+          leftText="Cancel"
+          rightText="Save"
+        >
+          <SetEditForm
+            initialValues={editingSet?.setConfig}
+            onValuesChange={setCurrentFormValues}
+            onDirtyChange={setFormDirty}
+            showSetNameField={true}
+            hideActionButtons={true}
+            hideInternalHeader={true}
+          />
+        </SwiperForm>
+      )}
     </>
   );
 };

@@ -67,7 +67,6 @@ export default function AppLayout({
         />
         <main
           style={{
-            paddingTop: `var(--header-height, 64px)`,
             "--mobile-nav-height": "80px",
             ...(enableScrollSnap
               ? {
@@ -75,7 +74,7 @@ export default function AppLayout({
                 }
               : {}),
           }}
-          className="flex-1 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
+          className="flex-1 overflow-y-auto"
         >
           <div className="w-full">
             <div className="max-w-[500px] mx-auto px-4">
