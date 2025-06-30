@@ -198,12 +198,10 @@ const History = () => {
   return (
     <AppLayout
       className="bg-white"
-      appHeaderTitle={viewingOwn ? "History" : `${ownerName || "User"}'s workout history`}
+      title="History"
       showSidebar={!paramUserId}
-      showAddButton={viewingOwn}
-      addButtonText="Share"
-      addButtonIcon={Share2}
-      onAction={handleShare}
+      showShare={viewingOwn}
+      onShare={handleShare}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search workouts"

@@ -453,7 +453,11 @@ const ActiveWorkout = () => {
         addButtonText="Add exercise"
         pageNameEditable={true}
         showBackButton={false}
-        appHeaderTitle={activeWorkout?.name || "Workout"}
+        title={activeWorkout?.workout_name || "Workout"}
+        showAdd={true}
+        showSettings={true}
+        onAdd={() => setShowAddExercise(true)}
+        onSettings={() => {/* settings handler here */}}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}
         onDelete={handleDeleteWorkout}
@@ -512,7 +516,9 @@ const ActiveWorkout = () => {
                         isUnscheduled={!!activeWorkout?.is_unscheduled}
                         onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
                         isFocused={isFocused}
-                        onFocus={() => changeFocus(ex.exercise_id)}
+                        onFocus={() => {
+                          if (!isFocused) changeFocus(ex.exercise_id);
+                        }}
                         index={index}
                         focusedIndex={focusedIndex}
                         totalCards={sectionExercises.length}

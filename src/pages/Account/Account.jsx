@@ -111,14 +111,14 @@ const Account = () => {
 
   if (loading) {
     return (
-      <AppLayout appHeaderTitle="Account">
+      <AppLayout title="Account">
         <div className="p-6">Loading…</div>
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout appHeaderTitle="Account">
+    <AppLayout title="Account">
       <SwiperForm.Section>
         <TextInput
           label="First name"

@@ -113,7 +113,7 @@ const Workout = () => {
 
   return (
     <AppLayout
-      appHeaderTitle="Start Workout"
+      title="Start Workout"
       showAddButton={false}
       showBackButton={false}
       search={true}

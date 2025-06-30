@@ -13,6 +13,7 @@ export default function AppLayout({
   searchValue,
   onSearchChange,
   enableScrollSnap = false,
+  title,
   ...headerProps
 }) {
   const headerRef = useRef(null);
@@ -49,12 +50,24 @@ export default function AppLayout({
         <PageHeader
           ref={headerRef}
           sidebarWidth={sidebarWidth}
+          title={title}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: showSidebar ? sidebarWidth : 0,
+            right: 0,
+            zIndex: 50,
+            width: `calc(100% - ${showSidebar ? sidebarWidth : 0}px)`
+          }}
           {...headerProps}
           onDelete={onDelete}
           showDeleteOption={showDeleteOption}
+          searchValue={searchValue}
+          onSearchChange={onSearchChange}
         />
         <main
           style={{
+            paddingTop: `var(--header-height, 64px)`,
             "--mobile-nav-height": "80px",
             ...(enableScrollSnap
               ? {
@@ -64,11 +77,8 @@ export default function AppLayout({
           }}
           className="flex-1 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
         >
-          <div className="w-full pt-4">
+          <div className="w-full">
             <div className="max-w-[500px] mx-auto px-4">
-              <h1 className="text-neutral-700 text-2xl font-bold leading-normal mb-4">
-                Training
-              </h1>
             </div>
             {children}
           </div>
@@ -89,4 +99,5 @@ AppLayout.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   enableScrollSnap: PropTypes.bool,
+  title: PropTypes.string,
 };

@@ -358,15 +358,19 @@ const ProgramBuilder = () => {
   return (
     <>
       <AppLayout
-        appHeaderTitle={programName}
+        title={programName}
         pageNameEditable={true}
-        onAction={() => setShowAddExercise(true)}
         onBack={handleBack}
-        onEdit={() => setEditProgramOpen(true)}
-        showEditOption={true}
+        showAdd={true}
+        onAdd={() => setShowAddExercise(true)}
+        showSearch={true}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        showSettings={true}
+        onSettings={() => setEditProgramOpen(true)}
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
-        addButtonText="Add exercise"
         showBackButton
         pageContext="program-builder"
         showSectionNav={true}

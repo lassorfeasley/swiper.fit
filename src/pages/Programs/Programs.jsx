@@ -107,23 +107,24 @@ const ProgramsIndex = () => {
 
   return (
     <AppLayout
-      appHeaderTitle="Programs"
-      showAddButton={true}
-      addButtonText="Add program"
+      title="Programs"
+      showAdd={true}
+      showSearch={true}
+      showAddButton={false}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
       searchValue={search}
       onSearchChange={setSearch}
-      onAction={() => {
+      pageContext="programs"
+      data-component="AppHeader"
+      onAdd={() => {
         setShowSheet(true);
         setProgramName("");
         setTimeout(() => {
           if (inputRef.current) inputRef.current.focus();
         }, 100);
       }}
-      pageContext="programs"
-      data-component="AppHeader"
     >
       <DeckWrapper paddingX={20}>
         {loading ? (
