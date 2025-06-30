@@ -4,8 +4,7 @@ import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import WorkoutSectionWrapper from "@/components/common/Cards/Wrappers/WorkoutSectionWrapper";
 import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -518,67 +517,56 @@ const ActiveWorkout = () => {
         <div ref={listRef}>
           {exercisesBySection.length > 0 ? (
             exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-              <div
-                key={section}
-                className="bg-white shadow-2xl z-20 relative mx-auto px-4 pt-6 pb-10"
-                style={{ boxShadow: '0 8px 40px 0 rgba(64,64,64,0.40)' }}
-              >
-                <div className="max-w-[500px] mx-auto w-full">
-                  <h2 className="text-2xl font-bold text-neutral-700 mb-6 capitalize">
-                    {section === "training" ? "Training" : section === "warmup" ? "Warmup" : section === "cooldown" ? "Cooldown" : section}
-                  </h2>
-                </div>
-                <DeckWrapper>
-                  {sectionExercises.map((ex, index) => {
-                    const exerciseProgress = workoutProgress[ex.exercise_id] || [];
-                    const focusedIndex = sectionExercises.findIndex(
-                      (e) => e.exercise_id === focusedExerciseId
-                    );
-                    const isFocused = focusedIndex === index;
-                    const isExpanded = isFocused || index === sectionExercises.length - 1;
+              <WorkoutSectionWrapper key={section} section={section}>
+                {sectionExercises.map((ex, index) => {
+                  const exerciseProgress = workoutProgress[ex.exercise_id] || [];
+                  const focusedIndex = sectionExercises.findIndex(
+                    (e) => e.exercise_id === focusedExerciseId
+                  );
+                  const isFocused = focusedIndex === index;
+                  const isExpanded = isFocused || index === sectionExercises.length - 1;
 
-                    const STACKING_OFFSET_PX = 64;
-                    let topOffset = 80 + index * STACKING_OFFSET_PX;
+                  const STACKING_OFFSET_PX = 64;
+                  let topOffset = 80 + index * STACKING_OFFSET_PX;
 
-                    if (focusedIndex !== -1) {
-                      const collapsedHeight = 80; 
-                      const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
-                      if (index > focusedIndex) {
-                        topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
-                      }
+                  if (focusedIndex !== -1) {
+                    const collapsedHeight = 80; 
+                    const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
+                    if (index > focusedIndex) {
+                      topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
                     }
+                  }
 
-                    return (
-                      <ActiveExerciseCard
-                        ref={isFocused ? focusedCardRef : null}
-                        key={ex.id}
-                        exerciseId={ex.exercise_id}
-                        exerciseName={ex.name}
-                        initialSetConfigs={ex.setConfigs}
-                        setData={exerciseProgress}
-                        onSetComplete={handleSetComplete}
-                        onSetDataChange={handleSetDataChange}
-                        onExerciseComplete={() =>
-                          handleExerciseCompleteNavigate(ex.exercise_id)
-                        }
-                        onSetPress={openSetEdit}
-                        isUnscheduled={!!activeWorkout?.is_unscheduled}
-                        onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                        isFocused={isFocused}
-                        isExpanded={isExpanded}
-                        onFocus={() => {
-                          if (!isFocused) changeFocus(ex.exercise_id);
-                        }}
-                        onEditExercise={() => setEditingExercise(ex)}
-                        index={index}
-                        focusedIndex={focusedIndex}
-                        totalCards={sectionExercises.length}
-                        topOffset={topOffset}
-                      />
-                    );
-                  })}
-                </DeckWrapper>
-              </div>
+                  return (
+                    <ActiveExerciseCard
+                      ref={isFocused ? focusedCardRef : null}
+                      key={ex.id}
+                      exerciseId={ex.exercise_id}
+                      exerciseName={ex.name}
+                      initialSetConfigs={ex.setConfigs}
+                      setData={exerciseProgress}
+                      onSetComplete={handleSetComplete}
+                      onSetDataChange={handleSetDataChange}
+                      onExerciseComplete={() =>
+                        handleExerciseCompleteNavigate(ex.exercise_id)
+                      }
+                      onSetPress={openSetEdit}
+                      isUnscheduled={!!activeWorkout?.is_unscheduled}
+                      onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                      isFocused={isFocused}
+                      isExpanded={isExpanded}
+                      onFocus={() => {
+                        if (!isFocused) changeFocus(ex.exercise_id);
+                      }}
+                      onEditExercise={() => setEditingExercise(ex)}
+                      index={index}
+                      focusedIndex={focusedIndex}
+                      totalCards={sectionExercises.length}
+                      topOffset={topOffset}
+                    />
+                  );
+                })}
+              </WorkoutSectionWrapper>
             ))
           ) : (
             <div className="text-center py-10">

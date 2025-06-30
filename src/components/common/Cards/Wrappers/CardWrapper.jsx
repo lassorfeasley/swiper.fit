@@ -55,7 +55,7 @@ const CardWrapper = React.forwardRef(({
     <div
       ref={ref}
       className={cn(
-        "w-full flex flex-col justify-start items-stretch mx-auto bg-transparent",
+        "relative z-10 w-full flex flex-col justify-start items-stretch mx-auto bg-transparent",
         { "border-l border-r border-neutral-300": index !== 0 },
         className
       )}
