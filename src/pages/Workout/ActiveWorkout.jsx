@@ -6,7 +6,7 @@ import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
+import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
@@ -29,6 +29,7 @@ const ActiveWorkout = () => {
     saveSet,
     updateSet,
     updateLastExercise,
+    lastExerciseId,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -42,7 +43,6 @@ const ActiveWorkout = () => {
   const [initialScrollTargetId, setInitialScrollTargetId] = useState(null);
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
   const [focusedCardHeight, setFocusedCardHeight] = useState(0);
-
   const [focusedNode, setFocusedNode] = useState(null);
   const focusedCardRef = useCallback(node => {
     if (node !== null) {
@@ -101,6 +101,12 @@ const ActiveWorkout = () => {
     });
   };
 
+  useEffect(() => {
+    if (lastExerciseId) {
+      setFocusedExerciseId(lastExerciseId);
+    }
+  }, [lastExerciseId]);
+
   // After exercises load, restore last interacted exercise (once per mount)
   useEffect(() => {
     if (hasAutoScrolledRef.current) return;
@@ -127,6 +133,7 @@ const ActiveWorkout = () => {
       const targetEl = document.getElementById(`exercise-${initialScrollTargetId}`);
       if (targetEl) {
         scrollCardIntoView(targetEl, "auto");
+        setFocusedExerciseId(initialScrollTargetId);
       }
       // Reset the target so this doesn't run on subsequent section changes
       setInitialScrollTargetId(null);
@@ -515,7 +522,11 @@ const ActiveWorkout = () => {
       if (ex.section !== currentSection) break; // beyond current section
       if (!isExerciseComplete(ex)) {
         setSectionFilter(currentSection);
-        // TODO: scroll to upcoming incomplete exercise
+        changeFocus(ex.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
@@ -526,7 +537,11 @@ const ActiveWorkout = () => {
       if (ex.section !== currentSection) break; // before section begins
       if (!isExerciseComplete(ex)) {
         setSectionFilter(currentSection);
-        // TODO: scroll to previous incomplete exercise
+        changeFocus(ex.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
@@ -538,12 +553,29 @@ const ActiveWorkout = () => {
       const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
       if (targetEx) {
         setSectionFilter(sectionName);
-        // TODO: scroll to first incomplete exercise in next section
+        changeFocus(targetEx.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${targetEx.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
     // No remaining incomplete exercises
   };
+
+  // Time (ms) to wait for collapse animation before opening another card
+  const collapseDurationMs = CARD_ANIMATION_DURATION_MS;
+  // Helper to collapse current focused card then open a new one
+  const changeFocus = useCallback((newId) => {
+    // Collapse any open card
+    setFocusedExerciseId(null);
+    // After collapse animation completes, open new card and update last exercise
+    setTimeout(() => {
+      setFocusedExerciseId(newId);
+      updateLastExercise?.(newId);
+    }, collapseDurationMs);
+  }, [updateLastExercise]);
 
   return (
     <>
@@ -570,15 +602,13 @@ const ActiveWorkout = () => {
           {filteredExercises.length > 0 ? (
             <DeckWrapper>
               {filteredExercises.map((ex, index) => {
-                const exerciseProgress = workoutProgress[ex.exercise_id] || {
-                  sets: [],
-                };
+                const exerciseProgress = workoutProgress[ex.exercise_id] || [];
                 const focusedIndex = filteredExercises.findIndex(
                   (e) => e.exercise_id === focusedExerciseId
                 );
                 const isFocused = focusedIndex === index;
 
-                const STACKING_OFFSET_PX = 8;
+                const STACKING_OFFSET_PX = 64;
                 let topOffset = 80 + index * STACKING_OFFSET_PX;
 
                 if (focusedIndex !== -1) {
@@ -596,7 +626,7 @@ const ActiveWorkout = () => {
                     exerciseId={ex.exercise_id}
                     exerciseName={ex.name}
                     initialSetConfigs={ex.setConfigs}
-                    setData={exerciseProgress.sets}
+                    setData={exerciseProgress}
                     onSetComplete={handleSetComplete}
                     onSetDataChange={handleSetDataChange}
                     onExerciseComplete={() =>
@@ -605,10 +635,7 @@ const ActiveWorkout = () => {
                     isUnscheduled={!!activeWorkout?.is_unscheduled}
                     onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
                     isFocused={isFocused}
-                    onFocus={() => {
-                      setFocusedExerciseId(ex.exercise_id);
-                      updateLastExercise?.(ex.exercise_id);
-                    }}
+                    onFocus={() => changeFocus(ex.exercise_id)}
                     index={index}
                     focusedIndex={focusedIndex}
                     totalCards={filteredExercises.length}

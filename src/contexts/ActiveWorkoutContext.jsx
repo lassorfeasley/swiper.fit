@@ -23,48 +23,56 @@ export function ActiveWorkoutProvider({ children }) {
       }
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch the active workout record and program metadata
+        const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, sets(*), programs(program_name)')
+          .select('*, programs(program_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
-
-        if (data && !error) {
-          // Found an active workout, let's resume it
-          const progress = {};
-          if (data.sets) {
-            data.sets.forEach(s => {
-              if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
-              progress[s.exercise_id].push({
-                id: s.id,
-                program_set_id: s.program_set_id,
-                reps: s.reps,
-                weight: s.weight,
-                unit: s.weight_unit,
-                weight_unit: s.weight_unit,
-                set_variant: s.set_variant,
-                status: 'complete', // Assume sets in DB are complete
-              });
-            });
-          }
-
-          const workoutData = {
-            id: data.id,
-            programId: data.program_id,
-            name: data.programs?.program_name || data.workout_name || 'Workout',
-            startTime: data.created_at,
-            lastExerciseId: data.last_exercise_id || null,
-          };
-          
-          setActiveWorkout(workoutData);
-          setWorkoutProgress(progress);
-          const elapsed = data.created_at ? Math.floor((new Date() - new Date(data.created_at)) / 1000) : 0;
-          setElapsedTime(elapsed);
-          setIsWorkoutActive(true);
+        if (!workout || workoutError) {
+          setLoading(false);
+          return;
         }
+        // Build workout context data
+        const workoutData = {
+          id: workout.id,
+          programId: workout.program_id,
+          name: workout.programs?.program_name || workout.workout_name || 'Workout',
+          startTime: workout.created_at,
+          lastExerciseId: workout.last_exercise_id || null,
+        };
+        setActiveWorkout(workoutData);
+        // Fetch all sets logged for this workout
+        const { data: setsData, error: setsError } = await supabase
+          .from('sets')
+          .select('*')
+          .eq('workout_id', workout.id);
+        const progress = {};
+        if (setsData && !setsError) {
+          setsData.forEach(s => {
+            if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
+            progress[s.exercise_id].push({
+              id: s.id,
+              program_set_id: s.program_set_id,
+              reps: s.reps,
+              weight: s.weight,
+              unit: s.weight_unit,
+              weight_unit: s.weight_unit,
+              set_variant: s.set_variant,
+              status: 'complete',
+            });
+          });
+        }
+        setWorkoutProgress(progress);
+        // Compute elapsed time
+        const elapsed = workout.created_at
+          ? Math.floor((new Date() - new Date(workout.created_at)) / 1000)
+          : 0;
+        setElapsedTime(elapsed);
+        setIsWorkoutActive(true);
       } catch (err) {
-        console.error("Error checking for active workout:", err);
+        console.error('Error checking for active workout:', err);
       } finally {
         setLoading(false);
       }
@@ -72,6 +80,35 @@ export function ActiveWorkoutProvider({ children }) {
     checkForActiveWorkout();
   }, [user]);
 
+  // Whenever a new workout is active, fetch any logged sets for it
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+    supabase
+      .from('sets')
+      .select('*')
+      .eq('workout_id', activeWorkout.id)
+      .then(({ data: setsData, error }) => {
+        if (error) {
+          console.error('Error fetching sets for active workout:', error);
+          return;
+        }
+        const progress = {};
+        setsData.forEach((s) => {
+          if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
+          progress[s.exercise_id].push({
+            id: s.id,
+            program_set_id: s.program_set_id,
+            reps: s.reps,
+            weight: s.weight,
+            unit: s.weight_unit,
+            weight_unit: s.weight_unit,
+            set_variant: s.set_variant,
+            status: 'complete',
+          });
+        });
+        setWorkoutProgress(progress);
+      });
+  }, [activeWorkout?.id]);
 
   useEffect(() => {
     let timer;

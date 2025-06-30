@@ -78,6 +78,23 @@ export default function SwipeSwitch({ set, onComplete, onClick }) {
     }
   }, [status]);
 
+  // Persist styling for completed sets when status changes to 'complete'
+  useEffect(() => {
+    if (status === 'complete') {
+      // collapse padding and expand thumb to full rail with green background
+      setIsPaddingCollapsed(true);
+      controls.set({ x: 0, left: 0 });
+      controls.start({
+        x: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#22C55E',
+        borderRadius: 0,
+      }, { type: 'tween', ease: 'easeInOut', duration: 0 });
+    }
+  }, [status, controls]);
+
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);

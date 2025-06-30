@@ -34,7 +34,6 @@ const CardWrapper = React.forwardRef(({
   index,
   focusedIndex,
   totalCards,
-  topOffset = 80,
   ...props
 }, ref) => {
   const divProps = { ...props };
@@ -42,19 +41,11 @@ const CardWrapper = React.forwardRef(({
   delete divProps.items;
   delete divProps.onReorder;
   delete divProps.headerRef;
-  delete divProps.isFocused;
 
   const zIndex = index + 1; // first card lowest, last highest
 
-  // Style object controlling spacing
-  const spacingStyle = {
-    rowGap: gap,
-    marginTop: marginTop,
-    marginBottom: marginBottom,
-    position: "sticky",
-    top: topOffset,
-    zIndex: zIndex,
-  };
+  // Style object controlling spacing; cards scroll normally
+  const spacingStyle = { rowGap: gap, marginTop, marginBottom };
 
   return (
     <div
@@ -62,7 +53,7 @@ const CardWrapper = React.forwardRef(({
       className={cn(
         "w-full flex flex-col justify-start items-stretch mx-auto bg-transparent border-l border-r border-neutral-300",
         {
-          "rounded-t-lg overflow-hidden border-t": index === 0,
+          "overflow-hidden border-t": index === 0,
           "overflow-visible": index !== 0,
         },
         className
@@ -118,7 +109,6 @@ CardWrapper.propTypes = {
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,
-  topOffset: PropTypes.number,
 };
 
 export default CardWrapper;

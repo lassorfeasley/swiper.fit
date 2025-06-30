@@ -29,6 +29,8 @@ import { TextInput } from "@/components/molecules/text-input";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export const CARD_ANIMATION_DURATION_MS = 2000;
+
 const ActiveExerciseCard = React.forwardRef(({
   exerciseId,
   exerciseName,
@@ -293,7 +295,7 @@ const ActiveExerciseCard = React.forwardRef(({
       <div
         className={cn(
           "w-full bg-white flex flex-col justify-start items-start",
-          isFocused && "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
+          "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
           index !== 0 && "rounded-t-lg border-t border-l border-r border-neutral-300"
         )}
         style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
@@ -309,29 +311,33 @@ const ActiveExerciseCard = React.forwardRef(({
             </div>
           </div>
           <div className="size-8 flex items-center justify-center">
-            {allComplete && <Check className="w-6 h-6 text-green-500" />}
-            {!allComplete && !isFocused && (
-              <Check className="w-6 h-6 text-neutral-300" />
-            )}
+            {allComplete
+              ? <Check className="w-6 h-6 text-green-500" />
+              : <Check className="w-6 h-6 text-neutral-300" />}
           </div>
         </div>
 
         {/* Swiper Section (collapsible) */}
         <div
-          className={`self-stretch px-3 flex flex-col justify-start items-start gap-3 overflow-hidden transition-all ease-in-out duration-300 ${
-            isFocused ? "max-h-[1000px] pb-3" : "max-h-0"
+          className={`grid transition-[grid-template-rows] ease-in-out ${
+            isFocused ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
           }`}
+          style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
         >
-          {sets.map((set, index) => (
-            <SwipeSwitch
-              key={set.id || `set-${index}`}
-              set={set}
-              onComplete={() => handleSetComplete(index)}
-              onClick={() => openEditSheet(index)}
-            />
-          ))}
-          <div className="self-stretch text-center text-neutral-400 text-sm font-medium leading-none py-2">
-            Tap to edit set. Swipe to complete.
+          <div className="overflow-hidden">
+            <div className={`self-stretch px-3 flex flex-col justify-start items-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
+              {sets.map((set, index) => (
+                <SwipeSwitch
+                  key={set.id || `set-${index}`}
+                  set={set}
+                  onComplete={() => handleSetComplete(index)}
+                  onClick={() => openEditSheet(index)}
+                />
+              ))}
+              <div className="self-stretch text-center text-neutral-400 text-sm font-medium leading-none py-2">
+                Tap to edit set. Swipe to complete.
+              </div>
+            </div>
           </div>
         </div>
             </div>
