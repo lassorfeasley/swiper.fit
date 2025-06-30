@@ -286,12 +286,17 @@ const ActiveExerciseCard = React.forwardRef(({
 
   const cardStatus = allComplete ? "complete" : "default";
 
+  const cardWrapperClass = cn({
+    "overflow-hidden": isFocused,
+  });
+
   return (
     <CardWrapper
       ref={ref}
+      reorderable={false}
+      className={cardWrapperClass}
       id={`exercise-${exerciseId}`}
       status={cardStatus}
-      className={`w-full ${index !== 0 ? 'bg-white' : ''}`}
       onClick={() => {
         if (isFocused) {
           onEditExercise?.();
@@ -309,7 +314,7 @@ const ActiveExerciseCard = React.forwardRef(({
           // Apply rounded bottom corners only if this is the last card in the section
           index === totalCards - 1 && "rounded-b-lg",
           "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
-          index !== 0 && "border-t border-l border-r border-neutral-300"
+          (index === 0 ? "border-l border-r border-t border-neutral-300" : "border-t border-l border-r border-neutral-300")
         )}
         style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
       >
