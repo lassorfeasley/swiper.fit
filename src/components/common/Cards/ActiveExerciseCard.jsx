@@ -287,7 +287,7 @@ const ActiveExerciseCard = React.forwardRef(({
   const cardStatus = allComplete ? "complete" : "default";
 
   const cardWrapperClass = cn({
-    "overflow-hidden": isFocused,
+    // Ensure drop shadow is never clipped
   });
 
   return (
