@@ -11,7 +11,7 @@ function debounce(fn, delay) {
   };
 }
 
-export default function SwipeSwitch({ set, onComplete, onClick }) {
+export default function SwipeSwitch({ set, onComplete, onClick, className = "" }) {
   const {
     status = "locked",
     reps,
@@ -236,7 +236,7 @@ export default function SwipeSwitch({ set, onComplete, onClick }) {
 
   return (
     <div
-      className="self-stretch h-16 bg-neutral-200 rounded-sm inline-flex flex-col justify-center items-start w-full cursor-pointer"
+      className={`self-stretch h-16 bg-neutral-200 rounded-sm flex flex-col justify-center w-full cursor-pointer ${className}`}
       onClick={onClick}
     >
       <div

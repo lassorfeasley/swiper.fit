@@ -44,7 +44,7 @@ export default function AppLayout({
   }, [headerProps]);
 
   return (
-    <div className="min-h-screen flex bg-stone-200 md:h-screen">
+    <div className="min-h-screen flex bg-white md:h-screen">
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
         <PageHeader
           ref={headerRef}

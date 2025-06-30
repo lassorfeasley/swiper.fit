@@ -29,7 +29,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const CARD_ANIMATION_DURATION_MS = 2000;
+export const CARD_ANIMATION_DURATION_MS = 500;
 
 const ActiveExerciseCard = React.forwardRef(({
   exerciseId,
@@ -284,7 +284,7 @@ const ActiveExerciseCard = React.forwardRef(({
       ref={ref}
       id={`exercise-${exerciseId}`}
       status={cardStatus}
-      className="w-full bg-white"
+      className={`w-full ${index !== 0 ? 'bg-white' : ''}`}
       onClick={onFocus}
       index={index}
       isFocused={isFocused}
@@ -294,9 +294,9 @@ const ActiveExerciseCard = React.forwardRef(({
     >
       <div
         className={cn(
-          "w-full bg-white flex flex-col justify-start items-start",
+          "w-full bg-white flex flex-col justify-start items-start rounded-t-lg",
           "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
-          index !== 0 && "rounded-t-lg border-t border-l border-r border-neutral-300"
+          index !== 0 && "border-t border-l border-r border-neutral-300"
         )}
         style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
       >
@@ -319,22 +319,23 @@ const ActiveExerciseCard = React.forwardRef(({
 
         {/* Swiper Section (collapsible) */}
         <div
-          className={`grid transition-[grid-template-rows] ease-in-out ${
+          className={`grid w-full transition-[grid-template-rows] ease-in-out ${
             isFocused ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
           }`}
           style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
         >
-          <div className="overflow-hidden">
-            <div className={`self-stretch px-3 flex flex-col justify-start items-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
+          <div className="overflow-hidden w-full">
+            <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
               {sets.map((set, index) => (
                 <SwipeSwitch
                   key={set.id || `set-${index}`}
                   set={set}
                   onComplete={() => handleSetComplete(index)}
                   onClick={() => openEditSheet(index)}
+                  className="w-full"
                 />
               ))}
-              <div className="self-stretch text-center text-neutral-400 text-sm font-medium leading-none py-2">
+              <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
                 Tap to edit set. Swipe to complete.
               </div>
             </div>
