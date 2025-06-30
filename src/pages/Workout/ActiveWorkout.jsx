@@ -11,7 +11,6 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
-import SectionNav from "@/components/molecules/section-nav";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -36,7 +35,6 @@ const ActiveWorkout = () => {
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
-  const [sectionFilter, setSectionFilter] = useState("warmup");
   const [canAddExercise, setCanAddExercise] = useState(false);
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
@@ -119,7 +117,6 @@ const ActiveWorkout = () => {
 
     if (targetExercise) {
       setInitialScrollTargetId(targetExercise.exercise_id);
-      setSectionFilter(targetExercise.section);
       hasAutoScrolledRef.current = true; // Mark as done so this only runs once
     }
   }, [exercises, activeWorkout?.lastExerciseId]);
@@ -344,142 +341,17 @@ const ActiveWorkout = () => {
     }
   };
 
-  // Filter exercises based on search
-  const filteredExercises = exercises
-    .filter((ex) => ex.section === sectionFilter)
-    .filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
-
-  const handleAddExercise = async (exerciseData, updateType = "today") => {
-    try {
-      let { data: existing } = await supabase
-        .from("exercises")
-        .select("id")
-        .eq("name", exerciseData.name)
-        .maybeSingle();
-      let exercise_id = existing?.id;
-      if (!exercise_id) {
-        const { data: newEx, error: insertError } = await supabase
-          .from("exercises")
-          .insert([{ name: exerciseData.name, section: exerciseData.section }])
-          .select("id")
-          .single();
-        if (insertError || !newEx) throw new Error("Failed to create exercise");
-        exercise_id = newEx.id;
-      }
-
-      let progEx;
-      let progExError;
-      // Attempt insert with section attribute first
-      ({ data: progEx, error: progExError } = await supabase
-        .from("program_exercises")
-        .insert({
-          program_id: activeWorkout.programId,
-          exercise_id,
-          exercise_order: exercises.length + 1,
-        })
-        .select("id")
-        .single());
-
-      if (progExError || !progEx)
-        throw new Error("Failed to link exercise to program");
-      const program_exercise_id = progEx.id;
-      const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
-        program_exercise_id,
-        set_order: idx + 1,
-        reps: Number(cfg.reps),
-        weight: Number(cfg.weight),
-        weight_unit: cfg.unit,
-        set_variant: `Set ${idx + 1}`,
-      }));
-      if (setRows.length > 0) {
-        const { error: setError } = await supabase
-          .from("program_sets")
-          .insert(setRows);
-        if (setError)
-          throw new Error("Failed to save set details: " + setError.message);
-      }
-
-      setShowAddExercise(false);
-
-      // Refresh exercises to show the new one
-      await refreshExercises();
-    } catch (err) {
-      alert(err.message || "Failed to add exercise");
+  // Group exercises by section
+  const sectionsOrder = ["warmup", "training", "cooldown"];
+  const exercisesBySection = sectionsOrder.map(section => {
+    let sectionExercises;
+    if (section === "training") {
+      sectionExercises = exercises.filter(ex => ex.section === "training" || ex.section === "workout");
+    } else {
+      sectionExercises = exercises.filter(ex => ex.section === section);
     }
-  };
-
-  const handleAddExerciseToday = (exerciseData) => {
-    handleAddExercise(exerciseData, "today");
-  };
-
-  const handleAddExerciseFuture = (exerciseData) => {
-    handleAddExercise(exerciseData, "future");
-  };
-
-  const handleCancelAddExercise = () => {
-    setShowAddExercise(false);
-  };
-
-  const refreshExercises = async () => {
-    if (!activeWorkout) return;
-
-    const { data: progExs, error } = await supabase
-      .from("program_exercises")
-      .select(
-        `
-        *,
-        exercises(name, section),
-        program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
-      `
-      )
-      .eq("program_id", activeWorkout.programId);
-
-    if (error || !progExs) {
-      setExercises([]);
-      return;
-    }
-
-    const exerciseIds = progExs.map((pe) => pe.exercise_id);
-    const { data: exercisesData, error: exercisesError } = await supabase
-      .from("exercises")
-      .select("id, name")
-      .in("id", exerciseIds);
-
-    if (exercisesError) {
-      setExercises([]);
-      return;
-    }
-
-    const uniqueProgExs = progExs.filter(
-      (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-    );
-
-    const cards = uniqueProgExs.map((pe) => ({
-      id: pe.id,
-      exercise_id: pe.exercise_id,
-      section: (() => {
-        const raw = ((pe.exercises || {}).section || "").toLowerCase();
-        return raw === "training" ? "workout" : raw;
-      })(),
-      name:
-        (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
-        "Unknown",
-      setConfigs: (pe.program_sets || [])
-        .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
-        .map((set) => ({
-          id: set.id,
-          reps: set.reps,
-          weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
-          unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
-          set_variant: set.set_variant || `Set ${set.set_order}`,
-          set_type: set.set_type,
-          timed_set_duration: set.timed_set_duration,
-        })),
-    }));
-    setExercises(cards);
-  };
-
-  const sectionsOrder = ["warmup", "workout", "cooldown"];
+    return { section, exercises: sectionExercises };
+  }).filter(group => group.exercises.length > 0);
 
   const handleExerciseCompleteNavigate = (exerciseId) => {
     // update completed set
@@ -521,7 +393,6 @@ const ActiveWorkout = () => {
       const ex = exercises[i];
       if (ex.section !== currentSection) break; // beyond current section
       if (!isExerciseComplete(ex)) {
-        setSectionFilter(currentSection);
         changeFocus(ex.exercise_id);
         setTimeout(() => {
           const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
@@ -536,7 +407,6 @@ const ActiveWorkout = () => {
       const ex = exercises[i];
       if (ex.section !== currentSection) break; // before section begins
       if (!isExerciseComplete(ex)) {
-        setSectionFilter(currentSection);
         changeFocus(ex.exercise_id);
         setTimeout(() => {
           const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
@@ -552,7 +422,6 @@ const ActiveWorkout = () => {
       const sectionName = sectionsOrder[j];
       const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
       if (targetEx) {
-        setSectionFilter(sectionName);
         changeFocus(targetEx.exercise_id);
         setTimeout(() => {
           const cardEl = document.getElementById(`exercise-${targetEx.exercise_id}`);
@@ -593,57 +462,67 @@ const ActiveWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
-        showSectionNav={true}
-        sectionNavValue={sectionFilter}
-        onSectionNavChange={setSectionFilter}
         enableScrollSnap={true}
       >
         <div ref={listRef}>
-          {filteredExercises.length > 0 ? (
-            <DeckWrapper>
-              {filteredExercises.map((ex, index) => {
-                const exerciseProgress = workoutProgress[ex.exercise_id] || [];
-                const focusedIndex = filteredExercises.findIndex(
-                  (e) => e.exercise_id === focusedExerciseId
-                );
-                const isFocused = focusedIndex === index;
+          {exercisesBySection.length > 0 ? (
+            exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+              <div
+                key={section}
+                className="bg-white shadow-2xl z-20 relative mx-auto px-4 pt-6"
+                style={{ boxShadow: '0 8px 40px 0 rgba(64,64,64,0.40)' }}
+              >
+                <div className="max-w-[500px] mx-auto w-full">
+                  <h2 className="text-2xl font-bold text-neutral-700 mb-6 capitalize">
+                    {section === "training" ? "Training" : section === "warmup" ? "Warmup" : section === "cooldown" ? "Cooldown" : section}
+                  </h2>
+                </div>
+                <DeckWrapper>
+                  {sectionExercises.map((ex, index) => {
+                    const exerciseProgress = workoutProgress[ex.exercise_id] || [];
+                    const focusedIndex = sectionExercises.findIndex(
+                      (e) => e.exercise_id === focusedExerciseId
+                    );
+                    const isFocused = focusedIndex === index;
 
-                const STACKING_OFFSET_PX = 64;
-                let topOffset = 80 + index * STACKING_OFFSET_PX;
+                    const STACKING_OFFSET_PX = 64;
+                    let topOffset = 80 + index * STACKING_OFFSET_PX;
 
-                if (focusedIndex !== -1) {
-                  const collapsedHeight = 80; 
-                  const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
-                  if (index > focusedIndex) {
-                    topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
-                  }
-                }
-
-                return (
-                  <ActiveExerciseCard
-                    ref={isFocused ? focusedCardRef : null}
-                    key={ex.id}
-                    exerciseId={ex.exercise_id}
-                    exerciseName={ex.name}
-                    initialSetConfigs={ex.setConfigs}
-                    setData={exerciseProgress}
-                    onSetComplete={handleSetComplete}
-                    onSetDataChange={handleSetDataChange}
-                    onExerciseComplete={() =>
-                      handleExerciseCompleteNavigate(ex.exercise_id)
+                    if (focusedIndex !== -1) {
+                      const collapsedHeight = 80; 
+                      const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
+                      if (index > focusedIndex) {
+                        topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
+                      }
                     }
-                    isUnscheduled={!!activeWorkout?.is_unscheduled}
-                    onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                    isFocused={isFocused}
-                    onFocus={() => changeFocus(ex.exercise_id)}
-                    index={index}
-                    focusedIndex={focusedIndex}
-                    totalCards={filteredExercises.length}
-                    topOffset={topOffset}
-                  />
-                );
-              })}
-            </DeckWrapper>
+
+                    return (
+                      <ActiveExerciseCard
+                        ref={isFocused ? focusedCardRef : null}
+                        key={ex.id}
+                        exerciseId={ex.exercise_id}
+                        exerciseName={ex.name}
+                        initialSetConfigs={ex.setConfigs}
+                        setData={exerciseProgress}
+                        onSetComplete={handleSetComplete}
+                        onSetDataChange={handleSetDataChange}
+                        onExerciseComplete={() =>
+                          handleExerciseCompleteNavigate(ex.exercise_id)
+                        }
+                        isUnscheduled={!!activeWorkout?.is_unscheduled}
+                        onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                        isFocused={isFocused}
+                        onFocus={() => changeFocus(ex.exercise_id)}
+                        index={index}
+                        focusedIndex={focusedIndex}
+                        totalCards={sectionExercises.length}
+                        topOffset={topOffset}
+                      />
+                    );
+                  })}
+                </DeckWrapper>
+              </div>
+            ))
           ) : (
             <div className="text-center py-10">
               <p>No exercises found.</p>
@@ -678,7 +557,7 @@ const ActiveWorkout = () => {
                       else handleAddExerciseToday(data);
                     }}
                     initialSets={3}
-                    initialSection={(sectionFilter === "workout" ? "training" : sectionFilter)}
+                    initialSection={"training"}
                     initialSetConfigs={Array.from({ length: 3 }, () => ({
                       reps: 10,
                       weight: 25,

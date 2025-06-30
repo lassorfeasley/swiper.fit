@@ -56,7 +56,6 @@ export default function AppLayout({
         <main
           style={{
             "--mobile-nav-height": "80px",
-            marginTop: headerHeight,
             ...(enableScrollSnap
               ? {
                   scrollSnapType: "y mandatory",
@@ -65,7 +64,14 @@ export default function AppLayout({
           }}
           className="flex-1 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
         >
-          {children}
+          <div className="w-full pt-4">
+            <div className="max-w-[500px] mx-auto px-4">
+              <h1 className="text-neutral-700 text-2xl font-bold leading-normal mb-4">
+                Training
+              </h1>
+            </div>
+            {children}
+          </div>
         </main>
       </div>
     </div>
