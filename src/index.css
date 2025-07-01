@@ -32,13 +32,13 @@ body {
     html,
     body {
       max-height: 100dvh;
-      overflow-x: hidden;
+      overflow-x: clip;
     }
 
     #root {
       max-height: 100dvh;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow-y: visible;
+      overflow-x: clip;
     }
   }
 }

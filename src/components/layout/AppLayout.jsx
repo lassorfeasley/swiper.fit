@@ -75,7 +75,7 @@ export default function AppLayout({
             "--mobile-nav-height": "80px",
             paddingTop: noTopPadding ? '0px' : headerHeight,
           }}
-          className={`flex-1 overflow-y-auto ${noTopPadding ? '!pt-0' : ''}`}
+          className={`flex-1 ${noTopPadding ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
         >
           {children}
         </main>

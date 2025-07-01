@@ -29,7 +29,7 @@ const WorkoutSectionWrapper = ({ section, children, className, ...props }) => {
       {...props}
     >
       {/* Header */}
-      <div className="self-stretch p-5 border-b border-neutral-300 flex items-center gap-2.5 sticky top-0 bg-white z-5 pointer-events-none">
+      <div className="self-stretch p-5 border-b border-neutral-300 flex items-center gap-2.5 sticky top-0 bg-white z-20 md:z-5 pointer-events-none">
         <h2 className="flex-1 text-neutral-600 text-2xl font-bold leading-normal capitalize">
           {displayTitle}
         </h2>
