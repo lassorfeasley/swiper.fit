@@ -1,11 +1,10 @@
 import React from "react";
 import { SwiperCalendar } from "@/components/molecules/swiper-calendar";
-import { Card, CardContent, CardFooter } from "@/components/atoms/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/atoms/card";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { useNavigate } from "react-router-dom";
 import WorkoutCard from "@/components/common/Cards/WorkoutCard";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 
 /**
  * CalendarWorkoutLog
@@ -122,44 +121,51 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const calendarSelected = filterMode === "all" ? undefined : (mode === "single" ? date : range);
 
   return (
-    <Card className="w-full pt-0 mb-6 bg-transparent border-none shadow-none rounded-none" data-component="CalendarWorkoutLog">
-      {/* Calendar */}
-      <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
-        <SwiperCalendar
-          mode={mode}
-          selected={calendarSelected}
-          onSelect={handleCalendarSelect}
-          className="bg-transparent p-0"
-          required
-          modifiers={{
-            hasWorkout: workoutDates,
-            future: isFutureNoWorkout,
-          }}
-          disabled={disabledMatcher}
-          modifiersClassNames={{
-            hasWorkout:
-              "!bg-green-500 !text-white rounded-sm hover:shadow-sm focus:!bg-green-500 data-[selected]:!bg-green-500 data-[selected]:!text-white",
-            future: "text-slate-400 font-extrabold",
-          }}
-        />
-      </CardContent>
+    <div className="w-full" data-component="CalendarWorkoutLog">
+      {/* Calendar + toggle section */}
+      <Card className="w-full pt-0 mb-0 bg-transparent border-none shadow-none rounded-none">
+        <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
+          <SwiperCalendar
+            mode={mode}
+            selected={calendarSelected}
+            onSelect={handleCalendarSelect}
+            className="bg-transparent p-0"
+            required
+            modifiers={{
+              hasWorkout: workoutDates,
+              future: isFutureNoWorkout,
+            }}
+            disabled={disabledMatcher}
+            modifiersClassNames={{
+              hasWorkout:
+                "!bg-green-500 !text-white rounded-sm hover:shadow-sm focus:!bg-green-500 data-[selected]:!bg-green-500 data-[selected]:!text-white",
+              future: "text-slate-400 font-extrabold",
+            }}
+          />
+        </CardContent>
 
-      {/* Toggle Group */}
-      <div className="w-full bg-white flex justify-center pb-3 px-3 md:px-0">
-        <ToggleInput
-          value={filterMode}
-          onChange={(val) => val && setFilterMode(val)}
-          options={[
-            { label: "Show all", value: "all" },
-            { label: "Day", value: "day" },
-            { label: "Range", value: "range" },
-          ]}
-          className="w-full max-w-[500px]"
-        />
-      </div>
+        {/* Toggle Group */}
+        <div className="w-full bg-white flex justify-center pb-5 px-3 md:px-0">
+          <ToggleInput
+            value={filterMode}
+            onChange={(val) => val && setFilterMode(val)}
+            options={[
+              { label: "Show all", value: "all" },
+              { label: "Day", value: "day" },
+              { label: "Range", value: "range" },
+            ]}
+            className="w-full max-w-[500px]"
+          />
+        </div>
+      </Card>
 
       {/* Events list */}
-      <div className="flex w-full flex-col items-center gap-4 px-3 py-5 justify-center">
+      <DeckWrapper
+        gap={20}
+        paddingX={12}
+        className="items-center border-t border-neutral-300 space-y-[20px]"
+        style={{ paddingTop: 20, paddingBottom: 20 }}
+      >
         {events.length === 0 ? (
           <div className="text-sm text-muted-foreground">No workouts logged</div>
         ) : (
@@ -167,7 +173,15 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
             const workoutDate = new Date(w.created_at);
             const todayMidnight = new Date();
             todayMidnight.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((todayMidnight - new Date(workoutDate.getFullYear(), workoutDate.getMonth(), workoutDate.getDate())) / 86400000);
+            const diffDays = Math.floor(
+              (todayMidnight -
+                new Date(
+                  workoutDate.getFullYear(),
+                  workoutDate.getMonth(),
+                  workoutDate.getDate()
+                )) /
+                86400000
+            );
             const relativeLabel = diffDays === 0 ? "Today" : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
             return (
               <div
@@ -176,34 +190,32 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
                 tabIndex={0}
                 onClick={() =>
                   navigate(
-                    viewingOwn
-                      ? `/history/${w.id}`
-                      : `/history/public/workout/${w.id}`
+                    viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
                   )
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     navigate(
-                      viewingOwn
-                        ? `/history/${w.id}`
-                        : `/history/public/workout/${w.id}`
+                      viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
                     );
                   }
                 }}
-                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px]"
+                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px] border border-neutral-300 rounded-lg"
               >
                 <WorkoutCard
                   name={w.workout_name || "Workout"}
-                  subtitle={w.programs?.program_name || w.muscle_group || "Workout"}
+                  subtitle={
+                    w.programs?.program_name || w.muscle_group || "Workout"
+                  }
                   relativeLabel={relativeLabel}
                 />
               </div>
             );
           })
         )}
-      </div>
-ts    </Card>
+      </DeckWrapper>
+    </div>
   );
 };
 
