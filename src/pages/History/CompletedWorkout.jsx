@@ -1,7 +1,7 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-360
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,6 +69,9 @@ const CompletedWorkout = () => {
   const [isEditWorkoutOpen, setEditWorkoutOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
   const { user } = useAuth();
+  const location = useLocation();
+  // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
+  const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetExerciseId, setEditSetExerciseId] = useState(null);
   const [editSetIndex, setEditSetIndex] = useState(null);
@@ -79,7 +82,9 @@ const CompletedWorkout = () => {
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [publicLink, setPublicLink] = useState(false);
-  const readOnly = !user || (workout && workout.user_id !== user.id);
+  const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
+  // Treat public view as read-only even if the owner is logged in
+  const readOnly = isPublicWorkoutView || !user || (workout && workout.user_id !== user.id);
 
   useEffect(() => {
     setIsOwner(user && workout && workout.user_id === user.id);
@@ -182,6 +187,24 @@ const CompletedWorkout = () => {
       }
     })();
   }, [workout, isOwner]);
+
+  // -------------------------------------------------------------
+  // Fetch whether the workout owner's history is globally shared
+  // (needed to decide whether to show a back button on public view)
+  // -------------------------------------------------------------
+  useEffect(() => {
+    if (!isPublicWorkoutView || !workout) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("share_all_workouts")
+        .eq("id", workout.user_id)
+        .single();
+      if (!error && data) {
+        setOwnerHistoryPublic(Boolean(data.share_all_workouts));
+      }
+    })();
+  }, [isPublicWorkoutView, workout]);
 
   // Group sets by exercise_id, but only include exercises that have valid sets
   const setsByExercise = {};
@@ -422,14 +445,20 @@ const CompletedWorkout = () => {
   return (
     <>
       <AppLayout
-        showSidebar={isOwner}
+        showSidebar={isOwner && !isPublicWorkoutView}
         title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={!readOnly && true}
-        showBackButton={true}
-        onBack={() => navigate('/history')}
-        showShare={isOwner}
+        showBackButton={!isPublicWorkoutView || ownerHistoryPublic}
+        onBack={() => {
+          if (isPublicWorkoutView && workout) {
+            navigate(`/history/public/${workout.user_id}`);
+          } else {
+            navigate('/history');
+          }
+        }}
+        showShare={isOwner && !isPublicWorkoutView}
         onShare={handleShare}
-        showSettings={!readOnly}
+        showSettings={!readOnly && !isPublicWorkoutView}
         onSettings={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
