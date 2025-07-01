@@ -287,18 +287,23 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
             )}
           </div>
         </motion.div>
-        {(isLocked || isActive || isReadyTimed) && !isVisuallyComplete && (
+        {(isLocked || isActive || isReadyTimed) && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || (weight > 0 && weight_unit !== 'body')) && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
-            <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">{set_variant}</div>
+            {set_variant && (
+              <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">
+                {set_variant}
+              </div>
+            )}
             <div className="inline-flex justify-end items-center gap-2">
-              {set_type === 'timed' ? (
+              {set_type === 'timed' && (
                 <div className="flex justify-center items-center gap-0.5">
                   <Clock className="size-4 text-neutral-500" />
                   <div className="text-center text-neutral-500 text-lg font-bold">
                     {duration >= 60 ? formatTime(duration) : `${duration}`}
                   </div>
                 </div>
-              ) : (
+              )}
+              {set_type !== 'timed' && typeof reps === 'number' && (
                 <div className="flex justify-center items-center gap-0.5">
                   <Repeat2 className="size-4 text-neutral-500" />
                   <div className="text-center text-neutral-500 text-lg font-bold">{reps}</div>

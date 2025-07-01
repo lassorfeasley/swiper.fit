@@ -122,7 +122,7 @@ const Workout = () => {
       onSearchChange={setSearch}
       pageContext="workout"
     >
-      <DeckWrapper paddingX={20}>
+      <DeckWrapper paddingX={20} gap={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (

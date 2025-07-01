@@ -56,7 +56,6 @@ const CardWrapper = React.forwardRef(({
       ref={ref}
       className={cn(
         "relative z-10 w-full flex flex-col justify-start items-stretch mx-auto bg-transparent",
-        { "border-l border-r border-neutral-300": index !== 0 },
         className
       )}
       style={{ maxWidth: 500, ...spacingStyle, ...(props.style || {}) }}
