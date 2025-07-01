@@ -462,24 +462,22 @@ const ActiveWorkout = () => {
   const handleEditFormSave = (newValues) => {
     if (!editingSet) return;
 
-    const { exerciseId, index } = editingSet;
-    
-    // Find the specific exercise and its progress
-    const exerciseProgress = workoutProgress[exerciseId] || [];
+    const { exerciseId, setConfig } = editingSet;
 
-    // Create the updated set object, preserving original id if it exists
-    const updatedSet = { ...exerciseProgress[index], ...newValues, id: exerciseProgress[index].id };
+    // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
+    const targetId = setConfig?.id;
 
-    // Create the update payload for `updateWorkoutProgress`
-    const updates = [{
-      id: updatedSet.id,
-      changes: newValues
-    }];
+    const updates = [
+      {
+        id: targetId,
+        changes: newValues,
+      },
+    ];
 
     updateWorkoutProgress(exerciseId, updates);
 
-    if(updatedSet.id) {
-      updateSet(updatedSet.id, newValues);
+    if (targetId) {
+      updateSet(targetId, newValues);
     }
 
     setEditSheetOpen(false);

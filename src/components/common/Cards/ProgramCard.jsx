@@ -22,7 +22,7 @@ const ProgramCard = ({
   setCount,
   leftText = "Swipe to begin",
   rightText = "",
-  swipeStatus = "active",
+  swipeStatus = "default",
   onSwipeComplete,
 }) => {
   return (

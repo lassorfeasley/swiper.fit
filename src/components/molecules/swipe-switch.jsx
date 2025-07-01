@@ -1,6 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import { Check, Lock, Repeat2, Weight, Clock } from "lucide-react";
+import { Check, Repeat2, Weight, Clock } from "lucide-react";
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -49,6 +49,13 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     return Math.max(THUMB_WIDTH, trackWidth - RAIL_HORIZONTAL_PADDING_PER_SIDE * 2);
   };
 
+  // Helper to display mm:ss for durations >= 60s (used in pill on the right)
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   const updateThumbTravel = () => {
     if (isDragging) return;
     if (trackRef.current) {
@@ -74,7 +81,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
 
   // Reset swipedComplete when parent status changes
   useEffect(() => {
-    if (status !== "active" && status !== "ready-timed-set") {
+    if (status !== "default") {
       setSwipedComplete(false);
     }
   }, [status]);
@@ -100,46 +107,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  useEffect(() => {
-    if (status !== "counting-down-timed") {
-      clearInterval(timerInterval.current);
-      return;
-    }
-
-    setTimer(duration); // Reset timer before starting.
-
-    timerInterval.current = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerInterval.current);
-          if (onCompleteRef.current) onCompleteRef.current();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerInterval.current);
-  }, [status, duration]);
-
-  const formatTime = (secs) => {
-    const m = Math.floor(secs / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
   const handleDragEnd = (_, info) => {
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
-    if (
-      (status === "active" || status === "ready-timed-set") &&
-      info.offset.x >= travelNeeded
-    ) {
-      if (status !== "ready-timed-set") {
-        setSwipedComplete(true);
-      }
+    if (status === "default" && info.offset.x >= travelNeeded) {
+      setSwipedComplete(true);
       // We defer onComplete until after full animation sequence
 
       // Step 1: Snap thumb to end
@@ -183,11 +155,8 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     }
   };
 
-  const isLocked = status === "locked";
-  const isActive = status === "active";
+  const isDefault = status === "default";
   const isComplete = status === "complete";
-  const isReadyTimed = status === "ready-timed-set";
-  const isCountingDown = status === "counting-down-timed";
   const isVisuallyComplete = isComplete || swipedComplete;
 
   // Always use left for positioning, animate x (vertical centering via classes)
@@ -197,43 +166,6 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     left: RAIL_HORIZONTAL_PADDING_PER_SIDE,
     borderRadius: THUMB_RADIUS,
   };
-
-  if (isCountingDown) {
-    return (
-      <div className="self-stretch bg-neutral-300 rounded-sm inline-flex flex-col justify-start items-start gap-[5px]">
-        <div className="Rail self-stretch h-14 p-2.5 inline-flex justify-start items-center gap-2.5 flex-wrap content-center">
-          <div className="Thumb flex-1 h-10 p-2.5 bg-white flex justify-center items-center gap-2.5">
-            <div className="Lucide size-6 relative overflow-hidden">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  stroke="#22C55E"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M12 7V12L15 15"
-                  stroke="#22C55E"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div className="justify-center text-sm font-normal leading-tight text-green-600">
-              {formatTime(timer)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -252,7 +184,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
         <motion.div
           className="Thumb w-20 bg-white flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
           style={thumbStyle}
-          drag={!isVisuallyComplete && (isActive || isReadyTimed) ? "x" : false}
+          drag={!isVisuallyComplete && isDefault ? "x" : false}
           dragElastic={0}
           dragMomentum={false}
           dragConstraints={{ left: 0, right: thumbTravel }}
@@ -273,21 +205,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
                 <Check className="w-5 h-5 text-white" />
               </div>
             )}
-            {isReadyTimed && !isVisuallyComplete && (
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="12" cy="12" r="9" stroke="#A3A3A3" strokeWidth="2" />
-                <path d="M12 7V12L15 15" stroke="#A3A3A3" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            )}
           </div>
         </motion.div>
-        {(isLocked || isActive || isReadyTimed) && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || (weight > 0 && weight_unit !== 'body')) && (
+        {isDefault && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || (weight > 0 && weight_unit !== 'body')) && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
             {set_variant && (
               <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">

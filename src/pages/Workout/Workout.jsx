@@ -139,7 +139,7 @@ const Workout = () => {
                 setCount={program.setCount}
                 leftText="Swipe to begin"
                 rightText={""}
-                swipeStatus="active"
+                swipeStatus="default"
                 onSwipeComplete={() => handleStartWorkout(program)}
               />
             </CardWrapper>

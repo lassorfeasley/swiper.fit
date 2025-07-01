@@ -263,7 +263,25 @@ export function ActiveWorkoutProvider({ children }) {
         return;
     }
 
-    const { id: program_set_id, ...restOfSetConfig } = setConfig;
+    // ------------------------------------------------------------------
+    //  Build payload for new set row
+    // ------------------------------------------------------------------
+    // A set can originate from a program (program_set_id) or be ad-hoc.  In the
+    // latter case we generate a temporary id (e.g. "temp-0") to track it in
+    // local state.  Attempting to persist this temp id will fail because the
+    // `program_set_id` column expects a valid UUID that references
+    // `program_sets(id)`.  Therefore we must validate the value before adding
+    // it to the insert payload.
+
+    const {
+        program_set_id: programSetIdField,
+        id: maybeId,
+        ...restOfSetConfig
+    } = setConfig;
+
+    // Prefer an explicit program_set_id field; fall back to the legacy `id`
+    // property (used to piggy-back the program_set_id prior to persistence).
+    const rawProgramSetId = programSetIdField || maybeId;
 
     const payload = {
         workout_id: activeWorkout.id,
@@ -271,17 +289,31 @@ export function ActiveWorkoutProvider({ children }) {
         set_variant: restOfSetConfig.set_variant,
     };
 
-    if (restOfSetConfig.reps !== undefined) {
+    const isTimed = restOfSetConfig.set_type === 'timed';
+
+    // For debugging: set reps=1 for timed sets; otherwise use provided reps
+    if (isTimed) {
+        payload.reps = 1; // temporary diagnostic value
+    } else if (restOfSetConfig.reps !== undefined) {
         payload.reps = Number(restOfSetConfig.reps);
     }
 
-    if (restOfSetConfig.weight !== undefined) {
-        payload.weight = Number(restOfSetConfig.weight);
+    // Always include weight_unit – even for body-weight sets – to satisfy NOT-NULL.
+    if (restOfSetConfig.unit) {
         payload.weight_unit = restOfSetConfig.unit;
     }
 
-    if (program_set_id) {
-        payload.program_set_id = program_set_id;
+    // Weight: store 0 for body-weight sets, otherwise the provided value (if any)
+    if (restOfSetConfig.unit === 'body') {
+        payload.weight = 0;
+    } else if (restOfSetConfig.weight !== undefined) {
+        payload.weight = Number(restOfSetConfig.weight);
+    }
+
+    // Only include program_set_id if it is a valid UUID (prevents foreign-key
+    // errors from temp ids like "temp-0").
+    if (rawProgramSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawProgramSetId)) {
+        payload.program_set_id = rawProgramSetId;
     }
 
     // Include timed set fields when relevant
@@ -291,6 +323,9 @@ export function ActiveWorkoutProvider({ children }) {
     if (restOfSetConfig.timed_set_duration !== undefined) {
         payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
     }
+
+    // DEBUG: log the payload we are about to send
+    console.log('[saveSet] inserting payload', payload);
 
     const { data, error } = await supabase
         .from('sets')

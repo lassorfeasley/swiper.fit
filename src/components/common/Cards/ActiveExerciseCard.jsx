@@ -89,10 +89,8 @@ const ActiveExerciseCard = React.forwardRef(({
         status: fromParent.status
           ? fromParent.status
           : i === 0
-          ? config.set_type === "timed" || fromParent.set_type === "timed"
-            ? "ready-timed-set"
-            : "active"
-          : "locked",
+            ? "default" // first set starts default (swipeable)
+            : "default",
         set_variant:
           fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
         program_set_id: config.id,
@@ -101,15 +99,9 @@ const ActiveExerciseCard = React.forwardRef(({
 
     // Ensure the correct active/locked statuses after merging
     const adjusted = combined.map((set) => {
-      if (set.status === "complete") {
-        return set;
-      }
-      // If not complete, it's either active or ready for a timed set.
-      return {
-        ...set,
-        status:
-          set.set_type === "timed" ? "ready-timed-set" : "active",
-      };
+      if (set.status === "complete") return set;
+      // All other sets are simply default now.
+      return { ...set, status: "default" };
     });
     return adjusted;
   }, [initialSetConfigs, setData]);
@@ -145,55 +137,26 @@ const ActiveExerciseCard = React.forwardRef(({
 
       // First, call onSetComplete for analytics if it exists.
       if (onSetComplete) {
-        // For a timed set starting, we don't mark it complete yet.
-        // For all others, we do.
-        if (
-          setToComplete.set_type !== "timed" ||
-          setToComplete.status !== "ready-timed-set"
-        ) {
-          Promise.resolve(
-            onSetComplete(exerciseId, { ...setToComplete, status: "complete" })
-          ).catch(console.error);
-        }
+        Promise.resolve(
+          onSetComplete(exerciseId, { ...setToComplete, status: "complete" })
+        ).catch(console.error);
       }
 
       if (!onSetDataChange) return;
 
-      const updates = [];
-      if (setToComplete.set_type === "timed") {
-        if (setToComplete.status === "ready-timed-set") {
-          // Transition to counting down
-          updates.push({
-            id: setToComplete.id,
-            changes: {
-              status: "counting-down-timed",
-              program_set_id: setToComplete.program_set_id,
-            },
-          });
-        } else if (setToComplete.status === "counting-down-timed") {
-          // Timer finished, mark as complete and persist set_type and timed_set_duration
-          updates.push({
-            id: setToComplete.id,
-            changes: {
-              status: "complete",
-              set_type: setToComplete.set_type,
-              timed_set_duration: setToComplete.timed_set_duration,
-              set_variant: setToComplete.set_variant,
-              program_set_id: setToComplete.program_set_id,
-            },
-          });
-        }
-      } else {
-        // For regular sets, just mark as complete
-        updates.push({
+      // Single-step: mark the set as complete regardless of type.
+      const updates = [
+        {
           id: setToComplete.id,
           changes: {
             status: "complete",
             set_variant: setToComplete.set_variant,
             program_set_id: setToComplete.program_set_id,
+            set_type: setToComplete.set_type,
+            timed_set_duration: setToComplete.timed_set_duration,
           },
-        });
-      }
+        },
+      ];
 
       // Log local set completion for clarity
       if (setToComplete.status !== "counting-down-timed") {
