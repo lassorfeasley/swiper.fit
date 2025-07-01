@@ -13,6 +13,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Reorder } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 // ========= Global CardWrapper spacing constants =========
 // Adjust these three numbers to control default spacing everywhere.
@@ -51,6 +52,8 @@ const CardWrapper = React.forwardRef(({
   // Style object controlling spacing; cards scroll normally
   const spacingStyle = { rowGap: gap, marginTop, marginBottom };
 
+  const [dragging, setDragging] = useState(false);
+
   return (
     <div
       ref={ref}
@@ -74,19 +77,23 @@ const CardWrapper = React.forwardRef(({
           className="w-full flex flex-col"
           style={{ rowGap: gap }}
         >
-          {React.Children.map(children, (child, idx) =>
-            React.isValidElement(child) ? (
+          {React.Children.map(children, (child, idx) => {
+            if (!React.isValidElement(child)) return child;
+
+            return (
               <Reorder.Item
                 key={items[idx]?.id || idx}
                 value={items[idx]}
                 className="w-full"
+                onDragStart={() => setDragging(true)}
+                onDragEnd={() => setDragging(false)}
               >
-                {child}
+                {typeof child.type === "string"
+                  ? child // don't pass extra props to DOM elements
+                  : React.cloneElement(child, { isDragging: dragging })}
               </Reorder.Item>
-            ) : (
-              child
-            )
-          )}
+            );
+          })}
         </Reorder.Group>
       ) : (
         children

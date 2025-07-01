@@ -16,6 +16,7 @@ const ExerciseCard = ({
   reorderable = false,
   reorderValue,
   onCardClick,
+  isDragging = false,
   ...props
 }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
@@ -28,7 +29,6 @@ const ExerciseCard = ({
   const [currentFormValues, setCurrentFormValues] = useState(editFormValues);
   const [formDirty, setFormDirty] = useState(false);
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Sets are editable whenever an onSetConfigsChange handler is provided
   const setsAreEditable = onSetConfigsChange !== undefined;
@@ -82,6 +82,7 @@ const ExerciseCard = ({
 
   const cardContent = (
     <div
+      data-exercise-card="true"
       data-layer="CardContentsWrapper"
       className="w-full p-4 bg-stone-50 rounded-lg"
       onClick={handleCardClick}
@@ -187,6 +188,7 @@ ExerciseCard.propTypes = {
   reorderable: PropTypes.bool,
   reorderValue: PropTypes.any,
   onCardClick: PropTypes.func,
+  isDragging: PropTypes.bool,
 };
 
 export default ExerciseCard;
