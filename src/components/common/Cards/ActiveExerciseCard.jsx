@@ -115,19 +115,6 @@ const ActiveExerciseCard = React.forwardRef(({
     [sets]
   );
 
-  // Notify parent once when exercise becomes fully complete
-  const notifiedRef = useRef(false);
-  useEffect(() => {
-    if (allComplete && !notifiedRef.current) {
-      notifiedRef.current = true;
-      onExerciseComplete?.(exerciseId);
-    }
-    if (!allComplete && notifiedRef.current) {
-      // Allow re-notification if sets are undone
-      notifiedRef.current = false;
-    }
-  }, [allComplete, exerciseId, onExerciseComplete]);
-
   const handleSetComplete = useCallback(
     async (setIdx) => {
       if (!mountedRef.current) return;
@@ -170,8 +157,16 @@ const ActiveExerciseCard = React.forwardRef(({
           console.error
         );
       }
+
+      // If this was the last set in the exercise, notify completion
+      if (setIdx === sets.length - 1) {
+        console.log(
+          `[ActiveExerciseCard] all sets complete for exercise ${exerciseName}, calling onExerciseComplete`
+        );
+        onExerciseComplete?.(exerciseId);
+      }
     },
-    [exerciseId, onSetComplete, onSetDataChange, sets]
+    [exerciseId, onSetComplete, onSetDataChange, sets, onExerciseComplete]
   );
 
   const openEditSheet = (index) => {
@@ -259,6 +254,7 @@ const ActiveExerciseCard = React.forwardRef(({
       reorderable={false}
       className={cardWrapperClass}
       id={`exercise-${exerciseId}`}
+      data-exercise-card="true"
       status={cardStatus}
       onClick={() => {
         if (isFocused) {

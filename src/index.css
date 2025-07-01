@@ -147,16 +147,17 @@ body:has(.edit-set-drawer[data-state="open"]) .fixed.inset-0[data-aria-hidden="t
 /* === Scroll snap for ActiveWorkout === */
 main[data-scroll-snap-enabled="true"] {
   scroll-snap-type: y mandatory;
-  /* Snap zone starts exactly at header bottom */
-  scroll-padding-top: var(--header-height, 0px);
+  /* Snap zone starts at 25% down the viewport */
+  scroll-padding-top: 25vh;
 }
 
 main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
-  scroll-padding-top: 0px;
+  /* Retain 25vh offset even with no top padding */
+  scroll-padding-top: 25vh;
 }
 
 [data-exercise-card="true"] {
   scroll-snap-align: start;
-  /* No extra margin – rely on scroll-padding */
-  scroll-margin-top: 0;
+  /* Offset programmatic scroll to 25% down viewport */
+  scroll-margin-top: 25vh;
 }

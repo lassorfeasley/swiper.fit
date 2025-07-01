@@ -72,38 +72,9 @@ const ActiveWorkout = () => {
   const hasAutoScrolledRef = useRef(false);
 
   const scrollCardIntoView = (cardEl, behavior = "smooth") => {
-    if (!cardEl) return;
-
-    // 1. Get header height from our CSS variable for precise alignment.
-    const headerHeight = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--header-height"
-      ) || "0",
-      10
-    );
-
-    // 2. Find the true scroll container (works for both mobile and desktop).
-    const mainEl = cardEl.closest("main");
-    const rootEl = cardEl.closest("#root");
-    let scrollContainer = document.documentElement; // Fallback
-    if (rootEl && rootEl.scrollHeight > rootEl.clientHeight) {
-      scrollContainer = rootEl;
-    }
-    if (mainEl && mainEl.scrollHeight > mainEl.clientHeight) {
-      scrollContainer = mainEl; // Override for desktop
-    }
-
-    // 3. Get the card's current position relative to the viewport.
-    const cardTop = cardEl.getBoundingClientRect().top;
-
-    // 4. Calculate the exact distance to scroll.
-    const scrollDistance = cardTop - headerHeight;
-
-    // 5. Scroll the container by that precise amount.
-    scrollContainer.scrollBy({
-      top: scrollDistance,
-      behavior,
-    });
+    if (!cardEl?.scrollIntoView) return;
+    // Leverage CSS scroll-margin-top to position at 25% from top
+    cardEl.scrollIntoView({ behavior, block: "start" });
   };
 
   useEffect(() => {
@@ -112,20 +83,15 @@ const ActiveWorkout = () => {
     }
   }, [lastExerciseId]);
 
-  // After exercises load, restore last interacted exercise (once per mount)
+  // After exercises load, autoscroll only to the card stored as lastExerciseId (once per mount)
   useEffect(() => {
     if (hasAutoScrolledRef.current) return;
     if (!activeWorkout?.lastExerciseId) return;
     if (!exercises.length) return;
-
-    const targetExercise = exercises.find(
-      (ex) => ex.exercise_id === activeWorkout.lastExerciseId
-    );
-
-    if (targetExercise) {
-      setInitialScrollTargetId(targetExercise.exercise_id);
-      hasAutoScrolledRef.current = true; // Mark as done so this only runs once
-    }
+    const lastExName = exercises.find(ex => ex.exercise_id === activeWorkout.lastExerciseId)?.name || 'Unknown';
+    console.log(`[ActiveWorkout] initial refresh focus: "${lastExName}"`);
+    setInitialScrollTargetId(activeWorkout.lastExerciseId);
+    hasAutoScrolledRef.current = true;
   }, [exercises, activeWorkout?.lastExerciseId]);
 
   // After the section has been updated and component re-rendered, perform the scroll.
@@ -145,6 +111,13 @@ const ActiveWorkout = () => {
 
     return () => clearTimeout(scrollTimeout);
   }, [initialScrollTargetId]);
+
+  // Scroll any newly focused card 25% down the viewport
+  useEffect(() => {
+    if (!focusedNode) return;
+    // Smoothly scroll the focused card into view at 25% down
+    scrollCardIntoView(focusedNode, "smooth");
+  }, [focusedNode]);
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -255,17 +228,19 @@ const ActiveWorkout = () => {
   };
 
   const handleSetComplete = (exerciseId, setConfig) => {
-    // Update last exercise interacted with
-    updateLastExercise?.(exerciseId);
-
-    const exerciseName =
-      exercises.find((e) => e.exercise_id === exerciseId)?.name || "Exercise";
-    // Call saveSet and then log upon completion
-    Promise.resolve(saveSet(exerciseId, setConfig)).then(() => {
-      console.log(
-        `${setConfig.set_variant} of ${exerciseName} logged to database.`
-      );
-    });
+    // Find this exercise's config and current progress
+    const ex = exercises.find((e) => e.exercise_id === exerciseId);
+    const exerciseName = ex?.name || "Exercise";
+    const totalSets = ex?.setConfigs?.length || 0;
+    const prevCount = (workoutProgress[exerciseId] || []).length;
+    // Save the set, then update lastExercise only if more sets remain
+    Promise.resolve(saveSet(exerciseId, setConfig))
+      .then(() => {
+        console.log(
+          `${setConfig.set_variant} of ${exerciseName} logged to database. (${prevCount + 1}/${totalSets})`
+        );
+      })
+      .catch(console.error);
   };
 
   const handleSetProgrammaticUpdate = async (exerciseId, setId, formValues) => {
@@ -446,12 +421,19 @@ const ActiveWorkout = () => {
   const changeFocus = useCallback((newId) => {
     // Collapse any open card
     setFocusedExerciseId(null);
-    // After collapse animation completes, open new card and update last exercise
+    // After collapse animation completes, open new card and update last exercise if incomplete
     setTimeout(() => {
       setFocusedExerciseId(newId);
-      updateLastExercise?.(newId);
+      // Check if this exercise still has incomplete sets
+      const ex = exercises.find((e) => e.exercise_id === newId);
+      const totalSets = ex?.setConfigs?.length || 0;
+      const completed = (workoutProgress[newId] || []).length;
+      if (completed < totalSets) {
+        console.log(`[ActiveWorkout] changeFocus updating lastExercise to ${ex?.name}`);
+        updateLastExercise?.(newId);
+      }
     }, collapseDurationMs);
-  }, [updateLastExercise]);
+  }, [updateLastExercise, exercises, workoutProgress]);
 
   const openSetEdit = (exerciseId, setConfig, index) => {
     setEditingSet({ exerciseId, setConfig, index });

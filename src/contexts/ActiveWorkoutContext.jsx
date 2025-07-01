@@ -427,10 +427,9 @@ export function ActiveWorkoutProvider({ children }) {
 
   const updateLastExercise = useCallback(async (exerciseId) => {
     if (!activeWorkout?.id) return;
-
     // Optimistically update state first
     setActiveWorkout(prev => ({ ...prev, lastExerciseId: exerciseId }));
-
+  
     try {
       await supabase
         .from('workouts')
