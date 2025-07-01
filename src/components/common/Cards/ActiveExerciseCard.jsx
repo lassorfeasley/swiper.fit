@@ -273,118 +273,126 @@ const ActiveExerciseCard = React.forwardRef(({
     >
       <div
         className={cn(
-          "w-full bg-white flex flex-col justify-start items-start rounded-t-lg",
-          // Apply rounded bottom corners only if this is the last card in the section
-          index === totalCards - 1 && "rounded-b-lg",
-          "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
-          (index === 0 ? "border-l border-r border-t border-neutral-300" : "border-t border-l border-r border-neutral-300")
+          "w-full bg-white",
+          index !== 0 && index !== totalCards - 1 && "border-l border-r border-neutral-300"
         )}
-        style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
       >
-        {/* Label Section */}
-        <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
-          <div className="flex-1 flex flex-col">
-            <div className="text-neutral-600 text-lg font-medium leading-tight">
-              {exerciseName}
-            </div>
-            <div className="text-neutral-400 text-sm font-medium leading-none">
-              {sets.length} {sets.length === 1 ? "set" : "sets"}
-            </div>
-          </div>
-          <div className="size-8 flex items-center justify-center">
-            {allComplete
-              ? <Check className="w-6 h-6 text-green-500" />
-              : <Check className="w-6 h-6 text-neutral-300" />}
-          </div>
-        </div>
-
-        {/* Swiper Section (collapsible) */}
         <div
-          className={`grid w-full transition-[grid-template-rows] ease-in-out ${
-            isFocused || isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-          }`}
-          style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
+          className={cn(
+            "w-full bg-white flex flex-col justify-start items-start rounded-t-lg",
+            index === totalCards - 1 && "rounded-b-lg",
+            "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
+            index === totalCards - 1
+              ? "border border-neutral-300"
+              : "border-t border-l border-r border-neutral-300"
+          )}
+          style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
         >
-          <div className="overflow-hidden w-full">
-            <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
-              {sets.map((set, index) => (
-                <SwipeSwitch
-                  key={set.id || `set-${index}`}
-                  set={set}
-                  onComplete={() => handleSetComplete(index)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSetPress) {
-                      onSetPress(exerciseId, set, index);
-                    }
-                  }}
-                  className="w-full"
-                  reps={set.reps}
-                  weight={set.weight}
-                  unit={set.weight_unit}
-                  status={set.status}
-                  onSwipe={() => handleSetComplete(index)}
-                  disabled={!isFocused}
-                  countdownDuration={set.timed_set_duration}
-                />
-              ))}
-              <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
-                Tap to edit set. Swipe to complete.
+          {/* Label Section */}
+          <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
+            <div className="flex-1 flex flex-col">
+              <div className="text-neutral-600 text-lg font-medium leading-tight">
+                {exerciseName}
+              </div>
+              <div className="text-neutral-400 text-sm font-medium leading-none">
+                {sets.length} {sets.length === 1 ? "set" : "sets"}
+              </div>
+            </div>
+            <div className="size-8 flex items-center justify-center">
+              {allComplete
+                ? <Check className="w-6 h-6 text-green-500" />
+                : <Check className="w-6 h-6 text-neutral-300" />}
+            </div>
+          </div>
+
+          {/* Swiper Section (collapsible) */}
+          <div
+            className={`grid w-full transition-[grid-template-rows] ease-in-out ${
+              isFocused || isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+            }`}
+            style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
+          >
+            <div className="overflow-hidden w-full">
+              <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
+                {sets.map((set, index) => (
+                  <SwipeSwitch
+                    key={set.id || `set-${index}`}
+                    set={set}
+                    onComplete={() => handleSetComplete(index)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSetPress) {
+                        onSetPress(exerciseId, set, index);
+                      }
+                    }}
+                    className="w-full"
+                    reps={set.reps}
+                    weight={set.weight}
+                    unit={set.weight_unit}
+                    status={set.status}
+                    onSwipe={() => handleSetComplete(index)}
+                    disabled={!isFocused}
+                    countdownDuration={set.timed_set_duration}
+                  />
+                ))}
+                <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
+                  Tap to edit set. Swipe to complete.
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {openSetIndex !== null && (
-        <SwiperForm
-          isOpen={isEditSheetOpen}
-          onClose={() => setIsEditSheetOpen(false)}
-        >
-          <FormHeader
-            title="Edit Set"
-            subtitle={sets[openSetIndex]?.set_variant}
-          />
-            <SetEditForm
-            formValues={editForm}
-            onFormChange={handleEditFormChange}
-            onToggleChange={handleToggleChange}
+        {openSetIndex !== null && (
+          <SwiperForm
+            isOpen={isEditSheetOpen}
+            onClose={() => setIsEditSheetOpen(false)}
           >
-            {isUnscheduled && (
-              <FormSectionWrapper>
-                <p className="text-sm text-gray-500 mb-2">
-                  Apply changes to this workout or update the program for future
-                  workouts.
-                </p>
-              <ToggleInput
-                  value={addType}
-                  onValueChange={setAddType}
-                options={[
-                    { label: "This Workout", value: "today" },
-                    { label: "This & Future", value: "future" },
-                  ]}
-                />
-              </FormSectionWrapper>
-            )}
-          </SetEditForm>
-          <div className="flex space-x-2 p-4">
-            <SwiperButton
-              onClick={() => setIsEditSheetOpen(false)}
-              variant="secondary"
-              className="flex-1"
+            <FormHeader
+              title="Edit Set"
+              subtitle={sets[openSetIndex]?.set_variant}
+            />
+              <SetEditForm
+              formValues={editForm}
+              onFormChange={handleEditFormChange}
+              onToggleChange={handleToggleChange}
             >
-              Cancel
-            </SwiperButton>
-            <SwiperButton
-              onClick={handleSaveSet}
-              className="flex-1"
-              disabled={!formDirty}
-            >
-              Save
-            </SwiperButton>
-          </div>
-        </SwiperForm>
-      )}
+              {isUnscheduled && (
+                <FormSectionWrapper>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Apply changes to this workout or update the program for future
+                    workouts.
+                  </p>
+                <ToggleInput
+                    value={addType}
+                    onValueChange={setAddType}
+                  options={[
+                      { label: "This Workout", value: "today" },
+                      { label: "This & Future", value: "future" },
+                    ]}
+                  />
+                </FormSectionWrapper>
+              )}
+            </SetEditForm>
+            <div className="flex space-x-2 p-4">
+              <SwiperButton
+                onClick={() => setIsEditSheetOpen(false)}
+                variant="secondary"
+                className="flex-1"
+              >
+                Cancel
+              </SwiperButton>
+              <SwiperButton
+                onClick={handleSaveSet}
+                className="flex-1"
+                disabled={!formDirty}
+              >
+                Save
+              </SwiperButton>
+            </div>
+          </SwiperForm>
+        )}
+      </div>
     </CardWrapper>
   );
 });
