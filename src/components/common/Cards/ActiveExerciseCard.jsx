@@ -27,7 +27,7 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils`";
 
 export const CARD_ANIMATION_DURATION_MS = 500;
 

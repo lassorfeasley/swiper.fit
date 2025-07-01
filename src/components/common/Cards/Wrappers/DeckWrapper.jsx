@@ -11,7 +11,7 @@ const DeckWrapper = forwardRef(
     {
       children,
       gap = 0, // px gap between CardWrappers (vertical spacing)
-      paddingX = 0, // horizontal padding (default 0)
+      paddingX = 12, // horizontal padding (default 12px)
       className,
       ...props
     },

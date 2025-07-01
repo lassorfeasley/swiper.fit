@@ -56,7 +56,7 @@ const PageHeader = forwardRef(({
             </div>
           </button>
         )}
-        <div className="w-80 justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">
+        <div className="flex-1 min-w-0 justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal truncate">
           {title}
         </div>
       </div>

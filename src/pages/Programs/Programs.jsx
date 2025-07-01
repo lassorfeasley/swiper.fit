@@ -135,7 +135,7 @@ const ProgramsIndex = () => {
         }, 100);
       }}
     >
-      <DeckWrapper paddingX={20} gap={20}>
+      <DeckWrapper paddingX={12} gap={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (
