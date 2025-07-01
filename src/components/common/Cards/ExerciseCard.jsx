@@ -84,7 +84,7 @@ const ExerciseCard = ({
     <div
       data-exercise-card="true"
       data-layer="CardContentsWrapper"
-      className="w-full p-4 bg-stone-50 rounded-lg"
+      className="w-full p-4 bg-white border border-neutral-300 rounded-lg"
       onClick={handleCardClick}
       style={{ cursor: setsAreEditable && onCardClick ? "pointer" : "default" }}
     >
