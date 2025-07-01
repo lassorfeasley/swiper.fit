@@ -22,21 +22,21 @@ const ProgramCard = ({
   setCount,
   leftText = "Swipe to begin",
   rightText = "",
-  swipeStatus = "active",
+  swipeStatus = "default",
   onSwipeComplete,
 }) => {
   return (
     <div
       key={id}
       data-component="ProgramCard"
-      className="Programcardcontents w-full max-w-[500px] bg-white rounded-xl inline-flex flex-col justify-start items-start"
+      className="Programcardcontents w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start"
     >
-      {/* Header: Workout Name full width */}
-      <div className="w-full px-4 pt-4 flex flex-col items-start gap-2">
-        <div className="w-full text-slate-950 text-lg font-medium leading-tight font-['Be_Vietnam_Pro']">
+      {/* Header: Program name & exercise pills */}
+      <div className="CardLable self-stretch px-4 pt-4 inline-flex justify-between items-start">
+        <div className="ProgramName justify-start text-slate-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
           {name}
         </div>
-        <div className="flex flex-row flex-wrap gap-2 w-full">
+        <div className="Cardpillwrapper flex justify-start items-center gap-2">
           {typeof exerciseCount === "number" && (
             <div className="px-2 py-1 bg-slate-200 rounded-sm flex justify-center items-center">
               <span className="text-slate-500 text-xs font-medium leading-none whitespace-nowrap">
@@ -57,7 +57,7 @@ const ProgramCard = ({
       {/* Swipe Switch & footer */}
       <div className="self-stretch px-5 py-4 flex flex-col gap-2">
         {/* Swipe control */}
-        <SwipeSwitch status={swipeStatus} onComplete={onSwipeComplete} />
+        <SwipeSwitch set={{ status: swipeStatus }} onComplete={onSwipeComplete} />
 
         {/* Bottom text row */}
         {(leftText || rightText) && (
@@ -87,3 +87,4 @@ ProgramCard.propTypes = {
 };
 
 export default ProgramCard; 
+// gjkgfhjk

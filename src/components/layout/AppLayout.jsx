@@ -13,6 +13,8 @@ export default function AppLayout({
   searchValue,
   onSearchChange,
   enableScrollSnap = false,
+  noTopPadding = false,
+  title,
   ...headerProps
 }) {
   const headerRef = useRef(null);
@@ -43,27 +45,37 @@ export default function AppLayout({
     };
   }, [headerProps]);
 
+  // List of props that PageHeader actually accepts
+  const allowedHeaderProps = [
+    'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare',
+    'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'searchValue', 'onSearchChange', 'className',
+  ];
+
+  const filteredHeaderProps = Object.fromEntries(
+    Object.entries(headerProps).filter(([key]) => allowedHeaderProps.includes(key))
+  );
+
   return (
-    <div className="min-h-screen flex bg-stone-200 md:h-screen">
+    <div className="min-h-screen flex bg-white md:h-screen">
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
         <PageHeader
           ref={headerRef}
-          sidebarWidth={sidebarWidth}
-          {...headerProps}
+          title={title}
+          showSidebar={showSidebar}
+          {...filteredHeaderProps}
           onDelete={onDelete}
           showDeleteOption={showDeleteOption}
+          searchValue={searchValue}
+          onSearchChange={onSearchChange}
         />
         <main
+          data-scroll-snap-enabled={enableScrollSnap}
+          data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            marginTop: headerHeight,
-            ...(enableScrollSnap
-              ? {
-                  scrollSnapType: "y mandatory",
-                }
-              : {}),
+            paddingTop: noTopPadding ? '0px' : headerHeight,
           }}
-          className="flex-1 pb-[80px] md:pb-4 mb-[100px] md:mb-0 overflow-y-auto"
+          className={`flex-1 overflow-y-auto ${noTopPadding ? '!pt-0' : ''}`}
         >
           {children}
         </main>
@@ -83,4 +95,6 @@ AppLayout.propTypes = {
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   enableScrollSnap: PropTypes.bool,
+  noTopPadding: PropTypes.bool,
+  title: PropTypes.string,
 };

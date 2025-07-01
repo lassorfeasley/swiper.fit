@@ -18,6 +18,7 @@ const DeckWrapper = forwardRef(
     ref
   ) => {
     const style = {
+      gap: gap,
       rowGap: gap,
       paddingLeft: paddingX,
       paddingRight: paddingX,

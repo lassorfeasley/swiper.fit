@@ -15,7 +15,7 @@ const Home = () => {
   };
   return (
     <AppLayout
-      appHeaderTitle="Home"
+      title="Home"
       showAddButton={false}
       showBackButton={false}
       search={false}

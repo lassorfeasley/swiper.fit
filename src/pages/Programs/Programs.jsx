@@ -46,8 +46,10 @@ const ProgramsIndex = () => {
           id,
           program_name,
           program_exercises (
+            id,
             exercise_id,
-            exercises ( name )
+            exercises ( name ),
+            program_sets ( id )
           )
         `
         )
@@ -60,12 +62,19 @@ const ProgramsIndex = () => {
         return;
       }
       // Map exercises for each program
-      const programsWithExercises = (data || []).map((program) => ({
-        ...program,
-        exerciseNames: (program.program_exercises || [])
-          .map((pe) => pe.exercises?.name)
-          .filter(Boolean),
-      }));
+      const programsWithExercises = (data || []).map((program) => {
+        const setCount = (program.program_exercises || []).reduce(
+          (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
+          0
+        );
+        return {
+          ...program,
+          setCount,
+          exerciseNames: (program.program_exercises || [])
+            .map((pe) => pe.exercises?.name)
+            .filter(Boolean),
+        };
+      });
       setPrograms(programsWithExercises);
       setLoading(false);
     }
@@ -107,25 +116,26 @@ const ProgramsIndex = () => {
 
   return (
     <AppLayout
-      appHeaderTitle="Programs"
-      showAddButton={true}
-      addButtonText="Add program"
+      title="Programs"
+      showAdd={true}
+      showSearch={true}
+      showAddButton={false}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search programs or exercises"
       searchValue={search}
       onSearchChange={setSearch}
-      onAction={() => {
+      pageContext="programs"
+      data-component="AppHeader"
+      onAdd={() => {
         setShowSheet(true);
         setProgramName("");
         setTimeout(() => {
           if (inputRef.current) inputRef.current.focus();
         }, 100);
       }}
-      pageContext="programs"
-      data-component="AppHeader"
     >
-      <DeckWrapper paddingX={20}>
+      <DeckWrapper paddingX={20} gap={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : filteredPrograms.length === 0 ? (
@@ -137,6 +147,7 @@ const ProgramsIndex = () => {
                 id={program.id}
                 name={program.program_name}
                 exerciseCount={(program.exerciseNames || []).length}
+                setCount={program.setCount}
                 leftText="Swipe to edit"
                 swipeStatus="active"
                 onSwipeComplete={() =>

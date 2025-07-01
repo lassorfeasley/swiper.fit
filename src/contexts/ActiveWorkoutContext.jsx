@@ -23,48 +23,56 @@ export function ActiveWorkoutProvider({ children }) {
       }
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch the active workout record and program metadata
+        const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, sets(*), programs(program_name)')
+          .select('*, programs(program_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
-
-        if (data && !error) {
-          // Found an active workout, let's resume it
-          const progress = {};
-          if (data.sets) {
-            data.sets.forEach(s => {
-              if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
-              progress[s.exercise_id].push({
-                id: s.id,
-                program_set_id: s.program_set_id,
-                reps: s.reps,
-                weight: s.weight,
-                unit: s.weight_unit,
-                weight_unit: s.weight_unit,
-                set_variant: s.set_variant,
-                status: 'complete', // Assume sets in DB are complete
-              });
-            });
-          }
-
-          const workoutData = {
-            id: data.id,
-            programId: data.program_id,
-            name: data.programs?.program_name || data.workout_name || 'Workout',
-            startTime: data.created_at,
-            lastExerciseId: data.last_exercise_id || null,
-          };
-          
-          setActiveWorkout(workoutData);
-          setWorkoutProgress(progress);
-          const elapsed = data.created_at ? Math.floor((new Date() - new Date(data.created_at)) / 1000) : 0;
-          setElapsedTime(elapsed);
-          setIsWorkoutActive(true);
+        if (!workout || workoutError) {
+          setLoading(false);
+          return;
         }
+        // Build workout context data
+        const workoutData = {
+          id: workout.id,
+          programId: workout.program_id,
+          name: workout.programs?.program_name || workout.workout_name || 'Workout',
+          startTime: workout.created_at,
+          lastExerciseId: workout.last_exercise_id || null,
+        };
+        setActiveWorkout(workoutData);
+        // Fetch all sets logged for this workout
+        const { data: setsData, error: setsError } = await supabase
+          .from('sets')
+          .select('*')
+          .eq('workout_id', workout.id);
+        const progress = {};
+        if (setsData && !setsError) {
+          setsData.forEach(s => {
+            if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
+            progress[s.exercise_id].push({
+              id: s.id,
+              program_set_id: s.program_set_id,
+              reps: s.reps,
+              weight: s.weight,
+              unit: s.weight_unit,
+              weight_unit: s.weight_unit,
+              set_variant: s.set_variant,
+              status: 'complete',
+            });
+          });
+        }
+        setWorkoutProgress(progress);
+        // Compute elapsed time
+        const elapsed = workout.created_at
+          ? Math.floor((new Date() - new Date(workout.created_at)) / 1000)
+          : 0;
+        setElapsedTime(elapsed);
+        setIsWorkoutActive(true);
       } catch (err) {
-        console.error("Error checking for active workout:", err);
+        console.error('Error checking for active workout:', err);
       } finally {
         setLoading(false);
       }
@@ -72,6 +80,35 @@ export function ActiveWorkoutProvider({ children }) {
     checkForActiveWorkout();
   }, [user]);
 
+  // Whenever a new workout is active, fetch any logged sets for it
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+    supabase
+      .from('sets')
+      .select('*')
+      .eq('workout_id', activeWorkout.id)
+      .then(({ data: setsData, error }) => {
+        if (error) {
+          console.error('Error fetching sets for active workout:', error);
+          return;
+        }
+        const progress = {};
+        setsData.forEach((s) => {
+          if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
+          progress[s.exercise_id].push({
+            id: s.id,
+            program_set_id: s.program_set_id,
+            reps: s.reps,
+            weight: s.weight,
+            unit: s.weight_unit,
+            weight_unit: s.weight_unit,
+            set_variant: s.set_variant,
+            status: 'complete',
+          });
+        });
+        setWorkoutProgress(progress);
+      });
+  }, [activeWorkout?.id]);
 
   useEffect(() => {
     let timer;
@@ -226,26 +263,69 @@ export function ActiveWorkoutProvider({ children }) {
         return;
     }
 
-    const { id: program_set_id, ...restOfSetConfig } = setConfig;
+    // ------------------------------------------------------------------
+    //  Build payload for new set row
+    // ------------------------------------------------------------------
+    // A set can originate from a program (program_set_id) or be ad-hoc.  In the
+    // latter case we generate a temporary id (e.g. "temp-0") to track it in
+    // local state.  Attempting to persist this temp id will fail because the
+    // `program_set_id` column expects a valid UUID that references
+    // `program_sets(id)`.  Therefore we must validate the value before adding
+    // it to the insert payload.
 
-    const newSet = {
-      ...restOfSetConfig,
-      status: 'complete',
-      logged_at: new Date().toISOString(),
-    };
+    const {
+        program_set_id: programSetIdField,
+        id: maybeId,
+        ...restOfSetConfig
+    } = setConfig;
+
+    // Prefer an explicit program_set_id field; fall back to the legacy `id`
+    // property (used to piggy-back the program_set_id prior to persistence).
+    const rawProgramSetId = programSetIdField || maybeId;
 
     const payload = {
         workout_id: activeWorkout.id,
         exercise_id: exerciseId,
-        reps: Number(restOfSetConfig.reps),
-        weight: Number(restOfSetConfig.weight),
-        weight_unit: restOfSetConfig.unit,
         set_variant: restOfSetConfig.set_variant,
     };
 
-    if (program_set_id) {
-        payload.program_set_id = program_set_id;
+    const isTimed = restOfSetConfig.set_type === 'timed';
+
+    // For debugging: set reps=1 for timed sets; otherwise use provided reps
+    if (isTimed) {
+        payload.reps = 1; // temporary diagnostic value
+    } else if (restOfSetConfig.reps !== undefined) {
+        payload.reps = Number(restOfSetConfig.reps);
     }
+
+    // Always include weight_unit – even for body-weight sets – to satisfy NOT-NULL.
+    if (restOfSetConfig.unit) {
+        payload.weight_unit = restOfSetConfig.unit;
+    }
+
+    // Weight: store 0 for body-weight sets, otherwise the provided value (if any)
+    if (restOfSetConfig.unit === 'body') {
+        payload.weight = 0;
+    } else if (restOfSetConfig.weight !== undefined) {
+        payload.weight = Number(restOfSetConfig.weight);
+    }
+
+    // Only include program_set_id if it is a valid UUID (prevents foreign-key
+    // errors from temp ids like "temp-0").
+    if (rawProgramSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawProgramSetId)) {
+        payload.program_set_id = rawProgramSetId;
+    }
+
+    // Include timed set fields when relevant
+    if (restOfSetConfig.set_type) {
+        payload.set_type = restOfSetConfig.set_type;
+    }
+    if (restOfSetConfig.timed_set_duration !== undefined) {
+        payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
+    }
+
+    // DEBUG: log the payload we are about to send
+    console.log('[saveSet] inserting payload', payload);
 
     const { data, error } = await supabase
         .from('sets')
@@ -255,14 +335,25 @@ export function ActiveWorkoutProvider({ children }) {
     
     if (error) {
         console.error("Error saving set:", error);
-        // Here you might want to handle the error, e.g., by reverting the optimistic update
+        throw error;
     } else {
       // Update local state with the actual ID from the database
       setWorkoutProgress(prev => {
-        const newSets = (prev[exerciseId] || []).map(s => 
-          s.program_set_id === setConfig.program_set_id ? { ...s, ...data } : s
-        );
-        return { ...prev, [exerciseId]: newSets };
+        const exerciseProgress = prev[exerciseId] || [];
+        const setIndex = exerciseProgress.findIndex(s => String(s.program_set_id) === String(setConfig.program_set_id));
+
+        const newExerciseProgress = [...exerciseProgress];
+
+        if (setIndex !== -1) {
+            // Found the set, update it. Merge existing, new DB data, and ensure status from the initiating call is respected.
+            newExerciseProgress[setIndex] = { ...newExerciseProgress[setIndex], ...data, status: setConfig.status };
+        } else {
+            // Did not find set (due to state batching), so add it.
+            // Build the set from `setConfig` (which has the correct status) and `data` (which has the DB ID).
+            newExerciseProgress.push({ ...setConfig, ...data });
+        }
+
+        return { ...prev, [exerciseId]: newExerciseProgress };
       });
     }
   }, [activeWorkout, user]);

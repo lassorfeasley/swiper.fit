@@ -78,6 +78,7 @@ const CompletedWorkout = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [publicLink, setPublicLink] = useState(false);
   const readOnly = !user || (workout && workout.user_id !== user.id);
 
   useEffect(() => {
@@ -162,6 +163,7 @@ const CompletedWorkout = () => {
   useEffect(() => {
     if (workout) {
       setWorkoutName(workout.workout_name);
+      setPublicLink(Boolean(workout.is_public));
     }
   }, [workout]);
 
@@ -391,6 +393,8 @@ const CompletedWorkout = () => {
   };
 
   const handleTogglePublic = async (val) => {
+    // Optimistic update: update local state immediately
+    setPublicLink(val);
     try {
       await supabase
         .from('workouts')
@@ -399,6 +403,8 @@ const CompletedWorkout = () => {
         .eq('user_id', user.id);
       setWorkout((prev) => ({ ...prev, is_public: val }));
     } catch (e) {
+      // Revert on failure
+      setPublicLink(!val);
       toast.error('Failed: ' + e.message);
     }
   };
@@ -417,16 +423,14 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         showSidebar={isOwner}
-        appHeaderTitle={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
+        title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={!readOnly && true}
         showBackButton={true}
         onBack={() => navigate('/history')}
-        showAddButton={isOwner}
-        addButtonText="Share"
-        addButtonIcon={Share2}
-        onAction={handleShare}
-        showEditOption={!readOnly}
-        onEdit={() => setEditWorkoutOpen(true)}
+        showShare={isOwner}
+        onShare={handleShare}
+        showSettings={!readOnly}
+        onSettings={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
@@ -461,9 +465,10 @@ const CompletedWorkout = () => {
             <SwiperForm
               open={isEditWorkoutOpen}
               onOpenChange={setEditWorkoutOpen}
-              onSubmit={handleSaveWorkoutName}
-              title="Edit workout"
+              title="Edit"
               leftAction={() => setEditWorkoutOpen(false)}
+              rightAction={handleSaveWorkoutName}
+              rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}
               leftText="Cancel"
               rightText="Save"
             >
@@ -473,6 +478,16 @@ const CompletedWorkout = () => {
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
                 />
+              </SwiperForm.Section>
+
+              <SwiperForm.Section bordered={false}>
+                <SwiperButton
+                  variant="destructive"
+                  onClick={handleDeleteWorkout}
+                  className="w-full"
+                >
+                  Delete workout
+                </SwiperButton>
               </SwiperForm.Section>
             </SwiperForm>
 
@@ -497,7 +512,7 @@ const CompletedWorkout = () => {
       <ShareWorkoutDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
-        isPublic={workout?.is_public}
+        isPublic={publicLink}
         shareUrl={`${window.location.origin}/history/public/workout/${workoutId}`}
         onCopy={handleCopyLink}
         onTogglePublic={handleTogglePublic}

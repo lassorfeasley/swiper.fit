@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import ActiveExerciseCard from "@/components/common/Cards/ActiveExerciseCard";
+import WorkoutSectionWrapper from "@/components/common/Cards/Wrappers/WorkoutSectionWrapper";
+import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
-import SectionNav from "@/components/molecules/section-nav";
+import SetEditForm from "@/components/common/forms/SetEditForm";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -29,17 +28,42 @@ const ActiveWorkout = () => {
     saveSet,
     updateSet,
     updateLastExercise,
+    lastExerciseId,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
-  const [sectionFilter, setSectionFilter] = useState("warmup");
   const [canAddExercise, setCanAddExercise] = useState(false);
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
   const [initialScrollTargetId, setInitialScrollTargetId] = useState(null);
+  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  const [focusedCardHeight, setFocusedCardHeight] = useState(0);
+  const [focusedNode, setFocusedNode] = useState(null);
+  const focusedCardRef = useCallback(node => {
+    if (node !== null) {
+      setFocusedNode(node);
+    }
+  }, []);
+
+  const [isEditSheetOpen, setEditSheetOpen] = useState(false);
+  const [editingSet, setEditingSet] = useState(null);
+  const [formDirty, setFormDirty] = useState(false);
+  const [currentFormValues, setCurrentFormValues] = useState({});
+  const [editingExercise, setEditingExercise] = useState(null);
+  const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
+
+  useEffect(() => {
+    if (focusedNode) {
+      const resizeObserver = new ResizeObserver(() => {
+        setFocusedCardHeight(focusedNode.offsetHeight);
+      });
+      resizeObserver.observe(focusedNode);
+      return () => resizeObserver.disconnect();
+    }
+  }, [focusedNode]);
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
@@ -82,6 +106,12 @@ const ActiveWorkout = () => {
     });
   };
 
+  useEffect(() => {
+    if (lastExerciseId) {
+      setFocusedExerciseId(lastExerciseId);
+    }
+  }, [lastExerciseId]);
+
   // After exercises load, restore last interacted exercise (once per mount)
   useEffect(() => {
     if (hasAutoScrolledRef.current) return;
@@ -94,7 +124,6 @@ const ActiveWorkout = () => {
 
     if (targetExercise) {
       setInitialScrollTargetId(targetExercise.exercise_id);
-      setSectionFilter(targetExercise.section);
       hasAutoScrolledRef.current = true; // Mark as done so this only runs once
     }
   }, [exercises, activeWorkout?.lastExerciseId]);
@@ -108,6 +137,7 @@ const ActiveWorkout = () => {
       const targetEl = document.getElementById(`exercise-${initialScrollTargetId}`);
       if (targetEl) {
         scrollCardIntoView(targetEl, "auto");
+        setFocusedExerciseId(initialScrollTargetId);
       }
       // Reset the target so this doesn't run on subsequent section changes
       setInitialScrollTargetId(null);
@@ -318,142 +348,17 @@ const ActiveWorkout = () => {
     }
   };
 
-  // Filter exercises based on search
-  const filteredExercises = exercises
-    .filter((ex) => ex.section === sectionFilter)
-    .filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
-
-  const handleAddExercise = async (exerciseData, updateType = "today") => {
-    try {
-      let { data: existing } = await supabase
-        .from("exercises")
-        .select("id")
-        .eq("name", exerciseData.name)
-        .maybeSingle();
-      let exercise_id = existing?.id;
-      if (!exercise_id) {
-        const { data: newEx, error: insertError } = await supabase
-          .from("exercises")
-          .insert([{ name: exerciseData.name, section: exerciseData.section }])
-          .select("id")
-          .single();
-        if (insertError || !newEx) throw new Error("Failed to create exercise");
-        exercise_id = newEx.id;
-      }
-
-      let progEx;
-      let progExError;
-      // Attempt insert with section attribute first
-      ({ data: progEx, error: progExError } = await supabase
-        .from("program_exercises")
-        .insert({
-          program_id: activeWorkout.programId,
-          exercise_id,
-          exercise_order: exercises.length + 1,
-        })
-        .select("id")
-        .single());
-
-      if (progExError || !progEx)
-        throw new Error("Failed to link exercise to program");
-      const program_exercise_id = progEx.id;
-      const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
-        program_exercise_id,
-        set_order: idx + 1,
-        reps: Number(cfg.reps),
-        weight: Number(cfg.weight),
-        weight_unit: cfg.unit,
-        set_variant: `Set ${idx + 1}`,
-      }));
-      if (setRows.length > 0) {
-        const { error: setError } = await supabase
-          .from("program_sets")
-          .insert(setRows);
-        if (setError)
-          throw new Error("Failed to save set details: " + setError.message);
-      }
-
-      setShowAddExercise(false);
-
-      // Refresh exercises to show the new one
-      await refreshExercises();
-    } catch (err) {
-      alert(err.message || "Failed to add exercise");
+  // Group exercises by section
+  const sectionsOrder = ["warmup", "training", "cooldown"];
+  const exercisesBySection = sectionsOrder.map(section => {
+    let sectionExercises;
+    if (section === "training") {
+      sectionExercises = exercises.filter(ex => ex.section === "training" || ex.section === "workout");
+    } else {
+      sectionExercises = exercises.filter(ex => ex.section === section);
     }
-  };
-
-  const handleAddExerciseToday = (exerciseData) => {
-    handleAddExercise(exerciseData, "today");
-  };
-
-  const handleAddExerciseFuture = (exerciseData) => {
-    handleAddExercise(exerciseData, "future");
-  };
-
-  const handleCancelAddExercise = () => {
-    setShowAddExercise(false);
-  };
-
-  const refreshExercises = async () => {
-    if (!activeWorkout) return;
-
-    const { data: progExs, error } = await supabase
-      .from("program_exercises")
-      .select(
-        `
-        *,
-        exercises(name, section),
-        program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
-      `
-      )
-      .eq("program_id", activeWorkout.programId);
-
-    if (error || !progExs) {
-      setExercises([]);
-      return;
-    }
-
-    const exerciseIds = progExs.map((pe) => pe.exercise_id);
-    const { data: exercisesData, error: exercisesError } = await supabase
-      .from("exercises")
-      .select("id, name")
-      .in("id", exerciseIds);
-
-    if (exercisesError) {
-      setExercises([]);
-      return;
-    }
-
-    const uniqueProgExs = progExs.filter(
-      (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-    );
-
-    const cards = uniqueProgExs.map((pe) => ({
-      id: pe.id,
-      exercise_id: pe.exercise_id,
-      section: (() => {
-        const raw = ((pe.exercises || {}).section || "").toLowerCase();
-        return raw === "training" ? "workout" : raw;
-      })(),
-      name:
-        (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
-        "Unknown",
-      setConfigs: (pe.program_sets || [])
-        .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
-        .map((set) => ({
-          id: set.id,
-          reps: set.reps,
-          weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
-          unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
-          set_variant: set.set_variant || `Set ${set.set_order}`,
-          set_type: set.set_type,
-          timed_set_duration: set.timed_set_duration,
-        })),
-    }));
-    setExercises(cards);
-  };
-
-  const sectionsOrder = ["warmup", "workout", "cooldown"];
+    return { section, exercises: sectionExercises };
+  }).filter(group => group.exercises.length > 0);
 
   const handleExerciseCompleteNavigate = (exerciseId) => {
     // update completed set
@@ -495,8 +400,11 @@ const ActiveWorkout = () => {
       const ex = exercises[i];
       if (ex.section !== currentSection) break; // beyond current section
       if (!isExerciseComplete(ex)) {
-        setSectionFilter(currentSection);
-        // TODO: scroll to upcoming incomplete exercise
+        changeFocus(ex.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
@@ -506,8 +414,11 @@ const ActiveWorkout = () => {
       const ex = exercises[i];
       if (ex.section !== currentSection) break; // before section begins
       if (!isExerciseComplete(ex)) {
-        setSectionFilter(currentSection);
-        // TODO: scroll to previous incomplete exercise
+        changeFocus(ex.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
@@ -518,12 +429,64 @@ const ActiveWorkout = () => {
       const sectionName = sectionsOrder[j];
       const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
       if (targetEx) {
-        setSectionFilter(sectionName);
-        // TODO: scroll to first incomplete exercise in next section
+        changeFocus(targetEx.exercise_id);
+        setTimeout(() => {
+          const cardEl = document.getElementById(`exercise-${targetEx.exercise_id}`);
+          if (cardEl) scrollCardIntoView(cardEl);
+        }, collapseDurationMs + 50);
         return;
       }
     }
     // No remaining incomplete exercises
+  };
+
+  // Time (ms) to wait for collapse animation before opening another card
+  const collapseDurationMs = CARD_ANIMATION_DURATION_MS;
+  // Helper to collapse current focused card then open a new one
+  const changeFocus = useCallback((newId) => {
+    // Collapse any open card
+    setFocusedExerciseId(null);
+    // After collapse animation completes, open new card and update last exercise
+    setTimeout(() => {
+      setFocusedExerciseId(newId);
+      updateLastExercise?.(newId);
+    }, collapseDurationMs);
+  }, [updateLastExercise]);
+
+  const openSetEdit = (exerciseId, setConfig, index) => {
+    setEditingSet({ exerciseId, setConfig, index });
+    setEditSheetOpen(true);
+    setCurrentFormValues(setConfig);
+  };
+
+  const handleEditFormSave = (newValues) => {
+    if (!editingSet) return;
+
+    const { exerciseId, setConfig } = editingSet;
+
+    // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
+    const targetId = setConfig?.id;
+
+    const updates = [
+      {
+        id: targetId,
+        changes: newValues,
+      },
+    ];
+
+    updateWorkoutProgress(exerciseId, updates);
+
+    if (targetId) {
+      updateSet(targetId, newValues);
+    }
+
+    setEditSheetOpen(false);
+    setEditingSet(null);
+  };
+
+  const handleSaveExerciseEdit = (data) => {
+    // TODO: persist edits; for now, close sheet
+    setEditingExercise(null);
   };
 
   return (
@@ -533,7 +496,11 @@ const ActiveWorkout = () => {
         addButtonText="Add exercise"
         pageNameEditable={true}
         showBackButton={false}
-        appHeaderTitle={activeWorkout?.name || "Workout"}
+        title=""
+        showAdd={true}
+        showSettings={true}
+        onAdd={() => setShowAddExercise(true)}
+        onSettings={() => {/* settings handler here */}}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}
         onDelete={handleDeleteWorkout}
@@ -542,35 +509,69 @@ const ActiveWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
-        showSectionNav={true}
-        sectionNavValue={sectionFilter}
-        onSectionNavChange={setSectionFilter}
         enableScrollSnap={true}
+        noTopPadding={true}
       >
-        <DeckWrapper ref={listRef}>
-          {filteredExercises.map((exercise) => (
-            <CardWrapper
-              key={exercise.id}
-              id={`exercise-${exercise.exercise_id}`}
-              data-exercise-card="true"
-              onClick={(e) => scrollCardIntoView(e.currentTarget, "smooth")}
-              gap={0}
-              marginTop={0}
-              marginBottom={0}
-            >
-              <ActiveExerciseCard
-                exerciseId={exercise.exercise_id}
-                exerciseName={exercise.name}
-                initialSetConfigs={exercise.setConfigs}
-                setData={workoutProgress[exercise.exercise_id] || []}
-                onSetComplete={handleSetComplete}
-                onSetDataChange={handleSetDataChange}
-                onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                onExerciseComplete={handleExerciseCompleteNavigate}
-              />
-            </CardWrapper>
-          ))}
-        </DeckWrapper>
+        <div ref={listRef}>
+          {exercisesBySection.length > 0 ? (
+            exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+              <WorkoutSectionWrapper key={section} section={section}>
+                {sectionExercises.map((ex, index) => {
+                  const exerciseProgress = workoutProgress[ex.exercise_id] || [];
+                  const focusedIndex = sectionExercises.findIndex(
+                    (e) => e.exercise_id === focusedExerciseId
+                  );
+                  const isFocused = focusedIndex === index;
+                  const isExpanded = isFocused || index === sectionExercises.length - 1;
+
+                  const STACKING_OFFSET_PX = 64;
+                  let topOffset = 80 + index * STACKING_OFFSET_PX;
+
+                  if (focusedIndex !== -1) {
+                    const collapsedHeight = 80; 
+                    const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
+                    if (index > focusedIndex) {
+                      topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
+                    }
+                  }
+
+                  return (
+                    <ActiveExerciseCard
+                      ref={isFocused ? focusedCardRef : null}
+                      key={ex.id}
+                      exerciseId={ex.exercise_id}
+                      exerciseName={ex.name}
+                      initialSetConfigs={ex.setConfigs}
+                      setData={exerciseProgress}
+                      onSetComplete={handleSetComplete}
+                      onSetDataChange={handleSetDataChange}
+                      onExerciseComplete={() =>
+                        handleExerciseCompleteNavigate(ex.exercise_id)
+                      }
+                      onSetPress={openSetEdit}
+                      isUnscheduled={!!activeWorkout?.is_unscheduled}
+                      onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                      isFocused={isFocused}
+                      isExpanded={isExpanded}
+                      onFocus={() => {
+                        if (!isFocused) changeFocus(ex.exercise_id);
+                      }}
+                      onEditExercise={() => setEditingExercise(ex)}
+                      index={index}
+                      focusedIndex={focusedIndex}
+                      totalCards={sectionExercises.length}
+                      topOffset={topOffset}
+                    />
+                  );
+                })}
+              </WorkoutSectionWrapper>
+            ))
+          ) : (
+            <div className="text-center py-10">
+              <p>No exercises found.</p>
+            </div>
+          )}
+        </div>
 
         {showAddExercise &&
           (() => {
@@ -599,7 +600,7 @@ const ActiveWorkout = () => {
                       else handleAddExerciseToday(data);
                     }}
                     initialSets={3}
-                    initialSection={(sectionFilter === "workout" ? "training" : sectionFilter)}
+                    initialSection={"training"}
                     initialSetConfigs={Array.from({ length: 3 }, () => ({
                       reps: 10,
                       weight: 25,
@@ -612,6 +613,40 @@ const ActiveWorkout = () => {
               </SwiperForm>
             );
           })()}
+
+        {/* Exercise edit sheet */}
+        {editingExercise && (() => {
+          const formRef = React.createRef();
+          return (
+            <SwiperForm
+              open={!!editingExercise}
+              onOpenChange={() => setEditingExercise(null)}
+              title="Edit"
+              leftAction={() => setEditingExercise(null)}
+              leftText="Close"
+              rightAction={() => formRef.current?.requestSubmit?.()}
+              rightText="Save"
+              rightEnabled={editingExerciseDirty}
+              padding={0}
+              className="edit-exercise-drawer"
+            >
+              <div className="flex-1 overflow-y-auto">
+                <AddNewExerciseForm
+                  ref={formRef}
+                  key={`edit-${editingExercise.id}`}
+                  formPrompt="Edit exercise"
+                  initialName={editingExercise.name}
+                  initialSection={editingExercise.section === 'workout' ? 'training' : editingExercise.section}
+                  initialSets={editingExercise.setConfigs?.length}
+                  initialSetConfigs={editingExercise.setConfigs}
+                  hideActionButtons={true}
+                  onActionIconClick={handleSaveExerciseEdit}
+                  onDirtyChange={setEditingExerciseDirty}
+                />
+              </div>
+            </SwiperForm>
+          );
+        })()}
       </AppLayout>
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}
@@ -622,6 +657,28 @@ const ActiveWorkout = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {isEditSheetOpen && (
+        <SwiperForm
+          open={isEditSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          title="Edit Set"
+          leftAction={() => setEditSheetOpen(false)}
+          rightAction={() => handleEditFormSave(currentFormValues)}
+          rightEnabled={formDirty}
+          leftText="Cancel"
+          rightText="Save"
+        >
+          <SetEditForm
+            initialValues={editingSet?.setConfig}
+            onValuesChange={setCurrentFormValues}
+            onDirtyChange={setFormDirty}
+            showSetNameField={true}
+            hideActionButtons={true}
+            hideInternalHeader={true}
+          />
+        </SwiperForm>
+      )}
     </>
   );
 };

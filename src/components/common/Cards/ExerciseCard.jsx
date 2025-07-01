@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 import SetBadge from "@/components/molecules/SetBadge";
 import { FormHeader } from "@/components/atoms/sheet";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import CardWrapper from "./Wrappers/CardWrapper";
-import { Reorder } from "framer-motion";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
 
@@ -18,6 +16,7 @@ const ExerciseCard = ({
   reorderable = false,
   reorderValue,
   onCardClick,
+  isDragging = false,
   ...props
 }) => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
@@ -30,7 +29,6 @@ const ExerciseCard = ({
   const [currentFormValues, setCurrentFormValues] = useState(editFormValues);
   const [formDirty, setFormDirty] = useState(false);
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Sets are editable whenever an onSetConfigsChange handler is provided
   const setsAreEditable = onSetConfigsChange !== undefined;
@@ -84,8 +82,9 @@ const ExerciseCard = ({
 
   const cardContent = (
     <div
+      data-exercise-card="true"
       data-layer="CardContentsWrapper"
-      className="w-full p-4 bg-stone-50 rounded-lg"
+      className="w-full p-4 bg-white border border-neutral-300 rounded-lg"
       onClick={handleCardClick}
       style={{ cursor: setsAreEditable && onCardClick ? "pointer" : "default" }}
     >
@@ -126,19 +125,8 @@ const ExerciseCard = ({
   );
 
   return (
-    <CardWrapper className={className} gap={0} marginTop={0} marginBottom={0}>
-      {reorderable ? (
-        <Reorder.Item
-          value={reorderValue}
-          className="w-full"
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={() => setIsDragging(false)}
-        >
-          {cardContent}
-        </Reorder.Item>
-      ) : (
-        cardContent
-      )}
+    <>
+      {cardContent}
       {setsAreEditable && (
         <SwiperForm
           open={editSheetOpen}
@@ -178,7 +166,7 @@ const ExerciseCard = ({
           </div>
         </SwiperForm>
       )}
-    </CardWrapper>
+    </>
   );
 };
 
@@ -200,6 +188,7 @@ ExerciseCard.propTypes = {
   reorderable: PropTypes.bool,
   reorderValue: PropTypes.any,
   onCardClick: PropTypes.func,
+  isDragging: PropTypes.bool,
 };
 
 export default ExerciseCard;

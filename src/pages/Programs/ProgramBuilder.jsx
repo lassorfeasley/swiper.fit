@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import WorkoutSectionWrapper from "@/components/common/Cards/Wrappers/WorkoutSectionWrapper";
 import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
 import { FormHeader } from "@/components/atoms/sheet";
@@ -257,12 +259,31 @@ const ProgramBuilder = () => {
     setExercises(items);
   };
 
-  const filteredExercises = exercises
-    .filter((ex) => {
-      const target = sectionFilter === "workout" ? "training" : sectionFilter;
-      return ex.section === target;
-    })
-    .filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
+  const searchFiltered = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const SECTION_KEYS = ["warmup", "workout", "cooldown"];
+
+  const exercisesBySection = SECTION_KEYS.map((key) => {
+    const target = key === "workout" ? "training" : key;
+    const items = searchFiltered
+      .filter((ex) => ex.section === target)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    return { section: key, exercises: items };
+  });
+
+  const scrollSectionIntoView = (key) => {
+    const el = document.getElementById(`section-${key}`);
+    if (!el) return;
+    const headerHeight = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue("--header-height") || "0",
+      10
+    );
+    const rect = el.getBoundingClientRect();
+    const scrollContainer = document.documentElement;
+    scrollContainer.scrollBy({ top: rect.top - headerHeight, behavior: "smooth" });
+  };
 
   const handleModalClose = () => {
     setShowAddExercise(false);
@@ -337,16 +358,22 @@ const ProgramBuilder = () => {
   };
 
   // Persist new order to Supabase immediately after reorder
-  const handleReorder = async (newOrder) => {
+  const handleReorder = async (sectionKey, newOrder) => {
     // Update local state first for immediate UI feedback
-    const updated = newOrder.map((ex, idx) => ({ ...ex, order: idx + 1 }));
-    setExercises(updated);
+    const updatedForSection = newOrder.map((ex, idx) => ({ ...ex, order: idx + 1 }));
 
-    // Persist only the items whose order changed
+    setExercises((prev) =>
+      prev.map((ex) => {
+        const isInSection = (sectionKey === "workout" ? "training" : sectionKey) === ex.section;
+        if (!isInSection) return ex;
+        const replacement = updatedForSection.find((u) => u.id === ex.id);
+        return replacement || ex;
+      })
+    );
+
     await Promise.all(
-      updated.map((ex, idx) => {
-        if (ex.order !== idx + 1) return null; // already correct
-        // upsert may not be needed, just update
+      updatedForSection.map((ex, idx) => {
+        if (ex.order !== idx + 1) return null;
         return supabase
           .from("program_exercises")
           .update({ exercise_order: idx + 1 })
@@ -358,56 +385,64 @@ const ProgramBuilder = () => {
   return (
     <>
       <AppLayout
-        appHeaderTitle={programName}
+        title={programName}
         pageNameEditable={true}
-        onAction={() => setShowAddExercise(true)}
         onBack={handleBack}
-        onEdit={() => setEditProgramOpen(true)}
-        showEditOption={true}
+        showAdd={true}
+        onAdd={() => setShowAddExercise(true)}
+        showSearch={true}
+        search={true}
+        searchValue={search}
+        onSearchChange={setSearch}
+        showSettings={true}
+        onSettings={() => setEditProgramOpen(true)}
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
-        addButtonText="Add exercise"
         showBackButton
         pageContext="program-builder"
         showSectionNav={true}
         sectionNavValue={sectionFilter}
-        onSectionNavChange={setSectionFilter}
+        onSectionNavChange={(val) => {
+          if (!val) return;
+          setSectionFilter(val);
+          scrollSectionIntoView(val);
+        }}
+        // vertical snap disabled
       >
-        <div
-          style={{
-            paddingBottom: "100px",
-          }}
-        >
-          <CardWrapper
-            reorderable
-            items={filteredExercises}
-            onReorder={handleReorder}
-          >
-            {loading ? (
-              <div className="text-gray-400 text-center py-8">Loading...</div>
-            ) : filteredExercises.length === 0 && !loading ? (
-              <div className="text-gray-400 text-center py-8">
-                No exercises found. Try adding one!
-              </div>
-            ) : (
-              filteredExercises.map((ex) => (
-                <ExerciseCard
-                  key={ex.id}
-                  mode="default"
-                  exerciseName={ex.name}
-                  setConfigs={ex.setConfigs}
-                  onEdit={() => setEditingExercise(ex)}
-                  onSetConfigsChange={(newSetConfigs) =>
-                    handleSetConfigsChange(ex.exercise_id, newSetConfigs)
-                  }
-                  reorderable={true}
-                  reorderValue={ex}
-                  onCardClick={() => setEditingExercise(ex)}
-                />
-              ))
-            )}
-          </CardWrapper>
-        </div>
+        {exercisesBySection.map(({ section, exercises: secExercises }) => (
+          <WorkoutSectionWrapper key={section} section={section} id={`section-${section}`}>
+            <CardWrapper
+              gap={20}
+              reorderable
+              items={secExercises}
+              onReorder={(newOrder) => handleReorder(section, newOrder)}
+            >
+              {loading ? (
+                <div className="text-gray-400 text-center py-8">Loading...</div>
+              ) : secExercises.length === 0 && !loading ? (
+                <div className="text-gray-400 text-center py-8">
+                  No exercises found. Try adding one!
+                </div>
+              ) : (
+                secExercises.map((ex) => (
+                  <ExerciseCard
+                    key={ex.id}
+                    mode="default"
+                    exerciseName={ex.name}
+                    setConfigs={ex.setConfigs}
+                    onEdit={() => setEditingExercise(ex)}
+                    onSetConfigsChange={(newSetConfigs) =>
+                      handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                    }
+                    reorderable={true}
+                    reorderValue={ex}
+                    onCardClick={() => setEditingExercise(ex)}
+                  />
+                ))
+              )}
+            </CardWrapper>
+          </WorkoutSectionWrapper>
+        ))}
         <SwiperForm
           open={showAddExercise || !!editingExercise}
           onOpenChange={(open) => {

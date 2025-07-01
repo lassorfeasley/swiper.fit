@@ -50,12 +50,20 @@ const AddNewExerciseForm = React.forwardRef(
     const {
       defaults,
       sets,
-      updateDefault,
+      updateDefault: _updateDefault,
       updateSetField,
       getSetMerged,
       addSet,
       removeLastSet,
     } = useSetConfig(initialSets, initialDefaults);
+
+    // Wrapper to keep single-set exercises in sync with defaults
+    const updateDefault = (field, value) => {
+      _updateDefault(field, value);
+      if (sets.length === 1) {
+        updateSetField(0, field, value);
+      }
+    };
 
     // Merge incoming per-set configs into hook state on mount
     useEffect(() => {
@@ -270,20 +278,21 @@ const AddNewExerciseForm = React.forwardRef(
           />
         </FormSectionWrapper>
 
-        {/* Per-set configs */}
-        <FormSectionWrapper className="py-4 px-4">
-          <div className="text-body leading-tight">
-            <span className="text-slate-600 font-medium">Customize sets </span>
-            <span className="text-neutral-300">
-              Tap a set to name and configure weight, reps, and more.
-            </span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: setsCount }).map((_, idx) => (
-              <SetCard key={idx} idx={idx} />
-            ))}
-          </div>
-        </FormSectionWrapper>
+        {setsCount > 1 && (
+          <FormSectionWrapper className="py-4 px-4">
+            <div className="text-body leading-tight">
+              <span className="text-slate-600 font-medium">Customize sets </span>
+              <span className="text-neutral-300">
+                Tap a set to name and configure weight, reps, and more.
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: setsCount }).map((_, idx) => (
+                <SetCard key={idx} idx={idx} />
+              ))}
+            </div>
+          </FormSectionWrapper>
+        )}
 
         {!hideActionButtons && (
           <FormSectionWrapper className="px-4 pb-4">
