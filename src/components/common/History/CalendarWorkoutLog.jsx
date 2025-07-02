@@ -164,7 +164,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
         gap={20}
         paddingX={20}
         className="items-center border-t border-neutral-300 space-y-[20px]"
-        style={{ paddingTop: 20, paddingBottom: 20 }}
+        style={{ paddingTop: 20, paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}
       >
         {events.length === 0 ? (
           <div className="text-sm text-muted-foreground">No workouts logged</div>
