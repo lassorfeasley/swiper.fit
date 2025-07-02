@@ -162,7 +162,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
       {/* Events list */}
       <DeckWrapper
         gap={20}
-        paddingX={12}
+        paddingX={20}
         className="items-center border-t border-neutral-300 space-y-[20px]"
         style={{ paddingTop: 20, paddingBottom: 20 }}
       >
