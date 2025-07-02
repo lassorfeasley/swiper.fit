@@ -325,15 +325,12 @@ const ActiveWorkout = () => {
 
   // Group exercises by section
   const sectionsOrder = ["warmup", "training", "cooldown"];
-  const exercisesBySection = sectionsOrder.map(section => {
-    let sectionExercises;
-    if (section === "training") {
-      sectionExercises = exercises.filter(ex => ex.section === "training" || ex.section === "workout");
-    } else {
-      sectionExercises = exercises.filter(ex => ex.section === section);
-    }
-    return { section, exercises: sectionExercises };
-  }).filter(group => group.exercises.length > 0);
+  const exercisesBySection = sectionsOrder
+    .map((section) => {
+      const sectionExercises = exercises.filter((ex) => ex.section === section);
+      return { section, exercises: sectionExercises };
+    })
+    .filter((group) => group.exercises.length > 0);
 
   const handleExerciseCompleteNavigate = (exerciseId) => {
     // update completed set
@@ -402,7 +399,9 @@ const ActiveWorkout = () => {
     const currentSectionIndex = sectionsOrder.indexOf(currentSection);
     for (let j = currentSectionIndex + 1; j < sectionsOrder.length; j++) {
       const sectionName = sectionsOrder[j];
-      const targetEx = exercises.find((ex) => ex.section === sectionName && !isExerciseComplete(ex));
+      const targetEx = exercises.find(
+        (ex) => ex.section === sectionName && !isExerciseComplete(ex)
+      );
       if (targetEx) {
         changeFocus(targetEx.exercise_id);
         setTimeout(() => {
