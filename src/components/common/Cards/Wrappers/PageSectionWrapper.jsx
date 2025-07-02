@@ -24,7 +24,7 @@ const PageSectionWrapper = ({ section, children, className, ...props }) => {
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full max-w-[1472px] bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-center items-center",
+        "Workoutcardwrapper w-full max-w-[1472px] bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-center items-center last:pb-20 md:last:pb-0",
         className
       )}
       {...props}

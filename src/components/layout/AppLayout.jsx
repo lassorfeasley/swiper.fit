@@ -14,6 +14,7 @@ export default function AppLayout({
   onSearchChange,
   enableScrollSnap = false,
   noTopPadding = false,
+  hideHeader = false,
   title,
   ...headerProps
 }) {
@@ -58,24 +59,26 @@ export default function AppLayout({
   return (
     <div className="min-h-screen flex bg-white md:h-screen">
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
-        <PageHeader
-          ref={headerRef}
-          title={title}
-          showSidebar={showSidebar}
-          {...filteredHeaderProps}
-          onDelete={onDelete}
-          showDeleteOption={showDeleteOption}
-          searchValue={searchValue}
-          onSearchChange={onSearchChange}
-        />
+        {!hideHeader && (
+          <PageHeader
+            ref={headerRef}
+            title={title}
+            showSidebar={showSidebar}
+            {...filteredHeaderProps}
+            onDelete={onDelete}
+            showDeleteOption={showDeleteOption}
+            searchValue={searchValue}
+            onSearchChange={onSearchChange}
+          />
+        )}
         <main
           data-scroll-snap-enabled={enableScrollSnap}
           data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            paddingTop: noTopPadding ? '0px' : headerHeight,
+            paddingTop: hideHeader || noTopPadding ? '0px' : headerHeight,
           }}
-          className={`flex-1 ${noTopPadding ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
+          className={`flex-1 ${hideHeader || noTopPadding ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
         >
           {children}
         </main>
@@ -96,5 +99,6 @@ AppLayout.propTypes = {
   onSearchChange: PropTypes.func,
   enableScrollSnap: PropTypes.bool,
   noTopPadding: PropTypes.bool,
+  hideHeader: PropTypes.bool,
   title: PropTypes.string,
 };
