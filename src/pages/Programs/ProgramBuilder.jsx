@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import WorkoutSectionWrapper from "@/components/common/Cards/Wrappers/WorkoutSectionWrapper";
+import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
 import { FormHeader } from "@/components/atoms/sheet";
@@ -410,7 +410,7 @@ const ProgramBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-          <WorkoutSectionWrapper key={section} section={section} id={`section-${section}`}>
+          <PageSectionWrapper key={section} section={section} id={`section-${section}`}>
             <CardWrapper
               gap={20}
               reorderable
@@ -441,7 +441,7 @@ const ProgramBuilder = () => {
                 ))
               )}
             </CardWrapper>
-          </WorkoutSectionWrapper>
+          </PageSectionWrapper>
         ))}
         <SwiperForm
           open={showAddExercise || !!editingExercise}

@@ -1,14 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import SectionWrapperLabel from "./SectionWrapperLabel";
 import { cn } from "@/lib/utils";
 
 /**
- * WorkoutSectionWrapper – container for a single workout section (warmup / training / cooldown).
+ * PageSectionWrapper – container for a single page section (warmup / training / cooldown).
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const WorkoutSectionWrapper = ({ section, children, className, ...props }) => {
+const PageSectionWrapper = ({ section, children, className, ...props }) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -29,11 +30,9 @@ const WorkoutSectionWrapper = ({ section, children, className, ...props }) => {
       {...props}
     >
       {/* Header */}
-      <div className="self-stretch p-5 border-b border-neutral-300 flex items-center gap-2.5 sticky top-0 bg-white z-20 md:z-5 pointer-events-none">
-        <h2 className="flex-1 text-neutral-600 text-2xl font-bold leading-normal capitalize">
-          {displayTitle}
-        </h2>
-      </div>
+      <SectionWrapperLabel>
+        {displayTitle}
+      </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
       <div className="self-stretch flex flex-col justify-start items-center gap-10">
@@ -45,10 +44,10 @@ const WorkoutSectionWrapper = ({ section, children, className, ...props }) => {
   );
 };
 
-WorkoutSectionWrapper.propTypes = {
+PageSectionWrapper.propTypes = {
   section: PropTypes.string.isRequired,
   children: PropTypes.node,
   className: PropTypes.string,
 };
 
-export default WorkoutSectionWrapper; 
+export default PageSectionWrapper; 

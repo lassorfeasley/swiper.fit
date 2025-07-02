@@ -4,7 +4,7 @@ import { supabase } from "@/supabaseClient";
 import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import WorkoutSectionWrapper from "@/components/common/Cards/Wrappers/WorkoutSectionWrapper";
+import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "@/components/common/Cards/ActiveExerciseCard";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -497,7 +497,7 @@ const ActiveWorkout = () => {
         <div ref={listRef}>
           {exercisesBySection.length > 0 ? (
             exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-              <WorkoutSectionWrapper key={section} section={section}>
+              <PageSectionWrapper key={section} section={section}>
                 {sectionExercises.map((ex, index) => {
                   const exerciseProgress = workoutProgress[ex.exercise_id] || [];
                   const focusedIndex = sectionExercises.findIndex(
@@ -546,7 +546,7 @@ const ActiveWorkout = () => {
                     />
                   );
                 })}
-              </WorkoutSectionWrapper>
+              </PageSectionWrapper>
             ))
           ) : (
             <div className="text-center py-10">
