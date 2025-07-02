@@ -87,7 +87,7 @@ const FormHeader = ({
           )}
           <button
             onClick={leftAction}
-            className="text-red-500 text-base font-medium font-vietnam leading-tight text-left"
+            className="text-red-500 text-base font-medium font-vietnam leading-tight text-left focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
           >
             {leftText}
           </button>
@@ -107,7 +107,8 @@ const FormHeader = ({
           onClick={rightAction}
           className={cn(
             "text-base font-medium font-vietnam leading-tight",
-            rightEnabled ? "text-green-600" : "text-neutral-400"
+            rightEnabled ? "text-green-600" : "text-neutral-400",
+            "focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
           )}
           disabled={!rightEnabled}
         >
