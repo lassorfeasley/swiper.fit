@@ -26,7 +26,7 @@ export function ActiveWorkoutProvider({ children }) {
         // Fetch the active workout record and program metadata
         const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, programs(program_name)')
+          .select('*, routines(program_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
@@ -38,7 +38,7 @@ export function ActiveWorkoutProvider({ children }) {
         const workoutData = {
           id: workout.id,
           programId: workout.program_id,
-          name: workout.programs?.program_name || workout.workout_name || 'Workout',
+          name: workout.routines?.program_name || workout.workout_name || 'Workout',
           startTime: workout.created_at,
           lastExerciseId: workout.last_exercise_id || null,
         };

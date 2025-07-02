@@ -8,10 +8,10 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
-import ProgramCard from "@/components/common/Cards/ProgramCard";
+import RoutineCard from "@/components/common/Cards/RoutineCard";
 
 const Workout = () => {
-  const [programs, setPrograms] = useState([]);
+  const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -23,14 +23,14 @@ const Workout = () => {
     console.log("Auth state:", { user, session });
   }, [user, session]);
 
-  // Fetch programs and their exercises on mount
+  // Fetch routines and their exercises on mount
   useEffect(() => {
-    async function fetchPrograms() {
+    async function fetchRoutines() {
       if (!user) {
         console.log("No user found, skipping fetch");
         return;
       }
-      console.log("Fetching programs for user:", user.id);
+      console.log("Fetching routines for user:", user.id);
       setLoading(true);
       try {
         const { data, error } = await supabase
@@ -58,11 +58,11 @@ const Workout = () => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("Error fetching programs:", error);
-          setPrograms([]);
+          console.error("Error fetching routines:", error);
+          setRoutines([]);
         } else {
-          console.log("Successfully fetched programs:", data);
-          const programsWithExercises = (data || []).map((program) => {
+          console.log("Successfully fetched routines:", data);
+          const routinesWithExercises = (data || []).map((program) => {
             const exerciseCount = (program.program_exercises || []).length;
             const setCount = (program.program_exercises || []).reduce(
               (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
@@ -77,17 +77,17 @@ const Workout = () => {
                 .filter(Boolean),
             };
           });
-          setPrograms(programsWithExercises);
+          setRoutines(routinesWithExercises);
         }
       } catch (err) {
-        console.error("Exception fetching programs:", err);
-        setPrograms([]);
+        console.error("Exception fetching routines:", err);
+        setRoutines([]);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchPrograms();
+    fetchRoutines();
   }, [user]);
 
   const handleStartWorkout = async (program) => {
@@ -101,8 +101,8 @@ const Workout = () => {
     }
   };
 
-  // Filter programs by search
-  const filteredPrograms = programs.filter((program) => {
+  // Filter routines by search
+  const filteredRoutines = routines.filter((program) => {
     const q = search.toLowerCase();
     return (
       program.program_name?.toLowerCase().includes(q) ||
@@ -117,7 +117,7 @@ const Workout = () => {
       showAddButton={false}
       showBackButton={false}
       search={true}
-      searchPlaceholder="Search programs or exercises"
+      searchPlaceholder="Search routines or exercises"
       searchValue={search}
       onSearchChange={setSearch}
       pageContext="workout"
@@ -125,14 +125,14 @@ const Workout = () => {
       <DeckWrapper paddingX={12} gap={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : filteredPrograms.length === 0 ? (
+        ) : filteredRoutines.length === 0 ? (
           <div className="text-gray-400 text-center py-8">
-            No programs found. Create a program to start a workout.
+            No routines found. Create a routine to start a workout.
           </div>
         ) : (
-          filteredPrograms.map((program) => (
+          filteredRoutines.map((program) => (
             <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
-              <ProgramCard
+              <RoutineCard
                 id={program.id}
                 name={program.program_name}
                 exerciseCount={program.exerciseCount}

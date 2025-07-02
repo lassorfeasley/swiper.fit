@@ -1,12 +1,12 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home/Home";
-import Programs from "./pages/Programs/Programs";
+import Routines from "./pages/Routines/Routines";
 import History from "./pages/History/History";
 import Workout from "./pages/Workout/Workout";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
-import ProgramBuilder from "./pages/Programs/ProgramBuilder";
+import RoutineBuilder from "./pages/Routines/RoutineBuilder";
 import "./App.css";
 import {
   NavBarVisibilityProvider,
@@ -36,7 +36,7 @@ function AppContent() {
   const { navBarVisible } = useNavBarVisibility();
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
-    /^\/programs\/[^/]+(\/edit)?$/.test(location.pathname) ||
+    /^\/routines\/[^/]+(\/edit)?$/.test(location.pathname) ||
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
     location.pathname === "/create-account" ||
@@ -67,10 +67,10 @@ function AppContent() {
           {/* Protected routes wrapper */}
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Home />} />
-            <Route path="/programs" element={<Programs />} />
+            <Route path="/routines" element={<Routines />} />
             <Route
-              path="/programs/:programId/configure"
-              element={<ProgramBuilder />}
+              path="/routines/:programId/configure"
+              element={<RoutineBuilder />}
             />
             <Route path="/history" element={<History />} />
             <Route path="/workout" element={<Workout />} />

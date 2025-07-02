@@ -11,16 +11,16 @@ import { Button } from "@/components/atoms/button";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
-import ProgramCard from "@/components/common/Cards/ProgramCard";
+import RoutineCard from "@/components/common/Cards/RoutineCard";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import MainContentSection from "@/components/layout/MainContentSection";
 
-const ProgramsIndex = () => {
+const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const { user } = useAuth();
-  const [programs, setPrograms] = useState([]);
+  const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
   const [programName, setProgramName] = useState("");
@@ -30,15 +30,15 @@ const ProgramsIndex = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setPageName("Programs");
-    async function fetchPrograms() {
+    setPageName("Routines");
+    async function fetchRoutines() {
       setLoading(true);
       if (!user) {
-        setPrograms([]);
+        setRoutines([]);
         setLoading(false);
         return;
       }
-      // Fetch programs and their exercises for this user
+      // Fetch routines and their exercises for this user
       const { data, error } = await supabase
         .from("programs")
         .select(
@@ -57,12 +57,12 @@ const ProgramsIndex = () => {
         .eq("is_archived", false)
         .order("created_at", { ascending: false });
       if (error) {
-        setPrograms([]);
+        setRoutines([]);
         setLoading(false);
         return;
       }
       // Map exercises for each program
-      const programsWithExercises = (data || []).map((program) => {
+      const routinesWithExercises = (data || []).map((program) => {
         const setCount = (program.program_exercises || []).reduce(
           (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
           0
@@ -75,10 +75,10 @@ const ProgramsIndex = () => {
             .filter(Boolean),
         };
       });
-      setPrograms(programsWithExercises);
+      setRoutines(routinesWithExercises);
       setLoading(false);
     }
-    fetchPrograms();
+    fetchRoutines();
   }, [setPageName, user, refreshFlag]);
 
   const handleCreateProgram = async () => {
@@ -96,7 +96,7 @@ const ProgramsIndex = () => {
       setShowSheet(false);
       setProgramName("");
       setRefreshFlag((f) => f + 1);
-      navigate(`/programs/${program_id}/configure`);
+      navigate(`/routines/${program_id}/configure`);
     } catch (err) {
       alert(err.message || "Failed to create program");
     }
@@ -104,8 +104,8 @@ const ProgramsIndex = () => {
 
   const isReady = programName.trim().length > 0;
 
-  // Filter programs by search
-  const filteredPrograms = programs.filter((program) => {
+  // Filter routines by search
+  const filteredRoutines = routines.filter((program) => {
     const q = search.toLowerCase();
     return (
       program.program_name?.toLowerCase().includes(q) ||
@@ -116,16 +116,16 @@ const ProgramsIndex = () => {
 
   return (
     <AppLayout
-      title="Programs"
+      title="Routines"
       showAdd={true}
       showSearch={true}
       showAddButton={false}
       showBackButton={false}
       search={true}
-      searchPlaceholder="Search programs or exercises"
+      searchPlaceholder="Search routines or exercises"
       searchValue={search}
       onSearchChange={setSearch}
-      pageContext="programs"
+      pageContext="routines"
       data-component="AppHeader"
       onAdd={() => {
         setShowSheet(true);
@@ -138,12 +138,12 @@ const ProgramsIndex = () => {
       <DeckWrapper paddingX={12} gap={20}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : filteredPrograms.length === 0 ? (
-          <div className="text-gray-400 text-center py-8">No programs found.</div>
+        ) : filteredRoutines.length === 0 ? (
+          <div className="text-gray-400 text-center py-8">No routines found.</div>
         ) : (
-          filteredPrograms.map((program) => (
+          filteredRoutines.map((program) => (
             <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
-              <ProgramCard
+              <RoutineCard
                 id={program.id}
                 name={program.program_name}
                 exerciseCount={(program.exerciseNames || []).length}
@@ -151,7 +151,7 @@ const ProgramsIndex = () => {
                 leftText="Swipe to edit"
                 swipeStatus="active"
                 onSwipeComplete={() =>
-                  navigate(`/programs/${program.id}/configure`)
+                  navigate(`/routines/${program.id}/configure`)
                 }
               />
             </CardWrapper>
@@ -171,7 +171,7 @@ const ProgramsIndex = () => {
       >
         <SwiperForm.Section>
           <TextInput
-            label="Name program"
+            label="Name routine"
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
             ref={inputRef}
@@ -182,4 +182,4 @@ const ProgramsIndex = () => {
   );
 };
 
-export default ProgramsIndex;
+export default RoutinesIndex;

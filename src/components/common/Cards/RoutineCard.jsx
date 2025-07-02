@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
 
 /**
- * ProgramCard – card representation of a workout program with swipe-to-action control.
+ * RoutineCard – card representation of a workout program with swipe-to-action control.
  *
  * Props:
  *  • id – program identifier (used for React key only).
@@ -15,7 +15,7 @@ import SwipeSwitch from "@/components/molecules/swipe-switch";
  *  • swipeStatus – status to pass to SwipeSwitch (defaults to "active").
  *  • onSwipeComplete – callback when user completes swipe gesture.
  */
-const ProgramCard = ({
+const RoutineCard = ({
   id,
   name,
   exerciseCount,
@@ -28,7 +28,7 @@ const ProgramCard = ({
   return (
     <div
       key={id}
-      data-component="ProgramCard"
+      data-component="RoutineCard"
       className="Programcardcontents w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start"
     >
       {/* Header: Program name & exercise pills */}
@@ -78,7 +78,7 @@ const ProgramCard = ({
   );
 };
 
-ProgramCard.propTypes = {
+RoutineCard.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   name: PropTypes.string.isRequired,
   exerciseCount: PropTypes.number,
@@ -89,5 +89,5 @@ ProgramCard.propTypes = {
   onSwipeComplete: PropTypes.func,
 };
 
-export default ProgramCard; 
+export default RoutineCard; 
 // gjkgfhjk

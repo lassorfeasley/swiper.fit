@@ -16,7 +16,7 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 
-const ProgramBuilder = () => {
+const RoutineBuilder = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const { setPageName } = useContext(PageNameContext);
@@ -37,7 +37,7 @@ const ProgramBuilder = () => {
   const [sectionFilter, setSectionFilter] = useState("workout");
 
   useEffect(() => {
-    setPageName("ProgramBuilder");
+    setPageName("RoutineBuilder");
   }, [setPageName]);
 
   useEffect(() => {
@@ -351,7 +351,7 @@ const ProgramBuilder = () => {
         throw error;
       }
 
-      navigate("/programs");
+      navigate("/routines");
     } catch (err) {
       alert("Failed to delete program: " + err.message);
     }
@@ -507,7 +507,7 @@ const ProgramBuilder = () => {
       >
         <SwiperForm.Section>
           <TextInput
-            label="Program name"
+            label="Routine name"
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
           />
@@ -544,4 +544,4 @@ const ProgramBuilder = () => {
   );
 };
 
-export default ProgramBuilder;
+export default RoutineBuilder;
