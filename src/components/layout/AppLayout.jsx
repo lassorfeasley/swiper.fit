@@ -48,6 +48,8 @@ export default function AppLayout({
 
   // List of props that PageHeader actually accepts
   const allowedHeaderProps = [
+    'variant',
+    'reserveSpace',
     'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare',
     'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'searchValue', 'onSearchChange', 'className',
   ];
@@ -55,6 +57,10 @@ export default function AppLayout({
   const filteredHeaderProps = Object.fromEntries(
     Object.entries(headerProps).filter(([key]) => allowedHeaderProps.includes(key))
   );
+
+  // Determine header variant and reserve flag
+  const variant = filteredHeaderProps.variant;
+  const reserveSpace = filteredHeaderProps.reserveSpace;
 
   return (
     <div className="min-h-screen flex bg-white md:h-screen">
@@ -76,9 +82,10 @@ export default function AppLayout({
           data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            paddingTop: hideHeader || noTopPadding ? '0px' : headerHeight,
+            // Push content down if dark-fixed or reserveSpace is true
+            paddingTop: hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '0px' : headerHeight,
           }}
-          className={`flex-1 ${hideHeader || noTopPadding ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
+          className={`flex-1 ${hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
         >
           {children}
         </main>

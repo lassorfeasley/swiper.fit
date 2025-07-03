@@ -504,6 +504,7 @@ const CompletedWorkout = () => {
   return (
     <>
       <AppLayout
+        variant="dark-fixed"
         showSidebar={isOwner && !isPublicWorkoutView}
         title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={!readOnly && true}

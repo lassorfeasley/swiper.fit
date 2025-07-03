@@ -197,6 +197,7 @@ const History = () => {
 
   return (
     <AppLayout
+      reserveSpace={true}
       title="History"
       showSidebar={!paramUserId}
       showShare={viewingOwn}

@@ -15,6 +15,7 @@ const Home = () => {
   };
   return (
     <AppLayout
+      reserveSpace={true}
       title="Home"
       showAddButton={false}
       showBackButton={false}

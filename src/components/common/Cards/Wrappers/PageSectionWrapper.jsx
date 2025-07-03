@@ -35,8 +35,8 @@ const PageSectionWrapper = ({ section, children, className, ...props }) => {
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className="w-full self-stretch pt-5 pb-28 px-3 md:px-0">
-        <DeckWrapper gap={0} paddingX={0}>
+      <div className="w-full self-stretch pt-5 pb-28 px-0">
+        <DeckWrapper gap={0} paddingX={20}>
           {children}
         </DeckWrapper>
       </div>

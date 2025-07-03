@@ -360,6 +360,8 @@ const RoutineBuilder = () => {
   return (
     <>
       <AppLayout
+        variant="dark-fixed"
+        reserveSpace={true}
         title={programName}
         pageNameEditable={true}
         onBack={handleBack}

@@ -116,6 +116,7 @@ const RoutinesIndex = () => {
 
   return (
     <AppLayout
+      reserveSpace={true}
       title="Routines"
       showAdd={true}
       showSearch={true}

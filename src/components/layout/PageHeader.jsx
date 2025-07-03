@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
 const PageHeader = forwardRef(({
+  reserveSpace = false,
+  variant = 'default',
   showBackButton = false,
   title = "Page",
   showSearch = false,
@@ -37,7 +39,9 @@ const PageHeader = forwardRef(({
     <header
       ref={ref}
       className={cn(
-        "fixed top-0 z-50 self-stretch min-h-14 px-5 pt-5 bg-transparent inline-flex justify-between items-center",
+        variant === 'dark-fixed'
+          ? "fixed top-0 z-50 self-stretch min-h-14 px-5 py-2.5 bg-neutral-700 inline-flex justify-between items-center"
+          : "fixed top-0 z-50 self-stretch min-h-14 px-5 pt-5 bg-transparent inline-flex justify-between items-center",
         showSidebar
           ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
           : "left-0 w-full",
@@ -47,16 +51,29 @@ const PageHeader = forwardRef(({
       <div className={cn("flex justify-start items-center gap-2.5", searchActive ? "hidden sm:flex" : "")}>
         {showBackButton && (
           <button
-            className="h-10 p-2 bg-neutral-700 rounded-[40px] flex justify-start items-center gap-2"
+            className={cn(
+              "h-10 p-2 rounded-[40px] flex justify-center items-center",
+              variant === 'dark-fixed' ? "" : "bg-neutral-700"
+            )}
             onClick={onBack}
             aria-label="Back"
           >
-            <div className="size-6 relative bg-neutral-700 overflow-hidden">
-              <ArrowLeft className="size-3.5 left-[5px] top-[5px] absolute text-white" />
+            <div
+              className={cn(
+                "w-full h-full relative overflow-hidden flex items-center justify-center",
+                variant === 'dark-fixed' ? "" : "bg-neutral-700"
+              )}
+            >
+              <ArrowLeft className="w-full h-full text-white" />
             </div>
           </button>
         )}
-        <div className="flex-1 min-w-0 justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal truncate">
+        <div
+          className={cn(
+            "flex-1 min-w-0 justify-center text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal truncate",
+            variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+          )}
+        >
           {title}
         </div>
       </div>
@@ -82,12 +99,20 @@ const PageHeader = forwardRef(({
             }}
             aria-label="Clear search"
           >
-            <X className="w-6 h-6 text-neutral-700" />
+            <X className={cn(
+              "w-6 h-6",
+              variant === 'dark-fixed' ? 'text-white' : 'text-neutral-700'
+            )} />
           </button>
         </div>
       ) : (
         (showSearch || showSettings || showAdd || showShare) && (
-          <div className="Pageactions px-3 py-2 bg-neutral-700 rounded-[40px] inline-flex justify-start items-center gap-3">
+          <div
+            className={cn(
+              "Pageactions px-3 py-2 rounded-[40px] inline-flex justify-start items-center gap-3",
+              variant === 'dark-fixed' ? "" : "bg-neutral-700"
+            )}
+          >
             {showSearch && (
               <button
                 className="Search w-8 h-8 flex items-center justify-center"
@@ -132,6 +157,8 @@ const PageHeader = forwardRef(({
 });
 
 PageHeader.propTypes = {
+  reserveSpace: PropTypes.bool,
+  variant: PropTypes.oneOf(['default', 'dark-fixed']),
   showBackButton: PropTypes.bool,
   title: PropTypes.string,
   showSearch: PropTypes.bool,

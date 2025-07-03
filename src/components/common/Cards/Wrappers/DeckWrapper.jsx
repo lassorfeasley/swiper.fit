@@ -11,7 +11,7 @@ const DeckWrapper = forwardRef(
     {
       children,
       gap = 0, // spacing between items
-      paddingX = 12, // horizontal padding (px)
+      paddingX = 20, // horizontal padding (px)
       grid = false, // horizontal layout when true
       className,
       ...props
@@ -30,7 +30,7 @@ const DeckWrapper = forwardRef(
     };
     // Determine flex direction classes with object syntax for purge safety
     const containerClasses = cn(
-      "card-container flex mx-auto w-full md:px-0",
+      "card-container flex mx-auto w-full",
       { "flex-row flex-wrap": grid, "flex-col": !grid },
       className
     );
