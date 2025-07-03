@@ -373,85 +373,68 @@ const ActiveWorkout = () => {
     .filter((group) => group.exercises.length > 0);
 
   const handleExerciseCompleteNavigate = (exerciseId) => {
-    // update completed set
     setCompletedExercises((prev) => {
       const newSet = new Set(prev);
       newSet.add(exerciseId);
 
-      // Auto-end workout check
+      // Auto-end workout if all complete
       if (!workoutAutoEnded) {
-        const allIds = exercises.map((e) => e.exercise_id);
-        const allDone = allIds.every((id) => newSet.has(id));
+        const allDone = exercises.every((ex) => newSet.has(ex.exercise_id));
         if (allDone) {
           setWorkoutAutoEnded(true);
           (async () => {
-            const workoutId = activeWorkout?.id;
-            if (workoutId) {
-              navigate(`/history/${workoutId}`);
-            } else {
-              navigate("/history");
-            }
+            const wid = activeWorkout?.id;
+            navigate(wid ? `/history/${wid}` : "/history");
             await contextEndWorkout();
           })();
         }
       }
 
+      // Find the current section group
+      const groupIndex = exercisesBySection.findIndex((group) =>
+        group.exercises.some((ex) => ex.exercise_id === exerciseId)
+      );
+      if (groupIndex !== -1) {
+        const group = exercisesBySection[groupIndex].exercises;
+        const idx = group.findIndex((ex) => ex.exercise_id === exerciseId);
+        let target;
+
+        // 1. Next in same section
+        for (let i = idx + 1; i < group.length; i++) {
+          if (!newSet.has(group[i].exercise_id)) {
+            target = group[i];
+            break;
+          }
+        }
+        // 2. Previous in same section
+        if (!target) {
+          for (let i = idx - 1; i >= 0; i--) {
+            if (!newSet.has(group[i].exercise_id)) {
+              target = group[i];
+              break;
+            }
+          }
+        }
+        // 3. First in next section
+        if (!target) {
+          for (let j = groupIndex + 1; j < exercisesBySection.length; j++) {
+            const found = exercisesBySection[j].exercises.find((ex) => !newSet.has(ex.exercise_id));
+            if (found) {
+              target = found;
+              break;
+            }
+          }
+        }
+        if (target) {
+          changeFocus(target.exercise_id);
+          setTimeout(() => {
+            const el = document.getElementById(`exercise-${target.exercise_id}`);
+            if (el) scrollCardIntoView(el);
+          }, collapseDurationMs + 50);
+        }
+      }
       return newSet;
     });
-
-    // Determine current exercise and section
-    const idx = exercises.findIndex((e) => e.exercise_id === exerciseId);
-    if (idx === -1) return;
-    const currentSection = exercises[idx].section;
-
-    // Helper to check if exercise complete
-    const isExerciseComplete = (ex) => completedExercises.has(ex.exercise_id) || ex.exercise_id === exerciseId;
-
-    // 1. Look forward in same section for incomplete
-    for (let i = idx + 1; i < exercises.length; i++) {
-      const ex = exercises[i];
-      if (ex.section !== currentSection) break; // beyond current section
-      if (!isExerciseComplete(ex)) {
-        changeFocus(ex.exercise_id);
-        setTimeout(() => {
-          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
-          if (cardEl) scrollCardIntoView(cardEl);
-        }, collapseDurationMs + 50);
-        return;
-      }
-    }
-
-    // 2. Look backward in same section for incomplete (nearest previous)
-    for (let i = idx - 1; i >= 0; i--) {
-      const ex = exercises[i];
-      if (ex.section !== currentSection) break; // before section begins
-      if (!isExerciseComplete(ex)) {
-        changeFocus(ex.exercise_id);
-        setTimeout(() => {
-          const cardEl = document.getElementById(`exercise-${ex.exercise_id}`);
-          if (cardEl) scrollCardIntoView(cardEl);
-        }, collapseDurationMs + 50);
-        return;
-      }
-    }
-
-    // 3. All exercises in current section complete: move to next section with incomplete exercises
-    const currentSectionIndex = sectionsOrder.indexOf(currentSection);
-    for (let j = currentSectionIndex + 1; j < sectionsOrder.length; j++) {
-      const sectionName = sectionsOrder[j];
-      const targetEx = exercises.find(
-        (ex) => ex.section === sectionName && !isExerciseComplete(ex)
-      );
-      if (targetEx) {
-        changeFocus(targetEx.exercise_id);
-        setTimeout(() => {
-          const cardEl = document.getElementById(`exercise-${targetEx.exercise_id}`);
-          if (cardEl) scrollCardIntoView(cardEl);
-        }, collapseDurationMs + 50);
-        return;
-      }
-    }
-    // No remaining incomplete exercises
   };
 
   // Time (ms) to wait for collapse animation before opening another card

@@ -1,5 +1,5 @@
 import { motion, useAnimation } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Check, Repeat2, Weight, Clock } from "lucide-react";
 
 // Debounce utility
@@ -81,7 +81,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   }, [isDragging]);
 
   // Reset swipedComplete when parent status changes
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (status !== "default") {
       setSwipedComplete(false);
     }
@@ -90,7 +90,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   }, [status]);
 
   // Persist styling for completed sets when status changes to 'complete'
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (status === 'complete') {
       // collapse padding and expand thumb to full rail with green background
       setIsPaddingCollapsed(true);
@@ -191,7 +191,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     >
       <div
         ref={trackRef}
-        className={`Rail self-stretch flex-1 rounded-[8px] inline-flex items-center justify-end relative overflow-hidden transition-all duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
+        className={`Rail self-stretch flex-1 rounded-[8px] inline-flex items-center justify-end relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
       >
         <motion.div
           className="Thumb w-20 bg-white flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
