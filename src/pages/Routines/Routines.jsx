@@ -135,29 +135,31 @@ const RoutinesIndex = () => {
         }, 100);
       }}
     >
-      <DeckWrapper paddingX={12} gap={20}>
-        {loading ? (
-          <div className="text-gray-400 text-center py-8">Loading...</div>
-        ) : filteredRoutines.length === 0 ? (
-          <div className="text-gray-400 text-center py-8">No routines found.</div>
-        ) : (
-          filteredRoutines.map((program) => (
-            <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
-              <RoutineCard
-                id={program.id}
-                name={program.program_name}
-                exerciseCount={(program.exerciseNames || []).length}
-                setCount={program.setCount}
-                leftText="Swipe to edit"
-                swipeStatus="active"
-                onSwipeComplete={() =>
-                  navigate(`/routines/${program.id}/configure`)
-                }
-              />
-            </CardWrapper>
-          ))
-        )}
-      </DeckWrapper>
+      <div className="mt-5">
+        <DeckWrapper paddingX={12} gap={20}>
+          {loading ? (
+            <div className="text-gray-400 text-center py-8">Loading...</div>
+          ) : filteredRoutines.length === 0 ? (
+            <div className="text-gray-400 text-center py-8">No routines found.</div>
+          ) : (
+            filteredRoutines.map((program) => (
+              <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
+                <RoutineCard
+                  id={program.id}
+                  name={program.program_name}
+                  exerciseCount={(program.exerciseNames || []).length}
+                  setCount={program.setCount}
+                  leftText="Swipe to edit"
+                  swipeStatus="active"
+                  onSwipeComplete={() =>
+                    navigate(`/routines/${program.id}/configure`)
+                  }
+                />
+              </CardWrapper>
+            ))
+          )}
+        </DeckWrapper>
+      </div>
 
       <SwiperForm
         open={showSheet}
