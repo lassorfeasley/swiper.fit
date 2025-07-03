@@ -533,7 +533,7 @@ const CompletedWorkout = () => {
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }) => (
                 <PageSectionWrapper key={section} section={section}>
-                  <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-center">
+                  <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-start">
                     {sectionExercises.map((exercise) => (
                       <ExerciseCompletedCard
                         key={exercise.id}
@@ -541,9 +541,9 @@ const CompletedWorkout = () => {
                         setLog={exercise.setLog}
                         onEdit={openSetEdit}
                         readOnly={readOnly}
-                                              />
-                      ))}
-                   </div>
+                      />
+                    ))}
+                  </div>
                 </PageSectionWrapper>
               ))
             ) : (

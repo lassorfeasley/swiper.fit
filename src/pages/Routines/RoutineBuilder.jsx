@@ -393,7 +393,7 @@ const RoutineBuilder = () => {
             ) : loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
             ) : (
-              <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-center">
+              <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-start">
                 {secExercises.map((ex) => (
                   <ExerciseCard
                     key={ex.id}
