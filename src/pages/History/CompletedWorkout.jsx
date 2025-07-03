@@ -141,7 +141,7 @@ const CompletedWorkout = () => {
       // Build workout query: owners can see their workouts; others can only see public ones
       let workoutQuery = supabase
         .from("workouts")
-        .select(`*, routines(routine_name)`)
+        .select("*, routines!fk_workouts__routines(routine_name)")
         .eq("id", workoutId);
 
       // If no user, rely on RLS to only expose workouts that are globally shared or explicitly public
@@ -159,10 +159,10 @@ const CompletedWorkout = () => {
       // Fetch only completed sets for this workout
       const { data: setsData } = await supabase
         .from("sets")
-        .select("id, exercise_id, reps, weight, weight_unit, order, set_type, timed_set_duration, set_variant, status")
+        .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status")
         .eq("workout_id", workoutId)
         .eq("status", "complete")
-        .order("order", { ascending: true });
+        .order("set_order", { ascending: true });
 
       // Only keep sets that have reps and weight logged and are valid numbers
       const validSets = (setsData || [])

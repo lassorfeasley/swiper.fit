@@ -41,18 +41,7 @@ const RoutinesIndex = () => {
       // Fetch routines and their exercises for this user
       const { data, error } = await supabase
         .from("routines")
-        .select(
-          `
-          id,
-          routine_name,
-          routine_exercises (
-            id,
-            exercise_id,
-            exercises ( name ),
-            routine_sets ( id )
-          )
-        `
-        )
+        .select("id, routine_name, routine_exercises!fk_routine_exercises__routines(id, exercise_id, exercises(name), routine_sets!fk_routine_sets__routine_exercises(id))")
         .eq("user_id", user.id)
         .eq("is_archived", false)
         .order("created_at", { ascending: false });

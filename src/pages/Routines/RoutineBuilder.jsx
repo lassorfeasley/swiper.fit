@@ -50,9 +50,7 @@ const RoutineBuilder = () => {
 
       const { data: progExs, error } = await supabase
         .from("routine_exercises")
-        .select(
-          "id, exercise_id, exercise_order, exercises(name, section), routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
-        )
+        .select("id, exercise_id, exercise_order, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
         .eq("routine_id", programId)
         .order("exercise_order", { ascending: true });
       if (error) {
@@ -228,9 +226,7 @@ const RoutineBuilder = () => {
   const refreshExercises = async () => {
     const { data: progExs } = await supabase
       .from("routine_exercises")
-      .select(
-        "id, exercise_id, exercise_order, exercises(name, section), routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
-      )
+      .select("id, exercise_id, exercise_order, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
       .eq("routine_id", programId)
       .order("exercise_order", { ascending: true });
     const items = (progExs || []).map((pe) => ({

@@ -138,16 +138,11 @@ const ActiveWorkout = () => {
     if (activeWorkout) {
       supabase
         .from("routine_exercises")
-        .select(
-          `
-          *,
-          exercises(name, section),
-          routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
-        `
-        )
+        .select("*, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
         .eq("routine_id", activeWorkout.programId)
         .then(async ({ data: progExs, error }) => {
           if (error || !progExs) {
+            console.error("Error fetching active workout exercises:", error);
             setExercises([]);
             return;
           }

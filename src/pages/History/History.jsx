@@ -156,7 +156,7 @@ const History = () => {
       }
       const { data: workoutsData, error } = await supabase
         .from("workouts")
-        .select(`*, routines(routine_name), sets(id, exercise_id)`)
+        .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
         .eq("user_id", targetUserId)
         .order("created_at", { ascending: false });
 
