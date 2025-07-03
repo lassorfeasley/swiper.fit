@@ -264,19 +264,21 @@ const AddNewExerciseForm = React.forwardRef(
           )}
         </FormSectionWrapper>
 
-        {/* Default set configs */}
-        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
-          <div className="text-body leading-tight">
-            <span className="text-slate-600 font-medium">Set defaults </span>
-            <span className="text-neutral-300">
-              Initialize sets then configure and name individual sets below.
-            </span>
-          </div>
-          <SetBuilderForm
-            initialDefaults={defaults}
-            onDefaultsChange={updateDefault}
-          />
-        </FormSectionWrapper>
+        {/* Default set configs – only show when creating a new exercise */}
+        {initialSetConfigs.length === 0 && (
+          <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
+            <div className="text-body leading-tight">
+              <span className="text-slate-600 font-medium">Set defaults </span>
+              <span className="text-neutral-300">
+                Initialize sets then configure and name individual sets below.
+              </span>
+            </div>
+            <SetBuilderForm
+              initialDefaults={defaults}
+              onDefaultsChange={updateDefault}
+            />
+          </FormSectionWrapper>
+        )}
 
         {setsCount > 1 && (
           <FormSectionWrapper className="py-4 px-4">
@@ -333,14 +335,14 @@ const AddNewExerciseForm = React.forwardRef(
             padding={0}
             className="edit-set-drawer"
           >
-            <FormSectionWrapper className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto">
               <SetEditForm
                 isChildForm
                 initialValues={editingFields}
                 onValuesChange={(vals) => setEditingFields(vals)}
                 onDirtyChange={setEditingDirty}
               />
-            </FormSectionWrapper>
+            </div>
           </SwiperForm>
         )}
       </form>
@@ -367,6 +369,7 @@ AddNewExerciseForm.propTypes = {
   ),
   onDirtyChange: PropTypes.func,
   hideActionButtons: PropTypes.bool,
+  showAddToProgramToggle: PropTypes.bool,
 };
 
 export default AddNewExerciseForm;

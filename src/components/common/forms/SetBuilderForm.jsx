@@ -80,6 +80,7 @@ export default function SetBuilderForm({ initialDefaults, onDefaultsChange }) {
             max={999}
             incrementing={defaults.unit !== "body"}
             unitLabel={defaults.unit !== "body" ? defaults.unit : undefined}
+            allowOneDecimal={true}
           />
         </div>
       </div>

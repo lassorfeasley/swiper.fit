@@ -128,12 +128,16 @@ const SetEditForm = memo(
     const [formValues, setFormValues] = useState(initialValues);
     const initialRef = React.useRef(initialValues);
 
-    // track dirty
+    // Toggle for saving scope
+    const [addType, setAddType] = useState("today");
+    const initialAddTypeRef = React.useRef("today");
+
+    // track dirty (after addType defined)
     React.useEffect(() => {
-      const dirty =
-        JSON.stringify(formValues) !== JSON.stringify(initialRef.current);
-      onDirtyChange?.(dirty);
-    }, [formValues, onDirtyChange]);
+      const dirtyForm = JSON.stringify(formValues) !== JSON.stringify(initialRef.current);
+      const dirtyScope = addType !== initialAddTypeRef.current;
+      onDirtyChange?.(dirtyForm || dirtyScope);
+    }, [formValues, addType, onDirtyChange]);
 
     const handleLocalChange = (field, value) => {
       setFormValues((prev) => {
@@ -185,9 +189,6 @@ const SetEditForm = memo(
     const weightOnChange = showSetNameField
       ? (val) => handleLocalChange("weight", val)
       : (val) => handleImmediateSync("weight", val);
-
-    // Toggle for saving scope
-    const [addType, setAddType] = useState("today");
 
     const handleSave = () => {
       if (addType === "future" && onSaveForFuture) {

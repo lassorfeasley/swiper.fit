@@ -111,11 +111,12 @@ const CompletedWorkout = () => {
       }
       setWorkout(workoutData);
 
-      // Fetch sets for this workout
+      // Fetch only completed sets for this workout
       const { data: setsData } = await supabase
         .from("sets")
-        .select("id, exercise_id, reps, weight, weight_unit, order, set_type, timed_set_duration, set_variant")
+        .select("id, exercise_id, reps, weight, weight_unit, order, set_type, timed_set_duration, set_variant, status")
         .eq("workout_id", workoutId)
+        .eq("status", "complete")
         .order("order", { ascending: true });
 
       // Only keep sets that have reps and weight logged and are valid numbers

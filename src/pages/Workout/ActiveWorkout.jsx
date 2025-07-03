@@ -170,8 +170,12 @@ const ActiveWorkout = () => {
             id: pe.id,
             exercise_id: pe.exercise_id,
             section: (() => {
-              const raw = ((pe.exercises || {}).section || "").toLowerCase();
-              return raw === "training" ? "workout" : raw;
+              const raw = ((pe.exercises || {}).section || "").toLowerCase().trim();
+              if (raw === "training" || raw === "workout") return "training";
+              if (raw === "warmup") return "warmup";
+              if (raw === "cooldown") return "cooldown";
+              // Fallback – treat unknown values as training to keep them visible
+              return "training";
             })(),
             name:
               (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
@@ -179,7 +183,8 @@ const ActiveWorkout = () => {
             setConfigs: (pe.program_sets || [])
               .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
               .map((set) => ({
-                id: set.id,
+                id: null,
+                program_set_id: set.id,
                 reps: set.reps,
                 weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
                 unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
@@ -200,6 +205,24 @@ const ActiveWorkout = () => {
   const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
       // New signature: an array of update objects
+      // --------------------------------------------------
+      //  Update local exercises array for immediate UI sync
+      // --------------------------------------------------
+      setExercises((prev) =>
+        prev.map((ex) => {
+          if (ex.exercise_id !== exerciseId) return ex;
+          const newConfigs = ex.setConfigs.map((cfg) => {
+            const upd = setIdOrUpdates.find((u) => {
+              // Match by id if both have ids, otherwise match by program_set_id
+              if (u.id && cfg.id) return u.id === cfg.id;
+              return String(u.changes.program_set_id || u.id) === String(cfg.program_set_id);
+            });
+            return upd ? { ...cfg, ...upd.changes } : cfg;
+          });
+          return { ...ex, setConfigs: newConfigs };
+        })
+      );
+
       updateWorkoutProgress(exerciseId, setIdOrUpdates);
       // Persist each update to the database if the set has an id
       setIdOrUpdates.forEach((update) => {
@@ -224,6 +247,18 @@ const ActiveWorkout = () => {
       if (setIdOrUpdates) {
         updateSet(setIdOrUpdates, { [field]: value });
       }
+      // Sync to exercises array as well
+      setExercises((prev) =>
+        prev.map((ex) => {
+          if (ex.exercise_id !== exerciseId) return ex;
+          const newConfigs = ex.setConfigs.map((cfg) => {
+            // Match by id if available, otherwise by program_set_id
+            if (setIdOrUpdates && cfg.id) return cfg.id === setIdOrUpdates ? { ...cfg, [field]: value } : cfg;
+            return String(cfg.program_set_id) === String(setIdOrUpdates) ? { ...cfg, [field]: value } : cfg;
+          });
+          return { ...ex, setConfigs: newConfigs };
+        })
+      );
     }
   };
 
@@ -327,7 +362,12 @@ const ActiveWorkout = () => {
   const sectionsOrder = ["warmup", "training", "cooldown"];
   const exercisesBySection = sectionsOrder
     .map((section) => {
-      const sectionExercises = exercises.filter((ex) => ex.section === section);
+      const sectionExercises = exercises.filter((ex) => {
+        if (section === "training") {
+          return ex.section === "training" || ex.section === "workout";
+        }
+        return ex.section === section;
+      });
       return { section, exercises: sectionExercises };
     })
     .filter((group) => group.exercises.length > 0);
@@ -440,10 +480,10 @@ const ActiveWorkout = () => {
     setCurrentFormValues(setConfig);
   };
 
-  const handleEditFormSave = (newValues) => {
+  const handleEditFormSave = async (newValues) => {
     if (!editingSet) return;
 
-    const { exerciseId, setConfig } = editingSet;
+    const { exerciseId, setConfig, index } = editingSet;
 
     // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
     const targetId = setConfig?.id;
@@ -451,23 +491,253 @@ const ActiveWorkout = () => {
     const updates = [
       {
         id: targetId,
-        changes: newValues,
+        changes: {
+          ...newValues,
+          program_set_id: setConfig?.program_set_id, // Preserve program_set_id
+        },
       },
     ];
 
-    updateWorkoutProgress(exerciseId, updates);
+    // Persist changes and wait for DB operations to complete
+    await updateWorkoutProgress(exerciseId, updates);
 
-    if (targetId) {
-      updateSet(targetId, newValues);
-    }
+    // --------------------------------------------------------------
+    //  Update local exercises array so Edit-Exercise form sees change
+    // --------------------------------------------------------------
+    setExercises((prev) =>
+      prev.map((ex) => {
+        if (ex.exercise_id !== exerciseId) return ex;
+        const updated = [...ex.setConfigs];
+        if (index != null && updated[index]) {
+          updated[index] = { ...updated[index], ...newValues };
+        }
+        return { ...ex, setConfigs: updated };
+      })
+    );
+
+    // If the exercise edit drawer is open for this exercise, sync it too
+    setEditingExercise((prev) => {
+      if (!prev || prev.exercise_id !== exerciseId) return prev;
+      const updated = [...prev.setConfigs];
+      if (index != null && updated[index]) {
+        updated[index] = { ...updated[index], ...newValues };
+      }
+      return { ...prev, setConfigs: updated };
+    });
 
     setEditSheetOpen(false);
     setEditingSet(null);
   };
 
-  const handleSaveExerciseEdit = (data) => {
-    // TODO: persist edits; for now, close sheet
-    setEditingExercise(null);
+  // ------------------------------------------------------------------
+  //  Add exercise handlers (today vs future)
+  // ------------------------------------------------------------------
+  const handleAddExerciseToday = async (data) => {
+    try {
+      // Ensure an exercise row exists (re-use by name if already present)
+      let exerciseId;
+      const { data: existing, error: findErr } = await supabase
+        .from("exercises")
+        .select("id")
+        .eq("name", data.name.trim())
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (existing) {
+        exerciseId = existing.id;
+      } else {
+        const { data: newEx, error: insertErr } = await supabase
+          .from("exercises")
+          .insert({ name: data.name.trim(), section: data.section })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+        exerciseId = newEx.id;
+      }
+
+      // Append to local list only (not routine)
+      const newCard = {
+        id: `temp-${Date.now()}`,
+        exercise_id: exerciseId,
+        section: data.section,
+        name: data.name.trim(),
+        setConfigs: data.setConfigs,
+      };
+      setExercises((prev) => [...prev, newCard]);
+      setShowAddExercise(false);
+    } catch (err) {
+      console.error("Error adding exercise for today:", err);
+      alert(err.message || "Failed to add exercise.");
+    }
+  };
+
+  const handleAddExerciseFuture = async (data) => {
+    try {
+      if (!activeWorkout?.programId) {
+        alert("No routine associated with this workout – cannot add permanently.");
+        return;
+      }
+      // Step 1: ensure exercise exists
+      let exerciseRow;
+      const { data: existing, error: findErr } = await supabase
+        .from("exercises")
+        .select("id")
+        .eq("name", data.name.trim())
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (existing) {
+        exerciseRow = existing;
+      } else {
+        const { data: newEx, error: insertErr } = await supabase
+          .from("exercises")
+          .insert({ name: data.name.trim(), section: data.section })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+        exerciseRow = newEx;
+      }
+
+      // Step 2: insert program_exercises row
+      const { data: progEx, error: progErr } = await supabase
+        .from("program_exercises")
+        .insert({
+          program_id: activeWorkout.programId,
+          exercise_id: exerciseRow.id,
+          exercise_order: exercises.length + 1,
+        })
+        .select()
+        .single();
+      if (progErr) throw progErr;
+
+      // Step 3: insert program_sets rows
+      const setRows = (data.setConfigs || []).map((cfg, idx) => ({
+        program_exercise_id: progEx.id,
+        set_order: idx + 1,
+        reps: cfg.reps,
+        weight: cfg.weight,
+        weight_unit: cfg.unit,
+        set_variant: cfg.set_variant,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
+      }));
+      if (setRows.length) {
+        const { error: setErr } = await supabase.from("program_sets").insert(setRows);
+        if (setErr) throw setErr;
+      }
+
+      // Step 4: update local state (so card appears immediately)
+      const newCard = {
+        id: progEx.id,
+        exercise_id: exerciseRow.id,
+        section: data.section,
+        name: data.name.trim(),
+        setConfigs: data.setConfigs,
+      };
+      setExercises((prev) => [...prev, newCard]);
+      setShowAddExercise(false);
+    } catch (err) {
+      console.error("Error adding exercise permanently:", err);
+      alert(err.message || "Failed to add exercise to routine.");
+    }
+  };
+
+  // ------------------------------------------------------------------
+  //  Save exercise edit (today vs future)
+  // ------------------------------------------------------------------
+  const handleSaveExerciseEdit = async (data, type = "today") => {
+    if (!editingExercise) return;
+
+    try {
+      // ------------------------------------------------------------------
+      //  Persist exercise-level edits: name and section
+      // ------------------------------------------------------------------
+      const exerciseId = editingExercise.exercise_id;
+      if (type === "future") {
+        try {
+          await supabase
+            .from('exercises')
+            .update({ name: data.name.trim(), section: data.section })
+            .eq('id', exerciseId);
+        } catch (err) {
+          console.error('Error updating exercise name/section:', err);
+        }
+      }
+
+      // ------------------------------------------------------------------
+      //  Persist set config changes (reps, weight, etc.)
+      // ------------------------------------------------------------------
+      const originalConfigs = editingExercise.setConfigs || [];
+      const updatedConfigs = data.setConfigs || [];
+
+      // Determine deletions (ids present originally but not in updated list)
+      const originalIds = originalConfigs.map((c) => c.id).filter(Boolean);
+      const updatedIds = updatedConfigs.map((c) => c.id).filter(Boolean);
+
+      const idsToDelete = originalIds.filter((id) => !updatedIds.includes(id));
+
+      if (type === "future") {
+        // Apply updates to program_sets table
+        if (idsToDelete.length > 0) {
+          await supabase.from("program_sets").delete().in("id", idsToDelete);
+        }
+
+        await Promise.all(
+          updatedConfigs.map(async (cfg, idx) => {
+            const payload = {
+              set_order: idx + 1,
+              reps: cfg.reps,
+              weight: cfg.weight,
+              weight_unit: cfg.unit,
+              set_variant: cfg.set_variant,
+              set_type: cfg.set_type,
+              timed_set_duration: cfg.timed_set_duration,
+            };
+
+            if (cfg.id) {
+              const { error } = await supabase
+                .from("program_sets")
+                .update(payload)
+                .eq("id", cfg.id);
+              if (error) throw error;
+            } else {
+              const { error } = await supabase.from("program_sets").insert({
+                program_exercise_id: editingExercise.id,
+                ...payload,
+              });
+              if (error) throw error;
+            }
+          })
+        );
+      }
+
+      // Update local state so UI reflects the change immediately
+      setExercises((prev) =>
+        prev.map((ex) =>
+          ex.exercise_id === exerciseId
+            ? { ...ex, name: data.name.trim(), section: data.section, setConfigs: updatedConfigs }
+            : ex
+        )
+      );
+
+      // Sync with workoutProgress so SwipeSwitch components show updated values
+      const progressUpdates = updatedConfigs.map((cfg) => ({
+        id: cfg.id,
+        changes: {
+          reps: cfg.reps,
+          weight: cfg.weight,
+          weight_unit: cfg.unit,
+          program_set_id: cfg.program_set_id,
+          set_variant: cfg.set_variant,
+          set_type: cfg.set_type,
+          timed_set_duration: cfg.timed_set_duration,
+        },
+      }));
+      await updateWorkoutProgress(exerciseId, progressUpdates);
+
+      setEditingExercise(null);
+    } catch (err) {
+      console.error("Error saving exercise edit:", err);
+      alert(err.message || "Failed to save exercise edits.");
+    }
   };
 
   return (

@@ -26,7 +26,7 @@ export function ActiveWorkoutProvider({ children }) {
         // Fetch the active workout record and program metadata
         const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, routines(program_name)')
+          .select('*, programs(program_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
@@ -38,12 +38,12 @@ export function ActiveWorkoutProvider({ children }) {
         const workoutData = {
           id: workout.id,
           programId: workout.program_id,
-          name: workout.routines?.program_name || workout.workout_name || 'Workout',
+          name: workout.programs?.program_name || workout.workout_name || 'Workout',
           startTime: workout.created_at,
           lastExerciseId: workout.last_exercise_id || null,
         };
         setActiveWorkout(workoutData);
-        // Fetch all sets logged for this workout
+        // Fetch all sets logged for this workout (including pending ones)
         const { data: setsData, error: setsError } = await supabase
           .from('sets')
           .select('*')
@@ -60,7 +60,9 @@ export function ActiveWorkoutProvider({ children }) {
               unit: s.weight_unit,
               weight_unit: s.weight_unit,
               set_variant: s.set_variant,
-              status: 'complete',
+              set_type: s.set_type,
+              timed_set_duration: s.timed_set_duration,
+              status: s.status || 'complete', // Include status from DB
             });
           });
         }
@@ -71,6 +73,8 @@ export function ActiveWorkoutProvider({ children }) {
           : 0;
         setElapsedTime(elapsed);
         setIsWorkoutActive(true);
+        
+        console.log('[ActiveWorkoutContext] Loaded workout progress on refresh:', progress);
       } catch (err) {
         console.error('Error checking for active workout:', err);
       } finally {
@@ -103,7 +107,9 @@ export function ActiveWorkoutProvider({ children }) {
             unit: s.weight_unit,
             weight_unit: s.weight_unit,
             set_variant: s.set_variant,
-            status: 'complete',
+            set_type: s.set_type,
+            timed_set_duration: s.timed_set_duration,
+            status: s.status || 'complete', // Include status from DB
           });
         });
         setWorkoutProgress(progress);
@@ -125,10 +131,24 @@ export function ActiveWorkoutProvider({ children }) {
   const startWorkout = useCallback(async (program) => {
     if (!user) throw new Error("User not authenticated.");
 
+    // 1) Make sure there isn't already an active workout for this user.
+    //    If there is, mark it complete so the unique-constraint (or RLS) on
+    //    `is_active = true` won't block a new insert.
+    try {
+      await supabase
+        .from("workouts")
+        .update({ is_active: false, completed_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+    } catch (e) {
+      console.warn("Failed to auto-close previous active workouts", e);
+      // not fatal – continue
+    }
+
     const workoutName = generateWorkoutName();
 
     const { data: workout, error } = await supabase
-      .from('workouts')
+      .from("workouts")
       .insert({
         user_id: user.id,
         program_id: program.id,
@@ -140,7 +160,8 @@ export function ActiveWorkoutProvider({ children }) {
 
     if (error || !workout) {
       console.error("Error creating workout:", error);
-      throw new Error("Could not start workout. Please try again.");
+      // Surface Supabase error if available to help debugging
+      throw new Error(error?.message || "Could not start workout. Please try again.");
     }
     
     const workoutData = {
@@ -233,29 +254,129 @@ export function ActiveWorkoutProvider({ children }) {
   }, [activeWorkout, elapsedTime]);
 
   const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
+    console.log('[updateWorkoutProgress] Starting with updates:', { exerciseId, updates });
+    
+    // Handle database persistence first, then update local state
+    const dbOperations = updates.map(async (update) => {
+      const targetProgramSetId = update.changes.program_set_id;
+      const targetId = update.id;
+
+      console.log('[updateWorkoutProgress] Processing update:', { targetId, targetProgramSetId, changes: update.changes });
+
+      try {
+        // Check if we have a real database ID
+        if (targetId && typeof targetId === 'string' && targetId.length > 10) {
+          console.log('[updateWorkoutProgress] Updating existing row:', targetId);
+          // Build update payload
+          const updatePayload = {
+            reps: Number(update.changes.reps) || 0,
+            weight: Number(update.changes.weight) || 0,
+            weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
+            set_variant: update.changes.set_variant || 'Set 1',
+            set_type: update.changes.set_type || 'reps',
+            status: update.changes.status || 'pending',
+          };
+          // Only add timed_set_duration if it's a timed set and has a valid value
+          if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
+            updatePayload.timed_set_duration = Number(update.changes.timed_set_duration);
+          }
+          console.log('[updateWorkoutProgress] Update payload:', updatePayload);
+
+          const { error } = await supabase
+            .from('sets')
+            .update(updatePayload)
+            .eq('id', targetId);
+          if (error) console.error('updateWorkoutProgress: DB update error', error);
+          return { update, dbId: targetId };
+        } else {
+          console.log('[updateWorkoutProgress] Inserting new row for program_set_id:', targetProgramSetId);
+          // Build insert payload
+          const insertPayload = {
+            workout_id: activeWorkout.id,
+            exercise_id: exerciseId,
+            program_set_id: targetProgramSetId,
+            reps: Number(update.changes.reps) || 0,
+            weight: Number(update.changes.weight) || 0,
+            weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
+            set_variant: update.changes.set_variant || 'Set 1',
+            set_type: update.changes.set_type || 'reps',
+            status: update.changes.status || 'pending',
+          };
+          // Only add timed_set_duration if it's a timed set and has a valid value
+          if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
+            insertPayload.timed_set_duration = Number(update.changes.timed_set_duration);
+          }
+          console.log('[updateWorkoutProgress] Insert payload:', insertPayload);
+
+          const { data: inserted, error } = await supabase
+            .from('sets')
+            .insert(insertPayload)
+            .select()
+            .single();
+          if (error) {
+            console.error('updateWorkoutProgress: DB insert error', error);
+            return null;
+          }
+          console.log('[updateWorkoutProgress] Successfully inserted:', inserted);
+          return { update, dbId: inserted.id };
+        }
+      } catch (e) {
+        console.error('updateWorkoutProgress: persistence exception', e);
+        return null;
+      }
+    });
+
+    // Wait for all database operations to complete
+    const dbResults = await Promise.all(dbOperations);
+    console.log('[updateWorkoutProgress] DB operations completed:', dbResults);
+
+    // Now update local state with the results
     setWorkoutProgress(prev => {
       const prevSets = prev[exerciseId] || [];
-      
       let newSets = [...prevSets];
 
-      updates.forEach(update => {
+      dbResults.forEach((result) => {
+        // Skip failed operations that returned null
+        if (!result || !result.update) {
+          console.warn('[updateWorkoutProgress] Skipping failed operation or null result:', result);
+          return;
+        }
+
+        const { update, dbId } = result;
         const targetProgramSetId = update.changes.program_set_id;
         const targetId = update.id;
+
+        // Find existing set in local state
         const setIdx = newSets.findIndex(s => {
           if (targetProgramSetId) return String(s.program_set_id) === String(targetProgramSetId);
           return String(s.id) === String(targetId);
         });
 
         if (setIdx !== -1) {
-          newSets[setIdx] = { ...newSets[setIdx], ...update.changes };
+          // Update existing set
+          newSets[setIdx] = {
+            ...newSets[setIdx],
+            ...update.changes,
+            id: dbId || newSets[setIdx].id, // Use new DB ID if available
+            // Preserve the status from update.changes instead of hardcoding to 'pending'
+            status: update.changes.status || newSets[setIdx].status || 'pending'
+          };
         } else {
-          newSets.push({ ...update.changes, id: update.id });
+          // Add new set
+          newSets.push({
+            ...update.changes,
+            id: dbId || update.id,
+            program_set_id: targetProgramSetId,
+            // Preserve the status from update.changes instead of hardcoding to 'pending'
+            status: update.changes.status || 'pending'
+          });
         }
       });
 
+      console.log('[updateWorkoutProgress] Updated local state:', { exerciseId, newSets });
       return { ...prev, [exerciseId]: newSets };
     });
-  }, []);
+  }, [activeWorkout]);
 
   const saveSet = useCallback(async (exerciseId, setConfig) => {
     if (!activeWorkout?.id || !user?.id) {
@@ -324,6 +445,11 @@ export function ActiveWorkoutProvider({ children }) {
         payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
     }
 
+    // Include status to properly mark completed sets in the database
+    if (restOfSetConfig.status) {
+        payload.status = restOfSetConfig.status;
+    }
+
     // DEBUG: log the payload we are about to send
     console.log('[saveSet] inserting payload', payload);
 
@@ -372,6 +498,11 @@ export function ActiveWorkoutProvider({ children }) {
     if (dbChanges.unit) {
       dbChanges.weight_unit = dbChanges.unit;
       delete dbChanges.unit;
+    }
+
+    // Include status in database updates if provided
+    if (status) {
+      dbChanges.status = status;
     }
 
     if (Object.keys(dbChanges).length === 0) return;
@@ -463,10 +594,10 @@ export function ActiveWorkoutProvider({ children }) {
   );
 }
 
-export function useActiveWorkout() {
+export const useActiveWorkout = () => {
   const context = useContext(ActiveWorkoutContext);
   if (!context) {
     throw new Error('useActiveWorkout must be used within an ActiveWorkoutProvider');
   }
   return context;
-} 
+}; 

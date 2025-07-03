@@ -68,32 +68,32 @@ const ActiveExerciseCard = React.forwardRef(({
   // Derive sets from setData and initialSetConfigs
   const sets = useMemo(() => {
     const combined = initialSetConfigs.map((config, i) => {
-      const fromParent =
-        setData.find((d) => d.program_set_id === config.id) || {};
-
-      const id = fromParent.id || config.id;
-      const tempId = `temp-${i}`;
+      // Match persisted set rows by program_set_id from config.program_set_id
+      const fromParent = setData.find((d) => d.program_set_id === config.program_set_id) || {};
+      // Use the database row id if present, otherwise no id (new set)
+      const id = fromParent.id || null;
+      // Local temporary id for unsaved sets
+      const tempId = id ? null : `temp-${i}`;
 
       return {
+        // retain template configuration
         ...config,
+        // overlay persisted data
         ...fromParent,
-        id: id || tempId,
-        tempId: id ? null : tempId,
+        // id is the sets table id, tempId is for new sets
+        id,
+        tempId,
+        // values: use persisted values or config defaults
         reps: fromParent.reps ?? config.reps,
         weight: fromParent.weight ?? config.weight,
         weight_unit:
-          fromParent.weight_unit ??
-          fromParent.unit ??
-          config.weight_unit ??
-          "lbs",
-        status: fromParent.status
-          ? fromParent.status
-          : i === 0
-            ? "default" // first set starts default (swipeable)
-            : "default",
-        set_variant:
-          fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
-        program_set_id: config.id,
+          fromParent.weight_unit ?? fromParent.unit ?? config.weight_unit ?? "lbs",
+        // status from persisted or default
+        status: fromParent.status || "default",
+        // set name
+        set_variant: fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
+        // program_set_id remains template id
+        program_set_id: config.program_set_id,
       };
     });
 

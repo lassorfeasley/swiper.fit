@@ -30,6 +30,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   const [swipedComplete, setSwipedComplete] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragMoved = useRef(false);
+  const dragStartTime = useRef(0);
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
 
   const duration = timed_set_duration || 30;
@@ -84,6 +85,8 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     if (status !== "default") {
       setSwipedComplete(false);
     }
+    // Reset drag detection when status changes to ensure clean state
+    dragMoved.current = false;
   }, [status]);
 
   // Persist styling for completed sets when status changes to 'complete'
@@ -153,6 +156,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
       // Incomplete: reset thumb
       controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
     }
+    
+    // Reset drag detection after a short delay to allow for proper interaction detection
+    setTimeout(() => {
+      dragMoved.current = false;
+    }, 50);
   };
 
   const isDefault = status === "default";
@@ -172,9 +180,13 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
       className={`self-stretch h-16 bg-neutral-200 rounded-sm flex flex-col justify-center w-full cursor-pointer ${className}`}
       onClick={(e) => {
         e.stopPropagation();
-        if (!dragMoved.current) {
-          onClick?.(e);
-        }
+        // Add a small delay to allow drag events to register first
+        setTimeout(() => {
+          // Only allow onClick if no drag movement was detected and not currently dragging
+          if (!dragMoved.current && !isDragging) {
+            onClick?.(e);
+          }
+        }, 10);
       }}
     >
       <div
@@ -188,9 +200,14 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
           dragElastic={0}
           dragMomentum={false}
           dragConstraints={{ left: 0, right: thumbTravel }}
-          onDragStart={() => { setIsDragging(true); dragMoved.current = false; }}
+          onDragStart={() => { 
+            setIsDragging(true); 
+            dragMoved.current = false;
+            dragStartTime.current = Date.now();
+          }}
           onDrag={(e, info) => {
-            if (Math.abs(info.delta.x) > 2 || Math.abs(info.delta.y) > 2) {
+            // Use a higher threshold for drag detection to prevent accidental clicks
+            if (Math.abs(info.delta.x) > 5 || Math.abs(info.delta.y) > 5 || Math.abs(info.offset.x) > 10) {
               dragMoved.current = true;
             }
           }}
