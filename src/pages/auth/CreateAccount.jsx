@@ -54,7 +54,7 @@ export default function CreateAccount() {
   };
 
   return (
-    <AppLayout showSidebar={false}>
+    <AppLayout showSidebar={false} hideHeader>
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="flex flex-col gap-5 p-5">
