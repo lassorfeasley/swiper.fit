@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import SectionWrapperLabel from "./SectionWrapperLabel";
 import { cn } from "@/lib/utils";
 
@@ -34,8 +35,10 @@ const PageSectionWrapper = ({ section, children, className, ...props }) => {
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className="w-full self-stretch pt-5 pb-28 flex justify-center items-center gap-14 px-3 md:px-0">
-        {children}
+      <div className="w-full self-stretch pt-5 pb-28 px-3 md:px-0">
+        <DeckWrapper gap={0} paddingX={0}>
+          {children}
+        </DeckWrapper>
       </div>
     </div>
   );
