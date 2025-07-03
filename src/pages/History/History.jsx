@@ -17,6 +17,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import { Copy } from "lucide-react";
 import CalendarWorkoutLog from "@/components/common/History/CalendarWorkoutLog";
 import MainContentSection from "@/components/layout/MainContentSection";
+import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -155,7 +156,7 @@ const History = () => {
       }
       const { data: workoutsData, error } = await supabase
         .from("workouts")
-        .select(`*, programs(program_name), sets(id, exercise_id)`)
+        .select(`*, routines(routine_name), sets(id, exercise_id)`)
         .eq("user_id", targetUserId)
         .order("created_at", { ascending: false });
 

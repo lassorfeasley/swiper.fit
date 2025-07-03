@@ -26,7 +26,7 @@ export function ActiveWorkoutProvider({ children }) {
         // Fetch the active workout record and program metadata
         const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, programs(program_name)')
+          .select('*, routines(routine_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
@@ -37,8 +37,8 @@ export function ActiveWorkoutProvider({ children }) {
         // Build workout context data
         const workoutData = {
           id: workout.id,
-          programId: workout.program_id,
-          name: workout.programs?.program_name || workout.workout_name || 'Workout',
+          programId: workout.routine_id,
+          name: workout.routines?.routine_name || workout.workout_name || 'Workout',
           startTime: workout.created_at,
           lastExerciseId: workout.last_exercise_id || null,
         };
@@ -54,7 +54,7 @@ export function ActiveWorkoutProvider({ children }) {
             if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
             progress[s.exercise_id].push({
               id: s.id,
-              program_set_id: s.program_set_id,
+              routine_set_id: s.routine_set_id,
               reps: s.reps,
               weight: s.weight,
               unit: s.weight_unit,
@@ -101,7 +101,7 @@ export function ActiveWorkoutProvider({ children }) {
           if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
           progress[s.exercise_id].push({
             id: s.id,
-            program_set_id: s.program_set_id,
+            routine_set_id: s.routine_set_id,
             reps: s.reps,
             weight: s.weight,
             unit: s.weight_unit,
@@ -151,7 +151,7 @@ export function ActiveWorkoutProvider({ children }) {
       .from("workouts")
       .insert({
         user_id: user.id,
-        program_id: program.id,
+        routine_id: program.id,
         workout_name: workoutName,
         is_active: true,
       })
@@ -178,13 +178,13 @@ export function ActiveWorkoutProvider({ children }) {
     setIsPaused(false);
     setWorkoutProgress({});
     
-    const exercises = program.program_exercises.reduce((acc, progEx) => {
+    const exercises = program.routine_exercises.reduce((acc, progEx) => {
       acc[progEx.exercise_id] = {
         name: progEx.exercises.name,
         program_exercise_id: progEx.id,
-        sets: progEx.program_sets.map(ps => ({
+        sets: progEx.routine_sets.map(ps => ({
           id: null, // this will be the `sets` table id, populated on completion
-          program_set_id: ps.id, // Storing the program_set id.
+          program_set_id: ps.id, // Storing the routine_set id.
           reps: ps.reps,
           weight: ps.weight,
           unit: ps.weight_unit,
@@ -258,10 +258,10 @@ export function ActiveWorkoutProvider({ children }) {
     
     // Handle database persistence first, then update local state
     const dbOperations = updates.map(async (update) => {
-      const targetProgramSetId = update.changes.program_set_id;
+      const targetRoutineSetId = update.changes.routine_set_id;
       const targetId = update.id;
 
-      console.log('[updateWorkoutProgress] Processing update:', { targetId, targetProgramSetId, changes: update.changes });
+      console.log('[updateWorkoutProgress] Processing update:', { targetId, targetRoutineSetId, changes: update.changes });
 
       try {
         // Check if we have a real database ID
@@ -289,12 +289,12 @@ export function ActiveWorkoutProvider({ children }) {
           if (error) console.error('updateWorkoutProgress: DB update error', error);
           return { update, dbId: targetId };
         } else {
-          console.log('[updateWorkoutProgress] Inserting new row for program_set_id:', targetProgramSetId);
+          console.log('[updateWorkoutProgress] Inserting new row for routine_set_id:', targetRoutineSetId);
           // Build insert payload
           const insertPayload = {
             workout_id: activeWorkout.id,
             exercise_id: exerciseId,
-            program_set_id: targetProgramSetId,
+            routine_set_id: targetRoutineSetId,
             reps: Number(update.changes.reps) || 0,
             weight: Number(update.changes.weight) || 0,
             weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
@@ -336,38 +336,30 @@ export function ActiveWorkoutProvider({ children }) {
       let newSets = [...prevSets];
 
       dbResults.forEach((result) => {
-        // Skip failed operations that returned null
-        if (!result || !result.update) {
-          console.warn('[updateWorkoutProgress] Skipping failed operation or null result:', result);
-          return;
-        }
+        if (!result || !result.update) return;
 
         const { update, dbId } = result;
-        const targetProgramSetId = update.changes.program_set_id;
+        const targetRoutineSetId = update.changes.routine_set_id;
         const targetId = update.id;
 
         // Find existing set in local state
         const setIdx = newSets.findIndex(s => {
-          if (targetProgramSetId) return String(s.program_set_id) === String(targetProgramSetId);
+          if (targetRoutineSetId) return String(s.routine_set_id) === String(targetRoutineSetId);
           return String(s.id) === String(targetId);
         });
 
         if (setIdx !== -1) {
-          // Update existing set
           newSets[setIdx] = {
             ...newSets[setIdx],
             ...update.changes,
-            id: dbId || newSets[setIdx].id, // Use new DB ID if available
-            // Preserve the status from update.changes instead of hardcoding to 'pending'
+            id: dbId || newSets[setIdx].id,
             status: update.changes.status || newSets[setIdx].status || 'pending'
           };
         } else {
-          // Add new set
           newSets.push({
             ...update.changes,
             id: dbId || update.id,
-            program_set_id: targetProgramSetId,
-            // Preserve the status from update.changes instead of hardcoding to 'pending'
+            routine_set_id: targetRoutineSetId,
             status: update.changes.status || 'pending'
           });
         }
@@ -395,14 +387,14 @@ export function ActiveWorkoutProvider({ children }) {
     // it to the insert payload.
 
     const {
-        program_set_id: programSetIdField,
+        routine_set_id: routineSetIdField,
         id: maybeId,
         ...restOfSetConfig
     } = setConfig;
 
     // Prefer an explicit program_set_id field; fall back to the legacy `id`
     // property (used to piggy-back the program_set_id prior to persistence).
-    const rawProgramSetId = programSetIdField || maybeId;
+    const rawRoutineSetId = routineSetIdField || maybeId;
 
     const payload = {
         workout_id: activeWorkout.id,
@@ -433,8 +425,8 @@ export function ActiveWorkoutProvider({ children }) {
 
     // Only include program_set_id if it is a valid UUID (prevents foreign-key
     // errors from temp ids like "temp-0").
-    if (rawProgramSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawProgramSetId)) {
-        payload.program_set_id = rawProgramSetId;
+    if (rawRoutineSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawRoutineSetId)) {
+        payload.routine_set_id = rawRoutineSetId;
     }
 
     // Include timed set fields when relevant
@@ -466,7 +458,7 @@ export function ActiveWorkoutProvider({ children }) {
       // Update local state with the actual ID from the database
       setWorkoutProgress(prev => {
         const exerciseProgress = prev[exerciseId] || [];
-        const setIndex = exerciseProgress.findIndex(s => String(s.program_set_id) === String(setConfig.program_set_id));
+        const setIndex = exerciseProgress.findIndex(s => String(s.routine_set_id) === String(setConfig.routine_set_id));
 
         const newExerciseProgress = [...exerciseProgress];
 

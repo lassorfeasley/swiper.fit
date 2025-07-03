@@ -40,16 +40,16 @@ const RoutinesIndex = () => {
       }
       // Fetch routines and their exercises for this user
       const { data, error } = await supabase
-        .from("programs")
+        .from("routines")
         .select(
           `
           id,
-          program_name,
-          program_exercises (
+          routine_name,
+          routine_exercises (
             id,
             exercise_id,
             exercises ( name ),
-            program_sets ( id )
+            routine_sets ( id )
           )
         `
         )
@@ -63,14 +63,14 @@ const RoutinesIndex = () => {
       }
       // Map exercises for each program
       const routinesWithExercises = (data || []).map((program) => {
-        const setCount = (program.program_exercises || []).reduce(
-          (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
+        const setCount = (program.routine_exercises || []).reduce(
+          (total, pe) => total + (pe.routine_sets ? pe.routine_sets.length : 0),
           0
         );
         return {
           ...program,
           setCount,
-          exerciseNames: (program.program_exercises || [])
+          exerciseNames: (program.routine_exercises || [])
             .map((pe) => pe.exercises?.name)
             .filter(Boolean),
         };
@@ -86,7 +86,7 @@ const RoutinesIndex = () => {
       if (!user) throw new Error("User not authenticated");
       // 1. Insert program
       const { data: program, error: programError } = await supabase
-        .from("programs")
+        .from("routines")
         .insert({ program_name: programName, user_id: user.id })
         .select()
         .single();
@@ -108,7 +108,7 @@ const RoutinesIndex = () => {
   const filteredRoutines = routines.filter((program) => {
     const q = search.toLowerCase();
     return (
-      program.program_name?.toLowerCase().includes(q) ||
+      program.routine_name?.toLowerCase().includes(q) ||
       (program.exerciseNames &&
         program.exerciseNames.some((name) => name.toLowerCase().includes(q)))
     );
@@ -147,7 +147,7 @@ const RoutinesIndex = () => {
               <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
                 <RoutineCard
                   id={program.id}
-                  name={program.program_name}
+                  name={program.routine_name}
                   exerciseCount={(program.exerciseNames || []).length}
                   setCount={program.setCount}
                   leftText="Swipe to edit"

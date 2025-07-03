@@ -137,15 +137,15 @@ const ActiveWorkout = () => {
   useEffect(() => {
     if (activeWorkout) {
       supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .select(
           `
           *,
           exercises(name, section),
-          program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
+          routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)
         `
         )
-        .eq("program_id", activeWorkout.programId)
+        .eq("routine_id", activeWorkout.programId)
         .then(async ({ data: progExs, error }) => {
           if (error || !progExs) {
             setExercises([]);
@@ -180,11 +180,11 @@ const ActiveWorkout = () => {
             name:
               (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
               "Unknown",
-            setConfigs: (pe.program_sets || [])
+            setConfigs: (pe.routine_sets || [])
               .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
               .map((set) => ({
                 id: null,
-                program_set_id: set.id,
+                routine_set_id: set.id,
                 reps: set.reps,
                 weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
                 unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
@@ -213,9 +213,9 @@ const ActiveWorkout = () => {
           if (ex.exercise_id !== exerciseId) return ex;
           const newConfigs = ex.setConfigs.map((cfg) => {
             const upd = setIdOrUpdates.find((u) => {
-              // Match by id if both have ids, otherwise match by program_set_id
+              // Match by id if both have ids, otherwise match by routine_set_id
               if (u.id && cfg.id) return u.id === cfg.id;
-              return String(u.changes.program_set_id || u.id) === String(cfg.program_set_id);
+              return String(u.changes.routine_set_id || u.id) === String(cfg.routine_set_id);
             });
             return upd ? { ...cfg, ...upd.changes } : cfg;
           });
@@ -252,9 +252,9 @@ const ActiveWorkout = () => {
         prev.map((ex) => {
           if (ex.exercise_id !== exerciseId) return ex;
           const newConfigs = ex.setConfigs.map((cfg) => {
-            // Match by id if available, otherwise by program_set_id
+            // Match by id if available, otherwise by routine_set_id
             if (setIdOrUpdates && cfg.id) return cfg.id === setIdOrUpdates ? { ...cfg, [field]: value } : cfg;
-            return String(cfg.program_set_id) === String(setIdOrUpdates) ? { ...cfg, [field]: value } : cfg;
+            return String(cfg.routine_set_id) === String(setIdOrUpdates) ? { ...cfg, [field]: value } : cfg;
           });
           return { ...ex, setConfigs: newConfigs };
         })
@@ -292,9 +292,9 @@ const ActiveWorkout = () => {
     }
 
     try {
-      // Update only columns that exist in program_sets
+      // Update only columns that exist in routine_sets
       const { data, error } = await supabase
-        .from("program_sets")
+        .from("routine_sets")
         .update({
           reps: formValues.reps,
           weight: formValues.weight,
@@ -307,7 +307,7 @@ const ActiveWorkout = () => {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error updating program set:", error);
+      console.error("Error updating routine set:", error);
       // Optionally, show an error to the user
     }
   };
@@ -476,7 +476,7 @@ const ActiveWorkout = () => {
         id: targetId,
         changes: {
           ...newValues,
-          program_set_id: setConfig?.program_set_id, // Preserve program_set_id
+          routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
         },
       },
     ];
@@ -579,11 +579,11 @@ const ActiveWorkout = () => {
         exerciseRow = newEx;
       }
 
-      // Step 2: insert program_exercises row
+      // Step 2: insert routine_exercises row
       const { data: progEx, error: progErr } = await supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .insert({
-          program_id: activeWorkout.programId,
+          routine_id: activeWorkout.programId,
           exercise_id: exerciseRow.id,
           exercise_order: exercises.length + 1,
         })
@@ -591,9 +591,9 @@ const ActiveWorkout = () => {
         .single();
       if (progErr) throw progErr;
 
-      // Step 3: insert program_sets rows
+      // Step 3: insert routine_sets rows
       const setRows = (data.setConfigs || []).map((cfg, idx) => ({
-        program_exercise_id: progEx.id,
+        routine_exercise_id: progEx.id,
         set_order: idx + 1,
         reps: cfg.reps,
         weight: cfg.weight,
@@ -603,7 +603,7 @@ const ActiveWorkout = () => {
         timed_set_duration: cfg.timed_set_duration,
       }));
       if (setRows.length) {
-        const { error: setErr } = await supabase.from("program_sets").insert(setRows);
+        const { error: setErr } = await supabase.from("routine_sets").insert(setRows);
         if (setErr) throw setErr;
       }
 
@@ -658,9 +658,9 @@ const ActiveWorkout = () => {
       const idsToDelete = originalIds.filter((id) => !updatedIds.includes(id));
 
       if (type === "future") {
-        // Apply updates to program_sets table
+        // Apply updates to routine_sets table
         if (idsToDelete.length > 0) {
-          await supabase.from("program_sets").delete().in("id", idsToDelete);
+          await supabase.from("routine_sets").delete().in("id", idsToDelete);
         }
 
         await Promise.all(
@@ -677,13 +677,13 @@ const ActiveWorkout = () => {
 
             if (cfg.id) {
               const { error } = await supabase
-                .from("program_sets")
+                .from("routine_sets")
                 .update(payload)
                 .eq("id", cfg.id);
               if (error) throw error;
             } else {
-              const { error } = await supabase.from("program_sets").insert({
-                program_exercise_id: editingExercise.id,
+              const { error } = await supabase.from("routine_sets").insert({
+                routine_exercise_id: editingExercise.id,
                 ...payload,
               });
               if (error) throw error;
@@ -708,7 +708,7 @@ const ActiveWorkout = () => {
           reps: cfg.reps,
           weight: cfg.weight,
           weight_unit: cfg.unit,
-          program_set_id: cfg.program_set_id,
+          routine_set_id: cfg.routine_set_id,
           set_variant: cfg.set_variant,
           set_type: cfg.set_type,
           timed_set_duration: cfg.timed_set_duration,

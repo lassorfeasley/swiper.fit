@@ -42,18 +42,18 @@ const RoutineBuilder = () => {
     async function fetchProgramAndExercises() {
       setLoading(true);
       const { data: programData } = await supabase
-        .from("programs")
-        .select("program_name")
+        .from("routines")
+        .select("routine_name")
         .eq("id", programId)
         .single();
-      setProgramName(programData?.program_name || "");
+      setProgramName(programData?.routine_name || "");
 
       const { data: progExs, error } = await supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .select(
-          "id, exercise_id, exercise_order, exercises(name, section), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
+          "id, exercise_id, exercise_order, exercises(name, section), routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
         )
-        .eq("program_id", programId)
+        .eq("routine_id", programId)
         .order("exercise_order", { ascending: true });
       if (error) {
         setExercises([]);
@@ -65,9 +65,9 @@ const RoutineBuilder = () => {
         exercise_id: pe.exercise_id,
         name: pe.exercises?.name || "[Exercise name]",
         section: pe.exercises?.section || "training",
-        sets: pe.program_sets?.length || 0,
+        sets: pe.routine_sets?.length || 0,
         order: pe.exercise_order || 0,
-        setConfigs: (pe.program_sets || [])
+        setConfigs: (pe.routine_sets || [])
           .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
           .map((set) => {
             const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
@@ -96,7 +96,7 @@ const RoutineBuilder = () => {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
       await supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .update({ exercise_order: i + 1 })
         .eq("id", ex.id);
     }
@@ -129,9 +129,9 @@ const RoutineBuilder = () => {
         exercise_id = newEx.id;
       }
       const { data: progEx, error: progExError } = await supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .insert({
-          program_id: programId,
+          routine_id: programId,
           exercise_id,
           exercise_order: exercises.length + 1,
         })
@@ -141,7 +141,7 @@ const RoutineBuilder = () => {
         throw new Error("Failed to link exercise to program");
       const program_exercise_id = progEx.id;
       const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
-        program_exercise_id,
+        routine_exercise_id: program_exercise_id,
         set_order: idx + 1,
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
@@ -152,7 +152,7 @@ const RoutineBuilder = () => {
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
-          .from("program_sets")
+          .from("routine_sets")
           .insert(setRows);
         if (setError)
           throw new Error("Failed to save set details: " + setError.message);
@@ -172,11 +172,11 @@ const RoutineBuilder = () => {
         .update({ name: exerciseData.name, section: exerciseData.section })
         .eq("id", editingExercise.exercise_id);
       await supabase
-        .from("program_sets")
+        .from("routine_sets")
         .delete()
-        .eq("program_exercise_id", editingExercise.id);
+        .eq("routine_exercise_id", editingExercise.id);
       const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
-        program_exercise_id: editingExercise.id,
+        routine_exercise_id: editingExercise.id,
         set_order: idx + 1,
         reps: Number(cfg.reps),
         weight: Number(cfg.weight),
@@ -187,7 +187,7 @@ const RoutineBuilder = () => {
       }));
       if (setRows.length > 0) {
         const { error: setError } = await supabase
-          .from("program_sets")
+          .from("routine_sets")
           .insert(setRows);
         if (setError)
           throw new Error("Failed to update set details: " + setError.message);
@@ -210,7 +210,7 @@ const RoutineBuilder = () => {
 
       // Delete the program exercise and its associated sets
       const { error: deleteError } = await supabase
-        .from("program_exercises")
+        .from("routine_exercises")
         .delete()
         .eq("id", editingExercise.id);
 
@@ -227,20 +227,20 @@ const RoutineBuilder = () => {
 
   const refreshExercises = async () => {
     const { data: progExs } = await supabase
-      .from("program_exercises")
+      .from("routine_exercises")
       .select(
-        "id, exercise_id, exercise_order, exercises(name, section), program_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
+        "id, exercise_id, exercise_order, exercises(name, section), routine_sets(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)"
       )
-      .eq("program_id", programId)
+      .eq("routine_id", programId)
       .order("exercise_order", { ascending: true });
     const items = (progExs || []).map((pe) => ({
       id: pe.id,
       exercise_id: pe.exercise_id,
       name: pe.exercises?.name || "[Exercise name]",
       section: pe.exercises?.section || "training",
-      sets: pe.program_sets?.length || 0,
+      sets: pe.routine_sets?.length || 0,
       order: pe.exercise_order || 0,
-      setConfigs: (pe.program_sets || [])
+      setConfigs: (pe.routine_sets || [])
         .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
         .map((set) => {
           const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
@@ -305,12 +305,12 @@ const RoutineBuilder = () => {
     const program_exercise_id = programExercise.id;
     // Delete old sets
     await supabase
-      .from("program_sets")
+      .from("routine_sets")
       .delete()
-      .eq("program_exercise_id", program_exercise_id);
+      .eq("routine_exercise_id", program_exercise_id);
     // Insert new sets
     const setRows = (newSetConfigs || []).map((cfg, idx) => ({
-      program_exercise_id,
+      routine_exercise_id: program_exercise_id,
       set_order: idx + 1,
       reps: Number(cfg.reps),
       weight: Number(cfg.weight),
@@ -320,15 +320,15 @@ const RoutineBuilder = () => {
       timed_set_duration: cfg.timed_set_duration,
     }));
     if (setRows.length > 0) {
-      await supabase.from("program_sets").insert(setRows);
+      await supabase.from("routine_sets").insert(setRows);
     }
   };
 
   const handleTitleChange = async (newTitle) => {
     setProgramName(newTitle);
     await supabase
-      .from("programs")
-      .update({ program_name: newTitle })
+      .from("routines")
+      .update({ routine_name: newTitle })
       .eq("id", programId);
     setEditProgramOpen(false);
   };
@@ -341,7 +341,7 @@ const RoutineBuilder = () => {
   const handleConfirmDeleteProgram = async () => {
     try {
       const { error } = await supabase
-        .from("programs")
+        .from("routines")
         .update({ is_archived: true })
         .eq("id", programId);
 

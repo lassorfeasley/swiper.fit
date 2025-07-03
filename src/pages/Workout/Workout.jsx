@@ -34,16 +34,16 @@ const Workout = () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("programs")
+          .from("routines")
           .select(
             `
             id,
-            program_name,
-            program_exercises (
+            routine_name,
+            routine_exercises (
               id,
               exercise_id,
               exercises ( name ),
-              program_sets (
+              routine_sets (
                 id,
                 reps,
                 weight,
@@ -63,16 +63,16 @@ const Workout = () => {
         } else {
           console.log("Successfully fetched routines:", data);
           const routinesWithExercises = (data || []).map((program) => {
-            const exerciseCount = (program.program_exercises || []).length;
-            const setCount = (program.program_exercises || []).reduce(
-              (total, pe) => total + (pe.program_sets ? pe.program_sets.length : 0),
+            const exerciseCount = (program.routine_exercises || []).length;
+            const setCount = (program.routine_exercises || []).reduce(
+              (total, pe) => total + (pe.routine_sets ? pe.routine_sets.length : 0),
               0
             );
             return {
               ...program,
               exerciseCount,
               setCount,
-              exerciseNames: (program.program_exercises || [])
+              exerciseNames: (program.routine_exercises || [])
                 .map((pe) => pe.exercises?.name)
                 .filter(Boolean),
             };
@@ -105,7 +105,7 @@ const Workout = () => {
   const filteredRoutines = routines.filter((program) => {
     const q = search.toLowerCase();
     return (
-      program.program_name?.toLowerCase().includes(q) ||
+      program.routine_name?.toLowerCase().includes(q) ||
       (program.exerciseNames &&
         program.exerciseNames.some((name) => name.toLowerCase().includes(q)))
     );
@@ -135,7 +135,7 @@ const Workout = () => {
             <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
               <RoutineCard
                 id={program.id}
-                name={program.program_name}
+                name={program.routine_name}
                 exerciseCount={program.exerciseCount}
                 setCount={program.setCount}
                 leftText="Swipe to begin"

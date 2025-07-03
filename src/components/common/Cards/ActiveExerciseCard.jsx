@@ -68,8 +68,8 @@ const ActiveExerciseCard = React.forwardRef(({
   // Derive sets from setData and initialSetConfigs
   const sets = useMemo(() => {
     const combined = initialSetConfigs.map((config, i) => {
-      // Match persisted set rows by program_set_id from config.program_set_id
-      const fromParent = setData.find((d) => d.program_set_id === config.program_set_id) || {};
+      // Match persisted set rows by routine_set_id from config.routine_set_id
+      const fromParent = setData.find((d) => d.routine_set_id === config.routine_set_id) || {};
       // Use the database row id if present, otherwise no id (new set)
       const id = fromParent.id || null;
       // Local temporary id for unsaved sets
@@ -92,8 +92,8 @@ const ActiveExerciseCard = React.forwardRef(({
         status: fromParent.status || "default",
         // set name
         set_variant: fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
-        // program_set_id remains template id
-        program_set_id: config.program_set_id,
+        // routine_set_id remains template id
+        routine_set_id: config.routine_set_id,
       };
     });
 
@@ -138,7 +138,7 @@ const ActiveExerciseCard = React.forwardRef(({
           changes: {
             status: "complete",
             set_variant: setToComplete.set_variant,
-            program_set_id: setToComplete.program_set_id,
+            routine_set_id: setToComplete.routine_set_id,
             set_type: setToComplete.set_type,
             timed_set_duration: setToComplete.timed_set_duration,
           },
@@ -179,7 +179,7 @@ const ActiveExerciseCard = React.forwardRef(({
       set_variant: setToEdit.set_variant,
       set_type: setToEdit.set_type,
       timed_set_duration: setToEdit.timed_set_duration,
-      program_set_id: setToEdit.program_set_id, // Store program_set_id for future use
+      routine_set_id: setToEdit.routine_set_id, // Store routine_set_id for future use
     });
     setIsEditSheetOpen(true);
     setFormDirty(false); // Reset dirty state on open
@@ -216,7 +216,7 @@ const ActiveExerciseCard = React.forwardRef(({
       if (onSetProgrammaticUpdate) {
         onSetProgrammaticUpdate(
           exerciseId,
-          setBeingEdited.program_set_id,
+          setBeingEdited.routine_set_id,
           editForm
         );
       }

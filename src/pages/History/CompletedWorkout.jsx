@@ -141,7 +141,7 @@ const CompletedWorkout = () => {
       // Build workout query: owners can see their workouts; others can only see public ones
       let workoutQuery = supabase
         .from("workouts")
-        .select(`*, programs(program_name)`)
+        .select(`*, routines(routine_name)`)
         .eq("id", workoutId);
 
       // If no user, rely on RLS to only expose workouts that are globally shared or explicitly public
