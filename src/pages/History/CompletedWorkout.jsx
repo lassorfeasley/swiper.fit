@@ -10,12 +10,14 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
-import CompletedWorkoutTable from "@/components/common/Tables/CompletedWorkoutTable";
+import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
+import SetBadge from "@/components/molecules/SetBadge";
 import { toast } from "sonner";
-import { Share2, Copy } from "lucide-react";
-import MainContentSection from "@/components/layout/MainContentSection";
+import { Share2, Copy, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Share dialog extracted outside of the component scope so it preserves identity between renders
 const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
@@ -56,6 +58,49 @@ const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shar
 );
 
 ShareWorkoutDialog.displayName = "ShareWorkoutDialog";
+
+// Individual Exercise Card Component
+const ExerciseCompletedCard = ({ exercise, setLog, onEdit, readOnly = false }) => {
+  const handleSetClick = (setIndex, set, e) => {
+    if (readOnly || !onEdit) return;
+    e.stopPropagation();
+    onEdit(exercise.id, setIndex, set);
+  };
+
+  return (
+    <div className="w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-4">
+      {/* Exercise name and completion status */}
+      <div className="self-stretch inline-flex justify-start items-center gap-4">
+        <div className="flex-1 justify-start text-neutral-600 text-lg font-medium font-vietnam leading-tight">
+          {exercise.exercise}
+        </div>
+        {setLog && setLog.length > 0 && (
+          <div className="size-8 flex items-center justify-center">
+            <Check className="w-6 h-6 text-green-500" />
+          </div>
+        )}
+      </div>
+
+      {/* Set badges */}
+      {setLog && setLog.length > 0 && (
+        <div className="w-80 inline-flex justify-start items-center gap-3 flex-wrap content-center">
+          {setLog.map((set, index) => (
+            <SetBadge
+              key={set.id || index}
+              reps={set.reps}
+              weight={set.weight}
+              unit={set.unit}
+              set_type={set.set_type}
+              timed_set_duration={set.timed_set_duration}
+              editable={!readOnly}
+              onEdit={(e) => handleSetClick(index, set, e)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CompletedWorkout = () => {
   const navigate = useNavigate();
@@ -227,21 +272,34 @@ const CompletedWorkout = () => {
     return exerciseName.toLowerCase().includes(search.toLowerCase());
   });
 
-  // Transform data for table rows
-  const tableRows = useMemo(() =>
-    filteredExercisesWithSets.map(([exId, exerciseSets]) => {
+  // Group exercises by section
+  const exercisesBySection = useMemo(() => {
+    const sectionGroups = {};
+    
+    filteredExercisesWithSets.forEach(([exId, exerciseSets]) => {
       const exInfo = exercises[exId] || { name: "[Exercise name]", section: "training" };
-      // Capitalize first letter for display
-      const sectionLabel = exInfo.section
-        ? exInfo.section.charAt(0).toUpperCase() + exInfo.section.slice(1)
-        : "Training";
-      return {
+      const section = exInfo.section || "training";
+      
+      if (!sectionGroups[section]) {
+        sectionGroups[section] = [];
+      }
+      
+      sectionGroups[section].push({
         id: exId,
         exercise: exInfo.name,
-        section: sectionLabel,
         setLog: exerciseSets,
-      };
-    }), [filteredExercisesWithSets, exercises]);
+      });
+    });
+
+    // Convert to array and sort sections
+    const sectionsOrder = ["warmup", "training", "cooldown"];
+    return sectionsOrder
+      .map(section => ({
+        section,
+        exercises: sectionGroups[section] || []
+      }))
+      .filter(group => group.exercises.length > 0);
+  }, [filteredExercisesWithSets, exercises]);
 
   const handleSaveWorkoutName = async () => {
     try {
@@ -471,74 +529,38 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          <MainContentSection>
-            <CompletedWorkoutTable
-              columns={[
-                { accessorKey: "exercise", header: "Exercise" },
-                { accessorKey: "section", header: "Section" },
-                { accessorKey: "setLog", header: "Set Log" },
-              ]}
-              data={tableRows}
-              onRowClick={readOnly ? undefined : openSetEdit}
-            />
-
-            <SwiperAlertDialog
-              isOpen={isDeleteConfirmOpen}
-              onOpenChange={setDeleteConfirmOpen}
-              onConfirm={handleConfirmDelete}
-              title="Delete workout?"
-              description="This workout and its sets will be deleted permanently."
-              confirmText="Delete"
-              cancelText="Cancel"
-            />
-
-            <SwiperForm
-              open={isEditWorkoutOpen}
-              onOpenChange={setEditWorkoutOpen}
-              title="Edit"
-              leftAction={() => setEditWorkoutOpen(false)}
-              rightAction={handleSaveWorkoutName}
-              rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}
-              leftText="Cancel"
-              rightText="Save"
-            >
-              <SwiperForm.Section>
-                <TextInput
-                  label="Workout name"
-                  value={workoutName}
-                  onChange={(e) => setWorkoutName(e.target.value)}
-                />
-              </SwiperForm.Section>
-
-              <SwiperForm.Section bordered={false}>
-                <SwiperButton
-                  variant="destructive"
-                  onClick={handleDeleteWorkout}
-                  className="w-full"
-                >
-                  Delete workout
-                </SwiperButton>
-              </SwiperForm.Section>
-            </SwiperForm>
-
-            {editSheetOpen && (
-              <SetEditForm
-                isOpen={editSheetOpen}
-                onOpenChange={setEditSheetOpen}
-                onSave={handleEditFormSave}
-                onDelete={handleSetDelete}
-                initialValues={editFormValues}
-                setExternalFormValues={setCurrentFormValues}
-                onFormDirty={setFormDirty}
-              />
+          <>
+            {exercisesBySection.length > 0 ? (
+              exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+                <PageSectionWrapper key={section} section={section}>
+                  <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-center">
+                    {sectionExercises.map((exercise) => (
+                      <ExerciseCompletedCard
+                        key={exercise.id}
+                        exercise={exercise}
+                        setLog={exercise.setLog}
+                        onEdit={openSetEdit}
+                        readOnly={readOnly}
+                                              />
+                      ))}
+                   </div>
+                </PageSectionWrapper>
+              ))
+            ) : (
+              <div className="flex h-full w-full items-center justify-center py-10">
+                <p className="text-gray-500">
+                  {search ? "No exercises found matching your search." : "No exercises found in this workout."}
+                </p>
+              </div>
             )}
-          </MainContentSection>
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <p>Workout not found.</p>
           </div>
         )}
       </AppLayout>
+
       <ShareWorkoutDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
@@ -547,6 +569,66 @@ const CompletedWorkout = () => {
         onCopy={handleCopyLink}
         onTogglePublic={handleTogglePublic}
       />
+
+      <SwiperAlertDialog
+        isOpen={isDeleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete workout?"
+        description="This workout and its sets will be deleted permanently."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      <SwiperForm
+        open={isEditWorkoutOpen}
+        onOpenChange={setEditWorkoutOpen}
+        title="Edit"
+        leftAction={() => setEditWorkoutOpen(false)}
+        rightAction={handleSaveWorkoutName}
+        rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}
+        leftText="Cancel"
+        rightText="Save"
+      >
+        <SwiperForm.Section>
+          <TextInput
+            label="Workout name"
+            value={workoutName}
+            onChange={(e) => setWorkoutName(e.target.value)}
+          />
+        </SwiperForm.Section>
+
+        <SwiperForm.Section bordered={false}>
+          <SwiperButton
+            variant="destructive"
+            onClick={handleDeleteWorkout}
+            className="w-full"
+          >
+            Delete workout
+          </SwiperButton>
+        </SwiperForm.Section>
+      </SwiperForm>
+
+      <SwiperForm
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        title="Edit Set"
+        leftAction={() => setEditSheetOpen(false)}
+        rightAction={() => handleEditFormSave(currentFormValues)}
+        rightEnabled={formDirty}
+        leftText="Cancel"
+        rightText="Save"
+      >
+        <SetEditForm
+          initialValues={editFormValues}
+          onValuesChange={setCurrentFormValues}
+          onDirtyChange={setFormDirty}
+          showSetNameField={true}
+          hideActionButtons={true}
+          hideInternalHeader={true}
+          isChildForm={true}
+        />
+      </SwiperForm>
     </>
   );
 };

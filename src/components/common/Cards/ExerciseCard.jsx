@@ -84,25 +84,20 @@ const ExerciseCard = ({
     <div
       data-exercise-card="true"
       data-layer="CardContentsWrapper"
-      className="w-full p-4 bg-white border border-neutral-300 rounded-lg"
+      className="w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-4"
       onClick={handleCardClick}
       style={{ cursor: setsAreEditable && onCardClick ? "pointer" : "default" }}
     >
-      <div
-        data-layer="ExersiceCardContent"
-        className="w-full flex flex-col gap-2"
-      >
-        <div
-          data-layer="Exercise Name"
-          className="w-full text-slate-950 text-heading-md"
-        >
+      {/* Exercise name */}
+      <div className="self-stretch inline-flex justify-start items-center gap-4">
+        <div className="flex-1 justify-start text-neutral-600 text-lg font-medium font-vietnam leading-tight">
           {exerciseName}
         </div>
-        <div
-          data-layer="Frame 5"
-          data-property-1="Default"
-          className="w-full flex flex-wrap gap-2"
-        >
+      </div>
+
+      {/* Set badges */}
+      {localSetConfigs && localSetConfigs.length > 0 && (
+        <div className="w-80 inline-flex justify-start items-center gap-3 flex-wrap content-center">
           {localSetConfigs.map((config, idx) => (
             <SetBadge
               key={idx}
@@ -120,12 +115,12 @@ const ExerciseCard = ({
             />
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 
   return (
-    <>
+    <div className={className}>
       {cardContent}
       {setsAreEditable && (
         <SwiperForm
@@ -166,7 +161,7 @@ const ExerciseCard = ({
           </div>
         </SwiperForm>
       )}
-    </>
+    </div>
   );
 };
 

@@ -2,9 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
-import { Reorder } from "framer-motion";
 import { PageNameContext } from "@/App";
 import { FormHeader } from "@/components/atoms/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
@@ -357,30 +355,7 @@ const RoutineBuilder = () => {
     }
   };
 
-  // Persist new order to Supabase immediately after reorder
-  const handleReorder = async (sectionKey, newOrder) => {
-    // Update local state first for immediate UI feedback
-    const updatedForSection = newOrder.map((ex, idx) => ({ ...ex, order: idx + 1 }));
 
-    setExercises((prev) =>
-      prev.map((ex) => {
-        const isInSection = (sectionKey === "workout" ? "training" : sectionKey) === ex.section;
-        if (!isInSection) return ex;
-        const replacement = updatedForSection.find((u) => u.id === ex.id);
-        return replacement || ex;
-      })
-    );
-
-    await Promise.all(
-      updatedForSection.map((ex, idx) => {
-        if (ex.order !== idx + 1) return null;
-        return supabase
-          .from("program_exercises")
-          .update({ exercise_order: idx + 1 })
-          .eq("id", ex.id);
-      })
-    );
-  };
 
   return (
     <>
@@ -411,20 +386,15 @@ const RoutineBuilder = () => {
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
           <PageSectionWrapper key={section} section={section} id={`section-${section}`}>
-            <CardWrapper
-              gap={20}
-              reorderable
-              items={secExercises}
-              onReorder={(newOrder) => handleReorder(section, newOrder)}
-            >
-              {loading ? (
-                <div className="text-gray-400 text-center py-8">Loading...</div>
-              ) : secExercises.length === 0 && !loading ? (
-                <div className="text-gray-400 text-center py-8">
-                  No exercises found. Try adding one!
-                </div>
-              ) : (
-                secExercises.map((ex) => (
+            {secExercises.length === 0 && !loading ? (
+              <div className="text-gray-400 text-center py-8">
+                No exercises found. Try adding one!
+              </div>
+            ) : loading ? (
+              <div className="text-gray-400 text-center py-8">Loading...</div>
+            ) : (
+              <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-center">
+                {secExercises.map((ex) => (
                   <ExerciseCard
                     key={ex.id}
                     mode="default"
@@ -434,13 +404,11 @@ const RoutineBuilder = () => {
                     onSetConfigsChange={(newSetConfigs) =>
                       handleSetConfigsChange(ex.exercise_id, newSetConfigs)
                     }
-                    reorderable={true}
-                    reorderValue={ex}
                     onCardClick={() => setEditingExercise(ex)}
-                  />
-                ))
-              )}
-            </CardWrapper>
+                                      />
+                  ))}
+                </div>
+            )}
           </PageSectionWrapper>
         ))}
         <SwiperForm

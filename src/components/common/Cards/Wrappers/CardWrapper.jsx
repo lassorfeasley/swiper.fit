@@ -26,6 +26,12 @@ const CardWrapper = React.forwardRef(({
   className = "",
   cardTitle,
   reorderable = false,
+  grid = false,
+  gridCols = "grid-cols-1", // Default grid columns for mobile
+  gridColsSm = null, // Grid columns for sm breakpoint and up
+  gridTemplateColumns = null, // Custom CSS grid-template-columns
+  justifyGrid = "justify-start", // Grid justify behavior
+  maxWidth = null, // Max width for grid container
   items = [],
   onReorder = () => {},
   headerRef,
@@ -46,30 +52,65 @@ const CardWrapper = React.forwardRef(({
   delete divProps.focusedIndex;
   delete divProps.totalCards;
   delete divProps.topOffset;
+  delete divProps.grid;
+  delete divProps.gridCols;
+  delete divProps.gridColsSm;
+  delete divProps.gridTemplateColumns;
+  delete divProps.justifyGrid;
+  delete divProps.maxWidth;
 
   const zIndex = index + 1; // first card lowest, last highest
 
   // Style object controlling spacing; cards scroll normally
-  const spacingStyle = { rowGap: gap, marginTop, marginBottom };
+  const spacingStyle = grid
+    ? { gap: gap, marginTop, marginBottom }
+    : { rowGap: gap, marginTop, marginBottom };
 
   const [dragging, setDragging] = useState(false);
+
+  // Layout classes: grid or flex-col
+  let layoutClasses;
+  if (grid) {
+    layoutClasses = `grid ${justifyGrid}`;
+  } else {
+    layoutClasses = "flex flex-col justify-start items-stretch";
+  }
+
+  const containerClasses = cn(
+    "relative z-10 w-full mx-auto bg-transparent",
+    layoutClasses,
+    className
+  );
+
+  // Apply styles based on layout type
+  let style = { ...spacingStyle, ...(props.style || {}) };
+  
+  if (grid) {
+    // Grid layout styling
+    if (maxWidth) {
+      style.maxWidth = maxWidth;
+    }
+    if (gridTemplateColumns) {
+      style.gridTemplateColumns = gridTemplateColumns;
+    }
+  } else {
+    // Flex layout styling (individual cards)
+    style.maxWidth = 500;
+  }
 
   return (
     <div
       ref={ref}
-      className={cn(
-        "relative z-10 w-full flex flex-col justify-start items-stretch mx-auto bg-transparent",
-        className
-      )}
-      style={{ maxWidth: 500, ...spacingStyle, ...(props.style || {}) }}
+      className={containerClasses}
+      style={style}
       {...divProps}
     >
-      {cardTitle && (
-        <div className="w-full bg-gray-50 border-b border-gray-200">
-          <h3 className="text-heading-md">{cardTitle}</h3>
-        </div>
-      )}
-      {reorderable ? (
+        {cardTitle && (
+          <div className="w-full bg-gray-50 border-b border-gray-200">
+            <h3 className="text-heading-md">{cardTitle}</h3>
+          </div>
+        )}
+        {reorderable ? (
         <Reorder.Group
           axis="y"
           values={items}
@@ -107,6 +148,12 @@ CardWrapper.propTypes = {
   className: PropTypes.string,
   cardTitle: PropTypes.string,
   reorderable: PropTypes.bool,
+  grid: PropTypes.bool,
+  gridCols: PropTypes.string,
+  gridColsSm: PropTypes.string,
+  gridTemplateColumns: PropTypes.string,
+  justifyGrid: PropTypes.string,
+  maxWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   items: PropTypes.array,
   onReorder: PropTypes.func,
   headerRef: PropTypes.object,
