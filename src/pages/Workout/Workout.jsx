@@ -113,6 +113,7 @@ const Workout = () => {
 
   return (
     <AppLayout
+      reserveSpace={true}
       title="Start Workout"
       showAddButton={false}
       showBackButton={false}
