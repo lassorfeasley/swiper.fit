@@ -194,15 +194,28 @@ const CompletedWorkout = () => {
       // Get unique exercise_ids from valid sets only
       const exerciseIds = [...new Set(validSets.map((s) => s.exercise_id))];
 
-      // Fetch exercise names
+      // Fetch exercise names from snapshot table (with override)
       let exercisesObj = {};
       if (exerciseIds.length > 0) {
-        const { data: exercisesData } = await supabase
-          .from("exercises")
-          .select("id, name, section")
-          .in("id", exerciseIds);
-        (exercisesData || []).forEach((e) => {
-          exercisesObj[e.id] = { name: e.name, section: e.section || "training" };
+        const { data: snapData, error: snapErr } = await supabase
+          .from("workout_exercises")
+          .select(
+            `exercise_id,
+             snapshot_name,
+             name_override,
+             exercises!workout_exercises_exercise_id_fkey(
+               name,
+               section
+             )`
+          )
+          .eq("workout_id", workoutId)
+          .in("exercise_id", exerciseIds);
+        if (snapErr) console.error('Error fetching snapshot names:', snapErr);
+        // Build mapping from snapshot rows
+        (snapData || []).forEach((row) => {
+          const displayName = row.name_override || row.snapshot_name;
+          const sec = (row.exercises || {}).section || "training";
+          exercisesObj[row.exercise_id] = { name: displayName, section: sec };
         });
       }
       setExercises(exercisesObj);
