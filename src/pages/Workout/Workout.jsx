@@ -73,7 +73,8 @@ const Workout = () => {
                 .filter(Boolean),
             };
           });
-          setRoutines(routinesWithExercises);
+          const routinesForWorkout = routinesWithExercises.filter((program) => program.exerciseCount > 0);
+          setRoutines(routinesForWorkout);
         }
       } catch (err) {
         console.error("Exception fetching routines:", err);
