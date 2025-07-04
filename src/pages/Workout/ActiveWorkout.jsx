@@ -595,6 +595,41 @@ const ActiveWorkout = () => {
         exerciseRow = newEx;
       }
 
+      // Insert into program's routine_exercises
+      const { count: existingCount, error: countErr } = await supabase
+        .from("routine_exercises")
+        .select("*", { count: "exact", head: true })
+        .eq("routine_id", activeWorkout.programId);
+      if (countErr) throw countErr;
+      const exerciseOrder = (existingCount || 0) + 1;
+      const { data: progEx, error: progExErr } = await supabase
+        .from("routine_exercises")
+        .insert({
+          routine_id: activeWorkout.programId,
+          exercise_id: exerciseRow.id,
+          exercise_order: exerciseOrder,
+        })
+        .select("id")
+        .single();
+      if (progExErr) throw progExErr;
+      // Insert default sets into program (routine_sets)
+      const setRows = data.setConfigs.map((cfg, idx) => ({
+        routine_exercise_id: progEx.id,
+        set_order: idx + 1,
+        reps: Number(cfg.reps),
+        weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
+        set_variant: cfg.set_variant,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
+      }));
+      if (setRows.length > 0) {
+        const { error: setErr } = await supabase
+          .from("routine_sets")
+          .insert(setRows);
+        if (setErr) throw setErr;
+      }
+
       // Step 2: insert snapshot workout_exercises row
       const { data: snapEx, error: snapErr } = await supabase
         .from("workout_exercises")
