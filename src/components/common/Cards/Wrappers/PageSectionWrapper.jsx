@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const PageSectionWrapper = ({ section, children, className, ...props }) => {
+const PageSectionWrapper = ({ section, children, className, deckGap = 0, ...props }) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -24,9 +24,10 @@ const PageSectionWrapper = ({ section, children, className, ...props }) => {
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-center items-center last:pb-20 md:last:pb-0",
+        "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center",
         className
       )}
+      style={{marginTop: 0, paddingTop: 0}}
       {...props}
     >
       {/* Header */}
@@ -36,7 +37,7 @@ const PageSectionWrapper = ({ section, children, className, ...props }) => {
 
       {/* Content with spacing around header & footer */}
       <div className="w-full self-stretch pt-5 pb-28 px-0">
-        <DeckWrapper gap={0} paddingX={20}>
+        <DeckWrapper gap={deckGap} paddingX={20}>
           {children}
         </DeckWrapper>
       </div>
@@ -48,6 +49,7 @@ PageSectionWrapper.propTypes = {
   section: PropTypes.string.isRequired,
   children: PropTypes.node,
   className: PropTypes.string,
+  deckGap: PropTypes.number,
 };
 
 export default PageSectionWrapper; 
