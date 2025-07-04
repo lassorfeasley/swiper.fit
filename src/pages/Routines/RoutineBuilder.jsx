@@ -98,6 +98,10 @@ const RoutineBuilder = () => {
           }),
       }));
       setExercises(items);
+      // Automatically open add exercise form when no exercises exist
+      if (items.length === 0) {
+        setShowAddExercise(true);
+      }
       setLoading(false);
     }
     fetchProgramAndExercises();
