@@ -50,7 +50,25 @@ const RoutineBuilder = () => {
 
       const { data: progExs, error } = await supabase
         .from("routine_exercises")
-        .select("id, exercise_id, exercise_order, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
+        .select(
+          `id,
+           exercise_id,
+           exercise_order,
+           exercises!fk_routine_exercises__exercises(
+             name,
+             section
+           ),
+           routine_sets!fk_routine_sets__routine_exercises(
+             id,
+             reps,
+             weight,
+             weight_unit,
+             set_order,
+             set_variant,
+             set_type,
+             timed_set_duration
+           )`
+        )
         .eq("routine_id", programId)
         .order("exercise_order", { ascending: true });
       if (error) {
@@ -212,12 +230,16 @@ const RoutineBuilder = () => {
         .delete()
         .eq("id", editingExercise.id);
 
-      if (deleteError) throw new Error("Failed to delete exercise");
+      if (deleteError) throw deleteError;
 
       setEditingExercise(null);
       await refreshExercises();
     } catch (err) {
-      alert(err.message || "Failed to delete exercise");
+      if (err.code === '23503') {
+        alert('Cannot delete this exercise because it is used by other routines or has logged sets.');
+      } else {
+        alert(err.message || 'Failed to delete exercise');
+      }
     } finally {
       setDeleteExerciseConfirmOpen(false);
     }
@@ -226,7 +248,25 @@ const RoutineBuilder = () => {
   const refreshExercises = async () => {
     const { data: progExs } = await supabase
       .from("routine_exercises")
-      .select("id, exercise_id, exercise_order, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
+      .select(
+        `id,
+         exercise_id,
+         exercise_order,
+         exercises!fk_routine_exercises__exercises(
+           name,
+           section
+         ),
+         routine_sets!fk_routine_sets__routine_exercises(
+           id,
+           reps,
+           weight,
+           weight_unit,
+           set_order,
+           set_variant,
+           set_type,
+           timed_set_duration
+         )`
+      )
       .eq("routine_id", programId)
       .order("exercise_order", { ascending: true });
     const items = (progExs || []).map((pe) => ({
@@ -341,13 +381,15 @@ const RoutineBuilder = () => {
         .update({ is_archived: true })
         .eq("id", programId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       navigate("/routines");
     } catch (err) {
-      alert("Failed to delete program: " + err.message);
+      if (err.code === '23503') {
+        alert('Cannot delete this routine because it has associated workouts.');
+      } else {
+        alert('Failed to delete routine: ' + err.message);
+      }
     }
   };
 

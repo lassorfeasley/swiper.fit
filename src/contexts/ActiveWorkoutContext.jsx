@@ -26,11 +26,16 @@ export function ActiveWorkoutProvider({ children }) {
         // Fetch the active workout record and program metadata
         const { data: workout, error: workoutError } = await supabase
           .from('workouts')
-          .select('*, routines(routine_name)')
+          .select('*, routines!workouts_routine_id_fkey(routine_name)')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
-        if (!workout || workoutError) {
+        if (workoutError) {
+          console.error('Error fetching active workout row:', workoutError);
+          setLoading(false);
+          return;
+        }
+        if (!workout) {
           setLoading(false);
           return;
         }
@@ -178,6 +183,22 @@ export function ActiveWorkoutProvider({ children }) {
     setIsPaused(false);
     setWorkoutProgress({});
     
+    // Snapshot initial exercises for this workout
+    try {
+      const snapshotPayload = program.routine_exercises.map((progEx, idx) => ({
+        workout_id: workout.id,
+        exercise_id: progEx.exercise_id,
+        exercise_order: progEx.exercise_order || idx + 1,
+        snapshot_name: progEx.exercises.name,
+      }));
+      const { error: snapshotError } = await supabase
+        .from("workout_exercises")
+        .insert(snapshotPayload);
+      if (snapshotError) console.error("Error snapshotting exercises:", snapshotError);
+    } catch (err) {
+      console.error("Error snapshotting exercises for workout start:", err);
+    }
+
     const exercises = program.routine_exercises.reduce((acc, progEx) => {
       acc[progEx.exercise_id] = {
         name: progEx.exercises.name,

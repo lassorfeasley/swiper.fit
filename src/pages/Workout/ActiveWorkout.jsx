@@ -22,6 +22,7 @@ const ActiveWorkout = () => {
   const {
     activeWorkout,
     isWorkoutActive,
+    loading,
     endWorkout: contextEndWorkout,
     workoutProgress,
     updateWorkoutProgress,
@@ -120,10 +121,12 @@ const ActiveWorkout = () => {
   }, [focusedNode]);
 
   useEffect(() => {
+    // Only redirect after loading has finished
+    if (loading) return;
     if (!isWorkoutActive) {
       navigate("/workout", { replace: true });
     }
-  }, [isWorkoutActive, navigate]);
+  }, [loading, isWorkoutActive, navigate]);
 
   useEffect(() => {
     setNavBarVisible(false);
@@ -135,64 +138,82 @@ const ActiveWorkout = () => {
   }, [setPageName]);
 
   useEffect(() => {
-    if (activeWorkout) {
-      supabase
+    const loadSnapshotExercises = async () => {
+      if (!activeWorkout) {
+        setExercises([]);
+        return;
+      }
+      // 1) Load snapshot of exercises for this workout
+      const { data: snapExs, error: snapErr } = await supabase
+        .from("workout_exercises")
+        .select(
+          `id,
+           exercise_id,
+           exercise_order,
+           snapshot_name,
+           name_override,
+           exercises!workout_exercises_exercise_id_fkey(
+             name,
+             section
+           )`
+        )
+        .eq("workout_id", activeWorkout.id)
+        .order("exercise_order", { ascending: true });
+      if (snapErr || !snapExs) {
+        console.error("Error fetching workout snapshot exercises:", snapErr);
+        setExercises([]);
+        return;
+      }
+      // 2) Fetch template sets from routine_exercises → routine_sets, ordered by set_order
+      const { data: tmplExs, error: tmplErr } = await supabase
         .from("routine_exercises")
-        .select("*, exercises(name, section), routine_sets!fk_routine_sets__routine_exercises(id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration)")
+        .select(
+          `exercise_id,
+           routine_sets!fk_routine_sets__routine_exercises(
+             id,
+             set_order,
+             reps,
+             weight,
+             weight_unit,
+             set_variant,
+             set_type,
+             timed_set_duration
+           )`
+        )
         .eq("routine_id", activeWorkout.programId)
-        .then(async ({ data: progExs, error }) => {
-          if (error || !progExs) {
-            console.error("Error fetching active workout exercises:", error);
-            setExercises([]);
-            return;
-          }
-          const exerciseIds = progExs.map((pe) => pe.exercise_id);
-          const { data: exercisesData, error: exercisesError } = await supabase
-            .from("exercises")
-            .select("id, name")
-            .in("id", exerciseIds);
-
-          if (exercisesError) {
-            setExercises([]);
-            return;
-          }
-
-          const uniqueProgExs = progExs.filter(
-            (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-          );
-
-          const cards = uniqueProgExs.map((pe) => ({
-            id: pe.id,
-            exercise_id: pe.exercise_id,
-            section: (() => {
-              const raw = ((pe.exercises || {}).section || "").toLowerCase().trim();
-              if (raw === "training" || raw === "workout") return "training";
-              if (raw === "warmup") return "warmup";
-              if (raw === "cooldown") return "cooldown";
-              // Fallback – treat unknown values as training to keep them visible
-              return "training";
-            })(),
-            name:
-              (exercisesData.find((e) => e.id === pe.exercise_id) || {}).name ||
-              "Unknown",
-            setConfigs: (pe.routine_sets || [])
-              .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
-              .map((set) => ({
-                id: null,
-                routine_set_id: set.id,
-                reps: set.reps,
-                weight: (set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs')) === 'body' ? 0 : set.weight,
-                unit: set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs'),
-                set_variant: set.set_variant || `Set ${set.set_order}`,
-                set_type: set.set_type,
-                timed_set_duration: set.timed_set_duration,
-              })),
-          }));
-          setExercises(cards);
-        });
-    } else {
-      setExercises([]);
-    }
+        .order("set_order", { foreignTable: "routine_sets", ascending: true });
+      if (tmplErr) console.error("Error fetching template sets:", tmplErr);
+      // 3) Group sets by exercise_id
+      const setsMap = {};
+      (tmplExs || []).forEach((re) => {
+        setsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
+          id: null,
+          routine_set_id: rs.id,
+          reps: rs.reps,
+          weight: rs.weight,
+          unit: rs.weight_unit,
+          set_variant: rs.set_variant,
+          set_type: rs.set_type,
+          timed_set_duration: rs.timed_set_duration,
+        }));
+      });
+      // 4) Merge into cards and set state
+      const cards = snapExs.map((we) => ({
+        id: we.id,
+        exercise_id: we.exercise_id,
+        section: (() => {
+          const raw = ((we.exercises || {}).section || "").toLowerCase().trim();
+          if (raw === "training" || raw === "workout") return "training";
+          if (raw === "warmup") return "warmup";
+          if (raw === "cooldown") return "cooldown";
+          return "training";
+        })(),
+        name: we.name_override || we.snapshot_name,
+        setConfigs: setsMap[we.exercise_id] || [],
+      }));
+      setExercises(cards);
+    };
+    loadSnapshotExercises();
   }, [activeWorkout]);
 
   // TODO: re-implement automatic navigation to last interacted exercise
@@ -574,37 +595,22 @@ const ActiveWorkout = () => {
         exerciseRow = newEx;
       }
 
-      // Step 2: insert routine_exercises row
-      const { data: progEx, error: progErr } = await supabase
-        .from("routine_exercises")
+      // Step 2: insert snapshot workout_exercises row
+      const { data: snapEx, error: snapErr } = await supabase
+        .from("workout_exercises")
         .insert({
-          routine_id: activeWorkout.programId,
+          workout_id: activeWorkout.id,
           exercise_id: exerciseRow.id,
           exercise_order: exercises.length + 1,
+          snapshot_name: data.name.trim(),
         })
         .select()
         .single();
-      if (progErr) throw progErr;
+      if (snapErr) throw snapErr;
 
-      // Step 3: insert routine_sets rows
-      const setRows = (data.setConfigs || []).map((cfg, idx) => ({
-        routine_exercise_id: progEx.id,
-        set_order: idx + 1,
-        reps: cfg.reps,
-        weight: cfg.weight,
-        weight_unit: cfg.unit,
-        set_variant: cfg.set_variant,
-        set_type: cfg.set_type,
-        timed_set_duration: cfg.timed_set_duration,
-      }));
-      if (setRows.length) {
-        const { error: setErr } = await supabase.from("routine_sets").insert(setRows);
-        if (setErr) throw setErr;
-      }
-
-      // Step 4: update local state (so card appears immediately)
+      // Step 3: update local state (so card appears immediately)
       const newCard = {
-        id: progEx.id,
+        id: snapEx.id,
         exercise_id: exerciseRow.id,
         section: data.section,
         name: data.name.trim(),
@@ -625,10 +631,25 @@ const ActiveWorkout = () => {
     if (!editingExercise) return;
 
     try {
-      // ------------------------------------------------------------------
-      //  Persist exercise-level edits: name and section
-      // ------------------------------------------------------------------
+      // Persist exercise-level edits: name and section
       const exerciseId = editingExercise.exercise_id;
+      if (type === "today") {
+        // Persist name override in snapshot table and handle errors
+        const { data: updated, error: updateErr } = await supabase
+          .from("workout_exercises")
+          .update({ name_override: data.name.trim() })
+          .eq("id", editingExercise.id)
+          .select()
+          .single();
+        if (updateErr) {
+          console.error('Error updating name_override:', updateErr);
+          throw updateErr;
+        }
+        // Optionally sync in-memory state to the final DB value
+        setExercises(prev => prev.map(ex =>
+          ex.id === editingExercise.id ? { ...ex, name: updated.name_override } : ex
+        ));
+      }
       if (type === "future") {
         try {
           await supabase
@@ -640,9 +661,7 @@ const ActiveWorkout = () => {
         }
       }
 
-      // ------------------------------------------------------------------
-      //  Persist set config changes (reps, weight, etc.)
-      // ------------------------------------------------------------------
+      // Persist set config changes (reps, weight, etc.)
       const originalConfigs = editingExercise.setConfigs || [];
       const updatedConfigs = data.setConfigs || [];
 
