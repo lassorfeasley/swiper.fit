@@ -123,10 +123,6 @@ const RoutineBuilder = () => {
   };
 
   const handleBack = () => {
-    if (exercises.length === 0) {
-      alert("You must add at least one exercise to save this program.");
-      return;
-    }
     saveOrder();
     navigate(-1);
   };
