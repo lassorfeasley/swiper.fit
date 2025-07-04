@@ -76,6 +76,8 @@ export default {
         metric: "700",
         normal: "400",
         medium: "500",
+        body: "400",
+        base: "400",
       },
       lineHeight: {
         h1: "20px",
