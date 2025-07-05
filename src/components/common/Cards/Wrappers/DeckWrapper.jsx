@@ -38,8 +38,11 @@ const DeckWrapper = forwardRef(
     // Apply grid specific inline styles
     if (isGrid) {
       style.display = "grid";
-      // Ensure each card maintains a consistent width regardless of the number of items
-      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,${minWidthPx}px))`;
+      // Align grid tracks and items to the start (left) to prevent centering when there is extra space
+      style.justifyContent = "start";
+      style.justifyItems = "start";
+      // Ensure each card has at least minWidthPx and can expand to fill available space
+      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,1fr))`;
     }
 
     const containerClasses = cn(
