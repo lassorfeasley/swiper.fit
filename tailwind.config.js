@@ -7,6 +7,10 @@ export default {
       fontFamily: {
         sans: ['"Be Vietnam Pro"', "sans-serif"],
       },
+      fontWeight: {
+        medium: '400',
+        bold: '500',
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -69,15 +73,6 @@ export default {
         body: "1rem",
         label: "0.875rem",
         caption: "0.75rem",
-      },
-      fontWeight: {
-        h1: "500",
-        h2: "400",
-        metric: "700",
-        normal: "400",
-        medium: "500",
-        body: "400",
-        base: "400",
       },
       lineHeight: {
         h1: "20px",
