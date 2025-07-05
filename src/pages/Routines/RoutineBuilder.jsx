@@ -425,30 +425,26 @@ const RoutineBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-          <PageSectionWrapper key={section} section={section} id={`section-${section}`} grid>
+          <PageSectionWrapper key={section} section={section} id={`section-${section}`} grid deckGap={20}>
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
                 No exercises found. Try adding one!
               </div>
             ) : loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
-            ) : (
-              <>
-                {secExercises.map((ex) => (
-                  <ExerciseCard
-                    key={ex.id}
-                    mode="default"
-                    exerciseName={ex.name}
-                    setConfigs={ex.setConfigs}
-                    onEdit={() => setEditingExercise(ex)}
-                    onSetConfigsChange={(newSetConfigs) =>
-                      handleSetConfigsChange(ex.exercise_id, newSetConfigs)
-                    }
-                    onCardClick={() => setEditingExercise(ex)}
-                  />
-                ))}
-              </>
-            )}
+            ) : secExercises.map((ex) => (
+              <ExerciseCard
+                key={ex.id}
+                mode="default"
+                exerciseName={ex.name}
+                setConfigs={ex.setConfigs}
+                onEdit={() => setEditingExercise(ex)}
+                onSetConfigsChange={(newSetConfigs) =>
+                  handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                }
+                onCardClick={() => setEditingExercise(ex)}
+              />
+            ))}
           </PageSectionWrapper>
         ))}
         <SwiperForm

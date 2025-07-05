@@ -546,18 +546,16 @@ const CompletedWorkout = () => {
           <>
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-                <PageSectionWrapper key={section} section={section} grid>
-                  <React.Fragment>
-                    {sectionExercises.map((exercise) => (
-                      <ExerciseCompletedCard
-                        key={exercise.id}
-                        exercise={exercise}
-                        setLog={exercise.setLog}
-                        onEdit={openSetEdit}
-                        readOnly={readOnly}
-                      />
-                    ))}
-                  </React.Fragment>
+                <PageSectionWrapper key={section} section={section} grid deckGap={20}>
+                  {sectionExercises.map((exercise) => (
+                    <ExerciseCompletedCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      setLog={exercise.setLog}
+                      onEdit={openSetEdit}
+                      readOnly={readOnly}
+                    />
+                  ))}
                 </PageSectionWrapper>
               ))
             ) : (

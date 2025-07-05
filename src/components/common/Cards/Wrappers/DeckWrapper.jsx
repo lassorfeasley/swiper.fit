@@ -23,6 +23,9 @@ const DeckWrapper = forwardRef(
     const isGrid = Boolean(grid);
     const minWidthPx = typeof grid === "number" ? grid : gridMinWidth;
 
+    // Count number of child elements to enable responsive tweaks (flatten fragments)
+    const childCount = React.Children.toArray(children).length;
+
     const style = {
       gap,
       paddingLeft: paddingX,
@@ -35,7 +38,8 @@ const DeckWrapper = forwardRef(
     // Apply grid specific inline styles
     if (isGrid) {
       style.display = "grid";
-      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,1fr))`;
+      // Ensure each card maintains a consistent width regardless of the number of items
+      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,${minWidthPx}px))`;
     }
 
     const containerClasses = cn(
