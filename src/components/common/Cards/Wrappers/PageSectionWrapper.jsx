@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const PageSectionWrapper = ({ section, children, className, deckGap = 0, ...props }) => {
+const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, ...props }) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -37,7 +37,7 @@ const PageSectionWrapper = ({ section, children, className, deckGap = 0, ...prop
 
       {/* Content with spacing around header & footer */}
       <div className="w-full self-stretch pt-5 pb-28 px-0">
-        <DeckWrapper gap={deckGap} paddingX={20}>
+        <DeckWrapper gap={deckGap} paddingX={20} {...(grid ? { grid: true, gridMinWidth } : {})}>
           {children}
         </DeckWrapper>
       </div>
@@ -50,6 +50,8 @@ PageSectionWrapper.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   deckGap: PropTypes.number,
+  grid: PropTypes.bool,
+  gridMinWidth: PropTypes.number,
 };
 
 export default PageSectionWrapper; 

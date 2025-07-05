@@ -97,7 +97,7 @@ const ExerciseCard = ({
 
       {/* Set badges */}
       {localSetConfigs && localSetConfigs.length > 0 && (
-        <div className="w-80 inline-flex justify-start items-center gap-3 flex-wrap content-center">
+        <div className="w-full min-w-0 inline-flex justify-start items-center gap-3 flex-wrap content-center">
           {localSetConfigs.map((config, idx) => (
             <SetBadge
               key={idx}

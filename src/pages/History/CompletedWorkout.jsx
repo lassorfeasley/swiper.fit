@@ -83,7 +83,7 @@ const ExerciseCompletedCard = ({ exercise, setLog, onEdit, readOnly = false }) =
 
       {/* Set badges */}
       {setLog && setLog.length > 0 && (
-        <div className="w-80 inline-flex justify-start items-center gap-3 flex-wrap content-center">
+        <div className="w-full min-w-0 inline-flex justify-start items-center gap-3 flex-wrap content-center">
           {setLog.map((set, index) => (
             <SetBadge
               key={set.id || index}
@@ -546,8 +546,8 @@ const CompletedWorkout = () => {
           <>
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-                <PageSectionWrapper key={section} section={section}>
-                  <div className="w-full max-w-[1250px] mx-auto grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(275px,375px))] gap-5 justify-start">
+                <PageSectionWrapper key={section} section={section} grid>
+                  <React.Fragment>
                     {sectionExercises.map((exercise) => (
                       <ExerciseCompletedCard
                         key={exercise.id}
@@ -557,7 +557,7 @@ const CompletedWorkout = () => {
                         readOnly={readOnly}
                       />
                     ))}
-                  </div>
+                  </React.Fragment>
                 </PageSectionWrapper>
               ))
             ) : (

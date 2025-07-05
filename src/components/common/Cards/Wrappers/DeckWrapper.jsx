@@ -12,26 +12,35 @@ const DeckWrapper = forwardRef(
       children,
       gap = 0, // spacing between items
       paddingX = 20, // horizontal padding (px)
-      grid = false, // horizontal layout when true
+      // When truthy, enables CSS grid; if a number, that is treated as the column min-width (px)
+      grid = false,
+      gridMinWidth = 210,
       className,
       ...props
     },
     ref
   ) => {
-    // Common inline style for gaps and padding
+    const isGrid = Boolean(grid);
+    const minWidthPx = typeof grid === "number" ? grid : gridMinWidth;
+
     const style = {
-      gap: gap,
-      // apply rowGap and columnGap via gap shorthand
+      gap,
       paddingLeft: paddingX,
       paddingRight: paddingX,
       paddingTop: 0,
       paddingBottom: 0,
       ...(props.style || {}),
     };
-    // Determine flex direction classes with object syntax for purge safety
+
+    // Apply grid specific inline styles
+    if (isGrid) {
+      style.display = "grid";
+      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,1fr))`;
+    }
+
     const containerClasses = cn(
-      "card-container flex mx-auto w-full",
-      { "flex-row flex-wrap": grid, "flex-col": !grid },
+      "card-container mx-auto w-full",
+      !isGrid && "flex flex-col",
       className
     );
 
@@ -54,8 +63,10 @@ DeckWrapper.propTypes = {
   children: PropTypes.node.isRequired,
   gap: PropTypes.number,
   paddingX: PropTypes.number,
-  /** When true, lays out children horizontally with wrapping */
-  grid: PropTypes.bool,
+  /** When truthy enables grid; can be boolean or a number (min col width) */
+  grid: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+  /** Fallback min column width when grid is boolean */
+  gridMinWidth: PropTypes.number,
   className: PropTypes.string,
 };
 
