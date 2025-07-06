@@ -32,16 +32,15 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
     else if (filterMode === "range") setMode("range");
   }, [filterMode]);
 
-  // Pre-compute set of calendar days that have at least one workout
-  const workoutDates = React.useMemo(() => {
-    const map = new Map();
+  // Pre-compute a Set of calendar days (timestamps) that have at least one workout
+  const workoutDateKeys = React.useMemo(() => {
+    const keys = new Set();
     workouts.forEach((w) => {
       const d = new Date(w.created_at);
-      // Normalize to midnight for uniqueness by day
       const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-      map.set(key, d);
+      keys.add(key);
     });
-    return Array.from(map.values());
+    return keys;
   }, [workouts]);
 
   // Ensure a recent workout date is selected by default
@@ -64,7 +63,10 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const isFutureNoWorkout = (day) => day > today && !workoutDates.some(d => new Date(d).toDateString() === day.toDateString());
+  const isFutureNoWorkout = (day) => {
+    const key = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+    return day > today && !workoutDateKeys.has(key);
+  };
 
   const events = React.useMemo(() => {
     if (filterMode === "all") return workouts;
@@ -92,15 +94,9 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const disabledMatcher = React.useCallback(
     (d) => {
       const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-      return !workoutDates.some((wd) => {
-        return (
-          wd.getFullYear() === d.getFullYear() &&
-          wd.getMonth() === d.getMonth() &&
-          wd.getDate() === d.getDate()
-        );
-      });
+      return !workoutDateKeys.has(key);
     },
-    [workoutDates]
+    [workoutDateKeys]
   );
 
   const navigate = useNavigate();
@@ -130,9 +126,13 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
             selected={calendarSelected}
             onSelect={handleCalendarSelect}
             className="bg-transparent p-0"
+            showOutsideDays={false}
             required
             modifiers={{
-              hasWorkout: workoutDates,
+              hasWorkout: (day) => {
+                const key = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+                return workoutDateKeys.has(key);
+              },
               future: isFutureNoWorkout,
             }}
             disabled={disabledMatcher}
