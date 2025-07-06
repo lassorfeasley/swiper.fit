@@ -1,9 +1,8 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home/Home";
 import Routines from "./pages/Routines/Routines";
 import History from "./pages/History/History";
-import Workout from "./pages/Workout/Workout";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
 import RoutineBuilder from "./pages/Routines/RoutineBuilder";
@@ -19,7 +18,7 @@ import CreateAccount from "./pages/auth/CreateAccount";
 import PasswordReset from "./pages/auth/PasswordReset";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
-import { ActiveWorkoutProvider } from "./contexts/ActiveWorkoutContext";
+import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
@@ -33,6 +32,8 @@ export const PageNameContext = createContext({
 
 function AppContent() {
   const location = useLocation();
+  const { isWorkoutActive } = useActiveWorkout();
+  const navigate = useNavigate();
   const { navBarVisible } = useNavBarVisibility();
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
@@ -54,6 +55,13 @@ function AppContent() {
   const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
   const hideNavForPublic = isPublicHistoryView;
 
+  // Redirect to active workout when one is live
+  useEffect(() => {
+    if (isWorkoutActive && location.pathname !== '/workout/active') {
+      navigate('/workout/active', { replace: true });
+    }
+  }, [isWorkoutActive, location.pathname, navigate]);
+
   return (
     <div className="min-h-screen relative">
       {/* Main Content */}
@@ -73,7 +81,6 @@ function AppContent() {
               element={<RoutineBuilder />}
             />
             <Route path="/history" element={<History />} />
-            <Route path="/workout" element={<Workout />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
@@ -88,9 +95,9 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Mobile & Side nav – hidden for public shared links */}
-      {isAuthenticatedRoute && !hideNavForPublic && <MobileNav />}
-      {isAuthenticatedRoute && !hideNavForPublic && <SideBarNav />}
+      {/* Hide navigation during active workout session */}
+      {isAuthenticatedRoute && !hideNavForPublic && !(isWorkoutActive && location.pathname === '/workout/active') && <MobileNav />}
+      {isAuthenticatedRoute && !hideNavForPublic && !(isWorkoutActive && location.pathname === '/workout/active') && <SideBarNav />}
 
       {/* Global toast notifications */}
       <Toaster richColors position="top-center" />

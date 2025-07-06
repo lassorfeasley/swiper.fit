@@ -16,11 +16,16 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import MainContentSection from "@/components/layout/MainContentSection";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const { user } = useAuth();
+  const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const [routines, setRoutines] = useState([]);
+  const [pendingProgramToStart, setPendingProgramToStart] = useState(null);
+  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
   const [programName, setProgramName] = useState("");
@@ -100,6 +105,20 @@ const RoutinesIndex = () => {
 
   const isReady = programName.trim().length > 0;
 
+  const handleStart = (program) => {
+    if (isWorkoutActive) {
+      setPendingProgramToStart(program);
+      setConfirmStartDialogOpen(true);
+    } else {
+      startWorkout(program).then(() => navigate("/workout/active"));
+    }
+  };
+
+  const handleConfirmStart = () => {
+    setConfirmStartDialogOpen(false);
+    startWorkout(pendingProgramToStart).then(() => navigate("/workout/active"));
+  };
+
   // Filter routines by search
   const filteredRoutines = routines.filter((program) => {
     const q = search.toLowerCase();
@@ -144,13 +163,8 @@ const RoutinesIndex = () => {
                 <RoutineCard
                   id={program.id}
                   name={program.routine_name}
-                  exerciseCount={(program.exerciseNames || []).length}
-                  setCount={program.setCount}
-                  leftText="Swipe to edit"
-                  swipeStatus="active"
-                  onSwipeComplete={() =>
-                    navigate(`/routines/${program.id}/configure`)
-                  }
+                  onStart={() => handleStart(program)}
+                  onSettings={() => navigate(`/routines/${program.id}/configure`)}
                 />
               </CardWrapper>
             ))
@@ -177,6 +191,14 @@ const RoutinesIndex = () => {
           />
         </SwiperForm.Section>
       </SwiperForm>
+      <SwiperAlertDialog
+        open={confirmStartDialogOpen}
+        onOpenChange={setConfirmStartDialogOpen}
+        onConfirm={handleConfirmStart}
+        title="End current workout?"
+        description="Starting this routine will end your current workout. Continue?"
+        confirmText="End & Start"
+      />
     </AppLayout>
   );
 };
