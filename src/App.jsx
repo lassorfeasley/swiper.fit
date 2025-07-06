@@ -24,6 +24,7 @@ import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
+import Workout from "./pages/Workout/Workout";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -86,6 +87,7 @@ function AppContent() {
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
+            <Route path="/workout" element={<Workout />} />
           </Route>
 
           {/* Public shared history route (unauthenticated) */}

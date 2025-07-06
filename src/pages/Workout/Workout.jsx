@@ -45,7 +45,9 @@ const Workout = () => {
                 reps,
                 weight,
                 weight_unit,
-                set_variant
+                set_variant,
+                set_type,
+                timed_set_duration
               )
             )`
           )
@@ -138,7 +140,7 @@ const Workout = () => {
                 leftText="Swipe to begin"
                 rightText={""}
                 swipeStatus="default"
-                onSwipeComplete={() => handleStartWorkout(program)}
+                onStart={() => handleStartWorkout(program)}
               />
             </CardWrapper>
           ))

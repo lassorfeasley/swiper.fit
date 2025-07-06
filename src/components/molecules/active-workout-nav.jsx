@@ -29,12 +29,12 @@ export default function ActiveWorkoutNav() {
   const handleEndWorkout = async () => {
     const workoutId = activeWorkout?.id;
     try {
+      await contextEndWorkout();
       if (workoutId) {
         navigate(`/history/${workoutId}`);
       } else {
         navigate("/history");
       }
-      await contextEndWorkout();
     } catch (error) {
       console.error("Error ending workout:", error);
       alert("There was an error ending your workout. Please try again.");

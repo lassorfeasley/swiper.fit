@@ -56,6 +56,8 @@ const ActiveWorkout = () => {
   const [editingExercise, setEditingExercise] = useState(null);
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
 
+  const skipAutoRedirectRef = useRef(false);
+
   useEffect(() => {
     if (focusedNode) {
       const resizeObserver = new ResizeObserver(() => {
@@ -124,6 +126,11 @@ const ActiveWorkout = () => {
     // Only redirect after loading has finished
     if (loading) return;
     if (!isWorkoutActive) {
+      // Skip auto-redirect after manual end
+      if (skipAutoRedirectRef.current) {
+        skipAutoRedirectRef.current = false;
+        return;
+      }
       navigate("/workout", { replace: true });
     }
   }, [loading, isWorkoutActive, navigate]);
@@ -330,13 +337,14 @@ const ActiveWorkout = () => {
 
   const handleEndWorkout = async () => {
     const workoutId = activeWorkout?.id;
+    skipAutoRedirectRef.current = true;
     try {
+      await contextEndWorkout();
       if (workoutId) {
         navigate(`/history/${workoutId}`);
       } else {
         navigate("/history");
       }
-      await contextEndWorkout();
     } catch (error) {
       console.error("Error ending workout:", error);
       alert("There was an error ending your workout. Please try again.");
@@ -966,7 +974,7 @@ const ActiveWorkout = () => {
       )}
 
       {/* Persistent bottom nav for active workout */}
-      <div data-layer="Property 1=active-workout" className="Property1ActiveWorkout self-stretch h-12 pl-3 bg-white border-t border-neutral-300 inline-flex justify-between items-center overflow-hidden fixed bottom-0 left-0 right-0 z-10">
+      <div data-layer="Property 1=active-workout" className="Property1ActiveWorkout self-stretch h-12 pl-3 bg-white border-t border-neutral-300 inline-flex justify-between items-center overflow-hidden fixed bottom-0 left-0 right-0 z-50">
         <div data-layer="max-width-wrapper" className="MaxWidthWrapper flex-1 self-stretch flex justify-start items-center">
           <div data-layer="Frame 22" className="Frame22 flex-1 self-stretch inline-flex flex-col justify-center items-start">
             <div data-layer="timeer" className="Timeer justify-center text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
@@ -978,7 +986,7 @@ const ActiveWorkout = () => {
           </div>
           <div data-layer="icons-wrapper" className="IconsWrapper self-stretch flex justify-start items-center">
             <div data-layer="Frame 23" className="Frame23 h-12 w-12 border-l border-neutral-300 flex justify-center items-center gap-2.5">
-              <div data-layer="lucide" data-icon="square" className="Lucide h-8 w-8 relative overflow-hidden">
+              <div data-layer="lucide" data-icon="square" className="Lucide h-8 w-8 relative overflow-hidden cursor-pointer" onClick={handleEndWorkout}>
                 <div data-layer="Vector" className="Vector h-6 w-6 left-[4px] top-[4px] absolute bg-red-400" />
               </div>
             </div>
