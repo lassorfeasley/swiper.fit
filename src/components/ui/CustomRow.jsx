@@ -44,29 +44,30 @@ export function CustomRow(props) {
   const cellWidth = `calc((100% - ${totalGapWidth + totalPaddingWidth}rem) / ${NUM_DAYS})`;
   
   return (
-    <tr className="relative" style={{ zIndex: 1 }}>
+    <tr className="relative overflow-visible" style={{ zIndex: 1, overflow: 'visible' }}>
       {isRangeMode && segments.map((segment, i) => {
         const startIndex = segment[0].index;
         const segmentLength = segment.length;
         
         const startOffset = `calc(${PADDING}rem + ${startIndex} * ${cellWidth} + ${startIndex * GAP}rem)`;
-        const wrapperWidth = `calc(${segmentLength} * ${cellWidth} + ${Math.max(0, segmentLength - 1)} * ${GAP}rem)`;
+        const wrapperWidth = `calc(${segmentLength} * ${cellWidth} + ${Math.max(0, segmentLength - 1)} * ${GAP}rem + ${totalPaddingWidth}rem)`;
 
         const wrapperStyle = {
+          border: '1px solid red',
           position: 'absolute',
-          top: '2px',
-          bottom: '2px',
+          top: `${PADDING}rem`,
+          bottom: `${PADDING}rem`,
           left: startOffset,
           width: wrapperWidth,
+          background: 'white',
+          boxShadow: '0px 0px 8.3px rgba(2,6,24,0.4)',
+          borderRadius: '4px',
           zIndex: -1,
         };
         
         return (
           <td key={i} colSpan={7} className="p-0">
-             <div
-                className="bg-red-500 rounded-sm h-full"
-                style={wrapperStyle}
-              />
+             <div style={wrapperStyle} />
           </td>
         );
       })}

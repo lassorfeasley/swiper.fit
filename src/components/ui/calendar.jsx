@@ -38,7 +38,7 @@ function Calendar({
         ...formatters,
       }}
       classNames={{
-        root: cn("w-fit", defaultClassNames.root),
+        root: cn("w-fit overflow-visible", defaultClassNames.root),
         months: cn("relative flex flex-col gap-4 md:flex-row", defaultClassNames.months),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         nav: cn(
@@ -71,7 +71,7 @@ function Calendar({
         caption_label: cn("select-none font-medium", captionLayout === "label"
           ? "text-sm"
           : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5", defaultClassNames.caption_label),
-        table: "w-full border-collapse",
+        table: "w-full border-separate",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "text-muted-foreground flex-1 select-none rounded-md text-[0.8rem] font-normal",
@@ -173,9 +173,12 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 leading-none data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] text-foreground hover:bg-transparent hover:text-foreground data-[range-start=true]:text-white data-[range-end=true]:text-white data-[range-middle=true]:text-white data-[selected-single=true]:bg-green-500 data-[selected-single=true]:text-white data-[selected-single=true]:shadow-calendar-selected [&>span]:text-xs",
+        "group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 leading-none hover:bg-transparent hover:text-foreground [&>span]:text-xs",
         modifiers.outside && "invisible pointer-events-none",
-        (modifiers.range_start || modifiers.range_middle || modifiers.range_end) && "!bg-transparent text-white",
+        modifiers.selected && !modifiers.range_start && !modifiers.range_middle && !modifiers.range_end && "bg-green-500 text-white shadow-calendar-selected",
+        modifiers.range_start && "bg-green-500 text-white rounded-tl-[8px] rounded-bl-[8px] rounded-tr-[2px] rounded-br-[2px]",
+        modifiers.range_middle && "bg-neutral-100 text-slate-600 rounded-[2px]",
+        modifiers.range_end && "bg-green-500 text-white rounded-tl-[2px] rounded-bl-[2px] rounded-tr-[8px] rounded-br-[8px]",
         isPastDay && "text-slate-600 font-extrabold",
         className
       )}
