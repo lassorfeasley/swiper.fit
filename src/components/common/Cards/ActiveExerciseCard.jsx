@@ -67,43 +67,69 @@ const ActiveExerciseCard = React.forwardRef(({
 
   // Derive sets from setData and initialSetConfigs
   const sets = useMemo(() => {
+    // 1) Merge template configs with any persisted rows that share the same routine_set_id
     const combined = initialSetConfigs.map((config, i) => {
-      // Match persisted set rows by routine_set_id from config.routine_set_id
-      const fromParent = setData.find((d) => d.routine_set_id === config.routine_set_id) || {};
-      // Use the database row id if present, otherwise no id (new set)
+      const fromParent = setData.find(
+        (d) => String(d.routine_set_id) === String(config.routine_set_id)
+      ) || {};
+
       const id = fromParent.id || null;
-      // Local temporary id for unsaved sets
       const tempId = id ? null : `temp-${i}`;
 
       return {
-        // retain template configuration
         ...config,
-        // overlay persisted data
         ...fromParent,
-        // id is the sets table id, tempId is for new sets
         id,
         tempId,
-        // values: use persisted values or config defaults
         reps: fromParent.reps ?? config.reps,
         weight: fromParent.weight ?? config.weight,
         weight_unit:
           fromParent.weight_unit ?? fromParent.unit ?? config.weight_unit ?? "lbs",
-        // status from persisted or default
         status: fromParent.status || "default",
-        // set name
-        set_variant: fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
-        // routine_set_id remains template id
+        set_variant:
+          fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
         routine_set_id: config.routine_set_id,
       };
     });
 
-    // Ensure the correct active/locked statuses after merging
-    const adjusted = combined.map((set) => {
-      if (set.status === "complete") return set;
-      // All other sets are simply default now.
-      return { ...set, status: "default" };
+    // 2) Append any persisted sets that DO NOT have a matching routine_set_id (i.e., ad-hoc sets)
+    const orphaned = setData.filter((d) => {
+      if (!d) return false;
+      // If routine_set_id is null OR not present in template list, treat as orphaned
+      return (
+        !d.routine_set_id ||
+        !initialSetConfigs.some(
+          (cfg) => String(cfg.routine_set_id) === String(d.routine_set_id)
+        )
+      );
     });
-    return adjusted;
+
+    orphaned.forEach((d, idx) => {
+      combined.push({
+        id: d.id || null,
+        tempId: d.id ? null : `orphan-${idx}`,
+        reps: d.reps ?? 0,
+        weight: d.weight ?? 0,
+        weight_unit: d.weight_unit ?? "lbs",
+        status: d.status || "default",
+        set_variant: d.set_variant || `Set ${combined.length + 1}`,
+        routine_set_id: d.routine_set_id || null,
+        set_type: d.set_type || "reps",
+        timed_set_duration: d.timed_set_duration,
+      });
+    });
+
+    // 3) Filter out sets explicitly marked as deleted / skipped for this workout
+    const visibleSets = combined.filter(
+      (set) => set.status !== "deleted" && set.status !== "skipped"
+    );
+
+    // 4) Normalise statuses – only completed sets stay completed; everything else is default
+    const filteredSets = visibleSets.map((set) =>
+      set.status === "complete" ? set : { ...set, status: "default" }
+    );
+
+    return filteredSets;
   }, [initialSetConfigs, setData]);
 
   useEffect(() => {
@@ -312,7 +338,7 @@ const ActiveExerciseCard = React.forwardRef(({
               <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
                 {sets.map((set, index) => (
                   <SwipeSwitch
-                    key={set.id || `set-${index}`}
+                    key={`${set.id || set.tempId || set.routine_set_id || "set"}-${index}`}
                     set={set}
                     onComplete={() => handleSetComplete(index)}
                     onClick={(e) => {

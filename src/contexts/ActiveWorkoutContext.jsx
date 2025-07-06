@@ -363,31 +363,33 @@ export function ActiveWorkoutProvider({ children }) {
         const targetRoutineSetId = update.changes.routine_set_id;
         const targetId = update.id;
 
-        // Find existing set in local state
-        const setIdx = newSets.findIndex(s => {
-          if (targetRoutineSetId) return String(s.routine_set_id) === String(targetRoutineSetId);
-          return String(s.id) === String(targetId);
-        });
+        // Update existing row or append new one
+        const setIdx = newSets.findIndex(
+          (s) => String(s.routine_set_id) === String(targetRoutineSetId)
+        );
+
+        const updatedRow = {
+          ...update.changes,
+          id: dbId || update.id || null,
+          routine_set_id: targetRoutineSetId,
+          status: update.changes.status || 'pending',
+        };
 
         if (setIdx !== -1) {
-          newSets[setIdx] = {
-            ...newSets[setIdx],
-            ...update.changes,
-            id: dbId || newSets[setIdx].id,
-            status: update.changes.status || newSets[setIdx].status || 'pending'
-          };
+          newSets[setIdx] = { ...newSets[setIdx], ...updatedRow };
         } else {
-          newSets.push({
-            ...update.changes,
-            id: dbId || update.id,
-            routine_set_id: targetRoutineSetId,
-            status: update.changes.status || 'pending'
-          });
+          newSets.push(updatedRow);
         }
       });
 
-      console.log('[updateWorkoutProgress] Updated local state:', { exerciseId, newSets });
-      return { ...prev, [exerciseId]: newSets };
+      // Deduplicate rows by routine_set_id to avoid duplicates
+      const deduped = Array.from(
+        new Map(
+          newSets.map((s) => [String(s.routine_set_id), s])
+        ).values()
+      );
+      console.log('[updateWorkoutProgress] Updated local state (deduped):', { exerciseId, deduped });
+      return { ...prev, [exerciseId]: deduped };
     });
   }, [activeWorkout]);
 

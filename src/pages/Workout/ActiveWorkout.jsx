@@ -126,7 +126,7 @@ const ActiveWorkout = () => {
     // Only redirect after loading has finished
     if (loading) return;
     if (!isWorkoutActive) {
-      // Skip auto-redirect after manual end
+      // Skip auto-redirect if user just ended workout
       if (skipAutoRedirectRef.current) {
         skipAutoRedirectRef.current = false;
         return;
@@ -336,8 +336,9 @@ const ActiveWorkout = () => {
   };
 
   const handleEndWorkout = async () => {
-    const workoutId = activeWorkout?.id;
+    // Prevent the auto-redirect effect from firing
     skipAutoRedirectRef.current = true;
+    const workoutId = activeWorkout?.id;
     try {
       await contextEndWorkout();
       if (workoutId) {
@@ -678,21 +679,14 @@ const ActiveWorkout = () => {
       // Persist exercise-level edits: name and section
       const exerciseId = editingExercise.exercise_id;
       if (type === "today") {
-        // Persist name override in snapshot table and handle errors
+        // 1) Update exercise name override
         const { data: updated, error: updateErr } = await supabase
           .from("workout_exercises")
           .update({ name_override: data.name.trim() })
           .eq("id", editingExercise.id)
           .select()
           .single();
-        if (updateErr) {
-          console.error('Error updating name_override:', updateErr);
-          throw updateErr;
-        }
-        // Optionally sync in-memory state to the final DB value
-        setExercises(prev => prev.map(ex =>
-          ex.id === editingExercise.id ? { ...ex, name: updated.name_override } : ex
-        ));
+        if (updateErr) throw updateErr;
       }
       if (type === "future") {
         try {
@@ -715,10 +709,32 @@ const ActiveWorkout = () => {
 
       const idsToDelete = originalIds.filter((id) => !updatedIds.includes(id));
 
+      // Delete removed sets from database
+      if (idsToDelete.length > 0) {
+        const { error: delError } = await supabase
+          .from('sets')
+          .delete()
+          .in('id', idsToDelete);
+        if (delError) console.error('Error deleting sets on edit:', delError);
+      }
+
       if (type === "future") {
-        // Apply updates to routine_sets table
-        if (idsToDelete.length > 0) {
-          await supabase.from("routine_sets").delete().in("id", idsToDelete);
+        // Apply updates to routine_sets table (template edits)
+        // Determine which template routine_sets were removed by the user
+        const originalRoutineIds = editingExercise.setConfigs
+          .map((c) => c.routine_set_id)
+          .filter(Boolean);
+        const updatedRoutineIds = updatedConfigs
+          .map((c) => c.routine_set_id)
+          .filter(Boolean);
+        const routineIdsToDelete = originalRoutineIds.filter(
+          (rid) => !updatedRoutineIds.includes(rid)
+        );
+        if (routineIdsToDelete.length > 0) {
+          await supabase
+            .from('routine_sets')
+            .delete()
+            .in('id', routineIdsToDelete);
         }
 
         await Promise.all(
@@ -733,18 +749,36 @@ const ActiveWorkout = () => {
               timed_set_duration: cfg.timed_set_duration,
             };
 
-            if (cfg.id) {
-              const { error } = await supabase
-                .from("routine_sets")
+            if (cfg.routine_set_id) {
+              // Update existing template set row
+              const { error: updErr } = await supabase
+                .from('routine_sets')
                 .update(payload)
-                .eq("id", cfg.id);
-              if (error) throw error;
+                .eq('id', cfg.routine_set_id);
+              if (updErr) throw updErr;
             } else {
-              const { error } = await supabase.from("routine_sets").insert({
-                routine_exercise_id: editingExercise.id,
-                ...payload,
-              });
-              if (error) throw error;
+              // Insert a new template set row
+              let routineExerciseId = null;
+              try {
+                const { data: rx, error: rxErr } = await supabase
+                  .from('routine_exercises')
+                  .select('id')
+                  .eq('routine_id', activeWorkout.programId)
+                  .eq('exercise_id', exerciseId)
+                  .single();
+                if (rxErr) throw rxErr;
+                routineExerciseId = rx?.id || null;
+              } catch (lookupErr) {
+                console.error(
+                  'Failed to find routine_exercise_id for new template set insertion',
+                  lookupErr
+                );
+              }
+
+              const { error: insErr } = await supabase
+                .from('routine_sets')
+                .insert({ routine_exercise_id: routineExerciseId, ...payload });
+              if (insErr) throw insErr;
             }
           })
         );
@@ -758,21 +792,6 @@ const ActiveWorkout = () => {
             : ex
         )
       );
-
-      // Sync with workoutProgress so SwipeSwitch components show updated values
-      const progressUpdates = updatedConfigs.map((cfg) => ({
-        id: cfg.id,
-        changes: {
-          reps: cfg.reps,
-          weight: cfg.weight,
-          weight_unit: cfg.unit,
-          routine_set_id: cfg.routine_set_id,
-          set_variant: cfg.set_variant,
-          set_type: cfg.set_type,
-          timed_set_duration: cfg.timed_set_duration,
-        },
-      }));
-      await updateWorkoutProgress(exerciseId, progressUpdates);
 
       setEditingExercise(null);
     } catch (err) {

@@ -78,13 +78,18 @@ const AddNewExerciseForm = React.forwardRef(
     useEffect(() => {
       const nameFilled = exerciseName.trim() !== "";
       const nameDirty = exerciseName.trim() !== initialNameRef.current.trim();
-      const setDirty = sets.some((_, idx) => {
-        const merged = getSetMerged(idx);
-        return (
-          JSON.stringify(merged) !==
-          JSON.stringify(initialSetConfigs[idx] || {})
-        );
-      });
+      // Detect if number of sets changed
+      const setsCountDirty = sets.length !== initialSetConfigs.length;
+      // Detect if any set's config changed
+      const setDirty =
+        setsCountDirty ||
+        sets.some((_, idx) => {
+          const merged = getSetMerged(idx);
+          return (
+            JSON.stringify(merged) !==
+            JSON.stringify(initialSetConfigs[idx] || {})
+          );
+        });
       // Ready to save/add only when a name is present AND either the name changed or sets changed
       onDirtyChange?.(nameFilled && (nameDirty || setDirty));
     }, [exerciseName, sets, onDirtyChange]);
