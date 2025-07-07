@@ -40,37 +40,37 @@ const PageHeader = forwardRef(({
       ref={ref}
       className={cn(
         variant === 'dark-fixed'
-          ? "fixed top-0 z-50 self-stretch min-h-14 px-5 py-2.5 bg-neutral-700 inline-flex justify-between items-center"
-          : "fixed top-0 z-50 self-stretch min-h-14 px-5 pt-5 bg-transparent inline-flex justify-between items-center",
+          ? "fixed top-0 z-50 self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
+          : "fixed top-0 z-50 self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
         showSidebar
           ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
           : "left-0 w-full",
         className
       )}
     >
-      <div className={cn("flex justify-start items-center gap-2.5", searchActive ? "hidden sm:flex" : "")}>
+      <div className={cn("flex justify-start items-center", searchActive ? "hidden sm:flex" : "")}>
         {showBackButton && (
           <button
             className={cn(
-              "h-10 p-2 rounded-[40px] flex justify-center items-center",
-              variant === 'dark-fixed' ? "" : "bg-neutral-700"
+              "w-11 h-11 flex items-center justify-center",
+              variant === 'dark-fixed'
+                ? "border-r border-neutral-600"
+                : "border-r border-neutral-300"
             )}
             onClick={onBack}
             aria-label="Back"
           >
-            <div
+            <ArrowLeft
               className={cn(
-                "w-full h-full relative overflow-hidden flex items-center justify-center",
-                variant === 'dark-fixed' ? "" : "bg-neutral-700"
+                "w-6 h-6",
+                variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
               )}
-            >
-              <ArrowLeft className="w-full h-full text-white" />
-            </div>
+            />
           </button>
         )}
         <div
           className={cn(
-            "flex-1 min-w-0 justify-center text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal truncate",
+            "pl-3 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide",
             variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
           )}
         >
@@ -107,46 +107,81 @@ const PageHeader = forwardRef(({
         </div>
       ) : (
         (showSearch || showSettings || showAdd || showShare) && (
-          <div
-            className={cn(
-              "Pageactions px-3 py-2 rounded-[40px] inline-flex justify-start items-center gap-3",
-              variant === 'dark-fixed' ? "" : "bg-neutral-700"
-            )}
-          >
+          <div className="Pageactions inline-flex justify-start items-center">
             {showSearch && (
               <button
-                className="Search w-8 h-8 flex items-center justify-center"
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center",
+                  variant === 'dark-fixed'
+                    ? "border-l border-neutral-600"
+                    : "border-l border-neutral-300"
+                )}
                 onClick={() => setSearchActive(true)}
                 aria-label="Open search"
               >
-                <Search className="w-6 h-6 text-white" />
+                <Search
+                  className={cn(
+                    "w-6 h-6",
+                    variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+                  )}
+                />
               </button>
             )}
             {showShare && (
               <button
-                className="Share w-8 h-8 flex items-center justify-center"
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center",
+                  variant === 'dark-fixed'
+                    ? "border-l border-neutral-600"
+                    : "border-l border-neutral-300"
+                )}
                 onClick={onShare}
                 aria-label="Share"
               >
-                <Share2 className="w-6 h-6 text-white" />
+                <Share2
+                  className={cn(
+                    "w-6 h-6",
+                    variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+                  )}
+                />
               </button>
             )}
             {showSettings && (
               <button
-                className="Settings2 w-8 h-8 flex items-center justify-center"
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center",
+                  variant === 'dark-fixed'
+                    ? "border-l border-neutral-600"
+                    : "border-l border-neutral-300"
+                )}
                 onClick={onSettings}
                 aria-label="Settings"
               >
-                <Settings2 className="w-6 h-6 text-white" />
+                <Settings2
+                  className={cn(
+                    "w-6 h-6",
+                    variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+                  )}
+                />
               </button>
             )}
             {showAdd && (
               <button
-                className="Add w-8 h-8 flex items-center justify-center"
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center",
+                  variant === 'dark-fixed'
+                    ? "border-l border-neutral-600"
+                    : "border-l border-neutral-300"
+                )}
                 onClick={onAdd}
                 aria-label="Add"
               >
-                <Plus className="w-6 h-6 text-white" />
+                <Plus
+                  className={cn(
+                    "w-6 h-6",
+                    variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+                  )}
+                />
               </button>
             )}
           </div>
