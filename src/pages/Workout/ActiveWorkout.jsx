@@ -12,6 +12,8 @@ import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
+import { Toaster } from "sonner";
+import { TextInput } from "@/components/molecules/text-input";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -58,6 +60,12 @@ const ActiveWorkout = () => {
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
 
   const skipAutoRedirectRef = useRef(false);
+
+  // State for settings sheet
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [newWorkoutName, setNewWorkoutName] = useState(activeWorkout?.workoutName || "");
+  // Sync local name when workoutName changes
+  useEffect(() => { setNewWorkoutName(activeWorkout?.workoutName || ""); }, [activeWorkout?.workoutName]);
 
   useEffect(() => {
     if (focusedNode) {
@@ -820,7 +828,7 @@ const ActiveWorkout = () => {
         showAdd={true}
         showSettings={true}
         onAdd={() => setShowAddExercise(true)}
-        onSettings={() => {/* settings handler here */}}
+        onSettings={() => setSettingsOpen(true)}
         onAction={() => setShowAddExercise(true)}
         onTitleChange={handleTitleChange}
         onDelete={handleDeleteWorkout}
@@ -1005,9 +1013,33 @@ const ActiveWorkout = () => {
       <ActiveWorkoutNav
         completedSets={completedSets}
         totalSets={totalSets}
+        onEnd={handleEndWorkout}
+        onSettings={() => setSettingsOpen(true)}
         onAdd={() => setShowAddExercise(true)}
-        onSettings={() => {/* settings handler here */}}
       />
+
+      {/* Settings sheet for renaming workout */}
+      <SwiperForm
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        title="Workout"
+        leftAction={() => setSettingsOpen(false)}
+        leftText="Cancel"
+        rightAction={() => handleTitleChange(newWorkoutName)}
+        rightText="Save"
+        rightEnabled={newWorkoutName.trim() !== (activeWorkout?.workoutName || "").trim()}
+        padding={0}
+        className="settings-drawer"
+      >
+        <div className="p-4">
+          <TextInput
+            label="Workout Name"
+            value={newWorkoutName}
+            onChange={(e) => setNewWorkoutName(e.target.value)}
+            placeholder="Enter workout name"
+          />
+        </div>
+      </SwiperForm>
     </>
   );
 };

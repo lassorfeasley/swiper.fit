@@ -43,7 +43,8 @@ export function ActiveWorkoutProvider({ children }) {
         const workoutData = {
           id: workout.id,
           programId: workout.routine_id,
-          name: workout.routines?.routine_name || workout.workout_name || 'Workout',
+          workoutName: workout.workout_name || 'Workout',
+          routineName: workout.routines?.routine_name || '',
           startTime: workout.created_at,
           lastExerciseId: workout.last_exercise_id || null,
         };
@@ -172,7 +173,8 @@ export function ActiveWorkoutProvider({ children }) {
     const workoutData = {
       id: workout.id,
       programId: program.id,
-      name: workoutName,
+      workoutName,
+      routineName: program.routine_name || '',
       startTime: workout.created_at,
       lastExerciseId: null,
     };

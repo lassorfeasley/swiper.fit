@@ -36,11 +36,11 @@ const Workout = () => {
         const { data, error } = await supabase
           .from("routines")
           .select(
-            `id, routine_name, routine_exercises!fk_routine_exercises__routines(
+            `id, routine_name, routine_exercises!routine_exercises_routine_id_fkey(
               id,
               exercise_id,
-              exercises!fk_routine_exercises__exercises(name),
-              routine_sets!fk_routine_sets__routine_exercises(
+              exercises!routine_exercises_exercise_id_fkey(name),
+              routine_sets!routine_sets_routine_exercise_id_fkey(
                 id,
                 reps,
                 weight,
