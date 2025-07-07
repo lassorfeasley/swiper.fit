@@ -18,6 +18,7 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import { toast } from "sonner";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -106,17 +107,29 @@ const RoutinesIndex = () => {
   const isReady = programName.trim().length > 0;
 
   const handleStart = (program) => {
+    console.log('[Routines] handleStart invoked for program:', program);
     if (isWorkoutActive) {
       setPendingProgramToStart(program);
       setConfirmStartDialogOpen(true);
     } else {
-      startWorkout(program).then(() => navigate("/workout/active"));
+      startWorkout(program)
+        .then(() => navigate("/workout/active"))
+        .catch((error) => {
+          console.error('[Routines] startWorkout error for program', program, error);
+          toast.error('Failed to start workout: ' + error.message);
+        });
     }
   };
 
   const handleConfirmStart = () => {
+    console.log('[Routines] handleConfirmStart for pending program:', pendingProgramToStart);
     setConfirmStartDialogOpen(false);
-    startWorkout(pendingProgramToStart).then(() => navigate("/workout/active"));
+    startWorkout(pendingProgramToStart)
+      .then(() => navigate("/workout/active"))
+      .catch((error) => {
+        console.error('[Routines] startWorkout error on confirm for program', pendingProgramToStart, error);
+        toast.error('Failed to start workout: ' + error.message);
+      });
   };
 
   // Filter routines by search

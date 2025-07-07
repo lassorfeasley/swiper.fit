@@ -137,19 +137,20 @@ const CompletedWorkout = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('[CompletedWorkout] Fetching workout with ID:', workoutId);
       setLoading(true);
       // Build workout query: owners can see their workouts; others can only see public ones
       let workoutQuery = supabase
         .from("workouts")
-        .select("*, routines(routine_name)")
+        // Use the explicit foreign-key relationship name to embed routine data
+        .select("*, routines!workouts_routine_id_fkey(routine_name)")
         .eq("id", workoutId);
 
-      // If no user, rely on RLS to only expose workouts that are globally shared or explicitly public
-
-      const { data: workoutData } = await workoutQuery.single();
+      const { data: workoutData, error: workoutError } = await workoutQuery.single();
+      console.log('[CompletedWorkout] workoutData:', workoutData, 'workoutError:', workoutError);
 
       // If workout not found (e.g., not public), stop here
-      if (!workoutData) {
+      if (workoutError || !workoutData) {
         setWorkout(null);
         setLoading(false);
         return;
@@ -157,12 +158,13 @@ const CompletedWorkout = () => {
       setWorkout(workoutData);
 
       // Fetch only completed sets for this workout
-      const { data: setsData } = await supabase
+      const { data: setsData, error: setsError } = await supabase
         .from("sets")
         .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status")
         .eq("workout_id", workoutId)
         .eq("status", "complete")
         .order("set_order", { ascending: true });
+      console.log('[CompletedWorkout] setsData:', setsData, 'setsError:', setsError);
 
       // Only keep sets that have reps and weight logged and are valid numbers
       const validSets = (setsData || [])
@@ -189,6 +191,7 @@ const CompletedWorkout = () => {
             set_variant: set.set_variant ?? set.name ?? '',
           };
         });
+      console.log('[CompletedWorkout] validSets:', validSets);
       setSets(validSets);
 
       // Get unique exercise_ids from valid sets only

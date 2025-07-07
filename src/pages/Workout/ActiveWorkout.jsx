@@ -349,11 +349,12 @@ const ActiveWorkout = () => {
     skipAutoRedirectRef.current = true;
     const workoutId = activeWorkout?.id;
     try {
-      await contextEndWorkout();
-      if (workoutId) {
+      const saved = await contextEndWorkout();
+      if (saved && workoutId) {
         navigate(`/history/${workoutId}`);
       } else {
-        navigate("/history");
+        // No sets saved – redirect back to routines
+        navigate("/routines");
       }
     } catch (error) {
       console.error("Error ending workout:", error);

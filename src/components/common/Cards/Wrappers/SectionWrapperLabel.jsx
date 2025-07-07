@@ -20,54 +20,16 @@ const SectionWrapperLabel = ({
   return (
     <div
       className={cn(
-        "h-20 self-stretch px-5 bg-white border-b border-neutral-300 inline-flex flex-col justify-center items-start gap-2.5 sticky top-0 z-20",
+        "h-[52px] self-stretch pl-3 bg-white border-b border-neutral-300 inline-flex items-center sticky top-0 z-20",
         className
       )}
       {...props}
     >
-      <div className="self-stretch inline-flex justify-between items-center gap-2.5">
-        <div className="flex-1 justify-start text-neutral-700 text-2xl font-bold font-vietnam leading-normal">
+      <div className="flex-1 flex items-center gap-2.5">
+        <div className="flex-1 text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
           {children}
         </div>
-        {(onEdit || onSave || onCancel) && (
-          <div className="flex items-center gap-5">
-            {isEditing ? (
-              <>
-                {onCancel && (
-                  <button
-                    onClick={onCancel}
-                    className="text-red-500 text-base font-medium font-vietnam leading-tight"
-                  >
-                    Cancel
-                  </button>
-                )}
-                {onSave && (
-                  <button
-                    onClick={onSave}
-                    disabled={isSaveDisabled}
-                    className={cn(
-                      isSaveDisabled
-                        ? "text-neutral-300 cursor-not-allowed"
-                        : "text-green-600",
-                      "text-base font-medium font-vietnam leading-tight"
-                    )}
-                  >
-                    Save
-                  </button>
-                )}
-              </>
-            ) : (
-              onEdit && (
-                <button
-                  onClick={onEdit}
-                  className="border-l border-white flex justify-center items-center gap-2.5 p-2"
-                >
-                  <Pencil className="size-6 text-neutral-400" />
-                </button>
-              )
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-5" />
       </div>
     </div>
   );

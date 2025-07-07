@@ -31,11 +31,18 @@ export const generateWorkoutName = () => {
   return `${day} ${timeOfDay} Workout`;
 };
 
-// Format seconds into MM:SS
+// Format elapsed time as 'M:SS' or 'H:MM:SS'
 export const formatSeconds = (totalSeconds) => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    .toString()
-    .padStart(2, "0")}`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const secString = seconds.toString().padStart(2, "0");
+  if (hours > 0) {
+    const hourString = hours.toString();
+    const minString = minutes.toString().padStart(2, "0");
+    return `${hourString}:${minString}:${secString}`;
+  } else {
+    const minString = minutes.toString();
+    return `${minString}:${secString}`;
+  }
 };

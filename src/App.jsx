@@ -58,7 +58,9 @@ function AppContent() {
 
   // Redirect to active workout when one is live
   useEffect(() => {
-    if (isWorkoutActive && location.pathname !== '/workout/active') {
+    const path = location.pathname;
+    // Only redirect to active workout when not on history pages
+    if (isWorkoutActive && !path.startsWith('/history') && path !== '/workout/active') {
       navigate('/workout/active', { replace: true });
     }
   }, [isWorkoutActive, location.pathname, navigate]);

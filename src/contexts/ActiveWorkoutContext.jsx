@@ -226,8 +226,8 @@ export function ActiveWorkoutProvider({ children }) {
   }, []);
 
   const endWorkout = useCallback(async () => {
-    if (!activeWorkout?.id) return;
-
+    if (!activeWorkout?.id) return false;
+    let saved = false;
     try {
       // Check if any sets have been logged for this workout
       const { count: setCount, error: countError } = await supabase
@@ -249,6 +249,7 @@ export function ActiveWorkoutProvider({ children }) {
         if (deleteError) {
           console.error('Error deleting empty workout:', deleteError);
         }
+        saved = false;
       } else {
         // Sets exist – mark workout as completed
         const { error } = await supabase
@@ -263,6 +264,7 @@ export function ActiveWorkoutProvider({ children }) {
         if (error) {
           console.error('Error ending workout:', error);
         }
+        saved = true;
       }
     } catch (err) {
       console.error('Unexpected error ending workout:', err);
@@ -274,6 +276,7 @@ export function ActiveWorkoutProvider({ children }) {
     setElapsedTime(0);
     setIsPaused(false);
     setWorkoutProgress({});
+    return saved;
   }, [activeWorkout, elapsedTime]);
 
   const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
