@@ -99,9 +99,9 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Hide navigation during active workout session */}
-      {isAuthenticatedRoute && !hideNavForPublic && !(isWorkoutActive && location.pathname === '/workout/active') && <MobileNav />}
-      {isAuthenticatedRoute && !hideNavForPublic && !(isWorkoutActive && location.pathname === '/workout/active') && <SideBarNav />}
+      {/* Show normal navigation only when no workout is active */}
+      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && <MobileNav />}
+      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && <SideBarNav />}
 
       {/* Global toast notifications */}
       <Toaster richColors position="top-center" />

@@ -546,10 +546,17 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          <>
+          // Flex container to ensure last section fills viewport
+          <div className="flex flex-col h-full">
             {exercisesBySection.length > 0 ? (
-              exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-                <PageSectionWrapper key={section} section={section} grid deckGap={20}>
+              exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => (
+                <PageSectionWrapper
+                  key={section}
+                  section={section}
+                  grid
+                  deckGap={20}
+                  className={idx === exercisesBySection.length - 1 ? 'flex-1' : ''}
+                >
                   {sectionExercises.map((exercise) => (
                     <ExerciseCompletedCard
                       key={exercise.id}
@@ -568,7 +575,7 @@ const CompletedWorkout = () => {
                 </p>
               </div>
             )}
-          </>
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <p>Workout not found.</p>

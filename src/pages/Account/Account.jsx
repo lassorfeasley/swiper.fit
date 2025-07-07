@@ -143,123 +143,126 @@ const Account = () => {
 
   return (
     <AppLayout title="Account" hideHeader>
-      <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-center items-center last:pb-20 md:last:pb-0">
-        <SectionWrapperLabel
-          isEditing={isEditingName}
-          onEdit={() => setIsEditingName(true)}
-          onCancel={() => {
-            setFirstName(profile.first_name);
-            setLastName(profile.last_name);
-            setDirtyName(false);
-            setIsEditingName(false);
-          }}
-          onSave={() => {
-            handleSaveName();
-            setIsEditingName(false);
-          }}
-          isSaveDisabled={!dirtyName}
-        >
-          Personal information
-        </SectionWrapperLabel>
-        <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-          <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-            <EditableTextInput
-              label="First name"
-              value={firstName}
-              onChange={(val) => {
-                setFirstName(val);
-                setDirtyName(true);
-              }}
-              editing={isEditingName}
-              onActivate={() => setIsEditingName(true)}
-            />
-            <EditableTextInput
-              label="Last name"
-              value={lastName}
-              onChange={(val) => {
-                setLastName(val);
-                setDirtyName(true);
-              }}
-              editing={isEditingName}
-              onActivate={() => setIsEditingName(true)}
-            />
+      {/* Container to ensure last section fills viewport */}
+      <div className="flex flex-col h-full">
+        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center">
+          <SectionWrapperLabel
+            isEditing={isEditingName}
+            onEdit={() => setIsEditingName(true)}
+            onCancel={() => {
+              setFirstName(profile.first_name);
+              setLastName(profile.last_name);
+              setDirtyName(false);
+              setIsEditingName(false);
+            }}
+            onSave={() => {
+              handleSaveName();
+              setIsEditingName(false);
+            }}
+            isSaveDisabled={!dirtyName}
+          >
+            Personal information
+          </SectionWrapperLabel>
+          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
+            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
+              <EditableTextInput
+                label="First name"
+                value={firstName}
+                onChange={(val) => {
+                  setFirstName(val);
+                  setDirtyName(true);
+                }}
+                editing={isEditingName}
+                onActivate={() => setIsEditingName(true)}
+              />
+              <EditableTextInput
+                label="Last name"
+                value={lastName}
+                onChange={(val) => {
+                  setLastName(val);
+                  setDirtyName(true);
+                }}
+                editing={isEditingName}
+                onActivate={() => setIsEditingName(true)}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-center items-center last:pb-20 md:last:pb-0">
-        <SectionWrapperLabel
-          isEditing={isEditingLogin}
-          onEdit={() => setIsEditingLogin(true)}
-          onCancel={() => {
-            setEmail(user.email || "");
-            setDirtyEmail(false);
-            setNewPassword("");
-            setIsEditingLogin(false);
-          }}
-          onSave={() => {
-            handleSaveLoginSection();
-            setIsEditingLogin(false);
-          }}
-          isSaveDisabled={!dirtyEmail && !newPassword}
-        >
-          Login and password
-        </SectionWrapperLabel>
-        <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-          <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-            <EditableTextInput
-              label="Email"
-              value={email}
-              onChange={(val) => {
-                setEmail(val);
-                setDirtyEmail(true);
-              }}
-              editing={isEditingLogin}
-              onActivate={() => setIsEditingLogin(true)}
-              inputProps={{ type: "email", placeholder: "Enter your email" }}
-            />
-            <EditableTextInput
-              label="Password"
-              value={newPassword}
-              onChange={setNewPassword}
-              editing={isEditingLogin}
-              onActivate={() => setIsEditingLogin(true)}
-              inputProps={{
-                type: showPasswordLogin ? "text" : "password",
-                placeholder: "",
-                icon: showPasswordLogin ? (
-                  <Eye
-                    className="size-6 text-neutral-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPasswordLogin(false);
-                    }}
-                  />
-                ) : (
-                  <EyeOff
-                    className="size-6 text-neutral-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPasswordLogin(true);
-                    }}
-                  />
-                ),
-              }}
-            />
+        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center">
+          <SectionWrapperLabel
+            isEditing={isEditingLogin}
+            onEdit={() => setIsEditingLogin(true)}
+            onCancel={() => {
+              setEmail(user.email || "");
+              setDirtyEmail(false);
+              setNewPassword("");
+              setIsEditingLogin(false);
+            }}
+            onSave={() => {
+              handleSaveLoginSection();
+              setIsEditingLogin(false);
+            }}
+            isSaveDisabled={!dirtyEmail && !newPassword}
+          >
+            Login and password
+          </SectionWrapperLabel>
+          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
+            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
+              <EditableTextInput
+                label="Email"
+                value={email}
+                onChange={(val) => {
+                  setEmail(val);
+                  setDirtyEmail(true);
+                }}
+                editing={isEditingLogin}
+                onActivate={() => setIsEditingLogin(true)}
+                inputProps={{ type: "email", placeholder: "Enter your email" }}
+              />
+              <EditableTextInput
+                label="Password"
+                value={newPassword}
+                onChange={setNewPassword}
+                editing={isEditingLogin}
+                onActivate={() => setIsEditingLogin(true)}
+                inputProps={{
+                  type: showPasswordLogin ? "text" : "password",
+                  placeholder: "",
+                  icon: showPasswordLogin ? (
+                    <Eye
+                      className="size-6 text-neutral-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPasswordLogin(false);
+                      }}
+                    />
+                  ) : (
+                    <EyeOff
+                      className="size-6 text-neutral-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPasswordLogin(true);
+                      }}
+                    />
+                  ),
+                }}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-center items-center last:pb-20 md:last:pb-0">
-        <SectionWrapperLabel>Account</SectionWrapperLabel>
-        <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-          <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-            <SwiperButton onClick={handleLogout} className="w-full">
-              Log out
-            </SwiperButton>
-            <SwiperButton variant="destructive" onClick={() => setDeleteConfirmOpen(true)} className="w-full">
-              Delete account
-            </SwiperButton>
+        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center flex-1">
+          <SectionWrapperLabel>Account</SectionWrapperLabel>
+          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
+            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
+              <SwiperButton onClick={handleLogout} className="w-full">
+                Log out
+              </SwiperButton>
+              <SwiperButton variant="destructive" onClick={() => setDeleteConfirmOpen(true)} className="w-full">
+                Delete account
+              </SwiperButton>
+            </div>
           </div>
         </div>
       </div>

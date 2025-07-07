@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
+import Footer from "@/components/layout/Footer";
 
 export default function AppLayout({
   children,
@@ -85,9 +86,12 @@ export default function AppLayout({
             // Push content down if dark-fixed or reserveSpace is true
             paddingTop: hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '0px' : headerHeight,
           }}
-          className={`flex-1 ${hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
+          className={`flex flex-col flex-1 ${hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
         >
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </main>
       </div>
     </div>

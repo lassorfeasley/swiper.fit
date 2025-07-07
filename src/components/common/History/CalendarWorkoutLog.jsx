@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { SwiperCalendar } from "@/components/molecules/swiper-calendar";
 import { Card, CardContent } from "@/components/atoms/card";
 import ToggleInput from "@/components/molecules/toggle-input";
@@ -22,6 +22,32 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   // selection mode for calendar: "single" | "range"
   const [mode, setMode] = React.useState("single");
   const [range, setRange] = React.useState({ from: undefined, to: undefined });
+
+  // Responsive month count for calendar
+  const computeResponsiveMonths = () => {
+    if (typeof window === "undefined") return 1;
+    const w = window.innerWidth;
+    if (w >= 1024) return 3;
+    if (w >= 768) return 2;
+    return 1;
+  };
+  const [months, setMonths] = useState(computeResponsiveMonths);
+  useEffect(() => {
+    const handler = () => setMonths(computeResponsiveMonths());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  // Determine calendar range (inclusive start, exclusive end)
+  const baseDate = useMemo(() => (date instanceof Date ? date : new Date()), [date]);
+  const calendarStart = useMemo(
+    () => new Date(baseDate.getFullYear(), baseDate.getMonth() - (months - 1), 1),
+    [baseDate, months]
+  );
+  const calendarEnd = useMemo(
+    () => new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1),
+    [baseDate]
+  );
 
   // higher-level filter: "all" | "day" | "range"
   const [filterMode, setFilterMode] = React.useState("all");
@@ -126,12 +152,14 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
             selected={calendarSelected}
             onSelect={handleCalendarSelect}
             className="bg-transparent p-0"
-            showOutsideDays={false}
+            showOutsideDays={true}
+            numberOfMonths={months}
             required
             modifiers={{
               hasWorkout: (day) => {
-                const key = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
-                return workoutDateKeys.has(key);
+                const time = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+                if (!workoutDateKeys.has(time)) return false;
+                return day >= calendarStart && day < calendarEnd;
               },
               future: isFutureNoWorkout,
             }}
@@ -206,7 +234,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
                 <WorkoutCard
                   name={w.workout_name || "Workout"}
                   subtitle={
-                    w.programs?.program_name || w.muscle_group || "Workout"
+                    w.routines?.routine_name || w.muscle_group || "Workout"
                   }
                   relativeLabel={relativeLabel}
                 />
