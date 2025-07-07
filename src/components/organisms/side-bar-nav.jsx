@@ -1,4 +1,3 @@
-import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { SidebarFooter } from "@/components/atoms/sidebar";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -54,11 +53,6 @@ const SideBarNav = () => {
     <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-r md:bg-stone-100 md:z-30">
       <div className="flex flex-col h-full w-full overflow-y-auto">
         <Content />
-        <SidebarFooter>
-          <div className="w-full px-1 pb-8">
-            <ActiveWorkoutNav />
-          </div>
-        </SidebarFooter>
       </div>
     </aside>
   );

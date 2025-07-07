@@ -6,132 +6,60 @@ import {
   StopCircle,
   Circle,
   Undo2,
+  Search,
+  Settings2,
+  Plus,
+  Square,
 } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate } from "react-router-dom";
 import { cn, formatSeconds } from "@/lib/utils";
 
-export default function ActiveWorkoutNav() {
-  const navigate = useNavigate();
-  const {
-    elapsedTime,
-    isPaused,
-    togglePause,
-    isWorkoutActive,
-    endWorkout: contextEndWorkout,
-    activeWorkout,
-  } = useActiveWorkout();
-
-  const handleC2AClick = () => {
-    navigate("/workout");
-  };
-
-  const handleEndWorkout = async () => {
-    const workoutId = activeWorkout?.id;
-    try {
-      await contextEndWorkout();
-      if (workoutId) {
-        navigate(`/history/${workoutId}`);
-      } else {
-        navigate("/history");
-      }
-    } catch (error) {
-      console.error("Error ending workout:", error);
-      alert("There was an error ending your workout. Please try again.");
-    }
-  };
-
-  const handleReturnToWorkout = () => {
-    navigate("/workout/active");
-  };
-
-  let workoutNavState = "c2a";
-  if (isWorkoutActive) {
-    if (location.pathname === "/workout/active") {
-      workoutNavState = "activeWorkout";
-    } else {
-      workoutNavState = "returnToWorkout";
-    }
-  } else if (location.pathname === "/workout") {
-    workoutNavState = "programPrompt";
-  }
-
-  const isBetween =
-    workoutNavState === "activeWorkout" ||
-    workoutNavState === "returnToWorkout";
-
-  const baseContainerClasses =
-    "h-12 px-3 py-2 bg-white rounded-lg shadow-[0px_0px_11.3px_0px_rgba(163,163,163,0.5)] inline-flex items-center overflow-hidden w-full cursor-pointer";
-
-  const renderContent = () => {
-    switch (workoutNavState) {
-      case "c2a":
-        return (
-          <div
-            className={cn(baseContainerClasses, "justify-start gap-2")}
-            onClick={handleC2AClick}
-          >
-            <PlayCircle className="size-7 text-red-400" />
-            <span className="text-neutral-700 text-sm font-medium leading-none">
-              Record a workout
-            </span>
-          </div>
-        );
-      case "programPrompt":
-        return (
-          <div className={cn(baseContainerClasses, "justify-start gap-2")}>
-            <ChevronRightCircle className="size-7 text-orange-600" />
-            <span className="text-neutral-700 text-sm font-medium leading-none">
-              Select a program
-            </span>
-          </div>
-        );
-      case "returnToWorkout":
-        return (
-          <div
-            className={cn(baseContainerClasses, "justify-between")}
-            onClick={handleReturnToWorkout}
-          >
-            <div className="flex-1 flex justify-start items-center gap-1">
-              <Undo2 className="size-5 text-green-600" />
-              <span className="text-neutral-700 text-sm font-medium leading-none">
-                Return to workout
-              </span>
+export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1 }) {
+  const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
+  return (
+    <div className="fixed bottom-0 left-0 right-0 w-full bg-white z-50">
+      {/* Progress bar */}
+      <div className="h-2 w-full flex overflow-hidden">
+        <div
+          className="bg-green-600 transition-all duration-300 ease-in-out"
+          style={{ width: `${progress * 100}%` }}
+        />
+        <div className="flex-1 bg-neutral-300" />
+      </div>
+      {/* Nav controls */}
+      <div className="h-12 w-full flex justify-between items-center overflow-hidden">
+        <div className="flex-1 self-stretch flex justify-start items-center">
+          <div className="self-stretch flex justify-start items-center">
+            <div className="w-12 h-12 flex justify-center items-center gap-2.5">
+              <Circle className="w-3 h-3 text-green-600 fill-current" />
             </div>
           </div>
-        );
-      case "activeWorkout":
-        return (
-          <div className={cn(baseContainerClasses, "justify-between")}>
-            <div className="flex justify-start items-center gap-1">
-              <Circle className="size-4 text-green-500 fill-current" />
-              <span className="text-neutral-700 text-sm font-medium leading-none">
-                {formatSeconds(elapsedTime)}
-              </span>
+          <div className="flex-1 h-12 pr-3 inline-flex flex-col justify-center items-start">
+            <div className="justify-center text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+              Wednesday morning workout
             </div>
-            <div className="flex justify-start items-center gap-2">
-              {isPaused ? (
-                <PlayCircle
-                  className="size-7 text-orange-500"
-                  onClick={togglePause}
-                />
-              ) : (
-                <PauseCircle
-                  className="size-7 text-orange-500"
-                  onClick={togglePause}
-                />
-              )}
-              <StopCircle
-                className="size-7 text-red-400"
-                onClick={handleEndWorkout}
-              />
+            <div className="justify-center text-neutral-400 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+              Chest and triceps
             </div>
           </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return <>{renderContent()}</>;
+          <div className="self-stretch flex justify-start items-center">
+            <div className="w-12 h-12 border-l border-neutral-300 flex justify-center items-center gap-2.5">
+              <Square className="w-6 h-6 text-neutral-500" />
+            </div>
+          </div>
+          <div className="h-12 flex justify-start items-center">
+            <div className="w-12 h-12 border-l border-neutral-300 flex justify-center items-center gap-2.5">
+              <Settings2 className="w-6 h-6 text-neutral-500" />
+            </div>
+          </div>
+          <div className="self-stretch flex justify-start items-center">
+            <div className="w-12 h-12 border-l border-neutral-300 flex justify-center items-center gap-2.5">
+              <Plus className="w-6 h-6 text-neutral-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
