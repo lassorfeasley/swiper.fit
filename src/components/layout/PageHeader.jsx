@@ -41,14 +41,16 @@ const PageHeader = forwardRef(({
       className={cn(
         variant === 'dark-fixed'
           ? "fixed top-0 z-50 self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
-          : "fixed top-0 z-50 self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
+          : searchActive
+            ? "fixed top-0 z-50 self-stretch h-11 bg-white backdrop-blur-xs border-b border-neutral-300 inline-flex justify-between items-center"
+            : "fixed top-0 z-50 self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
         showSidebar
           ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
           : "left-0 w-full",
         className
       )}
     >
-      <div className={cn("flex justify-start items-center", searchActive ? "hidden sm:flex" : "")}>
+      <div className="flex justify-start items-center">
         {showBackButton && (
           <button
             className={cn(
@@ -80,29 +82,33 @@ const PageHeader = forwardRef(({
       
       {/* Action / Search area */}
       {searchActive ? (
-        <div className="flex items-center gap-2 w-full max-w-[420px]">
-          <div className="flex-1">
-            <TextInput
-              ref={searchInputRef}
-              customPlaceholder="Search"
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-              icon={<Search className="size-4 text-neutral-300" />}
-              className="w-full"
-            />
+        <div className="Pageactions inline-flex justify-start items-center">
+          <div className="w-96 h-11 max-w-96 min-w-64 inline-flex flex-col justify-center items-start gap-2">
+            <div className="self-stretch pl-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5">
+              <TextInput
+                ref={searchInputRef}
+                customPlaceholder="Search"
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
+                icon={<Search className="size-4 text-neutral-300" />}
+                className="w-full"
+              />
+            </div>
           </div>
           <button
-            className="w-8 h-8 flex items-center justify-center"
+            className="w-11 h-11 flex items-center justify-center border-l border-neutral-300"
             onClick={() => {
               onSearchChange("");
               setSearchActive(false);
             }}
             aria-label="Clear search"
           >
-            <X className={cn(
-              "w-6 h-6",
-              variant === 'dark-fixed' ? 'text-white' : 'text-neutral-700'
-            )} />
+            <X
+              className={cn(
+                "w-6 h-6",
+                variant === 'dark-fixed' ? 'text-white' : 'text-neutral-700'
+              )}
+            />
           </button>
         </div>
       ) : (

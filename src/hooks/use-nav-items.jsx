@@ -1,19 +1,19 @@
-import { RotateCcw, Star, Cog, Blend } from "lucide-react";
+import { History, Star, Cog, Blend } from "lucide-react";
 
 export const useNavItems = () => {
   const navItems = [
-    { to: "/routines", label: "Routines", icon: <Star className="size-5" /> },
+    { to: "/routines", label: "Routines", icon: <Star className="w-6 h-6" /> },
     {
       to: "/history",
       label: "History",
-      icon: <RotateCcw className="size-5" />,
+      icon: <History className="w-6 h-6" />,
     },
+    { to: "/sharing", label: "Sharing", icon: <Blend className="w-6 h-6" />, disabled: true },
     {
       to: "/account",
       label: "Account",
-      icon: <Cog className="size-5" />,
+      icon: <Cog className="w-6 h-6" />,
     },
-    { to: "/sharing", label: "Sharing", icon: <Blend className="size-5" />, disabled: true },
   ];
 
   return navItems;

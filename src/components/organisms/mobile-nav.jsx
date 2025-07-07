@@ -12,28 +12,48 @@ const MobileNav = () => {
 
   return (
     <nav
-      className="mobile-nav flex flex-col items-center fixed bottom-0 left-0 right-0 w-full md:hidden px-4 pb-3 z-[100] gap-3"
+      className="mobile-nav self-stretch bg-white border-t border-neutral-300 inline-flex flex-col justify-end items-center fixed bottom-0 left-0 right-0 w-full md:hidden z-[100]"
     >
-      <div className="absolute inset-0 -z-10 bg-stone-200/70 backdrop-blur-md [mask-image:linear-gradient(to_bottom,transparent_0,black_40%)]" />
       {isWorkoutActive ? (
         <ActiveWorkoutNav />
       ) : (
-        <div className="flex flex-1 max-w-[350px] justify-evenly items-center mx-auto w-full h-full gap-5">
-          {navItems.map((item) => {
+        <div className="self-stretch flex w-full">
+          {navItems.map((item, index) => {
             const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
+            const isLastItem = index === navItems.length - 1;
+
+            const itemClasses = cn(
+              "flex-1 p-2 inline-flex flex-col justify-center items-center gap-2",
+              !isLastItem && "border-r border-neutral-300"
+            );
+
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.to}
+                  className={cn(itemClasses, "opacity-50 cursor-not-allowed")}
+                >
+                  <div className="relative">
+                    <span className="text-neutral-400">{item.icon}</span>
+                  </div>
+                  <div className="text-center justify-start text-xs font-bold font-vietnam uppercase leading-3 tracking-wide text-neutral-400">
+                    {item.label}
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className="w-14 inline-flex flex-col justify-start items-center group"
+                className={itemClasses}
                 aria-current={selected ? "page" : undefined}
               >
-                <div className="size-6 flex items-center justify-center">
+                <div className="relative">
                   <span
                     className={cn(
-                      selected
-                        ? "text-neutral-500"
-                        : "text-neutral-400 group-hover:text-neutral-500"
+                      selected ? "text-neutral-700" : "text-neutral-400"
                     )}
                   >
                     {item.icon}
@@ -41,10 +61,8 @@ const MobileNav = () => {
                 </div>
                 <div
                   className={cn(
-                    "text-center text-xs font-medium leading-none",
-                    selected
-                      ? "text-neutral-500"
-                      : "text-neutral-400 group-hover:text-neutral-500"
+                    "text-center justify-start text-xs font-bold font-vietnam uppercase leading-3 tracking-wide",
+                    selected ? "text-neutral-700" : "text-neutral-400"
                   )}
                 >
                   {item.label}
