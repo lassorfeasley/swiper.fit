@@ -558,6 +558,7 @@ const CompletedWorkout = () => {
                   className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
                   isSticky={true}
                   stickyTopClass="top-0"
+                  isFirst={idx === 0}
                 >
                   {sectionExercises.map((exercise) => (
                     <ExerciseCompletedCard

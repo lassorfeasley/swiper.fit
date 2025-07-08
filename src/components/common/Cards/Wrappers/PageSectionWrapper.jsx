@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, showPlusButton = false, onPlus, isSticky = true, stickyTopClass, ...props }) => {
+const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, showPlusButton = false, onPlus, isSticky = true, stickyTopClass, isFirst = false, ...props }) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -27,7 +27,7 @@ const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = 
         "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
         className
       )}
-      style={{marginTop: 0, paddingTop: 0}}
+      style={{marginTop: 0, paddingTop: isFirst ? 44 : 0}}
       {...props}
     >
       {/* Header */}
@@ -56,6 +56,7 @@ PageSectionWrapper.propTypes = {
   onPlus: PropTypes.func,
   isSticky: PropTypes.bool,
   stickyTopClass: PropTypes.string,
+  isFirst: PropTypes.bool,
 };
 
 export default PageSectionWrapper; 

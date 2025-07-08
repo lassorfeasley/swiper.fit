@@ -844,13 +844,14 @@ const ActiveWorkout = () => {
       >
         <div ref={listRef}>
           {exercisesBySection.length > 0 ? (
-            exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+            exercisesBySection.map(({ section, exercises: sectionExercises }, index) => (
               <PageSectionWrapper
                 key={section}
                 section={section}
                 showPlusButton={true}
                 onPlus={() => handleOpenAddExercise(section)}
                 stickyTopClass="top-11"
+                isFirst={index === 0}
               >
                 {sectionExercises.map((ex, index) => {
                   const exerciseProgress = workoutProgress[ex.exercise_id] || [];
