@@ -56,14 +56,32 @@ function AppContent() {
   const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
   const hideNavForPublic = isPublicHistoryView;
 
+  // Define paths that should be allowed even when workout is active
+  const allowedPaths = [
+    '/workout/active',           // The active workout page itself
+    '/login',                    // Authentication pages
+    '/create-account',
+    '/reset-password',
+    '/update-password'
+  ];
+  
+  // Check if current path is allowed
+  const isAllowedPath = allowedPaths.some(allowed => location.pathname === allowed || location.pathname.startsWith(allowed));
+  
+  // Guard: If workout is active and we're on a non-allowed page, immediately redirect
+  const shouldRedirect = isWorkoutActive && !isAllowedPath;
+
   // Redirect to active workout when one is live
   useEffect(() => {
-    const path = location.pathname;
-    // Only redirect to active workout when not on history pages
-    if (isWorkoutActive && !path.startsWith('/history') && path !== '/workout/active') {
+    if (shouldRedirect) {
       navigate('/workout/active', { replace: true });
     }
-  }, [isWorkoutActive, location.pathname, navigate]);
+  }, [shouldRedirect, navigate]);
+
+  // Don't render any content if we should be redirecting - this prevents the page from showing briefly
+  if (shouldRedirect) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen relative">
