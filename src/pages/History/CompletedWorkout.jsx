@@ -216,10 +216,28 @@ const CompletedWorkout = () => {
         if (snapErr) console.error('Error fetching snapshot names:', snapErr);
         // Build mapping from snapshot rows
         (snapData || []).forEach((row) => {
-          const displayName = row.name_override || row.snapshot_name;
+          // Prefer name_override, then snapshot_name, then the current exercises.name value
+          const displayName = row.name_override || row.snapshot_name || (row.exercises || {}).name;
           const sec = (row.exercises || {}).section || "training";
-          exercisesObj[row.exercise_id] = { name: displayName, section: sec };
+          if (displayName) {
+            exercisesObj[row.exercise_id] = { name: displayName, section: sec };
+          }
         });
+
+        // For any exerciseIds that still don't have a name (e.g., no snapshot row visible due to RLS)
+        const missingIds = exerciseIds.filter((id) => !exercisesObj[id]);
+        if (missingIds.length > 0) {
+          const { data: exData, error: exErr } = await supabase
+            .from("exercises")
+            .select("id, name, section")
+            .in("id", missingIds);
+          if (exErr) {
+            console.error('Error fetching fallback exercise names:', exErr);
+          }
+          (exData || []).forEach((row) => {
+            exercisesObj[row.id] = { name: row.name, section: row.section || "training" };
+          });
+        }
       }
       setExercises(exercisesObj);
       setLoading(false);
@@ -577,8 +595,7 @@ const CompletedWorkout = () => {
                   className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
                   isSticky={true}
                   stickyTopClass="top-0"
-                  isFirst={idx === 0}
-                >
+                  >
                   {sectionExercises.map((exercise) => (
                     <ExerciseCompletedCard
                       key={exercise.id}
