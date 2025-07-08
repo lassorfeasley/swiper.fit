@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const userAgent = req.headers['user-agent'] || '';
 
   // Check if this is a crawler/bot
-  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage/i.test(userAgent);
+  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin/i.test(userAgent);
 
   if (!isBot) {
     // Real user - redirect to SPA
