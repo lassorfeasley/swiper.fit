@@ -59,9 +59,13 @@ export default function AppLayout({
     Object.entries(headerProps).filter(([key]) => allowedHeaderProps.includes(key))
   );
 
+  // Extract legacy showAdd prop and map it to PageHeader's showPlusButton
+  const { showAdd: showAddProp, ...restHeaderProps } = filteredHeaderProps;
+  const showPlusButtonProp = restHeaderProps.showPlusButton ?? showAddProp;
+
   // Determine header variant and reserve flag
-  const variant = filteredHeaderProps.variant;
-  const reserveSpace = filteredHeaderProps.reserveSpace;
+  const variant = restHeaderProps.variant;
+  const reserveSpace = restHeaderProps.reserveSpace;
 
   return (
     <div className="min-h-screen flex bg-white md:h-screen">
@@ -71,7 +75,8 @@ export default function AppLayout({
             ref={headerRef}
             title={title}
             showSidebar={showSidebar}
-            {...filteredHeaderProps}
+            {...restHeaderProps}
+            showPlusButton={showPlusButtonProp}
             onDelete={onDelete}
             showDeleteOption={showDeleteOption}
             searchValue={searchValue}
