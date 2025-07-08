@@ -500,6 +500,23 @@ const CompletedWorkout = () => {
         .eq('id', workoutId)
         .eq('user_id', user.id);
       setWorkout((prev) => ({ ...prev, is_public: val }));
+      
+      // Trigger static generation for crawler support
+      try {
+        await fetch('/api/trigger-static-generation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            workoutId,
+            isPublic: val
+          })
+        });
+      } catch (triggerError) {
+        console.warn('Failed to trigger static generation:', triggerError);
+        // Don't show user error for this since it's not critical to core functionality
+      }
     } catch (e) {
       // Revert on failure
       setPublicLink(!val);
@@ -517,38 +534,7 @@ const CompletedWorkout = () => {
     }
   };
 
-  // Add this effect after all the existing useEffect hooks (around line 230)
-  useEffect(() => {
-    if (workout && isPublicWorkoutView && ownerName && !loading) {
-      const exerciseCount = new Set(sets.map(s => s.exercise_id)).size;
-      const setCount = sets.length;
-      const date = new Date(workout.created_at).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      
-      const duration = workout.duration_seconds ? 
-        formatDuration(workout.duration_seconds) : '';
-      
-      const title = `${ownerName}'s ${workout.workout_name}`;
-      const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
-      
-      // Update meta tags
-      document.title = title;
-      updateMetaTag('property', 'og:title', title);
-      updateMetaTag('property', 'og:description', description);
-      updateMetaTag('property', 'og:url', window.location.href);
-      updateMetaTag('property', 'og:type', 'website');
-      updateMetaTag('property', 'og:site_name', 'SwiperFit');
-      updateMetaTag('name', 'description', description);
-      
-      // Twitter Card meta tags
-      updateMetaTag('name', 'twitter:card', 'summary');
-      updateMetaTag('name', 'twitter:title', title);
-      updateMetaTag('name', 'twitter:description', description);
-    }
-  }, [workout, sets, ownerName, isPublicWorkoutView, loading]);
+
 
   return (
     <>

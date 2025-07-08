@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/history/public/workout/:workoutId", "destination": "/api/workout/:workoutId" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 } 
