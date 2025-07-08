@@ -13,8 +13,46 @@ export default async function handler(req, res) {
   const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin/i.test(userAgent);
 
   if (!isBot) {
-    // Real user - redirect to SPA
-    return res.redirect(302, `/history/public/workout/${workoutId}`);
+    // Real user - serve the SPA HTML
+    const indexHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Material Symbols -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Filled:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <title>SwiperFit</title>
+    <script type="module" crossorigin src="/assets/index-BL9RFIrh.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-U8Nvy5EN.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(200).send(indexHtml);
   }
 
   // Bot/crawler - serve static HTML
