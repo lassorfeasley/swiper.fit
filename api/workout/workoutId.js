@@ -6,7 +6,10 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  const { workoutId } = req.query;
+  // Extract workout ID from the referrer header or use a test ID
+  const referer = req.headers.referer || '';
+  const workoutIdMatch = referer.match(/\/workout\/([^\/\?]+)/);
+  const workoutId = workoutIdMatch ? workoutIdMatch[1] : '3de533f8-7d05-47a9-ac1d-159268b509a4'; // fallback for testing
   const userAgent = req.headers['user-agent'] || '';
 
   // Check if this is a crawler/bot
