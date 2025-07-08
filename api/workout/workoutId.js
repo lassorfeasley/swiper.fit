@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const supabase = createClient(
   'https://tdevpmxmvrgouozsgplu.supabase.co',
@@ -13,46 +15,17 @@ export default async function handler(req, res) {
   const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin/i.test(userAgent);
 
   if (!isBot) {
-    // Real user - serve the SPA HTML
-    const indexHtml = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Material Symbols -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Filled:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-    />
-    <title>SwiperFit</title>
-    <script type="module" crossorigin src="/assets/index-BL9RFIrh.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-U8Nvy5EN.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-    res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(indexHtml);
+    // Real user - serve the built SPA HTML dynamically to always reference the correct hashed asset names
+    try {
+      const distIndexPath = path.join(process.cwd(), 'dist', 'index.html');
+      const indexHtml = await fs.readFile(distIndexPath, 'utf8');
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(indexHtml);
+    } catch (err) {
+      console.error('Error reading built index.html:', err);
+      // Fallback: redirect to root so Vercel will serve the SPA index.html via static routing
+      return res.redirect(302, '/');
+    }
   }
 
   // Bot/crawler - serve static HTML
