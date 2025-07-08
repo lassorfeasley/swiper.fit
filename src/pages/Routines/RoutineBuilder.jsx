@@ -425,7 +425,7 @@ const RoutineBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-          <PageSectionWrapper key={section} section={section} id={`section-${section}`} grid deckGap={20}>
+          <PageSectionWrapper key={section} section={section} id={`section-${section}`} grid deckGap={20} stickyTopClass="top-0">
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
                 No exercises found. Try adding one!

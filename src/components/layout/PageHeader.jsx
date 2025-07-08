@@ -13,7 +13,7 @@ const PageHeader = forwardRef(({
   title = "Page",
   showSearch = false,
   showSettings = false,
-  showAdd = false,
+  showPlusButton = false,
   showShare = false,
   showSidebar = false,
   onBack,
@@ -38,6 +38,7 @@ const PageHeader = forwardRef(({
   return (
     <header
       ref={ref}
+      data-show-plus-button={showPlusButton}
       className={cn(
         variant === 'dark-fixed'
           ? "fixed top-0 z-50 self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
@@ -112,7 +113,7 @@ const PageHeader = forwardRef(({
           </button>
         </div>
       ) : (
-        (showSearch || showSettings || showAdd || showShare) && (
+        (showSearch || showSettings || showPlusButton || showShare) && (
           <div className="Pageactions inline-flex justify-start items-center">
             {showSearch && (
               <button
@@ -171,7 +172,7 @@ const PageHeader = forwardRef(({
                 />
               </button>
             )}
-            {showAdd && (
+            {showPlusButton && (
               <button
                 className={cn(
                   "w-11 h-11 flex items-center justify-center",
@@ -204,7 +205,7 @@ PageHeader.propTypes = {
   title: PropTypes.string,
   showSearch: PropTypes.bool,
   showSettings: PropTypes.bool,
-  showAdd: PropTypes.bool,
+  showPlusButton: PropTypes.bool,
   showShare: PropTypes.bool,
   showSidebar: PropTypes.bool,
   onBack: PropTypes.func,

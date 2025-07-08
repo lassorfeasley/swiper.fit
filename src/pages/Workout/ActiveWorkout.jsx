@@ -845,7 +845,13 @@ const ActiveWorkout = () => {
         <div ref={listRef}>
           {exercisesBySection.length > 0 ? (
             exercisesBySection.map(({ section, exercises: sectionExercises }) => (
-              <PageSectionWrapper key={section} section={section}>
+              <PageSectionWrapper
+                key={section}
+                section={section}
+                showPlusButton={true}
+                onPlus={() => handleOpenAddExercise(section)}
+                stickyTopClass="top-11"
+              >
                 {sectionExercises.map((ex, index) => {
                   const exerciseProgress = workoutProgress[ex.exercise_id] || [];
                   const focusedIndex = sectionExercises.findIndex(

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, ...props }) => {
+const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, showPlusButton = false, onPlus, isSticky = true, stickyTopClass, ...props }) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -24,19 +24,19 @@ const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = 
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center",
+        "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
         className
       )}
       style={{marginTop: 0, paddingTop: 0}}
       {...props}
     >
       {/* Header */}
-      <SectionWrapperLabel>
+      <SectionWrapperLabel showPlusButton={showPlusButton} onPlus={onPlus} isSticky={isSticky} stickyTopClass={stickyTopClass}>
         {displayTitle}
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className="w-full self-stretch pt-5 pb-28 px-0">
+      <div className={cn("w-full self-stretch pb-28 px-0")}>
         <DeckWrapper gap={deckGap} paddingX={20} {...(grid ? { grid: true, gridMinWidth } : {})}>
           {children}
         </DeckWrapper>
@@ -52,6 +52,10 @@ PageSectionWrapper.propTypes = {
   deckGap: PropTypes.number,
   grid: PropTypes.bool,
   gridMinWidth: PropTypes.number,
+  showPlusButton: PropTypes.bool,
+  onPlus: PropTypes.func,
+  isSticky: PropTypes.bool,
+  stickyTopClass: PropTypes.string,
 };
 
 export default PageSectionWrapper; 

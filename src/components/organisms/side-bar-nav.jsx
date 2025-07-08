@@ -10,7 +10,7 @@ const SideBarNav = () => {
   const accountItem = navItems.find(item => item.label === "Account");
   const selectedAccount = new RegExp(`^${accountItem.to}(\\/|$)`).test(location.pathname);
   return (
-    <aside data-layer="Property 1=Variant2" className="hidden md:fixed md:inset-y-0 md:left-0 md:inline-flex md:flex-col md:w-64 h-full bg-neutral-100 border-r border-neutral-300 md:z-50 overflow-y-auto Property1Variant2">
+    <aside data-layer="Property 1=Variant2" className="hidden md:fixed md:inset-y-0 md:left-0 md:inline-flex md:flex-col md:w-64 h-full bg-neutral-100 border-r border-neutral-300 md:z-50 overflow-y-hidden Property1Variant2">
       <div data-layer="Frame 18" className="Frame18 w-64 self-stretch inline-flex flex-col justify-between items-stretch h-full">
         <div data-layer="Frame 21" className="Frame21 self-stretch px-4 py-5 border-b border-neutral-300 flex justify-start items-center">
           <div data-svg-wrapper data-layer="Vector" className="Vector">

@@ -555,7 +555,9 @@ const CompletedWorkout = () => {
                   section={section}
                   grid
                   deckGap={20}
-                  className={idx === exercisesBySection.length - 1 ? 'flex-1' : ''}
+                  className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
+                  isSticky={true}
+                  stickyTopClass="top-0"
                 >
                   {sectionExercises.map((exercise) => (
                     <ExerciseCompletedCard
@@ -569,10 +571,8 @@ const CompletedWorkout = () => {
                 </PageSectionWrapper>
               ))
             ) : (
-              <div className="flex h-full w-full items-center justify-center py-10">
-                <p className="text-gray-500">
-                  {search ? "No exercises found matching your search." : "No exercises found in this workout."}
-                </p>
+              <div className="text-center py-10">
+                <p>No sets were logged for this workout.</p>
               </div>
             )}
           </div>
