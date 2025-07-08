@@ -8,7 +8,7 @@ export const useNavItems = () => {
       label: "History",
       icon: <History className="w-6 h-6" />,
     },
-    { to: "/sharing", label: "Sharing", icon: <Blend className="w-6 h-6" />, disabled: true },
+    { to: "/sharing", label: "Sharing", icon: <Blend className="w-6 h-6" /> },
     {
       to: "/account",
       label: "Account",
