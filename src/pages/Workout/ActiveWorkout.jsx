@@ -32,7 +32,6 @@ const ActiveWorkout = () => {
     saveSet,
     updateSet,
     updateLastExercise,
-    lastExerciseId,
   } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -83,17 +82,20 @@ const ActiveWorkout = () => {
   // === Scroll-snap helpers (new implementation) ===
   const hasAutoScrolledRef = useRef(false);
 
+  // Scroll the card to the top of the viewport
   const scrollCardIntoView = (cardEl, behavior = "smooth") => {
-    if (!cardEl?.scrollIntoView) return;
-    // Leverage CSS scroll-margin-top to position at 25% from top
-    cardEl.scrollIntoView({ behavior, block: "start" });
+    if (cardEl?.scrollIntoView) {
+      cardEl.scrollIntoView({ behavior, block: "start" });
+    }
   };
 
+  // Focus whenever the last_exercise_id in workflow context changes
   useEffect(() => {
-    if (lastExerciseId) {
-      setFocusedExerciseId(lastExerciseId);
+    const remoteId = activeWorkout?.lastExerciseId;
+    if (remoteId) {
+      setFocusedExerciseId(remoteId);
     }
-  }, [lastExerciseId]);
+  }, [activeWorkout?.lastExerciseId]);
 
   // After exercises load, autoscroll only to the card stored as lastExerciseId (once per mount)
   useEffect(() => {

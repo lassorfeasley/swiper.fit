@@ -143,6 +143,10 @@ useEffect(() => {
   const workoutChan = supabase
     .channel(`public:workouts:id=eq.${activeWorkout.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ new: w }) => {
+      // Sync last exercise across clients
+      if (w.last_exercise_id && w.last_exercise_id !== activeWorkout?.lastExerciseId) {
+        setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_exercise_id } : prev);
+      }
       console.log('[Realtime][workout status]', w);
       setIsWorkoutActive(w.is_active);
       if (!w.is_active) {
@@ -711,17 +715,26 @@ useEffect(() => {
   }, [activeWorkout, user]);
 
   const updateLastExercise = useCallback(async (exerciseId) => {
-    if (!activeWorkout?.id) return;
-    // Optimistically update state first
-    setActiveWorkout(prev => ({ ...prev, lastExerciseId: exerciseId }));
-  
+    if (!activeWorkout?.id) {
+      console.warn('[updateLastExercise] no activeWorkout.id, skipping', exerciseId);
+      return;
+    }
+    console.log('[updateLastExercise] attempting to set last_exercise_id to', exerciseId, 'for workout', activeWorkout.id);
+    // Optimistically update local state
+    setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: exerciseId } : prev);
     try {
-      await supabase
+      const { data: updatedRows, error: updateErr } = await supabase
         .from('workouts')
         .update({ last_exercise_id: exerciseId })
-        .eq('id', activeWorkout.id);
+        .eq('id', activeWorkout.id)
+        .select('id, last_exercise_id');
+      if (updateErr) {
+        console.error('[updateLastExercise] DB error:', updateErr);
+      } else {
+        console.log('[updateLastExercise] DB update success, rows:', updatedRows);
+      }
     } catch (err) {
-      console.error('Failed to update last_exercise_id:', err);
+      console.error('[updateLastExercise] exception:', err);
     }
   }, [activeWorkout]);
 
