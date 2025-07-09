@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
+import { useAccount } from "@/contexts/AccountContext";
+import DelegateModeHeader from "@/components/layout/DelegateModeHeader";
 import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
@@ -21,6 +23,9 @@ export default function AppLayout({
 }) {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Detect delegate mode
+  const { isDelegated } = useAccount();
 
   const sidebarWidthPx = 256; // Tailwind w-64
   const sidebarWidth = showSidebar ? sidebarWidthPx : 0;
@@ -67,9 +72,15 @@ export default function AppLayout({
   const variant = restHeaderProps.variant;
   const reserveSpace = restHeaderProps.reserveSpace;
 
+  // Determine total height of fixed headers: one PageHeader, plus DelegateModeHeader if impersonating
+  const baseHeaderHeight = hideHeader || noTopPadding ? 0 : headerHeight;
+  const totalHeaderHeight = isDelegated ? baseHeaderHeight * 2 : baseHeaderHeight;
+
   return (
     <div className="min-h-screen flex bg-white md:h-screen">
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64" : "flex flex-col flex-1"}>
+        {/* Delegate-mode and page headers */}
+        {isDelegated && <DelegateModeHeader />}
         {!hideHeader && (
           <PageHeader
             ref={headerRef}
@@ -81,6 +92,8 @@ export default function AppLayout({
             showDeleteOption={showDeleteOption}
             searchValue={searchValue}
             onSearchChange={onSearchChange}
+            // offset PageHeader below DelegateModeHeader when impersonating
+            className={isDelegated ? "fixed top-[var(--header-height)] left-0 right-0 transition-[top] ease-in-out" : undefined}
           />
         )}
         <main
@@ -88,10 +101,11 @@ export default function AppLayout({
           data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            // Push content down if dark-fixed or reserveSpace is true
-            paddingTop: hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '0px' : headerHeight,
+            // Reserve space for fixed headers
+            paddingTop: `${totalHeaderHeight}px`,
+            transition: 'padding-top 0.3s ease-in-out',
           }}
-          className={`flex flex-col flex-1 ${hideHeader || noTopPadding || !(variant === 'dark-fixed' || reserveSpace) ? '!pt-0 min-h-screen' : 'overflow-y-auto'}`}
+          className="flex flex-col flex-1 overflow-y-auto"
         >
           <div className="flex-1">
             {children}

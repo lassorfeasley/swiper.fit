@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
-import { useAuth } from './AuthContext';
+import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const ActiveWorkoutContext = createContext();
 
 export function ActiveWorkoutProvider({ children }) {
-  const { user } = useAuth();
+  const user = useCurrentUser();
+  const navigate = useNavigate();
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -134,6 +136,123 @@ export function ActiveWorkoutProvider({ children }) {
     };
   }, [isWorkoutActive, isPaused]);
 
+// Realtime subscriptions for active workout across clients
+useEffect(() => {
+  if (!activeWorkout?.id) return;
+  // Subscribe to workout status (start/end)
+  const workoutChan = supabase
+    .channel(`public:workouts:id=eq.${activeWorkout.id}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ new: w }) => {
+      console.log('[Realtime][workout status]', w);
+      setIsWorkoutActive(w.is_active);
+      if (!w.is_active) {
+        setActiveWorkout(null);
+      }
+    })
+    .subscribe();
+
+  // Subscribe to set logs for this workout
+  const setsChan = supabase
+    .channel(`public:sets:workout_id=eq.${activeWorkout.id}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'sets', filter: `workout_id=eq.${activeWorkout.id}` }, ({ eventType, new: row, old }) => {
+      console.log('[Realtime][sets]', eventType, row, old);
+      setWorkoutProgress(prev => {
+        const prog = { ...prev };
+        const list = prog[row.exercise_id] ? [...prog[row.exercise_id]] : [];
+        if (eventType === 'INSERT') {
+          list.push({
+            id: row.id,
+            routine_set_id: row.routine_set_id,
+            reps: row.reps,
+            weight: row.weight,
+            unit: row.weight_unit,
+            weight_unit: row.weight_unit,
+            set_variant: row.set_variant,
+            set_type: row.set_type,
+            timed_set_duration: row.timed_set_duration,
+            status: row.status || 'complete',
+          });
+        } else if (eventType === 'UPDATE') {
+          const idx = list.findIndex(s => s.id === row.id);
+          if (idx !== -1) {
+            list[idx] = {
+              ...list[idx],
+              reps: row.reps,
+              weight: row.weight,
+              weight_unit: row.weight_unit,
+              set_variant: row.set_variant,
+              set_type: row.set_type,
+              timed_set_duration: row.timed_set_duration,
+              status: row.status || 'complete',
+            };
+          }
+        } else if (eventType === 'DELETE') {
+          const idx = list.findIndex(s => s.id === old?.id);
+          if (idx !== -1) list.splice(idx, 1);
+        }
+        prog[row.exercise_id] = list;
+        return prog;
+      });
+    })
+    .subscribe();
+
+  return () => {
+    void workoutChan.unsubscribe();
+    void setsChan.unsubscribe();
+  };
+}, [activeWorkout?.id]);
+
+// Auto-navigate into any new active workout for this user (delegate or delegator), and initialize context
+useEffect(() => {
+  if (!user?.id) return;
+  const globalChan = supabase
+    .channel('global-workouts')
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'workouts', filter: `user_id=eq.${user.id}`
+    }, async ({ new: w }) => {
+      console.log('[Realtime][global new workout]', w);
+      if (!activeWorkout?.id) {
+        try {
+          // Fetch full workout record with routine join
+          const { data: workoutRec, error: fetchErr } = await supabase
+            .from('workouts')
+            .select('id, routine_id, workout_name, created_at, last_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
+            .eq('id', w.id)
+            .maybeSingle();
+          if (fetchErr || !workoutRec) {
+            console.error('Error fetching new active workout:', fetchErr);
+            return;
+          }
+          // Initialize context state
+          const workoutData = {
+            id: workoutRec.id,
+            programId: workoutRec.routine_id,
+            workoutName: workoutRec.workout_name,
+            routineName: workoutRec.routines?.routine_name || '',
+            startTime: workoutRec.created_at,
+            lastExerciseId: workoutRec.last_exercise_id || null,
+          };
+          setActiveWorkout(workoutData);
+          setIsWorkoutActive(true);
+          // Compute elapsed time from start
+          const elapsed = workoutRec.created_at
+            ? Math.floor((new Date() - new Date(workoutRec.created_at)) / 1000)
+            : 0;
+          setElapsedTime(elapsed);
+          setIsPaused(false);
+          setWorkoutProgress({});
+          // Navigate into the record page
+          navigate('/workout/active');
+        } catch (e) {
+          console.error('Error initializing remote workout:', e);
+        }
+      }
+    })
+    .subscribe();
+
+  return () => void globalChan.unsubscribe();
+}, [user?.id, activeWorkout?.id, navigate]);
+
   const startWorkout = useCallback(async (program) => {
     if (!user) throw new Error("User not authenticated.");
 
@@ -153,21 +272,36 @@ export function ActiveWorkoutProvider({ children }) {
 
     const workoutName = generateWorkoutName();
 
-    const { data: workout, error } = await supabase
-      .from("workouts")
-      .insert({
-        user_id: user.id,
-        routine_id: program.id,
-        workout_name: workoutName,
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (error || !workout) {
-      console.error("Error creating workout:", error);
-      // Surface Supabase error if available to help debugging
-      throw new Error(error?.message || "Could not start workout. Please try again.");
+    // Try creating a new active workout; if one already exists, fetch that instead
+    let workout;
+    try {
+      const { data: inserted, error: insertErr } = await supabase
+        .from('workouts')
+        .insert({
+          user_id: user.id,
+          routine_id: program.id,
+          workout_name: workoutName,
+          is_active: true,
+        })
+        .select()
+        .single();
+      if (insertErr) throw insertErr;
+      workout = inserted;
+    } catch (e) {
+      if (e.code === '23505') {
+        console.warn('Active workout already exists; fetching existing record');
+        const { data: existing, error: fetchErr } = await supabase
+          .from('workouts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single();
+        if (fetchErr) throw fetchErr;
+        workout = existing;
+      } else {
+        console.error('Error creating workout:', e);
+        throw new Error(e.message || 'Could not start workout. Please try again.');
+      }
     }
     
     const workoutData = {

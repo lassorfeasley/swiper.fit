@@ -7,9 +7,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserRoundPlus, UserRoundX, Blend } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import EditableTextInput from "@/components/molecules/editable-text-input";
+import { useAccount } from "@/contexts/AccountContext";
+import { useNavigate, Navigate } from "react-router-dom";
 
 export default function Sharing() {
-  const { user } = useAuth();
+  const { user } = useAuth(); // still need auth user for queries where they own shares
+  const { switchToUser, isDelegated } = useAccount();
+  const navigate = useNavigate();
+
+  // Redirect handled in render below to avoid hook order issues
+
   const queryClient = useQueryClient();
 
   // Form
@@ -209,6 +216,10 @@ export default function Sharing() {
     }
   };
 
+  if (isDelegated) {
+    return <Navigate to="/routines" replace />;
+  }
+
   return (
     <AppLayout>
       <div data-layer="Frame 65" className="Frame65 w-full h-full pt-11 pb-24 inline-flex flex-col justify-start items-center gap-5">
@@ -230,13 +241,18 @@ export default function Sharing() {
                     </div>
                   )}
                   {sharedWithMeQuery.data?.map((share) => (
-                    <EditableTextInput
+                    <div
                       key={share.id}
-                      value={formatUserDisplay(share.profile)}
-                      onChange={() => {}} // No-op since we disable editing
-                      disableEditing={true}
-                      customIcon={<Blend className="size-6 text-neutral-500" />}
-                    />
+                      onClick={() => switchToUser(share.profile)}
+                      className="w-full cursor-pointer"
+                    >
+                      <EditableTextInput
+                        value={formatUserDisplay(share.profile)}
+                        onChange={() => {}}
+                        disableEditing={true}
+                        customIcon={<Blend className="size-6 text-neutral-500" />}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>

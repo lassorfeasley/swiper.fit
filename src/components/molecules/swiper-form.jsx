@@ -6,6 +6,7 @@ import { FormHeader } from "../atoms/sheet";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
+import { useAccount } from "@/contexts/AccountContext";
 
 const SwiperForm = ({
   children,
@@ -21,6 +22,10 @@ const SwiperForm = ({
   className,
 }) => {
   const isMobile = useIsMobile();
+  const { isDelegated } = useAccount();
+  const delegateOverlayStyle = isDelegated
+    ? { top: "var(--header-height)", height: "calc(100% - var(--header-height))" }
+    : undefined;
 
   return (
     <div>
@@ -28,6 +33,7 @@ const SwiperForm = ({
         <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent
             className={cn("p-0 max-h-[90dvh] z-[100]", className)}
+            style={delegateOverlayStyle}
           >
             {leftAction && (
               <FormHeader
@@ -48,6 +54,7 @@ const SwiperForm = ({
           open={open}
           onOpenChange={onOpenChange}
           className={cn("z-[100] p-0", className)}
+          style={delegateOverlayStyle}
         >
           {leftAction && (
             <FormHeader

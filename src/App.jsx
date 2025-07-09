@@ -26,6 +26,7 @@ import SideBarNav from "./components/organisms/side-bar-nav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 import Workout from "./pages/Workout/Workout";
+import { AccountProvider } from "@/contexts/AccountContext";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -141,13 +142,15 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ActiveWorkoutProvider>
-          <PageNameContext.Provider value={{ pageName, setPageName }}>
-            <NavBarVisibilityProvider>
-              <AppContent />
-            </NavBarVisibilityProvider>
-          </PageNameContext.Provider>
-        </ActiveWorkoutProvider>
+        <AccountProvider>
+          <ActiveWorkoutProvider>
+            <PageNameContext.Provider value={{ pageName, setPageName }}>
+              <NavBarVisibilityProvider>
+                <AppContent />
+              </NavBarVisibilityProvider>
+            </PageNameContext.Provider>
+          </ActiveWorkoutProvider>
+        </AccountProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -3,14 +3,20 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/lib/utils";
+import { useAccount } from "@/contexts/AccountContext";
 import SidebarNavItems from "@/components/molecules/sidebar-nav-items";
 
 const SideBarNav = () => {
   const navItems = useNavItems();
+  const { isDelegated } = useAccount();
   const accountItem = navItems.find(item => item.label === "Account");
   const selectedAccount = new RegExp(`^${accountItem.to}(\\/|$)`).test(location.pathname);
   return (
-    <aside data-layer="Property 1=Variant2" className="hidden md:fixed md:inset-y-0 md:left-0 md:inline-flex md:flex-col md:w-64 h-full bg-neutral-100 border-r border-neutral-300 md:z-50 overflow-y-hidden overflow-x-hidden Property1Variant2">
+    <aside
+      data-layer="Property 1=Variant2"
+      className="hidden md:fixed md:inset-y-0 md:left-0 md:inline-flex md:flex-col md:w-64 bg-neutral-100 border-r border-neutral-300 md:z-50 overflow-y-hidden overflow-x-hidden Property1Variant2"
+      style={isDelegated ? { top: "var(--header-height)", height: "calc(100% - var(--header-height))" } : undefined}
+    >
       <div data-layer="Frame 18" className="Frame18 w-64 self-stretch inline-flex flex-col justify-between items-stretch h-full overflow-x-hidden">
         <div data-layer="Frame 21" className="Frame21 self-stretch px-4 py-5 border-b border-neutral-300 flex justify-start items-center">
           <div data-svg-wrapper data-layer="Vector" className="Vector">
@@ -24,16 +30,19 @@ const SideBarNav = () => {
         </div>
         <div data-layer="Frame 16" className="Frame16 self-stretch border-t border-neutral-300">
           <SidebarFooter className="p-0">
+            {accountItem && (
             <Link
               key={accountItem.to}
-              to={accountItem.to}
+              to={isDelegated ? "#" : accountItem.to}
               data-layer={`Selected=${selectedAccount ? 'selected' : 'Default'}`}
               className={cn(
                 "inline-flex justify-start items-center gap-1 w-full p-4",
                 selectedAccount ? "bg-white border-t border-b border-neutral-300" : "bg-neutral-100",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isDelegated && "opacity-50 cursor-not-allowed"
               )}
               aria-current={selectedAccount ? "page" : undefined}
+              onClick={e => { if (isDelegated) e.preventDefault(); }}
             >
               <div data-layer="Frame 17" className="flex-1 flex items-center gap-2 rounded-sm">
                 <div data-layer="lucide" className="size-6 relative overflow-hidden">
@@ -46,7 +55,7 @@ const SideBarNav = () => {
                   {accountItem.label}
                 </div>
               </div>
-            </Link>
+            </Link>) }
           </SidebarFooter>
         </div>
       </div>

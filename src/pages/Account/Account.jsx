@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useAccount } from "@/contexts/AccountContext";
+import { Navigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/supabaseClient";
 import { TextInput } from "@/components/molecules/text-input";
@@ -11,6 +13,8 @@ import { Eye, EyeOff } from "lucide-react";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 
 const Account = () => {
+  const { isDelegated } = useAccount();
+
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({ first_name: "", last_name: "" });
@@ -33,6 +37,8 @@ const Account = () => {
   const [newPassword, setNewPassword] = useState("");
   // Toggle password visibility in edit mode
   const [showPasswordLogin, setShowPasswordLogin] = useState(false);
+
+  // redirect rendered later to keep hook order
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,6 +145,10 @@ const Account = () => {
         <div className="p-6">Loading…</div>
       </AppLayout>
     );
+  }
+
+  if (isDelegated) {
+    return <Navigate to="/routines" replace />;
   }
 
   return (

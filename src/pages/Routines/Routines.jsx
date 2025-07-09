@@ -4,7 +4,7 @@ import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/contexts/AccountContext";
 import { FormHeader, SheetTitle, SheetFooter } from "@/components/atoms/sheet";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const [routines, setRoutines] = useState([]);
   const [pendingProgramToStart, setPendingProgramToStart] = useState(null);

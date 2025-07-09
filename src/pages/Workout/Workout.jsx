@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/contexts/AccountContext";
 import { supabase } from "@/supabaseClient";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -15,13 +15,13 @@ const Workout = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const user = useCurrentUser();
   const { startWorkout } = useActiveWorkout();
 
   // Add debug logging
   useEffect(() => {
-    console.log("Auth state:", { user, session });
-  }, [user, session]);
+    console.log("Current user state:", { user });
+  }, [user]);
 
   // Fetch routines and their exercises on mount
   useEffect(() => {

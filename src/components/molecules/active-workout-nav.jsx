@@ -12,15 +12,20 @@ import {
   Square,
 } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useAccount } from "@/contexts/AccountContext";
 import { useNavigate } from "react-router-dom";
 import { cn, formatSeconds } from "@/lib/utils";
+import ActiveWorkoutProgress from './active-workout-progress';
 
 export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onEnd, onSettings, onAdd }) {
   const { activeWorkout, elapsedTime } = useActiveWorkout();
+  const { isDelegated } = useAccount();
+  // when in delegate mode, push nav below the delegate header
+  const topOffset = isDelegated ? 'top-[var(--header-height)]' : 'top-0';
   const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
   const formattedTime = formatSeconds(elapsedTime);
   return (
-    <div data-layer="ActiveWorkoutNav" className="fixed top-0 left-0 right-0 w-full h-11 self-stretch bg-neutral-200 border-b border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden z-50">
+    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full h-11 self-stretch bg-neutral-200 border-b border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden z-50`}>
       <div data-layer="max-width-wrapper" className="MaxWidthWrapper self-stretch inline-flex justify-start items-center h-full">
         <div data-layer="icons-wrapper" className="IconsWrapper w-11 h-full border-r border-neutral-300 flex justify-center items-center">
           <div data-layer="Frame 23" className="Frame23 size-12 flex justify-center items-center gap-2.5">
@@ -50,6 +55,7 @@ export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onE
           </div>
         </div>
       </div>
+      <ActiveWorkoutProgress completedSets={completedSets} totalSets={totalSets} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/contexts/AccountContext";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Share2 } from "lucide-react";
@@ -23,7 +23,7 @@ const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareAll, setShareAll] = useState(false);
   const [search, setSearch] = useState("");
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
