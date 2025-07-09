@@ -16,6 +16,9 @@ const EditableTextInput = ({
   inputProps = {},
   editing,
   onActivate,
+  customIcon,
+  onIconClick,
+  disableEditing = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value);
@@ -44,7 +47,26 @@ const EditableTextInput = ({
     }
   };
 
-  if (editingState) {
+  const handleMainClick = () => {
+    if (disableEditing) return;
+    
+    if (isControlled) {
+      onActivate?.();
+    } else {
+      setIsEditing(true);
+    }
+  };
+
+  const handleIconClick = (e) => {
+    e.stopPropagation();
+    if (onIconClick) {
+      onIconClick();
+    } else if (!disableEditing) {
+      handleMainClick();
+    }
+  };
+
+  if (editingState && !disableEditing) {
     return (
       <TextInput
         label={label}
@@ -69,24 +91,20 @@ const EditableTextInput = ({
         "w-full inline-flex flex-col justify-start items-start gap-2",
         className
       )}
-      onClick={() => {
-        if (isControlled) {
-          onActivate?.();
-        } else {
-          setIsEditing(true);
-        }
-      }}
+      onClick={handleMainClick}
     >
       {/* Label row */}
-      <div className="w-full flex justify-between items-start">
-        <div className="text-sm font-medium leading-none font-vietnam text-neutral-500">
-          {label}
+      {label && (
+        <div className="w-full flex justify-between items-start">
+          <div className="text-sm font-medium leading-none font-vietnam text-neutral-500">
+            {label}
+          </div>
         </div>
-      </div>
+      )}
       {/* Static value wrapper matching TextInput structure */}
       <div className="relative w-full group">
         <div
-          className="h-[52px] bg-neutral-400 rounded border-none text-white p-3 pr-14 flex items-center"
+          className="h-[52px] bg-neutral-100 rounded-sm border-none text-neutral-500 p-3 pr-14 flex items-center"
         >
           <div className="flex-1 text-base font-medium font-vietnam leading-tight">
             {value}
@@ -94,10 +112,12 @@ const EditableTextInput = ({
         </div>
         <div
           className={cn(
-            "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l border-white"
+            "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l border-neutral-200",
+            onIconClick && "hover:bg-neutral-200 transition-colors cursor-pointer"
           )}
+          onClick={handleIconClick}
         >
-          <Pencil className="size-6 text-white" />
+          {customIcon || <Pencil className="size-6 text-neutral-500" />}
         </div>
       </div>
     </div>
@@ -105,13 +125,16 @@ const EditableTextInput = ({
 };
 
 EditableTextInput.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onChange: PropTypes.func.isRequired,
   className: PropTypes.string,
   inputProps: PropTypes.object,
   editing: PropTypes.bool,
   onActivate: PropTypes.func,
+  customIcon: PropTypes.element,
+  onIconClick: PropTypes.func,
+  disableEditing: PropTypes.bool,
 };
 
 export default EditableTextInput; 

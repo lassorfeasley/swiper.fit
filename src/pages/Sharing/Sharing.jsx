@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRoundPlus, UserRoundX, Blend } from "lucide-react";
+import AppLayout from "@/components/layout/AppLayout";
+import EditableTextInput from "@/components/molecules/editable-text-input";
 
 export default function Sharing() {
   const { user } = useAuth();
@@ -12,208 +15,299 @@ export default function Sharing() {
   // Form
   const [email, setEmail] = useState("");
 
+  // Helper function to format user display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    
+    // If we have both first and last name, use them
+    if (firstName && lastName) {
+      return `${firstName} ${lastName} | ${email}`;
+    }
+    
+    // If we only have first name, use it
+    if (firstName) {
+      return `${firstName} | ${email}`;
+    }
+    
+    // If we only have last name, use it
+    if (lastName) {
+      return `${lastName} | ${email}`;
+    }
+    
+    // If we have no name, just use email
+    return email;
+  };
+
   // -------------------------------
   // Queries
   // -------------------------------
   const ownerSharesQuery = useQuery({
-    queryKey: ["shares_owned", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["shares_owned_by_me", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get accounts I've shared my account with (I am the owner)
+      const { data: shares, error } = await supabase
         .from("account_shares")
-        .select("id, delegate_email, delegate_user_id, revoked_at, created_at")
+        .select("id, owner_user_id, delegate_user_id, delegate_email, created_at")
         .eq("owner_user_id", user.id)
-        .is("revoked_at", null)
-        .order("created_at", { ascending: false });
+        .is("revoked_at", null); // Only get non-revoked shares
+
       if (error) throw error;
-      return data;
+      
+      if (!shares || shares.length === 0) return [];
+
+      // Fetch profile data for the people I've shared with
+      const delegateIds = shares.map(share => share.delegate_user_id).filter(Boolean);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email")
+        .in("id", delegateIds);
+
+      if (profileError) throw profileError;
+
+      // Combine the data
+      return shares.map(share => ({
+        ...share,
+        profile: profiles?.find(profile => profile.id === share.delegate_user_id) || {
+          email: share.delegate_email,
+          first_name: "",
+          last_name: ""
+        }
+      }));
     },
+    enabled: !!user?.id,
   });
 
-  const delegateSharesQuery = useQuery({
-    queryKey: ["shares_delegate", user?.id],
-    enabled: !!user?.id,
+  const sharedWithMeQuery = useQuery({
+    queryKey: ["shares_shared_with_me", user?.id],
     queryFn: async () => {
-      // Step 1: fetch shares where I'm the delegate
+      // Get accounts that have shared their account with me (I am the delegate)
       const { data: shares, error } = await supabase
         .from("account_shares")
         .select("id, owner_user_id, created_at")
         .eq("delegate_user_id", user.id)
-        .is("revoked_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+        .is("revoked_at", null); // Only get non-revoked shares
 
+      if (error) throw error;
+      
       if (!shares || shares.length === 0) return [];
 
-      const ownerIds = shares.map((s) => s.owner_user_id);
-
-      // Step 2: fetch owner names from profiles
-      const { data: profileRows } = await supabase
+      // Fetch profile data for the people who shared with me
+      const ownerIds = shares.map(share => share.owner_user_id);
+      const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, email")
         .in("id", ownerIds);
 
-      const ownerInfoMap = {};
-      ownerIds.forEach((id) => {
-        const p = profileRows?.find((pr) => pr.id === id) || {};
-        ownerInfoMap[id] = {
-          first_name: p.first_name || null,
-          last_name: p.last_name || null,
-          email: p.email || null,
-        };
-      });
+      if (profileError) throw profileError;
 
-      return shares.map((s) => ({
-        ...s,
-        ownerInfo: ownerInfoMap[s.owner_user_id],
+      // Combine the data
+      return shares.map(share => ({
+        ...share,
+        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null
       }));
     },
+    enabled: !!user?.id,
   });
 
   // -------------------------------
   // Mutations
   // -------------------------------
-  const addShareMutation = useMutation({
-    mutationFn: async (emailToAdd) => {
-      // Try to insert share
-      const { error } = await supabase.from("account_shares").insert({
-        owner_user_id: user.id,
-        delegate_email: emailToAdd.trim(),
-      });
+  const createShareMutation = useMutation({
+    mutationFn: async (shareData) => {
+      const { data, error } = await supabase
+        .from("account_shares")
+        .insert(shareData)
+        .select();
+
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shares_owned", user?.id] });
+      queryClient.invalidateQueries(["shares_owned_by_me"]);
       setEmail("");
     },
   });
 
-  const revokeShareMutation = useMutation({
+  const deleteShareMutation = useMutation({
     mutationFn: async (shareId) => {
+      // Soft delete by setting revoked_at timestamp
       const { error } = await supabase
         .from("account_shares")
         .update({ revoked_at: new Date().toISOString() })
         .eq("id", shareId);
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shares_owned", user?.id] });
+      queryClient.invalidateQueries(["shares_owned_by_me"]);
     },
   });
 
   // -------------------------------
-  // Helpers
+  // Handlers
   // -------------------------------
-  const handleAddShare = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!email.trim()) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Please enter a valid email address");
-      return;
+
+    try {
+      // Look up the user by email
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email.trim().toLowerCase())
+        .limit(1);
+
+      if (profileError) throw profileError;
+
+      if (!profiles?.length) {
+        alert("No user found with that email address.");
+        return;
+      }
+
+      const targetUserId = profiles[0].id;
+
+      // Check if already shared (I am the owner, they are the delegate)
+      const { data: existingShares } = await supabase
+        .from("account_shares")
+        .select("id")
+        .eq("owner_user_id", user.id)
+        .eq("delegate_user_id", targetUserId)
+        .is("revoked_at", null)
+        .limit(1);
+
+      if (existingShares?.length > 0) {
+        alert("Access already shared with this user.");
+        return;
+      }
+
+      // Create the share (I am the owner sharing with them as delegate)
+      await createShareMutation.mutateAsync({
+        owner_user_id: user.id,
+        delegate_user_id: targetUserId,
+        delegate_email: email.trim().toLowerCase(),
+      });
+    } catch (error) {
+      console.error("Error sharing access:", error);
+      alert("Failed to share access. Please try again.");
     }
-    addShareMutation.mutate(email);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSubmit(e);
+    }
+  };
+
+  const handleRemoveShare = (shareId) => {
+    if (confirm("Are you sure you want to remove access for this user?")) {
+      deleteShareMutation.mutate(shareId);
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-10">
-      <header>
-        <h1 className="text-2xl font-bold">Account Sharing</h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          Grant other Swiper.fit users permission to manage your account, or
-          view the accounts that you can manage.
-        </p>
-      </header>
-      {user && (
-        <p className="text-sm text-neutral-700 font-mono">Logged in as: {user.email}</p>
-      )}
-
-      {/* Grant access form */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Grant access</h2>
-        <div className="flex gap-2 items-end max-w-md">
-          <div className="flex-1 space-y-1">
-            <label htmlFor="share-email" className="text-sm font-medium">
-              User email
-            </label>
-            <Input
-              id="share-email"
-              type="email"
-              placeholder="someone@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={addShareMutation.isPending}
-            />
+    <AppLayout>
+      <div data-layer="Frame 65" className="Frame65 w-full h-full pt-11 pb-24 inline-flex flex-col justify-start items-center gap-5">
+        
+        {/* Debug info */}
+        
+        {/* Shared with me section */}
+        <div data-layer="Frame 63" className="Frame63 w-full max-w-[500px] flex flex-col justify-center items-center">
+          <div data-layer="Frame 64" className="Frame64 self-stretch outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
+            <div data-layer="Frame 70" className="Frame70 self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
+              <div data-layer="Shared with me" className="SharedWithMe text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared with me</div>
+            </div>
+            <div data-layer="Frame 62" className="Frame62 self-stretch px-5 pt-5 pb-3 border-b border-neutral-300 flex flex-col justify-center items-start gap-14">
+              <div data-layer="Frame 61" className="Frame61 self-stretch flex flex-col justify-start items-start gap-3">
+                <div data-layer="Frame 59" className="Frame59 self-stretch flex flex-col justify-start items-start gap-5">
+                  {sharedWithMeQuery.data?.length === 0 && (
+                    <div className="text-neutral-neutral-400 text-sm font-medium">
+                      No accounts have shared access with you yet.
+                    </div>
+                  )}
+                  {sharedWithMeQuery.data?.map((share) => (
+                    <EditableTextInput
+                      key={share.id}
+                      value={formatUserDisplay(share.profile)}
+                      onChange={() => {}} // No-op since we disable editing
+                      disableEditing={true}
+                      customIcon={<Blend className="size-6 text-neutral-500" />}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <Button
-            type="button"
-            className="h-[52px]"
-            onClick={handleAddShare}
-            disabled={addShareMutation.isPending}
-          >
-            {addShareMutation.isPending ? "Sharing…" : "Share"}
-          </Button>
         </div>
-        {addShareMutation.isError && (
-          <p className="text-sm text-destructive">
-            {(addShareMutation.error)?.message || "Something went wrong."}
-          </p>
-        )}
-      </section>
 
-      {/* List of people current user has shared with */}
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">People who can manage your account</h2>
-
-        {ownerSharesQuery.isLoading ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
-        ) : ownerSharesQuery.data?.length === 0 ? (
-          <p className="text-sm text-neutral-500">No one has access yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {ownerSharesQuery.data.map((share) => (
-              <li
-                key={share.id}
-                className="bg-neutral-100 border border-neutral-200 px-3 py-2 rounded text-sm flex justify-between items-center"
-              >
-                <span>{share.delegate_email}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => revokeShareMutation.mutate(share.id)}
-                  disabled={revokeShareMutation.isPending}
-                >
-                  Revoke
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* List of accounts current user can manage */}
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Accounts you can manage</h2>
-        {delegateSharesQuery.isLoading ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
-        ) : delegateSharesQuery.data?.length === 0 ? (
-          <p className="text-sm text-neutral-500">You haven't been granted access to any accounts.</p>
-        ) : (
-          <ul className="space-y-2">
-            {delegateSharesQuery.data.map((share) => {
-              const { ownerInfo } = share;
-              const name = ownerInfo?.first_name || ownerInfo?.last_name ? `${ownerInfo?.first_name || ""} ${ownerInfo?.last_name || ""}`.trim() : null;
-              const emailDisplay = ownerInfo?.email;
-              return (
-                <li
-                  key={share.id}
-                  className="bg-neutral-100 border border-neutral-200 px-3 py-2 rounded text-sm"
-                >
-                  {name && emailDisplay ? `${name} (${emailDisplay})` : emailDisplay || name || share.owner_user_id}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-    </div>
+        {/* Shared by me section */}
+        <div data-layer="Frame 64" className="Frame64 size- max-w-[500px] flex flex-col justify-start items-end">
+          <div data-layer="Frame 64" className="Frame64 size- outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-start items-start">
+            <div data-layer="Frame 70" className="Frame70 self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
+              <div data-layer="Shared by me" className="SharedByMe text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared by me</div>
+            </div>
+            <div data-layer="Frame 62" className="Frame62 self-stretch px-5 pt-5 pb-3 border-b border-neutral-300 flex flex-col justify-center items-start gap-14">
+              <div data-layer="Frame 61" className="Frame61 self-stretch flex flex-col justify-start items-start gap-3">
+                <div data-layer="Frame 59" className="Frame59 self-stretch flex flex-col justify-start items-start gap-5">
+                  {ownerSharesQuery.data?.length === 0 && (
+                    <div className="text-neutral-neutral-400 text-sm font-medium">
+                      You haven't shared access with anyone yet.
+                    </div>
+                  )}
+                  {ownerSharesQuery.data?.map((share) => (
+                    <EditableTextInput
+                      key={share.id}
+                      value={formatUserDisplay(share.profile)}
+                      onChange={() => {}} // No-op since we disable editing
+                      disableEditing={true}
+                      customIcon={<UserRoundX className="size-6 text-neutral-500" />}
+                      onIconClick={() => handleRemoveShare(share.id)}
+                    />
+                  ))}
+                </div>
+                {ownerSharesQuery.data?.length > 0 && (
+                  <div data-layer="Click to remove access." className="ClickToRemoveAccess self-stretch h-5 justify-center text-neutral-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Click to remove access.</div>
+                )}
+              </div>
+            </div>
+            
+            {/* Add people section */}
+            <div data-layer="Frame 60" className="Frame60 w-[500px] max-w-[500px] px-5 pt-3 pb-5 border-b border-neutral-300 flex flex-col justify-start items-start gap-8">
+              <form onSubmit={handleSubmit} data-layer="swiper-text-input" className="SwiperTextInput self-stretch min-w-64 rounded-sm flex flex-col justify-center items-start gap-2">
+                <div data-layer="Frame 6" className="Frame6 self-stretch inline-flex justify-between items-start">
+                  <div data-layer="Label text" className="LabelText flex-1 justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Add people</div>
+                </div>
+                <div data-layer="input-wrapper" className="InputWrapper self-stretch pl-3 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Enter email address"
+                    disabled={createShareMutation.isPending}
+                    data-layer="User input" 
+                    className="UserInput flex-1 h-12 bg-transparent border-none outline-none text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight placeholder:text-neutral-neutral-400"
+                  />
+                  <button
+                    type="submit"
+                    disabled={createShareMutation.isPending || !email.trim()}
+                    data-layer="IconButton" 
+                    className="Iconbutton size- p-2.5 border-l border-neutral-300 flex justify-start items-center gap-2.5 hover:bg-neutral-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div data-layer="lucide" data-icon="user-round-plus" className="Lucide size-6 relative overflow-hidden">
+                      <UserRoundPlus className="size-5" />
+                    </div>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 } 
