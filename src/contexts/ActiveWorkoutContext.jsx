@@ -317,12 +317,6 @@ useEffect(() => {
       lastExerciseId: null,
     };
 
-    setActiveWorkout(workoutData);
-    setIsWorkoutActive(true);
-    setElapsedTime(0);
-    setIsPaused(false);
-    setWorkoutProgress({});
-    
     // Snapshot initial exercises for this workout
     try {
       const snapshotPayload = program.routine_exercises.map((progEx, idx) => ({
@@ -338,6 +332,13 @@ useEffect(() => {
     } catch (err) {
       console.error("Error snapshotting exercises for workout start:", err);
     }
+
+    // Only update context state after snapshot insert is done
+    setActiveWorkout(workoutData);
+    setIsWorkoutActive(true);
+    setElapsedTime(0);
+    setIsPaused(false);
+    setWorkoutProgress({});
 
     const exercises = program.routine_exercises.reduce((acc, progEx) => {
       acc[progEx.exercise_id] = {

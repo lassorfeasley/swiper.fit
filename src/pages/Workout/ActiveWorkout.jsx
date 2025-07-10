@@ -14,6 +14,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { Toaster, toast } from "sonner";
 import { TextInput } from "@/components/molecules/text-input";
+import { useAccount } from "@/contexts/AccountContext";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -63,6 +64,7 @@ const ActiveWorkout = () => {
   // State for settings sheet
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [newWorkoutName, setNewWorkoutName] = useState(activeWorkout?.workoutName || "");
+  const { isDelegated } = useAccount();
   // Sync local name when workoutName changes
   useEffect(() => { setNewWorkoutName(activeWorkout?.workoutName || ""); }, [activeWorkout?.workoutName]);
 
@@ -367,7 +369,7 @@ const ActiveWorkout = () => {
     const workoutId = activeWorkout?.id;
     try {
       const saved = await contextEndWorkout();
-      if (saved && workoutId) {
+      if (workoutId) {
         navigate(`/history/${workoutId}`);
       } else {
         // No sets saved – redirect back to routines
@@ -835,138 +837,137 @@ const ActiveWorkout = () => {
     .length;
 
   return (
-    <>
-      <AppLayout
-        hideHeader={true}
-        showAddButton={true}
-        addButtonText="Add exercise"
-        pageNameEditable={true}
-        showBackButton={false}
-        title=""
-        showAdd={true}
-        showSettings={true}
-        onAdd={() => setShowAddExercise(true)}
-        onSettings={() => setSettingsOpen(true)}
-        onAction={() => setShowAddExercise(true)}
-        onTitleChange={handleTitleChange}
-        onDelete={handleDeleteWorkout}
-        showDeleteOption={true}
-        search={true}
-        searchValue={search}
-        onSearchChange={setSearch}
-        pageContext="workout"
-        enableScrollSnap={true}
-        noTopPadding={true}
-        showSidebar={false}
-      >
-        <div ref={listRef}>
-          {exercisesBySection.length > 0 ? (
-            exercisesBySection.map(({ section, exercises: sectionExercises }, index) => (
-              <PageSectionWrapper
-                key={section}
-                section={section}
-                showPlusButton={true}
-                onPlus={() => handleOpenAddExercise(section)}
-                stickyTopClass="top-11"
-                isFirst={index === 0}
-              >
-                {sectionExercises.map((ex, index) => {
-                  const exerciseProgress = workoutProgress[ex.exercise_id] || [];
-                  const focusedIndex = sectionExercises.findIndex(
-                    (e) => e.exercise_id === focusedExerciseId
-                  );
-                  const isFocused = focusedIndex === index;
-                  const isExpanded = isFocused || index === sectionExercises.length - 1;
+    <AppLayout
+      hideHeader={true}
+      showAddButton={true}
+      addButtonText="Add exercise"
+      pageNameEditable={true}
+      showBackButton={false}
+      title=""
+      showAdd={true}
+      showSettings={true}
+      onAdd={() => setShowAddExercise(true)}
+      onSettings={() => setSettingsOpen(true)}
+      onAction={() => setShowAddExercise(true)}
+      onTitleChange={handleTitleChange}
+      onDelete={handleDeleteWorkout}
+      showDeleteOption={true}
+      search={true}
+      searchValue={search}
+      onSearchChange={setSearch}
+      pageContext="workout"
+      enableScrollSnap={true}
+      noTopPadding={true}
+      showSidebar={false}
+    >
+      <div ref={listRef} style={{ paddingTop: isDelegated ? '88px' : '44px' }}>
+        {exercisesBySection.length > 0 ? (
+          exercisesBySection.map(({ section, exercises: sectionExercises }, index) => (
+            <PageSectionWrapper
+              key={section}
+              section={section}
+              showPlusButton={true}
+              onPlus={() => handleOpenAddExercise(section)}
+              stickyTopClass="top-11"
+              isFirst={index === 0}
+            >
+              {sectionExercises.map((ex, index) => {
+                const exerciseProgress = workoutProgress[ex.exercise_id] || [];
+                const focusedIndex = sectionExercises.findIndex(
+                  (e) => e.exercise_id === focusedExerciseId
+                );
+                const isFocused = focusedIndex === index;
+                const isExpanded = isFocused || index === sectionExercises.length - 1;
 
-                  const STACKING_OFFSET_PX = 64;
-                  let topOffset = 80 + index * STACKING_OFFSET_PX;
+                const STACKING_OFFSET_PX = 64;
+                let topOffset = 80 + index * STACKING_OFFSET_PX;
 
-                  if (focusedIndex !== -1) {
-                    const collapsedHeight = 80; 
-                    const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
-                    if (index > focusedIndex) {
-                      topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
-                    }
+                if (focusedIndex !== -1) {
+                  const collapsedHeight = 80; 
+                  const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
+                  if (index > focusedIndex) {
+                    topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
                   }
+                }
 
-                  return (
-                    <ActiveExerciseCard
-                      ref={isFocused ? focusedCardRef : null}
-                      key={ex.id}
-                      exerciseId={ex.exercise_id}
-                      exerciseName={ex.name}
-                      initialSetConfigs={ex.setConfigs}
-                      setData={exerciseProgress}
-                      onSetComplete={handleSetComplete}
-                      onSetDataChange={handleSetDataChange}
-                      onExerciseComplete={() =>
-                        handleExerciseCompleteNavigate(ex.exercise_id)
-                      }
-                      onSetPress={openSetEdit}
-                      isUnscheduled={!!activeWorkout?.is_unscheduled}
-                      onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
-                      isFocused={isFocused}
-                      isExpanded={isExpanded}
-                      onFocus={() => {
-                        if (!isFocused) changeFocus(ex.exercise_id);
-                      }}
-                      onEditExercise={() => setEditingExercise(ex)}
-                      index={index}
-                      focusedIndex={focusedIndex}
-                      totalCards={sectionExercises.length}
-                      topOffset={topOffset}
-                    />
-                  );
-                })}
-              </PageSectionWrapper>
-            ))
-          ) : (
-            <div className="text-center py-10">
-              <p>No exercises found.</p>
-            </div>
-          )}
-        </div>
-
-        {showAddExercise &&
-          (() => {
-            const formRef = React.createRef();
-
-            return (
-              <SwiperForm
-                open={showAddExercise}
-                onOpenChange={() => setShowAddExercise(false)}
-                title="Exercise"
-                leftAction={() => setShowAddExercise(false)}
-                rightAction={() => formRef.current?.requestSubmit?.()}
-                rightEnabled={canAddExercise}
-                rightText="Add"
-                leftText="Cancel"
-                padding={0}
-                className="add-exercise-drawer"
-              >
-                <div className="flex-1 overflow-y-auto">
-                  <AddNewExerciseForm
-                    ref={formRef}
-                    key="add-exercise"
-                    formPrompt="Add a new exercise"
-                    onActionIconClick={(data, type) => {
-                      if (type === "future") handleAddExerciseFuture(data);
-                      else handleAddExerciseToday(data);
+                return (
+                  <ActiveExerciseCard
+                    ref={isFocused ? focusedCardRef : null}
+                    key={ex.id}
+                    exerciseId={ex.exercise_id}
+                    exerciseName={ex.name}
+                    initialSetConfigs={ex.setConfigs}
+                    setData={exerciseProgress}
+                    onSetComplete={handleSetComplete}
+                    onSetDataChange={handleSetDataChange}
+                    onExerciseComplete={() =>
+                      handleExerciseCompleteNavigate(ex.exercise_id)
+                    }
+                    onSetPress={openSetEdit}
+                    isUnscheduled={!!activeWorkout?.is_unscheduled}
+                    onSetProgrammaticUpdate={handleSetProgrammaticUpdate}
+                    isFocused={isFocused}
+                    isExpanded={isExpanded}
+                    onFocus={() => {
+                      if (!isFocused) changeFocus(ex.exercise_id);
                     }}
-                    initialSets={3}
-                    initialSection={"training"}
-                    initialSetConfigs={Array.from({ length: 3 }, () => ({
-                      reps: 10,
-                      weight: 25,
-                      unit: "lbs",
-                    }))}
-                    hideActionButtons={true}
-                    onDirtyChange={(ready) => setCanAddExercise(ready)}
+                    onEditExercise={() => setEditingExercise(ex)}
+                    index={index}
+                    focusedIndex={focusedIndex}
+                    totalCards={sectionExercises.length}
+                    topOffset={topOffset}
                   />
-                </div>
-              </SwiperForm>
-            );
-          })()}
+                );
+              })}
+            </PageSectionWrapper>
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <p>No exercises found.</p>
+          </div>
+        )}
+      </div>
+
+      {showAddExercise &&
+        (() => {
+          const formRef = React.createRef();
+
+          return (
+            <SwiperForm
+              open={showAddExercise}
+              onOpenChange={() => setShowAddExercise(false)}
+              title="Exercise"
+              leftAction={() => setShowAddExercise(false)}
+              rightAction={() => formRef.current?.requestSubmit?.()}
+              rightEnabled={canAddExercise}
+              rightText="Add"
+              leftText="Cancel"
+              padding={0}
+              className="add-exercise-drawer"
+            >
+              <div className="flex-1 overflow-y-auto">
+                <AddNewExerciseForm
+                  ref={formRef}
+                  key="add-exercise"
+                  formPrompt="Add a new exercise"
+                  onActionIconClick={(data, type) => {
+                    if (type === "future") handleAddExerciseFuture(data);
+                    else handleAddExerciseToday(data);
+                  }}
+                  initialSets={3}
+                  initialSection={"training"}
+                  initialSetConfigs={Array.from({ length: 3 }, () => ({
+                    reps: 10,
+                    weight: 25,
+                    unit: "lbs",
+                  }))}
+                  hideActionButtons={true}
+                  onDirtyChange={(ready) => setCanAddExercise(ready)}
+                />
+              </div>
+            </SwiperForm>
+          );
+        })()}
 
         {/* Exercise edit sheet */}
         {editingExercise && (() => {
@@ -1001,7 +1002,7 @@ const ActiveWorkout = () => {
             </SwiperForm>
           );
         })()}
-      </AppLayout>
+
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
@@ -1065,7 +1066,8 @@ const ActiveWorkout = () => {
           />
         </div>
       </SwiperForm>
-    </>
+      <Toaster richColors />
+    </AppLayout>
   );
 };
 

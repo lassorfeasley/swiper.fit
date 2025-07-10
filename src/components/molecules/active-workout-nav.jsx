@@ -21,7 +21,7 @@ export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onE
   const { activeWorkout, elapsedTime } = useActiveWorkout();
   const { isDelegated } = useAccount();
   // when in delegate mode, push nav below the delegate header
-  const topOffset = isDelegated ? 'top-[var(--header-height)]' : 'top-0';
+  const topOffset = isDelegated ? 'top-11' : 'top-0';
   const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
   const formattedTime = formatSeconds(elapsedTime);
   return (

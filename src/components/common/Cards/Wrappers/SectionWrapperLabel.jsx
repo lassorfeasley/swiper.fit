@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Pencil, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAccount } from "@/contexts/AccountContext";
 
 /**
  * SectionWrapperLabel – customizable label/header area for PageSectionWrapper.
@@ -18,16 +19,29 @@ const SectionWrapperLabel = ({
   onPlus,
   className = "",
   isSticky = true,
-  stickyTopClass = "top-11",
+  stickyTopClass: initialStickyTopClass = "top-11",
+  isFirst = false,
   ...props
 }) => {
+  const { isDelegated } = useAccount();
+
+  // Base top offset for the main workout nav
+  const baseTopOffset = 44; // h-11
+
+  // Additional offset for the delegate mode header
+  const delegateHeaderHeight = 44; // h-11
+
+  // Determine the correct top position for sticky headers
+  const stickyTop = isDelegated ? baseTopOffset + delegateHeaderHeight : baseTopOffset;
+
   return (
     <div
       className={cn(
         "h-[44px] self-stretch pl-3 bg-white border-b border-neutral-300 inline-flex items-center z-20",
-        isSticky && `sticky ${stickyTopClass}`,
+        isSticky && "sticky",
         className
       )}
+      style={{ top: isSticky ? `${stickyTop}px` : undefined }}
       {...props}
     >
       <div className="flex-1 flex items-center gap-2.5">

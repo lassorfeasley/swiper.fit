@@ -18,6 +18,7 @@ import SetBadge from "@/components/molecules/SetBadge";
 import { toast } from "sonner";
 import { Share2, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAccount } from "@/contexts/AccountContext";
 
 // Share dialog extracted outside of the component scope so it preserves identity between renders
 const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
@@ -130,6 +131,9 @@ const CompletedWorkout = () => {
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   // Treat public view as read-only even if the owner is logged in
   const readOnly = isPublicWorkoutView || !user || (workout && workout.user_id !== user.id);
+  const { isDelegated } = useAccount();
+  const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
+  console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
 
   useEffect(() => {
     setIsOwner(user && workout && workout.user_id === user.id);
@@ -558,9 +562,12 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         variant="dark-fixed"
-        showSidebar={isOwner && !isPublicWorkoutView}
         title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
-        pageNameEditable={!readOnly && true}
+        pageNameEditable={!readOnly || isDelegated}
+        showShare={!isPublicWorkoutView && (isOwner || isDelegated)}
+        onShare={handleShare}
+        showSettings={!isPublicWorkoutView && ( !readOnly || isDelegated )}
+        onSettings={() => setEditWorkoutOpen(true)}
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic}
         onBack={() => {
           if (isPublicWorkoutView && workout) {
@@ -569,10 +576,6 @@ const CompletedWorkout = () => {
             navigate('/history');
           }
         }}
-        showShare={isOwner && !isPublicWorkoutView}
-        onShare={handleShare}
-        showSettings={!readOnly && !isPublicWorkoutView}
-        onSettings={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
@@ -583,111 +586,104 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          // Flex container to ensure last section fills viewport
-          <div className="flex flex-col h-full">
-            {exercisesBySection.length > 0 ? (
-              exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => (
-                <PageSectionWrapper
-                  key={section}
-                  section={section}
-                  grid
-                  deckGap={20}
-                  className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
-                  isSticky={true}
-                  stickyTopClass="top-0"
-                  >
-                  {sectionExercises.map((exercise) => (
-                    <ExerciseCompletedCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      setLog={exercise.setLog}
-                      onEdit={openSetEdit}
-                      readOnly={readOnly}
-                    />
-                  ))}
-                </PageSectionWrapper>
-              ))
-            ) : (
-              <div className="text-center py-10">
-                <p>No sets were logged for this workout.</p>
-              </div>
-            )}
-          </div>
+          exercisesBySection.length > 0 ? (
+            exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => (
+              <PageSectionWrapper
+                key={section}
+                section={section}
+                grid
+                deckGap={20}
+                className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
+                isSticky={true}
+                stickyTopClass="top-0"
+              >
+                {sectionExercises.map((exercise) => (
+                  <ExerciseCompletedCard
+                    key={exercise.id}
+                    exercise={exercise}
+                    setLog={exercise.setLog}
+                    onEdit={openSetEdit}
+                    readOnly={readOnly}
+                  />
+                ))}
+              </PageSectionWrapper>
+            ))
+          ) : (
+            <div className="text-center py-10">
+              <p>No sets were logged for this workout.</p>
+            </div>
+          )
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <p>Workout not found.</p>
           </div>
         )}
-      </AppLayout>
-
-      <ShareWorkoutDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        isPublic={publicLink}
-        shareUrl={`${window.location.origin}/history/public/workout/${workoutId}`}
-        onCopy={handleCopyLink}
-        onTogglePublic={handleTogglePublic}
-      />
-
-      <SwiperAlertDialog
-        isOpen={isDeleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        onConfirm={handleConfirmDelete}
-        title="Delete workout?"
-        description="This workout and its sets will be deleted permanently."
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
-
-      <SwiperForm
-        open={isEditWorkoutOpen}
-        onOpenChange={setEditWorkoutOpen}
-        title="Edit"
-        leftAction={() => setEditWorkoutOpen(false)}
-        rightAction={handleSaveWorkoutName}
-        rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}
-        leftText="Cancel"
-        rightText="Save"
-      >
-        <SwiperForm.Section>
-          <TextInput
-            label="Workout name"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-          />
-        </SwiperForm.Section>
-
-        <SwiperForm.Section bordered={false}>
-          <SwiperButton
-            variant="destructive"
-            onClick={handleDeleteWorkout}
-            className="w-full"
-          >
-            Delete workout
-          </SwiperButton>
-        </SwiperForm.Section>
-      </SwiperForm>
-
-      <SwiperForm
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-        title="Edit Set"
-        leftAction={() => setEditSheetOpen(false)}
-        rightAction={() => handleEditFormSave(currentFormValues)}
-        rightEnabled={formDirty}
-        leftText="Cancel"
-        rightText="Save"
-      >
-        <SetEditForm
-          initialValues={editFormValues}
-          onValuesChange={setCurrentFormValues}
-          onDirtyChange={setFormDirty}
-          showSetNameField={true}
-          hideActionButtons={true}
-          hideInternalHeader={true}
-          isChildForm={true}
+        <ShareWorkoutDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          isPublic={publicLink}
+          shareUrl={`${window.location.origin}/history/public/workout/${workoutId}`}
+          onCopy={handleCopyLink}
+          onTogglePublic={handleTogglePublic}
         />
-      </SwiperForm>
+        <SwiperAlertDialog
+          isOpen={isDeleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          onConfirm={handleConfirmDelete}
+          title="Delete workout?"
+          description="This workout and its sets will be deleted permanently."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+        <SwiperForm
+          open={isEditWorkoutOpen}
+          onOpenChange={setEditWorkoutOpen}
+          title="Edit"
+          leftAction={() => setEditWorkoutOpen(false)}
+          rightAction={handleSaveWorkoutName}
+          rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}
+          leftText="Cancel"
+          rightText="Save"
+        >
+          <SwiperForm.Section>
+            <TextInput
+              label="Workout name"
+              value={workoutName}
+              onChange={(e) => setWorkoutName(e.target.value)}
+            />
+          </SwiperForm.Section>
+
+          <SwiperForm.Section bordered={false}>
+            <SwiperButton
+              variant="destructive"
+              onClick={handleDeleteWorkout}
+              className="w-full"
+            >
+              Delete workout
+            </SwiperButton>
+          </SwiperForm.Section>
+        </SwiperForm>
+        <SwiperForm
+          open={editSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          title="Edit Set"
+          leftAction={() => setEditSheetOpen(false)}
+          rightAction={() => handleEditFormSave(currentFormValues)}
+          rightEnabled={formDirty}
+          leftText="Cancel"
+          rightText="Save"
+        >
+          <SetEditForm
+            initialValues={editFormValues}
+            onValuesChange={setCurrentFormValues}
+            onDirtyChange={setFormDirty}
+            showSetNameField={true}
+            hideActionButtons={true}
+            hideInternalHeader={true}
+            isChildForm={true}
+          />
+        </SwiperForm>
+      </AppLayout>
     </>
   );
 };

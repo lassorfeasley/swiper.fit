@@ -27,7 +27,6 @@ const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = 
         "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
         className
       )}
-      style={{marginTop: 0, paddingTop: isFirst ? 44 : 0}}
       {...props}
     >
       {/* Header */}

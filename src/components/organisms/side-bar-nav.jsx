@@ -10,7 +10,7 @@ const SideBarNav = () => {
   const navItems = useNavItems();
   const { isDelegated } = useAccount();
   const accountItem = navItems.find(item => item.label === "Account");
-  const selectedAccount = new RegExp(`^${accountItem.to}(\\/|$)`).test(location.pathname);
+  const selectedAccount = new RegExp(`^${accountItem.to}(\/|$)`).test(location.pathname);
   return (
     <aside
       data-layer="Property 1=Variant2"

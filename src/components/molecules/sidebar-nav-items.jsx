@@ -26,9 +26,11 @@ const SidebarNavItems = () => {
                       <div data-layer="Page name" className="PageName text-neutral-400 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
                         {item.label}
                       </div>
-                      <div data-layer="Coming soon" className="ComingSoon text-neutral-300 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                        Coming soon
-                      </div>
+                      {item.showSubtext && item.subtext && (
+                        <div data-layer="Subtext" className="text-neutral-300 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                          {item.subtext}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

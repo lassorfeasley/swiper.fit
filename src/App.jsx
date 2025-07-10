@@ -122,7 +122,7 @@ function AppContent() {
 
       {/* Show normal navigation only when no workout is active */}
       {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && <MobileNav />}
-      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && <SideBarNav />}
+      {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
 
       {/* Global toast notifications */}
       <Toaster richColors position="top-center" />
