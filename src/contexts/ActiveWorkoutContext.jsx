@@ -420,89 +420,15 @@ useEffect(() => {
   const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
     console.log('[updateWorkoutProgress] Starting with updates:', { exerciseId, updates });
     
-    // Handle database persistence first, then update local state
-    const dbOperations = updates.map(async (update) => {
-      const targetRoutineSetId = update.changes.routine_set_id;
-      const targetId = update.id;
-
-      console.log('[updateWorkoutProgress] Processing update:', { targetId, targetRoutineSetId, changes: update.changes });
-
-      try {
-        // Check if we have a real database ID
-        if (targetId && typeof targetId === 'string' && targetId.length > 10) {
-          console.log('[updateWorkoutProgress] Updating existing row:', targetId);
-          // Build update payload
-          const updatePayload = {
-            reps: Number(update.changes.reps) || 0,
-            weight: Number(update.changes.weight) || 0,
-            weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
-            set_variant: update.changes.set_variant || 'Set 1',
-            set_type: update.changes.set_type || 'reps',
-            status: update.changes.status || 'pending',
-          };
-          // Only add timed_set_duration if it's a timed set and has a valid value
-          if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
-            updatePayload.timed_set_duration = Number(update.changes.timed_set_duration);
-          }
-          console.log('[updateWorkoutProgress] Update payload:', updatePayload);
-
-          const { error } = await supabase
-            .from('sets')
-            .update(updatePayload)
-            .eq('id', targetId);
-          if (error) console.error('updateWorkoutProgress: DB update error', error);
-          return { update, dbId: targetId };
-        } else {
-          console.log('[updateWorkoutProgress] Inserting new row for routine_set_id:', targetRoutineSetId);
-          // Build insert payload
-          const insertPayload = {
-            workout_id: activeWorkout.id,
-            exercise_id: exerciseId,
-            routine_set_id: targetRoutineSetId,
-            reps: Number(update.changes.reps) || 0,
-            weight: Number(update.changes.weight) || 0,
-            weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
-            set_variant: update.changes.set_variant || 'Set 1',
-            set_type: update.changes.set_type || 'reps',
-            status: update.changes.status || 'pending',
-          };
-          // Only add timed_set_duration if it's a timed set and has a valid value
-          if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
-            insertPayload.timed_set_duration = Number(update.changes.timed_set_duration);
-          }
-          console.log('[updateWorkoutProgress] Insert payload:', insertPayload);
-
-          const { data: inserted, error } = await supabase
-            .from('sets')
-            .insert(insertPayload)
-            .select()
-            .single();
-          if (error) {
-            console.error('updateWorkoutProgress: DB insert error', error);
-            return null;
-          }
-          console.log('[updateWorkoutProgress] Successfully inserted:', inserted);
-          return { update, dbId: inserted.id };
-        }
-      } catch (e) {
-        console.error('updateWorkoutProgress: persistence exception', e);
-        return null;
-      }
-    });
-
-    // Wait for all database operations to complete
-    const dbResults = await Promise.all(dbOperations);
-    console.log('[updateWorkoutProgress] DB operations completed:', dbResults);
-
-    // Now update local state with the results
+    // Store previous state for potential rollback
+    const previousState = workoutProgress[exerciseId] || [];
+    
+    // OPTIMISTIC UPDATE: Immediately update local state
     setWorkoutProgress(prev => {
       const prevSets = prev[exerciseId] || [];
       let newSets = [...prevSets];
 
-      dbResults.forEach((result) => {
-        if (!result || !result.update) return;
-
-        const { update, dbId } = result;
+      updates.forEach((update) => {
         const targetRoutineSetId = update.changes.routine_set_id;
         const targetId = update.id;
 
@@ -513,9 +439,10 @@ useEffect(() => {
 
         const updatedRow = {
           ...update.changes,
-          id: dbId || update.id || null,
+          id: targetId || `temp-${Date.now()}-${Math.random()}`, // Use temp ID if no real ID
           routine_set_id: targetRoutineSetId,
           status: update.changes.status || 'pending',
+          isOptimistic: !targetId || targetId.length <= 10, // Flag for optimistic updates
         };
 
         if (setIdx !== -1) {
@@ -531,10 +458,135 @@ useEffect(() => {
           newSets.map((s) => [String(s.routine_set_id), s])
         ).values()
       );
-      console.log('[updateWorkoutProgress] Updated local state (deduped):', { exerciseId, deduped });
+      console.log('[updateWorkoutProgress] Optimistic update applied:', { exerciseId, deduped });
       return { ...prev, [exerciseId]: deduped };
     });
-  }, [activeWorkout]);
+
+    // DATABASE OPERATIONS: Perform actual database operations
+    try {
+      const dbOperations = updates.map(async (update) => {
+        const targetRoutineSetId = update.changes.routine_set_id;
+        const targetId = update.id;
+
+        console.log('[updateWorkoutProgress] Processing DB operation:', { targetId, targetRoutineSetId, changes: update.changes });
+
+        try {
+          // Check if we have a real database ID
+          if (targetId && typeof targetId === 'string' && targetId.length > 10) {
+            console.log('[updateWorkoutProgress] Updating existing row:', targetId);
+            // Build update payload
+            const updatePayload = {
+              reps: Number(update.changes.reps) || 0,
+              weight: Number(update.changes.weight) || 0,
+              weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
+              set_variant: update.changes.set_variant || 'Set 1',
+              set_type: update.changes.set_type || 'reps',
+              status: update.changes.status || 'pending',
+            };
+            // Only add timed_set_duration if it's a timed set and has a valid value
+            if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
+              updatePayload.timed_set_duration = Number(update.changes.timed_set_duration);
+            }
+            console.log('[updateWorkoutProgress] Update payload:', updatePayload);
+
+            const { error } = await supabase
+              .from('sets')
+              .update(updatePayload)
+              .eq('id', targetId);
+            if (error) {
+              console.error('updateWorkoutProgress: DB update error', error);
+              throw error;
+            }
+            return { update, dbId: targetId };
+          } else {
+            console.log('[updateWorkoutProgress] Inserting new row for routine_set_id:', targetRoutineSetId);
+            // Build insert payload
+            const insertPayload = {
+              workout_id: activeWorkout.id,
+              exercise_id: exerciseId,
+              routine_set_id: targetRoutineSetId,
+              reps: Number(update.changes.reps) || 0,
+              weight: Number(update.changes.weight) || 0,
+              weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
+              set_variant: update.changes.set_variant || 'Set 1',
+              set_type: update.changes.set_type || 'reps',
+              status: update.changes.status || 'pending',
+            };
+            // Only add timed_set_duration if it's a timed set and has a valid value
+            if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
+              insertPayload.timed_set_duration = Number(update.changes.timed_set_duration);
+            }
+            console.log('[updateWorkoutProgress] Insert payload:', insertPayload);
+
+            const { data: inserted, error } = await supabase
+              .from('sets')
+              .insert(insertPayload)
+              .select()
+              .single();
+            if (error) {
+              console.error('updateWorkoutProgress: DB insert error', error);
+              throw error;
+            }
+            console.log('[updateWorkoutProgress] Successfully inserted:', inserted);
+            return { update, dbId: inserted.id };
+          }
+        } catch (e) {
+          console.error('updateWorkoutProgress: persistence exception', e);
+          throw e;
+        }
+      });
+
+      // Wait for all database operations to complete
+      const dbResults = await Promise.all(dbOperations);
+      console.log('[updateWorkoutProgress] DB operations completed successfully:', dbResults);
+
+      // CONFIRM OPTIMISTIC UPDATE: Replace temp IDs with real database IDs
+      setWorkoutProgress(prev => {
+        const prevSets = prev[exerciseId] || [];
+        let newSets = [...prevSets];
+
+        dbResults.forEach((result) => {
+          if (!result || !result.update) return;
+
+          const { update, dbId } = result;
+          const targetRoutineSetId = update.changes.routine_set_id;
+
+          // Find and update the optimistic set with real database ID
+          const setIdx = newSets.findIndex(
+            (s) => String(s.routine_set_id) === String(targetRoutineSetId)
+          );
+
+          if (setIdx !== -1) {
+            newSets[setIdx] = { 
+              ...newSets[setIdx], 
+              id: dbId, // Replace temp ID with real ID
+              isOptimistic: false, // Remove optimistic flag
+            };
+          }
+        });
+
+        // Deduplicate rows by routine_set_id to avoid duplicates
+        const deduped = Array.from(
+          new Map(
+            newSets.map((s) => [String(s.routine_set_id), s])
+          ).values()
+        );
+        console.log('[updateWorkoutProgress] Confirmed optimistic update:', { exerciseId, deduped });
+        return { ...prev, [exerciseId]: deduped };
+      });
+
+    } catch (error) {
+      // ROLLBACK ON ERROR: Revert the optimistic update
+      console.error('[updateWorkoutProgress] Database operation failed, rolling back:', error);
+      setWorkoutProgress(prev => ({
+        ...prev,
+        [exerciseId]: previousState
+      }));
+      
+      // Re-throw the error so calling code can handle it
+      throw error;
+    }
+  }, [activeWorkout, workoutProgress]);
 
   const saveSet = useCallback(async (exerciseId, setConfig) => {
     if (!activeWorkout?.id || !user?.id) {
@@ -542,105 +594,139 @@ useEffect(() => {
         return;
     }
 
-    // ------------------------------------------------------------------
-    //  Build payload for new set row
-    // ------------------------------------------------------------------
-    // A set can originate from a program (program_set_id) or be ad-hoc.  In the
-    // latter case we generate a temporary id (e.g. "temp-0") to track it in
-    // local state.  Attempting to persist this temp id will fail because the
-    // `program_set_id` column expects a valid UUID that references
-    // `program_sets(id)`.  Therefore we must validate the value before adding
-    // it to the insert payload.
+    // Store previous state for potential rollback
+    const previousState = workoutProgress[exerciseId] || [];
 
-    const {
-        routine_set_id: routineSetIdField,
-        id: maybeId,
-        ...restOfSetConfig
-    } = setConfig;
+    // OPTIMISTIC UPDATE: Immediately add the set to local state
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    setWorkoutProgress(prev => {
+      const exerciseProgress = prev[exerciseId] || [];
+      const optimisticSet = { 
+        ...setConfig, 
+        id: tempId,
+        status: setConfig.status || 'complete',
+        isOptimistic: true 
+      };
+      return { ...prev, [exerciseId]: [...exerciseProgress, optimisticSet] };
+    });
 
-    // Prefer an explicit program_set_id field; fall back to the legacy `id`
-    // property (used to piggy-back the program_set_id prior to persistence).
-    const rawRoutineSetId = routineSetIdField || maybeId;
+    // DATABASE OPERATION: Save to database
+    try {
+      // ------------------------------------------------------------------
+      //  Build payload for new set row
+      // ------------------------------------------------------------------
+      // A set can originate from a program (program_set_id) or be ad-hoc.  In the
+      // latter case we generate a temporary id (e.g. "temp-0") to track it in
+      // local state.  Attempting to persist this temp id will fail because the
+      // `program_set_id` column expects a valid UUID that references
+      // `program_sets(id)`.  Therefore we must validate the value before adding
+      // it to the insert payload.
 
-    const payload = {
-        workout_id: activeWorkout.id,
-        exercise_id: exerciseId,
-        set_variant: restOfSetConfig.set_variant,
-    };
+      const {
+          routine_set_id: routineSetIdField,
+          id: maybeId,
+          ...restOfSetConfig
+      } = setConfig;
 
-    const isTimed = restOfSetConfig.set_type === 'timed';
+      // Prefer an explicit program_set_id field; fall back to the legacy `id`
+      // property (used to piggy-back the program_set_id prior to persistence).
+      const rawRoutineSetId = routineSetIdField || maybeId;
 
-    // For debugging: set reps=1 for timed sets; otherwise use provided reps
-    if (isTimed) {
-        payload.reps = 1; // temporary diagnostic value
-    } else if (restOfSetConfig.reps !== undefined) {
-        payload.reps = Number(restOfSetConfig.reps);
-    }
+      const payload = {
+          workout_id: activeWorkout.id,
+          exercise_id: exerciseId,
+          set_variant: restOfSetConfig.set_variant,
+      };
 
-    // Always include weight_unit – even for body-weight sets – to satisfy NOT-NULL.
-    if (restOfSetConfig.unit) {
-        payload.weight_unit = restOfSetConfig.unit;
-    }
+      const isTimed = restOfSetConfig.set_type === 'timed';
 
-    // Weight: store 0 for body-weight sets, otherwise the provided value (if any)
-    if (restOfSetConfig.unit === 'body') {
-        payload.weight = 0;
-    } else if (restOfSetConfig.weight !== undefined) {
-        payload.weight = Number(restOfSetConfig.weight);
-    }
+      // For debugging: set reps=1 for timed sets; otherwise use provided reps
+      if (isTimed) {
+          payload.reps = 1; // temporary diagnostic value
+      } else if (restOfSetConfig.reps !== undefined) {
+          payload.reps = Number(restOfSetConfig.reps);
+      }
 
-    // Only include program_set_id if it is a valid UUID (prevents foreign-key
-    // errors from temp ids like "temp-0").
-    if (rawRoutineSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawRoutineSetId)) {
-        payload.routine_set_id = rawRoutineSetId;
-    }
+      // Always include weight_unit – even for body-weight sets – to satisfy NOT-NULL.
+      if (restOfSetConfig.unit) {
+          payload.weight_unit = restOfSetConfig.unit;
+      }
 
-    // Include timed set fields when relevant
-    if (restOfSetConfig.set_type) {
-        payload.set_type = restOfSetConfig.set_type;
-    }
-    if (restOfSetConfig.timed_set_duration !== undefined) {
-        payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
-    }
+      // Weight: store 0 for body-weight sets, otherwise the provided value (if any)
+      if (restOfSetConfig.unit === 'body') {
+          payload.weight = 0;
+      } else if (restOfSetConfig.weight !== undefined) {
+          payload.weight = Number(restOfSetConfig.weight);
+      }
 
-    // Include status to properly mark completed sets in the database
-    if (restOfSetConfig.status) {
-        payload.status = restOfSetConfig.status;
-    }
+      // Only include program_set_id if it is a valid UUID (prevents foreign-key
+      // errors from temp ids like "temp-0").
+      if (rawRoutineSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawRoutineSetId)) {
+          payload.routine_set_id = rawRoutineSetId;
+      }
 
-    // DEBUG: log the payload we are about to send
-    console.log('[saveSet] inserting payload', payload);
+      // Include timed set fields when relevant
+      if (restOfSetConfig.set_type) {
+          payload.set_type = restOfSetConfig.set_type;
+      }
+      if (restOfSetConfig.timed_set_duration !== undefined) {
+          payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
+      }
 
-    const { data, error } = await supabase
-        .from('sets')
-        .insert(payload)
-        .select()
-        .single();
-    
-    if (error) {
-        console.error("Error saving set:", error);
-        throw error;
-    } else {
-      // Update local state with the actual ID from the database
+      // Include status to properly mark completed sets in the database
+      if (restOfSetConfig.status) {
+          payload.status = restOfSetConfig.status;
+      }
+
+      // DEBUG: log the payload we are about to send
+      console.log('[saveSet] inserting payload', payload);
+
+      const { data, error } = await supabase
+          .from('sets')
+          .insert(payload)
+          .select()
+          .single();
+      
+      if (error) {
+          console.error("Error saving set:", error);
+          throw error;
+      }
+
+      // CONFIRM OPTIMISTIC UPDATE: Replace temp ID with real database ID
       setWorkoutProgress(prev => {
         const exerciseProgress = prev[exerciseId] || [];
-        const setIndex = exerciseProgress.findIndex(s => String(s.routine_set_id) === String(setConfig.routine_set_id));
+        const setIndex = exerciseProgress.findIndex(s => s.id === tempId);
 
         const newExerciseProgress = [...exerciseProgress];
 
         if (setIndex !== -1) {
-            // Found the set, update it. Merge existing, new DB data, and ensure status from the initiating call is respected.
-            newExerciseProgress[setIndex] = { ...newExerciseProgress[setIndex], ...data, status: setConfig.status };
+            // Found the optimistic set, update it with real database data
+            newExerciseProgress[setIndex] = { 
+              ...newExerciseProgress[setIndex], 
+              ...data, 
+              id: data.id, // Replace temp ID with real ID
+              isOptimistic: false // Remove optimistic flag
+            };
         } else {
-            // Did not find set (due to state batching), so add it.
-            // Build the set from `setConfig` (which has the correct status) and `data` (which has the DB ID).
+            // Did not find optimistic set (rare), so add it normally
             newExerciseProgress.push({ ...setConfig, ...data });
         }
 
         return { ...prev, [exerciseId]: newExerciseProgress };
       });
+
+    } catch (error) {
+      // ROLLBACK ON ERROR: Revert the optimistic update
+      console.error('[saveSet] Database operation failed, rolling back:', error);
+      setWorkoutProgress(prev => ({
+        ...prev,
+        [exerciseId]: previousState
+      }));
+      
+      // Re-throw the error so calling code can handle it
+      throw error;
     }
-  }, [activeWorkout, user]);
+  }, [activeWorkout, user, workoutProgress]);
 
   const updateSet = useCallback(async (setId, changes) => {
     if (!activeWorkout?.id || !user?.id) {

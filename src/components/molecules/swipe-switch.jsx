@@ -1,6 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { Check, Repeat2, Weight, Clock } from "lucide-react";
+import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -20,6 +20,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     set_variant,
     set_type,
     timed_set_duration,
+    isOptimistic = false, // New prop for optimistic updates
   } = set;
 
   // Animation controls for thumb only
@@ -219,7 +220,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
           <div className="size-7 relative overflow-hidden flex items-center justify-center">
             {isVisuallyComplete && (
               <div className="Check relative flex items-center justify-center">
-                <Check className="w-5 h-5 text-white" />
+                {isOptimistic ? (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <Check className="w-5 h-5 text-white" />
+                )}
               </div>
             )}
           </div>
@@ -253,6 +258,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
                 </div>
               )}
             </div>
+          </div>
+        )}
+        {/* Optimistic update indicator */}
+        {isOptimistic && (
+          <div className="absolute top-1 right-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
           </div>
         )}
       </div>

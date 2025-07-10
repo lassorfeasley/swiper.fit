@@ -12,7 +12,7 @@ import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { TextInput } from "@/components/molecules/text-input";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
@@ -236,7 +236,7 @@ const ActiveWorkout = () => {
 
   // TODO: re-implement automatic navigation to last interacted exercise
 
-  const handleSetDataChange = (exerciseId, setIdOrUpdates, field, value) => {
+  const handleSetDataChange = async (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
       // New signature: an array of update objects
       // --------------------------------------------------
@@ -257,18 +257,23 @@ const ActiveWorkout = () => {
         })
       );
 
-      updateWorkoutProgress(exerciseId, setIdOrUpdates);
-      // Persist each update to the database if the set has an id
-      setIdOrUpdates.forEach((update) => {
-        if (
-          update.id &&
-          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-            update.id
-          )
-        ) {
-          updateSet(update.id, update.changes);
+      try {
+        await updateWorkoutProgress(exerciseId, setIdOrUpdates);
+        // Persist each update to the database if the set has an id
+        for (const update of setIdOrUpdates) {
+          if (
+            update.id &&
+            /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+              update.id
+            )
+          ) {
+            await updateSet(update.id, update.changes);
+          }
         }
-      });
+      } catch (error) {
+        console.error("Failed to update set data:", error);
+        toast.error("Failed to save changes. Please try again.");
+      }
     } else {
       // Legacy signature: single field update, convert to new format
       const updates = [
@@ -277,39 +282,49 @@ const ActiveWorkout = () => {
           changes: { [field]: value },
         },
       ];
-      updateWorkoutProgress(exerciseId, updates);
-      if (setIdOrUpdates) {
-        updateSet(setIdOrUpdates, { [field]: value });
+      
+      try {
+        await updateWorkoutProgress(exerciseId, updates);
+        if (setIdOrUpdates) {
+          await updateSet(setIdOrUpdates, { [field]: value });
+        }
+        // Sync to exercises array as well
+        setExercises((prev) =>
+          prev.map((ex) => {
+            if (ex.exercise_id !== exerciseId) return ex;
+            const newConfigs = ex.setConfigs.map((cfg) => {
+              // Match by id if available, otherwise by routine_set_id
+              if (setIdOrUpdates && cfg.id) return cfg.id === setIdOrUpdates ? { ...cfg, [field]: value } : cfg;
+              return String(cfg.routine_set_id) === String(setIdOrUpdates) ? { ...cfg, [field]: value } : cfg;
+            });
+            return { ...ex, setConfigs: newConfigs };
+          })
+        );
+      } catch (error) {
+        console.error("Failed to update set data:", error);
+        toast.error("Failed to save changes. Please try again.");
       }
-      // Sync to exercises array as well
-      setExercises((prev) =>
-        prev.map((ex) => {
-          if (ex.exercise_id !== exerciseId) return ex;
-          const newConfigs = ex.setConfigs.map((cfg) => {
-            // Match by id if available, otherwise by routine_set_id
-            if (setIdOrUpdates && cfg.id) return cfg.id === setIdOrUpdates ? { ...cfg, [field]: value } : cfg;
-            return String(cfg.routine_set_id) === String(setIdOrUpdates) ? { ...cfg, [field]: value } : cfg;
-          });
-          return { ...ex, setConfigs: newConfigs };
-        })
-      );
     }
   };
 
-  const handleSetComplete = (exerciseId, setConfig) => {
+  const handleSetComplete = async (exerciseId, setConfig) => {
     // Find this exercise's config and current progress
     const ex = exercises.find((e) => e.exercise_id === exerciseId);
     const exerciseName = ex?.name || "Exercise";
     const totalSets = ex?.setConfigs?.length || 0;
     const prevCount = (workoutProgress[exerciseId] || []).length;
-    // Save the set, then update lastExercise only if more sets remain
-    Promise.resolve(saveSet(exerciseId, setConfig))
-      .then(() => {
-        console.log(
-          `${setConfig.set_variant} of ${exerciseName} logged to database. (${prevCount + 1}/${totalSets})`
-        );
-      })
-      .catch(console.error);
+    
+    try {
+      // Save the set with optimistic updates
+      await saveSet(exerciseId, setConfig);
+      console.log(
+        `${setConfig.set_variant} of ${exerciseName} logged to database. (${prevCount + 1}/${totalSets})`
+      );
+    } catch (error) {
+      console.error("Failed to save set:", error);
+      // Show user-friendly error message
+      toast.error(`Failed to save set. Please try again.`);
+    }
   };
 
   const handleSetProgrammaticUpdate = async (exerciseId, setId, formValues) => {
