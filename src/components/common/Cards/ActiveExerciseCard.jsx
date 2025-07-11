@@ -272,13 +272,6 @@ const ActiveExerciseCard = React.forwardRef(({
                       }
                     }}
                     className="w-full"
-                    reps={set.reps}
-                    weight={set.weight}
-                    unit={set.weight_unit}
-                    status={set.status}
-                    onSwipe={() => handleSetComplete(index)}
-                    disabled={!isFocused}
-                    countdownDuration={set.timed_set_duration}
                   />
                 ))}
                 <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">

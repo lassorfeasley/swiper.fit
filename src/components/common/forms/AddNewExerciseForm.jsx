@@ -219,7 +219,7 @@ const AddNewExerciseForm = React.forwardRef(
                 strokeWidth={1.5}
               />
               <span className="text-neutral-500 text-heading-sm font-medium leading-tight">
-                {merged.unit === "body" ? "body" : merged.weight}
+                {merged.unit === "body" ? "BW" : merged.weight}
               </span>
             </div>
           </div>

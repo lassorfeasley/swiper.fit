@@ -62,6 +62,15 @@ const ActiveWorkout = () => {
   const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
   const [setUpdateType, setSetUpdateType] = useState('today');
 
+  // Memoize initial values for SetEditForm to prevent unnecessary resets
+  const setEditFormInitialValues = React.useMemo(() => {
+    if (!editingSet?.setConfig) return {};
+    return {
+      ...editingSet.setConfig,
+      unit: editingSet.setConfig.weight_unit || editingSet.setConfig.unit || "lbs"
+    };
+  }, [editingSet?.setConfig?.routine_set_id, editingSet?.setConfig?.weight_unit, editingSet?.setConfig?.unit, editingSet?.setConfig?.weight, editingSet?.setConfig?.reps]);
+
   useEffect(() => {
     if (editingExercise) {
       setExerciseUpdateType('today');
@@ -259,7 +268,15 @@ const ActiveWorkout = () => {
           return "training";
         })(),
         name: we.name_override || we.snapshot_name,
-        setConfigs: setsMap[we.exercise_id] || [],
+        // Ensure every set config has consistent unit fields
+        setConfigs: (setsMap[we.exercise_id] || []).map((rs) => {
+          const normalisedUnit = rs.weight_unit || (rs.weight === 0 ? 'body' : (rs.set_type === 'timed' ? 'body' : 'lbs'));
+          return {
+            ...rs,
+            unit: normalisedUnit,
+            weight_unit: normalisedUnit,
+          };
+        }),
       }));
       setExercises(cards);
     };
@@ -567,6 +584,8 @@ const ActiveWorkout = () => {
     if (!editingSet) return;
 
     const { exerciseId, setConfig, index } = editingSet;
+    
+
 
     // Check if this is a programmatic update (when user selects "Permanently")
     const isProgramUpdate = setUpdateType === "future" && setConfig?.routine_set_id;
@@ -578,18 +597,28 @@ const ActiveWorkout = () => {
       // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
       const targetId = setConfig?.id;
 
+      // Map unit to weight_unit for database consistency
+      const { unit, ...otherValues } = newValues;
+      const dbValues = {
+        ...otherValues,
+        weight_unit: unit,
+        routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
+      };
+
       const updates = [
         {
           id: targetId,
-          changes: {
-            ...newValues,
-            routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
-          },
+          changes: dbValues,
         },
       ];
 
       // Persist changes and wait for DB operations to complete
       await updateWorkoutProgress(exerciseId, updates);
+      
+      // Also call updateSet if we have a valid database ID
+      if (targetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetId)) {
+        await updateSet(targetId, newValues); // Use original newValues with 'unit' field
+      }
     }
 
     // --------------------------------------------------------------
@@ -600,6 +629,7 @@ const ActiveWorkout = () => {
         if (ex.exercise_id !== exerciseId) return ex;
         const updated = [...ex.setConfigs];
         if (index != null && updated[index]) {
+          // Use the form values directly for local state (keeping 'unit' field)
           updated[index] = { ...updated[index], ...newValues };
         }
         return { ...ex, setConfigs: updated };
@@ -611,6 +641,7 @@ const ActiveWorkout = () => {
       if (!prev || prev.exercise_id !== exerciseId) return prev;
       const updated = [...prev.setConfigs];
       if (index != null && updated[index]) {
+        // Use the form values directly for local state (keeping 'unit' field)
         updated[index] = { ...updated[index], ...newValues };
       }
       return { ...prev, setConfigs: updated };
@@ -1093,7 +1124,8 @@ const ActiveWorkout = () => {
           rightText="Save"
         >
           <SetEditForm
-            initialValues={editingSet?.setConfig}
+            key={`edit-${editingSet?.setConfig?.routine_set_id || editingSet?.setConfig?.id}`}
+            initialValues={setEditFormInitialValues}
             onValuesChange={setCurrentFormValues}
             onDirtyChange={setFormDirty}
             showSetNameField={true}

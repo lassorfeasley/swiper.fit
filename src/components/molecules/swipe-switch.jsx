@@ -1,6 +1,7 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
+import React from "react"; // Added missing import for React
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -22,6 +23,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     timed_set_duration,
     isOptimistic = false, // New prop for optimistic updates
   } = set;
+  
+  // Debug logging for weight unit display
+  console.log('[SwipeSwitch] set data:', { weight, weight_unit, set_variant, set_type, status });
 
   // Animation controls for thumb only
   const controls = useAnimation();
@@ -229,7 +233,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
             )}
           </div>
         </motion.div>
-        {isDefault && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || (weight > 0 && weight_unit !== 'body')) && (
+        {isDefault && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
             {set_variant && (
               <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">

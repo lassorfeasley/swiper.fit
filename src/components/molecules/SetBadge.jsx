@@ -51,8 +51,6 @@ const SetBadge = ({
     else if (onClick) onClick(e);
   };
 
-  const showWeight = weight > 0 && unit !== "body";
-
   const renderSegments = () => {
     const segments = [];
     if (set_type === 'timed') {
@@ -61,7 +59,10 @@ const SetBadge = ({
         segments.push({ icon: Repeat2, value: reps });
     }
 
-    if(showWeight) {
+    // Show weight segment for body weight or when weight > 0
+    if (unit === "body") {
+        segments.push({ icon: Weight, value: "BW" });
+    } else if (weight > 0) {
         segments.push({ icon: Weight, value: weight });
     }
 
