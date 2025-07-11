@@ -171,6 +171,7 @@ const CompletedWorkout = () => {
       console.log('[CompletedWorkout] setsData:', setsData, 'setsError:', setsError);
 
       // Only keep sets that have reps and weight logged and are valid numbers
+      let dedupedMap = {};
       const validSets = (setsData || [])
         .filter((set) => {
           if (set.set_type === 'timed') {
@@ -194,6 +195,23 @@ const CompletedWorkout = () => {
             unit,
             set_variant: set.set_variant ?? set.name ?? '',
           };
+        })
+        // de-dupe: for each exercise+order keep a single row, preferring one that has a non-null weight_unit
+        .filter((row) => {
+          const key = row.routine_set_id
+            ? `rt-${row.routine_set_id}`
+            : `${row.exercise_id}-${row.set_order || row.set_variant || ''}`;
+          const existing = dedupedMap[key];
+          if (!existing) {
+            dedupedMap[key] = row;
+            return true;
+          }
+          // prefer the one whose unit is 'body' or has a weight >0
+          const takeCurrent = (row.unit === 'body' || row.weight > 0) && !(existing.unit === 'body' || existing.weight > 0);
+          if (takeCurrent) {
+            dedupedMap[key] = row;
+          }
+          return takeCurrent; // keep only the chosen row
         });
       console.log('[CompletedWorkout] validSets:', validSets);
       setSets(validSets);
