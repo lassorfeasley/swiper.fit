@@ -192,7 +192,7 @@ const CompletedWorkout = () => {
           const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
           return {
             ...set,
-            weight: unit === 'body' ? 0 : set.weight,
+            weight: set.weight,
             unit,
             set_variant: set.set_variant ?? set.name ?? '',
           };

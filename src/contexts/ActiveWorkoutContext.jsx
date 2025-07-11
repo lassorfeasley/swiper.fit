@@ -654,10 +654,8 @@ useEffect(() => {
           payload.weight_unit = restOfSetConfig.unit;
       }
 
-      // Weight: store 0 for body-weight sets, otherwise the provided value (if any)
-      if (restOfSetConfig.unit === 'body') {
-          payload.weight = 0;
-      } else if (restOfSetConfig.weight !== undefined) {
+      // Weight: preserve the actual weight value even for body-weight sets
+      if (restOfSetConfig.weight !== undefined) {
           payload.weight = Number(restOfSetConfig.weight);
       }
 

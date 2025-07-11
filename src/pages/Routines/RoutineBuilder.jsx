@@ -89,7 +89,7 @@ const RoutineBuilder = () => {
             const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
             return {
               reps: set.reps,
-              weight: unit === 'body' ? 0 : set.weight,
+              weight: set.weight,
               unit,
               set_variant: set.set_variant || `Set ${set.set_order}`,
               set_type: set.set_type,
@@ -282,7 +282,7 @@ const RoutineBuilder = () => {
           const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
           return {
             reps: set.reps,
-            weight: unit === 'body' ? 0 : set.weight,
+            weight: set.weight,
             unit,
             set_variant: set.set_variant || `Set ${set.set_order}`,
             set_type: set.set_type,

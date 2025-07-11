@@ -198,7 +198,7 @@ const SetEditForm = memo(
         if (val === "body") {
           // Store the last non-bodyweight value
           setLastNonBodyWeight({ weight: formValues.weight, unit: formValues.unit });
-          newValues.weight = 0;
+          // Keep the current weight value instead of setting to 0
         } else {
           // Restore previous value if coming from body
           if (formValues.unit === "body") {
