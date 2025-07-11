@@ -915,11 +915,27 @@ const ActiveWorkout = () => {
   };
 
   // Compute progress counts for nav
+  // Total sets = number of template setConfigs currently in the workout cards
   const totalSets = exercises.reduce((sum, ex) => sum + (ex.setConfigs?.length || 0), 0);
-  const completedSets = Object.values(workoutProgress)
-    .flat()
-    .filter((s) => s.status === 'complete')
-    .length;
+
+  /*
+    Each logged row in workoutProgress represents an instance a user swiped
+    a set to complete.  For a “progress” bar we only want to count a template
+    set once, no matter how many times a user logs it (e.g. timed stretches).
+
+    Strategy: for every set that came from a routine template we use its
+    routine_set_id as the unique key.  For ad-hoc body-weight or added sets
+    (no routine_set_id) we fall back to the `id` so they still register once.
+  */
+  const completedKeys = new Set();
+  Object.values(workoutProgress).forEach((list) => {
+    list.forEach((row) => {
+      if (row.status !== 'complete') return;
+      const key = row.routine_set_id || row.id;
+      if (key) completedKeys.add(String(key));
+    });
+  });
+  const completedSets = completedKeys.size;
 
   return (
     <AppLayout
