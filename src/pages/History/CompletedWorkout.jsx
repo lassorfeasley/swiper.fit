@@ -196,22 +196,32 @@ const CompletedWorkout = () => {
             set_variant: set.set_variant ?? set.name ?? '',
           };
         })
-        // de-dupe: for each exercise+order keep a single row, preferring one that has a non-null weight_unit
+        // De-dupe logic:
+        //   • If the set originated from a routine (routine_set_id present) we want to keep
+        //     only one row per routine_set_id – preferring the variant that includes
+        //     a body-weight unit or a non-zero weight.
+        //   • For any ad-hoc sets (no routine_set_id) we **should not** accidentally
+        //     collapse multiple logged sets just because set_order is null / identical.
+        //     In that case we use the row's unique database `id` as the key so every
+        //     distinct set is preserved.
         .filter((row) => {
           const key = row.routine_set_id
-            ? `rt-${row.routine_set_id}`
-            : `${row.exercise_id}-${row.set_order || row.set_variant || ''}`;
+            ? `rt-${row.routine_set_id}` // Use routine_set_id to collapse template sets
+            : row.id;                    // Preserve one-off sets by unique id
+
           const existing = dedupedMap[key];
           if (!existing) {
             dedupedMap[key] = row;
             return true;
           }
-          // prefer the one whose unit is 'body' or has a weight >0
+
+          // For routine-based duplicates, prefer the entry that carries an explicit unit
+          // or a non-zero weight (i.e. more informative).
           const takeCurrent = (row.unit === 'body' || row.weight > 0) && !(existing.unit === 'body' || existing.weight > 0);
           if (takeCurrent) {
             dedupedMap[key] = row;
           }
-          return takeCurrent; // keep only the chosen row
+          return takeCurrent; // keep only the chosen row when replacing
         });
       console.log('[CompletedWorkout] validSets:', validSets);
       setSets(validSets);
