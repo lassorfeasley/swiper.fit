@@ -59,12 +59,20 @@ const ActiveWorkout = () => {
   const [editingExercise, setEditingExercise] = useState(null);
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
   const [exerciseUpdateType, setExerciseUpdateType] = useState('today');
+  const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [setUpdateType, setSetUpdateType] = useState('today');
 
   useEffect(() => {
     if (editingExercise) {
       setExerciseUpdateType('today');
     }
   }, [editingExercise]);
+
+  useEffect(() => {
+    if (editingSet) {
+      setSetUpdateType('today');
+    }
+  }, [editingSet]);
 
   const skipAutoRedirectRef = useRef(false);
 
@@ -388,7 +396,11 @@ const ActiveWorkout = () => {
     }
   };
 
-  const handleEndWorkout = async () => {
+  const handleEndWorkout = () => {
+    setEndConfirmOpen(true);
+  };
+
+  const handleConfirmEnd = async () => {
     // Prevent the auto-redirect effect from firing
     skipAutoRedirectRef.current = true;
     try {
@@ -402,6 +414,8 @@ const ActiveWorkout = () => {
     } catch (error) {
       console.error("Error ending workout:", error);
       alert("There was an error ending your workout. Please try again.");
+    } finally {
+      setEndConfirmOpen(false);
     }
   };
 
@@ -554,21 +568,29 @@ const ActiveWorkout = () => {
 
     const { exerciseId, setConfig, index } = editingSet;
 
-    // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
-    const targetId = setConfig?.id;
+    // Check if this is a programmatic update (when user selects "Permanently")
+    const isProgramUpdate = setUpdateType === "future" && setConfig?.routine_set_id;
 
-    const updates = [
-      {
-        id: targetId,
-        changes: {
-          ...newValues,
-          routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
+    if (isProgramUpdate) {
+      // Update the program template
+      await handleSetProgrammaticUpdate(exerciseId, setConfig.routine_set_id, newValues);
+    } else {
+      // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
+      const targetId = setConfig?.id;
+
+      const updates = [
+        {
+          id: targetId,
+          changes: {
+            ...newValues,
+            routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
+          },
         },
-      },
-    ];
+      ];
 
-    // Persist changes and wait for DB operations to complete
-    await updateWorkoutProgress(exerciseId, updates);
+      // Persist changes and wait for DB operations to complete
+      await updateWorkoutProgress(exerciseId, updates);
+    }
 
     // --------------------------------------------------------------
     //  Update local exercises array so Edit-Exercise form sees change
@@ -842,7 +864,7 @@ const ActiveWorkout = () => {
             }
           })
         );
-        toast.success("Routine updated!");
+        // toast.success("Routine updated!"); // Removed duplicate toast - only show from handleSetProgrammaticUpdate
       }
 
       // Update local state so UI reflects the change immediately
@@ -1049,6 +1071,16 @@ const ActiveWorkout = () => {
         cancelText="Cancel"
       />
 
+      <SwiperAlertDialog
+        open={isEndConfirmOpen}
+        onOpenChange={setEndConfirmOpen}
+        onConfirm={handleConfirmEnd}
+        title="End Workout?"
+        description="Are you sure you want to end this workout? Your progress will be saved."
+        confirmText="End Workout"
+        cancelText="Cancel"
+      />
+
       {isEditSheetOpen && (
         <SwiperForm
           open={isEditSheetOpen}
@@ -1067,6 +1099,9 @@ const ActiveWorkout = () => {
             showSetNameField={true}
             hideActionButtons={true}
             hideInternalHeader={true}
+            isUnscheduled={!!editingSet?.setConfig?.routine_set_id}
+            addType={setUpdateType}
+            onAddTypeChange={setSetUpdateType}
           />
         </SwiperForm>
       )}

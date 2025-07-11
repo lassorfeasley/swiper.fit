@@ -26,7 +26,7 @@ const AddNewExerciseForm = React.forwardRef(
       hideActionButtons = false,
       showAddToProgramToggle = true,
       showUpdateTypeToggle = false,
-      updateType,
+      updateType = "today",
       onUpdateTypeChange,
     },
     ref
@@ -302,6 +302,7 @@ const AddNewExerciseForm = React.forwardRef(
         {showUpdateTypeToggle && (
           <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
             <ToggleInput
+              key="updateTypeToggle"
               label="Keep new settings?"
               value={updateType}
               onValueChange={onUpdateTypeChange}

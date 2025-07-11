@@ -17,15 +17,8 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "@/components/molecules/swipe-switch";
-import SetEditForm from "@/components/common/forms/SetEditForm";
 import PropTypes from "prop-types";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import { FormHeader } from "@/components/atoms/sheet";
-import SwiperForm from "@/components/molecules/swiper-form";
-import FormSectionWrapper from "../forms/wrappers/FormSectionWrapper";
-import ToggleInput from "@/components/molecules/toggle-input";
-import { SwiperButton } from "@/components/molecules/swiper-button";
-import { TextInput } from "@/components/molecules/text-input";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,11 +44,7 @@ const ActiveExerciseCard = React.forwardRef(({
   totalCards,
   topOffset,
 }, ref) => {
-  const [openSetIndex, setOpenSetIndex] = useState(null);
-  const [editForm, setEditForm] = useState({ reps: 0, weight: 0, unit: "lbs" });
-  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-  const [formDirty, setFormDirty] = useState(false);
-  const [addType, setAddType] = useState("today");
+
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
 
@@ -201,78 +190,7 @@ const ActiveExerciseCard = React.forwardRef(({
     [exerciseId, onSetComplete, onSetDataChange, sets, onExerciseComplete]
   );
 
-  const openEditSheet = (index) => {
-    const setToEdit = sets[index];
-    setOpenSetIndex(index);
-    setEditForm({
-      reps: setToEdit.reps,
-      weight: setToEdit.weight,
-      unit: setToEdit.weight_unit,
-      set_variant: setToEdit.set_variant,
-      set_type: setToEdit.set_type,
-      timed_set_duration: setToEdit.timed_set_duration,
-      routine_set_id: setToEdit.routine_set_id, // Store routine_set_id for future use
-    });
-    setIsEditSheetOpen(true);
-    setFormDirty(false); // Reset dirty state on open
-  };
 
-  const handleEditFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-    setFormDirty(true); // Mark form as dirty on change
-  };
-
-  const handleToggleChange = (field) => (value) => {
-    setEditForm((prev) => ({ ...prev, [field]: value }));
-    setFormDirty(true);
-  };
-
-  const handleSaveSet = async () => {
-    if (!formDirty) {
-      setIsEditSheetOpen(false);
-      return;
-    }
-
-    const setBeingEdited = sets[openSetIndex];
-    if (!setBeingEdited || !setBeingEdited.id) {
-      console.error("No valid set to update.", { openSetIndex, sets });
-      setIsEditSheetOpen(false);
-      return;
-    }
-
-    const isProgramUpdate = addType === "future";
-
-    if (isProgramUpdate) {
-      // Logic for updating the program template
-      if (onSetProgrammaticUpdate) {
-        onSetProgrammaticUpdate(
-          exerciseId,
-          setBeingEdited.routine_set_id,
-          editForm
-        );
-      }
-    } else {
-      // Existing logic for updating the current workout's set
-      const updates = [
-        {
-          id: setBeingEdited.id,
-          changes: {
-            reps: editForm.reps,
-            weight: editForm.weight,
-            weight_unit: editForm.unit,
-          },
-        },
-      ];
-      if (onSetDataChange) {
-        onSetDataChange(exerciseId, updates);
-      }
-    }
-
-    setIsEditSheetOpen(false);
-    setOpenSetIndex(null);
-    setFormDirty(false); // Reset dirty state
-  };
 
   const cardStatus = allComplete ? "complete" : "default";
 
@@ -371,55 +289,7 @@ const ActiveExerciseCard = React.forwardRef(({
           </div>
         </div>
 
-        {openSetIndex !== null && (
-          <SwiperForm
-            isOpen={isEditSheetOpen}
-            onClose={() => setIsEditSheetOpen(false)}
-          >
-            <FormHeader
-              title="Edit Set"
-              subtitle={sets[openSetIndex]?.set_variant}
-            />
-              <SetEditForm
-              formValues={editForm}
-              onFormChange={handleEditFormChange}
-              onToggleChange={handleToggleChange}
-            >
-              {isUnscheduled && (
-                <FormSectionWrapper>
-                  <p className="text-sm text-gray-500 mb-2">
-                    Apply changes to this workout or update the program for future
-                    workouts.
-                  </p>
-                <ToggleInput
-                    value={addType}
-                    onValueChange={setAddType}
-                  options={[
-                      { label: "This Workout", value: "today" },
-                      { label: "This & Future", value: "future" },
-                    ]}
-                  />
-                </FormSectionWrapper>
-              )}
-            </SetEditForm>
-            <div className="flex space-x-2 p-4">
-              <SwiperButton
-                onClick={() => setIsEditSheetOpen(false)}
-                variant="secondary"
-                className="flex-1"
-              >
-                Cancel
-              </SwiperButton>
-              <SwiperButton
-                onClick={handleSaveSet}
-                className="flex-1"
-                disabled={!formDirty}
-              >
-                Save
-              </SwiperButton>
-            </div>
-          </SwiperForm>
-        )}
+
       </div>
     </CardWrapper>
   );

@@ -29,9 +29,10 @@ const SwiperSheet = ({
           "bg-stone-50 p-0 gap-0 flex flex-col",
           className
         )}
-        aria-label={title}
         {...props}
       >
+        <SheetTitle className="sr-only">{title}</SheetTitle>
+        {description && <SheetDescription className="sr-only">{description}</SheetDescription>}
         {children}
       </SheetContent>
     </Sheet>

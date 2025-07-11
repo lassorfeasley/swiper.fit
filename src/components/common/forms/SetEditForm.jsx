@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo, useRef } from "react";
 import PropTypes from "prop-types";
 import NumericInput from "@/components/molecules/numeric-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
@@ -124,18 +124,19 @@ const SetEditForm = memo(
     hideActionButtons = false,
     hideInternalHeader = false,
     onDirtyChange,
+    isUnscheduled,
+    onSetProgrammaticUpdate,
+    addType,
+    onAddTypeChange,
   }) => {
     const [formValues, setFormValues] = useState(initialValues);
     const initialRef = React.useRef(initialValues);
+    const initialAddTypeRef = React.useRef(addType);
 
     // Reset form values when initialValues changes (e.g., when editing a different set)
     useEffect(() => {
       setFormValues(initialValues);
     }, [initialValues]);
-
-    // Toggle for saving scope
-    const [addType, setAddType] = useState("today");
-    const initialAddTypeRef = React.useRef("today");
 
     // track dirty (after addType defined)
     React.useEffect(() => {
@@ -230,6 +231,24 @@ const SetEditForm = memo(
       ? (val) => handleLocalChange("timed_set_duration", val)
       : (val) => handleImmediateSync("timed_set_duration", val);
 
+    const handleSaveSet = async () => {
+      const isProgramUpdate = addType === "future";
+
+      if (isProgramUpdate) {
+        if (onSetProgrammaticUpdate) {
+          onSetProgrammaticUpdate(
+            formValues.exerciseId,
+            formValues.routine_set_id,
+            formValues
+          );
+        }
+      } else {
+        if (onSave) {
+          onSave(formValues);
+        }
+      }
+    };
+
     if (isChildForm) {
       return (
         <FormContent
@@ -264,21 +283,34 @@ const SetEditForm = memo(
           durationOnChange={durationOnChange}
           weightOnChange={weightOnChange}
         />
-        {!isChildForm && (
+        {isUnscheduled && (
           <FormSectionWrapper>
             <ToggleInput
               label="Keep new settings?"
-              options={[{ label: 'Just for today', value: 'today' }, { label: 'Permanently', value: 'future' }]}
               value={addType}
-              onValueChange={setAddType}
+              onValueChange={onAddTypeChange}
+              options={[
+                { label: "Just for today", value: "today" },
+                { label: "Permanently", value: "future" },
+              ]}
             />
             {!hideActionButtons && (
-              <SwiperButton
-                onClick={handleSave}
-                disabled={!onSave && !onSaveForFuture}
-              >
-                {addType === "future" ? saveButtonText : "Save"}
-              </SwiperButton>
+              <div className="flex space-x-2 pt-4">
+                <SwiperButton
+                  onClick={() => onSave(initialValues)}
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  Cancel
+                </SwiperButton>
+                <SwiperButton
+                  onClick={handleSave}
+                  className="flex-1"
+                  disabled={!onDirtyChange}
+                >
+                  Save
+                </SwiperButton>
+              </div>
             )}
           </FormSectionWrapper>
         )}
@@ -309,6 +341,10 @@ SetEditForm.propTypes = {
   hideActionButtons: PropTypes.bool,
   hideInternalHeader: PropTypes.bool,
   onDirtyChange: PropTypes.func,
+  isUnscheduled: PropTypes.bool,
+  onSetProgrammaticUpdate: PropTypes.func,
+  addType: PropTypes.string,
+  onAddTypeChange: PropTypes.func,
 };
 
 export default SetEditForm;
