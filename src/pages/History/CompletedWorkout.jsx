@@ -5,6 +5,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/contexts/AccountContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
@@ -115,6 +116,7 @@ const CompletedWorkout = () => {
   const [isEditWorkoutOpen, setEditWorkoutOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
   const { user } = useAuth();
+  const currentUser = useCurrentUser(); // Use delegation-aware user context
   const location = useLocation();
   // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
   const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
@@ -130,14 +132,14 @@ const CompletedWorkout = () => {
   const [publicLink, setPublicLink] = useState(false);
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   // Treat public view as read-only even if the owner is logged in
-  const readOnly = isPublicWorkoutView || !user || (workout && workout.user_id !== user.id);
+  const readOnly = isPublicWorkoutView || !user || (workout && workout.user_id !== currentUser?.id);
   const { isDelegated } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
 
   useEffect(() => {
-    setIsOwner(user && workout && workout.user_id === user.id);
-  }, [user, workout]);
+    setIsOwner(user && workout && workout.user_id === currentUser?.id);
+  }, [user, currentUser, workout]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -273,7 +275,7 @@ const CompletedWorkout = () => {
       setLoading(false);
     };
     if (workoutId) fetchData();
-  }, [workoutId, user]);
+  }, [workoutId, user, currentUser]);
 
   useEffect(() => {
     if (workout) {
@@ -371,7 +373,7 @@ const CompletedWorkout = () => {
         .from("workouts")
         .update({ workout_name: workoutName })
         .eq("id", workoutId)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUser.id);
 
       if (error) throw error;
       setWorkout((prev) => ({ ...prev, workout_name: workoutName }));
@@ -404,7 +406,7 @@ const CompletedWorkout = () => {
         .from("workouts")
         .delete()
         .eq("id", workoutId)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUser.id);
 
       if (workoutError) {
         throw new Error("Failed to delete workout: " + workoutError.message);
@@ -528,7 +530,7 @@ const CompletedWorkout = () => {
         .from('workouts')
         .update({ is_public: true })
         .eq('id', workoutId)
-        .eq('user_id', user.id);
+        .eq('user_id', currentUser.id);
       if (error) throw error;
       setWorkout((prev) => ({ ...prev, is_public: true }));
     }
@@ -546,7 +548,7 @@ const CompletedWorkout = () => {
         .from('workouts')
         .update({ is_public: val })
         .eq('id', workoutId)
-        .eq('user_id', user.id);
+        .eq('user_id', currentUser.id);
       setWorkout((prev) => ({ ...prev, is_public: val }));
       
       // Trigger static generation for crawler support
@@ -606,7 +608,7 @@ const CompletedWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
-        showDeleteOption={!readOnly}
+        showDeleteOption={!readOnly || isDelegated}
         onDelete={handleDeleteWorkout}
       >
         {loading ? (
