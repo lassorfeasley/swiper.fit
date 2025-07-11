@@ -86,7 +86,7 @@ const RoutineBuilder = () => {
         setConfigs: (pe.routine_sets || [])
           .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
           .map((set) => {
-            const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+            const unit = set.weight_unit || 'lbs';
             return {
               reps: set.reps,
               weight: set.weight,
@@ -279,7 +279,7 @@ const RoutineBuilder = () => {
       setConfigs: (pe.routine_sets || [])
         .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
         .map((set) => {
-          const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+          const unit = set.weight_unit || 'lbs';
           return {
             reps: set.reps,
             weight: set.weight,

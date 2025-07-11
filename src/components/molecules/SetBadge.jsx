@@ -10,7 +10,7 @@ const SetBadgeSegment = ({ icon, value, isFirst, isLast }) => {
   return (
     <div className={`self-stretch px-2 bg-neutral-100 flex justify-center items-center gap-0.5 ${borderRadius} ${borderClass}`}>
       <IconComponent className="size-4 text-neutral-500" strokeWidth={1.5} />
-      {value && (
+      {value != null && value !== '' && (
         <span className="text-center text-neutral-500 text-label">
           {value}
         </span>
@@ -59,11 +59,11 @@ const SetBadge = ({
         segments.push({ icon: Repeat2, value: reps });
     }
 
-    // Show weight segment for body weight or when weight > 0
+    // Always show weight segment: BW for bodyweight, weight value (including 0) for others
     if (unit === "body") {
         segments.push({ icon: Weight, value: "BW" });
-    } else if (weight > 0) {
-        segments.push({ icon: Weight, value: weight });
+    } else {
+        segments.push({ icon: Weight, value: weight || 0 });
     }
 
     return segments.map((seg, index) => (

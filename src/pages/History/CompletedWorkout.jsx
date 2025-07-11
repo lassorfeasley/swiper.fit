@@ -189,7 +189,7 @@ const CompletedWorkout = () => {
           );
         })
         .map((set) => {
-          const unit = set.weight_unit || (set.set_type === 'timed' ? 'body' : 'lbs');
+          const unit = set.weight_unit || 'lbs';
           return {
             ...set,
             weight: set.weight,
@@ -216,13 +216,10 @@ const CompletedWorkout = () => {
             return true;
           }
 
-          // For routine-based duplicates, prefer the entry that carries an explicit unit
-          // or a non-zero weight (i.e. more informative).
-          const takeCurrent = (row.unit === 'body' || row.weight > 0) && !(existing.unit === 'body' || existing.weight > 0);
-          if (takeCurrent) {
-            dedupedMap[key] = row;
-          }
-          return takeCurrent; // keep only the chosen row when replacing
+          // For routine-based duplicates, keep the most recent entry (later in array)
+          // This ensures we get the final state if a user logged the same set multiple times
+          dedupedMap[key] = row;
+          return false; // always filter out duplicates, keeping the last one
         });
       console.log('[CompletedWorkout] validSets:', validSets);
       setSets(validSets);

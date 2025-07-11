@@ -156,6 +156,10 @@ const ActiveExerciseCard = React.forwardRef(({
             routine_set_id: setToComplete.routine_set_id,
             set_type: setToComplete.set_type,
             timed_set_duration: setToComplete.timed_set_duration,
+            // Include all set data to preserve bodyweight unit and other values
+            reps: setToComplete.reps,
+            weight: setToComplete.weight,
+            weight_unit: setToComplete.weight_unit || setToComplete.unit,
           },
         },
       ];

@@ -270,7 +270,7 @@ const ActiveWorkout = () => {
         name: we.name_override || we.snapshot_name,
         // Ensure every set config has consistent unit fields
         setConfigs: (setsMap[we.exercise_id] || []).map((rs) => {
-          const normalisedUnit = rs.weight_unit || (rs.weight === 0 ? 'body' : (rs.set_type === 'timed' ? 'body' : 'lbs'));
+          const normalisedUnit = rs.unit || 'lbs';
           return {
             ...rs,
             unit: normalisedUnit,
@@ -593,32 +593,33 @@ const ActiveWorkout = () => {
     if (isProgramUpdate) {
       // Update the program template
       await handleSetProgrammaticUpdate(exerciseId, setConfig.routine_set_id, newValues);
-    } else {
-      // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
-      const targetId = setConfig?.id;
+    }
 
-      // Map unit to weight_unit for database consistency
-      const { unit, ...otherValues } = newValues;
-      const dbValues = {
-        ...otherValues,
-        weight_unit: unit,
-        routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
-      };
+    // ALWAYS also update the current workout (whether permanent or not)
+    // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
+    const targetId = setConfig?.id;
 
-      const updates = [
-        {
-          id: targetId,
-          changes: dbValues,
-        },
-      ];
+    // Map unit to weight_unit for database consistency
+    const { unit, ...otherValues } = newValues;
+    const dbValues = {
+      ...otherValues,
+      weight_unit: unit,
+      routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
+    };
 
-      // Persist changes and wait for DB operations to complete
-      await updateWorkoutProgress(exerciseId, updates);
-      
-      // Also call updateSet if we have a valid database ID
-      if (targetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetId)) {
-        await updateSet(targetId, newValues); // Use original newValues with 'unit' field
-      }
+    const updates = [
+      {
+        id: targetId,
+        changes: dbValues,
+      },
+    ];
+
+    // Persist changes and wait for DB operations to complete
+    await updateWorkoutProgress(exerciseId, updates);
+    
+    // Also call updateSet if we have a valid database ID
+    if (targetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetId)) {
+      await updateSet(targetId, newValues); // Use original newValues with 'unit' field
     }
 
     // --------------------------------------------------------------
