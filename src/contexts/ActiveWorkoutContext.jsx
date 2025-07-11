@@ -150,6 +150,10 @@ useEffect(() => {
       console.log('[Realtime][workout status]', w);
       setIsWorkoutActive(w.is_active);
       if (!w.is_active) {
+        // Navigate to completed workout before clearing state (for remote workout endings)
+        if (activeWorkout?.id && w.completed_at) {
+          navigate(`/history/${activeWorkout.id}`);
+        }
         setActiveWorkout(null);
       }
     })
