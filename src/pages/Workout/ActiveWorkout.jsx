@@ -12,7 +12,7 @@ import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { TextInput } from "@/components/molecules/text-input";
 import { useAccount } from "@/contexts/AccountContext";
 
@@ -1137,7 +1137,6 @@ const ActiveWorkout = () => {
           />
         </div>
       </SwiperForm>
-      <Toaster richColors />
     </AppLayout>
   );
 };
