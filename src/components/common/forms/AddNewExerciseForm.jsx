@@ -285,7 +285,7 @@ const AddNewExerciseForm = React.forwardRef(
           </FormSectionWrapper>
         )}
 
-        {setsCount > 1 && (
+        {setsCount >= 1 && (
           <FormSectionWrapper className="py-4 px-4">
             <div className="text-body leading-tight">
               <span className="text-slate-600 font-medium">Customize sets </span>
