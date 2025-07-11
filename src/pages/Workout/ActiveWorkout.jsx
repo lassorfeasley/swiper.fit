@@ -139,8 +139,15 @@ const ActiveWorkout = () => {
   // Scroll any newly focused card 25% down the viewport
   useEffect(() => {
     if (!focusedNode) return;
-    // Smoothly scroll the focused card into view at 25% down
-    scrollCardIntoView(focusedNode, "smooth");
+    
+    // A timeout is needed to allow the card's expand animation to complete
+    // before we calculate its position and scroll to it.
+    const scrollTimeout = setTimeout(() => {
+      // Smoothly scroll the focused card into view at 25% down
+      scrollCardIntoView(focusedNode, "smooth");
+    }, CARD_ANIMATION_DURATION_MS + 50); // Add a 50ms buffer
+
+    return () => clearTimeout(scrollTimeout);
   }, [focusedNode]);
 
   useEffect(() => {
@@ -493,10 +500,13 @@ const ActiveWorkout = () => {
         }
         if (target) {
           changeFocus(target.exercise_id);
+          // The scroll is now handled by the useEffect on [focusedNode]
+          /*
           setTimeout(() => {
             const el = document.getElementById(`exercise-${target.exercise_id}`);
             if (el) scrollCardIntoView(el);
           }, collapseDurationMs + 50);
+          */
         }
       }
       return newSet;
