@@ -93,20 +93,28 @@ const ActiveWorkout = () => {
 
   // Focus whenever the last_exercise_id in workflow context changes
   useEffect(() => {
-    const remoteId = activeWorkout?.lastExerciseId;
-    if (remoteId) {
-      setFocusedExerciseId(remoteId);
+    const remoteWExId = activeWorkout?.lastExerciseId; // This is workout_exercise_id
+    if (remoteWExId) {
+      const targetExercise = exercises.find(ex => ex.id === remoteWExId);
+      if (targetExercise) {
+        setFocusedExerciseId(targetExercise.exercise_id);
+      }
     }
-  }, [activeWorkout?.lastExerciseId]);
+  }, [activeWorkout?.lastExerciseId, exercises]);
 
   // After exercises load, autoscroll only to the card stored as lastExerciseId (once per mount)
   useEffect(() => {
     if (hasAutoScrolledRef.current) return;
-    if (!activeWorkout?.lastExerciseId) return;
+    const lastWExId = activeWorkout?.lastExerciseId;
+    if (!lastWExId) return;
     if (!exercises.length) return;
-    const lastExName = exercises.find(ex => ex.exercise_id === activeWorkout.lastExerciseId)?.name || 'Unknown';
+    
+    const targetExercise = exercises.find(ex => ex.id === lastWExId);
+    if (!targetExercise) return;
+
+    const lastExName = targetExercise.name || 'Unknown';
     console.log(`[ActiveWorkout] initial refresh focus: "${lastExName}"`);
-    setInitialScrollTargetId(activeWorkout.lastExerciseId);
+    setInitialScrollTargetId(targetExercise.exercise_id);
     hasAutoScrolledRef.current = true;
   }, [exercises, activeWorkout?.lastExerciseId]);
 
@@ -510,7 +518,7 @@ const ActiveWorkout = () => {
       const completed = (workoutProgress[newId] || []).length;
       if (completed < totalSets) {
         console.log(`[ActiveWorkout] changeFocus updating lastExercise to ${ex?.name}`);
-        updateLastExercise?.(newId);
+        updateLastExercise?.(ex.id);
       }
     }, collapseDurationMs);
   }, [updateLastExercise, exercises, workoutProgress]);

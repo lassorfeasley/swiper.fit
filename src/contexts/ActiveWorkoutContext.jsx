@@ -48,7 +48,7 @@ export function ActiveWorkoutProvider({ children }) {
           workoutName: workout.workout_name || 'Workout',
           routineName: workout.routines?.routine_name || '',
           startTime: workout.created_at,
-          lastExerciseId: workout.last_exercise_id || null,
+          lastExerciseId: workout.last_workout_exercise_id || null,
         };
         setActiveWorkout(workoutData);
         // Fetch all sets logged for this workout (including pending ones)
@@ -144,8 +144,8 @@ useEffect(() => {
     .channel(`public:workouts:id=eq.${activeWorkout.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ new: w }) => {
       // Sync last exercise across clients
-      if (w.last_exercise_id && w.last_exercise_id !== activeWorkout?.lastExerciseId) {
-        setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_exercise_id } : prev);
+      if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
+        setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_workout_exercise_id } : prev);
       }
       console.log('[Realtime][workout status]', w);
       setIsWorkoutActive(w.is_active);
@@ -220,7 +220,7 @@ useEffect(() => {
           // Fetch full workout record with routine join
           const { data: workoutRec, error: fetchErr } = await supabase
             .from('workouts')
-            .select('id, routine_id, workout_name, created_at, last_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
+            .select('id, routine_id, workout_name, created_at, last_workout_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
             .eq('id', w.id)
             .maybeSingle();
           if (fetchErr || !workoutRec) {
@@ -234,7 +234,7 @@ useEffect(() => {
             workoutName: workoutRec.workout_name,
             routineName: workoutRec.routines?.routine_name || '',
             startTime: workoutRec.created_at,
-            lastExerciseId: workoutRec.last_exercise_id || null,
+            lastExerciseId: workoutRec.last_workout_exercise_id || null,
           };
           setActiveWorkout(workoutData);
           setIsWorkoutActive(true);
@@ -802,20 +802,20 @@ useEffect(() => {
     }
   }, [activeWorkout, user]);
 
-  const updateLastExercise = useCallback(async (exerciseId) => {
+  const updateLastExercise = useCallback(async (workoutExerciseId) => {
     if (!activeWorkout?.id) {
-      console.warn('[updateLastExercise] no activeWorkout.id, skipping', exerciseId);
+      console.warn('[updateLastExercise] no activeWorkout.id, skipping', workoutExerciseId);
       return;
     }
-    console.log('[updateLastExercise] attempting to set last_exercise_id to', exerciseId, 'for workout', activeWorkout.id);
+    console.log('[updateLastExercise] attempting to set last_workout_exercise_id to', workoutExerciseId, 'for workout', activeWorkout.id);
     // Optimistically update local state
-    setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: exerciseId } : prev);
+    setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: workoutExerciseId } : prev);
     try {
       const { data: updatedRows, error: updateErr } = await supabase
         .from('workouts')
-        .update({ last_exercise_id: exerciseId })
+        .update({ last_workout_exercise_id: workoutExerciseId })
         .eq('id', activeWorkout.id)
-        .select('id, last_exercise_id');
+        .select('id, last_workout_exercise_id');
       if (updateErr) {
         console.error('[updateLastExercise] DB error:', updateErr);
       } else {
