@@ -184,8 +184,14 @@ const ActiveExerciseCard = React.forwardRef(({
         );
       }
 
-      // If this was the last set in the exercise, notify completion
-      if (setIdx === sets.length - 1) {
+      // After updating the set's status, check if all sets for this exercise are now complete.
+      // We need to account for the update that's in-flight.
+      const allSetsNowComplete = setsRef.current.every((s, i) => {
+        if (i === setIdx) return true; // The current set is now complete
+        return s.status === "complete";
+      });
+
+      if (allSetsNowComplete) {
         console.log(
           `[ActiveExerciseCard] all sets complete for exercise ${exerciseName}, calling onExerciseComplete`
         );
