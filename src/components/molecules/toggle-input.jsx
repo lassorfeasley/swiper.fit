@@ -6,7 +6,7 @@ const ToggleInput = ({
   label,
   options = [],
   value,
-  onChange,
+  onValueChange,
   className = "",
 }) => {
   return (
@@ -24,7 +24,7 @@ const ToggleInput = ({
       <ToggleGroup
         type="single"
         value={value}
-        onValueChange={onChange}
+        onValueChange={onValueChange}
         className="gap-0 self-stretch rounded-sm border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0"
       >
         {options.map((option, idx) => (

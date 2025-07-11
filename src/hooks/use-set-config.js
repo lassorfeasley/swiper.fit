@@ -24,7 +24,7 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
    sets – array where each element stores ONLY fields that deviate from `defaults`.  Example:
      { set_variant: 'Warm-up', reps: 8 } // unit & weight come from defaults
    */
-  const [defaults, setDefaults] = useState(initialDefaults);
+  const [defaults, setDefaults] = useState(initialDefaults || defaultValues);
   const [sets, setSets] = useState(Array.from({ length: initialCount }, () => ({})));
 
   // --- updater helpers ----------------------------------------------------

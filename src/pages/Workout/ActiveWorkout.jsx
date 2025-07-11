@@ -58,6 +58,13 @@ const ActiveWorkout = () => {
   const [currentFormValues, setCurrentFormValues] = useState({});
   const [editingExercise, setEditingExercise] = useState(null);
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
+  const [exerciseUpdateType, setExerciseUpdateType] = useState('today');
+
+  useEffect(() => {
+    if (editingExercise) {
+      setExerciseUpdateType('today');
+    }
+  }, [editingExercise]);
 
   const skipAutoRedirectRef = useRef(false);
 
@@ -372,8 +379,11 @@ const ActiveWorkout = () => {
         .eq("id", setId); // only use id to identify the row
 
       if (error) throw error;
+
+      toast.success("Routine updated successfully!");
     } catch (error) {
       console.error("Error updating routine set:", error);
+      toast.error("Failed to update routine.");
       // Optionally, show an error to the user
     }
   };
@@ -832,7 +842,6 @@ const ActiveWorkout = () => {
             }
           })
         );
-        // Show confirmation toast
         toast.success("Routine updated!");
       }
 
@@ -1019,8 +1028,11 @@ const ActiveWorkout = () => {
                   initialSetConfigs={editingExercise.setConfigs}
                   hideActionButtons={true}
                   showAddToProgramToggle={false}
-                  onActionIconClick={(data, _type) => handleSaveExerciseEdit(data, 'future')}
+                  onActionIconClick={(data, _type) => handleSaveExerciseEdit(data, exerciseUpdateType)}
                   onDirtyChange={setEditingExerciseDirty}
+                  showUpdateTypeToggle={true}
+                  updateType={exerciseUpdateType}
+                  onUpdateTypeChange={setExerciseUpdateType}
                 />
               </div>
             </SwiperForm>

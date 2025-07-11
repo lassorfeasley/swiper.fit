@@ -12,7 +12,7 @@ const unitOptions = [
   { label: "body", value: "body" },
 ];
 
-export default function SetBuilderForm({ initialDefaults, onDefaultsChange }) {
+export default function SetBuilderForm({ initialDefaults = { set_type: 'reps', reps: 10, timed_set_duration: 30, weight: 25, unit: 'lbs' }, onDefaultsChange }) {
   const [defaults, setDefaults] = useState(initialDefaults);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function SetBuilderForm({ initialDefaults, onDefaultsChange }) {
           <ToggleInput
             options={setTypeOptions}
             value={defaults.set_type}
-            onChange={handleSetTypeChange}
+            onValueChange={handleSetTypeChange}
           />
         </div>
         <div className="w-full self-stretch flex flex-col justify-start items-start gap-1">
@@ -69,7 +69,7 @@ export default function SetBuilderForm({ initialDefaults, onDefaultsChange }) {
           <ToggleInput
             options={unitOptions}
             value={defaults.unit}
-            onChange={(val) => handleDefaultChange("unit", val)}
+            onValueChange={(val) => handleDefaultChange("unit", val)}
           />
         </div>
         <div className="w-full self-stretch flex flex-col justify-start items-start gap-1">

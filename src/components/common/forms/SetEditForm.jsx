@@ -55,7 +55,7 @@ const FormContent = ({
           label="Set type"
           options={setTypeOptions}
           value={set_type}
-          onChange={handleSetTypeChange}
+          onValueChange={handleSetTypeChange}
         />
         {set_type === "reps" ? (
           <NumericInput
@@ -79,7 +79,7 @@ const FormContent = ({
           label="Weight unit"
           options={unitOptions}
           value={unit}
-          onChange={handleUnitChange}
+          onValueChange={handleUnitChange}
         />
         {unit === "body" ? (
           <div className="w-full inline-flex flex-col justify-start items-start gap-0">
@@ -270,7 +270,7 @@ const SetEditForm = memo(
               label="Keep new settings?"
               options={[{ label: 'Just for today', value: 'today' }, { label: 'Permanently', value: 'future' }]}
               value={addType}
-              onChange={setAddType}
+              onValueChange={setAddType}
             />
             {!hideActionButtons && (
               <SwiperButton

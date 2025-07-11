@@ -25,16 +25,20 @@ const AddNewExerciseForm = React.forwardRef(
       onDirtyChange,
       hideActionButtons = false,
       showAddToProgramToggle = true,
+      showUpdateTypeToggle = false,
+      updateType,
+      onUpdateTypeChange,
     },
     ref
   ) => {
     /* ------------------------------------------------------------------ */
     //  Local state – name & set config hook
     /* ------------------------------------------------------------------ */
-
+    const [isInitialized, setIsInitialized] = useState(false);
     const [exerciseName, setExerciseName] = useState(initialName);
     const [section, setSection] = useState(initialSection);
     const initialNameRef = React.useRef(initialName);
+    const initialUpdateTypeRef = React.useRef(updateType);
 
     // Build initial defaults from the first supplied set config (if any)
     const initialDefaults = initialSetConfigs[0]
@@ -72,27 +76,31 @@ const AddNewExerciseForm = React.forwardRef(
           Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k, v));
         });
       }
+      onDirtyChange?.(false);
+      setIsInitialized(true);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
+      if (!isInitialized) return;
+
       const nameFilled = exerciseName.trim() !== "";
       const nameDirty = exerciseName.trim() !== initialNameRef.current.trim();
+      const updateTypeDirty = updateType !== initialUpdateTypeRef.current;
       // Detect if number of sets changed
       const setsCountDirty = sets.length !== initialSetConfigs.length;
       // Detect if any set's config changed
       const setDirty =
         setsCountDirty ||
-        sets.some((_, idx) => {
-          const merged = getSetMerged(idx);
+        sets.some((set, idx) => {
           return (
-            JSON.stringify(merged) !==
+            JSON.stringify(set) !==
             JSON.stringify(initialSetConfigs[idx] || {})
           );
         });
       // Ready to save/add only when a name is present AND either the name changed or sets changed
-      onDirtyChange?.(nameFilled && (nameDirty || setDirty));
-    }, [exerciseName, sets, onDirtyChange]);
+      onDirtyChange?.(nameFilled && (nameDirty || setDirty || updateTypeDirty));
+    }, [exerciseName, sets, onDirtyChange, isInitialized, updateType, initialSetConfigs]);
 
     /* ------------------------------------------------------------------ */
     //  Derived values & helpers
@@ -235,7 +243,7 @@ const AddNewExerciseForm = React.forwardRef(
           />
           <ToggleInput
             value={section}
-            onChange={(value) => value && setSection(value)}
+            onValueChange={(value) => value && setSection(value)}
             options={[
               { label: "Warmup", value: "warmup" },
               { label: "Training", value: "training" },
@@ -263,41 +271,45 @@ const AddNewExerciseForm = React.forwardRef(
                   { label: "Permanently", value: "future" },
                 ]}
                 value={addType}
-                onChange={(val) => val && setAddType(val)}
+                onValueChange={(val) => val && setAddType(val)}
               />
             </div>
           )}
         </FormSectionWrapper>
 
-        {/* Default set configs – only show when creating a new exercise */}
-        {initialSetConfigs.length === 0 && (
+        {/* Set config defaults (only when adding new exercise) */}
+        {showAddToProgramToggle && (
           <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
-            <div className="text-body leading-tight">
-              <span className="text-slate-600 font-medium">Set defaults </span>
-              <span className="text-neutral-300">
-                Initialize sets then configure and name individual sets below.
-              </span>
-            </div>
             <SetBuilderForm
               initialDefaults={defaults}
               onDefaultsChange={updateDefault}
+              disabled={setsCount === 1}
             />
           </FormSectionWrapper>
         )}
 
-        {setsCount >= 1 && (
-          <FormSectionWrapper className="py-4 px-4">
-            <div className="text-body leading-tight">
-              <span className="text-slate-600 font-medium">Customize sets </span>
-              <span className="text-neutral-300">
-                Tap a set to name and configure weight, reps, and more.
-              </span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: setsCount }).map((_, idx) => (
-                <SetCard key={idx} idx={idx} />
-              ))}
-            </div>
+        {/* Set list */}
+        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
+          <div className="text-sm font-medium text-neutral-600">Sets</div>
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: setsCount }).map((_, idx) => (
+              <SetCard key={idx} idx={idx} />
+            ))}
+          </div>
+        </FormSectionWrapper>
+
+        {/* Keep new settings toggle (Edit Exercise only) */}
+        {showUpdateTypeToggle && (
+          <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
+            <ToggleInput
+              label="Keep new settings?"
+              value={updateType}
+              onValueChange={onUpdateTypeChange}
+              options={[
+                { label: "Just for today", value: "today" },
+                { label: "Permanently", value: "future" },
+              ]}
+            />
           </FormSectionWrapper>
         )}
 
@@ -378,6 +390,9 @@ AddNewExerciseForm.propTypes = {
   onDirtyChange: PropTypes.func,
   hideActionButtons: PropTypes.bool,
   showAddToProgramToggle: PropTypes.bool,
+  showUpdateTypeToggle: PropTypes.bool,
+  updateType: PropTypes.oneOf(["today", "future"]),
+  onUpdateTypeChange: PropTypes.func,
 };
 
 export default AddNewExerciseForm;
