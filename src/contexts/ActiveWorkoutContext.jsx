@@ -368,11 +368,12 @@ useEffect(() => {
     if (!activeWorkout?.id) return false;
     let saved = false;
     try {
-      // Check if any sets have been logged for this workout
+      // Check if any completed sets have been logged for this workout
       const { count: setCount, error: countError } = await supabase
         .from('sets')
         .select('*', { count: 'exact', head: true })
-        .eq('workout_id', activeWorkout.id);
+        .eq('workout_id', activeWorkout.id)
+        .eq('status', 'complete');
 
       if (countError) {
         console.error('Error counting sets for workout:', countError);

@@ -435,12 +435,16 @@ const ActiveWorkout = () => {
         const allDone = exercises.every((ex) => newSet.has(ex.exercise_id));
         if (allDone) {
           setWorkoutAutoEnded(true);
-          (async () => {
-            const wid = activeWorkout?.id;
-            // End workout first to clear active context and prevent redirects
-            await contextEndWorkout();
-            navigate(wid ? `/history/${wid}` : "/history");
-          })();
+            (async () => {
+              const wid = activeWorkout?.id;
+              // End workout first to clear active context and prevent redirects
+              const saved = await contextEndWorkout();
+              if (saved && wid) {
+                navigate(`/history/${wid}`);
+              } else {
+                navigate("/routines");
+              }
+            })();
         }
       }
 
@@ -996,7 +1000,8 @@ const ActiveWorkout = () => {
                   initialSets={editingExercise.setConfigs?.length}
                   initialSetConfigs={editingExercise.setConfigs}
                   hideActionButtons={true}
-                  onActionIconClick={handleSaveExerciseEdit}
+                  showAddToProgramToggle={false}
+                  onActionIconClick={(data, _type) => handleSaveExerciseEdit(data, 'future')}
                   onDirtyChange={setEditingExerciseDirty}
                 />
               </div>
