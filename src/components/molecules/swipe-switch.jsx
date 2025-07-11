@@ -251,11 +251,18 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
                   <div className="text-center text-neutral-500 text-lg font-bold">{reps}</div>
                 </div>
               )}
-              {weight > 0 && weight_unit !== 'body' && (
+              {weight_unit === 'body' ? (
                 <div className="flex justify-center items-center gap-0.5">
                   <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-neutral-500 text-lg font-bold">{weight}</div>
+                  <div className="text-center text-neutral-500 text-lg font-bold">BW</div>
                 </div>
+              ) : (
+                weight > 0 && (
+                  <div className="flex justify-center items-center gap-0.5">
+                    <Weight className="size-4 text-neutral-500" />
+                    <div className="text-center text-neutral-500 text-lg font-bold">{weight}</div>
+                  </div>
+                )
               )}
             </div>
           </div>

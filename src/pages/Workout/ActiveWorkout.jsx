@@ -366,11 +366,10 @@ const ActiveWorkout = () => {
   const handleEndWorkout = async () => {
     // Prevent the auto-redirect effect from firing
     skipAutoRedirectRef.current = true;
-    const workoutId = activeWorkout?.id;
     try {
       const saved = await contextEndWorkout();
-      if (workoutId) {
-        navigate(`/history/${workoutId}`);
+      if (saved && activeWorkout?.id) {
+        navigate(`/history/${activeWorkout.id}`);
       } else {
         // No sets saved – redirect back to routines
         navigate("/routines");
@@ -811,6 +810,8 @@ const ActiveWorkout = () => {
             }
           })
         );
+        // Show confirmation toast
+        toast.success("Routine updated!");
       }
 
       // Update local state so UI reflects the change immediately

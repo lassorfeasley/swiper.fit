@@ -128,6 +128,11 @@ const SetEditForm = memo(
     const [formValues, setFormValues] = useState(initialValues);
     const initialRef = React.useRef(initialValues);
 
+    // Reset form values when initialValues changes (e.g., when editing a different set)
+    useEffect(() => {
+      setFormValues(initialValues);
+    }, [initialValues]);
+
     // Toggle for saving scope
     const [addType, setAddType] = useState("today");
     const initialAddTypeRef = React.useRef("today");
@@ -138,6 +143,16 @@ const SetEditForm = memo(
       const dirtyScope = addType !== initialAddTypeRef.current;
       onDirtyChange?.(dirtyForm || dirtyScope);
     }, [formValues, addType, onDirtyChange]);
+
+    // Store the last non-bodyweight value for restore-on-toggle
+    const [lastNonBodyWeight, setLastNonBodyWeight] = useState({ weight: initialValues.weight, unit: initialValues.unit });
+
+    // Update lastNonBodyWeight if initialValues changes and is not body
+    useEffect(() => {
+      if (initialValues.unit !== 'body') {
+        setLastNonBodyWeight({ weight: initialValues.weight, unit: initialValues.unit });
+      }
+    }, [initialValues.weight, initialValues.unit]);
 
     const handleLocalChange = (field, value) => {
       setFormValues((prev) => {
@@ -178,7 +193,17 @@ const SetEditForm = memo(
 
     const handleUnitChange = (val) => {
       if (val) {
-        const newValues = { ...formValues, unit: val };
+        let newValues = { ...formValues, unit: val };
+        if (val === "body") {
+          // Store the last non-bodyweight value
+          setLastNonBodyWeight({ weight: formValues.weight, unit: formValues.unit });
+          newValues.weight = 0;
+        } else {
+          // Restore previous value if coming from body
+          if (formValues.unit === "body") {
+            newValues.weight = lastNonBodyWeight.weight || 25;
+          }
+        }
         setFormValues(newValues);
         if (onValuesChange) {
           onValuesChange(newValues);

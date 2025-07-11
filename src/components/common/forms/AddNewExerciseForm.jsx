@@ -301,6 +301,18 @@ const AddNewExerciseForm = React.forwardRef(
           </FormSectionWrapper>
         )}
 
+        {onDelete && !hideActionButtons && (
+          <FormSectionWrapper className="px-4 pb-4">
+            <SwiperButton
+              variant="destructive"
+              onClick={onDelete}
+              className="w-full"
+            >
+              Delete exercise
+            </SwiperButton>
+          </FormSectionWrapper>
+        )}
+
         {!hideActionButtons && (
           <FormSectionWrapper className="px-4 pb-4">
             <SwiperButton
@@ -315,15 +327,6 @@ const AddNewExerciseForm = React.forwardRef(
             >
               {onDelete ? "Save changes" : "Add exercise"}
             </SwiperButton>
-            {onDelete && (
-              <SwiperButton
-                variant="destructive"
-                onClick={onDelete}
-                className="w-full"
-              >
-                Delete exercise
-              </SwiperButton>
-            )}
           </FormSectionWrapper>
         )}
 
