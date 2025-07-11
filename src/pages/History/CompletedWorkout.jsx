@@ -388,12 +388,25 @@ const CompletedWorkout = () => {
   };
 
   const handleConfirmDelete = async () => {
+    console.log('[CompletedWorkout] Starting delete process:', {
+      workoutId,
+      currentUserId: currentUser?.id,
+      workoutUserId: workout?.user_id,
+      isDelegated
+    });
+
     try {
       // Manually delete associated sets first
-      const { error: setsError } = await supabase
+      console.log('[CompletedWorkout] Deleting sets for workout:', workoutId);
+      const { error: setsError, count: deletedSetsCount } = await supabase
         .from("sets")
-        .delete()
+        .delete({ count: 'exact' })
         .eq("workout_id", workoutId);
+
+      console.log('[CompletedWorkout] Sets deletion result:', { 
+        error: setsError, 
+        deletedSetsCount 
+      });
 
       if (setsError) {
         throw new Error(
@@ -402,19 +415,38 @@ const CompletedWorkout = () => {
       }
 
       // Then, delete the workout
-      const { error: workoutError } = await supabase
+      // Use the workout's actual user_id rather than filtering by currentUser
+      const targetUserId = workout.user_id;
+      console.log('[CompletedWorkout] Deleting workout:', { 
+        workoutId, 
+        currentUserId: currentUser.id,
+        targetUserId,
+        workoutUserId: workout.user_id,
+        isDelegated
+      });
+      const { error: workoutError, count: deletedWorkoutCount } = await supabase
         .from("workouts")
-        .delete()
+        .delete({ count: 'exact' })
         .eq("id", workoutId)
-        .eq("user_id", currentUser.id);
+        .eq("user_id", targetUserId);
+
+      console.log('[CompletedWorkout] Workout deletion result:', { 
+        error: workoutError, 
+        deletedWorkoutCount 
+      });
 
       if (workoutError) {
         throw new Error("Failed to delete workout: " + workoutError.message);
       }
 
+      if (deletedWorkoutCount === 0) {
+        throw new Error("Workout not found or permission denied");
+      }
+
       // Navigate back to history
       navigate('/history');
     } catch (err) {
+      console.error('[CompletedWorkout] Delete failed:', err);
       toast.error(err.message);
     } finally {
       setDeleteConfirmOpen(false);
