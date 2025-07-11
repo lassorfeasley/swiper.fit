@@ -164,7 +164,8 @@ const CompletedWorkout = () => {
       // Fetch only completed sets for this workout
       const { data: setsData, error: setsError } = await supabase
         .from("sets")
-        .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status")
+        // Include routine_set_id so deduplication can collapse template-based duplicates
+        .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status, routine_set_id")
         .eq("workout_id", workoutId)
         .eq("status", "complete")
         .order("set_order", { ascending: true });
