@@ -138,22 +138,68 @@ export function ActiveWorkoutProvider({ children }) {
 
 // Realtime subscriptions for active workout across clients
 useEffect(() => {
-  if (!activeWorkout?.id) return;
-  // Subscribe to workout status (start/end)
+  if (!activeWorkout?.id || !user?.id) return;
+  
+  // Subscribe to workout status changes (completion/updates)
   const workoutChan = supabase
     .channel(`public:workouts:id=eq.${activeWorkout.id}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ new: w }) => {
-      // Sync last exercise across clients
-      if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
-        setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_workout_exercise_id } : prev);
-      }
-      setIsWorkoutActive(w.is_active);
-      if (!w.is_active) {
-        // Navigate to completed workout before clearing state (for remote workout endings)
-        if (activeWorkout?.id && w.completed_at) {
-          navigate(`/history/${activeWorkout.id}`);
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ eventType, new: w, old }) => {
+      console.log('[Real-time] Workout change:', eventType, w, old);
+      
+      if (eventType === 'UPDATE') {
+        // Sync last exercise across clients
+        if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
+          setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_workout_exercise_id } : prev);
         }
+        
+        // Handle workout completion
+        setIsWorkoutActive(w.is_active);
+        if (!w.is_active) {
+          console.log('[Real-time] Workout ended remotely, navigating...');
+          // Navigate to completed workout before clearing state (for remote workout endings)
+          if (activeWorkout?.id && w.completed_at) {
+            navigate(`/history/${activeWorkout.id}`);
+          } else {
+            // Workout was ended but no completion timestamp (shouldn't happen, but handle gracefully)
+            navigate('/routines');
+          }
+          setActiveWorkout(null);
+          setWorkoutProgress({});
+          setElapsedTime(0);
+          setIsPaused(false);
+        }
+      } else if (eventType === 'DELETE') {
+        console.log('[Real-time] Workout deleted remotely, ending local session...');
+        // Workout was deleted (no sets logged), end local session
+        setIsWorkoutActive(false);
         setActiveWorkout(null);
+        setWorkoutProgress({});
+        setElapsedTime(0);
+        setIsPaused(false);
+        navigate('/routines');
+      }
+    })
+    .subscribe();
+  
+  // Subscribe to workout deletions by user_id (catches deletions that specific workout subscription misses)
+  const userWorkoutChan = supabase
+    .channel(`user:workouts:${user.id}`)
+    .on('postgres_changes', { 
+      event: 'DELETE', 
+      schema: 'public', 
+      table: 'workouts', 
+      filter: `user_id=eq.${user.id}` 
+    }, ({ old }) => {
+      console.log('[Real-time] User workout deleted:', old);
+      // If the deleted workout was our active workout, end the session
+      if (old && String(old.id) === String(activeWorkout?.id)) {
+        console.log('[Real-time] Active workout deleted remotely, ending session...');
+        setIsWorkoutActive(false);
+        setActiveWorkout(null);
+        setWorkoutProgress({});
+        setElapsedTime(0);
+        setIsPaused(false);
+        navigate('/routines');
       }
     })
     .subscribe();
@@ -204,9 +250,10 @@ useEffect(() => {
 
   return () => {
     void workoutChan.unsubscribe();
+    void userWorkoutChan.unsubscribe();
     void setsChan.unsubscribe();
   };
-}, [activeWorkout?.id]);
+}, [activeWorkout?.id, user?.id, navigate]);
 
 // Auto-navigate into any new active workout for this user (delegate or delegator), and initialize context
 useEffect(() => {
