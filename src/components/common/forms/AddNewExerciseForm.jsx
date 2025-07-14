@@ -6,10 +6,8 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
-import SetEditForm from "./SetEditForm";
 import { FormHeader } from "@/components/atoms/sheet";
 import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
-import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "./wrappers/FormSectionWrapper";
 
 const AddNewExerciseForm = React.forwardRef(
@@ -28,6 +26,8 @@ const AddNewExerciseForm = React.forwardRef(
       showUpdateTypeToggle = false,
       updateType = "today",
       onUpdateTypeChange,
+      onEditSet,
+      onSetsConfigChange,
     },
     ref
   ) => {
@@ -79,7 +79,7 @@ const AddNewExerciseForm = React.forwardRef(
       onDirtyChange?.(false);
       setIsInitialized(true);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [initialSetConfigs]);
 
     useEffect(() => {
       if (!isInitialized) return;
@@ -122,32 +122,8 @@ const AddNewExerciseForm = React.forwardRef(
     //  Per-set editor sheet
     /* ------------------------------------------------------------------ */
 
-    const [editSheetOpen, setEditSheetOpen] = useState(false);
-    const [editingIndex, setEditingIndex] = useState(null);
-    const [editingFields, setEditingFields] = useState({});
-    const [editingDirty, setEditingDirty] = useState(false);
-
     const openEditSheet = (idx) => {
-      setEditingIndex(idx);
-      const merged = getSetMerged(idx);
-      const initialFields = { ...merged };
-      if (
-        !initialFields.set_variant ||
-        initialFields.set_variant.trim() === ""
-      ) {
-        initialFields.set_variant = `Set ${idx + 1}`;
-      }
-      setEditingFields(initialFields);
-      setEditingDirty(false);
-      setEditSheetOpen(true);
-    };
-
-    const saveEditSheet = () => {
-      const idx = editingIndex;
-      Object.entries(editingFields).forEach(([k, v]) =>
-        updateSetField(idx, k, v)
-      );
-      setEditSheetOpen(false);
+      onEditSet?.(idx, getSetMerged(idx));
     };
 
     /* ------------------------------------------------------------------ */
@@ -342,30 +318,6 @@ const AddNewExerciseForm = React.forwardRef(
             </SwiperButton>
           </FormSectionWrapper>
         )}
-
-        {editSheetOpen && (
-          <SwiperForm
-            open={editSheetOpen}
-            onOpenChange={setEditSheetOpen}
-            title="Edit set"
-            leftAction={() => setEditSheetOpen(false)}
-            rightAction={saveEditSheet}
-            rightEnabled={editingDirty}
-            rightText="Save"
-            leftText="Cancel"
-            padding={0}
-            className="edit-set-drawer"
-          >
-            <div className="flex-1 overflow-y-auto">
-              <SetEditForm
-                isChildForm
-                initialValues={editingFields}
-                onValuesChange={(vals) => setEditingFields(vals)}
-                onDirtyChange={setEditingDirty}
-              />
-            </div>
-          </SwiperForm>
-        )}
       </form>
     );
   }
@@ -377,23 +329,18 @@ AddNewExerciseForm.propTypes = {
   formPrompt: PropTypes.string,
   initialName: PropTypes.string,
   initialSets: PropTypes.number,
-  initialSection: PropTypes.oneOf(["training", "warmup", "cooldown"]),
-  initialSetConfigs: PropTypes.arrayOf(
-    PropTypes.shape({
-      reps: PropTypes.number,
-      weight: PropTypes.number,
-      unit: PropTypes.oneOf(["kg", "lbs", "body"]),
-      set_type: PropTypes.string,
-      timed_set_duration: PropTypes.number,
-      set_variant: PropTypes.string,
-    })
-  ),
+  initialSection: PropTypes.string,
+  initialSetConfigs: PropTypes.array,
   onDirtyChange: PropTypes.func,
   hideActionButtons: PropTypes.bool,
   showAddToProgramToggle: PropTypes.bool,
   showUpdateTypeToggle: PropTypes.bool,
-  updateType: PropTypes.oneOf(["today", "future"]),
+  updateType: PropTypes.string,
   onUpdateTypeChange: PropTypes.func,
+  onEditSet: PropTypes.func,
+  onSetsConfigChange: PropTypes.func,
 };
+
+AddNewExerciseForm.displayName = "AddNewExerciseForm";
 
 export default AddNewExerciseForm;

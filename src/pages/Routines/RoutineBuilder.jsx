@@ -13,6 +13,7 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
+import SetEditForm from "@/components/common/forms/SetEditForm";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -33,6 +34,10 @@ const RoutineBuilder = () => {
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
   const [sectionFilter, setSectionFilter] = useState("workout");
+  const [editingSet, setEditingSet] = useState(null);
+  const [editingSetIndex, setEditingSetIndex] = useState(null);
+  const [isEditSetFormOpen, setIsEditSetFormOpen] = useState(false);
+  const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
 
   useEffect(() => {
     setPageName("RoutineBuilder");
@@ -111,6 +116,32 @@ const RoutineBuilder = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programId]);
+
+  const handleEditSet = (index, setConfig) => {
+    setEditingSet(setConfig);
+    setEditingSetIndex(index);
+    setIsEditSetFormOpen(true);
+  };
+
+  const handleSetEditFormSave = (values) => {
+    if (editingExercise) {
+      const newSetConfigs = [...editingExercise.setConfigs];
+      newSetConfigs[editingSetIndex] = values;
+      setEditingExercise({
+        ...editingExercise,
+        setConfigs: newSetConfigs,
+      });
+    }
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
+  const handleSetEditFormClose = () => {
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
 
   const saveOrder = async () => {
     for (let i = 0; i < exercises.length; i++) {
@@ -483,6 +514,7 @@ const RoutineBuilder = () => {
                 onDirtyChange={setDirty}
                 hideActionButtons
                 showAddToProgramToggle={false}
+                onEditSet={handleEditSet}
               />
               {editingExercise && (
                 <div className="flex flex-col gap-3 border-t border-neutral-300 py-4 px-4">
@@ -525,6 +557,30 @@ const RoutineBuilder = () => {
             Delete program
           </SwiperButton>
         </SwiperForm.Section>
+      </SwiperForm>
+
+      <SwiperForm
+        open={isEditSetFormOpen}
+        onOpenChange={setIsEditSetFormOpen}
+        title="Edit set"
+        leftAction={handleSetEditFormClose}
+        rightAction={() => handleSetEditFormSave(editingSet)}
+        rightEnabled={editingSetFormDirty}
+        rightText="Save"
+        leftText="Cancel"
+        padding={0}
+      >
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <SetEditForm
+              hideInternalHeader
+              hideActionButtons
+              onDirtyChange={setEditingSetFormDirty}
+              onValuesChange={setEditingSet}
+              initialValues={editingSet}
+            />
+          </div>
+        </div>
       </SwiperForm>
 
       <SwiperAlertDialog

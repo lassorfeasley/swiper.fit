@@ -54,13 +54,14 @@ const ActiveWorkout = () => {
 
   const [isEditSheetOpen, setEditSheetOpen] = useState(false);
   const [editingSet, setEditingSet] = useState(null);
-  const [formDirty, setFormDirty] = useState(false);
-  const [currentFormValues, setCurrentFormValues] = useState({});
   const [editingExercise, setEditingExercise] = useState(null);
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
   const [exerciseUpdateType, setExerciseUpdateType] = useState('today');
   const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
   const [setUpdateType, setSetUpdateType] = useState('today');
+  const [editingSetIndex, setEditingSetIndex] = useState(null);
+  const [currentFormValues, setCurrentFormValues] = useState({});
+  const [formDirty, setFormDirty] = useState(false);
 
   // Memoize initial values for SetEditForm to prevent unnecessary resets
   const setEditFormInitialValues = React.useMemo(() => {
@@ -574,87 +575,44 @@ const ActiveWorkout = () => {
     }, collapseDurationMs);
   }, [updateLastExercise, exercises, workoutProgress]);
 
+  const handleEditSet = (index, setConfig) => {
+    setEditingSet({ exerciseId: editingExercise.exercise_id, setConfig, index });
+    setEditingSetIndex(index);
+    setEditSheetOpen(true);
+    setCurrentFormValues(setConfig);
+  };
+
   const openSetEdit = (exerciseId, setConfig, index) => {
     setEditingSet({ exerciseId, setConfig, index });
     setEditSheetOpen(true);
     setCurrentFormValues(setConfig);
   };
 
-  const handleEditFormSave = async (newValues) => {
-    if (!editingSet) return;
-
-    const { exerciseId, setConfig, index } = editingSet;
-    
-
-
-    // Check if this is a programmatic update (when user selects "Permanently")
-    const isProgramUpdate = setUpdateType === "future" && setConfig?.routine_set_id;
-
-    if (isProgramUpdate) {
-      // Update the program template
-      await handleSetProgrammaticUpdate(exerciseId, setConfig.routine_set_id, newValues);
-    }
-
-    // ALWAYS also update the current workout (whether permanent or not)
-    // Use the id from the original setConfig (may be undefined for yet-unsaved sets)
-    const targetId = setConfig?.id;
-
-    // Map unit to weight_unit for database consistency
-    const { unit, ...otherValues } = newValues;
-    const dbValues = {
-      ...otherValues,
-      weight_unit: unit,
-      routine_set_id: setConfig?.routine_set_id, // Preserve routine_set_id
-    };
-
-    const updates = [
-      {
-        id: targetId,
-        changes: dbValues,
-      },
-    ];
-
-    // Persist changes and wait for DB operations to complete
-    await updateWorkoutProgress(exerciseId, updates);
-    
-    // Also call updateSet if we have a valid database ID
-    if (targetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetId)) {
-      await updateSet(targetId, newValues); // Use original newValues with 'unit' field
-    }
-
-    // --------------------------------------------------------------
-    //  Update local exercises array so Edit-Exercise form sees change
-    // --------------------------------------------------------------
-    setExercises((prev) =>
-      prev.map((ex) => {
-        if (ex.exercise_id !== exerciseId) return ex;
-        const updated = [...ex.setConfigs];
-        if (index != null && updated[index]) {
-          // Use the form values directly for local state (keeping 'unit' field)
-          updated[index] = { ...updated[index], ...newValues };
-        }
-        return { ...ex, setConfigs: updated };
-      })
-    );
-
-    // If the exercise edit drawer is open for this exercise, sync it too
-    setEditingExercise((prev) => {
-      if (!prev || prev.exercise_id !== exerciseId) return prev;
-      const updated = [...prev.setConfigs];
-      if (index != null && updated[index]) {
-        // Use the form values directly for local state (keeping 'unit' field)
-        updated[index] = { ...updated[index], ...newValues };
+  const handleSetEditFormSave = (values) => {
+    if (editingExercise) {
+      const newSetConfigs = [...(editingExercise.setConfigs || [])];
+      if (editingSetIndex !== null) {
+        newSetConfigs[editingSetIndex] = values;
+        setEditingExercise({
+          ...editingExercise,
+          setConfigs: newSetConfigs,
+        });
       }
-      return { ...prev, setConfigs: updated };
-    });
-
+    } else if (editingSet) {
+      // Logic for when editing from ActiveExerciseCard
+      updateSet(editingSet.exerciseId, editingSet.setConfig.id, values);
+    }
     setEditSheetOpen(false);
     setEditingSet(null);
+    setEditingSetIndex(null);
   };
 
-  // ------------------------------------------------------------------
-  //  Add exercise handlers (today vs future)
-  // ------------------------------------------------------------------
+  const handleSetEditFormClose = () => {
+    setEditSheetOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
   const handleAddExerciseToday = async (data) => {
     try {
       // Ensure an exercise row exists (re-use by name if already present)
@@ -1103,6 +1061,7 @@ const ActiveWorkout = () => {
                   showUpdateTypeToggle={true}
                   updateType={exerciseUpdateType}
                   onUpdateTypeChange={setExerciseUpdateType}
+                  onEditSet={handleEditSet}
                 />
               </div>
             </SwiperForm>
@@ -1129,31 +1088,29 @@ const ActiveWorkout = () => {
         cancelText="Cancel"
       />
 
-      {isEditSheetOpen && (
-        <SwiperForm
-          open={isEditSheetOpen}
-          onOpenChange={setEditSheetOpen}
-          title="Edit Set"
-          leftAction={() => setEditSheetOpen(false)}
-          rightAction={() => handleEditFormSave(currentFormValues)}
-          rightEnabled={formDirty}
-          leftText="Cancel"
-          rightText="Save"
-        >
-          <SetEditForm
-            key={`edit-${editingSet?.setConfig?.routine_set_id || editingSet?.setConfig?.id}`}
-            initialValues={setEditFormInitialValues}
-            onValuesChange={setCurrentFormValues}
-            onDirtyChange={setFormDirty}
-            showSetNameField={true}
-            hideActionButtons={true}
-            hideInternalHeader={true}
-            isUnscheduled={!!editingSet?.setConfig?.routine_set_id}
-            addType={setUpdateType}
-            onAddTypeChange={setSetUpdateType}
-          />
-        </SwiperForm>
-      )}
+      <SwiperForm
+        open={isEditSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        title="Edit Set"
+        leftAction={handleSetEditFormClose}
+        rightAction={() => handleSetEditFormSave(currentFormValues)}
+        rightEnabled={formDirty}
+        leftText="Cancel"
+        rightText="Save"
+      >
+        <SetEditForm
+          key={`edit-${editingSet?.setConfig?.routine_set_id || editingSet?.setConfig?.id}`}
+          initialValues={setEditFormInitialValues}
+          onValuesChange={setCurrentFormValues}
+          onDirtyChange={setFormDirty}
+          showSetNameField={true}
+          hideActionButtons={true}
+          hideInternalHeader={true}
+          isUnscheduled={!!editingSet?.setConfig?.routine_set_id}
+          addType={setUpdateType}
+          onAddTypeChange={setSetUpdateType}
+        />
+      </SwiperForm>
 
       {/* Persistent bottom nav for active workout */}
       <ActiveWorkoutNav
