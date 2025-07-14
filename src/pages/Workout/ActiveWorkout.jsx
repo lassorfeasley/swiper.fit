@@ -198,94 +198,94 @@ const ActiveWorkout = () => {
     setPageName("Active Workout");
   }, [setPageName]);
 
-  useEffect(() => {
-    const loadSnapshotExercises = async () => {
-      if (!activeWorkout) {
-        setExercises([]);
-        return;
-      }
-      // 1) Load snapshot of exercises for this workout
-      const { data: snapExs, error: snapErr } = await supabase
-        .from("workout_exercises")
-        .select(
-          `id,
-           exercise_id,
-           exercise_order,
-           snapshot_name,
-           name_override,
-           exercises!workout_exercises_exercise_id_fkey(
-             name,
-             section
-           )`
-        )
-        .eq("workout_id", activeWorkout.id)
-        .order("exercise_order", { ascending: true });
-      if (snapErr || !snapExs) {
-        console.error("Error fetching workout snapshot exercises:", snapErr);
-        setExercises([]);
-        return;
-      }
-      // 2) Fetch template sets from routine_exercises → routine_sets, ordered by set_order
-      const { data: tmplExs, error: tmplErr } = await supabase
-        .from("routine_exercises")
-        .select(
-          `exercise_id,
-           routine_sets!fk_routine_sets__routine_exercises(
-             id,
-             set_order,
-             reps,
-             weight,
-             weight_unit,
-             set_variant,
-             set_type,
-             timed_set_duration
-           )`
-        )
-        .eq("routine_id", activeWorkout.programId)
-        .order("set_order", { foreignTable: "routine_sets", ascending: true });
-      if (tmplErr) console.error("Error fetching template sets:", tmplErr);
-      // 3) Group sets by exercise_id
-      const setsMap = {};
-      (tmplExs || []).forEach((re) => {
-        setsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
-          id: null,
-          routine_set_id: rs.id,
-          reps: rs.reps,
-          weight: rs.weight,
-          unit: rs.weight_unit,
-          set_variant: rs.set_variant,
-          set_type: rs.set_type,
-          timed_set_duration: rs.timed_set_duration,
-        }));
-      });
-      // 4) Merge into cards and set state
-      const cards = snapExs.map((we) => ({
-        id: we.id,
-        exercise_id: we.exercise_id,
-        section: (() => {
-          const raw = ((we.exercises || {}).section || "").toLowerCase().trim();
-          if (raw === "training" || raw === "workout") return "training";
-          if (raw === "warmup") return "warmup";
-          if (raw === "cooldown") return "cooldown";
-          return "training";
-        })(),
-        name: we.name_override || we.snapshot_name,
-        // Ensure every set config has consistent unit fields
-        setConfigs: (setsMap[we.exercise_id] || []).map((rs) => {
-          const normalisedUnit = rs.unit || 'lbs';
-          return {
-            ...rs,
-            unit: normalisedUnit,
-            weight_unit: normalisedUnit,
-          };
-        }),
+  // Extracted loading logic into reusable function to fix set duplication
+  const loadSnapshotExercises = useCallback(async () => {
+    if (!activeWorkout) {
+      setExercises([]);
+      return;
+    }
+    // 1) Load snapshot of exercises for this workout
+    const { data: snapExs, error: snapErr } = await supabase
+      .from("workout_exercises")
+      .select(
+        `id,
+         exercise_id,
+         exercise_order,
+         snapshot_name,
+         name_override,
+         exercises!workout_exercises_exercise_id_fkey(
+           name,
+           section
+         )`
+      )
+      .eq("workout_id", activeWorkout.id)
+      .order("exercise_order", { ascending: true });
+    if (snapErr || !snapExs) {
+      console.error("Error fetching workout snapshot exercises:", snapErr);
+      setExercises([]);
+      return;
+    }
+    // 2) Fetch template sets from routine_exercises → routine_sets, ordered by set_order
+    const { data: tmplExs, error: tmplErr } = await supabase
+      .from("routine_exercises")
+      .select(
+        `exercise_id,
+         routine_sets!fk_routine_sets__routine_exercises(
+           id,
+           set_order,
+           reps,
+           weight,
+           weight_unit,
+           set_variant,
+           set_type,
+           timed_set_duration
+         )`
+      )
+      .eq("routine_id", activeWorkout.programId)
+      .order("set_order", { foreignTable: "routine_sets", ascending: true });
+    if (tmplErr) console.error("Error fetching template sets:", tmplErr);
+    // 3) Group sets by exercise_id
+    const setsMap = {};
+    (tmplExs || []).forEach((re) => {
+      setsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
+        id: null,
+        routine_set_id: rs.id,
+        reps: rs.reps,
+        weight: rs.weight,
+        unit: rs.weight_unit,
+        set_variant: rs.set_variant,
+        set_type: rs.set_type,
+        timed_set_duration: rs.timed_set_duration,
       }));
-      setExercises(cards);
-    };
-    loadSnapshotExercises();
+    });
+    // 4) Merge into cards and set state
+    const cards = snapExs.map((we) => ({
+      id: we.id,
+      exercise_id: we.exercise_id,
+      section: (() => {
+        const raw = ((we.exercises || {}).section || "").toLowerCase().trim();
+        if (raw === "training" || raw === "workout") return "training";
+        if (raw === "warmup") return "warmup";
+        if (raw === "cooldown") return "cooldown";
+        return "training";
+      })(),
+      name: we.name_override || we.snapshot_name,
+      // Ensure every set config has consistent unit fields
+      setConfigs: (setsMap[we.exercise_id] || []).map((rs) => {
+        const normalisedUnit = rs.unit || 'lbs';
+        return {
+          ...rs,
+          unit: normalisedUnit,
+          weight_unit: normalisedUnit,
+        };
+      }),
+    }));
+    setExercises(cards);
   }, [activeWorkout]);
 
-  // TODO: re-implement automatic navigation to last interacted exercise
+  useEffect(() => {
+    loadSnapshotExercises();
+  }, [loadSnapshotExercises]);
 
   const handleSetDataChange = async (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
@@ -879,14 +879,8 @@ const ActiveWorkout = () => {
         // toast.success("Routine updated!"); // Removed duplicate toast - only show from handleSetProgrammaticUpdate
       }
 
-      // Update local state so UI reflects the change immediately
-      setExercises((prev) =>
-        prev.map((ex) =>
-          ex.exercise_id === exerciseId
-            ? { ...ex, name: data.name.trim(), section: data.section, setConfigs: updatedConfigs }
-            : ex
-        )
-      );
+      // Reload exercises to ensure consistency and prevent set duplication
+      await loadSnapshotExercises();
 
       setEditingExercise(null);
     } catch (err) {
