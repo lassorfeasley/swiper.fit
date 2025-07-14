@@ -37,7 +37,7 @@ const SectionWrapperLabel = ({
   return (
     <div
       className={cn(
-        "h-[44px] self-stretch pl-3 bg-white border-b border-neutral-300 inline-flex items-center z-20",
+        "h-[44px] self-stretch pl-3 bg-white border-b border-neutral-300 inline-flex items-center z-30",
         isSticky && "sticky",
         className
       )}

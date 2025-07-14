@@ -156,6 +156,42 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
   scroll-padding-top: 25vh;
 }
 
+/* === Fix for mobile sticky positioning === */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  .sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    /* Improve mobile sticky performance */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
+
+/* Ensure sticky elements work properly on mobile */
+@media (max-width: 768px) {
+  .sticky {
+    /* Force hardware acceleration on mobile */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Fix for mobile browsers where sticky doesn't work in certain containers */
+  main {
+    /* Ensure main container establishes proper stacking context */
+    isolation: isolate;
+  }
+  
+  /* Improve mobile sticky behavior */
+  .sticky {
+    /* Ensure sticky elements have proper containing block */
+    contain: layout style paint;
+  }
+}
+
 [data-exercise-card="true"] {
   scroll-snap-align: start;
   /* Offset programmatic scroll to 25% down viewport */
