@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -38,10 +38,20 @@ const RoutineBuilder = () => {
   const [editingSetIndex, setEditingSetIndex] = useState(null);
   const [isEditSetFormOpen, setIsEditSetFormOpen] = useState(false);
   const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
+  const reorderTimeoutRef = useRef(null);
 
   useEffect(() => {
     setPageName("RoutineBuilder");
   }, [setPageName]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (reorderTimeoutRef.current) {
+        clearTimeout(reorderTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchProgramAndExercises() {
@@ -183,7 +193,25 @@ const RoutineBuilder = () => {
   };
 
   // Handler for reordering exercises within a section
-  const handleReorderExercises = (section) => async (newOrder) => {
+  // Debounced database update function
+  const updateExerciseOrderInDatabase = useCallback(async (exercisesToUpdate) => {
+    try {
+      // Use a single bulk update approach
+      const updates = exercisesToUpdate.map(ex => 
+        supabase
+          .from("routine_exercises")
+          .update({ exercise_order: ex.order })
+          .eq("id", ex.id)
+      );
+      
+      await Promise.all(updates);
+    } catch (error) {
+      console.error("Failed to save exercise order:", error);
+      // Could add toast notification here
+    }
+  }, []);
+
+  const handleReorderExercises = (section) => (newOrder) => {
     const target = section === "workout" ? "training" : section;
     
     // Update local state first for immediate UI feedback
@@ -203,19 +231,19 @@ const RoutineBuilder = () => {
       return allExercises;
     });
 
-    // Save the new order to database
-    try {
-      for (let i = 0; i < newOrder.length; i++) {
-        const ex = newOrder[i];
-        await supabase
-          .from("routine_exercises")
-          .update({ exercise_order: i + 1 })
-          .eq("id", ex.id);
-      }
-    } catch (error) {
-      console.error("Failed to save exercise order:", error);
-      // Could add toast notification here
+    // Clear any existing timeout
+    if (reorderTimeoutRef.current) {
+      clearTimeout(reorderTimeoutRef.current);
     }
+
+    // Debounce the database update - only save after user stops dragging for 300ms
+    reorderTimeoutRef.current = setTimeout(() => {
+      const exercisesToUpdate = newOrder.map((ex, index) => ({
+        id: ex.id,
+        order: index + 1
+      }));
+      updateExerciseOrderInDatabase(exercisesToUpdate);
+    }, 300);
   };
 
   const handleBack = () => {

@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from "react";
+import React, { forwardRef, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import { Reorder } from "framer-motion";
@@ -22,6 +22,7 @@ const DeckWrapper = forwardRef(
     ref
   ) => {
     const [dragging, setDragging] = useState(false);
+    const containerRef = useRef(null);
 
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
@@ -43,7 +44,16 @@ const DeckWrapper = forwardRef(
     if (reorderable && items.length > 0) {
       return (
         <div
-          ref={ref}
+          ref={(node) => {
+            containerRef.current = node;
+            if (ref) {
+              if (typeof ref === 'function') {
+                ref(node);
+              } else {
+                ref.current = node;
+              }
+            }
+          }}
           className={containerClasses}
           style={style}
           {...props}
@@ -66,7 +76,7 @@ const DeckWrapper = forwardRef(
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}
-                dragConstraints={{ left: 0, right: 0 }}
+                dragConstraints={containerRef}
                 dragElastic={0}
               >
                 <div className="w-full max-w-[500px]">
