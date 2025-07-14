@@ -143,6 +143,35 @@ const RoutineBuilder = () => {
     setEditingSetIndex(null);
   };
 
+  const handleSetDelete = () => {
+    if (editingExercise && editingSetIndex !== null) {
+      const newSetConfigs = [...(editingExercise.setConfigs || [])];
+      newSetConfigs.splice(editingSetIndex, 1);
+      
+      // Update the editing exercise
+      const updatedExercise = {
+        ...editingExercise,
+        setConfigs: newSetConfigs,
+      };
+      setEditingExercise(updatedExercise);
+      
+      // Also update the main exercises list
+      setExercises((prev) =>
+        prev.map((ex) =>
+          ex.id === editingExercise.id
+            ? { ...ex, setConfigs: newSetConfigs }
+            : ex
+        )
+      );
+      
+      // Save to database
+      handleSetConfigsChange(editingExercise.exercise_id, newSetConfigs);
+    }
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
   const saveOrder = async () => {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
@@ -150,6 +179,42 @@ const RoutineBuilder = () => {
         .from("routine_exercises")
         .update({ exercise_order: i + 1 })
         .eq("id", ex.id);
+    }
+  };
+
+  // Handler for reordering exercises within a section
+  const handleReorderExercises = (section) => async (newOrder) => {
+    const target = section === "workout" ? "training" : section;
+    
+    // Update local state first for immediate UI feedback
+    setExercises(prev => {
+      // Get exercises from other sections
+      const otherSectionExercises = prev.filter(ex => ex.section !== target);
+      
+      // Update order numbers for the reordered section
+      const reorderedWithNewOrder = newOrder.map((ex, index) => ({
+        ...ex,
+        order: index + 1 // Simple 1-based ordering within section
+      }));
+      
+      // Combine all exercises and sort by section priority then order
+      const allExercises = [...otherSectionExercises, ...reorderedWithNewOrder];
+      
+      return allExercises;
+    });
+
+    // Save the new order to database
+    try {
+      for (let i = 0; i < newOrder.length; i++) {
+        const ex = newOrder[i];
+        await supabase
+          .from("routine_exercises")
+          .update({ exercise_order: i + 1 })
+          .eq("id", ex.id);
+      }
+    } catch (error) {
+      console.error("Failed to save exercise order:", error);
+      // Could add toast notification here
     }
   };
 
@@ -456,7 +521,16 @@ const RoutineBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-          <PageSectionWrapper key={section} section={section} id={`section-${section}`} grid deckGap={20} stickyTopClass="top-0">
+          <PageSectionWrapper 
+            key={section} 
+            section={section} 
+            id={`section-${section}`} 
+            deckGap={20} 
+            stickyTopClass="top-0"
+            reorderable={true}
+            items={secExercises}
+            onReorder={handleReorderExercises(section)}
+          >
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
                 No exercises found. Try adding one!
@@ -579,6 +653,17 @@ const RoutineBuilder = () => {
               onValuesChange={setEditingSet}
               initialValues={editingSet}
             />
+          </div>
+          <div className="border-t border-neutral-300">
+            <div className="p-4">
+              <SwiperButton
+                onClick={handleSetDelete}
+                variant="destructive"
+                className="w-full"
+              >
+                Delete Set
+              </SwiperButton>
+            </div>
           </div>
         </div>
       </SwiperForm>

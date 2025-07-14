@@ -226,7 +226,7 @@ export default function Sharing() {
     <AppLayout title="Sharing">
       <DeckWrapper gap={0} className="pb-24" style={{ paddingTop: 44, paddingLeft: 20, paddingRight: 20 }}>
         {/* Shared with me section */}
-        <div className="w-full flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden mb-8 bg-white">
+        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden mb-8 bg-white">
           <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared with me</div>
           </div>
@@ -266,7 +266,7 @@ export default function Sharing() {
         </div>
         
         {/* Shared by me section */}
-        <div className="w-full flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden mb-8 bg-white">
+        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden mb-8 bg-white">
           <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared by me</div>
           </div>
@@ -305,7 +305,7 @@ export default function Sharing() {
         </div>
         
         {/* Add people section */}
-        <div className="w-full flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden bg-white">
+        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 rounded-lg overflow-hidden bg-white">
           <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Add people</div>
           </div>

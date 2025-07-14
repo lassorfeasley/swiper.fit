@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import SetBadge from "@/components/molecules/SetBadge";
-import { FormHeader } from "@/components/atoms/sheet";
+import { Repeat2, Weight, Grip, Clock } from "lucide-react";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
+import { motion } from "framer-motion";
 
 const ExerciseCard = ({
   exerciseName,
@@ -80,48 +80,111 @@ const ExerciseCard = ({
     if (onCardClick) onCardClick(e);
   };
 
+  const handleMenuClick = (e) => {
+    e.stopPropagation();
+    if (onEdit) onEdit(e);
+  };
+
+  // Get set names from database or fallback to default
+  const getSetName = (index, config) => {
+    return config.set_variant || `Set ${index + 1}`;
+  };
+
+  // Format time for timed sets
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   const cardContent = (
     <div
-      data-exercise-card="true"
-      data-layer="CardContentsWrapper"
-      className="w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-4"
+      data-layer="Property 1=routine-builder" 
+      className="w-full bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
       onClick={handleCardClick}
-      style={{ cursor: setsAreEditable && onCardClick ? "pointer" : "default" }}
+      style={{ 
+        cursor: reorderable ? "grab" : setsAreEditable && onCardClick ? "pointer" : "default",
+        ...(isDragging && { cursor: "grabbing" })
+      }}
     >
-      {/* Exercise name */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
-        <div className="flex-1 justify-start text-neutral-600 text-lg font-medium font-vietnam leading-tight">
+      {/* Header */}
+      <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
+        <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
           {exerciseName}
+        </div>
+        <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
+          <button 
+            onClick={handleMenuClick}
+            className="size-6 relative overflow-hidden flex items-center justify-center"
+            aria-label="Exercise options"
+          >
+            <Grip className="size-6 text-neutral-300" />
+          </button>
         </div>
       </div>
 
-      {/* Set badges */}
+      {/* Set rows */}
       {localSetConfigs && localSetConfigs.length > 0 && (
-        <div className="w-full min-w-0 inline-flex justify-start items-center gap-3 flex-wrap content-center">
+        <>
           {localSetConfigs.map((config, idx) => (
-            <SetBadge
+            <div 
               key={idx}
-              reps={config.reps}
-              weight={config.weight}
-              unit={config.unit || "lbs"}
-              set_type={config.set_type}
-              timed_set_duration={config.timed_set_duration}
-              editable={setsAreEditable}
-              onEdit={(e) => {
+              data-layer="card-row" 
+              className="self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer hover:bg-neutral-50"
+              onClick={setsAreEditable ? (e) => {
                 e.stopPropagation();
                 handleSetEdit(idx);
-              }}
-              className={mode === "completed" ? "bg-green-500 text-white" : ""}
-            />
+              } : undefined}
+            >
+              <div data-layer="Set name" className="justify-start text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                {getSetName(idx, config)}
+              </div>
+              <div data-layer="metrics" className="self-stretch min-w-12 flex justify-start items-center gap-px overflow-hidden">
+                {/* First metric: Reps or Time */}
+                <div data-layer="rep-type" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                  <div data-layer="rep-type-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
+                    {config.set_type === 'timed' ? (
+                      <Clock className="size-4 text-neutral-500" strokeWidth={1.5} />
+                    ) : (
+                      <Repeat2 className="size-4 text-neutral-500" strokeWidth={1.5} />
+                    )}
+                  </div>
+                  <div data-layer="rep-type-metric" className="text-center justify-center text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    {config.set_type === 'timed' ? formatTime(config.timed_set_duration || 0) : (config.reps || 0)}
+                  </div>
+                </div>
+                {/* Weight */}
+                <div data-layer="rep-weight" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                  <div data-layer="rep-weight-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
+                    <Weight className="size-4 text-neutral-500" strokeWidth={1.5} />
+                  </div>
+                  <div data-layer="rep-weight-metric" className="text-center justify-center text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    {config.unit === 'body' ? 'BW' : (config.weight || 0)}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
-        </div>
+        </>
       )}
     </div>
   );
 
   return (
-    <div className={className}>
-      {cardContent}
+    <div className={`w-full ${className}`}>
+      {reorderable ? (
+        <motion.div
+          className="w-full"
+          whileTap={{ scale: 1.02 }}
+          style={{ touchAction: "none" }}
+        >
+          {cardContent}
+        </motion.div>
+      ) : (
+        cardContent
+      )}
+
+      {/* Edit form sheet */}
       {setsAreEditable && (
         <SwiperForm
           open={editSheetOpen}

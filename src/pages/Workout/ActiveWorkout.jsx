@@ -14,6 +14,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { toast } from "sonner";
 import { TextInput } from "@/components/molecules/text-input";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 import { useAccount } from "@/contexts/AccountContext";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
@@ -613,6 +614,27 @@ const ActiveWorkout = () => {
     setEditingSetIndex(null);
   };
 
+  const handleSetDelete = () => {
+    if (editingExercise) {
+      // Deleting from exercise edit form
+      const newSetConfigs = [...(editingExercise.setConfigs || [])];
+      if (editingSetIndex !== null) {
+        newSetConfigs.splice(editingSetIndex, 1);
+        setEditingExercise({
+          ...editingExercise,
+          setConfigs: newSetConfigs,
+        });
+      }
+    } else if (editingSet) {
+      // Deleting from active exercise card - this would require more complex logic
+      // For now, we'll just close the form as this is a more complex scenario
+      console.log('Delete set from active workout not implemented yet');
+    }
+    setEditSheetOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
   const handleAddExerciseToday = async (data) => {
     try {
       // Ensure an exercise row exists (re-use by name if already present)
@@ -1097,19 +1119,35 @@ const ActiveWorkout = () => {
         rightEnabled={formDirty}
         leftText="Cancel"
         rightText="Save"
+        padding={0}
       >
-        <SetEditForm
-          key={`edit-${editingSet?.setConfig?.routine_set_id || editingSet?.setConfig?.id}`}
-          initialValues={setEditFormInitialValues}
-          onValuesChange={setCurrentFormValues}
-          onDirtyChange={setFormDirty}
-          showSetNameField={true}
-          hideActionButtons={true}
-          hideInternalHeader={true}
-          isUnscheduled={!!editingSet?.setConfig?.routine_set_id}
-          addType={setUpdateType}
-          onAddTypeChange={setSetUpdateType}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <SetEditForm
+              key={`edit-${editingSet?.setConfig?.routine_set_id || editingSet?.setConfig?.id}`}
+              initialValues={setEditFormInitialValues}
+              onValuesChange={setCurrentFormValues}
+              onDirtyChange={setFormDirty}
+              showSetNameField={true}
+              hideActionButtons={true}
+              hideInternalHeader={true}
+              isUnscheduled={!!editingSet?.setConfig?.routine_set_id}
+              addType={setUpdateType}
+              onAddTypeChange={setSetUpdateType}
+            />
+          </div>
+          <div className="border-t border-neutral-300">
+            <div className="p-4">
+              <SwiperButton
+                onClick={handleSetDelete}
+                variant="destructive"
+                className="w-full"
+              >
+                Delete Set
+              </SwiperButton>
+            </div>
+          </div>
+        </div>
       </SwiperForm>
 
       {/* Persistent bottom nav for active workout */}

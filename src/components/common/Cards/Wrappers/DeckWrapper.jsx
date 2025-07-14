@@ -1,6 +1,7 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
+import { Reorder } from "framer-motion";
 
 /**
  * DeckWrapper – a vertical flex container meant to hold a stack of CardWrapper components.
@@ -12,16 +13,15 @@ const DeckWrapper = forwardRef(
       children,
       gap = 0, // spacing between items
       paddingX = 20, // horizontal padding (px)
-      // When truthy, enables CSS grid; if a number, that is treated as the column min-width (px)
-      grid = false,
-      gridMinWidth = 210,
       className,
+      reorderable = false,
+      items = [],
+      onReorder,
       ...props
     },
     ref
   ) => {
-    const isGrid = Boolean(grid);
-    const minWidthPx = typeof grid === "number" ? grid : gridMinWidth;
+    const [dragging, setDragging] = useState(false);
 
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
@@ -35,21 +35,55 @@ const DeckWrapper = forwardRef(
       ...(props.style || {}),
     };
 
-    // Apply grid specific inline styles
-    if (isGrid) {
-      style.display = "grid";
-      // Align grid tracks and items to the start (left) to prevent centering when there is extra space
-      style.justifyContent = "start";
-      style.justifyItems = "start";
-      // Ensure each card has at least minWidthPx and can expand to fill available space
-      style.gridTemplateColumns = `repeat(auto-fit,minmax(${minWidthPx}px,1fr))`;
-    }
-
     const containerClasses = cn(
-      "card-container mx-auto w-full",
-      !isGrid && "flex flex-col",
+      "card-container w-full flex flex-col items-center",
       className
     );
+
+    if (reorderable && items.length > 0) {
+      return (
+        <div
+          ref={ref}
+          className={containerClasses}
+          style={style}
+          {...props}
+        >
+          <Reorder.Group
+            axis="y"
+            values={items}
+            onReorder={onReorder}
+            className="w-full flex flex-col items-center"
+            style={{ gap }}
+          >
+            {items.map((item, idx) => (
+              <Reorder.Item
+                key={item.id}
+                value={item}
+                className="w-full flex justify-center"
+                style={{ 
+                  touchAction: "none",
+                  position: "relative"
+                }}
+                onDragStart={() => setDragging(true)}
+                onDragEnd={() => setDragging(false)}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0}
+              >
+                <div className="w-full max-w-[500px]">
+                  {React.Children.toArray(children)[idx] && 
+                    React.cloneElement(React.Children.toArray(children)[idx], { 
+                      reorderable: true, 
+                      reorderValue: item, 
+                      isDragging: dragging 
+                    })
+                  }
+                </div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+        </div>
+      );
+    }
 
     return (
       <div
@@ -70,11 +104,10 @@ DeckWrapper.propTypes = {
   children: PropTypes.node.isRequired,
   gap: PropTypes.number,
   paddingX: PropTypes.number,
-  /** When truthy enables grid; can be boolean or a number (min col width) */
-  grid: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-  /** Fallback min column width when grid is boolean */
-  gridMinWidth: PropTypes.number,
   className: PropTypes.string,
+  reorderable: PropTypes.bool,
+  items: PropTypes.array,
+  onReorder: PropTypes.func,
 };
 
 export default DeckWrapper; 

@@ -15,9 +15,8 @@ import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWr
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
-import SetBadge from "@/components/molecules/SetBadge";
 import { toast } from "sonner";
-import { Share2, Copy, Check } from "lucide-react";
+import { Share2, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/contexts/AccountContext";
 
@@ -69,37 +68,81 @@ const ExerciseCompletedCard = ({ exercise, setLog, onEdit, readOnly = false }) =
     onEdit(exercise.id, setIndex, set);
   };
 
+  // Get set names from database or fallback to default
+  const getSetName = (index, set) => {
+    return set.set_variant || `Set ${index + 1}`;
+  };
+
+  // Format time for timed sets
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   return (
-    <div className="w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-4">
-      {/* Exercise name and completion status */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
-        <div className="flex-1 justify-start text-neutral-600 text-lg font-medium font-vietnam leading-tight">
-          {exercise.exercise}
-        </div>
-        {setLog && setLog.length > 0 && (
-          <div className="size-8 flex items-center justify-center">
-            <Check className="w-6 h-6 text-green-500" />
+    <div className="w-full flex justify-center">
+      <div
+        data-layer="Property 1=completed-workout" 
+        className="w-full max-w-[500px] bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
+      >
+        {/* Header */}
+        <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
+          <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            {exercise.exercise}
           </div>
+          <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
+            <div className="size-6 relative overflow-hidden flex items-center justify-center">
+              <Check className="size-6 text-green-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Set rows */}
+        {setLog && setLog.length > 0 && (
+          <>
+            {setLog.map((set, idx) => (
+              <div 
+                key={set.id || idx}
+                data-layer="card-row" 
+                className={cn(
+                  "self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden",
+                  !readOnly && "cursor-pointer hover:bg-neutral-50"
+                )}
+                onClick={!readOnly ? (e) => handleSetClick(idx, set, e) : undefined}
+              >
+                <div data-layer="Set name" className="justify-start text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                  {getSetName(idx, set)}
+                </div>
+                <div data-layer="metrics" className="self-stretch min-w-12 flex justify-start items-center gap-px overflow-hidden">
+                  {/* First metric: Reps or Time */}
+                  <div data-layer="rep-type" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                    <div data-layer="rep-type-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
+                      {set.set_type === 'timed' ? (
+                        <Clock className="size-4 text-neutral-500" strokeWidth={1.5} />
+                      ) : (
+                        <Repeat2 className="size-4 text-neutral-500" strokeWidth={1.5} />
+                      )}
+                    </div>
+                    <div data-layer="rep-type-metric" className="text-center justify-center text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      {set.set_type === 'timed' ? formatTime(set.timed_set_duration || 0) : (set.reps || 0)}
+                    </div>
+                  </div>
+                  {/* Weight */}
+                  <div data-layer="rep-weight" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                    <div data-layer="rep-weight-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
+                      <Weight className="size-4 text-neutral-500" strokeWidth={1.5} />
+                    </div>
+                    <div data-layer="rep-weight-metric" className="text-center justify-center text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      {(set.weight_unit || set.unit) === 'body' ? 'BW' : (set.weight || 0)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
         )}
       </div>
-
-      {/* Set badges */}
-      {setLog && setLog.length > 0 && (
-        <div className="w-full min-w-0 inline-flex justify-start items-center gap-3 flex-wrap content-center">
-          {setLog.map((set, index) => (
-            <SetBadge
-              key={set.id || index}
-              reps={set.reps}
-              weight={set.weight}
-              unit={set.unit}
-              set_type={set.set_type}
-              timed_set_duration={set.timed_set_duration}
-              editable={!readOnly}
-              onEdit={(e) => handleSetClick(index, set, e)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
@@ -512,16 +555,37 @@ const CompletedWorkout = () => {
         }
       }
 
-      // Update local state
+      // Update local state while preserving order
       setSets((prev) => {
-        // Remove old records for this exercise
-        const remainder = prev.filter((s) => s.exercise_id !== exerciseId);
-        // Ensure each updated config has exercise_id
-        const updatedWithExercise = updatedConfigs.map((c) => ({
-          ...c,
-          exercise_id: exerciseId,
-        }));
-        return [...remainder, ...updatedWithExercise];
+        return prev.map((existingSet) => {
+          if (existingSet.exercise_id !== exerciseId) {
+            // Keep sets from other exercises unchanged
+            return existingSet;
+          }
+          
+          // Find the corresponding updated config for this set
+          const updatedConfig = updatedConfigs.find((config) => config.id === existingSet.id);
+          if (updatedConfig) {
+            // Update this set with new values while preserving original position
+            return {
+              ...existingSet,
+              ...updatedConfig,
+              exercise_id: exerciseId,
+            };
+          }
+          
+          // This set was deleted (not in updatedConfigs), so exclude it
+          return null;
+        }).filter(Boolean) // Remove null entries (deleted sets)
+        .concat(
+          // Add any new sets (ones without an id) at the end
+          updatedConfigs
+            .filter((config) => !config.id)
+            .map((config) => ({
+              ...config,
+              exercise_id: exerciseId,
+            }))
+        );
       });
     } catch (err) {
       console.error(err);
@@ -532,17 +596,32 @@ const CompletedWorkout = () => {
   const openSetEdit = (exerciseId, setIdx, setConfig) => {
     setEditSetExerciseId(exerciseId);
     setEditSetIndex(setIdx);
-    setEditFormValues(setConfig);
-    setCurrentFormValues(setConfig);
+    
+    // Normalize field names for the form (database uses weight_unit, form uses unit)
+    const normalizedSetConfig = {
+      ...setConfig,
+      unit: setConfig.weight_unit || setConfig.unit || 'lbs', // Ensure unit is set
+    };
+    
+    setEditFormValues(normalizedSetConfig);
+    setCurrentFormValues(normalizedSetConfig);
     setEditSheetOpen(true);
   };
 
   const handleEditFormSave = (values) => {
     if (editSetExerciseId === null || editSetIndex === null) return;
+    
+    // Normalize field names from form (form uses unit, database uses weight_unit)
+    const normalizedValues = {
+      ...values,
+      weight_unit: values.unit, // Map form's unit to database's weight_unit
+      unit: values.unit, // Keep unit for local state consistency
+    };
+    
     // Build updated configs for this exercise
     const exerciseSets = sets.filter((s) => s.exercise_id === editSetExerciseId);
     const updatedConfigs = exerciseSets.map((cfg, idx) =>
-      idx === editSetIndex ? { ...cfg, ...values } : cfg
+      idx === editSetIndex ? { ...cfg, ...normalizedValues } : cfg
     );
     handleSetConfigsChange(editSetExerciseId)(updatedConfigs);
     setEditSheetOpen(false);
@@ -651,7 +730,6 @@ const CompletedWorkout = () => {
               <PageSectionWrapper
                 key={section}
                 section={section}
-                grid
                 deckGap={20}
                 className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
                 isSticky={true}
@@ -732,16 +810,32 @@ const CompletedWorkout = () => {
           rightEnabled={formDirty}
           leftText="Cancel"
           rightText="Save"
+          padding={0}
         >
-          <SetEditForm
-            initialValues={editFormValues}
-            onValuesChange={setCurrentFormValues}
-            onDirtyChange={setFormDirty}
-            showSetNameField={true}
-            hideActionButtons={true}
-            hideInternalHeader={true}
-            isChildForm={true}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <SetEditForm
+                initialValues={editFormValues}
+                onValuesChange={setCurrentFormValues}
+                onDirtyChange={setFormDirty}
+                showSetNameField={true}
+                hideActionButtons={true}
+                hideInternalHeader={true}
+                isChildForm={true}
+              />
+            </div>
+            <div className="border-t border-neutral-300">
+              <div className="p-4">
+                <SwiperButton
+                  onClick={handleSetDelete}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Delete Set
+                </SwiperButton>
+              </div>
+            </div>
+          </div>
         </SwiperForm>
       </AppLayout>
     </>

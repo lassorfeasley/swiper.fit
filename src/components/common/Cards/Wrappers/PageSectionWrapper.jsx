@@ -9,7 +9,21 @@ import { cn } from "@/lib/utils";
  * Provides consistent padding, drop-shadow, and section heading.
  * Children are rendered inside a DeckWrapper so callers only need to pass in the cards.
  */
-const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = false, gridMinWidth = 250, showPlusButton = false, onPlus, isSticky = true, stickyTopClass, isFirst = false, ...props }) => {
+const PageSectionWrapper = ({ 
+  section, 
+  children, 
+  className, 
+  deckGap = 0, 
+  showPlusButton = false, 
+  onPlus, 
+  isSticky = true, 
+  stickyTopClass, 
+  isFirst = false,
+  reorderable = false,
+  items = [],
+  onReorder,
+  ...props 
+}) => {
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -36,7 +50,13 @@ const PageSectionWrapper = ({ section, children, className, deckGap = 0, grid = 
 
       {/* Content with spacing around header & footer */}
       <div className={cn("w-full self-stretch pb-28 px-0")}>
-        <DeckWrapper gap={deckGap} paddingX={20} {...(grid ? { grid: true, gridMinWidth } : {})}>
+        <DeckWrapper 
+          gap={deckGap} 
+          paddingX={20} 
+          reorderable={reorderable}
+          items={items}
+          onReorder={onReorder}
+        >
           {children}
         </DeckWrapper>
       </div>
@@ -49,13 +69,14 @@ PageSectionWrapper.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   deckGap: PropTypes.number,
-  grid: PropTypes.bool,
-  gridMinWidth: PropTypes.number,
   showPlusButton: PropTypes.bool,
   onPlus: PropTypes.func,
   isSticky: PropTypes.bool,
   stickyTopClass: PropTypes.string,
   isFirst: PropTypes.bool,
+  reorderable: PropTypes.bool,
+  items: PropTypes.array,
+  onReorder: PropTypes.func,
 };
 
 export default PageSectionWrapper; 
