@@ -589,7 +589,7 @@ const ActiveWorkout = () => {
     setCurrentFormValues(setConfig);
   };
 
-  const handleSetEditFormSave = (values) => {
+  const handleSetEditFormSave = async (values) => {
     if (editingExercise) {
       const newSetConfigs = [...(editingExercise.setConfigs || [])];
       if (editingSetIndex !== null) {
@@ -601,7 +601,45 @@ const ActiveWorkout = () => {
       }
     } else if (editingSet) {
       // Logic for when editing from ActiveExerciseCard
-      updateSet(editingSet.exerciseId, editingSet.setConfig.id, values);
+      try {
+        // Check if this should be a permanent change (routine template update)
+        if (setUpdateType === "future" && editingSet.setConfig.routine_set_id) {
+          // Update routine template permanently
+          await handleSetProgrammaticUpdate(
+            editingSet.exerciseId,
+            editingSet.setConfig.routine_set_id,
+            values
+          );
+        } else {
+          // Just for today - update only the workout instance
+          await updateSet(editingSet.setConfig.id, values);
+        }
+        
+        // Also update local exercises state to reflect changes in UI
+        // Convert form fields (unit) to database fields (weight_unit) for consistency
+        const normalizedValues = {
+          ...values,
+          weight_unit: values.unit, // Map form's unit to database's weight_unit
+          unit: values.unit, // Keep unit for backward compatibility
+        };
+        
+        setExercises((prev) =>
+          prev.map((ex) => {
+            if (ex.exercise_id !== editingSet.exerciseId) return ex;
+            const newConfigs = ex.setConfigs.map((cfg) => {
+              // Match by routine_set_id to find the correct set
+              if (String(cfg.routine_set_id) === String(editingSet.setConfig.routine_set_id)) {
+                return { ...cfg, ...normalizedValues };
+              }
+              return cfg;
+            });
+            return { ...ex, setConfigs: newConfigs };
+          })
+        );
+      } catch (error) {
+        console.error("Failed to update set:", error);
+        toast.error("Failed to save changes. Please try again.");
+      }
     }
     setEditSheetOpen(false);
     setEditingSet(null);
