@@ -14,11 +14,15 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
+import { Play } from "lucide-react";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { toast } from "sonner";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const { setPageName } = useContext(PageNameContext);
+  const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState("");
@@ -30,6 +34,8 @@ const RoutineBuilder = () => {
   const [isEditProgramOpen, setEditProgramOpen] = useState(false);
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
+  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
+  const [pendingRoutineToStart, setPendingRoutineToStart] = useState(null);
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
@@ -39,6 +45,7 @@ const RoutineBuilder = () => {
   const [isEditSetFormOpen, setIsEditSetFormOpen] = useState(false);
   const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
   const reorderTimeoutRef = useRef(null);
+  const [addExerciseSection, setAddExerciseSection] = useState(null);
 
   useEffect(() => {
     setPageName("RoutineBuilder");
@@ -196,15 +203,18 @@ const RoutineBuilder = () => {
   // Debounced database update function
   const updateExerciseOrderInDatabase = useCallback(async (exercisesToUpdate) => {
     try {
-      // Use a single bulk update approach
-      const updates = exercisesToUpdate.map(ex => 
-        supabase
+      // Use sequential updates to avoid 409 conflicts
+      for (const ex of exercisesToUpdate) {
+        const { error } = await supabase
           .from("routine_exercises")
           .update({ exercise_order: ex.order })
-          .eq("id", ex.id)
-      );
-      
-      await Promise.all(updates);
+          .eq("id", ex.id);
+        
+        if (error) {
+          console.error(`Failed to update exercise ${ex.id}:`, error);
+          // Continue with other updates even if one fails
+        }
+      }
     } catch (error) {
       console.error("Failed to save exercise order:", error);
       // Could add toast notification here
@@ -249,6 +259,65 @@ const RoutineBuilder = () => {
   const handleBack = () => {
     saveOrder();
     navigate(-1);
+  };
+
+  const handleOpenAddExercise = (section) => {
+    setAddExerciseSection(section);
+    setShowAddExercise(true);
+  };
+
+  const handleStartWorkout = () => {
+    // Create a routine object with exercises data to pass to startWorkout
+    // Convert our exercises format to the format expected by ActiveWorkout
+    const routine_exercises = exercises.map((ex) => ({
+      id: ex.id,
+      exercise_id: ex.exercise_id,
+      exercises: {
+        name: ex.name,
+        section: ex.section
+      },
+      routine_sets: ex.setConfigs.map((config, index) => ({
+        id: `${ex.id}-set-${index}`, // Generate a unique ID for each set
+        reps: config.reps,
+        weight: config.weight,
+        weight_unit: config.unit,
+        set_order: index + 1,
+        set_variant: config.set_variant,
+        set_type: config.set_type,
+        timed_set_duration: config.timed_set_duration,
+      }))
+    }));
+
+    const routine = {
+      id: programId,
+      routine_name: programName,
+      routine_exercises: routine_exercises,
+    };
+    
+    console.log('[RoutineBuilder] handleStartWorkout invoked for routine:', routine);
+    
+    if (isWorkoutActive) {
+      setPendingRoutineToStart(routine);
+      setConfirmStartDialogOpen(true);
+    } else {
+      startWorkout(routine)
+        .then(() => navigate("/workout/active"))
+        .catch((error) => {
+          console.error('[RoutineBuilder] startWorkout error for routine', routine, error);
+          toast.error('Failed to start workout: ' + error.message);
+        });
+    }
+  };
+
+  const handleConfirmStartWorkout = () => {
+    console.log('[RoutineBuilder] handleConfirmStartWorkout for pending routine:', pendingRoutineToStart);
+    setConfirmStartDialogOpen(false);
+    startWorkout(pendingRoutineToStart)
+      .then(() => navigate("/workout/active"))
+      .catch((error) => {
+        console.error('[RoutineBuilder] startWorkout error on confirm for routine', pendingRoutineToStart, error);
+        toast.error('Failed to start workout: ' + error.message);
+      });
   };
 
   const handleAddExercise = async (exerciseData) => {
@@ -446,6 +515,7 @@ const RoutineBuilder = () => {
   const handleModalClose = () => {
     setShowAddExercise(false);
     setEditingExercise(null);
+    setAddExerciseSection(null);
   };
 
   // Handler to update setConfigs for an exercise and persist to Supabase
@@ -527,8 +597,6 @@ const RoutineBuilder = () => {
         title={programName}
         pageNameEditable={true}
         onBack={handleBack}
-        showAdd={true}
-        onAdd={() => setShowAddExercise(true)}
         showSearch={true}
         search={true}
         searchValue={search}
@@ -538,6 +606,8 @@ const RoutineBuilder = () => {
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
         showBackButton
+        showStartWorkout={true}
+        onStartWorkout={handleStartWorkout}
         pageContext="program-builder"
         showSectionNav={true}
         sectionNavValue={sectionFilter}
@@ -558,6 +628,8 @@ const RoutineBuilder = () => {
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
+            showPlusButton={true}
+            onPlus={() => handleOpenAddExercise(section)}
           >
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
@@ -606,9 +678,9 @@ const RoutineBuilder = () => {
                 initialName={editingExercise?.name}
                 initialSection={
                   showAddExercise
-                    ? sectionFilter === "workout"
+                    ? addExerciseSection === "workout" || addExerciseSection === "training"
                       ? "training"
-                      : sectionFilter
+                      : addExerciseSection
                     : editingExercise?.section
                 }
                 initialSets={editingExercise?.setConfigs?.length}
@@ -712,6 +784,15 @@ const RoutineBuilder = () => {
         title="Are you sure you want to delete this exercise?"
         description="This action cannot be undone and the exercise will be removed from this program."
         confirmText="Delete"
+      />
+      <SwiperAlertDialog
+        open={confirmStartDialogOpen}
+        onOpenChange={setConfirmStartDialogOpen}
+        onConfirm={handleConfirmStartWorkout}
+        title="End current workout?"
+        description="Starting this routine will end your current workout. Continue?"
+        confirmText="End & Start"
+        cancelText="Cancel"
       />
     </>
   );

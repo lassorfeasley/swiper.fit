@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Settings2 } from "lucide-react";
 
 /**
  * RoutineCard – card representation of a workout program with swipe-to-action control.
@@ -15,7 +14,7 @@ import { Settings2 } from "lucide-react";
  *  • swipeStatus – status to pass to SwipeSwitch (defaults to "active").
  *  • onSwipeComplete – callback when user completes swipe gesture.
  */
-const RoutineCard = ({ id, name, lastCompleted, onStart, onSettings }) => {
+const RoutineCard = ({ id, name, lastCompleted, onStart }) => {
   return (
     <div
       data-layer="Routine Card"
@@ -39,16 +38,6 @@ const RoutineCard = ({ id, name, lastCompleted, onStart, onSettings }) => {
               className="BicepsAndChest flex-1 justify-start text-neutral-700 text-xl font-medium font-['Be Vietnam Pro'] leading-normal"
             >
               {name}
-            </div>
-            <div
-              data-layer="Frame 5006"
-              className="Frame5006 flex justify-start items-center gap-2.5"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSettings?.();
-              }}
-            >
-              <Settings2 className="text-neutral-700" size={20} />
             </div>
           </div>
           <div
@@ -76,7 +65,6 @@ RoutineCard.propTypes = {
   name: PropTypes.string.isRequired,
   lastCompleted: PropTypes.string,
   onStart: PropTypes.func,
-  onSettings: PropTypes.func,
 };
 
 export default RoutineCard; 

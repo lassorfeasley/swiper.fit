@@ -52,8 +52,8 @@ export default function AppLayout({
   }, [headerProps]);
 
   const allowedHeaderProps = [
-    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare',
-    'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'searchValue', 'onSearchChange', 'className'
+    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare', 'showStartWorkout',
+    'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'searchValue', 'onSearchChange', 'className'
   ];
 
   const filteredHeaderProps = Object.fromEntries(

@@ -176,8 +176,7 @@ const RoutinesIndex = () => {
                 <RoutineCard
                   id={program.id}
                   name={program.routine_name}
-                  onStart={() => handleStart(program)}
-                  onSettings={() => navigate(`/routines/${program.id}/configure`)}
+                  onStart={() => navigate(`/routines/${program.id}/configure`)}
                 />
               </CardWrapper>
             ))

@@ -185,7 +185,7 @@ const ActiveWorkout = () => {
         skipAutoRedirectRef.current = false;
         return;
       }
-      navigate("/workout", { replace: true });
+      navigate("/routines", { replace: true });
     }
   }, [loading, isWorkoutActive, navigate]);
 
@@ -461,7 +461,7 @@ const ActiveWorkout = () => {
     try {
       // End the workout without saving (this will clear the context)
       await contextEndWorkout();
-      navigate("/workout");
+      navigate("/routines");
     } catch (err) {
       alert("Failed to delete workout: " + err.message);
     } finally {

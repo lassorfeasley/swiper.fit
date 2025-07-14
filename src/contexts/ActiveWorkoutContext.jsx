@@ -147,7 +147,6 @@ useEffect(() => {
       if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
         setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_workout_exercise_id } : prev);
       }
-      console.log('[Realtime][workout status]', w);
       setIsWorkoutActive(w.is_active);
       if (!w.is_active) {
         // Navigate to completed workout before clearing state (for remote workout endings)
@@ -163,7 +162,6 @@ useEffect(() => {
   const setsChan = supabase
     .channel(`public:sets:workout_id=eq.${activeWorkout.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'sets', filter: `workout_id=eq.${activeWorkout.id}` }, ({ eventType, new: row, old }) => {
-      console.log('[Realtime][sets]', eventType, row, old);
       setWorkoutProgress(prev => {
         const prog = { ...prev };
         const list = prog[row.exercise_id] ? [...prog[row.exercise_id]] : [];
@@ -424,8 +422,6 @@ useEffect(() => {
   }, [activeWorkout, elapsedTime]);
 
   const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
-    console.log('[updateWorkoutProgress] Starting with updates:', { exerciseId, updates });
-    
     // Store previous state for potential rollback
     const previousState = workoutProgress[exerciseId] || [];
     
@@ -464,7 +460,6 @@ useEffect(() => {
           newSets.map((s) => [String(s.routine_set_id), s])
         ).values()
       );
-      console.log('[updateWorkoutProgress] Optimistic update applied:', { exerciseId, deduped });
       return { ...prev, [exerciseId]: deduped };
     });
 
@@ -474,12 +469,9 @@ useEffect(() => {
         const targetRoutineSetId = update.changes.routine_set_id;
         const targetId = update.id;
 
-        console.log('[updateWorkoutProgress] Processing DB operation:', { targetId, targetRoutineSetId, changes: update.changes });
-
         try {
           // Check if we have a real database ID
           if (targetId && typeof targetId === 'string' && targetId.length > 10) {
-            console.log('[updateWorkoutProgress] Updating existing row:', targetId);
             // Build update payload
             const updatePayload = {
               reps: Number(update.changes.reps) || 0,
@@ -493,7 +485,6 @@ useEffect(() => {
             if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
               updatePayload.timed_set_duration = Number(update.changes.timed_set_duration);
             }
-            console.log('[updateWorkoutProgress] Update payload:', updatePayload);
 
             const { error } = await supabase
               .from('sets')
@@ -505,7 +496,6 @@ useEffect(() => {
             }
             return { update, dbId: targetId };
           } else {
-            console.log('[updateWorkoutProgress] Inserting new row for routine_set_id:', targetRoutineSetId);
             // Build insert payload
             const insertPayload = {
               workout_id: activeWorkout.id,
@@ -522,7 +512,6 @@ useEffect(() => {
             if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
               insertPayload.timed_set_duration = Number(update.changes.timed_set_duration);
             }
-            console.log('[updateWorkoutProgress] Insert payload:', insertPayload);
 
             const { data: inserted, error } = await supabase
               .from('sets')
@@ -533,7 +522,6 @@ useEffect(() => {
               console.error('updateWorkoutProgress: DB insert error', error);
               throw error;
             }
-            console.log('[updateWorkoutProgress] Successfully inserted:', inserted);
             return { update, dbId: inserted.id };
           }
         } catch (e) {
@@ -544,7 +532,6 @@ useEffect(() => {
 
       // Wait for all database operations to complete
       const dbResults = await Promise.all(dbOperations);
-      console.log('[updateWorkoutProgress] DB operations completed successfully:', dbResults);
 
       // CONFIRM OPTIMISTIC UPDATE: Replace temp IDs with real database IDs
       setWorkoutProgress(prev => {
@@ -577,7 +564,6 @@ useEffect(() => {
             newSets.map((s) => [String(s.routine_set_id), s])
           ).values()
         );
-        console.log('[updateWorkoutProgress] Confirmed optimistic update:', { exerciseId, deduped });
         return { ...prev, [exerciseId]: deduped };
       });
 

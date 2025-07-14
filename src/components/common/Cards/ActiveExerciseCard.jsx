@@ -164,12 +164,7 @@ const ActiveExerciseCard = React.forwardRef(({
         },
       ];
 
-      // Log local set completion for clarity
-      if (setToComplete.status !== "counting-down-timed") {
-        console.log(
-          `${setToComplete.set_variant} of ${exerciseName} logged to local.`
-        );
-      }
+      // Set completed and logged to local state
 
       if (updates.length > 0) {
         Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
@@ -185,9 +180,6 @@ const ActiveExerciseCard = React.forwardRef(({
       });
 
       if (allSetsNowComplete) {
-        console.log(
-          `[ActiveExerciseCard] all sets complete for exercise ${exerciseName}, calling onExerciseComplete`
-        );
         onExerciseComplete?.(exerciseId);
       }
     },

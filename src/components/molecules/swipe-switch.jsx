@@ -24,9 +24,6 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     isOptimistic = false, // New prop for optimistic updates
   } = set;
   
-  // Debug logging for weight unit display
-  console.log('[SwipeSwitch] set data:', { weight, weight_unit, set_variant, set_type, status });
-
   // Animation controls for thumb only
   const controls = useAnimation();
   const trackRef = useRef(null);

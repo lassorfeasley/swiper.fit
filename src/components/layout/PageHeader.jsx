@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -15,12 +15,14 @@ const PageHeader = forwardRef(({
   showSettings = false,
   showPlusButton = false,
   showShare = false,
+  showStartWorkout = false,
   showSidebar = false,
   onBack,
   onSearch,
   onSettings,
   onAdd,
   onShare,
+  onStartWorkout,
   searchValue = "",
   onSearchChange = () => {},
   className,
@@ -113,7 +115,7 @@ const PageHeader = forwardRef(({
           </button>
         </div>
       ) : (
-        (showSearch || showSettings || showPlusButton || showShare) && (
+        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout) && (
           <div className="Pageactions inline-flex justify-start items-center">
             {showSearch && (
               <button
@@ -191,6 +193,25 @@ const PageHeader = forwardRef(({
                 />
               </button>
             )}
+            {showStartWorkout && (
+              <div className="pr-3 bg-green-600 flex items-center">
+                <button
+                  className={cn(
+                    "w-11 h-11 flex items-center justify-center",
+                    variant === 'dark-fixed'
+                      ? "border-l border-neutral-600"
+                      : "border-l border-neutral-300"
+                  )}
+                  onClick={onStartWorkout}
+                  aria-label="Start Workout"
+                >
+                  <Play className="w-6 h-6 text-white fill-white" />
+                </button>
+                <div className="text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                  start workout
+                </div>
+              </div>
+            )}
           </div>
         )
       )}
@@ -207,12 +228,14 @@ PageHeader.propTypes = {
   showSettings: PropTypes.bool,
   showPlusButton: PropTypes.bool,
   showShare: PropTypes.bool,
+  showStartWorkout: PropTypes.bool,
   showSidebar: PropTypes.bool,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,
   onAdd: PropTypes.func,
   onShare: PropTypes.func,
+  onStartWorkout: PropTypes.func,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   className: PropTypes.string,
