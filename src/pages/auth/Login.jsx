@@ -63,73 +63,74 @@ export default function Login() {
     <AppLayout showSidebar={false} hideHeader>
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <SwiperCard className="w-full max-w-md mx-4">
-          <SwiperCardContent className="flex flex-col gap-5 p-5">
-            {/* Header row */}
-            <div className="self-stretch inline-flex justify-between items-center">
-              <div className="text-slate-600 text-xl font-medium leading-9">
-                Login to your account
-              </div>
-              <div
-                className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
-                onClick={() => navigate("/create-account")}
-              >
-                Sign up
-              </div>
-            </div>
-            {/* Email field label */}
-            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-              <div className="self-stretch inline-flex justify-between items-start">
-                <div className="flex-1 text-slate-600 text-sm font-bold leading-tight">
-                  Email
-                </div>
-              </div>
-              <div className="mb-4 w-full">
-                <TextInput
-                  type="email"
-                  id="login-email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loginMutation.isPending}
-                  error={emailError ? errorMessage : undefined}
-                />
-              </div>
-            </div>
-            {/* Password field label and forgot link */}
-            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-              <div className="self-stretch inline-flex justify-between items-start">
-                <div className="text-slate-600 text-sm font-bold leading-tight">
-                  Password
+          <SwiperCardContent className="p-5">
+            <form onSubmit={handleLogin} className="flex flex-col gap-5">
+              {/* Header row */}
+              <div className="self-stretch inline-flex justify-between items-center">
+                <div className="text-slate-600 text-xl font-medium leading-9">
+                  Login to your account
                 </div>
                 <div
                   className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
-                  onClick={() => navigate("/reset-password")}
+                  onClick={() => navigate("/create-account")}
                 >
-                  Forgot your password?
+                  Sign up
                 </div>
               </div>
-              <div className="mb-4 w-full">
-                <TextInput
-                  type="password"
-                  id="login-password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loginMutation.isPending}
-                  icon={<Eye className="size-6 text-neutral-300" />}
-                  error={passwordError ? errorMessage : undefined}
-                />
+              {/* Email field label */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+                <div className="self-stretch inline-flex justify-between items-start">
+                  <div className="flex-1 text-slate-600 text-sm font-bold leading-tight">
+                    Email
+                  </div>
+                </div>
+                <div className="mb-4 w-full">
+                  <TextInput
+                    type="email"
+                    id="login-email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loginMutation.isPending}
+                    error={emailError ? errorMessage : undefined}
+                  />
+                </div>
               </div>
-            </div>
-            {/* Login button */}
-            <Button
-              type="submit"
-              disabled={loginMutation.isPending}
-              onClick={handleLogin}
-              className="w-full h-[56px]"
-            >
-              {loginMutation.isPending ? "Logging in..." : "Login"}
-            </Button>
+              {/* Password field label and forgot link */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+                <div className="self-stretch inline-flex justify-between items-start">
+                  <div className="text-slate-600 text-sm font-bold leading-tight">
+                    Password
+                  </div>
+                  <div
+                    className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
+                    onClick={() => navigate("/reset-password")}
+                  >
+                    Forgot your password?
+                  </div>
+                </div>
+                <div className="mb-4 w-full">
+                  <TextInput
+                    type="password"
+                    id="login-password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loginMutation.isPending}
+                    icon={<Eye className="size-6 text-neutral-300" />}
+                    error={passwordError ? errorMessage : undefined}
+                  />
+                </div>
+              </div>
+              {/* Login button */}
+              <Button
+                type="submit"
+                disabled={loginMutation.isPending}
+                className="w-full h-[56px]"
+              >
+                {loginMutation.isPending ? "Logging in..." : "Login"}
+              </Button>
+            </form>
           </SwiperCardContent>
         </SwiperCard>
       </div>
