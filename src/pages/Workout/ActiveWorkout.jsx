@@ -197,6 +197,126 @@ const ActiveWorkout = () => {
     setPageName("Active Workout");
   }, [setPageName]);
 
+  // Function to get fresh exercise data directly from database
+  const getFreshExerciseData = async (exerciseId) => {
+    if (!activeWorkout) return null;
+    
+    // Fetch the specific exercise data fresh from the database
+    const { data: snapEx, error: snapErr } = await supabase
+      .from("workout_exercises")
+      .select(
+        `id,
+         exercise_id,
+         exercise_order,
+         snapshot_name,
+         name_override,
+         exercises!workout_exercises_exercise_id_fkey(
+           name,
+           section
+         )`
+      )
+      .eq("workout_id", activeWorkout.id)
+      .eq("exercise_id", exerciseId)
+      .single();
+      
+    if (snapErr || !snapEx) {
+      console.error("Error fetching fresh exercise data:", snapErr);
+      return null;
+    }
+
+    // Fetch template sets for this exercise
+    const { data: tmplEx, error: tmplErr } = await supabase
+      .from("routine_exercises")
+      .select(
+        `exercise_id,
+         routine_sets!fk_routine_sets__routine_exercises(
+           id,
+           set_order,
+           reps,
+           weight,
+           weight_unit,
+           set_variant,
+           set_type,
+           timed_set_duration
+         )`
+      )
+      .eq("routine_id", activeWorkout.programId)
+      .eq("exercise_id", exerciseId)
+      .order("set_order", { foreignTable: "routine_sets", ascending: true })
+      .single();
+
+    // Fetch actual sets for this exercise in current workout
+    const { data: actualSets, error: setsErr } = await supabase
+      .from("sets")
+      .select("*")
+      .eq("workout_id", activeWorkout.id)
+      .eq("exercise_id", exerciseId);
+
+    // Process the data same way as loadSnapshotExercises
+    const templateConfigs = (tmplEx?.routine_sets || []).map((rs) => ({
+      id: null,
+      routine_set_id: rs.id,
+      reps: rs.reps,
+      weight: rs.weight,
+      unit: rs.weight_unit,
+      set_variant: rs.set_variant,
+      set_type: rs.set_type,
+      timed_set_duration: rs.timed_set_duration,
+    }));
+
+    // Group actual sets by routine_set_id
+    const actualSetsMap = {};
+    const todayOnlySets = []; // Sets without routine_set_id (just for today)
+    (actualSets || []).forEach((set) => {
+      if (set.routine_set_id) {
+        // Set has a template reference
+        actualSetsMap[set.routine_set_id] = {
+          ...set,
+          unit: set.weight_unit || 'lbs',
+          weight_unit: set.weight_unit || 'lbs',
+        };
+      } else {
+        // Set is "just for today" - no template reference
+        todayOnlySets.push({
+          ...set,
+          unit: set.weight_unit || 'lbs',
+          weight_unit: set.weight_unit || 'lbs',
+        });
+      }
+    });
+
+    // Merge actual sets into template sets
+    const mergedConfigs = templateConfigs.map((tmplCfg) => {
+      const actual = actualSetsMap[tmplCfg.routine_set_id];
+      return actual
+        ? {
+            ...tmplCfg,
+            ...actual,
+            id: actual.id,
+            unit: actual.unit,
+            weight_unit: actual.weight_unit,
+          }
+        : tmplCfg;
+    });
+    
+    // Add any "today only" sets at the end
+    const allConfigs = [...mergedConfigs, ...todayOnlySets];
+
+    return {
+      id: snapEx.id,
+      exercise_id: snapEx.exercise_id,
+      section: (() => {
+        const raw = ((snapEx.exercises || {}).section || "").toLowerCase().trim();
+        if (raw === "training" || raw === "workout") return "training";
+        if (raw === "warmup") return "warmup";
+        if (raw === "cooldown") return "cooldown";
+        return "training";
+      })(),
+      name: snapEx.name_override || snapEx.snapshot_name,
+      setConfigs: allConfigs,
+    };
+  };
+
   // Extracted loading logic into reusable function to fix set duplication
   const loadSnapshotExercises = useCallback(async () => {
     if (!activeWorkout) {
@@ -267,13 +387,26 @@ const ActiveWorkout = () => {
     
     // 5) Group actual sets by exercise_id and routine_set_id
     const actualSetsMap = {};
+    const todayOnlySets = {}; // Sets without routine_set_id (just for today)
     (actualSets || []).forEach((set) => {
       if (!actualSetsMap[set.exercise_id]) actualSetsMap[set.exercise_id] = {};
-      actualSetsMap[set.exercise_id][set.routine_set_id] = {
-        ...set,
-        unit: set.weight_unit || 'lbs',
-        weight_unit: set.weight_unit || 'lbs',
-      };
+      if (!todayOnlySets[set.exercise_id]) todayOnlySets[set.exercise_id] = [];
+      
+      if (set.routine_set_id) {
+        // Set has a template reference
+        actualSetsMap[set.exercise_id][set.routine_set_id] = {
+          ...set,
+          unit: set.weight_unit || 'lbs',
+          weight_unit: set.weight_unit || 'lbs',
+        };
+      } else {
+        // Set is "just for today" - no template reference
+        todayOnlySets[set.exercise_id].push({
+          ...set,
+          unit: set.weight_unit || 'lbs',
+          weight_unit: set.weight_unit || 'lbs',
+        });
+      }
     });
     
     // 6) Merge actual sets into template sets for each exercise
@@ -294,6 +427,10 @@ const ActiveWorkout = () => {
         return merged;
       });
       
+      // Add any "today only" sets at the end
+      const exerciseTodayOnlySets = todayOnlySets[we.exercise_id] || [];
+      const allConfigs = [...mergedConfigs, ...exerciseTodayOnlySets];
+      
       return {
         id: we.id,
         exercise_id: we.exercise_id,
@@ -305,7 +442,7 @@ const ActiveWorkout = () => {
           return "training";
         })(),
         name: we.name_override || we.snapshot_name,
-        setConfigs: mergedConfigs,
+        setConfigs: allConfigs,
       };
     });
     
@@ -315,6 +452,8 @@ const ActiveWorkout = () => {
   useEffect(() => {
     loadSnapshotExercises();
   }, [loadSnapshotExercises]);
+
+
 
   // Real-time sync for exercise name changes
   useEffect(() => {
@@ -994,6 +1133,8 @@ const ActiveWorkout = () => {
   const handleSaveExerciseEdit = async (data, type = "today") => {
     if (!editingExercise) return;
 
+    console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
+
     try {
       // Persist exercise-level edits: name and section
       const exerciseId = editingExercise.exercise_id;
@@ -1008,13 +1149,23 @@ const ActiveWorkout = () => {
         if (updateErr) throw updateErr;
       }
       if (type === "future") {
+        // Update both the exercise template (for future workouts) and current workout
         try {
+          // 1. Update the exercise template permanently
           await supabase
             .from('exercises')
             .update({ name: data.name.trim(), section: data.section })
             .eq('id', exerciseId);
+          
+          // 2. Also update the current workout so the change appears immediately
+          await supabase
+            .from("workout_exercises")
+            .update({ name_override: data.name.trim() })
+            .eq("id", editingExercise.id);
+            
         } catch (err) {
           console.error('Error updating exercise name/section:', err);
+          throw err; // Re-throw so the user sees the error
         }
       }
 
@@ -1022,86 +1173,153 @@ const ActiveWorkout = () => {
       const originalConfigs = editingExercise.setConfigs || [];
       const updatedConfigs = data.setConfigs || [];
 
-      // Determine deletions (ids present originally but not in updated list)
-      const originalIds = originalConfigs.map((c) => c.id).filter(Boolean);
-      const updatedIds = updatedConfigs.map((c) => c.id).filter(Boolean);
+      console.log('[DEBUG] Set configs:', {
+        originalCount: originalConfigs.length,
+        updatedCount: updatedConfigs.length,
+        originalConfigs,
+        updatedConfigs
+      });
 
-      const idsToDelete = originalIds.filter((id) => !updatedIds.includes(id));
-
-      // Delete removed sets from database
-      if (idsToDelete.length > 0) {
-        const { error: delError } = await supabase
+      if (type === "today") {
+        console.log('[DEBUG] Processing "today" set changes');
+        
+        // For "today" updates - we need to handle set count changes properly
+        // Strategy: Delete all existing sets for this exercise in current workout, then create fresh ones
+        
+        // First, delete all existing sets for this exercise in current workout
+        const { error: deleteAllError } = await supabase
           .from('sets')
           .delete()
-          .in('id', idsToDelete);
-        if (delError) console.error('Error deleting sets on edit:', delError);
+          .eq('workout_id', activeWorkout.id)
+          .eq('exercise_id', exerciseId);
+          
+        if (deleteAllError) {
+          console.error('Error deleting all sets for exercise:', deleteAllError);
+        } else {
+          console.log('[DEBUG] Deleted all existing sets for exercise in current workout');
+        }
+
+        // Create new sets based on updated configs
+        if (updatedConfigs.length > 0) {
+          const setsToInsert = updatedConfigs.map((cfg, idx) => ({
+            workout_id: activeWorkout.id,
+            exercise_id: exerciseId,
+            routine_set_id: cfg.routine_set_id,
+            reps: cfg.reps,
+            weight: cfg.weight,
+            weight_unit: cfg.unit || 'lbs',
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+            status: 'pending'
+          }));
+
+          console.log('[DEBUG] Creating new sets:', setsToInsert);
+
+          const { error: insertError } = await supabase
+            .from('sets')
+            .insert(setsToInsert);
+            
+          if (insertError) {
+            console.error('Error creating new sets:', insertError);
+          } else {
+            console.log('[DEBUG] Successfully created new sets');
+          }
+        }
       }
 
       if (type === "future") {
-        // Apply updates to routine_sets table (template edits)
-        // Determine which template routine_sets were removed by the user
-        const originalRoutineIds = editingExercise.setConfigs
-          .map((c) => c.routine_set_id)
-          .filter(Boolean);
-        const updatedRoutineIds = updatedConfigs
-          .map((c) => c.routine_set_id)
-          .filter(Boolean);
-        const routineIdsToDelete = originalRoutineIds.filter(
-          (rid) => !updatedRoutineIds.includes(rid)
-        );
-        if (routineIdsToDelete.length > 0) {
-          await supabase
-            .from('routine_sets')
+        console.log('[DEBUG] Processing "future" set changes (DIFF MODE)');
+
+        // === 1. Map originals & updated ===
+        const originalTemplate = (editingExercise.setConfigs || []).filter(c => c.routine_set_id);
+        const originalById = Object.fromEntries(originalTemplate.map(c => [c.routine_set_id, c]));
+        const originalIds = Object.keys(originalById);
+        // updatedConfigs already prepared above
+        const updatedById = Object.fromEntries(updatedConfigs.filter(c => c.routine_set_id).map(c => [c.routine_set_id, c]));
+        const updatedIds = Object.keys(updatedById);
+
+        // === 2. Determine deletes / updates / inserts ===
+        const idsToDelete = originalIds.filter(id => !updatedIds.includes(id));
+        const configsToUpdate = updatedConfigs.filter(c => c.routine_set_id && originalIds.includes(c.routine_set_id));
+        const configsToInsert = updatedConfigs.filter(c => !c.routine_set_id);
+
+        // Get routine_exercise_id for inserts once
+        const { data: rxRow, error: rxErr } = await supabase
+          .from('routine_exercises')
+          .select('id')
+          .eq('routine_id', activeWorkout.programId)
+          .eq('exercise_id', exerciseId)
+          .single();
+        if (rxErr) throw rxErr;
+        const routineExerciseId = rxRow.id;
+
+        // === 3. Delete removed template rows & their workout sets ===
+        if (idsToDelete.length) {
+          await supabase.from('routine_sets').delete().in('id', idsToDelete);
+          await supabase.from('sets')
             .delete()
-            .in('id', routineIdsToDelete);
+            .eq('workout_id', activeWorkout.id)
+            .in('routine_set_id', idsToDelete);
         }
 
-        await Promise.all(
-          updatedConfigs.map(async (cfg, idx) => {
-            const payload = {
-              set_order: idx + 1,
-              reps: cfg.reps,
-              weight: cfg.weight,
-              weight_unit: cfg.unit,
-              set_variant: cfg.set_variant,
-              set_type: cfg.set_type,
-              timed_set_duration: cfg.timed_set_duration,
-            };
+        // === 4. Update existing template rows ===
+        for (let i = 0; i < configsToUpdate.length; i++) {
+          const cfg = configsToUpdate[i];
+          const payload = {
+            set_order: i + 1, // will re-order sequentially
+            reps: cfg.reps,
+            weight: cfg.weight,
+            weight_unit: cfg.unit,
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+          };
+          await supabase.from('routine_sets').update(payload).eq('id', cfg.routine_set_id);
+          // mirror to workout set
+          await supabase.from('sets').update({
+            reps: cfg.reps,
+            weight: cfg.weight,
+            weight_unit: cfg.unit,
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+          }).eq('workout_id', activeWorkout.id).eq('routine_set_id', cfg.routine_set_id);
+        }
 
-            if (cfg.routine_set_id) {
-              // Update existing template set row
-              const { error: updErr } = await supabase
-                .from('routine_sets')
-                .update(payload)
-                .eq('id', cfg.routine_set_id);
-              if (updErr) throw updErr;
-            } else {
-              // Insert a new template set row
-              let routineExerciseId = null;
-              try {
-                const { data: rx, error: rxErr } = await supabase
-                  .from('routine_exercises')
-                  .select('id')
-                  .eq('routine_id', activeWorkout.programId)
-                  .eq('exercise_id', exerciseId)
-                  .single();
-                if (rxErr) throw rxErr;
-                routineExerciseId = rx?.id || null;
-              } catch (lookupErr) {
-                console.error(
-                  'Failed to find routine_exercise_id for new template set insertion',
-                  lookupErr
-                );
-              }
+        // === 5. Insert new template rows & matching workout sets ===
+        for (let i = 0; i < configsToInsert.length; i++) {
+          const cfg = configsToInsert[i];
+          const payload = {
+            routine_exercise_id: routineExerciseId,
+            set_order: configsToUpdate.length + i + 1,
+            reps: cfg.reps,
+            weight: cfg.weight,
+            weight_unit: cfg.unit,
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+          };
+          const { data: newSetRow, error: insErr } = await supabase
+            .from('routine_sets')
+            .insert(payload)
+            .select()
+            .single();
+          if (insErr) throw insErr;
 
-              const { error: insErr } = await supabase
-                .from('routine_sets')
-                .insert({ routine_exercise_id: routineExerciseId, ...payload });
-              if (insErr) throw insErr;
-            }
-          })
-        );
-        // toast.success("Routine updated!"); // Removed duplicate toast - only show from handleSetProgrammaticUpdate
+          await supabase.from('sets').insert({
+            workout_id: activeWorkout.id,
+            exercise_id: exerciseId,
+            routine_set_id: newSetRow.id,
+            reps: cfg.reps,
+            weight: cfg.weight,
+            weight_unit: cfg.unit,
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+            status: 'pending'
+          });
+        }
       }
 
       // Reload exercises to ensure consistency and prevent set duplication
@@ -1212,7 +1430,19 @@ const ActiveWorkout = () => {
                     onFocus={() => {
                       if (!isFocused) changeFocus(ex.exercise_id);
                     }}
-                    onEditExercise={() => setEditingExercise(ex)}
+                    onEditExercise={async () => {
+                      // Get absolutely fresh exercise data from database
+                      const freshExercise = await getFreshExerciseData(ex.exercise_id);
+                      if (freshExercise) {
+                        console.log('[DEBUG] Opening edit for exercise with fresh data:', freshExercise);
+                        setEditingExercise(freshExercise);
+                      } else {
+                        // Fallback to current state
+                        const latestExercise = exercises.find(e => e.exercise_id === ex.exercise_id) || ex;
+                        console.log('[DEBUG] Opening edit for exercise (fallback):', latestExercise);
+                        setEditingExercise(latestExercise);
+                      }
+                    }}
                     index={index}
                     focusedIndex={focusedIndex}
                     totalCards={sectionExercises.length}

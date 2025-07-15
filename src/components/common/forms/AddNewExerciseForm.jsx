@@ -143,7 +143,28 @@ const AddNewExerciseForm = React.forwardRef(
         return;
       }
 
-      const setConfigs = sets.map((_, idx) => getSetMerged(idx));
+      // When editing an existing exercise, preserve database identifiers
+      const setConfigs = sets.map((_, idx) => {
+        const merged = getSetMerged(idx);
+        const originalConfig = initialSetConfigs[idx];
+        
+        // If editing an existing exercise, preserve important database fields
+        if (originalConfig) {
+          const result = {
+            ...merged,
+            // Preserve database identifiers when they exist
+            ...(originalConfig.id && { id: originalConfig.id }),
+            ...(originalConfig.routine_set_id && { routine_set_id: originalConfig.routine_set_id }),
+          };
+          console.log(`[DEBUG] Preserved set ${idx}:`, { original: originalConfig, result });
+          return result;
+        }
+        
+        console.log(`[DEBUG] New set ${idx}:`, merged);
+        return merged;
+      });
+
+      console.log('[DEBUG] Final setConfigs for save:', setConfigs);
 
       if (onActionIconClick) {
         onActionIconClick(
