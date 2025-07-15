@@ -155,62 +155,58 @@ const SetEditForm = memo(
       }
     }, [initialValues.weight, initialValues.unit]);
 
+    // Remove all direct onValuesChange calls from setFormValues and handlers
     const handleLocalChange = (field, value) => {
-      setFormValues((prev) => {
-        const newVals = { ...prev, [field]: value };
-        if (onValuesChange) onValuesChange(newVals);
-        return newVals;
-      });
+      setFormValues((prev) => ({ ...prev, [field]: value }));
     };
 
     const syncWithParent = () => {
+      // This is called onBlur, so it's safe to call onValuesChange here
       if (onValuesChange) {
         onValuesChange(formValues);
       }
     };
 
     const handleImmediateSync = (field, value) => {
-      const newValues = { ...formValues, [field]: value };
-      setFormValues(newValues);
-      if (onValuesChange) {
-        onValuesChange(newValues);
-      }
+      setFormValues((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleSetTypeChange = (val) => {
       if (!val) return;
-      const newValues = { ...formValues, set_type: val };
-      if (
-        val === "timed" &&
-        (!formValues.timed_set_duration || formValues.timed_set_duration === 0)
-      ) {
-        newValues.timed_set_duration = 30;
-      }
-      setFormValues(newValues);
-      if (onValuesChange) {
-        onValuesChange(newValues);
-      }
+      setFormValues((prev) => {
+        const newValues = { ...prev, set_type: val };
+        if (
+          val === "timed" &&
+          (!prev.timed_set_duration || prev.timed_set_duration === 0)
+        ) {
+          newValues.timed_set_duration = 30;
+        }
+        return newValues;
+      });
     };
 
     const handleUnitChange = (val) => {
       if (val) {
-        let newValues = { ...formValues, unit: val };
-        if (val === "body") {
-          // Store the last non-bodyweight value
-          setLastNonBodyWeight({ weight: formValues.weight, unit: formValues.unit });
-          // Keep the current weight value instead of setting to 0
-        } else {
-          // Restore previous value if coming from body
-          if (formValues.unit === "body") {
-            newValues.weight = lastNonBodyWeight.weight || 25;
+        setFormValues((prev) => {
+          let newValues = { ...prev, unit: val };
+          if (val === "body") {
+            setLastNonBodyWeight({ weight: prev.weight, unit: prev.unit });
+          } else {
+            if (prev.unit === "body") {
+              newValues.weight = lastNonBodyWeight.weight || 25;
+            }
           }
-        }
-        setFormValues(newValues);
-        if (onValuesChange) {
-          onValuesChange(newValues);
-        }
+          return newValues;
+        });
       }
     };
+
+    // Call onValuesChange only after formValues changes, not during render or setState
+    useEffect(() => {
+      if (onValuesChange) {
+        onValuesChange(formValues);
+      }
+    }, [formValues, onValuesChange]);
 
     const weightOnChange = showSetNameField
       ? (val) => handleLocalChange("weight", val)
