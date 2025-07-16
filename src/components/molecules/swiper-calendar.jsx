@@ -13,32 +13,33 @@ import { Calendar } from "@/components/ui/calendar";
 const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
   const explicit = typeof numberOfMonths !== "undefined";
 
-  // Helper to decide responsive count synchronously on initial render.
+  // Helper to decide responsive count.
   const computeResponsiveMonths = () => {
-    if (explicit) return numberOfMonths;
-    if (typeof window !== "undefined") {
-      const w = window.innerWidth;
-      if (w >= 1024) return 3; // large screens
-      if (w >= 768) return 2; // medium screens
-      return 1; // mobile
-    }
-    return 1;
+    if (typeof window === "undefined") return 1; // SSR-safe default
+    const w = window.innerWidth;
+    if (w >= 1024) return 3; // large screens
+    if (w >= 768) return 2; // medium screens
+    return 1; // mobile
   };
 
-  const [months, setMonths] = React.useState(computeResponsiveMonths);
+  const [months, setMonths] = React.useState(1); // Default to 1 for SSR and initial render
 
   React.useEffect(() => {
-    if (explicit) return; // controlled by prop
-
-    if (typeof window === "undefined") return;
+    if (explicit) {
+      setMonths(numberOfMonths);
+      return;
+    }
 
     const handleResize = () => {
       setMonths(computeResponsiveMonths());
     };
 
+    // Set the correct number of months on initial client-side mount
+    handleResize();
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [explicit]);
+  }, [explicit, numberOfMonths]);
 
   // Build props for Calendar. If the caller hasn't specified `month` or
   // `defaultMonth`, we set `defaultMonth` so that the last calendar shown
