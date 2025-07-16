@@ -417,22 +417,26 @@ const ActiveWorkout = () => {
       
       const hasActualSets = allActualSets[we.exercise_id] && allActualSets[we.exercise_id].length > 0;
       
-      // Build set configs: if any actual sets exist, ignore template rows entirely to avoid duplicates
       let combinedConfigs;
       if (hasActualSets) {
-        // Use ONLY actual sets, completely ignore template rows to prevent duplicates
-        combinedConfigs = allActualSets[we.exercise_id]
-          .map((cfg) => ({
-            ...cfg,
-            unit: cfg.weight_unit || cfg.unit || 'lbs',
-          }))
-          .sort((a, b) => (a.set_order || 0) - (b.set_order || 0));
+        const mergedMap = new Map();
+
+        // 1. Put template rows first (key by routine_set_id or order)
+        templateConfigs.forEach((tpl, idx) => {
+          const key = tpl.routine_set_id || `order_${idx+1}`;
+          mergedMap.set(key, { ...tpl, status: 'default', unit: tpl.unit || 'lbs' });
+        });
+
+        // 2. Overlay / add actual rows
+        allActualSets[we.exercise_id].forEach(act => {
+          const key = act.routine_set_id || `order_${act.set_order}`;
+          mergedMap.set(key, { ...act, unit: act.weight_unit || act.unit || 'lbs' });
+        });
+
+        // Preserve template ordering: rely on Map insertion order (template first, then overlay values, then any ad-hoc sets)
+        combinedConfigs = Array.from(mergedMap.values());
       } else {
-        // No actual sets yet – fall back to template rows
-        combinedConfigs = templateConfigs.map((c) => ({
-          ...c,
-          unit: c.unit || 'lbs',
-        }));
+        combinedConfigs = templateConfigs.map(c=>({ ...c, unit: c.unit||'lbs', status:'default'}));
       }
      
       return {
@@ -1462,7 +1466,7 @@ const ActiveWorkout = () => {
                     exerciseId={ex.exercise_id}
                     exerciseName={ex.name}
                     initialSetConfigs={ex.setConfigs}
-                    setData={[]} // Pass empty to prevent double-counting since setConfigs already has merged data
+                    setData={exerciseProgress}
                     onSetComplete={handleSetComplete}
                     onSetDataChange={handleSetDataChange}
                     onExerciseComplete={() =>

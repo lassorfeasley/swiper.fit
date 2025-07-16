@@ -56,6 +56,9 @@ export function ActiveWorkoutProvider({ children }) {
           .from('sets')
           .select('*')
           .eq('workout_id', workout.id);
+        if (setsError) {
+          console.error('[ActiveWorkoutContext] Error fetching sets on initial load:', setsError);
+        }
         const progress = {};
         if (setsData && !setsError) {
           setsData.forEach(s => {
@@ -70,7 +73,7 @@ export function ActiveWorkoutProvider({ children }) {
               set_variant: s.set_variant,
               set_type: s.set_type,
               timed_set_duration: s.timed_set_duration,
-              status: s.status || 'complete', // Include status from DB
+              status: s.status ?? 'pending', // Include status from DB (default to pending)
             });
           });
         }
@@ -117,7 +120,7 @@ export function ActiveWorkoutProvider({ children }) {
             set_variant: s.set_variant,
             set_type: s.set_type,
             timed_set_duration: s.timed_set_duration,
-            status: s.status || 'complete', // Include status from DB
+            status: s.status ?? 'pending', // Include status from DB (default to pending)
           });
         });
         setWorkoutProgress(progress);
@@ -677,20 +680,17 @@ useEffect(() => {
           set_variant: restOfSetConfig.set_variant,
       };
 
-      const isTimed = restOfSetConfig.set_type === 'timed';
-
-      // For debugging: set reps=1 for timed sets; otherwise use provided reps
-      if (isTimed) {
-          payload.reps = 1; // temporary diagnostic value
+      /* ---------- reps ---------- */
+      if (restOfSetConfig.set_type === 'timed') {
+          // Timed sets don’t require reps – NULL is valid
+          payload.reps = null;
       } else if (restOfSetConfig.reps !== undefined) {
           payload.reps = Number(restOfSetConfig.reps);
       }
 
-      // Always include weight_unit – even for body-weight sets – to satisfy NOT-NULL.
-      if (restOfSetConfig.unit) {
-          payload.weight_unit = restOfSetConfig.unit;
-      }
-
+      /* ---------- unit & weight ---------- */
+      payload.weight_unit = restOfSetConfig.unit || 'lbs';
+       
       // Weight: preserve the actual weight value even for body-weight sets
       if (restOfSetConfig.weight !== undefined) {
           payload.weight = Number(restOfSetConfig.weight);
@@ -710,10 +710,19 @@ useEffect(() => {
           payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
       }
 
-      // Include status to properly mark completed sets in the database
-      if (restOfSetConfig.status) {
-          payload.status = restOfSetConfig.status;
-      }
+      /* ---------- status & ordering ---------- */
+      payload.status = restOfSetConfig.status || 'complete';
+
+      // Determine the next set_order for this exercise
+      const { data: maxRow } = await supabase
+        .from('sets')
+        .select('set_order')
+        .eq('workout_id', activeWorkout.id)
+        .eq('exercise_id', exerciseId)
+        .order('set_order', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      payload.set_order = (maxRow?.set_order || 0) + 1;
 
       // DEBUG: log the payload we are about to send
       console.log('[saveSet] inserting payload', payload);
@@ -723,6 +732,9 @@ useEffect(() => {
           .insert(payload)
           .select()
           .single();
+      // DEBUG: inspect inserted row
+      console.log('[saveSet] inserted row', data, 'error', error);
+      console.log('[saveSet] inserted row status', data.status, 'set_order', data.set_order);
       
       if (error) {
           console.error("Error saving set:", error);
