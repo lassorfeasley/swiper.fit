@@ -23,27 +23,13 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const [mode, setMode] = React.useState("single");
   const [range, setRange] = React.useState({ from: undefined, to: undefined });
 
-  // Responsive month count for calendar
-  const computeResponsiveMonths = () => {
-    if (typeof window === "undefined") return 1;
-    const w = window.innerWidth;
-    if (w >= 1024) return 3;
-    if (w >= 768) return 2;
-    return 1;
-  };
-  const [months, setMonths] = useState(computeResponsiveMonths);
-  useEffect(() => {
-    const handler = () => setMonths(computeResponsiveMonths());
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-
   // Determine calendar range (inclusive start, exclusive end)
   const baseDate = useMemo(() => (date instanceof Date ? date : new Date()), [date]);
-  const calendarStart = useMemo(
-    () => new Date(baseDate.getFullYear(), baseDate.getMonth() - (months - 1), 1),
-    [baseDate, months]
-  );
+  const calendarStart = useMemo(() => {
+    const month = baseDate.getMonth();
+    const year = baseDate.getFullYear();
+    return new Date(year, month, 1);
+  }, [baseDate]);
   const calendarEnd = useMemo(
     () => new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1),
     [baseDate]
@@ -153,7 +139,6 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
             onSelect={handleCalendarSelect}
             className="bg-transparent p-0"
             showOutsideDays={true}
-            numberOfMonths={months}
             required
             modifiers={{
               hasWorkout: (day) => {
