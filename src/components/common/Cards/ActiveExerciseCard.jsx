@@ -135,41 +135,12 @@ const ActiveExerciseCard = React.forwardRef(({
       if (!mountedRef.current) return;
 
       const setToComplete = { ...sets[setIdx] };
-      const nextSet = sets[setIdx + 1];
 
       // First, call onSetComplete for analytics if it exists.
       if (onSetComplete) {
         Promise.resolve(
           onSetComplete(exerciseId, { ...setToComplete, status: "complete" })
         ).catch(console.error);
-      }
-
-      if (!onSetDataChange) return;
-
-      // Single-step: mark the set as complete regardless of type.
-      const updates = [
-        {
-          id: setToComplete.id,
-          changes: {
-            status: "complete",
-            set_variant: setToComplete.set_variant,
-            routine_set_id: setToComplete.routine_set_id,
-            set_type: setToComplete.set_type,
-            timed_set_duration: setToComplete.timed_set_duration,
-            // Include all set data to preserve bodyweight unit and other values
-            reps: setToComplete.reps,
-            weight: setToComplete.weight,
-            weight_unit: setToComplete.weight_unit || setToComplete.unit,
-          },
-        },
-      ];
-
-      // Set completed and logged to local state
-
-      if (updates.length > 0) {
-        Promise.resolve(onSetDataChange(exerciseId, updates)).catch(
-          console.error
-        );
       }
 
       // After updating the set's status, check if all sets for this exercise are now complete.
@@ -183,7 +154,7 @@ const ActiveExerciseCard = React.forwardRef(({
         onExerciseComplete?.(exerciseId);
       }
     },
-    [exerciseId, onSetComplete, onSetDataChange, sets, onExerciseComplete]
+    [exerciseId, onSetComplete, sets, onExerciseComplete]
   );
 
 
