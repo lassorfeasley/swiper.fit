@@ -86,9 +86,9 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-auto">
       {/* Main Content */}
-      <main>
+      <main className="min-h-screen">
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />

@@ -7,6 +7,7 @@ const Drawer = ({ shouldScaleBackground = false, ...props }) => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
     {...props}
+    modal={false}
   />
 );
 Drawer.displayName = "Drawer";

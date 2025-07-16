@@ -70,9 +70,9 @@ export default function AppLayout({
   const totalHeaderHeight = isDelegated ? baseHeaderHeight * 2 : baseHeaderHeight;
 
   return (
-    <div className="min-h-screen flex bg-white md:h-screen md:overflow-y-hidden">
+    <div className="min-h-screen flex bg-white">
       {showSidebar && <SideBarNav />}
-      <div className={showSidebar ? "flex flex-col flex-1 md:ml-64 overflow-y-auto" : "flex flex-col flex-1 overflow-y-auto"}>
+      <div className={showSidebar ? "flex flex-col flex-1 md:ml-64 overflow-y-auto min-h-0" : "flex flex-col flex-1 overflow-y-auto min-h-0"}>
         {isDelegated && <DelegateModeHeader />}
         {!hideHeader && (
           <PageHeader
@@ -96,9 +96,9 @@ export default function AppLayout({
             paddingTop: `${totalHeaderHeight}px`,
             transition: 'padding-top 0.3s ease-in-out',
           }}
-          className="flex flex-col flex-1"
+          className="flex flex-col flex-1 min-h-0"
         >
-          <div className="flex-1">
+          <div className="flex-1 min-h-0">
             {children}
           </div>
           <Footer />

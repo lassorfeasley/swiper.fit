@@ -40,17 +40,17 @@ const FormContent = ({
   return (
     <>
       {showSetNameField && (
-        <FormSectionWrapper>
+        <FormSectionWrapper className="px-0 py-0">
           <TextInput
             label="Set name"
             optional
-            value={set_variant}
+            value={set_variant || ""}
             onChange={(e) => handleLocalChange("set_variant", e.target.value)}
             onBlur={syncWithParent}
           />
         </FormSectionWrapper>
       )}
-      <FormSectionWrapper>
+      <FormSectionWrapper className="px-0 py-0">
         <ToggleInput
           label="Set type"
           options={setTypeOptions}
@@ -128,6 +128,7 @@ const SetEditForm = memo(
     onSetProgrammaticUpdate,
     addType,
     onAddTypeChange,
+    hideToggle = false,
   }) => {
     const [formValues, setFormValues] = useState(initialValues);
     const initialRef = React.useRef(initialValues);
@@ -279,8 +280,8 @@ const SetEditForm = memo(
           durationOnChange={durationOnChange}
           weightOnChange={weightOnChange}
         />
-        {isUnscheduled && (
-          <FormSectionWrapper>
+        {isUnscheduled && !hideToggle && (
+          <FormSectionWrapper className="px-0 py-0">
             <ToggleInput
               label="Keep new settings?"
               value={addType}
@@ -341,6 +342,7 @@ SetEditForm.propTypes = {
   onSetProgrammaticUpdate: PropTypes.func,
   addType: PropTypes.string,
   onAddTypeChange: PropTypes.func,
+  hideToggle: PropTypes.bool,
 };
 
 export default SetEditForm;

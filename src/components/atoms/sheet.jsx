@@ -4,7 +4,7 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const Sheet = SheetPrimitive.Root;
+const Sheet = (props) => <SheetPrimitive.Root {...props} modal={false} />;
 
 const SheetTrigger = SheetPrimitive.Trigger;
 

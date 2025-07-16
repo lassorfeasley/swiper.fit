@@ -217,7 +217,6 @@ const CompletedWorkout = () => {
       console.log('[CompletedWorkout] setsData:', setsData, 'setsError:', setsError);
 
       // Only keep sets that have reps and weight logged and are valid numbers
-      let dedupedMap = {};
       const validSets = (setsData || [])
         .filter((set) => {
           if (set.set_type === 'timed') {
@@ -241,33 +240,15 @@ const CompletedWorkout = () => {
             unit,
             set_variant: set.set_variant ?? set.name ?? '',
           };
-        })
-        // De-dupe logic:
-        //   • If the set originated from a routine (routine_set_id present) we want to keep
-        //     only one row per routine_set_id – preferring the variant that includes
-        //     a body-weight unit or a non-zero weight.
-        //   • For any ad-hoc sets (no routine_set_id) we **should not** accidentally
-        //     collapse multiple logged sets just because set_order is null / identical.
-        //     In that case we use the row's unique database `id` as the key so every
-        //     distinct set is preserved.
-        .filter((row) => {
-          const key = row.routine_set_id
-            ? `rt-${row.routine_set_id}` // Use routine_set_id to collapse template sets
-            : row.id;                    // Preserve one-off sets by unique id
-
-          const existing = dedupedMap[key];
-          if (!existing) {
-            dedupedMap[key] = row;
-            return true;
-          }
-
-          // For routine-based duplicates, keep the most recent entry (later in array)
-          // This ensures we get the final state if a user logged the same set multiple times
-          dedupedMap[key] = row;
-          return false; // always filter out duplicates, keeping the last one
         });
+      
+      // Remove any true duplicates (same id) that might exist due to query issues
+      const deduped = validSets.filter((set, index, arr) => 
+        arr.findIndex(s => s.id === set.id) === index
+      );
+      
       console.log('[CompletedWorkout] validSets:', validSets);
-      setSets(validSets);
+      setSets(deduped);
 
       // Get unique exercise_ids from valid sets only
       const exerciseIds = [...new Set(validSets.map((s) => s.exercise_id))];
@@ -549,44 +530,34 @@ const CompletedWorkout = () => {
               set_type,
               timed_set_duration,
               set_variant,
-              order: 0, // Placeholder; you may want to calculate order properly
+              set_order: 0, // Placeholder; you may want to calculate order properly
+              status: "complete"
             });
           if (insError) throw insError;
         }
       }
 
       // Update local state while preserving order
-      setSets((prev) => {
-        return prev.map((existingSet) => {
-          if (existingSet.exercise_id !== exerciseId) {
-            // Keep sets from other exercises unchanged
-            return existingSet;
-          }
-          
-          // Find the corresponding updated config for this set
-          const updatedConfig = updatedConfigs.find((config) => config.id === existingSet.id);
-          if (updatedConfig) {
-            // Update this set with new values while preserving original position
-            return {
-              ...existingSet,
-              ...updatedConfig,
-              exercise_id: exerciseId,
-            };
-          }
-          
-          // This set was deleted (not in updatedConfigs), so exclude it
-          return null;
-        }).filter(Boolean) // Remove null entries (deleted sets)
-        .concat(
-          // Add any new sets (ones without an id) at the end
-          updatedConfigs
-            .filter((config) => !config.id)
-            .map((config) => ({
-              ...config,
-              exercise_id: exerciseId,
-            }))
-        );
-      });
+      // Re-fetch the exercise data to ensure consistency
+      const { data: updatedSets, error: fetchError } = await supabase
+        .from("sets")
+        .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status, routine_set_id")
+        .eq("workout_id", workoutId)
+        .eq("exercise_id", exerciseId)
+        .eq("status", "complete")
+        .order("set_order", { ascending: true });
+        
+      if (fetchError) throw fetchError;
+      
+      // Update local state: replace this exercise's sets with fresh data
+      setSets((prev) => [
+        ...prev.filter(s => s.exercise_id !== exerciseId),
+        ...(updatedSets || []).map(set => ({
+          ...set,
+          unit: set.weight_unit || 'lbs',
+          set_variant: set.set_variant ?? set.name ?? '',
+        }))
+      ]);
     } catch (err) {
       console.error(err);
       toast.error("Failed to update sets: " + err.message);
@@ -596,15 +567,18 @@ const CompletedWorkout = () => {
   const openSetEdit = (exerciseId, setIdx, setConfig) => {
     setEditSetExerciseId(exerciseId);
     setEditSetIndex(setIdx);
-    
-    // Normalize field names for the form (database uses weight_unit, form uses unit)
-    const normalizedSetConfig = {
-      ...setConfig,
-      unit: setConfig.weight_unit || setConfig.unit || 'lbs', // Ensure unit is set
-    };
-    
-    setEditFormValues(normalizedSetConfig);
-    setCurrentFormValues(normalizedSetConfig);
+
+    // Get all sets for this exercise from current state
+    const exerciseSets = sets
+      .filter(s => s.exercise_id === exerciseId)
+      .map(s => ({
+        ...s,
+        unit: s.weight_unit || s.unit || 'lbs' // Normalize field names for form
+      }));
+
+    setEditFormValues(exerciseSets);
+    setCurrentFormValues(exerciseSets);
+    setFormDirty(false);
     setEditSheetOpen(true);
   };
 

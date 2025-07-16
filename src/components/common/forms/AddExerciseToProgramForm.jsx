@@ -141,6 +141,8 @@ const AddExerciseToProgramForm = ({
               <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
                 <SetEditForm
                   isChildForm
+                  isUnscheduled={true}
+                  hideToggle={true}
                   initialValues={setDefaults}
                   onValuesChange={handleSetDefaultsChange}
                 />
@@ -175,6 +177,8 @@ const AddExerciseToProgramForm = ({
                     <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
                       <SetEditForm
                         isChildForm
+                        isUnscheduled={true}
+                        hideToggle={true}
                         initialValues={setConfig}
                         onValuesChange={(newValues) =>
                           handleSetFieldChange(idx, newValues)

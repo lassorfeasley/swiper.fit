@@ -202,6 +202,7 @@ const ExerciseCard = ({
               <SetEditForm
                 hideInternalHeader
                 hideActionButtons
+                hideToggle={true}
                 onDirtyChange={setFormDirty}
                 onValuesChange={setCurrentFormValues}
                 onSave={handleEditFormSave}
