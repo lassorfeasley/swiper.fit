@@ -125,8 +125,20 @@ body {
 }
 
 @media (min-width: 1024px) {
+  body.sidebar-shown main {
+    height: 100vh;
+    overflow-y: auto;
+    /* Create a new stacking context for sticky elements */
+    position: relative;
+  }
   main {
     padding-bottom: 0;
+  }
+  
+  /* Adjust sticky elements to work within the main scrolling container */
+  body.sidebar-shown .sticky {
+    /* Sticky elements now work relative to the main container */
+    position: sticky;
   }
 }
 

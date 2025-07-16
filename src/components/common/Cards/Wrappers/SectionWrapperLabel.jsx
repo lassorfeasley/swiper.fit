@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Pencil, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,15 +24,44 @@ const SectionWrapperLabel = ({
   ...props
 }) => {
   const { isDelegated } = useAccount();
+  const [isDesktopWithSidebar, setIsDesktopWithSidebar] = useState(false);
 
-  // Base top offset for the main workout nav
-  const baseTopOffset = 44; // h-11
+  // Check if we're on desktop with sidebar (which affects scrolling container)
+  useEffect(() => {
+    const checkDesktopSidebar = () => {
+      const isDesktop = window.innerWidth >= 1024; // lg breakpoint
+      const hasSidebarClass = document.body.classList.contains('sidebar-shown');
+      setIsDesktopWithSidebar(isDesktop && hasSidebarClass);
+    };
+    
+    checkDesktopSidebar();
+    window.addEventListener('resize', checkDesktopSidebar);
+    
+    // Also watch for changes to the sidebar-shown class
+    const observer = new MutationObserver(checkDesktopSidebar);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => {
+      window.removeEventListener('resize', checkDesktopSidebar);
+      observer.disconnect();
+    };
+  }, []);
 
-  // Additional offset for the delegate mode header
-  const delegateHeaderHeight = 44; // h-11
+  // Calculate sticky top position
+  const getStickyTop = () => {
+    if (isDesktopWithSidebar) {
+      // When main element is the scrolling container, sticky position is relative to main's content area
+      // No offset needed because the content already has padding-top from AppLayout
+      return 0;
+    } else {
+      // Default behavior for mobile/non-sidebar: position relative to viewport
+      const baseTopOffset = 44; // h-11 for header
+      const delegateHeaderHeight = 44; // h-11 for delegate header
+      return isDelegated ? baseTopOffset + delegateHeaderHeight : baseTopOffset;
+    }
+  };
 
-  // Determine the correct top position for sticky headers
-  const stickyTop = isDelegated ? baseTopOffset + delegateHeaderHeight : baseTopOffset;
+  const stickyTop = getStickyTop();
 
   return (
     <div

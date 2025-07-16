@@ -556,7 +556,7 @@ const CompletedWorkout = () => {
           ...set,
           unit: set.weight_unit || 'lbs',
           set_variant: set.set_variant ?? set.name ?? '',
-        }))
+            }))
       ]);
     } catch (err) {
       console.error(err);
@@ -567,7 +567,7 @@ const CompletedWorkout = () => {
   const openSetEdit = (exerciseId, setIdx, setConfig) => {
     setEditSetExerciseId(exerciseId);
     setEditSetIndex(setIdx);
-
+    
     // Get all sets for this exercise from current state
     const exerciseSets = sets
       .filter(s => s.exercise_id === exerciseId)
@@ -575,7 +575,7 @@ const CompletedWorkout = () => {
         ...s,
         unit: s.weight_unit || s.unit || 'lbs' // Normalize field names for form
       }));
-
+    
     setEditFormValues(exerciseSets);
     setCurrentFormValues(exerciseSets);
     setFormDirty(false);

@@ -28,6 +28,18 @@ export default function AppLayout({
   // Detect delegate mode
   const { isDelegated } = useAccount();
 
+  // Add a class to the body when the sidebar is shown
+  useEffect(() => {
+    if (showSidebar) {
+      document.body.classList.add("sidebar-shown");
+    } else {
+      document.body.classList.remove("sidebar-shown");
+    }
+    return () => {
+      document.body.classList.remove("sidebar-shown");
+    };
+  }, [showSidebar]);
+
   const sidebarWidthPx = 256; // Tailwind w-64
 
   useEffect(() => {

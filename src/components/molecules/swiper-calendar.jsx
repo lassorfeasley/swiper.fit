@@ -16,10 +16,10 @@ const SwiperCalendar = React.forwardRef(({ numberOfMonths, ...props }, ref) => {
   // Helper to decide responsive count.
   const computeResponsiveMonths = () => {
     if (typeof window === "undefined") return 1; // SSR-safe default
-    const w = window.innerWidth;
-    if (w >= 1024) return 3; // large screens
-    if (w >= 768) return 2; // medium screens
-    return 1; // mobile
+      const w = window.innerWidth;
+      if (w >= 1024) return 3; // large screens
+      if (w >= 768) return 2; // medium screens
+      return 1; // mobile
   };
 
   const [months, setMonths] = React.useState(1); // Default to 1 for SSR and initial render
