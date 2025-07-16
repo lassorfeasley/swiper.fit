@@ -23,6 +23,34 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const [mode, setMode] = React.useState("single");
   const [range, setRange] = React.useState({ from: undefined, to: undefined });
 
+  // Add a ref and state for the responsive month count
+  const calendarContainerRef = React.useRef(null);
+  const [responsiveMonths, setResponsiveMonths] = useState(1);
+
+  React.useLayoutEffect(() => {
+    const container = calendarContainerRef.current;
+    if (!container) return;
+
+    const computeMonths = (width) => {
+      // Assuming a single month view is ~300px wide including gaps
+      const monthWidth = 300;
+      const count = Math.floor(width / monthWidth);
+      return Math.max(1, Math.min(count, 3)); // Clamp between 1 and 3
+    };
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setResponsiveMonths(computeMonths(entry.contentRect.width));
+      }
+    });
+
+    observer.observe(container);
+    setResponsiveMonths(computeMonths(container.offsetWidth)); // Initial calculation
+
+    return () => observer.disconnect();
+  }, []);
+
+
   // Determine calendar range (inclusive start, exclusive end)
   const baseDate = useMemo(() => (date instanceof Date ? date : new Date()), [date]);
   const calendarStart = useMemo(() => {
@@ -132,13 +160,14 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
     <div className="w-full" data-component="CalendarWorkoutLog">
       {/* Calendar + toggle section */}
       <Card className="w-full pt-0 mb-0 bg-transparent border-none shadow-none rounded-none">
-        <CardContent className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
+        <CardContent ref={calendarContainerRef} className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
           <SwiperCalendar
             mode={mode}
             selected={calendarSelected}
             onSelect={handleCalendarSelect}
             className="bg-transparent p-0"
             showOutsideDays={true}
+            numberOfMonths={responsiveMonths}
             required
             modifiers={{
               hasWorkout: (day) => {
