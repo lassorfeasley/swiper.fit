@@ -1,6 +1,6 @@
 import React from "react";
-import { Drawer, DrawerContent } from "@/components/atoms/drawer";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
+import { Drawer, DrawerContent, DrawerOverlay } from "@/components/atoms/drawer";
+import { SwiperSheet, SheetOverlay } from "@/components/molecules/swiper-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FormHeader } from "../atoms/sheet";
 import PropTypes from "prop-types";
@@ -31,6 +31,7 @@ const SwiperForm = ({
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerOverlay />
           <DrawerContent
             className={cn("p-0 max-h-[90dvh] z-[100]", className)}
             style={delegateOverlayStyle}
@@ -56,6 +57,7 @@ const SwiperForm = ({
           className={cn("z-[100] p-0", className)}
           style={delegateOverlayStyle}
         >
+          <SheetOverlay />
           {leftAction && (
             <FormHeader
               className={padding === 0 ? "m-0" : undefined}
