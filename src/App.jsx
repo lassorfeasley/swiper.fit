@@ -4,6 +4,8 @@ import Home from "./pages/Home/Home";
 import Routines from "./pages/Routines/Routines";
 import History from "./pages/History/History";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
+import AddExercise from "./pages/Workout/AddExercise";
+import EditExercise from "./pages/Workout/EditExercise";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
 import RoutineBuilder from "./pages/Routines/RoutineBuilder";
 import "./App.css";
@@ -61,6 +63,8 @@ function AppContent() {
   // Define paths that should be allowed even when workout is active
   const allowedPaths = [
     '/workout/active',           // The active workout page itself
+    '/workout/exercise/add',     // Add exercise during workout
+    '/workout/exercise',         // Edit exercise during workout (covers /workout/exercise/:id/edit)
     '/login',                    // Authentication pages
     '/create-account',
     '/reset-password',
@@ -106,6 +110,8 @@ function AppContent() {
             <Route path="/history" element={<History />} />
             <Route path="/sharing" element={<Sharing />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
+            <Route path="/workout/exercise/add" element={<AddExercise />} />
+            <Route path="/workout/exercise/:exerciseId/edit" element={<EditExercise />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />

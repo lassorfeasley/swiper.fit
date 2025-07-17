@@ -6,7 +6,6 @@ import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "@/components/common/Cards/ActiveExerciseCard";
-import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
@@ -34,17 +33,20 @@ const ActiveWorkout = () => {
     saveSet,
     updateSet,
     updateLastExercise,
+    workoutExercises: exercises, // Use exercises from context
+    focusedExerciseId,
+    setFocusedExerciseId,
+    updateWorkoutExercises,
+    loadWorkoutExercises
   } = useActiveWorkout();
-  const [exercises, setExercises] = useState([]);
-  const [showAddExercise, setShowAddExercise] = useState(false);
+  // REMOVED: const [exercises, setExercises] = useState([]); - now from context
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
-  const [canAddExercise, setCanAddExercise] = useState(false);
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [workoutAutoEnded, setWorkoutAutoEnded] = useState(false);
   const [initialScrollTargetId, setInitialScrollTargetId] = useState(null);
-  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  // REMOVED: const [focusedExerciseId, setFocusedExerciseId] = useState(null); - now from context
   const [focusedCardHeight, setFocusedCardHeight] = useState(0);
   const [focusedNode, setFocusedNode] = useState(null);
   const focusedCardRef = useCallback(node => {
@@ -55,9 +57,6 @@ const ActiveWorkout = () => {
 
   const [isEditSheetOpen, setEditSheetOpen] = useState(false);
   const [editingSet, setEditingSet] = useState(null);
-  const [editingExercise, setEditingExercise] = useState(null);
-  const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
-  const [exerciseUpdateType, setExerciseUpdateType] = useState('today');
   const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
   const [setUpdateType, setSetUpdateType] = useState('today');
   const [editingSetIndex, setEditingSetIndex] = useState(null);
@@ -72,12 +71,6 @@ const ActiveWorkout = () => {
       unit: editingSet.setConfig.weight_unit || editingSet.setConfig.unit || "lbs"
     };
   }, [editingSet?.setConfig?.routine_set_id, editingSet?.setConfig?.weight_unit, editingSet?.setConfig?.unit, editingSet?.setConfig?.weight, editingSet?.setConfig?.reps]);
-
-  useEffect(() => {
-    if (editingExercise) {
-      setExerciseUpdateType('today');
-    }
-  }, [editingExercise]);
 
   useEffect(() => {
     if (editingSet) {
@@ -197,313 +190,14 @@ const ActiveWorkout = () => {
     setPageName("Active Workout");
   }, [setPageName]);
 
-  // Function to get fresh exercise data directly from database
-  const getFreshExerciseData = async (exerciseId) => {
-    if (!activeWorkout) return null;
-    
-    // Fetch the specific exercise data fresh from the database
-    const { data: snapEx, error: snapErr } = await supabase
-      .from("workout_exercises")
-      .select(
-        `id,
-         exercise_id,
-         exercise_order,
-         snapshot_name,
-         name_override,
-         exercises!workout_exercises_exercise_id_fkey(
-           name,
-           section
-         )`
-      )
-      .eq("workout_id", activeWorkout.id)
-      .eq("exercise_id", exerciseId)
-      .single();
-      
-    if (snapErr || !snapEx) {
-      console.error("Error fetching fresh exercise data:", snapErr);
-      return null;
-    }
-
-    // Fetch template sets for this exercise
-    const { data: tmplEx, error: tmplErr } = await supabase
-      .from("routine_exercises")
-      .select(
-        `exercise_id,
-         routine_sets!fk_routine_sets__routine_exercises(
-           id,
-           set_order,
-           reps,
-           weight,
-           weight_unit,
-           set_variant,
-           set_type,
-           timed_set_duration
-         )`
-      )
-      .eq("routine_id", activeWorkout.programId)
-      .eq("exercise_id", exerciseId)
-      .order("set_order", { foreignTable: "routine_sets", ascending: true })
-      .single();
-
-    // Fetch actual sets for this exercise in current workout
-    const { data: actualSets, error: setsErr } = await supabase
-      .from("sets")
-      .select("*")
-      .eq("workout_id", activeWorkout.id)
-      .eq("exercise_id", exerciseId);
-
-    // Process the data same way as loadSnapshotExercises
-    const templateConfigs = (tmplEx?.routine_sets || []).map((rs) => ({
-      id: null,
-      routine_set_id: rs.id,
-      reps: rs.reps,
-      weight: rs.weight,
-      unit: rs.weight_unit,
-      set_variant: rs.set_variant,
-      set_type: rs.set_type,
-      timed_set_duration: rs.timed_set_duration,
-    }));
-
-    // Group actual sets by routine_set_id
-    const actualSetsMap = {};
-    const todayOnlySets = []; // Sets without routine_set_id (just for today)
-    (actualSets || []).forEach((set) => {
-      if (set.routine_set_id) {
-        // Set has a template reference
-        actualSetsMap[set.routine_set_id] = {
-          ...set,
-          unit: set.weight_unit || 'lbs',
-          weight_unit: set.weight_unit || 'lbs',
-        };
-      } else {
-        // Set is "just for today" - no template reference
-        todayOnlySets.push({
-          ...set,
-          unit: set.weight_unit || 'lbs',
-          weight_unit: set.weight_unit || 'lbs',
-        });
-      }
-    });
-
-    // Merge actual sets into template sets
-    const mergedConfigs = templateConfigs.map((tmplCfg) => {
-      const actual = actualSetsMap[tmplCfg.routine_set_id];
-      return actual
-        ? {
-            ...tmplCfg,
-            ...actual,
-            id: actual.id,
-            unit: actual.unit,
-            weight_unit: actual.weight_unit,
-          }
-        : tmplCfg;
-    });
-    
-    // Add any "today only" sets at the end
-    const allConfigs = [...mergedConfigs, ...todayOnlySets];
-
-    return {
-      id: snapEx.id,
-      exercise_id: snapEx.exercise_id,
-      section: (() => {
-        const raw = ((snapEx.exercises || {}).section || "").toLowerCase().trim();
-        if (raw === "training" || raw === "workout") return "training";
-        if (raw === "warmup") return "warmup";
-        if (raw === "cooldown") return "cooldown";
-        return "training";
-      })(),
-      name: snapEx.name_override || snapEx.snapshot_name,
-      setConfigs: allConfigs,
-    };
-  };
-
-  // Extracted loading logic into reusable function to fix set duplication
-  const loadSnapshotExercises = useCallback(async () => {
-    if (!activeWorkout) {
-      setExercises([]);
-      return;
-    }
-    // 1) Load snapshot of exercises for this workout
-    const { data: snapExs, error: snapErr } = await supabase
-      .from("workout_exercises")
-      .select(
-        `id,
-         exercise_id,
-         exercise_order,
-         snapshot_name,
-         name_override,
-         exercises!workout_exercises_exercise_id_fkey(
-           name,
-           section
-         )`
-      )
-      .eq("workout_id", activeWorkout.id)
-      .order("exercise_order", { ascending: true });
-    if (snapErr || !snapExs) {
-      console.error("Error fetching workout snapshot exercises:", snapErr);
-      setExercises([]);
-      return;
-    }
-    // 2) Fetch template sets from routine_exercises → routine_sets, ordered by set_order
-    const { data: tmplExs, error: tmplErr } = await supabase
-      .from("routine_exercises")
-      .select(
-        `exercise_id,
-         routine_sets!fk_routine_sets__routine_exercises(
-           id,
-           set_order,
-           reps,
-           weight,
-           weight_unit,
-           set_variant,
-           set_type,
-           timed_set_duration
-         )`
-      )
-      .eq("routine_id", activeWorkout.programId)
-      .order("set_order", { foreignTable: "routine_sets", ascending: true });
-    if (tmplErr) console.error("Error fetching template sets:", tmplErr);
-    // 3) Fetch actual sets for this workout
-    const { data: actualSets, error: setsErr } = await supabase
-      .from("sets")
-      .select("*")
-      .eq("workout_id", activeWorkout.id);
-    if (setsErr) console.error("Error fetching actual sets:", setsErr);
-    
-    // 4) Group template sets by exercise_id
-    const setsMap = {};
-    (tmplExs || []).forEach((re) => {
-      setsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
-        id: null,
-        routine_set_id: rs.id,
-        reps: rs.reps,
-        weight: rs.weight,
-        unit: rs.weight_unit,
-        set_variant: rs.set_variant,
-        set_type: rs.set_type,
-        timed_set_duration: rs.timed_set_duration,
-      }));
-    });
-    
-    // 5) Group actual sets by exercise_id and routine_set_id
-    const actualSetsMap = {};
-    const todayOnlySets = {}; // Sets without routine_set_id (just for today)
-    (actualSets || []).forEach((set) => {
-      if (!actualSetsMap[set.exercise_id]) actualSetsMap[set.exercise_id] = {};
-      if (!todayOnlySets[set.exercise_id]) todayOnlySets[set.exercise_id] = [];
-      
-      if (set.routine_set_id) {
-        // Set has a template reference
-        actualSetsMap[set.exercise_id][set.routine_set_id] = {
-          ...set,
-          unit: set.weight_unit || 'lbs',
-          weight_unit: set.weight_unit || 'lbs',
-        };
-      } else {
-        // Set is "just for today" - no template reference
-        todayOnlySets[set.exercise_id].push({
-          ...set,
-          unit: set.weight_unit || 'lbs',
-          weight_unit: set.weight_unit || 'lbs',
-        });
-      }
-    });
-    
-    // 6) Merge actual sets into template sets for each exercise
-    const cards = snapExs.map((we) => {
-      const templateConfigs = setsMap[we.exercise_id] || [];
-      const mergedConfigs = templateConfigs.map((tmplCfg) => {
-        const actual = actualSetsMap[we.exercise_id]?.[tmplCfg.routine_set_id];
-        const merged = actual
-          ? {
-              ...tmplCfg,
-              ...actual,
-              id: actual.id,
-              unit: actual.unit,
-              weight_unit: actual.weight_unit,
-            }
-          : tmplCfg;
-        
-        return merged;
-      });
-      
-      // Add any "today only" sets at the end
-      const exerciseTodayOnlySets = todayOnlySets[we.exercise_id] || [];
-      const allConfigs = [...mergedConfigs, ...exerciseTodayOnlySets];
-      
-      return {
-        id: we.id,
-        exercise_id: we.exercise_id,
-        section: (() => {
-          const raw = ((we.exercises || {}).section || "").toLowerCase().trim();
-          if (raw === "training" || raw === "workout") return "training";
-          if (raw === "warmup") return "warmup";
-          if (raw === "cooldown") return "cooldown";
-          return "training";
-        })(),
-        name: we.name_override || we.snapshot_name,
-        setConfigs: allConfigs,
-      };
-    });
-    
-    setExercises(cards);
-  }, [activeWorkout]);
-
-  useEffect(() => {
-    loadSnapshotExercises();
-  }, [loadSnapshotExercises]);
 
 
 
-  // Real-time sync for exercise name changes
-  useEffect(() => {
-    if (!activeWorkout?.id) return;
-    // Subscribe to changes in workout_exercises for this workout
-    const chan = supabase
-      .channel(`public:workout_exercises:workout_id=eq.${activeWorkout.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'workout_exercises',
-          filter: `workout_id=eq.${activeWorkout.id}`,
-        },
-        async (payload) => {
-          // Defer state update to avoid React's render phase warning
-          setTimeout(() => loadSnapshotExercises(), 0);
-        }
-      )
-      .subscribe();
-    return () => {
-      void chan.unsubscribe();
-    };
-  }, [activeWorkout?.id, loadSnapshotExercises]);
+  // REMOVED: loadSnapshotExercises function - now handled in ActiveWorkoutContext
 
-  // Real-time sync for set template (routine_sets) changes
-  useEffect(() => {
-    if (!activeWorkout?.programId) return;
-    // Subscribe to changes in routine_sets for this routine
-    const chan = supabase
-      .channel(`public:routine_sets:routine_id=eq.${activeWorkout.programId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'routine_sets',
-          // No direct filter for routine_id, but we reload all sets on any change
-        },
-        async (payload) => {
-          // Defer state update to avoid React's render phase warning
-          setTimeout(() => loadSnapshotExercises(), 0);
-        }
-      )
-      .subscribe();
-    return () => {
-      void chan.unsubscribe();
-    };
-  }, [activeWorkout?.programId, loadSnapshotExercises]);
+
+
+  // REMOVED: Real-time subscriptions - now handled in ActiveWorkoutContext
 
   const handleSetDataChange = async (exerciseId, setIdOrUpdates, field, value) => {
     if (Array.isArray(setIdOrUpdates)) {
@@ -511,7 +205,7 @@ const ActiveWorkout = () => {
       // --------------------------------------------------
       //  Update local exercises array for immediate UI sync
       // --------------------------------------------------
-      setExercises((prev) =>
+      updateWorkoutExercises((prev) =>
         prev.map((ex) => {
           if (ex.exercise_id !== exerciseId) return ex;
           const newConfigs = ex.setConfigs.map((cfg) => {
@@ -596,7 +290,7 @@ const ActiveWorkout = () => {
         }
         
         // Sync to exercises array as well
-        setExercises((prev) =>
+        updateWorkoutExercises((prev) =>
           prev.map((ex) => {
             if (ex.exercise_id !== exerciseId) return ex;
             const newConfigs = ex.setConfigs.map((cfg) => {
@@ -758,6 +452,11 @@ const ActiveWorkout = () => {
     setDeleteConfirmOpen(true);
   };
 
+  // Handle opening add exercise page from section plus buttons
+  const handleOpenAddExercise = (section) => {
+    navigate(`/workout/exercise/add?section=${section}`);
+  };
+
   const handleConfirmDelete = async () => {
     try {
       // End the workout without saving (this will clear the context)
@@ -875,14 +574,9 @@ const ActiveWorkout = () => {
         updateLastExercise?.(ex.id);
       }
     }, collapseDurationMs);
-  }, [updateLastExercise, exercises, workoutProgress]);
+  }, [setFocusedExerciseId, updateLastExercise, exercises, workoutProgress]);
 
-  const handleEditSet = (index, setConfig) => {
-    setEditingSet({ exerciseId: editingExercise.exercise_id, setConfig, index });
-    setEditingSetIndex(index);
-    setEditSheetOpen(true);
-    setCurrentFormValues(setConfig);
-  };
+
 
   const openSetEdit = (exerciseId, setConfig, index) => {
     setEditingSet({ exerciseId, setConfig, index });
@@ -891,16 +585,7 @@ const ActiveWorkout = () => {
   };
 
   const handleSetEditFormSave = async (values) => {
-    if (editingExercise) {
-      const newSetConfigs = [...(editingExercise.setConfigs || [])];
-      if (editingSetIndex !== null) {
-        newSetConfigs[editingSetIndex] = values;
-        setEditingExercise({
-          ...editingExercise,
-          setConfigs: newSetConfigs,
-        });
-      }
-    } else if (editingSet) {
+    if (editingSet) {
       // Logic for when editing from ActiveExerciseCard
       try {
         // Check if this should be a permanent change (routine template update)
@@ -949,7 +634,7 @@ const ActiveWorkout = () => {
           unit: values.unit, // Keep unit for backward compatibility
         };
         
-        setExercises((prev) =>
+        updateWorkoutExercises((prev) =>
           prev.map((ex) => {
             if (ex.exercise_id !== editingSet.exerciseId) return ex;
             const newConfigs = ex.setConfigs.map((cfg) => {
@@ -979,17 +664,7 @@ const ActiveWorkout = () => {
   };
 
   const handleSetDelete = () => {
-    if (editingExercise) {
-      // Deleting from exercise edit form
-      const newSetConfigs = [...(editingExercise.setConfigs || [])];
-      if (editingSetIndex !== null) {
-        newSetConfigs.splice(editingSetIndex, 1);
-        setEditingExercise({
-          ...editingExercise,
-          setConfigs: newSetConfigs,
-        });
-      }
-    } else if (editingSet) {
+    if (editingSet) {
       // Deleting from active exercise card - this would require more complex logic
       // For now, we'll just close the form as this is a more complex scenario
       console.log('Delete set from active workout not implemented yet');
@@ -999,338 +674,9 @@ const ActiveWorkout = () => {
     setEditingSetIndex(null);
   };
 
-  const handleAddExerciseToday = async (data) => {
-    try {
-      // Ensure an exercise row exists (re-use by name if already present)
-      let exerciseId;
-      const { data: existing, error: findErr } = await supabase
-        .from("exercises")
-        .select("id")
-        .eq("name", data.name.trim())
-        .maybeSingle();
-      if (findErr) throw findErr;
-      if (existing) {
-        exerciseId = existing.id;
-      } else {
-        const { data: newEx, error: insertErr } = await supabase
-          .from("exercises")
-          .insert({ name: data.name.trim(), section: data.section })
-          .select()
-          .single();
-        if (insertErr) throw insertErr;
-        exerciseId = newEx.id;
-      }
 
-      // Append to local list only (not routine)
-      const newCard = {
-        id: `temp-${Date.now()}`,
-        exercise_id: exerciseId,
-        section: data.section,
-        name: data.name.trim(),
-        setConfigs: data.setConfigs,
-      };
-      setExercises((prev) => [...prev, newCard]);
-      setShowAddExercise(false);
-    } catch (err) {
-      console.error("Error adding exercise for today:", err);
-      alert(err.message || "Failed to add exercise.");
-    }
-  };
 
-  const handleAddExerciseFuture = async (data) => {
-    try {
-      if (!activeWorkout?.programId) {
-        alert("No routine associated with this workout – cannot add permanently.");
-        return;
-      }
-      // Step 1: ensure exercise exists
-      let exerciseRow;
-      const { data: existing, error: findErr } = await supabase
-        .from("exercises")
-        .select("id")
-        .eq("name", data.name.trim())
-        .maybeSingle();
-      if (findErr) throw findErr;
-      if (existing) {
-        exerciseRow = existing;
-      } else {
-        const { data: newEx, error: insertErr } = await supabase
-          .from("exercises")
-          .insert({ name: data.name.trim(), section: data.section })
-          .select()
-          .single();
-        if (insertErr) throw insertErr;
-        exerciseRow = newEx;
-      }
 
-      // Insert into program's routine_exercises
-      const { count: existingCount, error: countErr } = await supabase
-        .from("routine_exercises")
-        .select("*", { count: "exact", head: true })
-        .eq("routine_id", activeWorkout.programId);
-      if (countErr) throw countErr;
-      const exerciseOrder = (existingCount || 0) + 1;
-      const { data: progEx, error: progExErr } = await supabase
-        .from("routine_exercises")
-        .insert({
-          routine_id: activeWorkout.programId,
-          exercise_id: exerciseRow.id,
-          exercise_order: exerciseOrder,
-        })
-        .select("id")
-        .single();
-      if (progExErr) throw progExErr;
-      // Insert default sets into program (routine_sets)
-      const setRows = data.setConfigs.map((cfg, idx) => ({
-        routine_exercise_id: progEx.id,
-        set_order: idx + 1,
-        reps: Number(cfg.reps),
-        weight: Number(cfg.weight),
-        weight_unit: cfg.unit,
-        set_variant: cfg.set_variant,
-        set_type: cfg.set_type,
-        timed_set_duration: cfg.timed_set_duration,
-      }));
-      if (setRows.length > 0) {
-        const { error: setErr } = await supabase
-          .from("routine_sets")
-          .insert(setRows);
-        if (setErr) throw setErr;
-      }
-
-      // Step 2: insert snapshot workout_exercises row
-      const { data: snapEx, error: snapErr } = await supabase
-        .from("workout_exercises")
-        .insert({
-          workout_id: activeWorkout.id,
-          exercise_id: exerciseRow.id,
-          exercise_order: exercises.length + 1,
-          snapshot_name: data.name.trim(),
-        })
-        .select()
-        .single();
-      if (snapErr) throw snapErr;
-
-      // Step 3: update local state (so card appears immediately)
-      const newCard = {
-        id: snapEx.id,
-        exercise_id: exerciseRow.id,
-        section: data.section,
-        name: data.name.trim(),
-        setConfigs: data.setConfigs,
-      };
-      setExercises((prev) => [...prev, newCard]);
-      setShowAddExercise(false);
-    } catch (err) {
-      console.error("Error adding exercise permanently:", err);
-      alert(err.message || "Failed to add exercise to routine.");
-    }
-  };
-
-  // ------------------------------------------------------------------
-  //  Save exercise edit (today vs future)
-  // ------------------------------------------------------------------
-  const handleSaveExerciseEdit = async (data, type = "today") => {
-    if (!editingExercise) return;
-
-    console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
-
-    try {
-      // Persist exercise-level edits: name and section
-      const exerciseId = editingExercise.exercise_id;
-      if (type === "today") {
-        // 1) Update exercise name override
-        const { data: updated, error: updateErr } = await supabase
-          .from("workout_exercises")
-          .update({ name_override: data.name.trim() })
-          .eq("id", editingExercise.id)
-          .select()
-          .single();
-        if (updateErr) throw updateErr;
-      }
-      if (type === "future") {
-        // Update both the exercise template (for future workouts) and current workout
-        try {
-          // 1. Update the exercise template permanently
-          await supabase
-            .from('exercises')
-            .update({ name: data.name.trim(), section: data.section })
-            .eq('id', exerciseId);
-          
-          // 2. Also update the current workout so the change appears immediately
-          await supabase
-            .from("workout_exercises")
-            .update({ name_override: data.name.trim() })
-            .eq("id", editingExercise.id);
-            
-        } catch (err) {
-          console.error('Error updating exercise name/section:', err);
-          throw err; // Re-throw so the user sees the error
-        }
-      }
-
-      // Persist set config changes (reps, weight, etc.)
-      const originalConfigs = editingExercise.setConfigs || [];
-      const updatedConfigs = data.setConfigs || [];
-
-      console.log('[DEBUG] Set configs:', {
-        originalCount: originalConfigs.length,
-        updatedCount: updatedConfigs.length,
-        originalConfigs,
-        updatedConfigs
-      });
-
-      if (type === "today") {
-        console.log('[DEBUG] Processing "today" set changes');
-        
-        // For "today" updates - we need to handle set count changes properly
-        // Strategy: Delete all existing sets for this exercise in current workout, then create fresh ones
-        
-        // First, delete all existing sets for this exercise in current workout
-        const { error: deleteAllError } = await supabase
-          .from('sets')
-          .delete()
-          .eq('workout_id', activeWorkout.id)
-          .eq('exercise_id', exerciseId);
-          
-        if (deleteAllError) {
-          console.error('Error deleting all sets for exercise:', deleteAllError);
-        } else {
-          console.log('[DEBUG] Deleted all existing sets for exercise in current workout');
-        }
-
-        // Create new sets based on updated configs
-        if (updatedConfigs.length > 0) {
-          const setsToInsert = updatedConfigs.map((cfg, idx) => ({
-            workout_id: activeWorkout.id,
-            exercise_id: exerciseId,
-            routine_set_id: cfg.routine_set_id,
-            reps: cfg.reps,
-            weight: cfg.weight,
-            weight_unit: cfg.unit || 'lbs',
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-            status: 'pending'
-          }));
-
-          console.log('[DEBUG] Creating new sets:', setsToInsert);
-
-          const { error: insertError } = await supabase
-            .from('sets')
-            .insert(setsToInsert);
-            
-          if (insertError) {
-            console.error('Error creating new sets:', insertError);
-          } else {
-            console.log('[DEBUG] Successfully created new sets');
-          }
-        }
-      }
-
-      if (type === "future") {
-        console.log('[DEBUG] Processing "future" set changes (DIFF MODE)');
-
-        // === 1. Map originals & updated ===
-        const originalTemplate = (editingExercise.setConfigs || []).filter(c => c.routine_set_id);
-        const originalById = Object.fromEntries(originalTemplate.map(c => [c.routine_set_id, c]));
-        const originalIds = Object.keys(originalById);
-        // updatedConfigs already prepared above
-        const updatedById = Object.fromEntries(updatedConfigs.filter(c => c.routine_set_id).map(c => [c.routine_set_id, c]));
-        const updatedIds = Object.keys(updatedById);
-
-        // === 2. Determine deletes / updates / inserts ===
-        const idsToDelete = originalIds.filter(id => !updatedIds.includes(id));
-        const configsToUpdate = updatedConfigs.filter(c => c.routine_set_id && originalIds.includes(c.routine_set_id));
-        const configsToInsert = updatedConfigs.filter(c => !c.routine_set_id);
-
-        // Get routine_exercise_id for inserts once
-        const { data: rxRow, error: rxErr } = await supabase
-          .from('routine_exercises')
-          .select('id')
-          .eq('routine_id', activeWorkout.programId)
-          .eq('exercise_id', exerciseId)
-          .single();
-        if (rxErr) throw rxErr;
-        const routineExerciseId = rxRow.id;
-
-        // === 3. Delete removed template rows & their workout sets ===
-        if (idsToDelete.length) {
-          await supabase.from('routine_sets').delete().in('id', idsToDelete);
-          await supabase.from('sets')
-            .delete()
-            .eq('workout_id', activeWorkout.id)
-            .in('routine_set_id', idsToDelete);
-        }
-
-        // === 4. Update existing template rows ===
-        for (let i = 0; i < configsToUpdate.length; i++) {
-          const cfg = configsToUpdate[i];
-          const payload = {
-            set_order: i + 1, // will re-order sequentially
-            reps: cfg.reps,
-            weight: cfg.weight,
-            weight_unit: cfg.unit,
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-          };
-          await supabase.from('routine_sets').update(payload).eq('id', cfg.routine_set_id);
-          // mirror to workout set
-          await supabase.from('sets').update({
-            reps: cfg.reps,
-            weight: cfg.weight,
-            weight_unit: cfg.unit,
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-          }).eq('workout_id', activeWorkout.id).eq('routine_set_id', cfg.routine_set_id);
-        }
-
-        // === 5. Insert new template rows & matching workout sets ===
-        for (let i = 0; i < configsToInsert.length; i++) {
-          const cfg = configsToInsert[i];
-          const payload = {
-            routine_exercise_id: routineExerciseId,
-            set_order: configsToUpdate.length + i + 1,
-            reps: cfg.reps,
-            weight: cfg.weight,
-            weight_unit: cfg.unit,
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-          };
-          const { data: newSetRow, error: insErr } = await supabase
-            .from('routine_sets')
-            .insert(payload)
-            .select()
-            .single();
-          if (insErr) throw insErr;
-
-          await supabase.from('sets').insert({
-            workout_id: activeWorkout.id,
-            exercise_id: exerciseId,
-            routine_set_id: newSetRow.id,
-            reps: cfg.reps,
-            weight: cfg.weight,
-            weight_unit: cfg.unit,
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-            status: 'pending'
-          });
-        }
-      }
-
-      // Reload exercises to ensure consistency and prevent set duplication
-      await loadSnapshotExercises();
-
-      setEditingExercise(null);
-    } catch (err) {
-      console.error("Error saving exercise edit:", err);
-      alert(err.message || "Failed to save exercise edits.");
-    }
-  };
 
   // Compute progress counts for nav
   // Total sets = number of template setConfigs currently in the workout cards
@@ -1365,9 +711,9 @@ const ActiveWorkout = () => {
       title=""
       showAdd={true}
       showSettings={true}
-      onAdd={() => setShowAddExercise(true)}
+      onAdd={() => navigate('/workout/exercise/add')}
       onSettings={() => setSettingsOpen(true)}
-      onAction={() => setShowAddExercise(true)}
+      onAction={() => navigate('/workout/exercise/add')}
       onTitleChange={handleTitleChange}
       onDelete={handleDeleteWorkout}
       showDeleteOption={true}
@@ -1416,7 +762,7 @@ const ActiveWorkout = () => {
                     exerciseId={ex.exercise_id}
                     exerciseName={ex.name}
                     initialSetConfigs={ex.setConfigs}
-                    setData={exerciseProgress}
+                    setData={[]} // Empty to prevent double-merge since setConfigs already includes completion status
                     onSetComplete={handleSetComplete}
                     onSetDataChange={handleSetDataChange}
                     onExerciseComplete={() =>
@@ -1430,18 +776,8 @@ const ActiveWorkout = () => {
                     onFocus={() => {
                       if (!isFocused) changeFocus(ex.exercise_id);
                     }}
-                    onEditExercise={async () => {
-                      // Get absolutely fresh exercise data from database
-                      const freshExercise = await getFreshExerciseData(ex.exercise_id);
-                      if (freshExercise) {
-                        console.log('[DEBUG] Opening edit for exercise with fresh data:', freshExercise);
-                        setEditingExercise(freshExercise);
-                      } else {
-                        // Fallback to current state
-                        const latestExercise = exercises.find(e => e.exercise_id === ex.exercise_id) || ex;
-                        console.log('[DEBUG] Opening edit for exercise (fallback):', latestExercise);
-                        setEditingExercise(latestExercise);
-                      }
+                    onEditExercise={() => {
+                      navigate(`/workout/exercise/${ex.exercise_id}/edit`);
                     }}
                     index={index}
                     focusedIndex={focusedIndex}
@@ -1459,85 +795,9 @@ const ActiveWorkout = () => {
         )}
       </div>
 
-      {showAddExercise &&
-        (() => {
-          const formRef = React.createRef();
 
-          return (
-            <SwiperForm
-              open={showAddExercise}
-              onOpenChange={() => setShowAddExercise(false)}
-              title="Exercise"
-              leftAction={() => setShowAddExercise(false)}
-              rightAction={() => formRef.current?.requestSubmit?.()}
-              rightEnabled={canAddExercise}
-              rightText="Add"
-              leftText="Cancel"
-              padding={0}
-              className="add-exercise-drawer"
-            >
-              <div className="flex-1 overflow-y-auto">
-                <AddNewExerciseForm
-                  ref={formRef}
-                  key="add-exercise"
-                  formPrompt="Add a new exercise"
-                  onActionIconClick={(data, type) => {
-                    if (type === "future") handleAddExerciseFuture(data);
-                    else handleAddExerciseToday(data);
-                  }}
-                  initialSets={3}
-                  initialSection={"training"}
-                  initialSetConfigs={Array.from({ length: 3 }, () => ({
-                    reps: 10,
-                    weight: 25,
-                    unit: "lbs",
-                  }))}
-                  hideActionButtons={true}
-                  onDirtyChange={(ready) => setCanAddExercise(ready)}
-                />
-              </div>
-            </SwiperForm>
-          );
-        })()}
 
-        {/* Exercise edit sheet */}
-        {editingExercise && (() => {
-          const formRef = React.createRef();
-          return (
-            <SwiperForm
-              open={!!editingExercise}
-              onOpenChange={() => setEditingExercise(null)}
-              title="Edit"
-              leftAction={() => setEditingExercise(null)}
-              leftText="Close"
-              rightAction={() => formRef.current?.requestSubmit?.()}
-              rightText="Save"
-              rightEnabled={editingExerciseDirty}
-              padding={0}
-              className="edit-exercise-drawer"
-            >
-              <div className="flex-1 overflow-y-auto">
-                <AddNewExerciseForm
-                  ref={formRef}
-                  key={`edit-${editingExercise.id}`}
-                  formPrompt="Edit exercise"
-                  initialName={editingExercise.name}
-                  initialSection={editingExercise.section === 'workout' ? 'training' : editingExercise.section}
-                  initialSets={editingExercise.setConfigs?.length}
-                  initialSetConfigs={editingExercise.setConfigs}
-                  hideActionButtons={true}
-                  showAddToProgramToggle={false}
-                  onActionIconClick={(data, _type) => handleSaveExerciseEdit(data, exerciseUpdateType)}
-                  onDirtyChange={setEditingExerciseDirty}
-                  showUpdateTypeToggle={true}
-                  updateType={exerciseUpdateType}
-                  onUpdateTypeChange={setExerciseUpdateType}
-                  onEditSet={handleEditSet}
-                />
-              </div>
-            </SwiperForm>
-          );
-        })()}
+
 
       <SwiperAlertDialog
         open={isDeleteConfirmOpen}
@@ -1605,7 +865,7 @@ const ActiveWorkout = () => {
         totalSets={totalSets}
         onEnd={handleEndWorkout}
         onSettings={() => setSettingsOpen(true)}
-        onAdd={() => setShowAddExercise(true)}
+        onAdd={() => navigate('/workout/exercise/add')}
       />
 
       {/* Settings sheet for renaming workout */}
