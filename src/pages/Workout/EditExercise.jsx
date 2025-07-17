@@ -446,7 +446,7 @@ const EditExercise = () => {
       }
 
       // Reload exercises to ensure consistency and prevent set duplication
-      await loadWorkoutExercises();
+      await loadWorkoutExercises(workoutProgress);
 
       // Navigate back to active workout
       navigate('/workout/active');

@@ -7,6 +7,27 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Global error handler for auth errors
+  useEffect(() => {
+    const handleAuthError = (error) => {
+      if (error?.message?.includes('Invalid Refresh Token') || 
+          error?.message?.includes('Refresh Token Not Found') ||
+          error?.message?.includes('JWT expired')) {
+        console.log('AuthProvider: Auth error detected, signing out:', error.message);
+        supabase.auth.signOut();
+      }
+    };
+
+    // Listen for unhandled promise rejections that might be auth errors
+    window.addEventListener('unhandledrejection', (event) => {
+      handleAuthError(event.reason);
+    });
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleAuthError);
+    };
+  }, []);
+
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state change listener');
     
@@ -24,6 +45,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }).catch(error => {
       console.error('AuthProvider: Error getting initial session:', error);
+      // If we get an auth error, clear the session and sign out
+      if (error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found')) {
+        console.log('AuthProvider: Invalid refresh token detected, signing out');
+        supabase.auth.signOut();
+      }
       setLoading(false);
     });
 
@@ -36,6 +62,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     session,
     user: session?.user || null,
+    signOut: () => supabase.auth.signOut(),
   };
 
   console.log('AuthProvider: Current auth state:', value);

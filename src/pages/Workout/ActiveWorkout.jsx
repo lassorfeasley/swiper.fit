@@ -79,6 +79,12 @@ const ActiveWorkout = () => {
   }, [editingSet]);
 
   const skipAutoRedirectRef = useRef(false);
+  const workoutProgressRef = useRef(workoutProgress);
+
+  // Keep ref updated with current workoutProgress
+  useEffect(() => {
+    workoutProgressRef.current = workoutProgress;
+  }, [workoutProgress]);
 
   // State for settings sheet
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -127,7 +133,7 @@ const ActiveWorkout = () => {
     const lastWExId = activeWorkout?.lastExerciseId;
     if (!lastWExId) return;
     if (!exercises.length) return;
-    
+
     const targetExercise = exercises.find(ex => ex.id === lastWExId);
     if (!targetExercise) return;
 
@@ -157,7 +163,7 @@ const ActiveWorkout = () => {
   // Scroll any newly focused card 25% down the viewport
   useEffect(() => {
     if (!focusedNode) return;
-    
+
     // A timeout is needed to allow the card's expand animation to complete
     // before we calculate its position and scroll to it.
     const scrollTimeout = setTimeout(() => {
@@ -259,7 +265,7 @@ const ActiveWorkout = () => {
           changes: { [field]: value },
         },
       ];
-      
+
       try {
         await updateWorkoutProgress(exerciseId, updates);
         if (setIdOrUpdates && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(setIdOrUpdates)) {
@@ -268,11 +274,11 @@ const ActiveWorkout = () => {
         } else {
           // Set doesn't exist in database yet - find the routine_set_id and create it
           const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
-          const setConfig = exercise?.setConfigs?.find(cfg => 
-            String(cfg.routine_set_id) === String(setIdOrUpdates) || 
+          const setConfig = exercise?.setConfigs?.find(cfg =>
+            String(cfg.routine_set_id) === String(setIdOrUpdates) ||
             cfg.id === setIdOrUpdates
           );
-          
+
           if (setConfig?.routine_set_id) {
             const setConfigForSave = {
               reps: setConfig.reps,
@@ -288,7 +294,7 @@ const ActiveWorkout = () => {
             await saveSet(exerciseId, setConfigForSave);
           }
         }
-        
+
         // Sync to exercises array as well
         updateWorkoutExercises((prev) =>
           prev.map((ex) => {
@@ -314,7 +320,7 @@ const ActiveWorkout = () => {
     const exerciseName = ex?.name || "Exercise";
     const totalSets = ex?.setConfigs?.length || 0;
     const prevCount = (workoutProgress[exerciseId] || []).length;
-    
+
     try {
       // Save the set with optimistic updates
       await saveSet(exerciseId, setConfig);
@@ -483,78 +489,66 @@ const ActiveWorkout = () => {
     })
     .filter((group) => group.exercises.length > 0);
 
+  // Mark an exercise as completed and focus next one
   const handleExerciseCompleteNavigate = (exerciseId) => {
-    setCompletedExercises((prev) => {
+    setCompletedExercises(prev => {
       const newSet = new Set(prev);
       newSet.add(exerciseId);
-
-      // Auto-end workout if all complete
-      if (!workoutAutoEnded) {
-        const allDone = exercises.every((ex) => newSet.has(ex.exercise_id));
-        if (allDone) {
-          setWorkoutAutoEnded(true);
-            (async () => {
-              const wid = activeWorkout?.id;
-              // End workout first to clear active context and prevent redirects
-              const saved = await contextEndWorkout();
-              if (saved && wid) {
-                navigate(`/history/${wid}`);
-              } else {
-                navigate("/routines");
-              }
-            })();
+      return newSet;
+    });
+    // Focus next incomplete exercise
+    const groupIndex = exercisesBySection.findIndex(group =>
+      group.exercises.some(ex => ex.exercise_id === exerciseId)
+    );
+    if (groupIndex !== -1) {
+      const group = exercisesBySection[groupIndex].exercises;
+      const idx = group.findIndex(ex => ex.exercise_id === exerciseId);
+      let target;
+      // Next in same section
+      for (let i = idx + 1; i < group.length; i++) {
+        if (!completedExercises.has(group[i].exercise_id)) {
+          target = group[i];
+          break;
         }
       }
-
-      // Find the current section group
-      const groupIndex = exercisesBySection.findIndex((group) =>
-        group.exercises.some((ex) => ex.exercise_id === exerciseId)
-      );
-      if (groupIndex !== -1) {
-        const group = exercisesBySection[groupIndex].exercises;
-        const idx = group.findIndex((ex) => ex.exercise_id === exerciseId);
-        let target;
-
-        // 1. Next in same section
-        for (let i = idx + 1; i < group.length; i++) {
-          if (!newSet.has(group[i].exercise_id)) {
+      // Previous in same section
+      if (!target) {
+        for (let i = idx - 1; i >= 0; i--) {
+          if (!completedExercises.has(group[i].exercise_id)) {
             target = group[i];
             break;
           }
         }
-        // 2. Previous in same section
-        if (!target) {
-          for (let i = idx - 1; i >= 0; i--) {
-            if (!newSet.has(group[i].exercise_id)) {
-              target = group[i];
-              break;
-            }
-          }
-        }
-        // 3. First in next section
-        if (!target) {
-          for (let j = groupIndex + 1; j < exercisesBySection.length; j++) {
-            const found = exercisesBySection[j].exercises.find((ex) => !newSet.has(ex.exercise_id));
-            if (found) {
-              target = found;
-              break;
-            }
-          }
-        }
-        if (target) {
-          changeFocus(target.exercise_id);
-          // The scroll is now handled by the useEffect on [focusedNode]
-          /*
-          setTimeout(() => {
-            const el = document.getElementById(`exercise-${target.exercise_id}`);
-            if (el) scrollCardIntoView(el);
-          }, collapseDurationMs + 50);
-          */
+      }
+      // First in next section
+      if (!target) {
+        for (let j = groupIndex + 1; j < exercisesBySection.length; j++) {
+          const found = exercisesBySection[j].exercises.find(ex => !completedExercises.has(ex.exercise_id));
+          if (found) { target = found; break; }
         }
       }
-      return newSet;
-    });
+      if (target) {
+        changeFocus(target.exercise_id);
+      }
+    }
   };
+
+  // Auto-end workout and navigate when all exercises completed
+  useEffect(() => {
+    if (!workoutAutoEnded && exercises.length > 0) {
+      const allDone = exercises.every(ex => completedExercises.has(ex.exercise_id));
+      if (allDone) {
+        setWorkoutAutoEnded(true);
+        (async () => {
+          skipAutoRedirectRef.current = true;
+          const wid = activeWorkout?.id;
+          const saved = await contextEndWorkout();
+          if (saved && wid) navigate(`/history/${wid}`);
+          else navigate('/routines');
+        })();
+      }
+    }
+  }, [completedExercises, exercises, workoutAutoEnded, contextEndWorkout, activeWorkout, navigate]);
 
   // Time (ms) to wait for collapse animation before opening another card
   const collapseDurationMs = CARD_ANIMATION_DURATION_MS;
@@ -568,13 +562,13 @@ const ActiveWorkout = () => {
       // Check if this exercise still has incomplete sets
       const ex = exercises.find((e) => e.exercise_id === newId);
       const totalSets = ex?.setConfigs?.length || 0;
-      const completed = (workoutProgress[newId] || []).length;
+      const completed = (workoutProgressRef.current[newId] || []).length;
       if (completed < totalSets) {
         console.log(`[ActiveWorkout] changeFocus updating lastExercise to ${ex?.name}`);
         updateLastExercise?.(ex.id);
       }
     }, collapseDurationMs);
-  }, [setFocusedExerciseId, updateLastExercise, exercises, workoutProgress]);
+  }, [setFocusedExerciseId, updateLastExercise, exercises]);
 
 
 
@@ -598,7 +592,7 @@ const ActiveWorkout = () => {
           );
         } else {
           // Just for today - update only the workout instance
-          
+
           if (editingSet.setConfig.id) {
             // Set exists in database - update it
             const dbValues = {
@@ -625,7 +619,7 @@ const ActiveWorkout = () => {
             await saveSet(editingSet.exerciseId, setConfigForSave);
           }
         }
-        
+
         // Also update local exercises state to reflect changes in UI
         // Convert form fields (unit) to database fields (weight_unit) for consistency
         const normalizedValues = {
@@ -633,7 +627,7 @@ const ActiveWorkout = () => {
           weight_unit: values.unit, // Map form's unit to database's weight_unit
           unit: values.unit, // Keep unit for backward compatibility
         };
-        
+
         updateWorkoutExercises((prev) =>
           prev.map((ex) => {
             if (ex.exercise_id !== editingSet.exerciseId) return ex;
@@ -748,7 +742,7 @@ const ActiveWorkout = () => {
                 let topOffset = 80 + index * STACKING_OFFSET_PX;
 
                 if (focusedIndex !== -1) {
-                  const collapsedHeight = 80; 
+                  const collapsedHeight = 80;
                   const extraHeight = Math.max(0, focusedCardHeight - collapsedHeight);
                   if (index > focusedIndex) {
                     topOffset = 80 + focusedIndex * STACKING_OFFSET_PX + focusedCardHeight + (index - focusedIndex - 1) * STACKING_OFFSET_PX;
@@ -762,7 +756,7 @@ const ActiveWorkout = () => {
                     exerciseId={ex.exercise_id}
                     exerciseName={ex.name}
                     initialSetConfigs={ex.setConfigs}
-                    setData={[]} // Empty to prevent double-merge since setConfigs already includes completion status
+                    setData={exerciseProgress} // Use actual completed sets data from context
                     onSetComplete={handleSetComplete}
                     onSetDataChange={handleSetDataChange}
                     onExerciseComplete={() =>

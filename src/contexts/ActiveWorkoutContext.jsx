@@ -23,20 +23,20 @@ export function ActiveWorkoutProvider({ children }) {
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
 
   // NEW: Move loadSnapshotExercises logic from component to context
-  const loadWorkoutExercises = useCallback(async () => {
-    if (!activeWorkout) {
-      setWorkoutExercises([]);
-      return;
-    }
-    // 1) Load snapshot of exercises for this workout
+  const loadWorkoutExercises = useCallback(async (progressData = null) => {
+    if (!activeWorkout?.id) return;
+    
+    console.log('[loadWorkoutExercises] Loading exercises for workout:', activeWorkout.id);
+    
+    // 1) Fetch workout snapshot exercises
     const { data: snapExs, error: snapErr } = await supabase
       .from("workout_exercises")
       .select(
         `id,
          exercise_id,
          exercise_order,
-         snapshot_name,
          name_override,
+         snapshot_name,
          exercises!workout_exercises_exercise_id_fkey(
            name,
            section
@@ -68,12 +68,9 @@ export function ActiveWorkoutProvider({ children }) {
       .eq("routine_id", activeWorkout.programId)
       .order("set_order", { foreignTable: "routine_sets", ascending: true });
     if (tmplErr) console.error("Error fetching template sets:", tmplErr);
-    // 3) Fetch actual sets for this workout
-    const { data: actualSets, error: setsErr } = await supabase
-      .from("sets")
-      .select("*")
-      .eq("workout_id", activeWorkout.id);
-    if (setsErr) console.error("Error fetching actual sets:", setsErr);
+    
+    // 3) Use provided progressData or current workoutProgress state
+    const actualSets = Object.values(progressData || workoutProgress).flat();
     
     // 4) Group template sets by exercise_id
     const setsMap = {};
@@ -99,11 +96,18 @@ export function ActiveWorkoutProvider({ children }) {
       
       if (set.routine_set_id) {
         // Set has a template reference
-        actualSetsMap[set.exercise_id][set.routine_set_id] = {
+        const existing = actualSetsMap[set.exercise_id][set.routine_set_id];
+        const normalized = {
           ...set,
           unit: set.weight_unit || 'lbs',
           weight_unit: set.weight_unit || 'lbs',
         };
+        // Prefer rows explicitly marked complete; otherwise keep whichever came first
+        if (!existing) {
+          actualSetsMap[set.exercise_id][set.routine_set_id] = normalized;
+        } else if (normalized.status === 'complete' && existing.status !== 'complete') {
+          actualSetsMap[set.exercise_id][set.routine_set_id] = normalized;
+        }
       } else {
         // Set is "just for today" - no template reference
         todayOnlySets[set.exercise_id].push({
@@ -114,37 +118,26 @@ export function ActiveWorkoutProvider({ children }) {
       }
     });
     
+    // Debug: Log what's in actualSetsMap
+    console.log('[loadWorkoutExercises] actualSetsMap:', actualSetsMap);
+    
     // 6) Merge actual sets into template sets for each exercise
     const cards = snapExs.map((we) => {
       const templateConfigs = setsMap[we.exercise_id] || [];
       const exerciseTodayOnlySets = todayOnlySets[we.exercise_id] || [];
       const exerciseActualSets = Object.values(actualSetsMap[we.exercise_id] || {});
       
-      // SMART MERGING: Detect when set counts don't match between template and actual
-      // This happens when user did "today only" edits that changed set count
-      const totalActualSets = exerciseActualSets.length + exerciseTodayOnlySets.length;
+      // SMART MERGING: Merge template sets with actual sets to show completion status
       const templateCount = templateConfigs.length;
+      const todayOnlyCount = exerciseTodayOnlySets.length;
       
       let allConfigs;
       
-      if (totalActualSets > 0 && templateCount > 0 && totalActualSets !== templateCount) {
-        // Set count mismatch: user changed set count with "today only" edit
-        // Use ONLY actual sets to prevent phantom template sets
-        console.log(`[loadWorkoutExercises] Set count mismatch for exercise ${we.exercise_id}: template=${templateCount}, actual=${totalActualSets}. Using actual sets only.`);
-        console.log(`[loadWorkoutExercises] Debug - exerciseActualSets:`, exerciseActualSets);
-        console.log(`[loadWorkoutExercises] Debug - exerciseTodayOnlySets:`, exerciseTodayOnlySets);
-        console.log(`[loadWorkoutExercises] Debug - final allConfigs will have ${exerciseActualSets.length + exerciseTodayOnlySets.length} sets`);
-        allConfigs = [...exerciseActualSets, ...exerciseTodayOnlySets];
-      } else if (totalActualSets === 0 && templateCount > 0) {
-        // No actual sets yet, use template sets with default status
-        allConfigs = templateConfigs.map(cfg => ({ ...cfg, status: 'default' }));
-      } else if (totalActualSets > 0 && templateCount === 0) {
-        // Only actual sets, no template
-        allConfigs = [...exerciseActualSets, ...exerciseTodayOnlySets];
-      } else {
-        // Normal merging: merge template with actual sets, then add any today-only sets
+      if (templateCount > 0) {
+        // We have template sets - merge them with actual sets to show completion status
         const mergedConfigs = templateConfigs.map((tmplCfg) => {
           const actual = actualSetsMap[we.exercise_id]?.[tmplCfg.routine_set_id];
+          console.log(`[loadWorkoutExercises] Merging template set ${tmplCfg.routine_set_id} with actual:`, actual);
           const merged = actual
             ? {
                 ...tmplCfg,
@@ -152,13 +145,21 @@ export function ActiveWorkoutProvider({ children }) {
                 id: actual.id,
                 unit: actual.unit,
                 weight_unit: actual.weight_unit,
+                status: actual.status || 'complete', // Preserve completion status
               }
             : { ...tmplCfg, status: 'default' }; // Add default status for template sets
+          console.log(`[loadWorkoutExercises] Merged result:`, merged);
           
           return merged;
         });
         
         allConfigs = [...mergedConfigs, ...exerciseTodayOnlySets];
+      } else if (exerciseActualSets.length > 0 || exerciseTodayOnlySets.length > 0) {
+        // No template sets, but we have actual sets (today-only workout)
+        allConfigs = [...exerciseActualSets, ...exerciseTodayOnlySets];
+      } else {
+        // No sets at all
+        allConfigs = [];
       }
       
       // Final debug log
@@ -189,7 +190,7 @@ export function ActiveWorkoutProvider({ children }) {
 
   // Load exercises when activeWorkout changes
   useEffect(() => {
-    loadWorkoutExercises();
+    loadWorkoutExercises(workoutProgress);
   }, [loadWorkoutExercises]);
 
   // CONSOLIDATED: Real-time sync with debouncing to prevent race conditions
@@ -200,41 +201,26 @@ export function ActiveWorkoutProvider({ children }) {
     
     // Debouncing mechanism to prevent multiple rapid reloads
     let reloadTimeout;
+    let isReloading = false;
     const debouncedReload = () => {
+      if (isReloading) {
+        console.log('[Real-time] Reload already in progress, skipping');
+        return;
+      }
+      
       clearTimeout(reloadTimeout);
-      reloadTimeout = setTimeout(() => {
+      reloadTimeout = setTimeout(async () => {
         console.log('[Real-time] Debounced reload triggered');
-        loadWorkoutExercises();
+        isReloading = true;
         
-        // Also reload progress to keep in sync
-        supabase
-          .from('sets')
-          .select('*')
-          .eq('workout_id', activeWorkout.id)
-          .then(({ data: setsData, error }) => {
-            if (error) {
-              console.error('Error reloading workout progress:', error);
-              return;
-            }
-            const progress = {};
-            setsData.forEach((s) => {
-              if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
-              progress[s.exercise_id].push({
-                id: s.id,
-                routine_set_id: s.routine_set_id,
-                reps: s.reps,
-                weight: s.weight,
-                unit: s.weight_unit || 'lbs',
-                weight_unit: s.weight_unit || 'lbs',
-                set_variant: s.set_variant,
-                set_type: s.set_type,
-                timed_set_duration: s.timed_set_duration,
-                status: s.status || 'complete',
-              });
-            });
-            setWorkoutProgress(progress);
-          });
-      }, 500); // 500ms debounce
+        try {
+          // Reload both exercises and progress in parallel to keep them in sync
+          // Only reload exercises, not progress (progress is handled surgically)
+          await loadWorkoutExercises(workoutProgress);
+        } finally {
+          isReloading = false;
+        }
+      }, 1000); // Increased debounce to 1 second to prevent rapid reloads
     };
     
     // Single subscription channel for all workout-related changes
@@ -270,6 +256,7 @@ export function ActiveWorkoutProvider({ children }) {
         filter: `workout_id=eq.${activeWorkout.id}`,
       }, (payload) => {
         console.log('[Real-time] Set change:', payload);
+        // Trigger reload of exercises since workoutProgress will be updated by the existing logic
         debouncedReload();
       })
       .subscribe();
@@ -279,7 +266,7 @@ export function ActiveWorkoutProvider({ children }) {
       clearTimeout(reloadTimeout);
       void workoutDataChan.unsubscribe();
     };
-  }, [activeWorkout?.id, activeWorkout?.programId, loadWorkoutExercises]);
+  }, [activeWorkout?.id, activeWorkout?.programId, loadWorkoutExercises, workoutProgress]);
 
   // Effect to check for an active workout on load
   useEffect(() => {
