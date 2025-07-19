@@ -38,6 +38,7 @@ const AddNewExerciseForm = React.forwardRef(
     const [exerciseName, setExerciseName] = useState(initialName);
     const [section, setSection] = useState(initialSection);
     const initialNameRef = React.useRef(initialName);
+    const initialSectionRef = React.useRef(initialSection);
     const initialUpdateTypeRef = React.useRef(updateType);
 
     // Build initial defaults from the first supplied set config (if any)
@@ -86,6 +87,7 @@ const AddNewExerciseForm = React.forwardRef(
 
       const nameFilled = exerciseName.trim() !== "";
       const nameDirty = exerciseName.trim() !== initialNameRef.current.trim();
+      const sectionDirty = section !== initialSectionRef.current;
       const updateTypeDirty = updateType !== initialUpdateTypeRef.current;
       // Detect if number of sets changed
       const setsCountDirty = sets.length !== initialSetConfigs.length;
@@ -98,9 +100,9 @@ const AddNewExerciseForm = React.forwardRef(
             JSON.stringify(initialSetConfigs[idx] || {})
           );
         });
-      // Ready to save/add only when a name is present AND either the name changed or sets changed
-      onDirtyChange?.(nameFilled && (nameDirty || setDirty || updateTypeDirty));
-    }, [exerciseName, sets, onDirtyChange, isInitialized, updateType, initialSetConfigs]);
+      // Ready to save/add only when a name is present AND either the name changed, section changed, or sets changed
+      onDirtyChange?.(nameFilled && (nameDirty || sectionDirty || setDirty || updateTypeDirty));
+    }, [exerciseName, section, sets, onDirtyChange, isInitialized, updateType, initialSetConfigs]);
 
     /* ------------------------------------------------------------------ */
     //  Derived values & helpers

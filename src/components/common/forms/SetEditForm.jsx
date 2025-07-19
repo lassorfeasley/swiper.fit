@@ -103,33 +103,35 @@ const FormContent = ({
   );
 };
 
-const SetEditForm = memo(
-  ({
-    formPrompt = "Edit set",
-    onSave,
-    onSaveForFuture,
-    onDelete,
-    saveButtonText = "Just for today",
-    onValuesChange,
-    isChildForm,
-    initialValues = {
-      reps: 0,
-      weight: 0,
-      unit: "lbs",
-      set_type: "reps",
-      set_variant: "",
+const SetEditForm = React.forwardRef((
+    {
+      formPrompt = "Edit set",
+      onSave,
+      onSaveForFuture,
+      onDelete,
+      saveButtonText = "Just for today",
+      onValuesChange,
+      isChildForm,
+      initialValues = {
+        reps: 0,
+        weight: 0,
+        unit: "lbs",
+        set_type: "reps",
+        set_variant: "",
+      },
+      className = "",
+      showSetNameField = true,
+      hideActionButtons = false,
+      hideInternalHeader = false,
+      onDirtyChange,
+      isUnscheduled,
+      onSetProgrammaticUpdate,
+      addType,
+      onAddTypeChange,
+      hideToggle = false,
     },
-    className = "",
-    showSetNameField = true,
-    hideActionButtons = false,
-    hideInternalHeader = false,
-    onDirtyChange,
-    isUnscheduled,
-    onSetProgrammaticUpdate,
-    addType,
-    onAddTypeChange,
-    hideToggle = false,
-  }) => {
+    ref
+  ) => {
     const [formValues, setFormValues] = useState(initialValues);
     const initialRef = React.useRef(initialValues);
     const initialAddTypeRef = React.useRef(addType);
@@ -146,6 +148,10 @@ const SetEditForm = memo(
       onDirtyChange?.(dirtyForm || dirtyScope);
     }, [formValues, addType, onDirtyChange]);
 
+    React.useImperativeHandle(ref, () => ({
+      getFormValues: () => formValues,
+    }));
+
     // Store the last non-bodyweight value for restore-on-toggle
     const [lastNonBodyWeight, setLastNonBodyWeight] = useState({ weight: initialValues.weight, unit: initialValues.unit });
 
@@ -158,7 +164,11 @@ const SetEditForm = memo(
 
     // Remove all direct onValuesChange calls from setFormValues and handlers
     const handleLocalChange = (field, value) => {
-      setFormValues((prev) => ({ ...prev, [field]: value }));
+      const newValues = { ...formValues, [field]: value };
+      setFormValues(newValues);
+      if (onValuesChange) {
+        onValuesChange(newValues);
+      }
     };
 
     const syncWithParent = () => {
@@ -174,40 +184,35 @@ const SetEditForm = memo(
 
     const handleSetTypeChange = (val) => {
       if (!val) return;
-      setFormValues((prev) => {
-        const newValues = { ...prev, set_type: val };
-        if (
-          val === "timed" &&
-          (!prev.timed_set_duration || prev.timed_set_duration === 0)
-        ) {
-          newValues.timed_set_duration = 30;
-        }
-        return newValues;
-      });
+      const newValues = { ...formValues, set_type: val };
+      if (
+        val === "timed" &&
+        (!formValues.timed_set_duration || formValues.timed_set_duration === 0)
+      ) {
+        newValues.timed_set_duration = 30;
+      }
+      setFormValues(newValues);
+      if (onValuesChange) {
+        onValuesChange(newValues);
+      }
     };
 
     const handleUnitChange = (val) => {
       if (val) {
-        setFormValues((prev) => {
-          let newValues = { ...prev, unit: val };
-          if (val === "body") {
-            setLastNonBodyWeight({ weight: prev.weight, unit: prev.unit });
-          } else {
-            if (prev.unit === "body") {
-              newValues.weight = lastNonBodyWeight.weight || 25;
-            }
+        let newValues = { ...formValues, unit: val };
+        if (val === "body") {
+          setLastNonBodyWeight({ weight: formValues.weight, unit: formValues.unit });
+        } else {
+          if (formValues.unit === "body") {
+            newValues.weight = lastNonBodyWeight.weight || 25;
           }
-          return newValues;
-        });
+        }
+        setFormValues(newValues);
+        if (onValuesChange) {
+          onValuesChange(newValues);
+        }
       }
     };
-
-    // Call onValuesChange only after formValues changes, not during render or setState
-    useEffect(() => {
-      if (onValuesChange) {
-        onValuesChange(formValues);
-      }
-    }, [formValues, onValuesChange]);
 
     const weightOnChange = showSetNameField
       ? (val) => handleLocalChange("weight", val)
@@ -246,75 +251,23 @@ const SetEditForm = memo(
       }
     };
 
-    if (isChildForm) {
-      return (
-        <FormContent
-          formValues={formValues}
-          showSetNameField={showSetNameField}
-          handleLocalChange={handleLocalChange}
-          handleSetTypeChange={handleSetTypeChange}
-          handleUnitChange={handleUnitChange}
-          syncWithParent={syncWithParent}
-          repsOnChange={repsOnChange}
-          durationOnChange={durationOnChange}
-          weightOnChange={weightOnChange}
-        />
-      );
-    }
-
+    // Simplify: always render the form content; parent handles Save/Delete
     return (
-      <div className={`w-full flex flex-col justify-start items-start gap-0 ${className}`}>
-        {!isChildForm && !hideInternalHeader && (
-          <div className="EditSetOne self-stretch h-6 justify-start text-slate-600 text-lg font-medium leading-7">
-            {formPrompt}
-          </div>
-        )}
-        <FormContent
-          formValues={formValues}
-          showSetNameField={showSetNameField}
-          handleLocalChange={handleLocalChange}
-          handleSetTypeChange={handleSetTypeChange}
-          handleUnitChange={handleUnitChange}
-          syncWithParent={syncWithParent}
-          repsOnChange={repsOnChange}
-          durationOnChange={durationOnChange}
-          weightOnChange={weightOnChange}
-        />
-        {isUnscheduled && !hideToggle && (
-          <FormSectionWrapper className="px-0 py-0">
-            <ToggleInput
-              label="Keep new settings?"
-              value={addType}
-              onValueChange={onAddTypeChange}
-              options={[
-                { label: "Just for today", value: "today" },
-                { label: "Permanently", value: "future" },
-              ]}
-            />
-            {!hideActionButtons && (
-              <div className="flex space-x-2 pt-4">
-                <SwiperButton
-                  onClick={() => onSave(initialValues)}
-                  variant="secondary"
-                  className="flex-1"
-                >
-                  Cancel
-                </SwiperButton>
-                <SwiperButton
-                  onClick={handleSave}
-                  className="flex-1"
-                  disabled={!onDirtyChange}
-                >
-                  Save
-                </SwiperButton>
-              </div>
-            )}
-          </FormSectionWrapper>
-        )}
-      </div>
+      <FormContent
+        formValues={formValues}
+        showSetNameField={showSetNameField}
+        handleLocalChange={handleLocalChange}
+        handleSetTypeChange={handleSetTypeChange}
+        handleUnitChange={handleUnitChange}
+        syncWithParent={syncWithParent}
+        repsOnChange={repsOnChange}
+        durationOnChange={durationOnChange}
+        weightOnChange={weightOnChange}
+      />
     );
-  }
-);
+});
+
+SetEditForm.displayName = "SetEditForm";
 
 SetEditForm.propTypes = {
   formPrompt: PropTypes.string,
