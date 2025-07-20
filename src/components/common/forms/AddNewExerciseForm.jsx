@@ -26,6 +26,7 @@ const AddNewExerciseForm = React.forwardRef(
       onUpdateTypeChange,
       onEditSet,
       onSetsConfigChange,
+      disabled = false,
     },
     ref
   ) => {
@@ -175,6 +176,7 @@ const AddNewExerciseForm = React.forwardRef(
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
             customPlaceholder=""
+            disabled={disabled}
           />
           <ToggleInput
             value={section}
@@ -184,6 +186,7 @@ const AddNewExerciseForm = React.forwardRef(
               { label: "Training", value: "training" },
               { label: "Cooldown", value: "cooldown" },
             ]}
+            disabled={disabled}
                     />
           
           {/* Sets control */}
@@ -237,7 +240,7 @@ const AddNewExerciseForm = React.forwardRef(
             <SetBuilderForm
               initialDefaults={defaults}
               onDefaultsChange={updateDefault}
-              disabled={setsCount === 1}
+              disabled={disabled || setsCount === 1}
             />
           </FormSectionWrapper>
         )}
