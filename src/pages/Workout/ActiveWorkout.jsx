@@ -35,6 +35,7 @@ const ActiveWorkout = () => {
     saveSet,
     fetchWorkoutSets,
     updateWorkoutProgress,
+    updateLastExercise,
   } = useActiveWorkout();
   
 
@@ -453,6 +454,31 @@ const ActiveWorkout = () => {
         },
         (payload) => {
           console.log('[Real-time] Workout change:', payload);
+          
+          // Sync focus state when last_workout_exercise_id changes in real-time
+          if (payload.new && payload.new.last_workout_exercise_id !== payload.old?.last_workout_exercise_id) {
+            const newWorkoutExerciseId = payload.new.last_workout_exercise_id;
+            console.log('[Real-time] Focus changed to workout_exercise_id:', newWorkoutExerciseId);
+            
+            // Convert workout_exercise_id to exercise_id for UI focus
+            const targetExercise = exercises.find(ex => ex.id === newWorkoutExerciseId);
+            if (targetExercise) {
+              const targetExerciseId = targetExercise.exercise_id;
+              
+              // Only update focus if this change came from another window (not this one)
+              if (targetExerciseId && targetExerciseId !== focusedExerciseId) {
+                setFocusedExerciseId(targetExerciseId);
+                
+                // Scroll to the focused exercise after a brief delay
+                setTimeout(() => {
+                  const element = document.getElementById(`exercise-${targetExerciseId}`);
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 300);
+              }
+            }
+          }
         }
       )
       .subscribe();
@@ -638,8 +664,14 @@ const ActiveWorkout = () => {
     // After collapse animation completes, open new card
     setTimeout(() => {
       setFocusedExerciseId(newId);
+      // Save the focus change to database for real-time sync across windows
+      // Find the workout_exercise_id for this exercise_id
+      const exercise = exercises.find(ex => ex.exercise_id === newId);
+      if (exercise?.id) {
+        updateLastExercise(exercise.id); // Use workout_exercise_id (ex.id), not exercise_id
+      }
     }, collapseDurationMs);
-  }, []);
+  }, [updateLastExercise, exercises]);
 
   const handleEditSet = (index, setConfig) => {
     setEditingSet({ exerciseId: editingExercise.exercise_id, setConfig, index, fromEditExercise: true });
