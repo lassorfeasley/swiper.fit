@@ -134,7 +134,7 @@ const ActiveExerciseCard = React.forwardRef(({
       (set) => set.status !== "deleted" && set.status !== "skipped"
     );
 
-    // 4) Only show sets that are complete or template sets (for UI display)
+    // 4) Only show sets that are complete, template sets, or default status sets (for UI display)
     const filteredSets = visibleSets.map((set) => {
       // Show completed sets
       if (set.status === "complete") {
@@ -144,12 +144,16 @@ const ActiveExerciseCard = React.forwardRef(({
       if (!set.id || set.id.startsWith('temp-')) {
         return { ...set, status: "default" };
       }
-      // Hide saved sets that are not complete (they're tracked in context but not shown in UI)
+      // Show sets with default status (newly added sets that haven't been completed yet)
+      if (set.status === "default") {
+        return set;
+      }
+      // Hide saved sets that are not complete and not default (they're tracked in context but not shown in UI)
       return null;
     }).filter(Boolean);
 
     return filteredSets;
-  }, [initialSetConfigs, setData]);
+  }, [initialSetConfigs, setData, exerciseName]);
 
   useEffect(() => {
     setsRef.current = sets;

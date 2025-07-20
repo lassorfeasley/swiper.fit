@@ -31,6 +31,7 @@ const ActiveWorkout = () => {
     loading,
     endWorkout: contextEndWorkout,
     workoutProgress,
+    setWorkoutProgress,
     saveSet,
     fetchWorkoutSets,
     updateWorkoutProgress,
@@ -672,6 +673,12 @@ const ActiveWorkout = () => {
     
     try {
       const { exerciseId, setConfig, index } = editingSet;
+      console.log('[handleSetEditFormSave] Starting with:', { exerciseId, setConfig, index, values });
+      
+      // Declare variables at function level so they're accessible throughout
+      let savedSetId = null;
+      let isNewSet = false;
+      let savedSetData = null;
       
       // Check if this is a "permanent" update (routine template update)
       if (setUpdateType === 'future' && setConfig.routine_set_id) {
@@ -708,12 +715,11 @@ const ActiveWorkout = () => {
           status: 'default'
         };
 
-        let savedSetId = null;
-        let isNewSet = false;
-        let savedSetData = null;
-
         // If this set already has an ID, update it; otherwise create new
         if (setConfig.id) {
+          console.log('[handleSetEditFormSave] PERMANENT: Updating set with ID:', setConfig.id);
+          console.log('[handleSetEditFormSave] PERMANENT: Update data:', setData);
+          
           const { data, error } = await supabase
             .from('sets')
             .update(setData)
@@ -721,17 +727,26 @@ const ActiveWorkout = () => {
             .select('*')
             .single();
             
-          if (error) throw error;
+          if (error) {
+            console.error('[handleSetEditFormSave] PERMANENT: Update error:', error);
+            throw error;
+          }
           savedSetId = setConfig.id;
           savedSetData = data;
         } else {
+          console.log('[handleSetEditFormSave] PERMANENT: Creating new set');
+          console.log('[handleSetEditFormSave] PERMANENT: Insert data:', setData);
+          
           const { data, error } = await supabase
             .from('sets')
             .insert(setData)
             .select('*')
             .single();
             
-          if (error) throw error;
+          if (error) {
+            console.error('[handleSetEditFormSave] PERMANENT: Insert error:', error);
+            throw error;
+          }
           savedSetId = data.id;
           savedSetData = data;
           isNewSet = true;
@@ -748,15 +763,14 @@ const ActiveWorkout = () => {
           set_type: values.set_type || 'reps',
           set_variant: values.set_variant || '',
           timed_set_duration: values.timed_set_duration || 30,
-          status: 'complete'
+          status: setConfig.status || 'default'  // Preserve original status
         };
-
-        let savedSetId = null;
-        let isNewSet = false;
-        let savedSetData = null;
 
         // If this set already has an ID, update it; otherwise create new
         if (setConfig.id) {
+          console.log('[handleSetEditFormSave] TODAY: Updating set with ID:', setConfig.id);
+          console.log('[handleSetEditFormSave] TODAY: Update data:', setData);
+          
           const { data, error } = await supabase
             .from('sets')
             .update(setData)
@@ -764,18 +778,27 @@ const ActiveWorkout = () => {
             .select('*')
             .single();
             
-          if (error) throw error;
+          if (error) {
+            console.error('[handleSetEditFormSave] TODAY: Update error:', error);
+            throw error;
+          }
           savedSetId = setConfig.id;
           savedSetData = data;
           toast.success("Set updated successfully");
         } else {
+          console.log('[handleSetEditFormSave] TODAY: Creating new set');
+          console.log('[handleSetEditFormSave] TODAY: Insert data:', setData);
+          
           const { data, error } = await supabase
             .from('sets')
             .insert(setData)
             .select('*')
             .single();
             
-          if (error) throw error;
+          if (error) {
+            console.error('[handleSetEditFormSave] TODAY: Insert error:', error);
+            throw error;
+          }
           savedSetId = data.id;
           savedSetData = data;
           isNewSet = true;
@@ -841,7 +864,7 @@ const ActiveWorkout = () => {
       }));
       
       // Update the workout progress context to reflect the changes
-      updateWorkoutProgress(prev => {
+      setWorkoutProgress(prev => {
         const newProgress = { ...prev };
         const exerciseProgress = newProgress[exerciseId] || [];
         
@@ -871,6 +894,13 @@ const ActiveWorkout = () => {
       
     } catch (error) {
       console.error("Failed to save set:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        stack: error.stack
+      });
       toast.error("Failed to save set. Please try again.");
     }
   };
@@ -1149,6 +1179,25 @@ const ActiveWorkout = () => {
         }
         return ex;
       }));
+      
+      // Immediately update workoutProgress context with synthetic "default" status rows for new sets
+      // This ensures the UI shows the correct number of sets immediately without waiting for refresh
+      setWorkoutProgress(prev => {
+        const updated = { ...prev };
+        updated[exercise_id] = newSetConfigs.map(cfg => ({
+          id: cfg.id ?? null,
+          routine_set_id: cfg.routine_set_id ?? null,
+          reps: cfg.reps,
+          weight: cfg.weight,
+          unit: cfg.unit || cfg.weight_unit || 'lbs',
+          weight_unit: cfg.unit || cfg.weight_unit || 'lbs',
+          set_variant: cfg.set_variant,
+          set_type: cfg.set_type,
+          timed_set_duration: cfg.timed_set_duration,
+          status: 'default', // not yet completed
+        }));
+        return updated;
+      });
       
       // Refresh the workout progress context to include the newly saved sets
       await fetchWorkoutSets();

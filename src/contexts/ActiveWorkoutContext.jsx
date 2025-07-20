@@ -524,6 +524,12 @@ useEffect(() => {
   }, [activeWorkout, elapsedTime]);
 
   const updateWorkoutProgress = useCallback(async (exerciseId, updates) => {
+    // Validate inputs
+    if (!exerciseId || !updates || !Array.isArray(updates)) {
+      console.error('[updateWorkoutProgress] Invalid inputs:', { exerciseId, updates });
+      return;
+    }
+    
     // Store previous state for potential rollback
     const previousState = workoutProgress[exerciseId] || [];
     
@@ -533,6 +539,11 @@ useEffect(() => {
       let newSets = [...prevSets];
 
       updates.forEach((update) => {
+        if (!update || !update.changes) {
+          console.error('[updateWorkoutProgress] Invalid update object:', update);
+          return;
+        }
+        
         const targetRoutineSetId = update.changes.routine_set_id;
         const targetId = update.id;
 
@@ -559,7 +570,7 @@ useEffect(() => {
       // Deduplicate rows by routine_set_id to avoid duplicates
       const deduped = Array.from(
         new Map(
-          newSets.map((s) => [String(s.routine_set_id), s])
+          newSets.filter(s => s && s.routine_set_id).map((s) => [String(s.routine_set_id), s])
         ).values()
       );
       return { ...prev, [exerciseId]: deduped };
@@ -663,7 +674,7 @@ useEffect(() => {
         // Deduplicate rows by routine_set_id to avoid duplicates
         const deduped = Array.from(
           new Map(
-            newSets.map((s) => [String(s.routine_set_id), s])
+            newSets.filter(s => s && s.routine_set_id).map((s) => [String(s.routine_set_id), s])
           ).values()
         );
         return { ...prev, [exerciseId]: deduped };
@@ -961,6 +972,7 @@ useEffect(() => {
         togglePause,
         endWorkout,
         workoutProgress,
+        setWorkoutProgress,
         updateWorkoutProgress,
         saveSet,
         updateSet,
