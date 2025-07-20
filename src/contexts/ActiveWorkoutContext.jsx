@@ -51,11 +51,15 @@ export function ActiveWorkoutProvider({ children }) {
           lastExerciseId: workout.last_workout_exercise_id || null,
         };
         setActiveWorkout(workoutData);
-        // Fetch all sets logged for this workout (including pending ones)
+        // Fetch only completed sets for this workout
         const { data: setsData, error: setsError } = await supabase
           .from('sets')
           .select('*')
-          .eq('workout_id', workout.id);
+          .eq('workout_id', workout.id)
+          .eq('status', 'complete');
+        
+
+        
         const progress = {};
         if (setsData && !setsError) {
           setsData.forEach(s => {
@@ -92,37 +96,52 @@ export function ActiveWorkoutProvider({ children }) {
     checkForActiveWorkout();
   }, [user]);
 
-  // Whenever a new workout is active, fetch any logged sets for it
-  useEffect(() => {
+  // Function to fetch sets for the active workout
+  const fetchWorkoutSets = React.useCallback(async () => {
     if (!activeWorkout?.id) return;
-    supabase
+    
+    console.log('[ActiveWorkoutContext] Fetching sets for workout:', activeWorkout.id);
+    
+    const { data: setsData, error } = await supabase
       .from('sets')
       .select('*')
-      .eq('workout_id', activeWorkout.id)
-      .then(({ data: setsData, error }) => {
-        if (error) {
-          console.error('Error fetching sets for active workout:', error);
-          return;
-        }
-        const progress = {};
-        setsData.forEach((s) => {
-          if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
-          progress[s.exercise_id].push({
-            id: s.id,
-            routine_set_id: s.routine_set_id,
-            reps: s.reps,
-            weight: s.weight,
-            unit: s.weight_unit || 'lbs',
-            weight_unit: s.weight_unit || 'lbs',
-            set_variant: s.set_variant,
-            set_type: s.set_type,
-            timed_set_duration: s.timed_set_duration,
-            status: s.status || 'complete', // Include status from DB
-          });
-        });
-        setWorkoutProgress(progress);
+      .eq('workout_id', activeWorkout.id);
+      
+    if (error) {
+      console.error('Error fetching sets for active workout:', error);
+      return;
+    }
+    
+    console.log('[ActiveWorkoutContext] Raw sets data from DB:', setsData);
+    const progress = {};
+    setsData.forEach((s) => {
+      if (!progress[s.exercise_id]) progress[s.exercise_id] = [];
+      progress[s.exercise_id].push({
+        id: s.id,
+        routine_set_id: s.routine_set_id,
+        reps: s.reps,
+        weight: s.weight,
+        unit: s.weight_unit || 'lbs',
+        weight_unit: s.weight_unit || 'lbs',
+        set_variant: s.set_variant,
+        set_type: s.set_type,
+        timed_set_duration: s.timed_set_duration,
+        status: s.status || 'default', // Changed from 'complete' to 'default'
       });
+    });
+    console.log('[ActiveWorkoutContext] Processed progress object:', progress);
+    setWorkoutProgress(progress);
   }, [activeWorkout?.id]);
+
+  // Whenever a new workout is active, fetch any logged sets for it
+  useEffect(() => {
+    fetchWorkoutSets();
+  }, [fetchWorkoutSets]);
+
+  // Debug workoutProgress changes
+  useEffect(() => {
+    // console.log('[ActiveWorkoutContext] workoutProgress changed:', workoutProgress);
+  }, [workoutProgress]);
 
   useEffect(() => {
     let timer;
@@ -208,11 +227,35 @@ useEffect(() => {
   const setsChan = supabase
     .channel(`public:sets:workout_id=eq.${activeWorkout.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'sets', filter: `workout_id=eq.${activeWorkout.id}` }, ({ eventType, new: row, old }) => {
+      
       setWorkoutProgress(prev => {
         const prog = { ...prev };
         const list = prog[row.exercise_id] ? [...prog[row.exercise_id]] : [];
         if (eventType === 'INSERT') {
-          list.push({
+          // For sets with routine_set_id, check for existing sets
+          let existingSetIndex = -1;
+          let optimisticSetIndex = -1;
+          
+          if (row.routine_set_id) {
+            existingSetIndex = list.findIndex(s => 
+              String(s.routine_set_id) === String(row.routine_set_id)
+            );
+            
+            optimisticSetIndex = list.findIndex(s => 
+              s.isOptimistic && String(s.routine_set_id) === String(row.routine_set_id)
+            );
+          } else {
+            // For sets without routine_set_id (newly added sets), check by set_variant
+            existingSetIndex = list.findIndex(s => 
+              !s.routine_set_id && s.set_variant === row.set_variant
+            );
+            
+            optimisticSetIndex = list.findIndex(s => 
+              s.isOptimistic && !s.routine_set_id && s.set_variant === row.set_variant
+            );
+          }
+          
+          const newSet = {
             id: row.id,
             routine_set_id: row.routine_set_id,
             reps: row.reps,
@@ -222,8 +265,20 @@ useEffect(() => {
             set_variant: row.set_variant,
             set_type: row.set_type,
             timed_set_duration: row.timed_set_duration,
-            status: row.status || 'complete',
-          });
+            status: row.status || 'default',
+            isOptimistic: false,
+          };
+          
+          if (optimisticSetIndex !== -1) {
+            // Replace optimistic set with real database set
+            list[optimisticSetIndex] = newSet;
+          } else if (existingSetIndex !== -1) {
+            // Update existing set
+            list[existingSetIndex] = newSet;
+          } else {
+            // Add new set
+            list.push(newSet);
+          }
         } else if (eventType === 'UPDATE') {
           const idx = list.findIndex(s => s.id === row.id);
           if (idx !== -1) {
@@ -526,7 +581,7 @@ useEffect(() => {
               weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
               set_variant: update.changes.set_variant || 'Set 1',
               set_type: update.changes.set_type || 'reps',
-              status: update.changes.status || 'pending',
+              status: update.changes.status || 'complete', // Changed from 'pending' to 'complete'
             };
             // Only add timed_set_duration if it's a timed set and has a valid value
             if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
@@ -553,7 +608,7 @@ useEffect(() => {
               weight_unit: update.changes.weight_unit || update.changes.unit || 'lbs',
               set_variant: update.changes.set_variant || 'Set 1',
               set_type: update.changes.set_type || 'reps',
-              status: update.changes.status || 'pending',
+              status: update.changes.status || 'complete', // Changed from 'pending' to 'complete'
             };
             // Only add timed_set_duration if it's a timed set and has a valid value
             if (update.changes.set_type === 'timed' && update.changes.timed_set_duration) {
@@ -636,17 +691,32 @@ useEffect(() => {
     // Store previous state for potential rollback
     const previousState = workoutProgress[exerciseId] || [];
 
-    // OPTIMISTIC UPDATE: Immediately add the set to local state
+    // OPTIMISTIC UPDATE: Check if set already exists and update it, otherwise add new
     const tempId = `temp-${Date.now()}-${Math.random()}`;
     setWorkoutProgress(prev => {
       const exerciseProgress = prev[exerciseId] || [];
+      
+      // Check if a set with the same routine_set_id already exists
+      const existingSetIndex = exerciseProgress.findIndex(s => 
+        String(s.routine_set_id) === String(setConfig.routine_set_id)
+      );
+      
       const optimisticSet = { 
         ...setConfig, 
         id: tempId,
         status: setConfig.status || 'complete',
         isOptimistic: true 
       };
-      return { ...prev, [exerciseId]: [...exerciseProgress, optimisticSet] };
+      
+      if (existingSetIndex !== -1) {
+        // Update existing set
+        const newExerciseProgress = [...exerciseProgress];
+        newExerciseProgress[existingSetIndex] = optimisticSet;
+        return { ...prev, [exerciseId]: newExerciseProgress };
+      } else {
+        // Add new set
+        return { ...prev, [exerciseId]: [...exerciseProgress, optimisticSet] };
+      }
     });
 
     // DATABASE OPERATION: Save to database
@@ -728,6 +798,10 @@ useEffect(() => {
           console.error("Error saving set:", error);
           throw error;
       }
+      
+
+
+
 
       // CONFIRM OPTIMISTIC UPDATE: Replace temp ID with real database ID
       setWorkoutProgress(prev => {
@@ -745,8 +819,23 @@ useEffect(() => {
               isOptimistic: false // Remove optimistic flag
             };
         } else {
-            // Did not find optimistic set (rare), so add it normally
-            newExerciseProgress.push({ ...setConfig, ...data });
+            // Did not find optimistic set (rare), check if we need to update by routine_set_id
+            const existingSetIndex = exerciseProgress.findIndex(s => 
+              String(s.routine_set_id) === String(setConfig.routine_set_id)
+            );
+            
+            if (existingSetIndex !== -1) {
+              // Update existing set with new data
+              newExerciseProgress[existingSetIndex] = { 
+                ...newExerciseProgress[existingSetIndex], 
+                ...data, 
+                id: data.id,
+                isOptimistic: false 
+              };
+            } else {
+              // Add new set
+              newExerciseProgress.push({ ...setConfig, ...data });
+            }
         }
 
         return { ...prev, [exerciseId]: newExerciseProgress };
@@ -876,6 +965,7 @@ useEffect(() => {
         saveSet,
         updateSet,
         updateLastExercise,
+        fetchWorkoutSets,
         loading
       }}
     >

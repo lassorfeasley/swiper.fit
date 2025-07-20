@@ -58,12 +58,29 @@ const ActiveExerciseCard = React.forwardRef(({
   const sets = useMemo(() => {
     // 1) Merge template configs with any persisted rows that share the same routine_set_id
     const combined = initialSetConfigs.map((config, i) => {
-      const fromParent = setData.find(
+      // First try to find by routine_set_id
+      let fromParent = setData.find(
         (d) => String(d.routine_set_id) === String(config.routine_set_id)
-      ) || {};
+      );
+      
+      // If not found and this is a template set without routine_set_id, 
+      // look for any saved set that might correspond to this template set
+      if (!fromParent && !config.routine_set_id) {
+        // For template sets without routine_set_id, we need to match them with saved sets
+        // that also don't have routine_set_id (newly added sets)
+        fromParent = setData.find(
+          (d) => !d.routine_set_id && d.set_variant === config.set_variant
+        );
+      }
+      
+      fromParent = fromParent || {};
 
       const id = fromParent.id || null;
       const tempId = id ? null : `temp-${i}`;
+
+      // For template sets without a database ID, use default status
+      // For saved sets, use their actual status
+      const status = fromParent.id ? (fromParent.status || "complete") : "default";
 
       return {
         ...config,
@@ -74,7 +91,7 @@ const ActiveExerciseCard = React.forwardRef(({
         weight: fromParent.weight ?? config.weight,
         weight_unit:
           fromParent.weight_unit ?? fromParent.unit ?? config.weight_unit ?? "lbs",
-        status: fromParent.status || "default",
+        status,
         set_variant:
           fromParent.set_variant || config.set_variant || `Set ${i + 1}`,
         routine_set_id: config.routine_set_id,
@@ -82,8 +99,12 @@ const ActiveExerciseCard = React.forwardRef(({
     });
 
     // 2) Append any persisted sets that DO NOT have a matching routine_set_id (i.e., ad-hoc sets)
+    // Only include orphaned sets that are actually complete to avoid showing unexpected sets
     const orphaned = setData.filter((d) => {
       if (!d) return false;
+      // Only include sets that are complete and don't match any template
+      if (d.status !== 'complete') return false;
+      
       // If routine_set_id is null OR not present in template list, treat as orphaned
       return (
         !d.routine_set_id ||
@@ -100,7 +121,7 @@ const ActiveExerciseCard = React.forwardRef(({
         reps: d.reps ?? 0,
         weight: d.weight ?? 0,
         weight_unit: d.weight_unit ?? "lbs",
-        status: d.status || "default",
+        status: d.status || "complete",
         set_variant: d.set_variant || `Set ${combined.length + 1}`,
         routine_set_id: d.routine_set_id || null,
         set_type: d.set_type || "reps",
@@ -113,10 +134,19 @@ const ActiveExerciseCard = React.forwardRef(({
       (set) => set.status !== "deleted" && set.status !== "skipped"
     );
 
-    // 4) Normalise statuses – only completed sets stay completed; everything else is default
-    const filteredSets = visibleSets.map((set) =>
-      set.status === "complete" ? set : { ...set, status: "default" }
-    );
+    // 4) Only show sets that are complete or template sets (for UI display)
+    const filteredSets = visibleSets.map((set) => {
+      // Show completed sets
+      if (set.status === "complete") {
+        return set;
+      }
+      // Show template sets (no database ID) as default
+      if (!set.id || set.id.startsWith('temp-')) {
+        return { ...set, status: "default" };
+      }
+      // Hide saved sets that are not complete (they're tracked in context but not shown in UI)
+      return null;
+    }).filter(Boolean);
 
     return filteredSets;
   }, [initialSetConfigs, setData]);

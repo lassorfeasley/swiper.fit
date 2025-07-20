@@ -49,7 +49,32 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
   const setName = (index, name) => updateSetField(index, 'set_variant', name);
 
   // array helpers ----------------------------------------------------------
-  const addSet = () => setSets((prev) => [...prev, {}]);
+  const addSet = () => {
+    setSets((prev) => {
+      if (prev.length === 0) {
+        // If no sets exist, use defaults
+        return [{}];
+      }
+      
+      // Get the last set's configuration (merged with defaults)
+      const lastSetConfig = getSetMerged(prev.length - 1);
+      
+      // Create a new set with the same configuration as the last set
+      // but remove any database-specific fields and use proper naming
+      const newSetConfig = {
+        set_type: lastSetConfig.set_type,
+        reps: lastSetConfig.reps,
+        timed_set_duration: lastSetConfig.timed_set_duration,
+        weight: lastSetConfig.weight,
+        unit: lastSetConfig.unit,
+        weight_unit: lastSetConfig.weight_unit,
+        set_variant: `Set ${prev.length + 1}`, // Use proper naming convention
+      };
+      
+      return [...prev, newSetConfig];
+    });
+  };
+  
   const removeLastSet = () =>
     setSets((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
 

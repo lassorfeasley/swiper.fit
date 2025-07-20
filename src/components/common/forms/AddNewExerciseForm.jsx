@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
-import NumericInput from "@/components/molecules/numeric-input";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
-import { FormHeader } from "@/components/atoms/sheet";
-import { Repeat2, Timer, Weight as WeightIcon } from "lucide-react";
 import FormSectionWrapper from "./wrappers/FormSectionWrapper";
+import { Minus, Plus } from "lucide-react";
 
 const AddNewExerciseForm = React.forwardRef(
   (
@@ -92,16 +90,14 @@ const AddNewExerciseForm = React.forwardRef(
       // Detect if number of sets changed
       const setsCountDirty = sets.length !== initialSetConfigs.length;
       // Detect if any set's config changed
-      const setDirty =
-        setsCountDirty ||
-        sets.some((set, idx) => {
-          return (
-            JSON.stringify(set) !==
-            JSON.stringify(initialSetConfigs[idx] || {})
-          );
-        });
+      const setDirty = sets.some((set, idx) => {
+        return (
+          JSON.stringify(set) !==
+          JSON.stringify(initialSetConfigs[idx] || {})
+        );
+      });
       // Ready to save/add only when a name is present AND either the name changed, section changed, or sets changed
-      onDirtyChange?.(nameFilled && (nameDirty || sectionDirty || setDirty || updateTypeDirty));
+      onDirtyChange?.(nameFilled && (nameDirty || sectionDirty || setDirty || setsCountDirty || updateTypeDirty));
     }, [exerciseName, section, sets, onDirtyChange, isInitialized, updateType, initialSetConfigs]);
 
     /* ------------------------------------------------------------------ */
@@ -110,23 +106,9 @@ const AddNewExerciseForm = React.forwardRef(
 
     const setsCount = sets.length;
 
-    const handleSetsChange = (val) => {
-      if (val > setsCount) {
-        Array.from({ length: val - setsCount }).forEach(() => addSet());
-      } else if (val < setsCount) {
-        Array.from({ length: setsCount - val }).forEach(() => removeLastSet());
-      }
-    };
-
     const [addType, setAddType] = useState("today");
 
-    /* ------------------------------------------------------------------ */
-    //  Per-set editor sheet
-    /* ------------------------------------------------------------------ */
 
-    const openEditSheet = (idx) => {
-      onEditSet?.(idx, getSetMerged(idx));
-    };
 
     /* ------------------------------------------------------------------ */
     //  Save / cancel
@@ -140,10 +122,7 @@ const AddNewExerciseForm = React.forwardRef(
         return;
       }
 
-      if (setsCount < 1) {
-        alert("At least one set is required.");
-        return;
-      }
+
 
       // When editing an existing exercise, preserve database identifiers
       const setConfigs = sets.map((_, idx) => {
@@ -181,50 +160,7 @@ const AddNewExerciseForm = React.forwardRef(
       }
     };
 
-    /* ------------------------------------------------------------------ */
-    //  Render helpers
-    /* ------------------------------------------------------------------ */
 
-    const SetCard = ({ idx }) => {
-      const merged = getSetMerged(idx);
-      const isTimed = merged.set_type === "timed";
-
-      return (
-        <div
-          key={idx}
-          className="w-full rounded-sm flex justify-between items-center bg-white cursor-pointer p-4 border border-neutral-300 hover:border-neutral-400"
-          onClick={() => openEditSheet(idx)}
-        >
-          <span className="text-slate-600 text-label font-normal leading-none">
-            {sets[idx].set_variant || `Set ${idx + 1}`}
-          </span>
-          <div className="bg-neutral-300 flex rounded-sm outline outline-1 outline-neutral-300 ">
-            <div className=" bg-neutral-100 flex items-center gap-0.5 p-2">
-              {isTimed ? (
-                <Timer className="size-4 text-neutral-500" strokeWidth={1.5} />
-              ) : (
-                <Repeat2
-                  className="size-4 text-neutral-500"
-                  strokeWidth={1.5}
-                />
-              )}
-              <span className="text-neutral-500 text-heading-sm font-medium leading-tight">
-                {isTimed ? merged.timed_set_duration : merged.reps}
-              </span>
-            </div>
-            <div className=" bg-neutral-100 flex items-center gap-0.5 border-l border-neutral-300 p-2">
-              <WeightIcon
-                className="size-4 text-neutral-500"
-                strokeWidth={1.5}
-              />
-              <span className="text-neutral-500 text-heading-sm font-medium leading-tight">
-                {merged.unit === "body" ? "BW" : merged.weight}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    };
 
     return (
       <form
@@ -248,16 +184,35 @@ const AddNewExerciseForm = React.forwardRef(
               { label: "Training", value: "training" },
               { label: "Cooldown", value: "cooldown" },
             ]}
-          />
-          <div className="flex flex-col gap-1">
-            <NumericInput
-              value={setsCount}
-              onChange={handleSetsChange}
-              min={1}
-              max={10}
-              className="w-full"
-              unitLabel="Sets"
-            />
+                    />
+          
+          {/* Sets control */}
+          <div className="flex flex-col gap-2">
+            <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setsCount > 1 && removeLastSet()}
+                disabled={setsCount <= 1}
+                className="flex-1 self-stretch border-r border-neutral-300 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Minus className="w-5 h-5 text-slate-600" />
+              </button>
+              <div className="flex-1 inline-flex flex-col justify-center items-start gap-1">
+                <div className="self-stretch text-center justify-start text-slate-600 text-base font-medium leading-tight">
+                  {setsCount.toString().padStart(2, '0')}
+                </div>
+                <div className="self-stretch text-center justify-start text-slate-500 text-sm font-medium leading-tight">
+                  Sets
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => addSet()}
+                className="flex-1 self-stretch border-l border-neutral-300 flex justify-center items-center"
+              >
+                <Plus className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
           </div>
 
           {/* Add to program toggle */}
@@ -287,15 +242,7 @@ const AddNewExerciseForm = React.forwardRef(
           </FormSectionWrapper>
         )}
 
-        {/* Set list */}
-        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
-          <div className="text-sm font-medium text-neutral-600">Sets</div>
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: setsCount }).map((_, idx) => (
-              <SetCard key={idx} idx={idx} />
-            ))}
-          </div>
-        </FormSectionWrapper>
+
 
         {/* Keep new settings toggle (Edit Exercise only) */}
         {showUpdateTypeToggle && (

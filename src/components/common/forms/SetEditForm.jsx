@@ -27,6 +27,7 @@ const FormContent = ({
   repsOnChange,
   durationOnChange,
   weightOnChange,
+  onDelete,
 }) => {
   const {
     set_type = "reps",
@@ -38,68 +39,109 @@ const FormContent = ({
   } = formValues;
 
   return (
-    <>
+    <div className="w-full bg-stone-50 inline-flex flex-col justify-start items-center">
       {showSetNameField && (
-        <FormSectionWrapper className="px-0 py-0">
+                <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
           <TextInput
             label="Set name"
-            optional
             value={set_variant || ""}
             onChange={(e) => handleLocalChange("set_variant", e.target.value)}
             onBlur={syncWithParent}
+            customPlaceholder=""
           />
-        </FormSectionWrapper>
+        </div>
       )}
-      <FormSectionWrapper className="px-0 py-0">
-        <ToggleInput
-          label="Set type"
-          options={setTypeOptions}
-          value={set_type}
-          onValueChange={handleSetTypeChange}
-        />
-        {set_type === "reps" ? (
-          <NumericInput
-            label="Reps"
-            value={reps}
-            onChange={repsOnChange}
-            onBlur={showSetNameField ? syncWithParent : undefined}
-            unitLabel="Reps"
-          />
-        ) : (
-          <NumericInput
-            label="Duration"
-            value={timed_set_duration}
-            onChange={durationOnChange}
-            onBlur={showSetNameField ? syncWithParent : undefined}
-            unitLabel="Seconds"
-            step={5}
-          />
-        )}
-        <ToggleInput
-          label="Weight unit"
-          options={unitOptions}
-          value={unit}
-          onValueChange={handleUnitChange}
-        />
-        {unit === "body" ? (
-          <div className="w-full inline-flex flex-col justify-start items-start gap-0">
-            <div className="self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-center items-center">
+      
+      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start gap-3">
+        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
+          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Set type</div>
+          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+            <ToggleInput
+              value={set_type}
+              onValueChange={handleSetTypeChange}
+              options={setTypeOptions}
+              className="flex-1 h-7"
+            />
+          </div>
+        </div>
+        <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
+          {set_type === "reps" ? (
+            <NumericInput
+              value={reps}
+              onChange={repsOnChange}
+              onBlur={showSetNameField ? syncWithParent : undefined}
+              unitLabel="Reps"
+              className="self-stretch h-12"
+            />
+          ) : (
+            <NumericInput
+              value={timed_set_duration}
+              onChange={durationOnChange}
+              onBlur={showSetNameField ? syncWithParent : undefined}
+              unitLabel="Seconds"
+              step={5}
+              className="self-stretch h-12"
+            />
+          )}
+        </div>
+      </div>
+      
+      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start gap-3">
+        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
+          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Weight unit</div>
+          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+            <ToggleInput
+              value={unit}
+              onValueChange={handleUnitChange}
+              options={unitOptions}
+              className="flex-1 h-7"
+            />
+          </div>
+        </div>
+        <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
+          {unit === "body" ? (
+            <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center">
               <span className="text-slate-500 text-body">Bodyweight</span>
             </div>
+          ) : (
+            <NumericInput
+              value={weight}
+              onChange={weightOnChange}
+              onBlur={showSetNameField ? syncWithParent : undefined}
+              unitLabel={unit}
+              step={1}
+              allowOneDecimal={true}
+              className="self-stretch h-12"
+            />
+          )}
+        </div>
+      </div>
+      
+      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
+        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
+          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Keep new settings?</div>
+          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+            <ToggleInput
+              value="today"
+              options={[
+                { label: "Just for today", value: "today" },
+                { label: "Permanently", value: "future" }
+              ]}
+              className="flex-1 h-7"
+            />
           </div>
-        ) : (
-          <NumericInput
-            label="Weight"
-            value={weight}
-            onChange={weightOnChange}
-            onBlur={showSetNameField ? syncWithParent : undefined}
-            unitLabel={unit}
-            step={1}
-            allowOneDecimal={true}
-          />
-        )}
-      </FormSectionWrapper>
-    </>
+        </div>
+      </div>
+      
+      <div className="self-stretch p-4 flex flex-col justify-center items-start">
+        <button
+          onClick={onDelete}
+          className="w-full h-12 px-4 py-2 bg-red-400 rounded inline-flex justify-center items-center gap-2.5 hover:bg-red-500 transition-colors"
+        >
+          <div className="justify-start text-white text-base font-medium leading-tight">Delete set</div>
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -263,6 +305,7 @@ const SetEditForm = React.forwardRef((
         repsOnChange={repsOnChange}
         durationOnChange={durationOnChange}
         weightOnChange={weightOnChange}
+        onDelete={onDelete}
       />
     );
 });

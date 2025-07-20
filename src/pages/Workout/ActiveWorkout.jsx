@@ -32,7 +32,12 @@ const ActiveWorkout = () => {
     endWorkout: contextEndWorkout,
     workoutProgress,
     saveSet,
+    fetchWorkoutSets,
+    updateWorkoutProgress,
   } = useActiveWorkout();
+  
+
+  
   const [exercises, setExercises] = useState([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [selectedSection, setSelectedSection] = useState("training");
@@ -144,19 +149,29 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkout?.lastExerciseId, exercises]);
 
-  // After exercises load, autoscroll only to the card stored as lastExerciseId (once per mount)
+  // After exercises load, autoscroll to the last exercise or first exercise if no last exercise (once per mount)
   useEffect(() => {
     if (hasAutoScrolledRef.current) return;
-    const lastWExId = activeWorkout?.lastExerciseId;
-    if (!lastWExId) return;
     if (!exercises.length) return;
     
-    const targetExercise = exercises.find(ex => ex.id === lastWExId);
-    if (!targetExercise) return;
-
-    const lastExName = targetExercise.name || 'Unknown';
-    setInitialScrollTargetId(targetExercise.exercise_id);
-    hasAutoScrolledRef.current = true;
+    const lastWExId = activeWorkout?.lastExerciseId;
+    let targetExercise;
+    
+    if (lastWExId) {
+      // Try to find the last exercise
+      targetExercise = exercises.find(ex => ex.id === lastWExId);
+    }
+    
+    // If no last exercise found or no last exercise ID, focus on the first exercise
+    if (!targetExercise) {
+      targetExercise = exercises[0];
+    }
+    
+    if (targetExercise) {
+      const exerciseName = targetExercise.name || 'Unknown';
+      setInitialScrollTargetId(targetExercise.exercise_id);
+      hasAutoScrolledRef.current = true;
+    }
   }, [exercises, activeWorkout?.lastExerciseId]);
 
   // After the section has been updated and component re-rendered, perform the scroll.
@@ -299,37 +314,55 @@ const ActiveWorkout = () => {
       savedSetsMap[set.exercise_id].push(set);
     });
     
+    // Also include sets from workoutProgress context (for newly added sets)
+    Object.entries(workoutProgress).forEach(([exerciseId, sets]) => {
+      if (!savedSetsMap[exerciseId]) {
+        savedSetsMap[exerciseId] = [];
+      }
+      sets.forEach((set) => {
+        // Only add if not already present (avoid duplicates)
+        const exists = savedSetsMap[exerciseId].some(existing => 
+          existing.id === set.id || 
+          (existing.routine_set_id && set.routine_set_id && 
+           String(existing.routine_set_id) === String(set.routine_set_id))
+        );
+        if (!exists) {
+          savedSetsMap[exerciseId].push(set);
+        }
+      });
+    });
+    
     // Build exercise cards with template sets merged with saved sets
     const cards = snapExs.map((we) => {
       const templateConfigs = setsMap[we.exercise_id] || [];
       const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
       
-      // Merge template sets with saved sets here, bypass ActiveExerciseCard's merging logic
+      // Merge template sets with saved sets here, preserving template order
       const mergedSetConfigs = [];
       
-      // First, add all saved sets (these take priority)
-      savedSetsForExercise.forEach((saved) => {
-        mergedSetConfigs.push({
-          id: saved.id,
-          routine_set_id: saved.routine_set_id,
-          reps: saved.reps,
-          weight: saved.weight,
-          unit: saved.weight_unit,
-          weight_unit: saved.weight_unit,
-          set_variant: saved.set_variant,
-          set_type: saved.set_type,
-          timed_set_duration: saved.timed_set_duration,
-          status: saved.status || 'default',
-        });
-      });
-      
-      // Then add any template sets that don't have saved counterparts
+      // Start with template sets in their original order
       templateConfigs.forEach((template) => {
-        const hasSavedCounterpart = savedSetsForExercise.some(
+        // Look for a saved set that matches this template
+        const savedSet = savedSetsForExercise.find(
           saved => saved.routine_set_id === template.routine_set_id
         );
         
-        if (!hasSavedCounterpart) {
+        if (savedSet) {
+          // Use saved set data but preserve template order
+          mergedSetConfigs.push({
+            id: savedSet.id,
+            routine_set_id: savedSet.routine_set_id,
+            reps: savedSet.reps,
+            weight: savedSet.weight,
+            unit: savedSet.weight_unit,
+            weight_unit: savedSet.weight_unit,
+            set_variant: savedSet.set_variant,
+            set_type: savedSet.set_type,
+            timed_set_duration: savedSet.timed_set_duration,
+            status: savedSet.status || 'default',
+          });
+        } else {
+          // Use template set
           mergedSetConfigs.push({
             ...template,
             unit: template.unit || 'lbs',
@@ -338,7 +371,32 @@ const ActiveWorkout = () => {
         }
       });
       
-      console.log(`[DEBUG] Exercise ${we.exercise_id}: merged ${templateConfigs.length} template sets + ${savedSetsForExercise.length} saved sets = ${mergedSetConfigs.length} total sets`);
+      // Add any orphaned saved sets (sets without matching templates) at the end
+      savedSetsForExercise.forEach((saved) => {
+        const hasTemplateCounterpart = templateConfigs.some(
+          template => template.routine_set_id === saved.routine_set_id
+        );
+        
+        if (!hasTemplateCounterpart) {
+          mergedSetConfigs.push({
+            id: saved.id,
+            routine_set_id: saved.routine_set_id,
+            reps: saved.reps,
+            weight: saved.weight,
+            unit: saved.weight_unit,
+            weight_unit: saved.weight_unit,
+            set_variant: saved.set_variant,
+            set_type: saved.set_type,
+            timed_set_duration: saved.timed_set_duration,
+            status: saved.status || 'default',
+          });
+        }
+      });
+      
+              // console.log(`[DEBUG] Exercise ${we.exercise_id}: merged ${templateConfigs.length} template sets + ${savedSetsForExercise.length} saved sets = ${mergedSetConfigs.length} total sets`);
+              // console.log(`[DEBUG] Template sets:`, templateConfigs);
+        // console.log(`[DEBUG] Saved sets:`, savedSetsForExercise);
+        // console.log(`[DEBUG] Merged sets:`, mergedSetConfigs);
       
       const setConfigs = mergedSetConfigs;
       
@@ -369,9 +427,10 @@ const ActiveWorkout = () => {
     });
     
     setExercises(cards);
-  }, [activeWorkout]);
+  }, [activeWorkout, workoutProgress]);
 
   useEffect(() => {
+    // console.log('[ActiveWorkout] loadSnapshotExercises called, workoutProgress:', workoutProgress);
     loadSnapshotExercises();
   }, [loadSnapshotExercises]);
 
@@ -689,7 +748,7 @@ const ActiveWorkout = () => {
           set_type: values.set_type || 'reps',
           set_variant: values.set_variant || '',
           timed_set_duration: values.timed_set_duration || 30,
-          status: 'default'
+          status: 'complete'
         };
 
         let savedSetId = null;
@@ -735,7 +794,7 @@ const ActiveWorkout = () => {
         set_type: savedSetData.set_type,
         set_variant: savedSetData.set_variant,
         timed_set_duration: savedSetData.timed_set_duration,
-        status: savedSetData.status || 'default'
+        status: savedSetData.status || 'complete'
       };
 
       // Optimistically update local state with the correct data
@@ -780,6 +839,29 @@ const ActiveWorkout = () => {
         
         return { ...ex, setConfigs: newSetConfigs };
       }));
+      
+      // Update the workout progress context to reflect the changes
+      updateWorkoutProgress(prev => {
+        const newProgress = { ...prev };
+        const exerciseProgress = newProgress[exerciseId] || [];
+        
+        if (isNewSet) {
+          // For new sets, add to the context
+          newProgress[exerciseId] = [...exerciseProgress, updatedSetConfig];
+        } else {
+          // For existing sets, update in the context
+          const idx = exerciseProgress.findIndex(s => s.id === savedSetId);
+          if (idx !== -1) {
+            exerciseProgress[idx] = updatedSetConfig;
+            newProgress[exerciseId] = exerciseProgress;
+          } else {
+            // If not found, add it
+            newProgress[exerciseId] = [...exerciseProgress, updatedSetConfig];
+          }
+        }
+        
+        return newProgress;
+      });
       
       setEditSheetOpen(false);
       setEditingSet(null);
@@ -864,7 +946,8 @@ const ActiveWorkout = () => {
             setsToUpdate.push({ id: oldSet.id, data: newSet });
           }
         } else {
-          // New set to create
+          // Create database records for new template sets so they can be tracked
+          // This allows them to be updated when completed
           setsToCreate.push(newSet);
         }
       });
@@ -912,8 +995,11 @@ const ActiveWorkout = () => {
           set_type: newSet.set_type || 'reps',
           set_variant: newSet.set_variant || '',
           timed_set_duration: newSet.timed_set_duration || 30,
-          status: 'default'
+          status: newSet.status || 'default'
         };
+        
+
+        
         operations.push(
           supabase.from('sets').insert(setData).select('*').single()
         );
@@ -937,6 +1023,9 @@ const ActiveWorkout = () => {
       }
       
       console.log(`Set changes applied: ${setsToUpdate.length} updated, ${setsToCreate.length} created, ${setsToDelete.length} deleted`);
+      console.log('Sets to create:', setsToCreate);
+      console.log('Sets to update:', setsToUpdate);
+      console.log('Database operation results:', results);
       
     } catch (error) {
       console.error('Failed to handle set config changes:', error);
@@ -1048,10 +1137,7 @@ const ActiveWorkout = () => {
       // Handle set changes - this is the complex part
       await handleSetConfigChanges(exercise_id, newSetConfigs, editingExercise.setConfigs);
       
-      // Force reload of exercises to get the updated merged data
-      await loadSnapshotExercises();
-      
-      // Optimistically update local state
+      // Optimistically update local state immediately with the new set configurations
       setExercises(prev => prev.map(ex => {
         if (ex.id === workoutExerciseId) {
           return { 
@@ -1063,6 +1149,12 @@ const ActiveWorkout = () => {
         }
         return ex;
       }));
+      
+      // Refresh the workout progress context to include the newly saved sets
+      await fetchWorkoutSets();
+      
+      // Force reload of exercises to get the updated merged data
+      await loadSnapshotExercises();
       
       if (type === 'today') {
         toast.success("Exercise updated successfully");
@@ -1165,7 +1257,7 @@ const ActiveWorkout = () => {
                     exerciseId={ex.exercise_id}
                     exerciseName={ex.name}
                     initialSetConfigs={ex.setConfigs}
-                    setData={[]} // Pass empty since we're doing the merging ourselves
+                    setData={workoutProgress[ex.exercise_id] || []}
                     onSetComplete={handleSetComplete}
                     onSetDataChange={handleSetDataChange}
                     onExerciseComplete={() =>
@@ -1322,18 +1414,8 @@ const ActiveWorkout = () => {
             hideToggle={editingSet?.fromEditExercise}
             addType={setUpdateType}
             onAddTypeChange={setSetUpdateType}
+            onDelete={handleSetDelete}
           />
-          <div className="border-t border-neutral-300">
-            <div className="p-4">
-              <SwiperButton
-                onClick={handleSetDelete}
-                variant="destructive"
-                className="w-full"
-              >
-                Delete Set
-              </SwiperButton>
-            </div>
-          </div>
         </div>
       </SwiperForm>
 
