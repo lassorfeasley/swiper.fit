@@ -28,6 +28,8 @@ const FormContent = ({
   durationOnChange,
   weightOnChange,
   onDelete,
+  addType,
+  onAddTypeChange,
 }) => {
   const {
     set_type = "reps",
@@ -122,7 +124,8 @@ const FormContent = ({
           <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Keep new settings?</div>
           <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
             <ToggleInput
-              value="today"
+              value={addType || "today"}
+              onValueChange={onAddTypeChange}
               options={[
                 { label: "Just for today", value: "today" },
                 { label: "Permanently", value: "future" }
@@ -306,6 +309,8 @@ const SetEditForm = React.forwardRef((
         durationOnChange={durationOnChange}
         weightOnChange={weightOnChange}
         onDelete={onDelete}
+        addType={addType}
+        onAddTypeChange={onAddTypeChange}
       />
     );
 });

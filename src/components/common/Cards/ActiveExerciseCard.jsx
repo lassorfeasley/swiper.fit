@@ -134,8 +134,50 @@ const ActiveExerciseCard = React.forwardRef(({
       (set) => set.status !== "deleted" && set.status !== "skipped"
     );
 
-    // 4) Only show sets that are complete, template sets, or default status sets (for UI display)
-    const filteredSets = visibleSets.map((set) => {
+    // 4) Deduplicate sets by id, routine_set_id, or set_variant to prevent showing both template and completed versions
+    const deduplicatedSets = [];
+    const seenIds = new Set();
+    const seenRoutineSetIds = new Set();
+    const seenVariants = new Set();
+
+    visibleSets.forEach(set => {
+      let shouldAdd = true;
+      
+      // Skip if we've already seen this exact ID
+      if (set.id && !set.id.startsWith('temp-') && seenIds.has(set.id)) {
+        shouldAdd = false;
+      }
+      
+      // Skip if we've already seen this routine_set_id (prefer completed over template)
+      if (set.routine_set_id && seenRoutineSetIds.has(set.routine_set_id)) {
+        // If the current set is complete and we haven't added a complete version yet, replace
+        const existingIndex = deduplicatedSets.findIndex(s => s.routine_set_id === set.routine_set_id);
+        if (existingIndex !== -1 && set.status === 'complete' && deduplicatedSets[existingIndex].status !== 'complete') {
+          deduplicatedSets[existingIndex] = set;
+        }
+        shouldAdd = false;
+      }
+      
+      // For ad-hoc sets without routine_set_id, dedupe by set_variant
+      if (!set.routine_set_id && set.set_variant && seenVariants.has(set.set_variant)) {
+        // Prefer completed sets over incomplete ones
+        const existingIndex = deduplicatedSets.findIndex(s => s.set_variant === set.set_variant);
+        if (existingIndex !== -1 && set.status === 'complete' && deduplicatedSets[existingIndex].status !== 'complete') {
+          deduplicatedSets[existingIndex] = set;
+        }
+        shouldAdd = false;
+      }
+      
+      if (shouldAdd) {
+        if (set.id && !set.id.startsWith('temp-')) seenIds.add(set.id);
+        if (set.routine_set_id) seenRoutineSetIds.add(set.routine_set_id);
+        if (set.set_variant) seenVariants.add(set.set_variant);
+        deduplicatedSets.push(set);
+      }
+    });
+
+    // 5) Only show sets that are complete, template sets, or default status sets (for UI display)
+    const filteredSets = deduplicatedSets.map((set) => {
       // Show completed sets
       if (set.status === "complete") {
         return set;

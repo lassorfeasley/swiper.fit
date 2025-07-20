@@ -756,7 +756,8 @@ const ActiveWorkout = () => {
         const setData = {
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
-          routine_set_id: setConfig.routine_set_id,
+          // Only include routine_set_id if we have one to avoid FK errors
+          ...(setConfig.routine_set_id ? { routine_set_id: setConfig.routine_set_id } : {}),
           reps: values.reps || 0,
           weight: values.weight || 0,
           weight_unit: values.unit || 'lbs',
@@ -826,40 +827,16 @@ const ActiveWorkout = () => {
         
         const newSetConfigs = [...ex.setConfigs];
         
-        if (isNewSet) {
-          // For new sets, replace the template set at the same index
-          // This prevents duplicates by replacing the template set with the saved version
-          if (index >= 0 && index < newSetConfigs.length) {
-            newSetConfigs[index] = updatedSetConfig;
-          } else {
-            // Fallback: find by routine_set_id and replace
-            const templateIdx = newSetConfigs.findIndex(s => 
-              s.routine_set_id === setConfig.routine_set_id && !s.id
-            );
-            if (templateIdx !== -1) {
-              newSetConfigs[templateIdx] = updatedSetConfig;
-            } else {
-              // If no template found, add to the end
-              newSetConfigs.push(updatedSetConfig);
-            }
-          }
+        const placeholderIdx = newSetConfigs.findIndex(s => !s.id && s.routine_set_id === setConfig.routine_set_id);
+        if (placeholderIdx !== -1) {
+          // Replace placeholder (template) row with the saved version
+          newSetConfigs[placeholderIdx] = updatedSetConfig;
+        } else if (isNewSet) {
+          newSetConfigs.push(updatedSetConfig);
         } else {
-          // For existing sets, update the matching set by ID
           const idx = newSetConfigs.findIndex(s => s.id === savedSetId);
-          if (idx !== -1) {
-            newSetConfigs[idx] = updatedSetConfig;
-          } else {
-            // Fallback: if ID not found, try to match by routine_set_id and index
-            const fallbackIdx = newSetConfigs.findIndex(s => 
-              s.routine_set_id === setConfig.routine_set_id && 
-              newSetConfigs.indexOf(s) === index
-            );
-            if (fallbackIdx !== -1) {
-              newSetConfigs[fallbackIdx] = updatedSetConfig;
-            }
-          }
+          if (idx !== -1) newSetConfigs[idx] = updatedSetConfig;
         }
-        
         return { ...ex, setConfigs: newSetConfigs };
       }));
       
@@ -868,17 +845,16 @@ const ActiveWorkout = () => {
         const newProgress = { ...prev };
         const exerciseProgress = newProgress[exerciseId] || [];
         
-        if (isNewSet) {
-          // For new sets, add to the context
-          newProgress[exerciseId] = [...exerciseProgress, updatedSetConfig];
+        const placeholderIdx = exerciseProgress.findIndex(s => !s.id && s.routine_set_id === setConfig.routine_set_id);
+        if (placeholderIdx !== -1) {
+          exerciseProgress[placeholderIdx] = updatedSetConfig;
+          newProgress[exerciseId] = exerciseProgress;
         } else {
-          // For existing sets, update in the context
           const idx = exerciseProgress.findIndex(s => s.id === savedSetId);
           if (idx !== -1) {
             exerciseProgress[idx] = updatedSetConfig;
             newProgress[exerciseId] = exerciseProgress;
           } else {
-            // If not found, add it
             newProgress[exerciseId] = [...exerciseProgress, updatedSetConfig];
           }
         }

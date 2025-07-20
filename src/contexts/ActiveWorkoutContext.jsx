@@ -702,60 +702,60 @@ useEffect(() => {
     // Store previous state for potential rollback
     const previousState = workoutProgress[exerciseId] || [];
 
-    // OPTIMISTIC UPDATE: Check if set already exists and update it, otherwise add new
-    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    // OPTIMISTIC UPDATE: Find existing set and mark as complete
     setWorkoutProgress(prev => {
       const exerciseProgress = prev[exerciseId] || [];
       
-      // Check if a set with the same routine_set_id already exists
-      const existingSetIndex = exerciseProgress.findIndex(s => 
-        String(s.routine_set_id) === String(setConfig.routine_set_id)
-      );
+      // Find the set to update - try multiple matching strategies
+      let targetIndex = -1;
       
-      const optimisticSet = { 
-        ...setConfig, 
-        id: tempId,
-        status: setConfig.status || 'complete',
-        isOptimistic: true 
-      };
+      if (setConfig.id && !setConfig.id.startsWith('temp-')) {
+        // Match by real database ID
+        targetIndex = exerciseProgress.findIndex(s => s.id === setConfig.id);
+      } else if (setConfig.routine_set_id) {
+        // Match by routine_set_id
+        targetIndex = exerciseProgress.findIndex(s => String(s.routine_set_id) === String(setConfig.routine_set_id));
+      } else {
+        // For ad-hoc sets, find first incomplete set with similar properties
+        targetIndex = exerciseProgress.findIndex(s => 
+          (!s.id || s.id.startsWith('temp-')) && 
+          s.status !== 'complete' &&
+          s.set_variant === setConfig.set_variant
+        );
+      }
       
-      if (existingSetIndex !== -1) {
-        // Update existing set
+      if (targetIndex !== -1) {
+        // Update existing set to complete
         const newExerciseProgress = [...exerciseProgress];
-        newExerciseProgress[existingSetIndex] = optimisticSet;
+        newExerciseProgress[targetIndex] = { 
+          ...newExerciseProgress[targetIndex],
+          ...setConfig,
+          status: 'complete',
+          isOptimistic: true 
+        };
         return { ...prev, [exerciseId]: newExerciseProgress };
       } else {
-        // Add new set
-        return { ...prev, [exerciseId]: [...exerciseProgress, optimisticSet] };
+        // If no existing set found, this might be an error - log it but don't add duplicates
+        console.warn('[saveSet] No existing set found to update:', setConfig);
+        return prev;
       }
     });
 
     // DATABASE OPERATION: Save to database
     try {
-      // ------------------------------------------------------------------
-      //  Build payload for new set row
-      // ------------------------------------------------------------------
-      // A set can originate from a program (program_set_id) or be ad-hoc.  In the
-      // latter case we generate a temporary id (e.g. "temp-0") to track it in
-      // local state.  Attempting to persist this temp id will fail because the
-      // `program_set_id` column expects a valid UUID that references
-      // `program_sets(id)`.  Therefore we must validate the value before adding
-      // it to the insert payload.
-
       const {
           routine_set_id: routineSetIdField,
-          id: maybeId,
           ...restOfSetConfig
       } = setConfig;
 
-      // Prefer an explicit program_set_id field; fall back to the legacy `id`
-      // property (used to piggy-back the program_set_id prior to persistence).
-      const rawRoutineSetId = routineSetIdField || maybeId;
+      // Use routine_set_id only if it is a real UUID coming from the routine template.
+      const rawRoutineSetId = routineSetIdField;
 
       const payload = {
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
           set_variant: restOfSetConfig.set_variant,
+          status: 'complete'
       };
 
       const isTimed = restOfSetConfig.set_type === 'timed';
@@ -777,8 +777,7 @@ useEffect(() => {
           payload.weight = Number(restOfSetConfig.weight);
       }
 
-      // Only include program_set_id if it is a valid UUID (prevents foreign-key
-      // errors from temp ids like "temp-0").
+      // Only include routine_set_id if it is a valid UUID (prevents foreign-key errors from temp ids).
       if (rawRoutineSetId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(rawRoutineSetId)) {
           payload.routine_set_id = rawRoutineSetId;
       }
@@ -791,65 +790,54 @@ useEffect(() => {
           payload.timed_set_duration = Number(restOfSetConfig.timed_set_duration);
       }
 
-      // Include status to properly mark completed sets in the database
-      if (restOfSetConfig.status) {
-          payload.status = restOfSetConfig.status;
-      }
-
       // DEBUG: log the payload we are about to send
       console.log('[saveSet] inserting payload', payload);
 
-      const { data, error } = await supabase
+      // Check if this set already exists in the database
+      let data, error;
+      if (setConfig.id && !setConfig.id.startsWith('temp-')) {
+        // Update existing set
+        const updateResult = await supabase
+          .from('sets')
+          .update({ ...payload, status: 'complete' })
+          .eq('id', setConfig.id)
+          .select()
+          .single();
+        data = updateResult.data;
+        error = updateResult.error;
+      } else {
+        // Insert new set
+        const insertResult = await supabase
           .from('sets')
           .insert(payload)
           .select()
           .single();
+        data = insertResult.data;
+        error = insertResult.error;
+      }
       
       if (error) {
           console.error("Error saving set:", error);
           throw error;
       }
-      
 
-
-
-
-      // CONFIRM OPTIMISTIC UPDATE: Replace temp ID with real database ID
+      // CONFIRM OPTIMISTIC UPDATE: Replace optimistic set with real database data
       setWorkoutProgress(prev => {
         const exerciseProgress = prev[exerciseId] || [];
-        const setIndex = exerciseProgress.findIndex(s => s.id === tempId);
-
-        const newExerciseProgress = [...exerciseProgress];
-
-        if (setIndex !== -1) {
-            // Found the optimistic set, update it with real database data
-            newExerciseProgress[setIndex] = { 
-              ...newExerciseProgress[setIndex], 
-              ...data, 
-              id: data.id, // Replace temp ID with real ID
-              isOptimistic: false // Remove optimistic flag
-            };
-        } else {
-            // Did not find optimistic set (rare), check if we need to update by routine_set_id
-            const existingSetIndex = exerciseProgress.findIndex(s => 
-              String(s.routine_set_id) === String(setConfig.routine_set_id)
-            );
-            
-            if (existingSetIndex !== -1) {
-              // Update existing set with new data
-              newExerciseProgress[existingSetIndex] = { 
-                ...newExerciseProgress[existingSetIndex], 
-                ...data, 
-                id: data.id,
-                isOptimistic: false 
-              };
-            } else {
-              // Add new set
-              newExerciseProgress.push({ ...setConfig, ...data });
-            }
+        
+        // Find the optimistic set we just created and replace it with real data
+        const optimisticIndex = exerciseProgress.findIndex(s => s.isOptimistic);
+        
+        if (optimisticIndex !== -1) {
+          const newExerciseProgress = [...exerciseProgress];
+          newExerciseProgress[optimisticIndex] = { 
+            ...data, 
+            isOptimistic: false
+          };
+          return { ...prev, [exerciseId]: newExerciseProgress };
         }
-
-        return { ...prev, [exerciseId]: newExerciseProgress };
+        
+        return prev;
       });
 
     } catch (error) {
