@@ -7,6 +7,8 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
+import { useWorkoutFocus } from "@/hooks/useFocusScroll";
+import { ANIMATION_DURATIONS } from "@/lib/scrollSnap";
 
 const ActiveWorkoutSection = ({
   section,
@@ -23,8 +25,11 @@ const ActiveWorkoutSection = ({
 
   // Internal focus state management
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
-  const [focusedCardHeight, setFocusedCardHeight] = useState(0);
-  const [focusedNode, setFocusedNode] = useState(null);
+  
+  // Use the new focus scroll hook
+  const { focusRef, focusedHeight } = useWorkoutFocus({
+    animationDuration: CARD_ANIMATION_DURATION_MS
+  });
 
   // Form state management
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -289,35 +294,7 @@ const ActiveWorkoutSection = ({
     editingSet?.setConfig?.set_variant,
   ]);
 
-  const focusedCardRef = useCallback((node) => {
-    if (node !== null) {
-      setFocusedNode(node);
-    }
-  }, []);
-
-  // Monitor focused node for height changes
-  useEffect(() => {
-    if (focusedNode) {
-      const resizeObserver = new ResizeObserver(() => {
-        setFocusedCardHeight(focusedNode.offsetHeight);
-      });
-      resizeObserver.observe(focusedNode);
-      return () => resizeObserver.disconnect();
-    }
-  }, [focusedNode]);
-
-  // Handle scroll when focus changes
-  useEffect(() => {
-    if (!focusedNode) return;
-
-    const scrollTimeout = setTimeout(() => {
-      if (focusedNode?.scrollIntoView) {
-        focusedNode.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, CARD_ANIMATION_DURATION_MS + 50);
-
-    return () => clearTimeout(scrollTimeout);
-  }, [focusedNode]);
+  // Focus management is now handled by the useWorkoutFocus hook
 
   // Reset form state when forms are opened
   useEffect(() => {
@@ -1054,20 +1031,20 @@ const ActiveWorkoutSection = ({
             const collapsedHeight = 80;
             const extraHeight = Math.max(
               0,
-              focusedCardHeight - collapsedHeight
+              focusedHeight - collapsedHeight
             );
             if (index > focusedIndex) {
               topOffset =
                 80 +
                 focusedIndex * STACKING_OFFSET_PX +
-                focusedCardHeight +
+                focusedHeight +
                 (index - focusedIndex - 1) * STACKING_OFFSET_PX;
             }
           }
 
           return (
             <ActiveExerciseCard
-              ref={isFocused ? focusedCardRef : null}
+              ref={isFocused ? focusRef : null}
               key={ex.id}
               exerciseId={ex.exercise_id}
               exerciseName={ex.name}

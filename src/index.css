@@ -158,14 +158,14 @@ body:has(.edit-set-drawer[data-state="open"]) .fixed.inset-0[data-aria-hidden="t
 
 /* === Scroll snap for ActiveWorkout === */
 main[data-scroll-snap-enabled="true"] {
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: var(--scroll-snap-type, y mandatory);
   /* Snap zone starts at 25% down the viewport */
-  scroll-padding-top: 25vh;
+  scroll-padding-top: var(--scroll-padding-top, 25vh);
 }
 
 main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
   /* Retain 25vh offset even with no top padding */
-  scroll-padding-top: 25vh;
+  scroll-padding-top: var(--scroll-padding-top, 25vh);
 }
 
 /* === Fix for mobile sticky positioning === */
@@ -205,7 +205,18 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
 }
 
 [data-exercise-card="true"] {
-  scroll-snap-align: start;
+  scroll-snap-align: var(--card-snap-align, start);
   /* Offset programmatic scroll to 25% down viewport */
-  scroll-margin-top: 25vh;
+  scroll-margin-top: var(--card-scroll-margin-top, 25vh);
+}
+
+/* === Scroll snap utility classes === */
+.scroll-snap-container {
+  scroll-snap-type: var(--scroll-snap-type, y mandatory);
+  scroll-padding-top: var(--scroll-padding-top, 0);
+}
+
+.scroll-snap-item {
+  scroll-snap-align: var(--card-snap-align, start);
+  scroll-margin-top: var(--card-scroll-margin-top, 0);
 }
