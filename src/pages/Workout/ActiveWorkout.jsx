@@ -19,9 +19,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";
-import ActiveWorkoutWarmup from "./active-workout-warmup/ActiveWorkoutWarmup";
-import ActiveWorkoutTraining from "./active-workout-training/ActiveWorkoutTraining";
-import ActiveWorkoutCooldown from "./active-workout-cooldown/ActiveWorkoutCooldown";
+import ActiveWorkoutSection from "./ActiveWorkoutSection";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -541,7 +539,8 @@ const ActiveWorkout = () => {
           <>
             {/* Warmup Section */}
             {exercisesBySection.find((group) => group.section === "warmup") && (
-              <ActiveWorkoutWarmup
+              <ActiveWorkoutSection
+                section="warmup"
                 sectionExercises={
                   exercisesBySection.find((group) => group.section === "warmup")
                     .exercises
@@ -558,7 +557,8 @@ const ActiveWorkout = () => {
             {exercisesBySection.find(
               (group) => group.section === "training"
             ) && (
-              <ActiveWorkoutTraining
+              <ActiveWorkoutSection
+                section="training"
                 sectionExercises={
                   exercisesBySection.find(
                     (group) => group.section === "training"
@@ -576,7 +576,8 @@ const ActiveWorkout = () => {
             {exercisesBySection.find(
               (group) => group.section === "cooldown"
             ) && (
-              <ActiveWorkoutCooldown
+              <ActiveWorkoutSection
+                section="cooldown"
                 sectionExercises={
                   exercisesBySection.find(
                     (group) => group.section === "cooldown"

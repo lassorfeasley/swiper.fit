@@ -1,6 +1,4 @@
-import ActiveExerciseCard, {
-  CARD_ANIMATION_DURATION_MS,
-} from "@/components/common/Cards/ActiveExerciseCard";
+import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "./components/ActiveExerciseCard";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -10,7 +8,8 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
 
-const ActiveWorkoutCooldown = ({
+const ActiveWorkoutSection = ({
+  section,
   sectionExercises,
   onSetComplete,
   onSetDataChange,
@@ -19,7 +18,6 @@ const ActiveWorkoutCooldown = ({
   onUpdateLastExercise,
   onRefreshExercises,
 }) => {
-  const section = "cooldown";
   const {
     activeWorkout,
     workoutProgress,
@@ -113,7 +111,7 @@ const ActiveWorkoutCooldown = ({
     }
   }, [editingSet]);
 
-  // Handle set completion for cooldown section
+  // Handle set completion for section
   const handleSetComplete = async (exerciseId, setConfig) => {
     try {
       await onSetComplete(exerciseId, setConfig);
@@ -236,7 +234,7 @@ const ActiveWorkoutCooldown = ({
     changeFocus(exerciseId);
   };
 
-  // Handle adding new exercise to cooldown
+  // Handle adding new exercise to section
   const handleAddExercise = () => {
     setShowAddExercise(true);
   };
@@ -299,7 +297,7 @@ const ActiveWorkoutCooldown = ({
             exercise_id: exerciseId,
             exercise_order: nextOrder,
             snapshot_name: exerciseName.trim(),
-            section_override: section, // Force this exercise into cooldown section
+            section_override: section, // Force this exercise into the section
           })
           .select("*");
 
@@ -667,7 +665,7 @@ const ActiveWorkoutCooldown = ({
           leftText="Close"
           rightAction={() => {
             const formRef = document.querySelector(
-              `[data-form-ref="edit-${editingExercise.id}"]`
+              `[data-form-ref=\"edit-${editingExercise.id}\"]`
             );
             if (formRef) formRef.requestSubmit();
           }}
@@ -739,4 +737,4 @@ const ActiveWorkoutCooldown = ({
   );
 };
 
-export default ActiveWorkoutCooldown;
+export default ActiveWorkoutSection; 
