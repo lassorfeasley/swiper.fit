@@ -15,7 +15,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { useNavigate } from "react-router-dom";
 import { cn, formatSeconds } from "@/lib/utils";
-import ActiveWorkoutProgress from './active-workout-progress';
+import SwiperProgress from './swiper-progress';
 
 export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onEnd, onSettings, onAdd }) {
   const { activeWorkout, elapsedTime } = useActiveWorkout();
@@ -55,7 +55,7 @@ export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onE
           </div>
         </div>
       </div>
-      <ActiveWorkoutProgress completedSets={completedSets} totalSets={totalSets} />
+      <SwiperProgress completedSets={completedSets} totalSets={totalSets} />
     </div>
   );
 }

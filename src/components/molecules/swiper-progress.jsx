@@ -1,7 +1,6 @@
 import React from "react";
-import PropTypes from "prop-types";
 
-export default function ActiveWorkoutProgress({ completedSets = 0, totalSets = 1 }) {
+export default function SwiperProgress({ completedSets = 0, totalSets = 1 }) {
   const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
   return (
     <div className="fixed bottom-0 left-0 right-0 w-full z-40">
@@ -14,9 +13,4 @@ export default function ActiveWorkoutProgress({ completedSets = 0, totalSets = 1
       </div>
     </div>
   );
-}
-
-ActiveWorkoutProgress.propTypes = {
-  completedSets: PropTypes.number,
-  totalSets: PropTypes.number,
-}; 
+} 
