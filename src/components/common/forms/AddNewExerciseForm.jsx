@@ -71,9 +71,18 @@ const AddNewExerciseForm = React.forwardRef(
 
     // Merge incoming per-set configs into hook state on mount
     useEffect(() => {
+      console.log('[DEBUG] AddNewExerciseForm useEffect - initialSetConfigs:', initialSetConfigs);
+      console.log('[DEBUG] AddNewExerciseForm useEffect - current sets length:', sets.length);
+      
       if (initialSetConfigs.length > 0) {
         initialSetConfigs.forEach((cfg, idx) => {
+          console.log(`[DEBUG] Adding set ${idx}:`, cfg);
           Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k, v));
+          
+          // Ensure each set has a proper set_variant name
+          if (!cfg.set_variant) {
+            updateSetField(idx, 'set_variant', `Set ${idx + 1}`);
+          }
         });
       }
       onDirtyChange?.(false);
@@ -147,6 +156,12 @@ const AddNewExerciseForm = React.forwardRef(
       });
 
       console.log('[DEBUG] Final setConfigs for save:', setConfigs);
+      console.log('[DEBUG] Final setConfigs with set_variant names:', setConfigs.map((set, idx) => ({ 
+        index: idx, 
+        set_variant: set.set_variant, 
+        id: set.id,
+        routine_set_id: set.routine_set_id 
+      })));
 
       if (onActionIconClick) {
         onActionIconClick(

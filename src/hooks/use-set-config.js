@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const defaultValues = {
   set_type: 'reps',
@@ -35,6 +35,10 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
   const updateSetField = (index, field, value) => {
     setSets((prev) => {
       const next = [...prev];
+      // Ensure the array is large enough
+      while (next.length <= index) {
+        next.push({});
+      }
       next[index] = { ...next[index], [field]: value };
       return next;
     });
@@ -59,6 +63,17 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
       // Get the last set's configuration (merged with defaults)
       const lastSetConfig = getSetMerged(prev.length - 1);
       
+      // Find the next available set number by looking at existing set_variant names
+      let nextSetNumber = 1;
+      for (const set of prev) {
+        if (set.set_variant && set.set_variant.startsWith('Set ')) {
+          const setNumber = parseInt(set.set_variant.replace('Set ', ''), 10);
+          if (!isNaN(setNumber) && setNumber >= nextSetNumber) {
+            nextSetNumber = setNumber + 1;
+          }
+        }
+      }
+      
       // Create a new set with the same configuration as the last set
       // but remove any database-specific fields and use proper naming
       const newSetConfig = {
@@ -68,7 +83,7 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
         weight: lastSetConfig.weight,
         unit: lastSetConfig.unit,
         weight_unit: lastSetConfig.weight_unit,
-        set_variant: `Set ${prev.length + 1}`, // Use proper naming convention
+        set_variant: `Set ${nextSetNumber}`, // Use the next available set number
       };
       
       return [...prev, newSetConfig];

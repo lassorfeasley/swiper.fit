@@ -10,21 +10,16 @@ import { supabase } from "@/supabaseClient";
 
 const ActiveWorkoutSection = ({
   section,
-  sectionExercises,
-  onSetComplete,
-  onSetDataChange,
-  onExerciseComplete,
-  onAddExercise,
+  onSectionComplete,
   onUpdateLastExercise,
-  onRefreshExercises,
 }) => {
-  const {
-    activeWorkout,
-    workoutProgress,
-    setWorkoutProgress,
-    fetchWorkoutSets,
-    updateWorkoutProgress,
-  } = useActiveWorkout();
+  const { activeWorkout } = useActiveWorkout();
+
+  // Local state for this section's exercises
+  const [exercises, setExercises] = useState([]);
+  const [completedExercises, setCompletedExercises] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   // Internal focus state management
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
@@ -42,9 +37,235 @@ const ActiveWorkoutSection = ({
   const [setUpdateType, setSetUpdateType] = useState("today");
   const [currentFormValues, setCurrentFormValues] = useState({});
   const [formDirty, setFormDirty] = useState(false);
+  const [addingSetToExercise, setAddingSetToExercise] = useState(null);
+  const [removingSetFromExercise, setRemovingSetFromExercise] = useState(null);
 
   // Form refs
   const addExerciseFormRef = useRef(null);
+  const editExerciseFormRef = useRef(null);
+
+  // Fetch exercises for this section
+  const fetchExercises = useCallback(async () => {
+    if (!activeWorkout?.id) return;
+
+    if (firstLoad) setLoading(true);
+
+    try {
+      // Fetch workout exercises for this section
+      const { data: workoutExercises, error: workoutError } = await supabase
+        .from("workout_exercises")
+        .select(`
+          id,
+          exercise_id,
+          exercise_order,
+          snapshot_name,
+          name_override,
+          section_override,
+          exercises!workout_exercises_exercise_id_fkey(
+            name,
+            section
+          )
+        `)
+        .eq("workout_id", activeWorkout.id)
+        .order("exercise_order", { ascending: true });
+
+      console.log('[ActiveWorkoutSection] Section:', section, 'Fetched workoutExercises:', workoutExercises);
+
+      if (workoutError) {
+        console.error("Error fetching workout exercises:", workoutError);
+        return;
+      }
+
+      // Filter by section_override if present, otherwise by exercises.section
+      const filteredExercises = (workoutExercises || []).filter(we => {
+        const sec = we.section_override || we.exercises?.section;
+        if (section === "training") return sec === "training" || sec === "workout";
+        return sec === section;
+      });
+
+      // Fetch template sets for each exercise
+      const { data: templateSets, error: templateError } = await supabase
+        .from("routine_exercises")
+        .select(`
+          exercise_id,
+          routine_sets!fk_routine_sets__routine_exercises(
+            id,
+            set_order,
+            reps,
+            weight,
+            weight_unit,
+            set_variant,
+            set_type,
+            timed_set_duration
+          )
+        `)
+        .eq("routine_id", activeWorkout.programId)
+        .order("set_order", { foreignTable: "routine_sets", ascending: true });
+
+      if (templateError) {
+        console.error("Error fetching template sets:", templateError);
+      }
+
+      // Fetch saved sets for this workout
+      const { data: savedSets, error: savedError } = await supabase
+        .from("sets")
+        .select("*")
+        .eq("workout_id", activeWorkout.id);
+
+      if (savedError) {
+        console.error("Error fetching saved sets:", savedError);
+      }
+
+      // Group template sets by exercise_id
+      const templateSetsMap = {};
+      (templateSets || []).forEach((re) => {
+        templateSetsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
+          id: null,
+          routine_set_id: rs.id,
+          reps: rs.reps,
+          weight: rs.weight,
+          unit: rs.weight_unit,
+          set_variant: rs.set_variant,
+          set_type: rs.set_type,
+          timed_set_duration: rs.timed_set_duration,
+        }));
+      });
+
+      // Group saved sets by exercise_id
+      const savedSetsMap = {};
+      (savedSets || []).forEach((set) => {
+        if (!savedSetsMap[set.exercise_id]) {
+          savedSetsMap[set.exercise_id] = [];
+        }
+        savedSetsMap[set.exercise_id].push(set);
+      });
+
+      // Build exercise objects with merged set configs
+      const processedExercises = filteredExercises.map((we) => {
+        const templateConfigs = templateSetsMap[we.exercise_id] || [];
+        const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
+
+        // Merge template sets with saved sets
+        const mergedSetConfigs = [];
+
+        // Start with template sets in their original order
+        templateConfigs.forEach((template) => {
+          const savedSet = savedSetsForExercise.find(
+            (saved) => saved.routine_set_id === template.routine_set_id
+          );
+
+          if (savedSet) {
+            mergedSetConfigs.push({
+              id: savedSet.id,
+              routine_set_id: savedSet.routine_set_id,
+              reps: savedSet.reps,
+              weight: savedSet.weight,
+              unit: savedSet.weight_unit,
+              weight_unit: savedSet.weight_unit,
+              set_variant: savedSet.set_variant,
+              set_type: savedSet.set_type,
+              timed_set_duration: savedSet.timed_set_duration,
+              status: savedSet.status || "default",
+            });
+          } else {
+            mergedSetConfigs.push({
+              ...template,
+              unit: template.unit || "lbs",
+              weight_unit: template.unit || "lbs",
+            });
+          }
+        });
+
+        // Add orphaned saved sets
+        savedSetsForExercise.forEach((saved) => {
+          const hasTemplateCounterpart = templateConfigs.some(
+            (template) => template.routine_set_id === saved.routine_set_id
+          );
+
+          if (!hasTemplateCounterpart) {
+            mergedSetConfigs.push({
+              id: saved.id,
+              routine_set_id: saved.routine_set_id,
+              reps: saved.reps,
+              weight: saved.weight,
+              unit: saved.weight_unit,
+              weight_unit: saved.weight_unit,
+              set_variant: saved.set_variant,
+              set_type: saved.set_type,
+              timed_set_duration: saved.timed_set_duration,
+              status: saved.status || "default",
+            });
+          }
+        });
+
+        // Ensure unique set_variant names
+        const usedNames = new Set();
+        mergedSetConfigs.forEach((set, index) => {
+          if (!set.set_variant || usedNames.has(set.set_variant)) {
+            // Find the next available set number
+            let nextSetNumber = 1;
+            while (usedNames.has(`Set ${nextSetNumber}`)) {
+              nextSetNumber++;
+            }
+            set.set_variant = `Set ${nextSetNumber}`;
+          }
+          usedNames.add(set.set_variant);
+        });
+
+        return {
+          id: we.id,
+          exercise_id: we.exercise_id,
+          section: section,
+          name: we.name_override || we.snapshot_name,
+          setConfigs: mergedSetConfigs,
+        };
+      });
+
+      setExercises(processedExercises);
+      setLoading(false);
+      setFirstLoad(false);
+      console.log('[ActiveWorkoutSection] Section:', section, 'Processed exercises:', processedExercises);
+      console.log('[ActiveWorkoutSection] Section:', section, 'Final exercises state set:', processedExercises.map(ex => ({ name: ex.name, setCount: ex.setConfigs.length })));
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+      toast.error("Failed to load exercises");
+    } finally {
+      // setLoading(false); // This line is removed as per the new_code
+    }
+  }, [activeWorkout?.id, activeWorkout?.programId, section, firstLoad]);
+
+  // Fetch exercises when workout changes
+  useEffect(() => {
+    fetchExercises();
+  }, [fetchExercises]);
+
+  // Real-time subscription for sets in this section
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+
+    const exerciseIds = exercises.map(ex => ex.exercise_id);
+    if (exerciseIds.length === 0) return;
+
+    const setsChan = supabase
+      .channel(`sets-section-${section}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'sets', 
+        filter: `workout_id=eq.${activeWorkout.id}` 
+      }, ({ eventType, new: row, old }) => {
+        // Only process if the set belongs to an exercise in this section
+        if (!exerciseIds.includes(row.exercise_id)) return;
+
+        // Refresh exercises to get updated data
+        fetchExercises();
+      })
+      .subscribe();
+
+    return () => {
+      void setsChan.unsubscribe();
+    };
+  }, [activeWorkout?.id, exercises, section, fetchExercises]);
 
   // Memoized initial values for SetEditForm
   const setEditFormInitialValues = React.useMemo(() => {
@@ -111,10 +332,71 @@ const ActiveWorkoutSection = ({
     }
   }, [editingSet]);
 
-  // Handle set completion for section
+  // Handle set completion for this section
   const handleSetComplete = async (exerciseId, setConfig) => {
     try {
-      await onSetComplete(exerciseId, setConfig);
+      // Save set to database
+      const payload = {
+        workout_id: activeWorkout.id,
+        exercise_id: exerciseId,
+        set_variant: setConfig.set_variant,
+        status: 'complete'
+      };
+
+      const isTimed = setConfig.set_type === 'timed';
+
+      if (isTimed) {
+        payload.reps = 1;
+      } else if (setConfig.reps !== undefined) {
+        payload.reps = Number(setConfig.reps);
+      }
+
+      if (setConfig.unit) {
+        payload.weight_unit = setConfig.unit;
+      }
+
+      if (setConfig.weight !== undefined) {
+        payload.weight = Number(setConfig.weight);
+      }
+
+      if (setConfig.routine_set_id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(setConfig.routine_set_id)) {
+        payload.routine_set_id = setConfig.routine_set_id;
+      }
+
+      if (setConfig.set_type) {
+        payload.set_type = setConfig.set_type;
+      }
+      if (setConfig.timed_set_duration !== undefined) {
+        payload.timed_set_duration = Number(setConfig.timed_set_duration);
+      }
+
+      let data, error;
+      if (setConfig.id && !setConfig.id.startsWith('temp-')) {
+        const updateResult = await supabase
+          .from('sets')
+          .update({ ...payload, status: 'complete' })
+          .eq('id', setConfig.id)
+          .select()
+          .single();
+        data = updateResult.data;
+        error = updateResult.error;
+      } else {
+        const insertResult = await supabase
+          .from('sets')
+          .insert(payload)
+          .select()
+          .single();
+        data = insertResult.data;
+        error = insertResult.error;
+      }
+      
+      if (error) {
+        console.error("Error saving set:", error);
+        throw error;
+      }
+
+      // Refresh exercises to get updated data
+      await fetchExercises();
     } catch (error) {
       console.error("Failed to save set:", error);
       toast.error(`Failed to save set. Please try again.`);
@@ -128,12 +410,7 @@ const ActiveWorkoutSection = ({
     field,
     value
   ) => {
-    try {
-      await onSetDataChange(exerciseId, setIdOrUpdates, field, value);
-    } catch (error) {
-      console.error("Failed to update set:", error);
-      toast.error("Failed to update set. Please try again.");
-    }
+    toast.info("Set editing feature is under construction");
   };
 
   // Handle exercise completion and navigation
@@ -143,40 +420,39 @@ const ActiveWorkoutSection = ({
     if (nextExercise && nextExercise.section === section) {
       changeFocus(nextExercise.exercise_id);
     } else {
-      onExerciseComplete(exerciseId);
+      // Mark exercise as complete
+      setCompletedExercises(prev => {
+        const newSet = new Set(prev);
+        newSet.add(exerciseId);
+        
+        // Check if all exercises in this section are complete
+        if (newSet.size === exercises.length) {
+          onSectionComplete?.(section);
+        }
+        
+        return newSet;
+      });
     }
   };
 
   // Helper to find next incomplete exercise
   const findNextIncompleteExercise = (currentExerciseId) => {
-    const currentIndex = sectionExercises.findIndex(
+    const currentIndex = exercises.findIndex(
       (ex) => ex.exercise_id === currentExerciseId
     );
 
     // Look for next incomplete exercise in this section
-    for (let i = currentIndex + 1; i < sectionExercises.length; i++) {
-      const ex = sectionExercises[i];
-      const exerciseProgress = workoutProgress[ex.exercise_id] || [];
-      const totalSets = ex.setConfigs?.length || 0;
-      const completedSets = exerciseProgress.filter(
-        (set) => set.status === "complete"
-      ).length;
-
-      if (completedSets < totalSets) {
+    for (let i = currentIndex + 1; i < exercises.length; i++) {
+      const ex = exercises[i];
+      if (!completedExercises.has(ex.exercise_id)) {
         return { ...ex, section };
       }
     }
 
     // Look for previous incomplete exercise in this section
     for (let i = currentIndex - 1; i >= 0; i--) {
-      const ex = sectionExercises[i];
-      const exerciseProgress = workoutProgress[ex.exercise_id] || [];
-      const totalSets = ex.setConfigs?.length || 0;
-      const completedSets = exerciseProgress.filter(
-        (set) => set.status === "complete"
-      ).length;
-
-      if (completedSets < totalSets) {
+      const ex = exercises[i];
+      if (!completedExercises.has(ex.exercise_id)) {
         return { ...ex, section };
       }
     }
@@ -218,7 +494,7 @@ const ActiveWorkoutSection = ({
       setTimeout(() => {
         setFocusedExerciseId(newExerciseId);
 
-        const exercise = sectionExercises.find(
+        const exercise = exercises.find(
           (ex) => ex.exercise_id === newExerciseId
         );
         if (exercise?.id && onUpdateLastExercise) {
@@ -226,7 +502,7 @@ const ActiveWorkoutSection = ({
         }
       }, collapseDurationMs);
     },
-    [sectionExercises, onUpdateLastExercise]
+    [exercises, onUpdateLastExercise]
   );
 
   // Handle focus from external calls
@@ -344,10 +620,8 @@ const ActiveWorkoutSection = ({
       toast.success(`Added ${exerciseName} to ${section}`);
       setShowAddExercise(false);
 
-      // Refresh exercises in parent
-      if (onRefreshExercises) {
-        await onRefreshExercises();
-      }
+      // Refresh exercises to get updated data
+      await fetchExercises();
 
       // Focus on the newly added exercise
       changeFocus(exerciseId);
@@ -366,13 +640,25 @@ const ActiveWorkoutSection = ({
 
   // Handle saving exercise edits
   const handleSaveExerciseEdit = async (data, type = "today") => {
-    if (!editingExercise) return;
+    console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
+    if (!editingExercise) {
+      console.log('[DEBUG] No editingExercise, returning');
+      return;
+    }
 
     try {
       const { id: workoutExerciseId, exercise_id } = editingExercise;
       const newName = data.name?.trim();
       const newSection = data.section;
       const newSetConfigs = data.setConfigs || [];
+
+      console.log('[DEBUG] Processing exercise edit:', { 
+        workoutExerciseId, 
+        exercise_id, 
+        newName, 
+        newSection, 
+        newSetConfigs 
+      });
 
       if (!newName) {
         toast.error("Exercise name cannot be empty");
@@ -392,13 +678,108 @@ const ActiveWorkoutSection = ({
 
       if (error) throw error;
 
+      // Handle set changes
+      const currentSets = editingExercise.setConfigs || [];
+      const newSets = newSetConfigs || [];
+
+      // Find sets to add (new sets without IDs)
+      const setsToAdd = newSets.filter((newSet) => {
+        if (newSet.id) return false; // Already saved
+
+        // If this set already exists in currentSets (matched by routine_set_id or key fields), skip
+        const existsInCurrent = currentSets.some((cs) => {
+          if (cs.id) return false;
+
+          // Match by routine_set_id if present on both
+          if (newSet.routine_set_id && cs.routine_set_id) {
+            return newSet.routine_set_id === cs.routine_set_id;
+          }
+
+          // Otherwise compare the core fields
+          return (
+            newSet.reps === cs.reps &&
+            newSet.weight === cs.weight &&
+            newSet.weight_unit === cs.weight_unit &&
+            newSet.set_variant === cs.set_variant &&
+            newSet.set_type === cs.set_type &&
+            newSet.timed_set_duration === cs.timed_set_duration
+          );
+        });
+
+        return !existsInCurrent;
+      });
+      
+      // Find sets to remove (current sets not in new sets)
+      const setsToRemove = currentSets.filter(currentSet => 
+        !newSets.some(newSet => newSet.id === currentSet.id)
+      );
+
+      // Find sets to update (sets with IDs that have changes)
+      const setsToUpdate = newSets.filter(newSet => {
+        if (!newSet.id) return false; // Skip new sets
+        const currentSet = currentSets.find(cs => cs.id === newSet.id);
+        if (!currentSet) return false;
+        
+        // Check if any field changed
+        return (
+          newSet.reps !== currentSet.reps ||
+          newSet.weight !== currentSet.weight ||
+          newSet.weight_unit !== currentSet.weight_unit ||
+          newSet.set_variant !== currentSet.set_variant ||
+          newSet.set_type !== currentSet.set_type ||
+          newSet.timed_set_duration !== currentSet.timed_set_duration
+        );
+      });
+
+      // Remove sets
+      for (const set of setsToRemove) {
+        if (set.id) {
+          await supabase
+            .from("sets")
+            .delete()
+            .eq("id", set.id);
+        }
+      }
+
+      // Add new sets
+      for (const set of setsToAdd) {
+        await supabase
+          .from("sets")
+          .insert({
+            workout_id: activeWorkout.id,
+            exercise_id: exercise_id,
+            reps: set.reps,
+            weight: set.weight,
+            weight_unit: set.weight_unit,
+            set_variant: set.set_variant,
+            set_type: set.set_type,
+            timed_set_duration: set.timed_set_duration,
+            status: "default",
+          });
+      }
+
+      // Update existing sets
+      for (const set of setsToUpdate) {
+        await supabase
+          .from("sets")
+          .update({
+            reps: set.reps,
+            weight: set.weight,
+            weight_unit: set.weight_unit,
+            set_variant: set.set_variant,
+            set_type: set.set_type,
+            timed_set_duration: set.timed_set_duration,
+          })
+          .eq("id", set.id);
+      }
+
       toast.success("Exercise updated successfully");
       setEditingExercise(null);
 
-      // Refresh exercises in parent
-      if (onRefreshExercises) {
-        await onRefreshExercises();
-      }
+      // Refresh exercises to get updated data
+      console.log('[DEBUG] About to refresh exercises after save');
+      await fetchExercises();
+      console.log('[DEBUG] Finished refreshing exercises after save');
     } catch (error) {
       console.error("Failed to update exercise:", error);
       toast.error("Failed to update exercise. Please try again.");
@@ -444,11 +825,8 @@ const ActiveWorkoutSection = ({
       setCurrentFormValues({});
       setFormDirty(false);
 
-      // Refresh workout progress
-      await fetchWorkoutSets();
-      if (onRefreshExercises) {
-        await onRefreshExercises();
-      }
+      // Refresh exercises to get updated data
+      await fetchExercises();
     } catch (error) {
       console.error("Failed to save set:", error);
       toast.error("Failed to save set. Please try again.");
@@ -483,18 +861,121 @@ const ActiveWorkoutSection = ({
       setEditSheetOpen(false);
       setEditingSet(null);
 
-      // Refresh workout progress
-      await fetchWorkoutSets();
-      if (onRefreshExercises) {
-        await onRefreshExercises();
-      }
+      // Refresh exercises to get updated data
+      await fetchExercises();
     } catch (error) {
       console.error("Failed to delete set:", error);
       toast.error("Failed to delete set. Please try again.");
     }
   };
 
-  if (!sectionExercises || sectionExercises.length === 0) {
+  // Handle adding a new set to an exercise
+  const handleAddSetToExercise = async (exerciseId) => {
+    try {
+      setAddingSetToExercise(exerciseId);
+      
+      // Find the exercise to get its current sets
+      const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+      if (!exercise) return;
+
+      // Create a new set with default values
+      const newSetNumber = exercise.setConfigs.length + 1;
+      const newSet = {
+        workout_id: activeWorkout.id,
+        exercise_id: exerciseId,
+        reps: 10,
+        weight: 25,
+        weight_unit: "lbs",
+        set_variant: `Set ${newSetNumber}`,
+        set_type: "reps",
+        timed_set_duration: 30,
+        status: "default",
+      };
+
+      // Insert the new set into the database
+      const { data: insertedSet, error } = await supabase
+        .from("sets")
+        .insert(newSet)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error adding set:", error);
+        toast.error("Failed to add set");
+        return;
+      }
+
+      toast.success("Set added successfully");
+      
+      // Refresh exercises to get updated data
+      await fetchExercises();
+    } catch (error) {
+      console.error("Error adding set:", error);
+      toast.error("Failed to add set");
+    } finally {
+      setAddingSetToExercise(null);
+    }
+  };
+
+  // Handle removing the last set from an exercise
+  const handleRemoveSetFromExercise = async (exerciseId) => {
+    try {
+      setRemovingSetFromExercise(exerciseId);
+      
+      // Find the exercise to get its current sets
+      const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+      if (!exercise || exercise.setConfigs.length === 0) return;
+
+      // Get the last set (highest set number)
+      const lastSet = exercise.setConfigs[exercise.setConfigs.length - 1];
+      
+      if (!lastSet.id) {
+        // If it's a template set without a database ID, just refresh
+        await fetchExercises();
+        return;
+      }
+
+      // Delete the set from the database
+      const { error } = await supabase
+        .from("sets")
+        .delete()
+        .eq("id", lastSet.id);
+
+      if (error) {
+        console.error("Error removing set:", error);
+        toast.error("Failed to remove set");
+        return;
+      }
+
+      toast.success("Set removed successfully");
+      
+      // Refresh exercises to get updated data
+      await fetchExercises();
+    } catch (error) {
+      console.error("Error removing set:", error);
+      toast.error("Failed to remove set");
+    } finally {
+      setRemovingSetFromExercise(null);
+    }
+  };
+
+  if (firstLoad && loading) {
+    return (
+      <PageSectionWrapper
+        key={section}
+        section={section}
+        showPlusButton={true}
+        onPlus={handleAddExercise}
+        stickyTopClass="top-11"
+      >
+        <div className="text-center py-8 text-gray-500">
+          Loading {section} exercises...
+        </div>
+      </PageSectionWrapper>
+    );
+  }
+
+  if (!exercises || exercises.length === 0) {
     return (
       <>
         <PageSectionWrapper
@@ -559,12 +1040,12 @@ const ActiveWorkoutSection = ({
         onPlus={handleAddExercise}
         stickyTopClass="top-11"
       >
-        {sectionExercises.map((ex, index) => {
-          const focusedIndex = sectionExercises.findIndex(
+        {exercises.map((ex, index) => {
+          const focusedIndex = exercises.findIndex(
             (e) => e.exercise_id === focusedExerciseId
           );
           const isFocused = focusedIndex === index;
-          const isExpanded = isFocused || index === sectionExercises.length - 1;
+          const isExpanded = isFocused || index === exercises.length - 1;
 
           const STACKING_OFFSET_PX = 64;
           let topOffset = 80 + index * STACKING_OFFSET_PX;
@@ -591,7 +1072,6 @@ const ActiveWorkoutSection = ({
               exerciseId={ex.exercise_id}
               exerciseName={ex.name}
               initialSetConfigs={ex.setConfigs}
-              setData={workoutProgress[ex.exercise_id] || []}
               onSetComplete={handleSetComplete}
               onSetDataChange={handleSetDataChange}
               onExerciseComplete={() => handleExerciseComplete(ex.exercise_id)}
@@ -608,7 +1088,7 @@ const ActiveWorkoutSection = ({
               onEditExercise={() => handleEditExercise(ex)}
               index={index}
               focusedIndex={focusedIndex}
-              totalCards={sectionExercises.length}
+              totalCards={exercises.length}
               topOffset={topOffset}
             />
           );
@@ -664,10 +1144,13 @@ const ActiveWorkoutSection = ({
           leftAction={() => setEditingExercise(null)}
           leftText="Close"
           rightAction={() => {
-            const formRef = document.querySelector(
-              `[data-form-ref=\"edit-${editingExercise.id}\"]`
-            );
-            if (formRef) formRef.requestSubmit();
+            console.log('[DEBUG] Save button clicked, using ref');
+            if (editExerciseFormRef.current) {
+              console.log('[DEBUG] Calling requestSubmit on form ref');
+              editExerciseFormRef.current.requestSubmit();
+            } else {
+              console.log('[DEBUG] Form ref not found!');
+            }
           }}
           rightText="Save"
           rightEnabled={editingExerciseDirty}
@@ -676,7 +1159,7 @@ const ActiveWorkoutSection = ({
         >
           <div className="flex-1 overflow-y-auto">
             <AddNewExerciseForm
-              data-form-ref={`edit-${editingExercise.id}`}
+              ref={editExerciseFormRef}
               key={`edit-${editingExercise.id}`}
               formPrompt={`Edit ${section} exercise`}
               initialName={editingExercise.name}
@@ -685,7 +1168,7 @@ const ActiveWorkoutSection = ({
                   ? "training"
                   : editingExercise.section
               }
-              initialSets={editingExercise.setConfigs?.length}
+              initialSets={editingExercise.setConfigs?.length || 0}
               initialSetConfigs={editingExercise.setConfigs}
               hideActionButtons={true}
               showAddToProgramToggle={false}
