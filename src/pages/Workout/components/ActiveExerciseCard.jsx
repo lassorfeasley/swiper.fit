@@ -77,6 +77,8 @@ const ActiveExerciseCard = React.forwardRef(({
     [sets]
   );
 
+
+
   const handleSetComplete = useCallback(
     async (setIdx) => {
       if (!mountedRef.current) return;

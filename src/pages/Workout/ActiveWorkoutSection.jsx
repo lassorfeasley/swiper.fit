@@ -8,23 +8,31 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
 import { useWorkoutFocus } from "@/hooks/useFocusScroll";
-import { ANIMATION_DURATIONS } from "@/lib/scrollSnap";
+import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 
 const ActiveWorkoutSection = ({
   section,
   onSectionComplete,
   onUpdateLastExercise,
+  onUserFocus,
 }) => {
   const { activeWorkout } = useActiveWorkout();
+  const {
+    updateSectionExercises,
+    markExerciseComplete,
+    completedExercises: globalCompletedExercises,
+    focusedExercise,
+    setFocusedExerciseId
+  } = useWorkoutNavigation();
 
   // Local state for this section's exercises
   const [exercises, setExercises] = useState([]);
-  const [completedExercises, setCompletedExercises] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
 
   // Internal focus state management
-  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  const [focusedExerciseId, setLocalFocusedExerciseId] = useState(null);
+  const [lastCompletedExerciseId, setLastCompletedExerciseId] = useState(null);
   
   // Use the new focus scroll hook
   const { focusRef, focusedHeight } = useWorkoutFocus({
@@ -227,6 +235,8 @@ const ActiveWorkoutSection = ({
       });
 
       setExercises(processedExercises);
+      // Update global context with exercises for this section
+      updateSectionExercises(section, processedExercises);
       setLoading(false);
       setFirstLoad(false);
       console.log('[ActiveWorkoutSection] Section:', section, 'Processed exercises:', processedExercises);
@@ -295,6 +305,37 @@ const ActiveWorkoutSection = ({
   ]);
 
   // Focus management is now handled by the useWorkoutFocus hook
+
+  // Handle cross-section navigation when focused exercise changes
+  useEffect(() => {
+    if (focusedExercise && (focusedExercise.section === section || focusedExercise.section === null)) {
+      // Check if the exercise exists in this section before setting focus
+      const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
+      if (exerciseExists) {
+        // Update local focus state when global focus changes
+        setLocalFocusedExerciseId(focusedExercise.exercise_id);
+      }
+    }
+  }, [focusedExercise, section, exercises]);
+
+  // Handle focus restoration when exercises are loaded
+  useEffect(() => {
+    if (exercises.length > 0 && focusedExercise) {
+      // Check if the focused exercise exists in our loaded exercises
+      const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
+      
+      // Handle both cases: when section matches or when section is null (fallback)
+      const shouldRestoreFocus = (focusedExercise.section === section) || 
+                                (focusedExercise.section === null && exerciseExists);
+      
+      if (shouldRestoreFocus && exerciseExists) {
+        // If the exercise exists and we don't have a local focus, set it
+        if (!focusedExerciseId) {
+          setLocalFocusedExerciseId(focusedExercise.exercise_id);
+        }
+      }
+    }
+  }, [exercises, focusedExercise, section, focusedExerciseId]);
 
   // Reset form state when forms are opened
   useEffect(() => {
@@ -390,30 +431,98 @@ const ActiveWorkoutSection = ({
     toast.info("Set editing feature is under construction");
   };
 
+  // Internal focus change logic
+  const changeFocus = useCallback(
+    (newExerciseId) => {
+      // Safety check: Never focus on a completed exercise
+      if (globalCompletedExercises.has(newExerciseId)) {
+        console.log(`[${section}] Attempted to focus on completed exercise:`, newExerciseId);
+        return;
+      }
+
+      setLocalFocusedExerciseId(null);
+
+      setTimeout(() => {
+        setLocalFocusedExerciseId(newExerciseId);
+        setFocusedExerciseId(newExerciseId, section);
+
+        const exercise = exercises.find(
+          (ex) => ex.exercise_id === newExerciseId
+        );
+        if (exercise?.id && onUpdateLastExercise) {
+          onUpdateLastExercise(exercise.id);
+        }
+      }, CARD_ANIMATION_DURATION_MS);
+    },
+    [exercises, onUpdateLastExercise, setFocusedExerciseId, section, globalCompletedExercises]
+  );
+
   // Handle exercise completion and navigation
   const handleExerciseComplete = (exerciseId) => {
-    const nextExercise = findNextIncompleteExercise(exerciseId);
-
-    if (nextExercise && nextExercise.section === section) {
-      changeFocus(nextExercise.exercise_id);
-    } else {
-      // Mark exercise as complete
-      setCompletedExercises(prev => {
-        const newSet = new Set(prev);
-        newSet.add(exerciseId);
-        
-        // Check if all exercises in this section are complete
-        if (newSet.size === exercises.length) {
-          onSectionComplete?.(section);
-        }
-        
-        return newSet;
-      });
-    }
+    // Mark exercise as complete in global context
+    markExerciseComplete(exerciseId);
+    // Track the last completed exercise to trigger focus change
+    setLastCompletedExerciseId(exerciseId);
   };
 
-  // Helper to find next incomplete exercise
-  const findNextIncompleteExercise = (currentExerciseId) => {
+  // Watch for changes in completed exercises and handle navigation
+  useEffect(() => {
+    if (exercises.length === 0) return;
+
+    // Check if all exercises in this section are complete
+    const allSectionComplete = exercises.every(ex => 
+      globalCompletedExercises.has(ex.exercise_id)
+    );
+
+    if (allSectionComplete) {
+      // All exercises in this section are complete
+      onSectionComplete?.(section);
+    } else if (lastCompletedExerciseId) {
+      // An exercise was just completed, find the next incomplete one
+      const completedExerciseIndex = exercises.findIndex(ex => 
+        ex.exercise_id === lastCompletedExerciseId
+      );
+      
+      if (completedExerciseIndex !== -1) {
+        // Look for the next incomplete exercise after the completed one
+        let nextExercise = null;
+        
+        // First, try to find the next incomplete exercise after the completed one
+        for (let i = completedExerciseIndex + 1; i < exercises.length; i++) {
+          const ex = exercises[i];
+          if (!globalCompletedExercises.has(ex.exercise_id)) {
+            nextExercise = ex;
+            break;
+          }
+        }
+        
+        // If no next incomplete exercise found, look for the first incomplete exercise before the completed one
+        if (!nextExercise) {
+          for (let i = completedExerciseIndex - 1; i >= 0; i--) {
+            const ex = exercises[i];
+            if (!globalCompletedExercises.has(ex.exercise_id)) {
+              nextExercise = ex;
+              break;
+            }
+          }
+        }
+        
+        // Only change focus if we found an incomplete exercise
+        if (nextExercise && !globalCompletedExercises.has(nextExercise.exercise_id)) {
+          changeFocus(nextExercise.exercise_id);
+        }
+        // If no incomplete exercise found, don't change focus - let the section completion logic handle it
+      }
+      
+      // Clear the last completed exercise ID
+      setLastCompletedExerciseId(null);
+    }
+  }, [globalCompletedExercises, exercises, lastCompletedExerciseId, section, onSectionComplete, changeFocus]);
+
+
+
+  // Helper to find next incomplete exercise in this section
+  const findNextIncompleteInSection = (currentExerciseId) => {
     const currentIndex = exercises.findIndex(
       (ex) => ex.exercise_id === currentExerciseId
     );
@@ -421,7 +530,7 @@ const ActiveWorkoutSection = ({
     // Look for next incomplete exercise in this section
     for (let i = currentIndex + 1; i < exercises.length; i++) {
       const ex = exercises[i];
-      if (!completedExercises.has(ex.exercise_id)) {
+      if (!globalCompletedExercises.has(ex.exercise_id)) {
         return { ...ex, section };
       }
     }
@@ -429,7 +538,7 @@ const ActiveWorkoutSection = ({
     // Look for previous incomplete exercise in this section
     for (let i = currentIndex - 1; i >= 0; i--) {
       const ex = exercises[i];
-      if (!completedExercises.has(ex.exercise_id)) {
+      if (!globalCompletedExercises.has(ex.exercise_id)) {
         return { ...ex, section };
       }
     }
@@ -461,29 +570,17 @@ const ActiveWorkoutSection = ({
     });
   };
 
-  // Internal focus change logic
-  const changeFocus = useCallback(
-    (newExerciseId) => {
-      const collapseDurationMs = CARD_ANIMATION_DURATION_MS;
-
-      setFocusedExerciseId(null);
-
-      setTimeout(() => {
-        setFocusedExerciseId(newExerciseId);
-
-        const exercise = exercises.find(
-          (ex) => ex.exercise_id === newExerciseId
-        );
-        if (exercise?.id && onUpdateLastExercise) {
-          onUpdateLastExercise(exercise.id);
-        }
-      }, collapseDurationMs);
-    },
-    [exercises, onUpdateLastExercise]
-  );
-
   // Handle focus from external calls
   const handleFocus = (exerciseId) => {
+    // Safety check: Never focus on a completed exercise
+    if (globalCompletedExercises.has(exerciseId)) {
+      console.log(`[${section}] Attempted to focus on completed exercise via handleFocus:`, exerciseId);
+      return;
+    }
+    
+    // Notify parent that user is actively focusing
+    onUserFocus?.();
+    
     changeFocus(exerciseId);
   };
 
@@ -1022,7 +1119,9 @@ const ActiveWorkoutSection = ({
             (e) => e.exercise_id === focusedExerciseId
           );
           const isFocused = focusedIndex === index;
-          const isExpanded = isFocused || index === exercises.length - 1;
+          const isExpanded = isFocused;
+          
+
 
           const STACKING_OFFSET_PX = 64;
           let topOffset = 80 + index * STACKING_OFFSET_PX;

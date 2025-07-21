@@ -20,6 +20,7 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ActiveWorkoutSection from "./ActiveWorkoutSection";
+import { WorkoutNavigationProvider, useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -27,7 +28,7 @@ function debug(...args) {
   if (DEBUG_LOG) console.log("[ActiveWorkout]", ...args);
 }
 
-const ActiveWorkout = () => {
+const ActiveWorkoutContent = () => {
   const { setPageName } = useContext(PageNameContext);
   const navigate = useNavigate();
   const {
@@ -38,6 +39,37 @@ const ActiveWorkout = () => {
     updateLastExercise,
   } = useActiveWorkout();
 
+
+
+  const {
+    handleSectionComplete: navigationHandleSectionComplete,
+    isWorkoutComplete,
+    getProgressStats,
+    setFocusedExerciseId: originalSetFocusedExerciseId,
+    focusFirstExercise
+  } = useWorkoutNavigation();
+
+  // Wrapper to track user focus activity
+  const setFocusedExerciseId = useCallback((exerciseId, section) => {
+    userActiveFocusRef.current = true;
+    originalSetFocusedExerciseId(exerciseId, section);
+    
+    // Reset the flag after a short delay to allow for sync focus
+    setTimeout(() => {
+      userActiveFocusRef.current = false;
+    }, 2000);
+  }, [originalSetFocusedExerciseId]);
+
+  // Handle user actively focusing on exercises
+  const handleUserFocus = useCallback(() => {
+    userActiveFocusRef.current = true;
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      userActiveFocusRef.current = false;
+    }, 2000);
+  }, []);
+
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { setNavBarVisible } = useNavBarVisibility();
@@ -47,6 +79,7 @@ const ActiveWorkout = () => {
   const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
 
   const skipAutoRedirectRef = useRef(false);
+  const userActiveFocusRef = useRef(false); // Track if user is actively focusing
 
   // State for settings sheet
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -63,6 +96,8 @@ const ActiveWorkout = () => {
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
+
+
 
   useEffect(() => {
     // Only redirect after loading has finished
@@ -85,6 +120,151 @@ const ActiveWorkout = () => {
   useEffect(() => {
     setPageName("Active Workout");
   }, [setPageName]);
+
+  // Auto-scroll to last exercise on page load/refresh or when synced from other clients
+  useEffect(() => {
+    if (!activeWorkout?.lastExerciseId) return;
+
+    console.log('[ActiveWorkout] Attempting to scroll to last exercise:', activeWorkout.lastExerciseId);
+
+    // Function to find the exercise_id from workout_exercise_id
+    const findExerciseIdFromWorkoutExerciseId = async (workoutExerciseId) => {
+      try {
+        const { data, error } = await supabase
+          .from('workout_exercises')
+          .select('exercise_id, section_override, snapshot_name')
+          .eq('id', workoutExerciseId)
+          .single();
+        
+        if (error) {
+          console.error('[ActiveWorkout] Error finding exercise_id:', error);
+          return null;
+        }
+        
+        return data;
+      } catch (err) {
+        console.error('[ActiveWorkout] Exception finding exercise_id:', err);
+        return null;
+      }
+    };
+
+    // Function to attempt scrolling
+    const attemptScroll = async () => {
+      // First, try to find the exercise_id from the workout_exercise_id
+      const { exercise_id, section_override, snapshot_name } = await findExerciseIdFromWorkoutExerciseId(activeWorkout.lastExerciseId);
+      
+      if (!exercise_id) {
+        console.log('[ActiveWorkout] Could not find exercise_id for workout_exercise_id:', activeWorkout.lastExerciseId);
+        return false;
+      }
+
+      console.log('[ActiveWorkout] Found exercise:', snapshot_name || exercise_id, 'for workout_exercise_id:', activeWorkout.lastExerciseId);
+      
+      const lastExerciseElement = document.getElementById(`exercise-${exercise_id}`);
+      
+      if (lastExerciseElement) {
+        console.log('[ActiveWorkout] Found exercise element, scrolling to it');
+        lastExerciseElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        
+        // Set focus on this exercise immediately
+        console.log('[ActiveWorkout] Setting focus on exercise:', snapshot_name || exercise_id);
+        if (setFocusedExerciseId) {
+          setFocusedExerciseId(exercise_id, section_override);
+        }
+        
+        return true;
+      } else {
+        console.log('[ActiveWorkout] Exercise element not found, will retry');
+        // Let's see what exercise elements exist
+        const allExerciseElements = document.querySelectorAll('[id^="exercise-"]');
+        console.log('[ActiveWorkout] Available exercise elements:', Array.from(allExerciseElements).map(el => el.id));
+        return false;
+      }
+    };
+
+    // Try immediately
+    attemptScroll().then((success) => {
+      if (!success) {
+        // If not found, try with increasing delays
+        const delays = [500, 1000, 2000, 3000];
+        
+        delays.forEach((delay, index) => {
+          setTimeout(() => {
+            attemptScroll().then((retrySuccess) => {
+              if (!retrySuccess && index === delays.length - 1) {
+                console.log('[ActiveWorkout] Failed to find exercise element after all attempts');
+              }
+            });
+          }, delay);
+        });
+      }
+    });
+  }, [activeWorkout?.lastExerciseId]);
+
+  // Auto-focus on synced last exercise when it changes from other clients
+  useEffect(() => {
+    if (!activeWorkout?.lastExerciseId) return;
+
+    // Don't auto-focus if user is actively focusing on exercises
+    if (userActiveFocusRef.current) {
+      console.log('[ActiveWorkout] Skipping sync focus - user is actively focusing');
+      return;
+    }
+
+    console.log('[ActiveWorkout] Last exercise synced from other client, focusing on:', activeWorkout.lastExerciseId);
+    
+    // Add a small delay to allow sections to load their exercises
+    const timer = setTimeout(() => {
+      // Find the exercise_id from workout_exercise_id
+      const findExerciseIdFromWorkoutExerciseId = async (workoutExerciseId) => {
+        try {
+          const { data, error } = await supabase
+            .from('workout_exercises')
+            .select('exercise_id, section_override, snapshot_name')
+            .eq('id', workoutExerciseId)
+            .single();
+          
+          if (error) {
+            console.error('[ActiveWorkout] Error finding exercise_id:', error);
+            return null;
+          }
+          
+          return data;
+        } catch (err) {
+          console.error('[ActiveWorkout] Exception finding exercise_id:', err);
+          return null;
+        }
+      };
+
+      // Set focus on the synced exercise
+      findExerciseIdFromWorkoutExerciseId(activeWorkout.lastExerciseId).then(({ exercise_id, section_override, snapshot_name }) => {
+        if (exercise_id && setFocusedExerciseId) {
+          console.log('[ActiveWorkout] Setting focus on synced exercise:', snapshot_name || exercise_id);
+          setFocusedExerciseId(exercise_id, section_override);
+        }
+      });
+    }, 500); // Shorter delay for sync updates
+    
+    return () => clearTimeout(timer);
+  }, [activeWorkout?.lastExerciseId, setFocusedExerciseId]);
+
+  // Auto-focus on first exercise when starting a new workout
+  useEffect(() => {
+    // Only trigger for new workouts (no lastExerciseId) and when we have an active workout
+    if (activeWorkout?.id && !activeWorkout?.lastExerciseId) {
+      console.log('[ActiveWorkout] New workout detected, focusing on first exercise');
+      
+      // Add a small delay to allow sections to load their exercises
+      const timer = setTimeout(() => {
+        focusFirstExercise();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeWorkout?.id, activeWorkout?.lastExerciseId, focusFirstExercise]);
 
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);
@@ -146,11 +326,15 @@ const ActiveWorkout = () => {
       const newSet = new Set(prev);
       newSet.add(sectionName);
 
-      // Auto-end workout if all sections are complete
-      if (!workoutAutoEnded) {
-        const allSections = ["warmup", "training", "cooldown"];
-        const allDone = allSections.every(section => newSet.has(section));
-        if (allDone) {
+      // Use the navigation context to find the next exercise
+      const nextExercise = navigationHandleSectionComplete(sectionName);
+      
+      if (nextExercise) {
+        // There are more exercises to complete, continue the workout
+        console.log(`Section ${sectionName} complete. Next exercise:`, nextExercise);
+      } else {
+        // All exercises are complete, end the workout
+        if (!workoutAutoEnded) {
           setWorkoutAutoEnded(true);
           (async () => {
             const wid = activeWorkout?.id;
@@ -169,9 +353,10 @@ const ActiveWorkout = () => {
     });
   };
 
-  // Compute progress counts for nav (simplified - sections handle their own progress)
-  const totalSets = 0; // This will be computed by individual sections
-  const completedSets = 0; // This will be computed by individual sections
+  // Compute progress counts for nav using the navigation context
+  const progressStats = getProgressStats();
+  const totalSets = progressStats.total;
+  const completedSets = progressStats.completed;
 
   return (
     <AppLayout
@@ -203,6 +388,7 @@ const ActiveWorkout = () => {
           section="warmup"
           onSectionComplete={handleSectionComplete}
           onUpdateLastExercise={updateLastExercise}
+          onUserFocus={handleUserFocus}
         />
 
         {/* Training Section */}
@@ -210,6 +396,7 @@ const ActiveWorkout = () => {
           section="training"
           onSectionComplete={handleSectionComplete}
           onUpdateLastExercise={updateLastExercise}
+          onUserFocus={handleUserFocus}
         />
 
         {/* Cooldown Section */}
@@ -217,6 +404,7 @@ const ActiveWorkout = () => {
           section="cooldown"
           onSectionComplete={handleSectionComplete}
           onUpdateLastExercise={updateLastExercise}
+          onUserFocus={handleUserFocus}
         />
       </div>
 
@@ -281,8 +469,16 @@ const ActiveWorkout = () => {
   );
 };
 
-ActiveWorkout.propTypes = {
+ActiveWorkoutContent.propTypes = {
   // PropTypes can be re-added if needed
+};
+
+const ActiveWorkout = () => {
+  return (
+    <WorkoutNavigationProvider>
+      <ActiveWorkoutContent />
+    </WorkoutNavigationProvider>
+  );
 };
 
 export default ActiveWorkout;

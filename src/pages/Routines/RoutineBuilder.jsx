@@ -17,6 +17,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import { Play } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "sonner";
+import { scrollToSection } from "@/lib/scroll";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -501,15 +502,7 @@ const RoutineBuilder = () => {
   });
 
   const scrollSectionIntoView = (key) => {
-    const el = document.getElementById(`section-${key}`);
-    if (!el) return;
-    const headerHeight = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue("--header-height") || "0",
-      10
-    );
-    const rect = el.getBoundingClientRect();
-    const scrollContainer = document.documentElement;
-    scrollContainer.scrollBy({ top: rect.top - headerHeight, behavior: "smooth" });
+    scrollToSection(`section-${key}`);
   };
 
   const handleModalClose = () => {

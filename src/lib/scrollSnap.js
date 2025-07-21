@@ -78,8 +78,8 @@ export const getScrollSnapCSSVars = (configKey) => {
  * Constants for animation durations
  */
 export const ANIMATION_DURATIONS = {
-  CARD_ANIMATION_DURATION_MS: 300,
-  SCROLL_DELAY_MS: 350, // Card animation + buffer
+  CARD_ANIMATION_DURATION_MS: 500, // Matches ActiveExerciseCard.jsx
+  SCROLL_DELAY_MS: 550, // Card animation + buffer
   FOCUS_TRANSITION_MS: 200
 };
 

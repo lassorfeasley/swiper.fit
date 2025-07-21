@@ -5,6 +5,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/organisms/side-bar-nav";
+import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 
 export default function AppLayout({
   children,
@@ -107,6 +108,7 @@ export default function AppLayout({
             "--mobile-nav-height": "80px",
             paddingTop: `${totalHeaderHeight}px`,
             transition: 'padding-top 0.3s ease-in-out',
+            ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
           }}
           className="flex flex-col flex-1 min-h-0"
         >

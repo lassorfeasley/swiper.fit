@@ -49,6 +49,12 @@ export function ActiveWorkoutProvider({ children }) {
           startTime: workout.created_at,
           lastExerciseId: workout.last_workout_exercise_id || null,
         };
+        
+        // Log when last workout exercise is loaded
+        if (workout.last_workout_exercise_id) {
+          console.log('[ActiveWorkout] Last workout exercise loaded:', workout.last_workout_exercise_id);
+        }
+        
         setActiveWorkout(workoutData);
         
         // Compute elapsed time
