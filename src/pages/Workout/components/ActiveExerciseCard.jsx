@@ -9,6 +9,16 @@
 //
 // Before making any style changes, confirm directly with the user.
 // ==========================================
+//
+// SET REORDERING FUNCTIONALITY:
+// This component now manages set reordering responsibilities:
+// - Internal state for reordered sets (reorderedSets)
+// - Optimistic UI updates for immediate feedback
+// - Parent callback (onSetReorder) for local state updates only
+// - Automatic reset when parent data changes
+// - Error handling with rollback on failure
+// - NOTE: Reordering only updates local state to prevent infinite loops
+// ==========================================
 import React, {
   useState,
   useRef,
@@ -38,6 +48,7 @@ const ActiveExerciseCard = React.forwardRef(({
   onFocus,
   onSetPress,
   onEditExercise,
+  onSetReorder,
   index,
   focusedIndex,
   totalCards,
@@ -47,15 +58,19 @@ const ActiveExerciseCard = React.forwardRef(({
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
 
+  // Internal state for managing reordered sets
+  const [reorderedSets, setReorderedSets] = useState(null);
+
   useEffect(() => {
     return () => {
       mountedRef.current = false;
     };
   }, []);
 
-  // Use initialSetConfigs directly as sets
+  // Use initialSetConfigs directly as sets, or reordered sets if available
   const sets = useMemo(() => {
-    return initialSetConfigs.map((config, i) => ({
+    const sourceSets = reorderedSets || initialSetConfigs;
+    return sourceSets.map((config, i) => ({
       ...config,
       id: config.id || null,
       tempId: config.id ? null : `temp-${i}`,
@@ -66,18 +81,44 @@ const ActiveExerciseCard = React.forwardRef(({
       set_variant: config.set_variant || `Set ${i + 1}`,
       routine_set_id: config.routine_set_id,
     }));
-  }, [initialSetConfigs]);
+  }, [initialSetConfigs, reorderedSets]);
 
   useEffect(() => {
     setsRef.current = sets;
   }, [sets]);
+
+  // Reset reordered sets when initialSetConfigs change (from parent)
+  useEffect(() => {
+    setReorderedSets(null);
+  }, [initialSetConfigs]);
 
   const allComplete = useMemo(
     () => sets.every((set) => set.status === "complete"),
     [sets]
   );
 
+  // Handle set reordering - this is the new responsibility delegated to the card
+  const handleSetReorder = useCallback((fromIndex, toIndex) => {
+    if (!mountedRef.current) return;
 
+    const newOrder = [...sets];
+    const [movedSet] = newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, movedSet);
+
+    // Update internal state immediately for optimistic UI update
+    setReorderedSets(newOrder);
+
+    // Notify parent of the reorder for database persistence
+    if (onSetReorder) {
+      Promise.resolve(
+        onSetReorder(exerciseId, newOrder, fromIndex, toIndex)
+      ).catch((error) => {
+        console.error('Failed to persist set reorder:', error);
+        // Revert optimistic update on error
+        setReorderedSets(null);
+      });
+    }
+  }, [exerciseId, sets, onSetReorder]);
 
   const handleSetComplete = useCallback(
     async (setIdx) => {
@@ -217,6 +258,7 @@ ActiveExerciseCard.propTypes = {
   onFocus: PropTypes.func,
   onSetPress: PropTypes.func,
   onEditExercise: PropTypes.func,
+  onSetReorder: PropTypes.func,
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,

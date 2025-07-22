@@ -215,6 +215,14 @@ const ActiveWorkoutSection = ({
           }
         });
 
+        // Sort by set_order first to ensure stable positioning
+        // This prevents sets from reordering when renamed
+        mergedSetConfigs.sort((a, b) => {
+          const aOrder = a.set_order ?? 0;
+          const bOrder = b.set_order ?? 0;
+          return aOrder - bOrder;
+        });
+
         // Ensure unique set_variant names while preserving original order
         const usedNames = new Set();
         
@@ -226,21 +234,15 @@ const ActiveWorkoutSection = ({
         });
         
         // Second pass: assign default names only to sets that need them
-        mergedSetConfigs.forEach((set, index) => {
+        // Use set_order for naming to maintain consistency
+        mergedSetConfigs.forEach((set) => {
           // Only assign a default name if the set doesn't have one
           if (!set.set_variant) {
-            // Use the position in the array (index + 1) to maintain order
-            set.set_variant = `Set ${index + 1}`;
+            // Use the set_order for naming to maintain consistency
+            const setOrder = set.set_order ?? 1;
+            set.set_variant = `Set ${setOrder}`;
             usedNames.add(set.set_variant);
           }
-        });
-
-        // Sort by set_order to ensure stable positioning
-        // This prevents sets from reordering when renamed
-        mergedSetConfigs.sort((a, b) => {
-          const aOrder = a.set_order ?? 0;
-          const bOrder = b.set_order ?? 0;
-          return aOrder - bOrder;
         });
 
         return {
@@ -406,6 +408,11 @@ const ActiveWorkoutSection = ({
         payload.timed_set_duration = Number(setConfig.timed_set_duration);
       }
 
+      // Add set_order if not present to ensure database consistency
+      if (setConfig.set_order !== undefined) {
+        payload.set_order = setConfig.set_order;
+      }
+
       let data, error;
       if (setConfig.id && !setConfig.id.startsWith('temp-')) {
         const updateResult = await supabase
@@ -447,6 +454,34 @@ const ActiveWorkoutSection = ({
     value
   ) => {
     toast.info("Set editing feature is under construction");
+  };
+
+  // Handle set reordering - called by ActiveExerciseCard
+  const handleSetReorder = async (exerciseId, newSetOrder, fromIndex, toIndex) => {
+    try {
+      console.log(`[ActiveWorkoutSection] Reordering sets for exercise ${exerciseId}: ${fromIndex} -> ${toIndex}`);
+      
+      // Update only the local exercises state to reflect the reorder
+      // We don't update the global context for reordering to avoid infinite loops
+      // The global context is mainly used for completion tracking and navigation
+      setExercises(prevExercises => 
+        prevExercises.map(ex => 
+          ex.exercise_id === exerciseId 
+            ? { ...ex, setConfigs: newSetOrder }
+            : ex
+        )
+      );
+
+      // For now, we'll just update the local state
+      // In the future, this could be extended to persist the reorder to the database
+      // by updating the set_order field in the sets table
+      
+      console.log(`[ActiveWorkoutSection] Set reorder completed for exercise ${exerciseId}`);
+    } catch (error) {
+      console.error(`[ActiveWorkoutSection] Failed to handle set reorder for exercise ${exerciseId}:`, error);
+      toast.error("Failed to reorder sets. Please try again.");
+      throw error; // Re-throw to trigger optimistic update rollback in the card
+    }
   };
 
   // Internal focus change logic
@@ -657,7 +692,7 @@ const ActiveWorkoutSection = ({
         activeWorkout.id
       );
 
-      const { data: workoutExercises, error: workoutExerciseError } =
+      const { data: workoutExercise, error: workoutExerciseError } =
         await supabase
           .from("workout_exercises")
           .insert({
@@ -667,7 +702,8 @@ const ActiveWorkoutSection = ({
             snapshot_name: exerciseName.trim(),
             section_override: section, // Force this exercise into the section
           })
-          .select("*");
+          .select("id")
+          .single();
 
       if (workoutExerciseError) throw workoutExerciseError;
 
@@ -678,6 +714,7 @@ const ActiveWorkoutSection = ({
         setRows = setConfigs.map((cfg, idx) => ({
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
+          set_order: idx + 1, // Add proper set_order for database consistency
           reps: Number(cfg.reps) || 10,
           weight: Number(cfg.weight) || 25,
           weight_unit: cfg.unit || "lbs",
@@ -691,6 +728,7 @@ const ActiveWorkoutSection = ({
         setRows = Array.from({ length: 3 }, (_, idx) => ({
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
+          set_order: idx + 1, // Add proper set_order for database consistency
           reps: 10,
           weight: 25,
           weight_unit: "lbs",
@@ -1015,6 +1053,7 @@ const ActiveWorkoutSection = ({
           .insert({
             workout_id: activeWorkout.id,
             exercise_id: exercise_id,
+            set_order: set.set_order || 1, // Add proper set_order for database consistency
             reps: set.reps,
             weight: set.weight,
             weight_unit: set.weight_unit,
@@ -1106,7 +1145,11 @@ const ActiveWorkoutSection = ({
           .eq("id", setConfig.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("sets").insert(setData);
+        const { error } = await supabase
+          .from("sets")
+          .insert(setData)
+          .select("id")
+          .single();
         if (error) throw error;
       }
 
@@ -1189,6 +1232,7 @@ const ActiveWorkoutSection = ({
       const newSet = {
         workout_id: activeWorkout.id,
         exercise_id: exerciseId,
+        set_order: newSetNumber, // Add proper set_order for database consistency
         reps: 10,
         weight: 25,
         weight_unit: "lbs",
@@ -1388,6 +1432,7 @@ const ActiveWorkoutSection = ({
               }
               isUnscheduled={!!activeWorkout?.is_unscheduled}
               onSetProgrammaticUpdate={handleSetDataChange}
+              onSetReorder={handleSetReorder}
               isFocused={isFocused}
               isExpanded={isExpanded}
               onFocus={() => {
