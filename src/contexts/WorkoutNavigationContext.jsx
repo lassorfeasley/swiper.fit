@@ -107,19 +107,36 @@ export const WorkoutNavigationProvider = ({ children }) => {
 
   // Get progress statistics
   const getProgressStats = useCallback(() => {
-    const totalExercises = Object.values(sectionExercises).reduce(
-      (total, exercises) => total + exercises.length, 
+    // Count total sets across all exercises
+    const totalSets = Object.values(sectionExercises).reduce(
+      (total, exercises) => total + exercises.reduce(
+        (exerciseTotal, exercise) => exerciseTotal + (exercise.setConfigs?.length || 0), 
+        0
+      ), 
       0
     );
-    const completedCount = completedExercises.size;
+    
+    // Count completed sets by checking the status of each set in each exercise
+    const completedSets = Object.values(sectionExercises).reduce(
+      (total, exercises) => total + exercises.reduce(
+        (exerciseTotal, exercise) => {
+          const completedSetsInExercise = (exercise.setConfigs || []).filter(
+            set => set.status === 'complete'
+          ).length;
+          return exerciseTotal + completedSetsInExercise;
+        }, 
+        0
+      ), 
+      0
+    );
     
     return {
-      total: totalExercises,
-      completed: completedCount,
-      remaining: totalExercises - completedCount,
-      percentage: totalExercises > 0 ? (completedCount / totalExercises) * 100 : 0
+      total: totalSets,
+      completed: completedSets,
+      remaining: totalSets - completedSets,
+      percentage: totalSets > 0 ? (completedSets / totalSets) * 100 : 0
     };
-  }, [sectionExercises, completedExercises]);
+  }, [sectionExercises]);
 
   // Focus on the first incomplete exercise in the workout
   const focusFirstExercise = useCallback(() => {
