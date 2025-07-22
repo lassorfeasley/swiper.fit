@@ -13,6 +13,7 @@ const SwiperForm = ({
   open,
   onOpenChange,
   title,
+  description,
   leftAction,
   rightAction,
   rightEnabled,
@@ -55,6 +56,8 @@ const SwiperForm = ({
           onOpenChange={onOpenChange}
           className={cn("z-[100] p-0", className)}
           style={delegateOverlayStyle}
+          title={title}
+          description={description}
         >
           {leftAction && (
             <FormHeader
@@ -77,6 +80,7 @@ const SwiperForm = ({
 SwiperForm.propTypes = {
   padding: PropTypes.oneOf([0, 4]),
   className: PropTypes.string,
+  description: PropTypes.string,
 };
 
 // Convenient section wrapper for form content
@@ -88,6 +92,7 @@ const SwiperFormSection = ({ children, bordered = true, className }) => {
         bordered && "border-b border-neutral-300 last:border-b-0",
         className
       )}
+      bordered={bordered}
     >
       {children}
     </FormSectionWrapper>

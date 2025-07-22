@@ -6,7 +6,7 @@ const StaticCard = ({ id, name, labels = [], count, duration, onClick }) => {
     <div
       key={id}
       data-component="StaticCard"
-      className="bg-white rounded-lg shadow-sm p-4 w-full flex justify-between items-center cursor-pointer"
+      className="bg-white shadow-sm p-4 w-full flex justify-between items-center cursor-pointer"
       onClick={onClick}
     >
       <div className="flex-1">

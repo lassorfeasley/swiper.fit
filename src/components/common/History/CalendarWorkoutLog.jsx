@@ -243,7 +243,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
                     );
                   }
                 }}
-                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px] border border-neutral-300 rounded-lg"
+                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px] border border-neutral-300"
               >
                 <WorkoutCard
                   name={w.workout_name || "Workout"}

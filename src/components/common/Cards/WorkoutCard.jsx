@@ -12,7 +12,7 @@ import PropTypes from "prop-types";
 const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
-      className="w-full max-w-[500px] p-4 bg-white rounded-lg flex flex-col justify-start items-start gap-2"
+      className="w-full max-w-[500px] p-4 bg-white flex flex-col justify-start items-start gap-2"
       {...props}
     >
       <div className="w-full text-slate-950 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight truncate">

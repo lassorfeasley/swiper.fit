@@ -30,6 +30,7 @@ const FormContent = ({
   onDelete,
   addType,
   onAddTypeChange,
+  hideToggle,
 }) => {
   const {
     set_type = "reps",
@@ -43,7 +44,7 @@ const FormContent = ({
   return (
     <div className="w-full bg-stone-50 inline-flex flex-col justify-start items-center">
       {showSetNameField && (
-                <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
+        <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
           <TextInput
             label="Set name"
             value={set_variant || ""}
@@ -54,96 +55,101 @@ const FormContent = ({
         </div>
       )}
       
-      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start gap-3">
-        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
-          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Set type</div>
-          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
-            <ToggleInput
-              value={set_type}
-              onValueChange={handleSetTypeChange}
-              options={setTypeOptions}
-              className="flex-1 h-7"
-            />
-          </div>
-        </div>
-        <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
-          {set_type === "reps" ? (
-            <NumericInput
-              value={reps}
-              onChange={repsOnChange}
-              onBlur={showSetNameField ? syncWithParent : undefined}
-              unitLabel="Reps"
-              className="self-stretch h-12"
-            />
-          ) : (
-            <NumericInput
-              value={timed_set_duration}
-              onChange={durationOnChange}
-              onBlur={showSetNameField ? syncWithParent : undefined}
-              unitLabel="Seconds"
-              step={5}
-              className="self-stretch h-12"
-            />
-          )}
-        </div>
-      </div>
-      
-      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start gap-3">
-        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
-          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Weight unit</div>
-          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
-            <ToggleInput
-              value={unit}
-              onValueChange={handleUnitChange}
-              options={unitOptions}
-              className="flex-1 h-7"
-            />
-          </div>
-        </div>
-        <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
-          {unit === "body" ? (
-            <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center">
-              <span className="text-slate-500 text-body">Bodyweight</span>
+      <div className={`self-stretch p-4 flex flex-col justify-center items-start gap-6 ${!hideToggle ? 'border-b border-neutral-300' : ''}`}>
+        <div className="self-stretch flex flex-col justify-start items-start gap-4">
+          <div data-field-label="true" className="w-full max-w-[500px] flex flex-col justify-start items-center gap-2">
+            <div className="self-stretch justify-start text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Set type</div>
+            <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+              <ToggleInput
+                value={set_type}
+                onValueChange={handleSetTypeChange}
+                options={setTypeOptions}
+                className="flex-1 h-7"
+              />
             </div>
-          ) : (
-            <NumericInput
-              value={weight}
-              onChange={weightOnChange}
-              onBlur={showSetNameField ? syncWithParent : undefined}
-              unitLabel={unit}
-              step={1}
-              allowOneDecimal={true}
-              className="self-stretch h-12"
-            />
-          )}
+          </div>
+          <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
+            {set_type === "reps" ? (
+              <NumericInput
+                value={reps}
+                onChange={repsOnChange}
+                onBlur={showSetNameField ? syncWithParent : undefined}
+                unitLabel="Reps"
+                className="self-stretch h-12"
+              />
+            ) : (
+              <NumericInput
+                value={timed_set_duration}
+                onChange={durationOnChange}
+                onBlur={showSetNameField ? syncWithParent : undefined}
+                unitLabel="Seconds"
+                step={5}
+                className="self-stretch h-12"
+              />
+            )}
+          </div>
         </div>
-      </div>
-      
-      <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
-        <div data-field-label="true" className="w-full flex flex-col justify-start items-center gap-2">
-          <div className="self-stretch justify-start text-slate-500 text-sm font-medium leading-tight">Keep new settings?</div>
-          <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
-            <ToggleInput
-              value={addType || "today"}
-              onValueChange={onAddTypeChange}
-              options={[
-                { label: "Just for today", value: "today" },
-                { label: "Permanently", value: "future" }
-              ]}
-              className="flex-1 h-7"
-            />
+        
+        <div className="self-stretch flex flex-col justify-start items-start gap-4">
+          <div data-field-label="true" className="w-full max-w-[500px] flex flex-col justify-start items-center gap-2">
+            <div className="self-stretch justify-start text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Weight unit</div>
+            <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+              <ToggleInput
+                value={unit}
+                onValueChange={handleUnitChange}
+                options={unitOptions}
+                className="flex-1 h-7"
+              />
+            </div>
+          </div>
+          <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
+            {unit === "body" ? (
+              <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center">
+                <span className="text-slate-500 text-body">Bodyweight</span>
+              </div>
+            ) : (
+              <NumericInput
+                value={weight}
+                onChange={weightOnChange}
+                onBlur={showSetNameField ? syncWithParent : undefined}
+                unitLabel={unit}
+                step={1}
+                allowOneDecimal={true}
+                className="self-stretch h-12"
+              />
+            )}
           </div>
         </div>
       </div>
       
-      <div className="self-stretch p-4 flex flex-col justify-center items-start">
+      {/* Only show keep new settings in active workout - they are all permanent in routine builder */}
+      {!hideToggle && (
+        <div className="self-stretch p-4 flex flex-col justify-center items-start">
+          <div data-field-label="true" className="w-full max-w-[500px] flex flex-col justify-start items-center gap-2">
+            <div className="self-stretch justify-start text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Keep new settings?</div>
+            <div className="self-stretch rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center overflow-hidden">
+              <ToggleInput
+                value={addType || "today"}
+                onValueChange={onAddTypeChange}
+                options={[
+                  { label: "Just for today", value: "today" },
+                  { label: "Permanently", value: "future" }
+                ]}
+                className="flex-1 h-7"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <FormSectionWrapper className="p-4 border-t border-neutral-300">
         <button
           onClick={onDelete}
-          className="w-full h-12 px-4 py-2 bg-red-400 rounded inline-flex justify-center items-center gap-2.5 hover:bg-red-500 transition-colors"
+          className="w-full h-12 px-4 py-2 bg-red-400 rounded inline-flex justify-center items-center gap-2.5"
         >
-          <div className="justify-start text-white text-base font-medium leading-tight">Delete set</div>
+          <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Delete set</div>
         </button>
-      </div>
+      </FormSectionWrapper>
     </div>
   );
 };
@@ -311,6 +317,7 @@ const SetEditForm = React.forwardRef((
         onDelete={onDelete}
         addType={addType}
         onAddTypeChange={onAddTypeChange}
+        hideToggle={hideToggle}
       />
     );
 });

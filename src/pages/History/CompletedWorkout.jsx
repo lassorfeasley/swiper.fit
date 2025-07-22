@@ -602,6 +602,7 @@ const CompletedWorkout = () => {
           open={isEditWorkoutOpen}
           onOpenChange={setEditWorkoutOpen}
           title="Edit"
+          description="Edit workout name and manage workout settings"
           leftAction={() => setEditWorkoutOpen(false)}
           rightAction={handleSaveWorkoutName}
           rightEnabled={Boolean(workoutName.trim()) && workoutName.trim() !== (workout?.workout_name || "")}

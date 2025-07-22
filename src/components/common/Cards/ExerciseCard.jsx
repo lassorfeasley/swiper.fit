@@ -100,7 +100,7 @@ const ExerciseCard = ({
   const cardContent = (
     <div
       data-layer="Property 1=routine-builder" 
-      className="w-full bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
+      className="w-full bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
       onClick={handleCardClick}
       style={{ 
         cursor: reorderable ? "grab" : setsAreEditable && onCardClick ? "pointer" : "default",
@@ -197,32 +197,16 @@ const ExerciseCard = ({
           leftText="Cancel"
           padding={0}
         >
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <SetEditForm
-                hideInternalHeader
-                hideActionButtons
-                hideToggle={true}
-                onDirtyChange={setFormDirty}
-                onValuesChange={setCurrentFormValues}
-                onSave={handleEditFormSave}
-                initialValues={editFormValues}
-              />
-            </div>
-            {onSetConfigsChange && (
-              <div className="border-t border-neutral-300">
-                <div className="p-4">
-                  <SwiperButton
-                    onClick={handleSetDelete}
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    Delete Set
-                  </SwiperButton>
-                </div>
-              </div>
-            )}
-          </div>
+          <SetEditForm
+            hideInternalHeader
+            hideActionButtons
+            hideToggle={true}
+            onDirtyChange={setFormDirty}
+            onValuesChange={setCurrentFormValues}
+            onSave={handleEditFormSave}
+            onDelete={handleSetDelete}
+            initialValues={editFormValues}
+          />
         </SwiperForm>
       )}
     </div>

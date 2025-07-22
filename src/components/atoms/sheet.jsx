@@ -85,18 +85,18 @@ const FormHeader = ({
               <div className="w-1.5 h-3 left-[9px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600" />
             </div>
           )}
-          <button
-            onClick={leftAction}
-            className="text-red-500 text-base font-medium font-vietnam leading-tight text-left focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
-          >
-            {leftText}
-          </button>
+                  <button
+          onClick={leftAction}
+          className="text-red-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight text-left focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+        >
+          {leftText}
+        </button>
         </>
       )}
     </div>
     <div className="flex-1 flex justify-center items-center gap-2.5">
       {title && (
-        <div className="justify-center text-slate-600 text-xl font-medium font-vietnam leading-normal">
+        <div className="justify-center text-neutral-950 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight whitespace-nowrap">
           {title}
         </div>
       )}
@@ -106,7 +106,7 @@ const FormHeader = ({
         <button
           onClick={rightAction}
           className={cn(
-            "text-base font-medium font-vietnam leading-tight",
+            "text-base font-medium font-['Be_Vietnam_Pro'] leading-tight",
             rightEnabled ? "text-green-600" : "text-neutral-400",
             "focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
           )}

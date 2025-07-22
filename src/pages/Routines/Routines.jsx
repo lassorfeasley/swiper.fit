@@ -188,13 +188,14 @@ const RoutinesIndex = () => {
         open={showSheet}
         onOpenChange={setShowSheet}
         title=""
+        description="Create a new workout routine"
         leftAction={() => setShowSheet(false)}
         rightAction={handleCreateProgram}
         rightEnabled={isReady}
         rightText="Create"
         leftText="Cancel"
       >
-        <SwiperForm.Section>
+        <SwiperForm.Section bordered={false}>
           <TextInput
             label="Name routine"
             value={programName}

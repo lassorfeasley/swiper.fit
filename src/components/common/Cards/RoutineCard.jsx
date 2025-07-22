@@ -18,7 +18,7 @@ const RoutineCard = ({ id, name, lastCompleted, onStart }) => {
   return (
     <div
       data-layer="Routine Card"
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-10 cursor-pointer"
+      className="RoutineCard w-full max-w-[500px] p-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-10 cursor-pointer"
       onClick={onStart}
     >
       <div

@@ -673,6 +673,11 @@ const RoutineBuilder = () => {
             handleModalClose();
           }}
           title={showAddExercise ? "Exercise" : "Edit"}
+          description={
+            showAddExercise 
+              ? "Add a new exercise to your routine with name, section, and sets" 
+              : "Edit exercise details including name, section, and sets"
+          }
           leftAction={handleModalClose}
           rightAction={() => formRef.current.requestSubmit()}
           rightEnabled={dirty}
@@ -703,10 +708,11 @@ const RoutineBuilder = () => {
                 onDirtyChange={setDirty}
                 hideActionButtons
                 showAddToProgramToggle={false}
+                hideSetDefaults={!!editingExercise}
                 onEditSet={handleEditSet}
               />
               {editingExercise && (
-                <div className="flex flex-col gap-3 border-t border-neutral-300 py-4 px-4">
+                <div className="flex flex-col gap-3 py-4 px-4">
                   <SwiperButton
                     variant="destructive"
                     className="w-full"
@@ -725,6 +731,7 @@ const RoutineBuilder = () => {
         open={isEditProgramOpen}
         onOpenChange={setEditProgramOpen}
         title="Edit"
+        description="Edit routine name and manage program settings"
         leftAction={() => setEditProgramOpen(false)}
         leftText="Cancel"
         rightAction={() => handleTitleChange(programName)}
@@ -737,7 +744,7 @@ const RoutineBuilder = () => {
             onChange={(e) => setProgramName(e.target.value)}
           />
         </SwiperForm.Section>
-        <SwiperForm.Section>
+        <SwiperForm.Section bordered={false}>
           <SwiperButton
             variant="destructive"
             onClick={handleDeleteProgram}
@@ -751,7 +758,8 @@ const RoutineBuilder = () => {
       <SwiperForm
         open={isEditSetFormOpen}
         onOpenChange={setIsEditSetFormOpen}
-        title="Edit set"
+        title="Edit"
+        description="Edit set configuration including type, reps, weight, and unit"
         leftAction={handleSetEditFormClose}
         rightAction={() => handleSetEditFormSave(editingSet)}
         rightEnabled={editingSetFormDirty}
@@ -759,28 +767,14 @@ const RoutineBuilder = () => {
         leftText="Cancel"
         padding={0}
       >
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <SetEditForm
-              hideInternalHeader
-              hideActionButtons
-              onDirtyChange={setEditingSetFormDirty}
-              onValuesChange={setEditingSet}
-              initialValues={editingSet}
-            />
-          </div>
-          <div className="border-t border-neutral-300">
-            <div className="p-4">
-              <SwiperButton
-                onClick={handleSetDelete}
-                variant="destructive"
-                className="w-full"
-              >
-                Delete Set
-              </SwiperButton>
-            </div>
-          </div>
-        </div>
+        <SetEditForm
+          hideInternalHeader
+          hideActionButtons
+          onDirtyChange={setEditingSetFormDirty}
+          onValuesChange={setEditingSet}
+          onDelete={handleSetDelete}
+          initialValues={editingSet}
+        />
       </SwiperForm>
 
       <SwiperAlertDialog

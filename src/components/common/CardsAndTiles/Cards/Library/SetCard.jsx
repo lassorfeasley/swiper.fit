@@ -176,7 +176,7 @@ const SetCard = ({
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg relative">
+    <div className="p-4 bg-white relative">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-heading-md text-[#353942] m-0">{exerciseName}</h1>
         <button className="text-xl" onClick={toggleFocusedView}>

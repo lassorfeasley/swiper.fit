@@ -59,9 +59,7 @@ const AddExerciseToProgramForm = ({
     );
   };
 
-  const handleSetDefaultsChange = (newValues) => {
-    setSetDefaults(newValues);
-  };
+
 
   const handleSaveToday = (e) => {
     e.preventDefault();
@@ -119,9 +117,6 @@ const AddExerciseToProgramForm = ({
           <NumericInput value={sets} onChange={setSets} min={1} max={10} />
         </div>
       </div>
-      <div className="my-2 text-slate-600 text-heading-sm font-normal leading-tight">
-        Set defaults are global - edit individual sets for more control.
-      </div>
       <SwiperAccordionGroup>
         <SwiperAccordion
           type="single"
@@ -130,25 +125,6 @@ const AddExerciseToProgramForm = ({
           onValueChange={setOpenSet}
           className="w-full"
         >
-          <SwiperAccordionItem
-            value="defaults"
-            className="border-b border-neutral-300"
-          >
-            <SwiperAccordionTrigger>
-              <span className="font-bold">Set defaults</span>
-            </SwiperAccordionTrigger>
-            <SwiperAccordionContent>
-              <div className="atomic-set-builder-form w-full flex flex-col justify-start items-start gap-6">
-                <SetEditForm
-                  isChildForm
-                  isUnscheduled={true}
-                  hideToggle={true}
-                  initialValues={setDefaults}
-                  onValuesChange={handleSetDefaultsChange}
-                />
-              </div>
-            </SwiperAccordionContent>
-          </SwiperAccordionItem>
 
           {Array.from({ length: sets }).map((_, idx) => {
             const setConfig = setConfigs[idx] || setDefaults;

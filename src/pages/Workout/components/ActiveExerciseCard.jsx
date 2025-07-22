@@ -180,9 +180,7 @@ const ActiveExerciseCard = React.forwardRef(({
       >
         <div
           className={cn(
-            "w-full bg-white flex flex-col justify-start items-start rounded-t-lg",
-            index === totalCards - 1 && "rounded-b-lg",
-            "shadow-[0px_0px_4px_0px_rgba(212,212,212,1)]",
+            "w-full bg-white flex flex-col justify-start items-start",
             index === totalCards - 1
               ? "border border-neutral-300"
               : "border-t border-l border-r border-neutral-300"

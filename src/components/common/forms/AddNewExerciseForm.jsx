@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import ToggleInput from "@/components/molecules/toggle-input";
+import NumericInput from "@/components/molecules/numeric-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
@@ -27,6 +28,7 @@ const AddNewExerciseForm = React.forwardRef(
       onEditSet,
       onSetsConfigChange,
       disabled = false,
+      hideSetDefaults = false,
     },
     ref
   ) => {
@@ -132,8 +134,6 @@ const AddNewExerciseForm = React.forwardRef(
 
     const [addType, setAddType] = useState("today");
 
-
-
     /* ------------------------------------------------------------------ */
     //  Save / cancel
     /* ------------------------------------------------------------------ */
@@ -145,8 +145,6 @@ const AddNewExerciseForm = React.forwardRef(
         alert("Exercise name is required.");
         return;
       }
-
-
 
       // When editing an existing exercise, preserve database identifiers
       const setConfigs = sets.map((_, idx) => {
@@ -191,13 +189,9 @@ const AddNewExerciseForm = React.forwardRef(
     };
 
     return (
-      <form
-        ref={ref}
-        className="w-full box-border inline-flex flex-col gap-0"
-        onSubmit={handleSave}
-      >
-        {/* Exercise name & sets */}
-        <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
+      <div className="w-full bg-stone-50 inline-flex flex-col justify-start items-center overflow-hidden">
+        {/* Exercise name & section & sets */}
+        <FormSectionWrapper className="p-5" bordered={!(hideSetDefaults && !showAddToProgramToggle)}>
           <TextInput
             label="Exercise name"
             value={exerciseName}
@@ -205,6 +199,7 @@ const AddNewExerciseForm = React.forwardRef(
             customPlaceholder=""
             disabled={disabled}
           />
+          
           <ToggleInput
             value={section}
             onValueChange={(value) => value && setSection(value)}
@@ -216,119 +211,119 @@ const AddNewExerciseForm = React.forwardRef(
             disabled={disabled}
           />
           
-          {/* Sets control */}
-          <div className="flex flex-col gap-2">
-            <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('[DEBUG] Remove button clicked, current setsCount:', setsCount);
-                  if (setsCount > 1) {
-                    console.log('[DEBUG] Calling removeLastSet');
-                    removeLastSet();
-                  } else {
-                    console.log('[DEBUG] Remove button disabled, setsCount <= 1');
-                  }
-                }}
-                disabled={setsCount <= 1}
-                className="flex-1 self-stretch border-r border-neutral-300 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Minus className="w-5 h-5 text-slate-600" />
-              </button>
-              <div className="flex-1 inline-flex flex-col justify-center items-start gap-1">
-                <div className="self-stretch text-center justify-start text-slate-600 text-base font-medium leading-tight">
-                  {setsCount.toString().padStart(2, '0')}
-                </div>
-                <div className="self-stretch text-center justify-start text-slate-500 text-sm font-medium leading-tight">
-                  Sets
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('[DEBUG] Add button clicked, current setsCount:', setsCount);
-                  console.log('[DEBUG] Calling addSet');
+          <NumericInput
+            label="Sets"
+            value={setsCount}
+            onChange={(value) => {
+              const currentCount = sets.length;
+              if (value > currentCount) {
+                // Add sets
+                for (let i = currentCount; i < value; i++) {
                   addSet();
-                }}
-                className="flex-1 self-stretch border-l border-neutral-300 flex justify-center items-center"
-              >
-                <Plus className="w-5 h-5 text-slate-600" />
-              </button>
-            </div>
-          </div>
-
-          {/* Add to program toggle */}
-          {showAddToProgramToggle && (
-            <div className="flex flex-col gap-2 pt-2">
-              <span className="text-slate-600 text-label">Add to program?</span>
-              <ToggleInput
-                options={[
-                  { label: "Just for today", value: "today" },
-                  { label: "Permanently", value: "future" },
-                ]}
-                value={addType}
-                onValueChange={(val) => val && setAddType(val)}
-              />
-            </div>
-          )}
+                }
+              } else if (value < currentCount) {
+                // Remove sets
+                for (let i = currentCount; i > value; i--) {
+                  removeLastSet();
+                }
+              }
+            }}
+            min={1}
+            max={10}
+            unitLabel="Sets"
+            disabled={disabled}
+          />
         </FormSectionWrapper>
 
-        {/* Set config defaults (only when adding new exercise) */}
-        {showAddToProgramToggle && (
-          <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
-            <SetBuilderForm
-              initialDefaults={defaults}
-              onDefaultsChange={updateDefault}
-              disabled={disabled || setsCount === 1}
-            />
+        {/* Set defaults section - only show when not editing */}
+        {!hideSetDefaults && (
+          <FormSectionWrapper className="p-5">
+            <div className="self-stretch justify-start">
+              <span className="text-slate-600 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Set defaults </span>
+              <span className="text-slate-300 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Initialize sets then configure them individually in the exercise card.</span>
+            </div>
+            
+            <div className="self-stretch flex flex-col justify-start items-start gap-6">
+              {/* Default set type */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-4">
+                <ToggleInput
+                  label="Default set type"
+                  value={defaults.set_type}
+                  onValueChange={(value) => value && updateDefault("set_type", value)}
+                  options={[
+                    { label: "Reps", value: "reps" },
+                    { label: "Timed", value: "timed" },
+                  ]}
+                  disabled={disabled}
+                />
+
+                <NumericInput
+                  label={defaults.set_type === "timed" ? "Duration" : "Reps"}
+                  value={defaults.set_type === "timed" ? defaults.timed_set_duration : defaults.reps}
+                  onChange={(value) => {
+                    if (defaults.set_type === "timed") {
+                      updateDefault("timed_set_duration", value);
+                    } else {
+                      updateDefault("reps", value);
+                    }
+                  }}
+                  min={1}
+                  max={999}
+                  unitLabel={defaults.set_type === "timed" ? "Seconds" : "Reps"}
+                  disabled={disabled}
+                />
+              </div>
+
+              {/* Default weight */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-4">
+                <ToggleInput
+                  label="Default weight"
+                  value={defaults.unit}
+                  onValueChange={(value) => value && updateDefault("unit", value)}
+                  options={[
+                    { label: "lbs", value: "lbs" },
+                    { label: "kg", value: "kg" },
+                    { label: "body", value: "body" },
+                  ]}
+                  disabled={disabled}
+                />
+
+                <NumericInput
+                  label="Weight"
+                  value={defaults.weight}
+                  onChange={(value) => updateDefault("weight", value)}
+                  min={0}
+                  max={999}
+                  step={5}
+                  unitLabel={defaults.unit === "body" ? "Body" : defaults.unit === "kg" ? "Kg" : "Lbs"}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
           </FormSectionWrapper>
         )}
 
-        {/* Keep new settings toggle (Edit Exercise only) */}
-        {showUpdateTypeToggle && (
-          <FormSectionWrapper className="border-b border-neutral-300 py-4 px-4">
+        {/* Keep new exercise toggle (only for active workouts) */}
+        {showAddToProgramToggle && (
+          <FormSectionWrapper className="p-4" bordered={false}>
             <ToggleInput
-              key="updateTypeToggle"
-              label="Keep new settings?"
-              value={updateType}
-              onValueChange={onUpdateTypeChange}
+              label="Keep new exercise?"
+              value={addType}
+              onValueChange={(value) => value && setAddType(value)}
               options={[
                 { label: "Just for today", value: "today" },
                 { label: "Permanently", value: "future" },
               ]}
+              disabled={disabled}
             />
           </FormSectionWrapper>
         )}
 
-        {onDelete && !hideActionButtons && (
-          <FormSectionWrapper className="px-4 pb-4">
-            <SwiperButton
-              variant="destructive"
-              onClick={onDelete}
-              className="w-full"
-            >
-              Delete exercise
-            </SwiperButton>
-          </FormSectionWrapper>
-        )}
-
-        {!hideActionButtons && (
-          <FormSectionWrapper className="px-4 pb-4">
-            <SwiperButton
-              type="submit"
-              variant="default"
-              disabled={!exerciseName.trim()}
-              className={`w-full ${
-                exerciseName.trim()
-                  ? "!bg-green-600 hover:!bg-green-500"
-                  : "!bg-neutral-300"
-              }`}
-            >
-              {onDelete ? "Save changes" : "Add exercise"}
-            </SwiperButton>
-          </FormSectionWrapper>
-        )}
-      </form>
+        {/* Hidden form for submission */}
+        <form ref={ref} onSubmit={handleSave} className="hidden">
+          <button type="submit" />
+        </form>
+      </div>
     );
   }
 );
@@ -349,6 +344,8 @@ AddNewExerciseForm.propTypes = {
   onUpdateTypeChange: PropTypes.func,
   onEditSet: PropTypes.func,
   onSetsConfigChange: PropTypes.func,
+  disabled: PropTypes.bool,
+  hideSetDefaults: PropTypes.bool,
 };
 
 AddNewExerciseForm.displayName = "AddNewExerciseForm";

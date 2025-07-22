@@ -1399,9 +1399,7 @@ const ActiveWorkoutSection = ({
       <SwiperForm
         open={showAddExercise}
         onOpenChange={setShowAddExercise}
-        title={`Add ${
-          section.charAt(0).toUpperCase() + section.slice(1)
-        } Exercise`}
+        title="Create"
         leftAction={() => setShowAddExercise(false)}
         rightAction={() => addExerciseFormRef.current?.requestSubmit?.()}
         rightEnabled={canAddExercise}
@@ -1438,9 +1436,8 @@ const ActiveWorkoutSection = ({
         <SwiperForm
           open={!!editingExercise}
           onOpenChange={() => setEditingExercise(null)}
-          title={`Edit ${
-            section.charAt(0).toUpperCase() + section.slice(1)
-          } Exercise`}
+          title="Edit exercise"
+          description="Edit exercise details including name, section, and sets"
           leftAction={() => setEditingExercise(null)}
           leftText="Close"
           rightAction={() => {
@@ -1472,6 +1469,7 @@ const ActiveWorkoutSection = ({
               initialSetConfigs={editingExercise.setConfigs}
               hideActionButtons={true}
               showAddToProgramToggle={false}
+              hideSetDefaults={true}
               onActionIconClick={(data) =>
                 handleSaveExerciseEdit(data, exerciseUpdateType)
               }
@@ -1488,7 +1486,8 @@ const ActiveWorkoutSection = ({
       <SwiperForm
         open={isEditSheetOpen}
         onOpenChange={setEditSheetOpen}
-        title={`Edit ${section.charAt(0).toUpperCase() + section.slice(1)} Set`}
+        title="Edit"
+        description="Edit set configuration including type, reps, weight, and unit"
         leftAction={handleSetEditFormClose}
         rightAction={() => handleSetEditFormSave(currentFormValues)}
         rightEnabled={formDirty}
