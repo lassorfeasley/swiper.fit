@@ -13,11 +13,11 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
-import SetEditForm from "@/components/common/forms/SetEditForm";
+
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
 import { Share2, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { useAccount } from "@/contexts/AccountContext";
 
 // Share dialog extracted outside of the component scope so it preserves identity between renders
@@ -61,12 +61,7 @@ const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shar
 ShareWorkoutDialog.displayName = "ShareWorkoutDialog";
 
 // Individual Exercise Card Component
-const ExerciseCompletedCard = ({ exercise, setLog, onEdit, readOnly = false }) => {
-  const handleSetClick = (setIndex, set, e) => {
-    if (readOnly || !onEdit) return;
-    e.stopPropagation();
-    onEdit(exercise.id, setIndex, set);
-  };
+const ExerciseCompletedCard = ({ exercise, setLog }) => {
 
   // Get set names from database or fallback to default
   const getSetName = (index, set) => {
@@ -105,11 +100,7 @@ const ExerciseCompletedCard = ({ exercise, setLog, onEdit, readOnly = false }) =
               <div 
                 key={set.id || idx}
                 data-layer="card-row" 
-                className={cn(
-                  "self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden",
-                  !readOnly && "cursor-pointer hover:bg-neutral-50"
-                )}
-                onClick={!readOnly ? (e) => handleSetClick(idx, set, e) : undefined}
+                className="self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden"
               >
                 <div data-layer="Set name" className="justify-start text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                   {getSetName(idx, set)}
@@ -163,19 +154,13 @@ const CompletedWorkout = () => {
   const location = useLocation();
   // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
   const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [editSetExerciseId, setEditSetExerciseId] = useState(null);
-  const [editSetIndex, setEditSetIndex] = useState(null);
-  const [editFormValues, setEditFormValues] = useState({});
-  const [currentFormValues, setCurrentFormValues] = useState({});
-  const [formDirty, setFormDirty] = useState(false);
+
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [publicLink, setPublicLink] = useState(false);
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
-  // Treat public view as read-only even if the owner is logged in
-  const readOnly = isPublicWorkoutView || !user || (workout && workout.user_id !== currentUser?.id);
+
   const { isDelegated } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
@@ -477,137 +462,7 @@ const CompletedWorkout = () => {
     }
   };
 
-  // Handle edits to sets within an exercise
-  const handleSetConfigsChange = (exerciseId) => async (updatedConfigs) => {
-    try {
-      // Retrieve the existing sets for this exercise
-      const originalConfigs = sets.filter(
-        (s) => s.exercise_id === exerciseId
-      );
 
-      const updatedIds = updatedConfigs.map((c) => c.id);
-
-      // Delete sets that were removed
-      const toDelete = originalConfigs.filter(
-        (c) => !updatedIds.includes(c.id)
-      );
-      if (toDelete.length > 0) {
-        const { error: delError } = await supabase
-          .from("sets")
-          .delete()
-          .in(
-            "id",
-            toDelete.map((s) => s.id)
-          );
-        if (delError) throw delError;
-      }
-
-      // Upsert (update) existing sets and insert new ones
-      for (const cfg of updatedConfigs) {
-        const { id, reps, weight, unit, set_type, timed_set_duration, set_variant } = cfg;
-        if (id) {
-          const { error: updError } = await supabase
-            .from("sets")
-            .update({
-              reps,
-              weight,
-              weight_unit: unit,
-              set_type,
-              timed_set_duration,
-              set_variant,
-            })
-            .eq("id", id);
-          if (updError) throw updError;
-        } else {
-          const { error: insError } = await supabase
-            .from("sets")
-            .insert({
-              workout_id: workoutId,
-              exercise_id: exerciseId,
-              reps,
-              weight,
-              weight_unit: unit,
-              set_type,
-              timed_set_duration,
-              set_variant,
-              set_order: 0, // Placeholder; you may want to calculate order properly
-              status: "complete"
-            });
-          if (insError) throw insError;
-        }
-      }
-
-      // Update local state while preserving order
-      // Re-fetch the exercise data to ensure consistency
-      const { data: updatedSets, error: fetchError } = await supabase
-        .from("sets")
-        .select("id, exercise_id, reps, weight, weight_unit, set_order, set_type, timed_set_duration, set_variant, status, routine_set_id")
-        .eq("workout_id", workoutId)
-        .eq("exercise_id", exerciseId)
-        .eq("status", "complete")
-        .order("set_order", { ascending: true });
-        
-      if (fetchError) throw fetchError;
-      
-      // Update local state: replace this exercise's sets with fresh data
-      setSets((prev) => [
-        ...prev.filter(s => s.exercise_id !== exerciseId),
-        ...(updatedSets || []).map(set => ({
-          ...set,
-          unit: set.weight_unit || 'lbs',
-          set_variant: set.set_variant ?? set.name ?? '',
-            }))
-      ]);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update sets: " + err.message);
-    }
-  };
-
-  const openSetEdit = (exerciseId, setIdx, setConfig) => {
-    setEditSetExerciseId(exerciseId);
-    setEditSetIndex(setIdx);
-    
-    // Get all sets for this exercise from current state
-    const exerciseSets = sets
-      .filter(s => s.exercise_id === exerciseId)
-      .map(s => ({
-        ...s,
-        unit: s.weight_unit || s.unit || 'lbs' // Normalize field names for form
-      }));
-    
-    setEditFormValues(exerciseSets);
-    setCurrentFormValues(exerciseSets);
-    setFormDirty(false);
-    setEditSheetOpen(true);
-  };
-
-  const handleEditFormSave = (values) => {
-    if (editSetExerciseId === null || editSetIndex === null) return;
-    
-    // Normalize field names from form (form uses unit, database uses weight_unit)
-    const normalizedValues = {
-      ...values,
-      weight_unit: values.unit, // Map form's unit to database's weight_unit
-      unit: values.unit, // Keep unit for local state consistency
-    };
-    
-    // Build updated configs for this exercise
-    const exerciseSets = sets.filter((s) => s.exercise_id === editSetExerciseId);
-    const updatedConfigs = exerciseSets.map((cfg, idx) =>
-      idx === editSetIndex ? { ...cfg, ...normalizedValues } : cfg
-    );
-    handleSetConfigsChange(editSetExerciseId)(updatedConfigs);
-    setEditSheetOpen(false);
-  };
-
-  const handleSetDelete = () => {
-    if (editSetExerciseId === null || editSetIndex === null) return;
-    const exerciseSets = sets.filter((s) => s.exercise_id === editSetExerciseId);
-    const updatedConfigs = exerciseSets.filter((_, idx) => idx !== editSetIndex);
-    handleSetConfigsChange(editSetExerciseId)(updatedConfigs);
-    setEditSheetOpen(false);
-  };
 
   const ensurePublic = async () => {
     if (!workout.is_public) {
@@ -676,10 +531,10 @@ const CompletedWorkout = () => {
       <AppLayout
         variant="dark-fixed"
         title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
-        pageNameEditable={!readOnly || isDelegated}
+        pageNameEditable={isOwner || isDelegated}
         showShare={!isPublicWorkoutView && (isOwner || isDelegated)}
         onShare={handleShare}
-        showSettings={!isPublicWorkoutView && ( !readOnly || isDelegated )}
+        showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
         onSettings={() => setEditWorkoutOpen(true)}
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic}
         onBack={() => {
@@ -693,7 +548,7 @@ const CompletedWorkout = () => {
         searchValue={search}
         onSearchChange={setSearch}
         pageContext="workout"
-        showDeleteOption={!readOnly || isDelegated}
+        showDeleteOption={isOwner || isDelegated}
         onDelete={handleDeleteWorkout}
       >
         {loading ? (
@@ -714,8 +569,6 @@ const CompletedWorkout = () => {
                     key={exercise.id}
                     exercise={exercise}
                     setLog={exercise.setLog}
-                    onEdit={openSetEdit}
-                    readOnly={readOnly}
                   />
                 ))}
               </PageSectionWrapper>
@@ -775,42 +628,7 @@ const CompletedWorkout = () => {
             </SwiperButton>
           </SwiperForm.Section>
         </SwiperForm>
-        <SwiperForm
-          open={editSheetOpen}
-          onOpenChange={setEditSheetOpen}
-          title="Edit Set"
-          leftAction={() => setEditSheetOpen(false)}
-          rightAction={() => handleEditFormSave(currentFormValues)}
-          rightEnabled={formDirty}
-          leftText="Cancel"
-          rightText="Save"
-          padding={0}
-        >
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <SetEditForm
-                initialValues={editFormValues}
-                onValuesChange={setCurrentFormValues}
-                onDirtyChange={setFormDirty}
-                showSetNameField={true}
-                hideActionButtons={true}
-                hideInternalHeader={true}
-                isChildForm={true}
-              />
-            </div>
-            <div className="border-t border-neutral-300">
-              <div className="p-4">
-                <SwiperButton
-                  onClick={handleSetDelete}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  Delete Set
-                </SwiperButton>
-              </div>
-            </div>
-          </div>
-        </SwiperForm>
+
       </AppLayout>
     </>
   );

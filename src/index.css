@@ -140,6 +140,17 @@ body {
     /* Sticky elements now work relative to the main container */
     position: sticky;
   }
+  
+  /* Ensure footer is positioned at the bottom of scrollable content */
+  body.sidebar-shown main > div:first-child {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  /* Ensure footer is positioned at the bottom of the scrollable content */
+  body.sidebar-shown main > div:first-child > div:last-child {
+    margin-top: auto;
+  }
 }
 
 body:has(.edit-set-drawer[data-state="open"]) .add-exercise-drawer {
