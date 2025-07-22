@@ -38,6 +38,7 @@ const ActiveWorkoutContent = () => {
     loading,
     endWorkout: contextEndWorkout,
     updateLastExercise,
+    lastExerciseIdChangeTrigger,
   } = useActiveWorkout();
 
   const {
@@ -108,6 +109,14 @@ const ActiveWorkoutContent = () => {
   useEffect(() => {
     isRestoringFocusRef.current = false;
   }, [activeWorkout?.id]);
+
+  // Reset restoration flag when lastExerciseId changes via real-time subscription (cross-device sync)
+  useEffect(() => {
+    if (lastExerciseIdChangeTrigger > 0) {
+      console.log('[ActiveWorkout] Cross-device focus change detected, resetting restoration flag');
+      isRestoringFocusRef.current = false;
+    }
+  }, [lastExerciseIdChangeTrigger]);
   
   useEffect(() => {
     if (!activeWorkout?.id) return;

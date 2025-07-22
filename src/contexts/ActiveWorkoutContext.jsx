@@ -14,6 +14,7 @@ export function ActiveWorkoutProvider({ children }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState(0);
 
   // Effect to check for an active workout on load
   useEffect(() => {
@@ -130,6 +131,8 @@ export function ActiveWorkoutProvider({ children }) {
 
               if (!conversionError && workoutExercise?.exercise_id) {
                 setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: workoutExercise.exercise_id } : prev);
+                // Trigger focus restoration for cross-device sync
+                setLastExerciseIdChangeTrigger(prev => prev + 1);
               }
             } catch (err) {
               console.error('[ActiveWorkout] Error converting workout_exercise_id in real-time update:', err);
@@ -452,7 +455,8 @@ export function ActiveWorkoutProvider({ children }) {
         togglePause,
         endWorkout,
         updateLastExercise,
-        loading
+        loading,
+        lastExerciseIdChangeTrigger
       }}
     >
       {!loading && children}
