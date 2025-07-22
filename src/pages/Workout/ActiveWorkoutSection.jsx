@@ -1273,7 +1273,6 @@ const ActiveWorkoutSection = ({
         section={section}
         showPlusButton={true}
         onPlus={handleAddExercise}
-        stickyTopClass="top-11"
       >
         <div className="text-center py-8 text-gray-500">
           Loading {section} exercises...
@@ -1290,7 +1289,6 @@ const ActiveWorkoutSection = ({
           section={section}
           showPlusButton={true}
           onPlus={handleAddExercise}
-          stickyTopClass="top-11"
         >
           <div className="text-center py-8 text-gray-500">
             No {section} exercises yet. Add one to get started!
@@ -1345,7 +1343,6 @@ const ActiveWorkoutSection = ({
         section={section}
         showPlusButton={true}
         onPlus={handleAddExercise}
-        stickyTopClass="top-11"
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);

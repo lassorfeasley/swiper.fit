@@ -640,7 +640,6 @@ const RoutineBuilder = () => {
             section={section} 
             id={`section-${section}`} 
             deckGap={20} 
-            stickyTopClass="top-0"
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}

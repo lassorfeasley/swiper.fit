@@ -16,8 +16,6 @@ const PageSectionWrapper = ({
   deckGap = 0, 
   showPlusButton = false, 
   onPlus, 
-  isSticky = true, 
-  stickyTopClass, 
   isFirst = false,
   reorderable = false,
   items = [],
@@ -38,13 +36,13 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white shadow-[0px_0px_16px_0px_rgba(212,212,212,1)] border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
+        "Workoutcardwrapper w-full bg-white border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
         className
       )}
       {...props}
     >
       {/* Header */}
-      <SectionWrapperLabel showPlusButton={showPlusButton} onPlus={onPlus} isSticky={isSticky} stickyTopClass={stickyTopClass}>
+      <SectionWrapperLabel showPlusButton={showPlusButton} onPlus={onPlus}>
         {displayTitle}
       </SectionWrapperLabel>
 
@@ -71,8 +69,6 @@ PageSectionWrapper.propTypes = {
   deckGap: PropTypes.number,
   showPlusButton: PropTypes.bool,
   onPlus: PropTypes.func,
-  isSticky: PropTypes.bool,
-  stickyTopClass: PropTypes.string,
   isFirst: PropTypes.bool,
   reorderable: PropTypes.bool,
   items: PropTypes.array,
