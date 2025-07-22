@@ -25,7 +25,9 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
      { set_variant: 'Warm-up', reps: 8 } // unit & weight come from defaults
    */
   const [defaults, setDefaults] = useState(initialDefaults || defaultValues);
-  const [sets, setSets] = useState(Array.from({ length: initialCount }, () => ({})));
+  const [sets, setSets] = useState(Array.from({ length: initialCount }, (_, index) => ({
+    set_variant: `Set ${index + 1}`
+  })));
 
   // --- updater helpers ----------------------------------------------------
   const updateDefault = (field, value) => {

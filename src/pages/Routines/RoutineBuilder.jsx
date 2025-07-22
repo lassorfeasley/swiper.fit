@@ -338,12 +338,35 @@ const RoutineBuilder = () => {
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
       }
+      // Check if this exercise is already in the routine
+      const { data: existingRoutineExercise } = await supabase
+        .from("routine_exercises")
+        .select("id")
+        .eq("routine_id", programId)
+        .eq("exercise_id", exercise_id)
+        .maybeSingle();
+
+      if (existingRoutineExercise) {
+        throw new Error("This exercise is already in the routine");
+      }
+
+      // Get the next available exercise_order to avoid conflicts
+      const { data: maxOrderResult } = await supabase
+        .from("routine_exercises")
+        .select("exercise_order")
+        .eq("routine_id", programId)
+        .order("exercise_order", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextOrder = (maxOrderResult?.exercise_order || 0) + 1;
+
       const { data: progEx, error: progExError } = await supabase
         .from("routine_exercises")
         .insert({
           routine_id: programId,
           exercise_id,
-          exercise_order: exercises.length + 1,
+          exercise_order: nextOrder,
         })
         .select("id")
         .single();

@@ -33,12 +33,15 @@ const AddNewExerciseForm = React.forwardRef(
     /* ------------------------------------------------------------------ */
     //  Local state – name & set config hook
     /* ------------------------------------------------------------------ */
+    // Store the last used key to detect when to re-initialize
+    const lastKeyRef = React.useRef(null);
     const [isInitialized, setIsInitialized] = useState(false);
     const [exerciseName, setExerciseName] = useState(initialName);
     const [section, setSection] = useState(initialSection);
     const initialNameRef = React.useRef(initialName);
     const initialSectionRef = React.useRef(initialSection);
     const initialUpdateTypeRef = React.useRef(updateType);
+    const lastInitialSetConfigsRef = React.useRef(initialSetConfigs);
 
     // Build initial defaults from the first supplied set config (if any)
     const initialDefaults = initialSetConfigs[0]
@@ -51,6 +54,7 @@ const AddNewExerciseForm = React.forwardRef(
         }
       : undefined;
 
+    // Initialize useSetConfig with the correct number of sets
     const {
       defaults,
       sets,
@@ -69,14 +73,25 @@ const AddNewExerciseForm = React.forwardRef(
       }
     };
 
+    // Set isInitialized to true on first mount
+    useEffect(() => {
+      setIsInitialized(true);
+    }, []);
+
     // Merge incoming per-set configs into hook state on mount
     useEffect(() => {
-      console.log('[DEBUG] AddNewExerciseForm useEffect - initialSetConfigs:', initialSetConfigs);
-      console.log('[DEBUG] AddNewExerciseForm useEffect - current sets length:', sets.length);
+      // Only run this effect if initialSetConfigs has actually changed
+      const currentConfigsString = JSON.stringify(initialSetConfigs);
+      const lastConfigsString = JSON.stringify(lastInitialSetConfigsRef.current);
+      
+      if (currentConfigsString === lastConfigsString) {
+        return; // No change, don't run the effect
+      }
+      
+      lastInitialSetConfigsRef.current = initialSetConfigs;
       
       if (initialSetConfigs.length > 0) {
         initialSetConfigs.forEach((cfg, idx) => {
-          console.log(`[DEBUG] Adding set ${idx}:`, cfg);
           Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k, v));
           
           // Ensure each set has a proper set_variant name
@@ -85,9 +100,8 @@ const AddNewExerciseForm = React.forwardRef(
           }
         });
       }
+      
       onDirtyChange?.(false);
-      setIsInitialized(true);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSetConfigs]);
 
     useEffect(() => {
@@ -176,8 +190,6 @@ const AddNewExerciseForm = React.forwardRef(
       }
     };
 
-
-
     return (
       <form
         ref={ref}
@@ -202,14 +214,22 @@ const AddNewExerciseForm = React.forwardRef(
               { label: "Cooldown", value: "cooldown" },
             ]}
             disabled={disabled}
-                    />
+          />
           
           {/* Sets control */}
           <div className="flex flex-col gap-2">
             <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center gap-1">
               <button
                 type="button"
-                onClick={() => setsCount > 1 && removeLastSet()}
+                onClick={() => {
+                  console.log('[DEBUG] Remove button clicked, current setsCount:', setsCount);
+                  if (setsCount > 1) {
+                    console.log('[DEBUG] Calling removeLastSet');
+                    removeLastSet();
+                  } else {
+                    console.log('[DEBUG] Remove button disabled, setsCount <= 1');
+                  }
+                }}
                 disabled={setsCount <= 1}
                 className="flex-1 self-stretch border-r border-neutral-300 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -225,7 +245,11 @@ const AddNewExerciseForm = React.forwardRef(
               </div>
               <button
                 type="button"
-                onClick={() => addSet()}
+                onClick={() => {
+                  console.log('[DEBUG] Add button clicked, current setsCount:', setsCount);
+                  console.log('[DEBUG] Calling addSet');
+                  addSet();
+                }}
                 className="flex-1 self-stretch border-l border-neutral-300 flex justify-center items-center"
               >
                 <Plus className="w-5 h-5 text-slate-600" />
@@ -259,8 +283,6 @@ const AddNewExerciseForm = React.forwardRef(
             />
           </FormSectionWrapper>
         )}
-
-
 
         {/* Keep new settings toggle (Edit Exercise only) */}
         {showUpdateTypeToggle && (

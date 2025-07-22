@@ -179,17 +179,20 @@ const ActiveWorkoutSection = ({
               set_type: savedSet.set_type,
               timed_set_duration: savedSet.timed_set_duration,
               status: savedSet.status || "default",
+              set_order: template.set_order, // Use the actual set_order from template
             });
           } else {
             mergedSetConfigs.push({
               ...template,
               unit: template.unit || "lbs",
               weight_unit: template.unit || "lbs",
+              set_order: template.set_order, // Use the actual set_order from template
             });
           }
         });
 
-        // Add orphaned saved sets
+        // Add orphaned saved sets at the end
+        let orphanIndex = templateConfigs.length;
         savedSetsForExercise.forEach((saved) => {
           const hasTemplateCounterpart = templateConfigs.some(
             (template) => template.routine_set_id === saved.routine_set_id
@@ -207,22 +210,37 @@ const ActiveWorkoutSection = ({
               set_type: saved.set_type,
               timed_set_duration: saved.timed_set_duration,
               status: saved.status || "default",
+              set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
             });
           }
         });
 
-        // Ensure unique set_variant names
+        // Ensure unique set_variant names while preserving original order
         const usedNames = new Set();
-        mergedSetConfigs.forEach((set, index) => {
-          if (!set.set_variant || usedNames.has(set.set_variant)) {
-            // Find the next available set number
-            let nextSetNumber = 1;
-            while (usedNames.has(`Set ${nextSetNumber}`)) {
-              nextSetNumber++;
-            }
-            set.set_variant = `Set ${nextSetNumber}`;
+        
+        // First pass: collect all existing names
+        mergedSetConfigs.forEach((set) => {
+          if (set.set_variant) {
+            usedNames.add(set.set_variant);
           }
-          usedNames.add(set.set_variant);
+        });
+        
+        // Second pass: assign default names only to sets that need them
+        mergedSetConfigs.forEach((set, index) => {
+          // Only assign a default name if the set doesn't have one
+          if (!set.set_variant) {
+            // Use the position in the array (index + 1) to maintain order
+            set.set_variant = `Set ${index + 1}`;
+            usedNames.add(set.set_variant);
+          }
+        });
+
+        // Sort by set_order to ensure stable positioning
+        // This prevents sets from reordering when renamed
+        mergedSetConfigs.sort((a, b) => {
+          const aOrder = a.set_order ?? 0;
+          const bOrder = b.set_order ?? 0;
+          return aOrder - bOrder;
         });
 
         return {
