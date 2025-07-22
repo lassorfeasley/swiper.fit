@@ -25,17 +25,14 @@ export const useAutoFocus = ({
       
       // Prevent duplicate focus calls
       if (lastFocusedIdRef.current === itemId) {
-        console.log(`[useAutoFocus] Skipping duplicate focus on: ${itemId}`);
         return firstIncomplete;
       }
       
-      console.log(`[useAutoFocus] Focusing on first incomplete item: ${itemId}`);
       setFocusedItem(firstIncomplete);
       lastFocusedIdRef.current = itemId;
       return firstIncomplete;
     }
     
-    console.log('[useAutoFocus] All items are complete, no focus set');
     return null;
   }, [items, setFocusedItem, isItemComplete, itemIdKey]);
 
@@ -44,7 +41,6 @@ export const useAutoFocus = ({
     const currentIndex = items.findIndex(item => item[itemIdKey] === currentItemId);
     
     if (currentIndex === -1) {
-      console.log(`[useAutoFocus] Current item not found: ${currentItemId}`);
       return null;
     }
     
@@ -56,11 +52,9 @@ export const useAutoFocus = ({
         
         // Prevent duplicate focus calls
         if (lastFocusedIdRef.current === itemId) {
-          console.log(`[useAutoFocus] Skipping duplicate focus on: ${itemId}`);
           return item;
         }
         
-        console.log(`[useAutoFocus] Focusing on next incomplete item: ${itemId}`);
         setFocusedItem(item);
         lastFocusedIdRef.current = itemId;
         return item;
@@ -75,18 +69,15 @@ export const useAutoFocus = ({
         
         // Prevent duplicate focus calls
         if (lastFocusedIdRef.current === itemId) {
-          console.log(`[useAutoFocus] Skipping duplicate focus on: ${itemId}`);
           return item;
         }
         
-        console.log(`[useAutoFocus] Focusing on previous incomplete item: ${itemId}`);
         setFocusedItem(item);
         lastFocusedIdRef.current = itemId;
         return item;
       }
     }
     
-    console.log('[useAutoFocus] No incomplete items found');
     return null;
   }, [items, setFocusedItem, isItemComplete, itemIdKey]);
 
@@ -108,11 +99,13 @@ export const useAutoFocus = ({
  * @param {Object} options.sectionExercises - Object with exercises for each section
  * @param {Set} options.completedExercises - Set of completed exercise IDs
  * @param {Function} options.setFocusedExercise - Function to set the focused exercise
+ * @param {boolean} options.isRestoringFocus - Flag to prevent auto-focus when restoring from database
  */
 export const useWorkoutAutoFocus = ({
   sectionExercises,
   completedExercises,
-  setFocusedExercise
+  setFocusedExercise,
+  isRestoringFocus = false
 }) => {
   const lastFocusedExerciseIdRef = useRef(null);
 
@@ -136,7 +129,11 @@ export const useWorkoutAutoFocus = ({
 
   // Focus on the first incomplete exercise in the workout
   const focusFirstExercise = useCallback(() => {
-    // Check sections in order: warmup, training, cooldown
+    // Don't auto-focus if we're restoring focus from database
+    if (isRestoringFocus) {
+      return null;
+    }
+    
     const sections = ['warmup', 'training', 'cooldown'];
     
     for (const section of sections) {
@@ -148,11 +145,9 @@ export const useWorkoutAutoFocus = ({
         
         // Prevent duplicate focus calls
         if (lastFocusedExerciseIdRef.current === exerciseId) {
-          console.log(`[useWorkoutAutoFocus] Skipping duplicate focus on: ${firstIncomplete.name} (${exerciseId})`);
           return firstIncomplete;
         }
         
-        console.log(`[useWorkoutAutoFocus] Focusing on first exercise: ${firstIncomplete.name} in ${section} section`);
         setFocusedExercise({ ...firstIncomplete, section });
         lastFocusedExerciseIdRef.current = exerciseId;
         return firstIncomplete;
@@ -160,9 +155,8 @@ export const useWorkoutAutoFocus = ({
     }
     
     // If all exercises are complete, don't focus on anything
-    console.log('[useWorkoutAutoFocus] All exercises are complete, no focus set');
     return null;
-  }, [sectionExercises, completedExercises, setFocusedExercise]);
+  }, [sectionExercises, completedExercises, setFocusedExercise, isRestoringFocus]);
 
   // Handle section completion and find next exercise
   const handleSectionComplete = useCallback((completedSection) => {
@@ -185,12 +179,10 @@ export const useWorkoutAutoFocus = ({
         
         // Prevent duplicate focus calls
         if (lastFocusedExerciseIdRef.current === exerciseId) {
-          console.log(`[useWorkoutAutoFocus] Skipping duplicate focus on: ${nextExercise.name} (${exerciseId})`);
           return { ...nextExercise, section: nextSection };
         }
         
         const result = { ...nextExercise, section: nextSection };
-        console.log(`[useWorkoutAutoFocus] Section ${completedSection} complete, focusing on: ${nextExercise.name} in ${nextSection}`);
         setFocusedExercise(result);
         lastFocusedExerciseIdRef.current = exerciseId;
         return result;
@@ -211,12 +203,10 @@ export const useWorkoutAutoFocus = ({
           
           // Prevent duplicate focus calls
           if (lastFocusedExerciseIdRef.current === exerciseId) {
-            console.log(`[useWorkoutAutoFocus] Skipping duplicate focus on: ${exercise.name} (${exerciseId})`);
             return { ...exercise, section: sectionName };
           }
           
           const result = { ...exercise, section: sectionName };
-          console.log(`[useWorkoutAutoFocus] Section ${completedSection} complete, focusing on: ${exercise.name} in ${sectionName}`);
           setFocusedExercise(result);
           lastFocusedExerciseIdRef.current = exerciseId;
           return result;
@@ -235,12 +225,10 @@ export const useWorkoutAutoFocus = ({
           
           // Prevent duplicate focus calls
           if (lastFocusedExerciseIdRef.current === exerciseId) {
-            console.log(`[useWorkoutAutoFocus] Skipping duplicate focus on: ${exercise.name} (${exerciseId})`);
             return { ...exercise, section: sectionName };
           }
           
           const result = { ...exercise, section: sectionName };
-          console.log(`[useWorkoutAutoFocus] Section ${completedSection} complete, focusing on: ${exercise.name} in ${sectionName}`);
           setFocusedExercise(result);
           lastFocusedExerciseIdRef.current = exerciseId;
           return result;
@@ -249,14 +237,12 @@ export const useWorkoutAutoFocus = ({
     }
     
     // If no incomplete exercises found anywhere, return null to end workout
-    console.log(`[useWorkoutAutoFocus] Section ${completedSection} complete, no more exercises to focus on`);
     setFocusedExercise(null);
     return null;
   }, [sectionExercises, completedExercises, setFocusedExercise]);
 
   return {
     ...baseAutoFocus,
-    focusFirstExercise,
     handleSectionComplete
   };
 };

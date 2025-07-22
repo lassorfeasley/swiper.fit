@@ -41,12 +41,12 @@ const ActiveWorkoutContent = () => {
   } = useActiveWorkout();
 
   const {
+    focusedExercise,
+    setFocusedExerciseId,
     handleSectionComplete: navigationHandleSectionComplete,
     isWorkoutComplete,
     getProgressStats,
-    setFocusedExerciseId,
-    focusFirstExercise,
-    focusedExercise
+    sectionExercises
   } = useWorkoutNavigation();
 
   // Remove user activity tracking - simplified approach
@@ -99,22 +99,50 @@ const ActiveWorkoutContent = () => {
   // Use the dedicated autoscroll hook
   useWorkoutAutoScroll({
     focusedExercise,
-    viewportPosition: 0.15
+    viewportPosition: 0.2
   });
-  // Auto-focus on first exercise when starting a new workout
+  // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
+  const isRestoringFocusRef = useRef(false);
+  
+  // Reset restoration flag when workout changes
   useEffect(() => {
-    // Only trigger for new workouts (no lastExerciseId) and when we have an active workout
-    if (activeWorkout?.id && !activeWorkout?.lastExerciseId) {
-      console.log('[ActiveWorkout] New workout detected, focusing on first exercise');
-      
-      // Add a small delay to allow sections to load their exercises
-      const timer = setTimeout(() => {
-        focusFirstExercise();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+    isRestoringFocusRef.current = false;
+  }, [activeWorkout?.id]);
+  
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+
+    // Prevent multiple restoration attempts
+    if (isRestoringFocusRef.current) return;
+
+    // Reduced delay to allow sections to load their exercises
+    const timer = setTimeout(() => {
+      if (activeWorkout?.lastExerciseId) {
+        // No database query needed - exercise_id is already loaded in ActiveWorkoutContext
+        console.log('[ActiveWorkout] Restoring focus to exercise:', activeWorkout.lastExerciseId);
+        isRestoringFocusRef.current = true;
+        setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+      }
+      // No else clause needed - all workouts now have lastExerciseId set
+    }, 300); // Reduced from 1500ms to 300ms
+    
+    return () => clearTimeout(timer);
+  }, [activeWorkout?.id, setFocusedExerciseId]);
+
+  // Reactive trigger: Restore focus as soon as sections have loaded exercises
+  useEffect(() => {
+    if (!activeWorkout?.lastExerciseId || isRestoringFocusRef.current) return;
+    
+    // Check if any sections have loaded exercises
+    const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
+    
+    if (hasExercises) {
+      // Sections are ready, restore focus immediately
+      console.log('[ActiveWorkout] Sections loaded, restoring focus immediately to:', activeWorkout.lastExerciseId);
+      isRestoringFocusRef.current = true;
+      setFocusedExerciseId(activeWorkout.lastExerciseId, null);
     }
-  }, [activeWorkout?.id, activeWorkout?.lastExerciseId, focusFirstExercise]);
+  }, [sectionExercises, activeWorkout?.lastExerciseId, setFocusedExerciseId]);
 
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);

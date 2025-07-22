@@ -40,6 +40,28 @@ export function ActiveWorkoutProvider({ children }) {
           setLoading(false);
           return;
         }
+
+        // If there's a last_workout_exercise_id, convert it to exercise_id
+        let lastExerciseId = null;
+        if (workout.last_workout_exercise_id) {
+          try {
+            const { data: workoutExercise, error: conversionError } = await supabase
+              .from('workout_exercises')
+              .select('exercise_id')
+              .eq('id', workout.last_workout_exercise_id)
+              .single();
+
+            if (!conversionError && workoutExercise?.exercise_id) {
+              lastExerciseId = workoutExercise.exercise_id;
+              console.log('[ActiveWorkout] Converted workout_exercise_id', workout.last_workout_exercise_id, 'to exercise_id', lastExerciseId);
+            } else {
+              console.warn('[ActiveWorkout] Could not convert workout_exercise_id to exercise_id:', workout.last_workout_exercise_id);
+            }
+          } catch (err) {
+            console.error('[ActiveWorkout] Error converting workout_exercise_id:', err);
+          }
+        }
+
         // Build workout context data
         const workoutData = {
           id: workout.id,
@@ -47,12 +69,12 @@ export function ActiveWorkoutProvider({ children }) {
           workoutName: workout.workout_name || 'Workout',
           routineName: workout.routines?.routine_name || '',
           startTime: workout.created_at,
-          lastExerciseId: workout.last_workout_exercise_id || null,
+          lastExerciseId: lastExerciseId,
         };
         
         // Log when last workout exercise is loaded
-        if (workout.last_workout_exercise_id) {
-          console.log('[ActiveWorkout] Last workout exercise loaded:', workout.last_workout_exercise_id);
+        if (lastExerciseId) {
+          console.log('[ActiveWorkout] Last workout exercise loaded:', lastExerciseId);
         }
         
         setActiveWorkout(workoutData);
@@ -92,13 +114,26 @@ export function ActiveWorkoutProvider({ children }) {
     // Subscribe to workout status changes (completion/updates)
     const workoutChan = supabase
       .channel(`public:workouts:id=eq.${activeWorkout.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, ({ eventType, new: w, old }) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts', filter: `id=eq.${activeWorkout.id}` }, async ({ eventType, new: w, old }) => {
         console.log('[Real-time] Workout change:', eventType, w, old);
         
         if (eventType === 'UPDATE') {
-          // Sync last exercise across clients
+          // Sync last exercise across clients, but only if it's different and not during restoration
           if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
-            setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: w.last_workout_exercise_id } : prev);
+            // Convert the new workout_exercise_id to exercise_id
+            try {
+              const { data: workoutExercise, error: conversionError } = await supabase
+                .from('workout_exercises')
+                .select('exercise_id')
+                .eq('id', w.last_workout_exercise_id)
+                .single();
+
+              if (!conversionError && workoutExercise?.exercise_id) {
+                setActiveWorkout(prev => prev ? { ...prev, lastExerciseId: workoutExercise.exercise_id } : prev);
+              }
+            } catch (err) {
+              console.error('[ActiveWorkout] Error converting workout_exercise_id in real-time update:', err);
+            }
           }
           
           // Handle workout completion
@@ -267,6 +302,8 @@ export function ActiveWorkoutProvider({ children }) {
     };
 
     // Snapshot initial exercises for this workout
+    let firstWorkoutExerciseId = null;
+    let insertedExercises = null;
     try {
       const snapshotPayload = program.routine_exercises.map((progEx, idx) => ({
         workout_id: workout.id,
@@ -274,16 +311,47 @@ export function ActiveWorkoutProvider({ children }) {
         exercise_order: progEx.exercise_order || idx + 1,
         snapshot_name: progEx.exercises.name,
       }));
-      const { error: snapshotError } = await supabase
+      const { data: exercisesData, error: snapshotError } = await supabase
         .from("workout_exercises")
-        .insert(snapshotPayload);
-      if (snapshotError) console.error("Error snapshotting exercises:", snapshotError);
+        .insert(snapshotPayload)
+        .select('id, exercise_id, exercise_order');
+      if (snapshotError) {
+        console.error("Error snapshotting exercises:", snapshotError);
+      } else if (exercisesData && exercisesData.length > 0) {
+        insertedExercises = exercisesData;
+        // Find the first exercise by exercise_order
+        const firstExercise = insertedExercises.reduce((first, current) => 
+          (current.exercise_order < first.exercise_order) ? current : first
+        );
+        firstWorkoutExerciseId = firstExercise.id;
+        
+        // Update the workout to set the first exercise as last_workout_exercise_id
+        const { error: updateError } = await supabase
+          .from('workouts')
+          .update({ last_workout_exercise_id: firstWorkoutExerciseId })
+          .eq('id', workout.id);
+        
+        if (updateError) {
+          console.error("Error setting first exercise as last_workout_exercise_id:", updateError);
+        } else {
+          console.log('[ActiveWorkout] Set first exercise as last_workout_exercise_id:', firstWorkoutExerciseId);
+        }
+      }
     } catch (err) {
       console.error("Error snapshotting exercises for workout start:", err);
     }
 
+    // Update workoutData with the first exercise's exercise_id
+    const updatedWorkoutData = {
+      ...workoutData,
+      lastExerciseId: firstWorkoutExerciseId && insertedExercises ? 
+        program.routine_exercises.find(ex => ex.exercise_id === 
+          (insertedExercises.find(we => we.id === firstWorkoutExerciseId)?.exercise_id)
+        )?.exercise_id : null
+    };
+
     // Only update context state after snapshot insert is done
-    setActiveWorkout(workoutData);
+    setActiveWorkout(updatedWorkoutData);
     setIsWorkoutActive(true);
     setElapsedTime(0);
     setIsPaused(false);

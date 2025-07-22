@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { 
   areAllExercisesComplete
 } from '@/lib/exerciseNavigation';
 import { useWorkoutAutoFocus } from '@/hooks/useAutoFocus';
+
 const WorkoutNavigationContext = createContext();
 
 export const useWorkoutNavigation = () => {
@@ -11,6 +12,21 @@ export const useWorkoutNavigation = () => {
     throw new Error('useWorkoutNavigation must be used within a WorkoutNavigationProvider');
   }
   return context;
+};
+
+// Utility function to find exercise across all sections
+const findExerciseInSections = (exerciseId, sectionExercises) => {
+  const sections = ['warmup', 'training', 'cooldown'];
+  
+  for (const sectionName of sections) {
+    const exercises = sectionExercises[sectionName] || [];
+    const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+    if (exercise) {
+      return { exercise, section: sectionName };
+    }
+  }
+  
+  return { exercise: null, section: null };
 };
 
 export const WorkoutNavigationProvider = ({ children }) => {
@@ -26,6 +42,9 @@ export const WorkoutNavigationProvider = ({ children }) => {
   
   // Store the currently focused exercise
   const [focusedExercise, setFocusedExercise] = useState(null);
+  
+  // Flag to prevent auto-focus when restoring from database
+  const [isRestoringFocus, setIsRestoringFocus] = useState(false);
 
   // Update exercises for a specific section
   const updateSectionExercises = useCallback((section, exercises) => {
@@ -56,23 +75,67 @@ export const WorkoutNavigationProvider = ({ children }) => {
       return;
     }
 
-    const exercises = sectionExercises[section] || [];
-    const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
-    
-    if (exercise) {
-      setFocusedExercise({ ...exercise, section });
+    if (section) {
+      // Search in specific section
+      const exercises = sectionExercises[section] || [];
+      const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+      
+      if (exercise) {
+        setFocusedExercise({ ...exercise, section });
+      }
     } else {
-      // Store a placeholder so sections can react when data arrives
-      setFocusedExercise({ exercise_id: exerciseId, section });
+      // Search across all sections (for restoring focus on page refresh)
+      setIsRestoringFocus(true);
+      
+      const { exercise, section: foundSection } = findExerciseInSections(exerciseId, sectionExercises);
+      
+      if (exercise) {
+        setFocusedExercise({ ...exercise, section: foundSection });
+        setIsRestoringFocus(false);
+      } else {
+        // Store the exercise ID to resolve later when exercises load
+        setFocusedExercise({ exercise_id: exerciseId, section: null });
+      }
     }
   }, [sectionExercises]);
 
+  // Resolve focus when exercises are loaded (for restoration)
+  useEffect(() => {
+    if (isRestoringFocus && focusedExercise && focusedExercise.section === null) {
+      const { exercise, section: foundSection } = findExerciseInSections(focusedExercise.exercise_id, sectionExercises);
+      
+      if (exercise) {
+        setFocusedExercise({ ...exercise, section: foundSection });
+        setIsRestoringFocus(false);
+      } else {
+        // Exercise still not found in any section, clear restoring flag
+        setIsRestoringFocus(false);
+      }
+    }
+  }, [sectionExercises, focusedExercise, isRestoringFocus]);
+
   // Use the dedicated auto focus hook
-  const { focusFirstExercise, handleSectionComplete } = useWorkoutAutoFocus({
+  const { handleSectionComplete } = useWorkoutAutoFocus({
     sectionExercises,
     completedExercises,
-    setFocusedExercise
+    setFocusedExercise,
+    isRestoringFocus
   });
+
+  // Debug: Log when focus changes
+  useEffect(() => {
+    if (focusedExercise) {
+      // Clear restoring flag if we successfully restored focus
+      if (isRestoringFocus && focusedExercise.section !== null) {
+        setIsRestoringFocus(false);
+      }
+    } else {
+      // Clear restoring flag if focus is cleared
+      setIsRestoringFocus(false);
+    }
+  }, [focusedExercise, isRestoringFocus]);
+
+
 
   // Check if all exercises are complete
   const isWorkoutComplete = useCallback(() => {
@@ -117,6 +180,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
     sectionExercises,
     completedExercises,
     focusedExercise,
+    isRestoringFocus,
     
     // Actions
     updateSectionExercises,
@@ -124,7 +188,6 @@ export const WorkoutNavigationProvider = ({ children }) => {
     markExerciseIncomplete,
     setFocusedExerciseId,
     handleSectionComplete,
-    focusFirstExercise,
     
     // Computed values
     isWorkoutComplete,

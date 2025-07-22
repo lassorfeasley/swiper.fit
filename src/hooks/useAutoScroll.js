@@ -5,14 +5,14 @@ import { useEffect, useRef } from 'react';
  * @param {Object} options - Configuration options
  * @param {string|number} options.focusedId - The ID of the currently focused element
  * @param {string} options.elementPrefix - Prefix for element IDs (e.g., 'exercise-')
- * @param {number} options.viewportPosition - Position in viewport (0-1, default 0.15 for 15%)
+ * @param {number} options.viewportPosition - Position in viewport (0-1, default 0.2 for 20%)
  * @param {string} options.scrollBehavior - Scroll behavior ('smooth', 'auto', 'instant')
  * @param {number} options.debounceMs - Debounce delay in milliseconds (default 100ms)
  */
 export const useAutoScroll = ({
   focusedId,
   elementPrefix = '',
-  viewportPosition = 0.15,
+  viewportPosition = 0.2,
   scrollBehavior = 'smooth',
   debounceMs = 100
 }) => {
@@ -80,12 +80,12 @@ export const useAutoScroll = ({
  * Specialized hook for workout exercise auto-scroll
  * @param {Object} options - Configuration options
  * @param {Object} options.focusedExercise - The currently focused exercise object
- * @param {number} options.viewportPosition - Position in viewport (0-1, default 0.15 for 15%)
+ * @param {number} options.viewportPosition - Position in viewport (0-1, default 0.2 for 20%)
  * @param {number} options.debounceMs - Debounce delay in milliseconds (default 150ms for workouts)
  */
 export const useWorkoutAutoScroll = ({
   focusedExercise,
-  viewportPosition = 0.15,
+  viewportPosition = 0.2,
   debounceMs = 150
 }) => {
   useAutoScroll({

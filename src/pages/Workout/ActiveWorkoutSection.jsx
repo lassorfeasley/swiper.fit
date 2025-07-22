@@ -20,7 +20,8 @@ const ActiveWorkoutSection = ({
     markExerciseComplete,
     completedExercises: globalCompletedExercises,
     focusedExercise,
-    setFocusedExerciseId
+    setFocusedExerciseId,
+    isRestoringFocus
   } = useWorkoutNavigation();
 
   // Local state for this section's exercises
@@ -74,8 +75,6 @@ const ActiveWorkoutSection = ({
         `)
         .eq("workout_id", activeWorkout.id)
         .order("exercise_order", { ascending: true });
-
-      console.log('[ActiveWorkoutSection] Section:', section, 'Fetched workoutExercises:', workoutExercises);
 
       if (workoutError) {
         console.error("Error fetching workout exercises:", workoutError);
@@ -252,8 +251,7 @@ const ActiveWorkoutSection = ({
       updateSectionExercises(section, processedExercises);
       setLoading(false);
       setFirstLoad(false);
-      console.log('[ActiveWorkoutSection] Section:', section, 'Processed exercises:', processedExercises);
-      console.log('[ActiveWorkoutSection] Section:', section, 'Final exercises state set:', processedExercises.map(ex => ({ name: ex.name, setCount: ex.setConfigs.length })));
+      return processedExercises; // Return the processed exercises for the next step
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error("Failed to load exercises");
@@ -328,7 +326,7 @@ const ActiveWorkoutSection = ({
       // Check if the exercise exists in this section before setting focus
       const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
       if (exerciseExists) {
-        console.log(`[${section}] Global focus set to exercise: ${focusedExercise.exercise_id}`);
+        // console.log(`[${section}] Global focus set to exercise: ${focusedExercise.exercise_id}`);
       }
     }
   }, [focusedExercise, section, exercises]);
@@ -346,8 +344,25 @@ const ActiveWorkoutSection = ({
     }
   }, [editingSet]);
 
-  // Handle set completion for this section
-  const handleSetComplete = async (exerciseId, setConfig) => {
+  // Internal focus change logic
+  const changeFocus = useCallback(
+    (newExerciseId) => {
+      // Set global focus immediately
+      setFocusedExerciseId(newExerciseId, section);
+
+      const exercise = exercises.find(
+        (ex) => ex.exercise_id === newExerciseId
+      );
+      // Only update database if this is a user-initiated focus change, not restoration
+      if (exercise?.id && onUpdateLastExercise && !isRestoringFocus) {
+        onUpdateLastExercise(exercise.id);
+      }
+    },
+    [exercises, onUpdateLastExercise, setFocusedExerciseId, section, isRestoringFocus]
+  );
+
+  // Handle set completion
+  const handleSetComplete = useCallback(async (exerciseId, setConfig) => {
     try {
       // Save set to database
       const payload = {
@@ -415,12 +430,48 @@ const ActiveWorkoutSection = ({
       }
 
       // Refresh exercises to get updated data
-      await fetchExercises();
+      const updatedExercises = await fetchExercises();
+      
+      // Check if all sets in this exercise are now complete
+      const currentExercise = updatedExercises.find(ex => ex.exercise_id === exerciseId);
+      if (currentExercise) {
+        const allSetsComplete = currentExercise.setConfigs.every(set => set.status === 'complete');
+        if (allSetsComplete) {
+          // console.log(`[${section}] All sets complete for exercise ${exerciseId}, auto-focusing next exercise`);
+          
+          // Find the next incomplete exercise in this section
+          const currentIndex = updatedExercises.findIndex(ex => ex.exercise_id === exerciseId);
+          
+          // Look for next incomplete exercise after current position
+          for (let i = currentIndex + 1; i < updatedExercises.length; i++) {
+            const ex = updatedExercises[i];
+            if (!globalCompletedExercises.has(ex.exercise_id)) {
+              // console.log(`[${section}] Auto-focusing next exercise: ${ex.name} (${ex.exercise_id})`);
+              changeFocus(ex.exercise_id);
+              return;
+            }
+          }
+          
+          // If no next exercise found, look for previous incomplete exercise
+          for (let i = currentIndex - 1; i >= 0; i--) {
+            const ex = updatedExercises[i];
+            if (!globalCompletedExercises.has(ex.exercise_id)) {
+              // console.log(`[${section}] Auto-focusing previous exercise: ${ex.name} (${ex.exercise_id})`);
+              changeFocus(ex.exercise_id);
+              return;
+            }
+          }
+          
+          // If no incomplete exercises found in this section, trigger section complete
+          // console.log(`[${section}] All exercises in section complete, triggering section complete`);
+          onSectionComplete?.(section);
+        }
+      }
     } catch (error) {
       console.error("Failed to save set:", error);
       toast.error(`Failed to save set. Please try again.`);
     }
-  };
+  }, [activeWorkout?.id, globalCompletedExercises, section, changeFocus, onSectionComplete, fetchExercises]);
 
   // Handle set data changes (inline editing)
   const handleSetDataChange = async (
@@ -435,7 +486,7 @@ const ActiveWorkoutSection = ({
   // Handle set reordering - called by ActiveExerciseCard
   const handleSetReorder = async (exerciseId, newSetOrder, fromIndex, toIndex) => {
     try {
-      console.log(`[ActiveWorkoutSection] Reordering sets for exercise ${exerciseId}: ${fromIndex} -> ${toIndex}`);
+      // console.log(`[ActiveWorkoutSection] Reordering sets for exercise ${exerciseId}: ${fromIndex} -> ${toIndex}`);
       
       // Update only the local exercises state to reflect the reorder
       // We don't update the global context for reordering to avoid infinite loops
@@ -452,7 +503,7 @@ const ActiveWorkoutSection = ({
       // In the future, this could be extended to persist the reorder to the database
       // by updating the set_order field in the sets table
       
-      console.log(`[ActiveWorkoutSection] Set reorder completed for exercise ${exerciseId}`);
+      // console.log(`[ActiveWorkoutSection] Set reorder completed for exercise ${exerciseId}`);
     } catch (error) {
       console.error(`[ActiveWorkoutSection] Failed to handle set reorder for exercise ${exerciseId}:`, error);
       toast.error("Failed to reorder sets. Please try again.");
@@ -460,31 +511,9 @@ const ActiveWorkoutSection = ({
     }
   };
 
-  // Internal focus change logic
-  const changeFocus = useCallback(
-    (newExerciseId) => {
-      // Safety check: Never focus on a completed exercise
-      if (globalCompletedExercises.has(newExerciseId)) {
-        console.log(`[${section}] Attempted to focus on completed exercise:`, newExerciseId);
-        return;
-      }
-
-      // Set global focus immediately
-      setFocusedExerciseId(newExerciseId, section);
-
-      const exercise = exercises.find(
-        (ex) => ex.exercise_id === newExerciseId
-      );
-      if (exercise?.id && onUpdateLastExercise) {
-        onUpdateLastExercise(exercise.id);
-      }
-    },
-    [exercises, onUpdateLastExercise, setFocusedExerciseId, section, globalCompletedExercises]
-  );
-
   // Handle exercise completion
   const handleExerciseComplete = useCallback((exerciseId) => {
-    console.log(`[${section}] Exercise completed:`, exerciseId);
+    // console.log(`[${section}] Exercise completed:`, exerciseId);
     
     // Mark as completed in global context
     markExerciseComplete(exerciseId);
@@ -499,7 +528,7 @@ const ActiveWorkoutSection = ({
     
     if (allExercisesInSection.length === 0) {
       // All exercises in this section are complete
-      console.log(`[${section}] All exercises complete, triggering section complete`);
+      // console.log(`[${section}] All exercises complete, triggering section complete`);
       onSectionComplete?.(section);
     } else if (lastCompletedExerciseId) {
       // Find the next incomplete exercise after the last completed one
@@ -558,7 +587,7 @@ const ActiveWorkoutSection = ({
   const handleFocus = (exerciseId) => {
     // Safety check: Never focus on a completed exercise
     if (globalCompletedExercises.has(exerciseId)) {
-      console.log(`[${section}] Attempted to focus on completed exercise via handleFocus:`, exerciseId);
+      // console.log(`[${section}] Attempted to focus on completed exercise via handleFocus:`, exerciseId);
       return;
     }
     
@@ -815,9 +844,9 @@ const ActiveWorkoutSection = ({
 
   // Handle saving exercise edits
   const handleSaveExerciseEdit = async (data, type = "today") => {
-    console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
+    // console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
     if (!editingExercise) {
-      console.log('[DEBUG] No editingExercise, returning');
+      // console.log('[DEBUG] No editingExercise, returning');
       return;
     }
 
@@ -827,13 +856,13 @@ const ActiveWorkoutSection = ({
       const newSection = data.section;
       const newSetConfigs = data.setConfigs || [];
 
-      console.log('[DEBUG] Processing exercise edit:', { 
-        workoutExerciseId, 
-        exercise_id, 
-        newName, 
-        newSection, 
-        newSetConfigs 
-      });
+      // console.log('[DEBUG] Processing exercise edit:', { 
+      //   workoutExerciseId, 
+      //   exercise_id, 
+      //   newName, 
+      //   newSection, 
+      //   newSetConfigs 
+      // });
 
       if (!newName) {
         toast.error("Exercise name cannot be empty");
@@ -1011,9 +1040,9 @@ const ActiveWorkoutSection = ({
       setEditingExercise(null);
 
       // Refresh exercises to get updated data
-      console.log('[DEBUG] About to refresh exercises after save');
+      // console.log('[DEBUG] About to refresh exercises after save');
       await fetchExercises();
-      console.log('[DEBUG] Finished refreshing exercises after save');
+      // console.log('[DEBUG] Finished refreshing exercises after save');
     } catch (error) {
       console.error("Failed to update exercise:", error);
       toast.error("Failed to update exercise. Please try again.");
@@ -1418,12 +1447,12 @@ const ActiveWorkoutSection = ({
           leftAction={() => setEditingExercise(null)}
           leftText="Close"
           rightAction={() => {
-            console.log('[DEBUG] Save button clicked, using ref');
+            // console.log('[DEBUG] Save button clicked, using ref');
             if (editExerciseFormRef.current) {
-              console.log('[DEBUG] Calling requestSubmit on form ref');
+              // console.log('[DEBUG] Calling requestSubmit on form ref');
               editExerciseFormRef.current.requestSubmit();
             } else {
-              console.log('[DEBUG] Form ref not found!');
+              // console.log('[DEBUG] Form ref not found!');
             }
           }}
           rightText="Save"
