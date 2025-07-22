@@ -99,7 +99,7 @@ const ActiveWorkoutContent = () => {
   // Use the dedicated autoscroll hook
   useWorkoutAutoScroll({
     focusedExercise,
-    viewportPosition: 0.2
+    viewportPosition: 0.15
   });
   // Auto-focus on first exercise when starting a new workout
   useEffect(() => {

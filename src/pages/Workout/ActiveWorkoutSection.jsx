@@ -482,94 +482,53 @@ const ActiveWorkoutSection = ({
     [exercises, onUpdateLastExercise, setFocusedExerciseId, section, globalCompletedExercises]
   );
 
-  // Handle exercise completion and navigation
-  const handleExerciseComplete = (exerciseId) => {
-    // Mark exercise as complete in global context
+  // Handle exercise completion
+  const handleExerciseComplete = useCallback((exerciseId) => {
+    console.log(`[${section}] Exercise completed:`, exerciseId);
+    
+    // Mark as completed in global context
     markExerciseComplete(exerciseId);
-    // Track the last completed exercise to trigger focus change
+    
+    // Store the last completed exercise for this section
     setLastCompletedExerciseId(exerciseId);
-  };
-
-  // Watch for changes in completed exercises and handle navigation
-  useEffect(() => {
-    if (exercises.length === 0) return;
-
+    
     // Check if all exercises in this section are complete
-    const allSectionComplete = exercises.every(ex => 
-      globalCompletedExercises.has(ex.exercise_id)
+    const allExercisesInSection = exercises.filter(
+      (ex) => !globalCompletedExercises.has(ex.exercise_id)
     );
-
-    if (allSectionComplete) {
+    
+    if (allExercisesInSection.length === 0) {
       // All exercises in this section are complete
+      console.log(`[${section}] All exercises complete, triggering section complete`);
       onSectionComplete?.(section);
     } else if (lastCompletedExerciseId) {
-      // An exercise was just completed, find the next incomplete one
-      const completedExerciseIndex = exercises.findIndex(ex => 
-        ex.exercise_id === lastCompletedExerciseId
+      // Find the next incomplete exercise after the last completed one
+      const lastCompletedIndex = exercises.findIndex(
+        (ex) => ex.exercise_id === lastCompletedExerciseId
       );
       
-      if (completedExerciseIndex !== -1) {
-        // Look for the next incomplete exercise after the completed one
-        let nextExercise = null;
-        
-        // First, try to find the next incomplete exercise after the completed one
-        for (let i = completedExerciseIndex + 1; i < exercises.length; i++) {
-          const ex = exercises[i];
-          if (!globalCompletedExercises.has(ex.exercise_id)) {
-            nextExercise = ex;
-            break;
-          }
+      // Look for next incomplete exercise
+      for (let i = lastCompletedIndex + 1; i < exercises.length; i++) {
+        const ex = exercises[i];
+        if (!globalCompletedExercises.has(ex.exercise_id)) {
+          changeFocus(ex.exercise_id);
+          return;
         }
-        
-        // If no next incomplete exercise found, look for the first incomplete exercise before the completed one
-        if (!nextExercise) {
-          for (let i = completedExerciseIndex - 1; i >= 0; i--) {
-            const ex = exercises[i];
-            if (!globalCompletedExercises.has(ex.exercise_id)) {
-              nextExercise = ex;
-              break;
-            }
-          }
+      }
+      
+      // If no next exercise found, look for previous incomplete exercise
+      for (let i = lastCompletedIndex - 1; i >= 0; i--) {
+        const ex = exercises[i];
+        if (!globalCompletedExercises.has(ex.exercise_id)) {
+          changeFocus(ex.exercise_id);
+          return;
         }
-        
-        // Only change focus if we found an incomplete exercise
-        if (nextExercise && !globalCompletedExercises.has(nextExercise.exercise_id)) {
-          changeFocus(nextExercise.exercise_id);
-        }
-        // If no incomplete exercise found, don't change focus - let the section completion logic handle it
       }
       
       // Clear the last completed exercise ID
       setLastCompletedExerciseId(null);
     }
-  }, [globalCompletedExercises, exercises, lastCompletedExerciseId, section, onSectionComplete, changeFocus]);
-
-
-
-  // Helper to find next incomplete exercise in this section
-  const findNextIncompleteInSection = (currentExerciseId) => {
-    const currentIndex = exercises.findIndex(
-      (ex) => ex.exercise_id === currentExerciseId
-    );
-
-    // Look for next incomplete exercise in this section
-    for (let i = currentIndex + 1; i < exercises.length; i++) {
-      const ex = exercises[i];
-      if (!globalCompletedExercises.has(ex.exercise_id)) {
-        return { ...ex, section };
-      }
-    }
-
-    // Look for previous incomplete exercise in this section
-    for (let i = currentIndex - 1; i >= 0; i--) {
-      const ex = exercises[i];
-      if (!globalCompletedExercises.has(ex.exercise_id)) {
-        return { ...ex, section };
-      }
-    }
-
-    return null;
-  };
+  }, [globalCompletedExercises, exercises, lastCompletedExerciseId, section, onSectionComplete, changeFocus, markExerciseComplete]);
 
   // Handle set press (open edit modal)
   const handleSetPress = (exerciseId, setConfig, index) => {
