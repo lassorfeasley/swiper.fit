@@ -697,8 +697,10 @@ const ActiveWorkoutSection = ({
       // Refresh exercises to get updated data
       await fetchExercises();
 
-      // Focus on the newly added exercise
-      changeFocus(exerciseId);
+      // Focus on the newly added exercise with a small delay to ensure UI is updated
+      setTimeout(() => {
+        changeFocus(exerciseId);
+      }, 100);
     } catch (error) {
       console.error("Error adding exercise:", error);
       toast.error("Failed to add exercise. Please try again.");
@@ -707,9 +709,124 @@ const ActiveWorkoutSection = ({
 
   // Handle adding exercise to routine (future workouts)
   const handleAddExerciseFuture = async (data) => {
-    // First add to routine, then add to current workout
-    await handleAddExerciseToday(data);
-    // TODO: Add routine template logic if needed
+    try {
+      const { name: exerciseName, section: exerciseSection, setConfigs } = data;
+
+      // Find or create exercise
+      let exerciseId;
+      const { data: existingExercise, error: searchError } = await supabase
+        .from("exercises")
+        .select("id")
+        .eq("name", exerciseName)
+        .maybeSingle();
+
+      if (searchError) throw searchError;
+
+      if (existingExercise) {
+        exerciseId = existingExercise.id;
+        // Update the section if it changed
+        if (existingExercise.section !== exerciseSection) {
+          await supabase
+            .from("exercises")
+            .update({ section: exerciseSection })
+            .eq("id", exerciseId);
+        }
+      } else {
+        const { data: newExercise, error: createError } = await supabase
+          .from("exercises")
+          .insert({ 
+            name: exerciseName,
+            section: exerciseSection 
+          })
+          .select("id")
+          .single();
+
+        if (createError) throw createError;
+        exerciseId = newExercise.id;
+      }
+
+      // Get the next order for routine_exercises
+      const nextRoutineOrder = await getNextOrder(
+        "routine_exercises",
+        "routine_id",
+        activeWorkout.programId
+      );
+
+      // Add to routine_exercises
+      const { data: routineExercise, error: routineExerciseError } = await supabase
+        .from("routine_exercises")
+        .insert({
+          routine_id: activeWorkout.programId,
+          exercise_id: exerciseId,
+          exercise_order: nextRoutineOrder,
+        })
+        .select("id")
+        .single();
+
+      if (routineExerciseError) throw routineExerciseError;
+
+      // Add to routine_sets
+      if (setConfigs && setConfigs.length > 0) {
+        const routineSetRows = setConfigs.map((cfg, idx) => ({
+          routine_exercise_id: routineExercise.id,
+          set_order: idx + 1,
+          reps: Number(cfg.reps) || 10,
+          weight: Number(cfg.weight) || 25,
+          weight_unit: cfg.unit || "lbs",
+          set_variant: cfg.set_variant || `Set ${idx + 1}`,
+          set_type: cfg.set_type || "reps",
+          timed_set_duration: cfg.timed_set_duration || 30,
+        }));
+
+        const { error: routineSetError } = await supabase
+          .from("routine_sets")
+          .insert(routineSetRows);
+
+        if (routineSetError) {
+          console.error("Failed to add sets to routine template:", routineSetError);
+          toast.error("Failed to add sets to routine template. Exercise added to today's workout only.");
+        } else {
+          toast.success("Exercise added to routine template");
+        }
+      }
+
+      // Add to current workout (but don't call handleAddExerciseToday to avoid duplication)
+      const nextWorkoutOrder = await getNextOrder(
+        "workout_exercises",
+        "workout_id",
+        activeWorkout.id
+      );
+
+      const { data: workoutExercise, error: workoutExerciseError } =
+        await supabase
+          .from("workout_exercises")
+          .insert({
+            workout_id: activeWorkout.id,
+            exercise_id: exerciseId,
+            exercise_order: nextWorkoutOrder,
+            snapshot_name: exerciseName.trim(),
+            section_override: exerciseSection, // Use the form section, not current section
+          })
+          .select("id")
+          .single();
+
+      if (workoutExerciseError) throw workoutExerciseError;
+
+      // Don't create sets for current workout - they will be created from the routine template
+      // when fetchExercises runs and merges the template sets
+
+      toast.success(`Added ${exerciseName} to ${exerciseSection}`);
+      setShowAddExercise(false);
+
+      // Refresh exercises to get updated data
+      await fetchExercises();
+
+      // Focus on the newly added exercise
+      changeFocus(exerciseId);
+    } catch (error) {
+      console.error("Error adding exercise to routine:", error);
+      toast.error("Failed to add exercise to routine. Please try again.");
+    }
   };
 
   // Handle saving exercise edits
@@ -752,7 +869,65 @@ const ActiveWorkoutSection = ({
 
       if (error) throw error;
 
-      // Handle set changes
+      // If type is "future", also update the routine template
+      if (type === "future") {
+        // Update the exercise name and section in the exercises table
+        const { error: exerciseUpdateError } = await supabase
+          .from("exercises")
+          .update({ 
+            name: newName,
+            section: newSection 
+          })
+          .eq("id", exercise_id);
+
+        if (exerciseUpdateError) {
+          console.error("Failed to update exercise in routine template:", exerciseUpdateError);
+          toast.error("Failed to update exercise in routine template. Changes saved for today only.");
+        }
+
+        // Find the routine_exercise_id for this exercise
+        const { data: routineExercise } = await supabase
+          .from("routine_exercises")
+          .select("id")
+          .eq("routine_id", activeWorkout.programId)
+          .eq("exercise_id", exercise_id)
+          .single();
+
+        if (routineExercise) {
+          // Delete existing routine_sets for this exercise
+          await supabase
+            .from("routine_sets")
+            .delete()
+            .eq("routine_exercise_id", routineExercise.id);
+
+          // Insert new routine_sets
+          const routineSetRows = newSetConfigs.map((cfg, idx) => ({
+            routine_exercise_id: routineExercise.id,
+            set_order: idx + 1,
+            reps: Number(cfg.reps),
+            weight: Number(cfg.weight),
+            weight_unit: cfg.weight_unit,
+            set_variant: cfg.set_variant,
+            set_type: cfg.set_type,
+            timed_set_duration: cfg.timed_set_duration,
+          }));
+
+          if (routineSetRows.length > 0) {
+            const { error: routineSetError } = await supabase
+              .from("routine_sets")
+              .insert(routineSetRows);
+            
+            if (routineSetError) {
+              console.error("Failed to update routine template:", routineSetError);
+              toast.error("Failed to update routine template. Changes saved for today only.");
+            } else {
+              toast.success("Exercise updated in routine template");
+            }
+          }
+        }
+      }
+
+      // Handle set changes for current workout
       const currentSets = editingExercise.setConfigs || [];
       const newSets = newSetConfigs || [];
 
@@ -882,6 +1057,30 @@ const ActiveWorkoutSection = ({
         status: setConfig.status || "default",
       };
 
+      // If setUpdateType is "future" and we have a routine_set_id, update the routine template
+      if (setUpdateType === "future" && setConfig.routine_set_id) {
+        const routineSetData = {
+          reps: values.reps || 0,
+          weight: values.weight || 0,
+          weight_unit: values.unit || "lbs",
+          set_type: values.set_type || "reps",
+          set_variant: values.set_variant || "",
+          timed_set_duration: values.timed_set_duration || 30,
+        };
+
+        const { error: routineSetError } = await supabase
+          .from("routine_sets")
+          .update(routineSetData)
+          .eq("id", setConfig.routine_set_id);
+
+        if (routineSetError) {
+          console.error("Failed to update routine template:", routineSetError);
+          toast.error("Failed to update routine template. Changes saved for today only.");
+        } else {
+          toast.success("Set updated in routine template");
+        }
+      }
+
       if (setConfig.id) {
         const { error } = await supabase
           .from("sets")
@@ -924,6 +1123,21 @@ const ActiveWorkoutSection = ({
     }
 
     try {
+      // If setUpdateType is "future" and we have a routine_set_id, delete from routine template
+      if (setUpdateType === "future" && editingSet.setConfig.routine_set_id) {
+        const { error: routineSetError } = await supabase
+          .from("routine_sets")
+          .delete()
+          .eq("id", editingSet.setConfig.routine_set_id);
+
+        if (routineSetError) {
+          console.error("Failed to delete from routine template:", routineSetError);
+          toast.error("Failed to delete from routine template. Set deleted from today's workout only.");
+        } else {
+          toast.success("Set deleted from routine template");
+        }
+      }
+
       const { error } = await supabase
         .from("sets")
         .delete()
