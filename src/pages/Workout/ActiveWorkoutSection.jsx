@@ -1,4 +1,4 @@
-import ActiveExerciseCard, { CARD_ANIMATION_DURATION_MS } from "./components/ActiveExerciseCard";
+import ActiveExerciseCard from "./components/ActiveExerciseCard";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -7,14 +7,12 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
-import { useWorkoutFocus } from "@/hooks/useFocusScroll";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 
 const ActiveWorkoutSection = ({
   section,
   onSectionComplete,
   onUpdateLastExercise,
-  onUserFocus,
 }) => {
   const { activeWorkout } = useActiveWorkout();
   const {
@@ -30,14 +28,9 @@ const ActiveWorkoutSection = ({
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
 
-  // Internal focus state management
-  const [focusedExerciseId, setLocalFocusedExerciseId] = useState(null);
+  // Remove local focus state - use global focus only
   const [lastCompletedExerciseId, setLastCompletedExerciseId] = useState(null);
   
-  // Use the new focus scroll hook
-  const { focusRef, focusedHeight } = useWorkoutFocus({
-    animationDuration: CARD_ANIMATION_DURATION_MS
-  });
 
   // Form state management
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -324,7 +317,10 @@ const ActiveWorkoutSection = ({
     editingSet?.setConfig?.set_variant,
   ]);
 
-  // Focus management is now handled by the useWorkoutFocus hook
+  // Simplified focus management - just use global focus
+  const isExerciseFocused = useCallback((exerciseId) => {
+    return focusedExercise?.exercise_id === exerciseId;
+  }, [focusedExercise]);
 
   // Handle cross-section navigation when focused exercise changes
   useEffect(() => {
@@ -332,30 +328,10 @@ const ActiveWorkoutSection = ({
       // Check if the exercise exists in this section before setting focus
       const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
       if (exerciseExists) {
-        // Update local focus state when global focus changes
-        setLocalFocusedExerciseId(focusedExercise.exercise_id);
+        console.log(`[${section}] Global focus set to exercise: ${focusedExercise.exercise_id}`);
       }
     }
   }, [focusedExercise, section, exercises]);
-
-  // Handle focus restoration when exercises are loaded
-  useEffect(() => {
-    if (exercises.length > 0 && focusedExercise) {
-      // Check if the focused exercise exists in our loaded exercises
-      const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
-      
-      // Handle both cases: when section matches or when section is null (fallback)
-      const shouldRestoreFocus = (focusedExercise.section === section) || 
-                                (focusedExercise.section === null && exerciseExists);
-      
-      if (shouldRestoreFocus && exerciseExists) {
-        // If the exercise exists and we don't have a local focus, set it
-        if (!focusedExerciseId) {
-          setLocalFocusedExerciseId(focusedExercise.exercise_id);
-        }
-      }
-    }
-  }, [exercises, focusedExercise, section, focusedExerciseId]);
 
   // Reset form state when forms are opened
   useEffect(() => {
@@ -493,19 +469,15 @@ const ActiveWorkoutSection = ({
         return;
       }
 
-      setLocalFocusedExerciseId(null);
+      // Set global focus immediately
+      setFocusedExerciseId(newExerciseId, section);
 
-      setTimeout(() => {
-        setLocalFocusedExerciseId(newExerciseId);
-        setFocusedExerciseId(newExerciseId, section);
-
-        const exercise = exercises.find(
-          (ex) => ex.exercise_id === newExerciseId
-        );
-        if (exercise?.id && onUpdateLastExercise) {
-          onUpdateLastExercise(exercise.id);
-        }
-      }, CARD_ANIMATION_DURATION_MS);
+      const exercise = exercises.find(
+        (ex) => ex.exercise_id === newExerciseId
+      );
+      if (exercise?.id && onUpdateLastExercise) {
+        onUpdateLastExercise(exercise.id);
+      }
     },
     [exercises, onUpdateLastExercise, setFocusedExerciseId, section, globalCompletedExercises]
   );
@@ -623,16 +595,13 @@ const ActiveWorkoutSection = ({
     });
   };
 
-  // Handle focus from external calls
+  // Simplified handle focus function
   const handleFocus = (exerciseId) => {
     // Safety check: Never focus on a completed exercise
     if (globalCompletedExercises.has(exerciseId)) {
       console.log(`[${section}] Attempted to focus on completed exercise via handleFocus:`, exerciseId);
       return;
     }
-    
-    // Notify parent that user is actively focusing
-    onUserFocus?.();
     
     changeFocus(exerciseId);
   };
@@ -1391,35 +1360,28 @@ const ActiveWorkoutSection = ({
         stickyTopClass="top-11"
       >
         {exercises.map((ex, index) => {
-          const focusedIndex = exercises.findIndex(
-            (e) => e.exercise_id === focusedExerciseId
-          );
-          const isFocused = focusedIndex === index;
+          const isFocused = isExerciseFocused(ex.exercise_id);
           const isExpanded = isFocused;
           
-
-
+          // Simplified stacking calculation
           const STACKING_OFFSET_PX = 64;
           let topOffset = 80 + index * STACKING_OFFSET_PX;
 
-          if (focusedIndex !== -1) {
+          // If focused, adjust offset for expanded card
+          if (isFocused) {
             const collapsedHeight = 80;
-            const extraHeight = Math.max(
-              0,
-              focusedHeight - collapsedHeight
-            );
-            if (index > focusedIndex) {
-              topOffset =
-                80 +
-                focusedIndex * STACKING_OFFSET_PX +
-                focusedHeight +
-                (index - focusedIndex - 1) * STACKING_OFFSET_PX;
+            const expandedHeight = 300; // Approximate expanded height
+            const extraHeight = expandedHeight - collapsedHeight;
+            
+            // Adjust offsets for cards after the focused one
+            for (let i = index + 1; i < exercises.length; i++) {
+              topOffset += extraHeight;
             }
           }
 
           return (
             <ActiveExerciseCard
-              ref={isFocused ? focusRef : null}
+              // ref={isFocused ? focusRef : null} // This line is removed
               key={ex.id}
               exerciseId={ex.exercise_id}
               exerciseName={ex.name}
@@ -1440,7 +1402,7 @@ const ActiveWorkoutSection = ({
               }}
               onEditExercise={() => handleEditExercise(ex)}
               index={index}
-              focusedIndex={focusedIndex}
+              focusedIndex={exercises.findIndex(e => e.exercise_id === focusedExercise?.exercise_id)}
               totalCards={exercises.length}
               topOffset={topOffset}
             />
