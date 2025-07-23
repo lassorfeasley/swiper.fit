@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const DemoWorkoutContext = createContext();
 
@@ -24,32 +24,32 @@ export function DemoWorkoutProvider({ children }) {
           routine_set_id: 'demo-routine-set-1',
           reps: 10,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'Set 1',
           set_type: 'reps',
-          status: 'complete',
+          status: 'incomplete',
           set_order: 1
         },
         {
           id: 'demo-set-1-2',
-          routine_set_id: 'demo-routine-set-2',
-          reps: 12,
+          routine_set_id: 'demo-routine-set-1',
+          reps: 10,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'Set 2',
           set_type: 'reps',
-          status: 'complete',
+          status: 'incomplete',
           set_order: 2
         },
         {
           id: 'demo-set-1-3',
-          routine_set_id: 'demo-routine-set-3',
-          reps: 8,
+          routine_set_id: 'demo-routine-set-1',
+          reps: 10,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'Set 3',
           set_type: 'reps',
-          status: 'complete',
+          status: 'incomplete',
           set_order: 3
         }
       ]
@@ -62,35 +62,35 @@ export function DemoWorkoutProvider({ children }) {
       setConfigs: [
         {
           id: 'demo-set-2-1',
-          routine_set_id: 'demo-routine-set-4',
+          routine_set_id: 'demo-routine-set-2',
           reps: 25,
           weight: 25,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'ALTERNATING',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 1
         },
         {
           id: 'demo-set-2-2',
-          routine_set_id: 'demo-routine-set-5',
+          routine_set_id: 'demo-routine-set-2',
           reps: 25,
           weight: 25,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'UNISON',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 2
         },
         {
           id: 'demo-set-2-3',
-          routine_set_id: 'demo-routine-set-6',
+          routine_set_id: 'demo-routine-set-2',
           reps: 25,
           weight: 25,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'WOODCHOP',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 3
         }
       ]
@@ -103,35 +103,35 @@ export function DemoWorkoutProvider({ children }) {
       setConfigs: [
         {
           id: 'demo-set-3-1',
-          routine_set_id: 'demo-routine-set-7',
-          reps: 5,
+          routine_set_id: 'demo-routine-set-3',
+          reps: 8,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 1',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 1
         },
         {
           id: 'demo-set-3-2',
-          routine_set_id: 'demo-routine-set-8',
-          reps: 5,
+          routine_set_id: 'demo-routine-set-3',
+          reps: 8,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 2',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 2
         },
         {
           id: 'demo-set-3-3',
-          routine_set_id: 'demo-routine-set-9',
-          reps: 5,
+          routine_set_id: 'demo-routine-set-3',
+          reps: 6,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 3',
           set_type: 'reps',
-          status: 'default',
+          status: 'incomplete',
           set_order: 3
         }
       ]
@@ -207,7 +207,12 @@ export function DemoWorkoutProvider({ children }) {
             ...exercise,
             setConfigs: exercise.setConfigs.map(set => 
               set.id === setConfig.id 
-                ? { ...set, ...updates }
+                ? { 
+                    ...set, 
+                    ...updates,
+                    // Map 'unit' to 'weight_unit' for compatibility
+                    weight_unit: updates.unit || set.weight_unit || set.unit
+                  }
                 : set
             )
           };
@@ -273,7 +278,7 @@ export function DemoWorkoutProvider({ children }) {
           routine_set_id: `demo-routine-set-new-${Date.now()}-1`,
           reps: 10,
           weight: 0,
-          unit: 'lbs',
+          weight_unit: 'lbs',
           set_variant: 'Set 1',
           set_type: 'reps',
           status: 'default',
@@ -286,28 +291,212 @@ export function DemoWorkoutProvider({ children }) {
     setShowAddExercise(false);
   }, []);
 
+  // Auto-complete demo feature
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
+  const [autoCompleteInterval, setAutoCompleteInterval] = useState(null);
+
+  // Start auto-complete demo
+  const startAutoComplete = useCallback(() => {
+    if (autoCompleteEnabled) return; // Already running
+    
+    setAutoCompleteEnabled(true);
+    
+    const interval = setInterval(() => {
+      // Find all incomplete sets across all exercises
+      const incompleteSets = [];
+      demoExercises.forEach(exercise => {
+        exercise.setConfigs.forEach(set => {
+          if (set.status !== 'complete') {
+            incompleteSets.push({
+              exerciseId: exercise.exercise_id,
+              set: set
+            });
+          }
+        });
+      });
+      
+      if (incompleteSets.length > 0) {
+        // Pick a random incomplete set
+        const randomIndex = Math.floor(Math.random() * incompleteSets.length);
+        const { exerciseId, set } = incompleteSets[randomIndex];
+        
+        // Complete the set
+        handleSetComplete(exerciseId, set);
+      } else {
+        // All sets completed, stop auto-complete
+        stopAutoComplete();
+      }
+    }, Math.random() * 3000 + 2000); // Random interval between 2-5 seconds
+    
+    setAutoCompleteInterval(interval);
+  }, [autoCompleteEnabled, demoExercises, handleSetComplete]);
+
+  // Stop auto-complete demo
+  const stopAutoComplete = useCallback(() => {
+    if (autoCompleteInterval) {
+      clearInterval(autoCompleteInterval);
+      setAutoCompleteInterval(null);
+    }
+    setAutoCompleteEnabled(false);
+  }, [autoCompleteInterval]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autoCompleteInterval) {
+        clearInterval(autoCompleteInterval);
+      }
+    };
+  }, [autoCompleteInterval]);
+
+  // Reset demo data
+  const resetDemo = useCallback(() => {
+    stopAutoComplete();
+    setDemoExercises([
+      {
+        id: 'demo-exercise-1',
+        exercise_id: 'push-up',
+        name: 'Push up',
+        section: 'training',
+        setConfigs: [
+          {
+            id: 'demo-set-1-1',
+            routine_set_id: 'demo-routine-set-1',
+            reps: 10,
+            weight: 0,
+            weight_unit: 'lbs',
+            set_variant: 'Set 1',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 1
+          },
+          {
+            id: 'demo-set-1-2',
+            routine_set_id: 'demo-routine-set-1',
+            reps: 10,
+            weight: 0,
+            weight_unit: 'lbs',
+            set_variant: 'Set 2',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 2
+          },
+          {
+            id: 'demo-set-1-3',
+            routine_set_id: 'demo-routine-set-1',
+            reps: 10,
+            weight: 0,
+            weight_unit: 'lbs',
+            set_variant: 'Set 3',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 3
+          }
+        ]
+      },
+      {
+        id: 'demo-exercise-2',
+        exercise_id: 'battle-ropes',
+        name: 'Battle ropes',
+        section: 'training',
+        setConfigs: [
+          {
+            id: 'demo-set-2-1',
+            routine_set_id: 'demo-routine-set-2',
+            reps: 25,
+            weight: 25,
+            weight_unit: 'lbs',
+            set_variant: 'ALTERNATING',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 1
+          },
+          {
+            id: 'demo-set-2-2',
+            routine_set_id: 'demo-routine-set-2',
+            reps: 25,
+            weight: 25,
+            weight_unit: 'lbs',
+            set_variant: 'UNISON',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 2
+          },
+          {
+            id: 'demo-set-2-3',
+            routine_set_id: 'demo-routine-set-2',
+            reps: 25,
+            weight: 25,
+            weight_unit: 'lbs',
+            set_variant: 'WOODCHOP',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 3
+          }
+        ]
+      },
+      {
+        id: 'demo-exercise-3',
+        exercise_id: 'chin-up',
+        name: 'Chin up',
+        section: 'training',
+        setConfigs: [
+          {
+            id: 'demo-set-3-1',
+            routine_set_id: 'demo-routine-set-3',
+            reps: 8,
+            weight: 0,
+            weight_unit: 'body',
+            set_variant: 'Set 1',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 1
+          },
+          {
+            id: 'demo-set-3-2',
+            routine_set_id: 'demo-routine-set-3',
+            reps: 8,
+            weight: 0,
+            weight_unit: 'body',
+            set_variant: 'Set 2',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 2
+          },
+          {
+            id: 'demo-set-3-3',
+            routine_set_id: 'demo-routine-set-3',
+            reps: 6,
+            weight: 0,
+            weight_unit: 'body',
+            set_variant: 'Set 3',
+            set_type: 'reps',
+            status: 'incomplete',
+            set_order: 3
+          }
+        ]
+      }
+    ]);
+    setCompletedExercises(new Set());
+    setFocusedExerciseId(null);
+  }, [stopAutoComplete]);
+
   const value = {
-    // Workout state
     demoWorkout,
     demoExercises,
     focusedExerciseId,
     completedExercises,
-    
-    // Form state
     showAddExercise,
     setShowAddExercise,
     editingSet,
     setEditingSet,
     isEditSheetOpen,
     setEditSheetOpen,
-    
-    // Edit exercise state
     editingExercise,
     setEditingExercise,
     editingExerciseDirty,
     setEditingExerciseDirty,
-    
-    // Actions
+    autoCompleteEnabled,
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
@@ -315,7 +504,10 @@ export function DemoWorkoutProvider({ children }) {
     handleEditExercise,
     handleSaveExerciseEdit,
     handleAddExercise,
-    setFocusedExerciseId
+    setFocusedExerciseId,
+    startAutoComplete,
+    stopAutoComplete,
+    resetDemo
   };
 
   return (

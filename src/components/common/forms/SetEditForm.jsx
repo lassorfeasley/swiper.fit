@@ -201,6 +201,7 @@ const SetEditForm = React.forwardRef((
 
     React.useImperativeHandle(ref, () => ({
       getFormValues: () => formValues,
+      handleSaveSet: () => handleSaveSet(),
     }));
 
     // Store the last non-bodyweight value for restore-on-toggle

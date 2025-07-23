@@ -22,10 +22,10 @@ export default function Landing() {
 
   return (
     <DemoWorkoutProvider>
-      <div className="w-[1512px] h-[963px] relative bg-white overflow-hidden">
+      <div className="min-h-screen w-full relative bg-white overflow-x-hidden">
         {/* Header */}
-        <div className="w-[1512px] left-0 top-0 absolute border-b border-neutral-neutral-300 inline-flex justify-between items-center">
-          <div data-property-1="Default" className="w-48 h-11 px-2 py-3 bg-green-500 flex justify-center items-center gap-2">
+        <div className="w-full border-b border-neutral-neutral-300 flex justify-between items-center">
+          <div data-property-1="Default" className="px-2 py-3 bg-green-500 flex justify-center items-center gap-2 min-w-[10rem] sm:min-w-[12rem]">
             <div className="w-5 inline-flex flex-col justify-start items-start gap-2.5">
               <div className="w-6 h-4 bg-neutral-Neutral-50" />
             </div>
@@ -36,20 +36,20 @@ export default function Landing() {
             <div className="w-5 h-3 bg-neutral-Neutral-50" />
             <div className="w-4 h-5 bg-neutral-Neutral-50" />
           </div>
-          <div className="self-stretch flex justify-start items-center">
-            <div className="self-stretch px-5 py-2.5 border-l border-neutral-neutral-300 flex justify-center items-center gap-2.5">
+          <div className="flex justify-start items-center h-11">
+            <div className="px-2 sm:px-3 lg:px-5 border-l border-neutral-neutral-300 flex justify-center items-center gap-2.5 h-11">
               <div 
-                className="justify-start text-black text-base font-medium font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
+                className="justify-start text-black text-sm sm:text-base font-medium font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
                 onClick={() => navigate("/login")}
               >
                 Log in
               </div>
             </div>
             <div 
-              className="w-48 self-stretch max-w-96 px-4 py-2 bg-slate-slate-600 flex justify-center items-center gap-2.5 cursor-pointer"
+              className="w-28 sm:w-32 lg:w-48 px-2 sm:px-3 lg:px-4 bg-slate-slate-600 flex justify-center items-center gap-2.5 cursor-pointer h-11"
               onClick={() => navigate("/create-account")}
             >
-              <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+              <div className="justify-start text-white text-xs sm:text-sm lg:text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
                 Create account
               </div>
             </div>
@@ -57,25 +57,25 @@ export default function Landing() {
         </div>
 
         {/* Main Content */}
-        <div className="h-[767px] left-[199px] top-[44px] absolute inline-flex justify-start items-center gap-48">
+        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 lg:gap-12 xl:gap-48 px-4 sm:px-6 lg:px-8 flex-1 min-h-[90vh] items-center">
           {/* Left Column - Interactive Demo */}
-          <div className="w-96 self-stretch outline outline-1 outline-neutral-neutral-300 inline-flex flex-col justify-center items-center">
+          <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-96 outline outline-1 outline-neutral-neutral-300 flex flex-col order-2 lg:order-1">
             <DemoWorkoutSection />
           </div>
           
           {/* Right Column - Content */}
-          <div className="w-[500px] h-20 max-w-[500px] inline-flex flex-col justify-start items-start gap-2">
-            <div className="self-stretch h-7 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">
+          <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-[500px] flex flex-col justify-start items-start gap-3 sm:gap-2 text-center lg:text-left order-1 lg:order-2">
+            <div className="self-stretch justify-start text-neutral-neutral-700 text-xl sm:text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">
               Log workouts effortlessly.
             </div>
-            <div className="w-96 h-11 justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            <div className="w-full justify-start text-neutral-neutral-500 text-sm sm:text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
               Enter your routine and start a workout. Never miss an exercise and monitor your progress with AI.
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="w-[1512px] h-36 px-3 pt-3 pb-24 left-0 top-[811px] absolute bg-white border-t border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-3">
+        <div className="w-full px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
           <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
             Developed by Lassor
           </div>
@@ -83,7 +83,7 @@ export default function Landing() {
             <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
               www.Lassor.com
             </div>
-            <div className="w-56 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            <div className="w-full sm:w-56 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none break-all sm:break-normal">
               Feasley@Lassor.com
             </div>
           </div>

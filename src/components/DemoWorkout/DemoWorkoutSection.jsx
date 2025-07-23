@@ -20,6 +20,7 @@ export default function DemoWorkoutSection() {
     setEditingExercise,
     editingExerciseDirty,
     setEditingExerciseDirty,
+    autoCompleteEnabled,
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
@@ -27,20 +28,49 @@ export default function DemoWorkoutSection() {
     handleEditExercise,
     handleSaveExerciseEdit,
     handleAddExercise,
-    setFocusedExerciseId
+    startAutoComplete,
+    stopAutoComplete,
+    resetDemo
   } = useDemoWorkout();
+
+  // Auto-start the demo on component mount
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      startAutoComplete();
+    }, 1000); // Start after 1 second
+
+    return () => clearTimeout(timer);
+  }, [startAutoComplete]);
+
+  // Handle hover pause/resume
+  const handleMouseEnter = () => {
+    if (autoCompleteEnabled) {
+      stopAutoComplete();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!autoCompleteEnabled) {
+      startAutoComplete();
+    }
+  };
 
   // Form refs
   const addExerciseFormRef = useRef(null);
   const editExerciseFormRef = useRef(null);
+  const setEditFormRef = useRef(null);
 
   // Filter exercises for training section (demo only shows training)
   const trainingExercises = demoExercises.filter(ex => ex.section === 'training');
 
   return (
-    <div className="w-full max-w-[500px] bg-white flex flex-col justify-center items-center">
-      {/* Exercise Cards */}
-      <div className="w-full">
+    <div className="w-full bg-white flex-1 h-full">
+      {/* Exercise Cards Container with border wrapper */}
+      <div 
+        className="w-full border-l border-r border-neutral-300 demo-workout-container h-full"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {trainingExercises.map((exercise, index) => {
           const isFocused = focusedExerciseId === exercise.exercise_id;
           const isCompleted = completedExercises.has(exercise.exercise_id);
@@ -74,18 +104,10 @@ export default function DemoWorkoutSection() {
                 />
               </div>
               
-              {/* Add Exercise Button - only show under the last exercise when it's focused */}
-              {isFocused && isLastExercise && (
-                <div className="px-3 pb-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAddExercise(true);
-                    }}
-                    className="w-full text-blue-600 hover:text-blue-700 text-sm font-medium py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-                  >
-                    + Add Exercise
-                  </button>
+              {/* Show "Add Exercise" button only for the last exercise when it's focused */}
+              {isLastExercise && isFocused && (
+                <div className="px-3 pb-3 border-t border-neutral-300">
+                  {/* Add Exercise button removed - form functionality preserved */}
                 </div>
               )}
             </div>
@@ -97,22 +119,33 @@ export default function DemoWorkoutSection() {
       {editingSet && (
         <SwiperForm
           open={isEditSheetOpen}
-          onOpenChange={setEditSheetOpen}
+          onOpenChange={() => setEditSheetOpen(false)}
           title="Edit Set"
           leftAction={() => setEditSheetOpen(false)}
           rightAction={() => {
-            // Handle form submission
-            setEditSheetOpen(false);
-            setEditingSet(null);
+            // Trigger form submission
+            if (setEditFormRef.current) {
+              setEditFormRef.current.handleSaveSet();
+            }
           }}
           rightText="Save"
           leftText="Cancel"
           padding={0}
         >
           <SetEditForm
-            initialValues={editingSet.setConfig}
-            onSubmit={(values) => {
-              handleSetUpdate(editingSet.exerciseId, editingSet.setConfig, values);
+            ref={setEditFormRef}
+            initialValues={{
+              ...editingSet.setConfig,
+              // Map weight_unit to unit for the form
+              unit: editingSet.setConfig.weight_unit || editingSet.setConfig.unit || 'lbs'
+            }}
+            onSave={(values) => {
+              // Map unit back to weight_unit when saving
+              const updatedValues = {
+                ...values,
+                weight_unit: values.unit
+              };
+              handleSetUpdate(editingSet.exerciseId, editingSet.setConfig, updatedValues);
               setEditSheetOpen(false);
               setEditingSet(null);
             }}
@@ -127,7 +160,7 @@ export default function DemoWorkoutSection() {
       {/* Add Exercise Form */}
       <SwiperForm
         open={showAddExercise}
-        onOpenChange={setShowAddExercise}
+        onOpenChange={() => setShowAddExercise(false)}
         title="Create"
         leftAction={() => setShowAddExercise(false)}
         rightAction={() => addExerciseFormRef.current?.requestSubmit?.()}
