@@ -4,7 +4,7 @@ import { Repeat2, Weight, Grip, Clock } from "lucide-react";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
-import { motion } from "framer-motion";
+import { motion, useMotionValue } from "framer-motion";
 
 const ExerciseCard = ({
   exerciseName,
@@ -17,8 +17,11 @@ const ExerciseCard = ({
   reorderValue,
   onCardClick,
   isDragging = false,
+  isFirstCard,
   ...props
 }) => {
+  // Filter out isFirstCard from props to prevent React warning
+  const { isFirstCard: _, ...domProps } = props;
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSetIndex, setEditSetIndex] = useState(null);
   const [editFormValues, setEditFormValues] = useState({
@@ -100,15 +103,16 @@ const ExerciseCard = ({
   const cardContent = (
     <div
       data-layer="Property 1=routine-builder" 
-      className="w-full bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
+      className="w-full bg-white inline-flex flex-col justify-start items-start overflow-hidden"
       onClick={handleCardClick}
       style={{ 
         cursor: reorderable ? "grab" : setsAreEditable && onCardClick ? "pointer" : "default",
         ...(isDragging && { cursor: "grabbing" })
       }}
+      {...domProps}
     >
       {/* Header */}
-      <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
+      <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-100 border-b-[0.25px] inline-flex justify-start items-center gap-4">
         <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
           {exerciseName}
         </div>
@@ -130,7 +134,7 @@ const ExerciseCard = ({
             <div 
               key={idx}
               data-layer="card-row" 
-              className="self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer hover:bg-neutral-50"
+              className="self-stretch h-11 pl-3 border-b border-neutral-100 border-b-[0.25px] inline-flex justify-between items-center overflow-hidden cursor-pointer hover:bg-neutral-50"
               onClick={setsAreEditable ? (e) => {
                 e.stopPropagation();
                 handleSetEdit(idx);
@@ -175,13 +179,22 @@ const ExerciseCard = ({
       {reorderable ? (
         <motion.div
           className="w-full"
-          whileTap={{ scale: 1.02 }}
-          style={{ touchAction: "none" }}
+          style={{ 
+            touchAction: "none"
+          }}
         >
           {cardContent}
         </motion.div>
       ) : (
-        cardContent
+        <div
+          className="w-full"
+          style={{
+            borderBottom: "1px solid #d4d4d4",
+            ...(isFirstCard && { borderTop: "1px solid #d4d4d4" })
+          }}
+        >
+          {cardContent}
+        </div>
       )}
 
       {/* Edit form sheet */}
@@ -232,6 +245,7 @@ ExerciseCard.propTypes = {
   reorderValue: PropTypes.any,
   onCardClick: PropTypes.func,
   isDragging: PropTypes.bool,
+  isFirstCard: PropTypes.bool,
 };
 
 export default ExerciseCard;

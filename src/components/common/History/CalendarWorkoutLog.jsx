@@ -187,7 +187,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
         </CardContent>
 
         {/* Toggle Group */}
-        <div className="w-full bg-white flex justify-center pb-5 px-3 md:px-0">
+        <div className="w-full bg-white flex justify-center pb-5 px-3 md:px-0 border-b border-neutral-300">
           <ToggleInput
             value={filterMode}
             onChange={(val) => val && setFilterMode(val)}
@@ -202,61 +202,61 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
       </Card>
 
       {/* Events list */}
-      <DeckWrapper
-        gap={20}
-        paddingX={20}
-        className="items-center border-t border-neutral-300 space-y-[20px]"
-        style={{ paddingTop: 20, paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}
-      >
-        {events.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No workouts logged</div>
-        ) : (
-          events.map((w) => {
-            const workoutDate = new Date(w.created_at);
-            const todayMidnight = new Date();
-            todayMidnight.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor(
-              (todayMidnight -
-                new Date(
-                  workoutDate.getFullYear(),
-                  workoutDate.getMonth(),
-                  workoutDate.getDate()
-                )) /
-                86400000
-            );
-            const relativeLabel = diffDays === 0 ? "Today" : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-            return (
-              <div
-                key={w.id}
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  navigate(
-                    viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
-                  )
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+      <div className="flex justify-center">
+        <DeckWrapper
+          gap={0}
+        >
+          {events.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No workouts logged</div>
+          ) : (
+            events.map((w, index) => {
+              const workoutDate = new Date(w.created_at);
+              const todayMidnight = new Date();
+              todayMidnight.setHours(0, 0, 0, 0);
+              const diffDays = Math.floor(
+                (todayMidnight -
+                  new Date(
+                    workoutDate.getFullYear(),
+                    workoutDate.getMonth(),
+                    workoutDate.getDate()
+                  )) /
+                  86400000
+              );
+              const relativeLabel = diffDays === 0 ? "Today" : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+                          return (
+              <CardWrapper key={w.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
                     navigate(
                       viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
-                    );
+                    )
                   }
-                }}
-                className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full max-w-[500px] border border-neutral-300"
-              >
-                <WorkoutCard
-                  name={w.workout_name || "Workout"}
-                  subtitle={
-                    w.routines?.routine_name || w.muscle_group || "Workout"
-                  }
-                  relativeLabel={relativeLabel}
-                />
-              </div>
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(
+                        viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
+                      );
+                    }
+                  }}
+                  className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full"
+                >
+                  <WorkoutCard
+                    name={w.workout_name || "Workout"}
+                    subtitle={
+                      w.routines?.routine_name || w.muscle_group || "Workout"
+                    }
+                    relativeLabel={relativeLabel}
+                  />
+                </div>
+              </CardWrapper>
             );
-          })
-        )}
-      </DeckWrapper>
+            })
+          )}
+        </DeckWrapper>
+      </div>
     </div>
   );
 };

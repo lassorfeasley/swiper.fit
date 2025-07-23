@@ -20,6 +20,7 @@ const PageSectionWrapper = ({
   reorderable = false,
   items = [],
   onReorder,
+  isFirstCard, // Extract isFirstCard to prevent it from being spread to DOM
   ...props 
 }) => {
   // Map raw section key to display name
@@ -36,7 +37,7 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white border-t border-neutral-300 inline-flex flex-col justify-start items-center gap-11",
+        "Workoutcardwrapper w-full bg-white border-t border-neutral-300 inline-flex flex-col justify-start items-center",
         className
       )}
       {...props}
@@ -47,10 +48,9 @@ const PageSectionWrapper = ({
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch pb-28 px-0")}>
+      <div className={cn("w-full self-stretch px-0 flex justify-center")}>
         <DeckWrapper 
           gap={deckGap} 
-          paddingX={20} 
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}

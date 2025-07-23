@@ -204,7 +204,20 @@ const RoutineBuilder = () => {
   // Debounced database update function
   const updateExerciseOrderInDatabase = useCallback(async (exercisesToUpdate) => {
     try {
-      // Use sequential updates to avoid 409 conflicts
+      // First, set all exercises to temporary negative order values to avoid constraint conflicts
+      for (const ex of exercisesToUpdate) {
+        const { error } = await supabase
+          .from("routine_exercises")
+          .update({ exercise_order: -ex.order }) // Use negative values as temporary
+          .eq("id", ex.id);
+        
+        if (error) {
+          console.error(`Failed to update exercise ${ex.id} to temporary order:`, error);
+          return; // Stop if we can't set temporary values
+        }
+      }
+      
+      // Then, set the final positive order values
       for (const ex of exercisesToUpdate) {
         const { error } = await supabase
           .from("routine_exercises")
@@ -212,7 +225,7 @@ const RoutineBuilder = () => {
           .eq("id", ex.id);
         
         if (error) {
-          console.error(`Failed to update exercise ${ex.id}:`, error);
+          console.error(`Failed to update exercise ${ex.id} to final order:`, error);
           // Continue with other updates even if one fails
         }
       }
@@ -635,11 +648,11 @@ const RoutineBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-          <PageSectionWrapper 
-            key={section} 
+                    <PageSectionWrapper
+            key={section}
             section={section} 
             id={`section-${section}`} 
-            deckGap={20} 
+            deckGap={0} 
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}

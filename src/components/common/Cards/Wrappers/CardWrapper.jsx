@@ -77,7 +77,9 @@ const CardWrapper = React.forwardRef(({
   }
 
   const containerClasses = cn(
-    "relative z-10 w-full mx-auto bg-transparent",
+    "relative z-10 w-full mx-auto bg-transparent border-b border-neutral-300",
+    // Add top border if this is the first card
+    props.isFirstCard && "border-t border-neutral-300",
     layoutClasses,
     className
   );
@@ -95,7 +97,7 @@ const CardWrapper = React.forwardRef(({
     }
   } else {
     // Flex layout styling (individual cards)
-    style.maxWidth = 500;
+    // Max width is now managed by DeckWrapper
   }
 
   return (
@@ -110,7 +112,7 @@ const CardWrapper = React.forwardRef(({
             <h3 className="text-heading-md">{cardTitle}</h3>
           </div>
         )}
-        {reorderable ? (
+        {reorderable && items && onReorder ? (
         <Reorder.Group
           axis="y"
           values={items}
@@ -137,7 +139,15 @@ const CardWrapper = React.forwardRef(({
           })}
         </Reorder.Group>
       ) : (
-        children
+        React.Children.map(children, (child) => {
+          if (!React.isValidElement(child)) return child;
+          
+          // Forward isFirstCard prop to children
+          return React.cloneElement(child, {
+            ...child.props,
+            isFirstCard: props.isFirstCard
+          });
+        })
       )}
     </div>
   );
@@ -163,6 +173,7 @@ CardWrapper.propTypes = {
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,
+  isFirstCard: PropTypes.bool,
 };
 
 export default CardWrapper;

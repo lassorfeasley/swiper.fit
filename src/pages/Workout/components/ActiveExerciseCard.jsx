@@ -53,6 +53,7 @@ const ActiveExerciseCard = React.forwardRef(({
   focusedIndex,
   totalCards,
   topOffset,
+  isFirstCard,
 }, ref) => {
 
   const mountedRef = useRef(true);
@@ -172,15 +173,11 @@ const ActiveExerciseCard = React.forwardRef(({
       focusedIndex={focusedIndex}
       totalCards={totalCards}
     >
-      <div
-        className={cn(
-          "w-full bg-white flex flex-col justify-start items-start",
-          // First card gets top, left, right borders only, others get bottom, left, right borders
-          index === 0 
-            ? "border-t border-l border-r border-neutral-300" 
-            : "border-b border-l border-r border-neutral-300"
-        )}
-      >
+              <div
+          className={cn(
+            "w-full bg-white flex flex-col justify-start items-start"
+          )}
+        >
           {/* Label Section */}
           <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
             <div className="flex-1 flex flex-col">
@@ -252,6 +249,7 @@ ActiveExerciseCard.propTypes = {
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,
   topOffset: PropTypes.number,
+  isFirstCard: PropTypes.bool,
 };
 
 export default ActiveExerciseCard; 

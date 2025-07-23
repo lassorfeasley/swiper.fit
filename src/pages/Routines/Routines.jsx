@@ -164,8 +164,8 @@ const RoutinesIndex = () => {
         }, 100);
       }}
     >
-      <div className="mt-5">
-        <DeckWrapper paddingX={12} gap={20}>
+      <div className="flex justify-center">
+        <DeckWrapper gap={20} className={filteredRoutines.length <= 1 && !loading ? "min-h-screen" : ""}>
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (

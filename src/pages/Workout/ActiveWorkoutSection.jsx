@@ -1,5 +1,6 @@
 import ActiveExerciseCard from "./components/ActiveExerciseCard";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -1365,32 +1366,33 @@ const ActiveWorkoutSection = ({
           }
 
           return (
-            <ActiveExerciseCard
-              // ref={isFocused ? focusRef : null} // This line is removed
-              key={ex.id}
-              exerciseId={ex.exercise_id}
-              exerciseName={ex.name}
-              initialSetConfigs={ex.setConfigs}
-              onSetComplete={handleSetComplete}
-              onSetDataChange={handleSetDataChange}
-              onExerciseComplete={() => handleExerciseComplete(ex.exercise_id)}
-              onSetPress={(setConfig, index) =>
-                handleSetPress(ex.exercise_id, setConfig, index)
-              }
-              isUnscheduled={!!activeWorkout?.is_unscheduled}
-              onSetProgrammaticUpdate={handleSetDataChange}
-              onSetReorder={handleSetReorder}
-              isFocused={isFocused}
-              isExpanded={isExpanded}
-              onFocus={() => {
-                if (!isFocused) handleFocus(ex.exercise_id);
-              }}
-              onEditExercise={() => handleEditExercise(ex)}
-              index={index}
-              focusedIndex={exercises.findIndex(e => e.exercise_id === focusedExercise?.exercise_id)}
-              totalCards={exercises.length}
-              topOffset={topOffset}
-            />
+            <CardWrapper key={ex.id}>
+              <ActiveExerciseCard
+                // ref={isFocused ? focusRef : null} // This line is removed
+                exerciseId={ex.exercise_id}
+                exerciseName={ex.name}
+                initialSetConfigs={ex.setConfigs}
+                onSetComplete={handleSetComplete}
+                onSetDataChange={handleSetDataChange}
+                onExerciseComplete={() => handleExerciseComplete(ex.exercise_id)}
+                onSetPress={(setConfig, index) =>
+                  handleSetPress(ex.exercise_id, setConfig, index)
+                }
+                isUnscheduled={!!activeWorkout?.is_unscheduled}
+                onSetProgrammaticUpdate={handleSetDataChange}
+                onSetReorder={handleSetReorder}
+                isFocused={isFocused}
+                isExpanded={isExpanded}
+                onFocus={() => {
+                  if (!isFocused) handleFocus(ex.exercise_id);
+                }}
+                onEditExercise={() => handleEditExercise(ex)}
+                index={index}
+                focusedIndex={exercises.findIndex(e => e.exercise_id === focusedExercise?.exercise_id)}
+                totalCards={exercises.length}
+                topOffset={topOffset}
+              />
+            </CardWrapper>
           );
         })}
       </PageSectionWrapper>

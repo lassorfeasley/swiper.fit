@@ -14,11 +14,11 @@ import PropTypes from "prop-types";
  *  • swipeStatus – status to pass to SwipeSwitch (defaults to "active").
  *  • onSwipeComplete – callback when user completes swipe gesture.
  */
-const RoutineCard = ({ id, name, lastCompleted, onStart }) => {
+const RoutineCard = ({ id, name, lastCompleted, onStart, isFirstCard }) => {
   return (
     <div
       data-layer="Routine Card"
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start gap-10 cursor-pointer"
+      className="RoutineCard w-full max-w-[500px] p-3 bg-white inline-flex flex-col justify-start items-start gap-10 cursor-pointer"
       onClick={onStart}
     >
       <div
@@ -65,6 +65,7 @@ RoutineCard.propTypes = {
   name: PropTypes.string.isRequired,
   lastCompleted: PropTypes.string,
   onStart: PropTypes.func,
+  isFirstCard: PropTypes.bool,
 };
 
 export default RoutineCard; 
