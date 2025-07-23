@@ -20,3 +20,87 @@
   --ring: 222.2 84% 4.9%;
   --radius: 0.5rem;
 } 
+/* Neutral color classes for Figma design */
+.neutral-neutral-50 {
+  color: #fafafa;
+}
+
+.neutral-neutral-200 {
+  color: #e5e5e5;
+}
+
+.neutral-neutral-300 {
+  color: #d4d4d4;
+}
+
+.neutral-neutral-400 {
+  color: #a3a3a3;
+}
+
+.neutral-neutral-500 {
+  color: #737373;
+}
+
+.neutral-neutral-600 {
+  color: #525252;
+}
+
+.neutral-neutral-700 {
+  color: #404040;
+}
+
+.neutral-neutral-Neutral-50 {
+  background-color: #fafafa;
+}
+
+.bg-neutral-neutral-200 {
+  background-color: #e5e5e5;
+}
+
+.bg-neutral-neutral-300 {
+  background-color: #d4d4d4;
+}
+
+.bg-neutral-neutral-400 {
+  background-color: #a3a3a3;
+}
+
+.bg-neutral-neutral-500 {
+  background-color: #737373;
+}
+
+.bg-neutral-neutral-600 {
+  background-color: #525252;
+}
+
+.bg-neutral-neutral-700 {
+  background-color: #404040;
+}
+
+.outline-neutral-neutral-300 {
+  outline-color: #d4d4d4;
+}
+
+.border-neutral-neutral-300 {
+  border-color: #d4d4d4;
+}
+
+.bg-slate-slate-600 {
+  background-color: #475569;
+}
+
+.text-neutral-neutral-400 {
+  color: #a3a3a3;
+}
+
+.text-neutral-neutral-500 {
+  color: #737373;
+}
+
+.text-neutral-neutral-600 {
+  color: #525252;
+}
+
+.text-neutral-neutral-700 {
+  color: #404040;
+}

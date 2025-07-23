@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home/Home";
+import Landing from "./pages/Landing/Landing";
 import Routines from "./pages/Routines/Routines";
 import History from "./pages/History/History";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
@@ -49,6 +50,7 @@ function AppContent() {
 
   // Check if current route is authenticated
   const isAuthenticatedRoute = ![
+    "/",
     "/login",
     "/create-account",
     "/reset-password",
@@ -61,6 +63,7 @@ function AppContent() {
   // Define paths that should be allowed even when workout is active
   const allowedPaths = [
     '/workout/active',           // The active workout page itself
+    '/',                         // Landing page
     '/login',                    // Authentication pages
     '/create-account',
     '/reset-password',
@@ -91,13 +94,14 @@ function AppContent() {
       <main className="min-h-screen">
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/create-account" element={<CreateAccount />} />
           <Route path="/reset-password" element={<PasswordReset />} />
 
           {/* Protected routes wrapper */}
           <Route element={<RequireAuth />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Home />} />
             <Route path="/routines" element={<Routines />} />
             <Route
               path="/routines/:programId/configure"

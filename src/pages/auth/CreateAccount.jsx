@@ -38,7 +38,7 @@ export default function CreateAccount() {
         console.error("Post-signup login failed", e);
       }
 
-      navigate("/");
+      navigate("/routines");
     },
     onError: (error) => {
       setErrorMessage(error.message);

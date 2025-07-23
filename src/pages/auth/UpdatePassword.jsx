@@ -49,8 +49,8 @@ export default function UpdatePassword() {
       // Clear the form
       setNewPassword("");
       setConfirmPassword("");
-      // Navigate to home page after a short delay
-      setTimeout(() => navigate("/"), 2000);
+      // Navigate to routines page after a short delay
+      setTimeout(() => navigate("/routines"), 2000);
     }
   };
 

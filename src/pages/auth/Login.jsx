@@ -36,7 +36,7 @@ export default function Login() {
       setPasswordError(false);
       setErrorMessage("");
       toast.success("Logged in successfully");
-      navigate("/");
+      navigate("/routines");
     },
     onError: (error) => {
       const msg = error.message.toLowerCase();
