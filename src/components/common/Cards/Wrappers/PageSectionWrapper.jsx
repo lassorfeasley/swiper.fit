@@ -20,6 +20,7 @@ const PageSectionWrapper = ({
   reorderable = false,
   items = [],
   onReorder,
+  extendToBottom = false,
   isFirstCard, // Extract isFirstCard to prevent it from being spread to DOM
   ...props 
 }) => {
@@ -54,6 +55,7 @@ const PageSectionWrapper = ({
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
+          extendToBottom={extendToBottom}
         >
           {children}
         </DeckWrapper>
@@ -73,6 +75,7 @@ PageSectionWrapper.propTypes = {
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
+  extendToBottom: PropTypes.bool,
 };
 
 export default PageSectionWrapper; 

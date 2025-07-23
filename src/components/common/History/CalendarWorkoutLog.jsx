@@ -5,6 +5,7 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { useNavigate } from "react-router-dom";
 import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 /**
  * CalendarWorkoutLog

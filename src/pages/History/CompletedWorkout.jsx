@@ -76,13 +76,12 @@ const ExerciseCompletedCard = ({ exercise, setLog }) => {
   };
 
   return (
-    <div className="w-full flex justify-center">
-      <div
-        data-layer="Property 1=completed-workout" 
-        className="w-full max-w-[500px] bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden"
-      >
+    <div
+      data-layer="Property 1=completed-workout" 
+      className="w-full bg-white inline-flex flex-col justify-start items-start overflow-hidden"
+    >
         {/* Header */}
-        <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
+        <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-100 border-b-[0.25px] inline-flex justify-start items-center gap-4">
           <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
             {exercise.exercise}
           </div>
@@ -100,7 +99,7 @@ const ExerciseCompletedCard = ({ exercise, setLog }) => {
               <div 
                 key={set.id || idx}
                 data-layer="card-row" 
-                className="self-stretch h-11 pl-3 border-b border-neutral-300 inline-flex justify-between items-center overflow-hidden"
+                className="self-stretch h-11 pl-3 border-b border-neutral-100 border-b-[0.25px] inline-flex justify-between items-center overflow-hidden"
               >
                 <div data-layer="Set name" className="justify-start text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                   {getSetName(idx, set)}
@@ -134,7 +133,6 @@ const ExerciseCompletedCard = ({ exercise, setLog }) => {
           </>
         )}
       </div>
-    </div>
   );
 };
 
@@ -559,7 +557,8 @@ const CompletedWorkout = () => {
               <PageSectionWrapper
                 key={section}
                 section={section}
-                deckGap={20}
+                deckGap={0}
+                extendToBottom={idx === exercisesBySection.length - 1}
                 className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
               >
                 {sectionExercises.map((exercise) => (
