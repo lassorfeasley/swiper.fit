@@ -148,7 +148,9 @@ const CardWrapper = React.forwardRef(({
               const { isFirstCard: _, ...filteredProps } = child.props;
               return filteredProps;
             })(),
-            isFirstCard: props.isFirstCard
+            ...(
+              typeof child.type !== 'string' ? { isFirstCard: props.isFirstCard } : {}
+            )
           });
         })
       )}

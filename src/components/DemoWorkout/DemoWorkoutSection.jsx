@@ -23,6 +23,8 @@ export default function DemoWorkoutSection() {
     editingExerciseDirty,
     setEditingExerciseDirty,
     autoCompleteEnabled,
+    setAutoCompleteEnabled,
+    userHasInteracted,
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
@@ -35,49 +37,44 @@ export default function DemoWorkoutSection() {
     resetDemo
   } = useDemoWorkout();
 
+  // Filter exercises for training section (demo only shows training)
+  const trainingExercises = demoExercises.filter(ex => ex.section === 'training');
+
+  // Focus first exercise on component mount only if no exercise is focused
+  React.useEffect(() => {
+    if (trainingExercises.length > 0 && !focusedExerciseId) {
+      handleExerciseFocus(trainingExercises[0].exercise_id, false); // Not a manual click
+    }
+  }, [trainingExercises, focusedExerciseId, handleExerciseFocus]);
+
   // Auto-start the demo on component mount
   React.useEffect(() => {
     const timer = setTimeout(() => {
       startAutoComplete();
-    }, 1000); // Start after 1 second
+    }, 3000); // Start after 3 seconds to let first exercise stay focused
 
     return () => clearTimeout(timer);
   }, [startAutoComplete]);
 
-  // Handle hover pause/resume
-  const handleMouseEnter = () => {
-    if (autoCompleteEnabled) {
-      stopAutoComplete();
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!autoCompleteEnabled) {
-      startAutoComplete();
-    }
-  };
+  // No hover handling - only disable auto-complete on actual clicks
 
   // Form refs
   const addExerciseFormRef = useRef(null);
   const editExerciseFormRef = useRef(null);
   const setEditFormRef = useRef(null);
 
-  // Filter exercises for training section (demo only shows training)
-  const trainingExercises = demoExercises.filter(ex => ex.section === 'training');
-
   return (
     <div className="w-full bg-transparent flex-1 h-full">
       {/* Exercise Cards Container - now using DeckWrapper */}
       <div 
         className="w-full demo-workout-container h-full flex flex-col items-center justify-center"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <DeckWrapper
           gap={0}
           maxWidth={500}
           minWidth={325}
-          className="h-full"
+          className="h-full flex justify-center items-center"
+          style={{ paddingTop: 0, paddingBottom: 0 }}
         >
           {trainingExercises.map((exercise, index) => {
             const isFocused = focusedExerciseId === exercise.exercise_id;
@@ -89,7 +86,6 @@ export default function DemoWorkoutSection() {
                 key={exercise.id}
                 reorderable={false}
                 className="cursor-pointer"
-                onClick={() => handleExerciseFocus(exercise.exercise_id)}
               >
                 <ActiveExerciseCard
                   exerciseId={exercise.exercise_id}
@@ -104,7 +100,7 @@ export default function DemoWorkoutSection() {
                   onSetPress={(setConfig, index) => handleSetEdit(exercise.exercise_id, setConfig, index)}
                   isFocused={isFocused}
                   isExpanded={isFocused}
-                  onFocus={() => handleExerciseFocus(exercise.exercise_id)}
+                  onFocus={() => handleExerciseFocus(exercise.exercise_id, true)}
                   onEditExercise={() => handleEditExercise(exercise)}
                   index={index}
                   focusedIndex={trainingExercises.findIndex(e => e.exercise_id === focusedExerciseId)}

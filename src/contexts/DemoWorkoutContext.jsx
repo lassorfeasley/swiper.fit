@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 
 const DemoWorkoutContext = createContext();
 
@@ -24,7 +24,7 @@ export function DemoWorkoutProvider({ children }) {
           routine_set_id: 'demo-routine-set-1',
           reps: 10,
           weight: 0,
-          weight_unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 1',
           set_type: 'reps',
           status: 'default',
@@ -35,7 +35,7 @@ export function DemoWorkoutProvider({ children }) {
           routine_set_id: 'demo-routine-set-1',
           reps: 10,
           weight: 0,
-          weight_unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 2',
           set_type: 'reps',
           status: 'default',
@@ -46,7 +46,7 @@ export function DemoWorkoutProvider({ children }) {
           routine_set_id: 'demo-routine-set-1',
           reps: 10,
           weight: 0,
-          weight_unit: 'lbs',
+          weight_unit: 'body',
           set_variant: 'Set 3',
           set_type: 'reps',
           status: 'default',
@@ -139,8 +139,8 @@ export function DemoWorkoutProvider({ children }) {
   ]);
 
   // Focus management
-  const [focusedExerciseId, setFocusedExerciseId] = useState('battle-ropes');
-  const [completedExercises, setCompletedExercises] = useState(new Set(['push-up']));
+  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  const [completedExercises, setCompletedExercises] = useState(new Set());
 
   // Form state
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -150,6 +150,18 @@ export function DemoWorkoutProvider({ children }) {
   // Edit exercise state
   const [editingExercise, setEditingExercise] = useState(null);
   const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
+
+  // Auto-complete demo feature
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
+  const [autoCompleteInterval, setAutoCompleteInterval] = useState(null);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
+  
+  // Use refs to track current auto-complete state to avoid closure issues
+  const autoCompleteEnabledRef = useRef(false);
+  const currentExerciseIndexRef = useRef(0);
+  const currentSetIndexRef = useRef(0);
 
   // Handle set completion
   const handleSetComplete = useCallback((exerciseId, setConfig) => {
@@ -179,18 +191,20 @@ export function DemoWorkoutProvider({ children }) {
       if (allSetsComplete) {
         setCompletedExercises(prev => new Set([...prev, exerciseId]));
         
-        // Auto-focus next incomplete exercise
-        const currentIndex = demoExercises.findIndex(ex => ex.exercise_id === exerciseId);
-        for (let i = currentIndex + 1; i < demoExercises.length; i++) {
-          const nextExercise = demoExercises[i];
-          if (!completedExercises.has(nextExercise.exercise_id)) {
-            setFocusedExerciseId(nextExercise.exercise_id);
-            break;
+        // Only auto-focus next incomplete exercise if auto-complete is enabled
+        if (autoCompleteEnabled) {
+          const currentIndex = demoExercises.findIndex(ex => ex.exercise_id === exerciseId);
+          for (let i = currentIndex + 1; i < demoExercises.length; i++) {
+            const nextExercise = demoExercises[i];
+            if (!completedExercises.has(nextExercise.exercise_id)) {
+              setFocusedExerciseId(nextExercise.exercise_id);
+              break;
+            }
           }
         }
       }
     }
-  }, [demoExercises, completedExercises]);
+  }, [demoExercises, completedExercises, autoCompleteEnabled]);
 
   // Handle set editing
   const handleSetEdit = useCallback((exerciseId, setConfig, index) => {
@@ -223,9 +237,25 @@ export function DemoWorkoutProvider({ children }) {
   }, []);
 
   // Handle exercise focus - allow clicking on any exercise
-  const handleExerciseFocus = useCallback((exerciseId) => {
+  const handleExerciseFocus = useCallback((exerciseId, isManualClick = false) => {
     setFocusedExerciseId(exerciseId);
-  }, []);
+    // If auto-complete is running and user manually clicks, stop it permanently
+    if (autoCompleteEnabledRef.current && isManualClick) {
+      // Stop auto-complete by setting the state directly
+      setAutoCompleteEnabled(false);
+      autoCompleteEnabledRef.current = false;
+      setCurrentExerciseIndex(0);
+      setCurrentSetIndex(0);
+      currentExerciseIndexRef.current = 0;
+      currentSetIndexRef.current = 0;
+      if (autoCompleteInterval) {
+        clearInterval(autoCompleteInterval);
+        setAutoCompleteInterval(null);
+      }
+      // Mark that user has interacted
+      setUserHasInteracted(true);
+    }
+  }, [autoCompleteEnabled, autoCompleteInterval]);
 
   // Handle edit exercise
   const handleEditExercise = useCallback((exercise) => {
@@ -291,46 +321,6 @@ export function DemoWorkoutProvider({ children }) {
     setShowAddExercise(false);
   }, []);
 
-  // Auto-complete demo feature
-  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
-  const [autoCompleteInterval, setAutoCompleteInterval] = useState(null);
-
-  // Start auto-complete demo
-  const startAutoComplete = useCallback(() => {
-    if (autoCompleteEnabled) return; // Already running
-    
-    setAutoCompleteEnabled(true);
-    
-    const interval = setInterval(() => {
-      // Find all incomplete sets across all exercises
-      const incompleteSets = [];
-      demoExercises.forEach(exercise => {
-        exercise.setConfigs.forEach(set => {
-          if (set.status !== 'complete') {
-            incompleteSets.push({
-              exerciseId: exercise.exercise_id,
-              set: set
-            });
-          }
-        });
-      });
-      
-      if (incompleteSets.length > 0) {
-        // Pick a random incomplete set
-        const randomIndex = Math.floor(Math.random() * incompleteSets.length);
-        const { exerciseId, set } = incompleteSets[randomIndex];
-        
-        // Complete the set
-        handleSetComplete(exerciseId, set);
-      } else {
-        // All sets completed, stop auto-complete
-        stopAutoComplete();
-      }
-    }, Math.random() * 3000 + 2000); // Random interval between 2-5 seconds
-    
-    setAutoCompleteInterval(interval);
-  }, [autoCompleteEnabled, demoExercises, handleSetComplete]);
-
   // Stop auto-complete demo
   const stopAutoComplete = useCallback(() => {
     if (autoCompleteInterval) {
@@ -338,7 +328,138 @@ export function DemoWorkoutProvider({ children }) {
       setAutoCompleteInterval(null);
     }
     setAutoCompleteEnabled(false);
+    autoCompleteEnabledRef.current = false;
+    setCurrentExerciseIndex(0);
+    setCurrentSetIndex(0);
+    currentExerciseIndexRef.current = 0;
+    currentSetIndexRef.current = 0;
   }, [autoCompleteInterval]);
+
+  // Process next set in auto-complete
+  const processNextSet = useCallback(() => {
+    console.log('processNextSet called', { 
+      currentExerciseIndex: currentExerciseIndexRef.current, 
+      currentSetIndex: currentSetIndexRef.current, 
+      autoCompleteEnabled: autoCompleteEnabledRef.current 
+    });
+    
+    // Check if auto-complete is still enabled (user might have paused it)
+    if (!autoCompleteEnabledRef.current) {
+      console.log('Auto-complete disabled, returning');
+      return;
+    }
+    
+    if (currentExerciseIndexRef.current >= demoExercises.length) {
+      // All exercises completed
+      setAutoCompleteEnabled(false);
+      autoCompleteEnabledRef.current = false;
+      setCurrentExerciseIndex(0);
+      setCurrentSetIndex(0);
+      currentExerciseIndexRef.current = 0;
+      currentSetIndexRef.current = 0;
+      if (autoCompleteInterval) {
+        clearInterval(autoCompleteInterval);
+        setAutoCompleteInterval(null);
+      }
+      return;
+    }
+    
+    const currentExercise = demoExercises[currentExerciseIndexRef.current];
+    if (!currentExercise) {
+      setAutoCompleteEnabled(false);
+      autoCompleteEnabledRef.current = false;
+      setCurrentExerciseIndex(0);
+      setCurrentSetIndex(0);
+      currentExerciseIndexRef.current = 0;
+      currentSetIndexRef.current = 0;
+      if (autoCompleteInterval) {
+        clearInterval(autoCompleteInterval);
+        setAutoCompleteInterval(null);
+      }
+      return;
+    }
+    
+    // Focus on current exercise
+    handleExerciseFocus(currentExercise.exercise_id, false); // Not a manual click
+    
+    if (currentSetIndexRef.current >= currentExercise.setConfigs.length) {
+      // All sets in current exercise completed, move to next incomplete exercise
+      let nextExerciseIndex = currentExerciseIndexRef.current + 1;
+      
+      // Find the next incomplete exercise
+      while (nextExerciseIndex < demoExercises.length) {
+        const nextExercise = demoExercises[nextExerciseIndex];
+        if (!completedExercises.has(nextExercise.exercise_id)) {
+          break;
+        }
+        nextExerciseIndex++;
+      }
+      
+      setCurrentExerciseIndex(nextExerciseIndex);
+      setCurrentSetIndex(0);
+      currentExerciseIndexRef.current = nextExerciseIndex;
+      currentSetIndexRef.current = 0;
+      
+      // Fixed 4-second delay before next exercise
+      setTimeout(processNextSet, 4000);
+      return;
+    }
+    
+    // Complete current set
+    const currentSet = currentExercise.setConfigs[currentSetIndexRef.current];
+    if (currentSet && currentSet.status !== 'complete') {
+      handleSetComplete(currentExercise.exercise_id, currentSet);
+    }
+    
+    // Move to next set
+    setCurrentSetIndex(prev => prev + 1);
+    currentSetIndexRef.current += 1;
+    
+    // Fixed 4-second delay before next set
+    setTimeout(processNextSet, 4000);
+  }, [demoExercises, handleSetComplete, handleExerciseFocus, userHasInteracted, autoCompleteInterval, completedExercises]);
+
+  // Start auto-complete demo
+  const startAutoComplete = useCallback(() => {
+    console.log('startAutoComplete called', { autoCompleteEnabled, userHasInteracted });
+    if (autoCompleteEnabledRef.current) {
+      console.log('Auto-complete already running, returning');
+      return; // Already running
+    }
+    if (userHasInteracted) {
+      console.log('User has interacted, returning');
+      return; // Don't start if user has manually interacted
+    }
+    
+    console.log('Starting auto-complete');
+    setAutoCompleteEnabled(true);
+    autoCompleteEnabledRef.current = true;
+    setCurrentExerciseIndex(0);
+    setCurrentSetIndex(0);
+    currentExerciseIndexRef.current = 0;
+    currentSetIndexRef.current = 0;
+    
+    // Start with first exercise focused only if no exercise is currently focused
+    if (demoExercises.length > 0 && !focusedExerciseId) {
+      handleExerciseFocus(demoExercises[0].exercise_id, false); // Not a manual click
+    }
+    
+    // Start the process after a delay to ensure first exercise stays focused
+    setTimeout(processNextSet, 1000);
+  }, [demoExercises, handleExerciseFocus, focusedExerciseId, userHasInteracted, processNextSet]);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    autoCompleteEnabledRef.current = autoCompleteEnabled;
+  }, [autoCompleteEnabled]);
+  
+  useEffect(() => {
+    currentExerciseIndexRef.current = currentExerciseIndex;
+  }, [currentExerciseIndex]);
+  
+  useEffect(() => {
+    currentSetIndexRef.current = currentSetIndex;
+  }, [currentSetIndex]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -351,7 +472,17 @@ export function DemoWorkoutProvider({ children }) {
 
   // Reset demo data
   const resetDemo = useCallback(() => {
-    stopAutoComplete();
+    setAutoCompleteEnabled(false);
+    autoCompleteEnabledRef.current = false;
+    setCurrentExerciseIndex(0);
+    setCurrentSetIndex(0);
+    currentExerciseIndexRef.current = 0;
+    currentSetIndexRef.current = 0;
+    if (autoCompleteInterval) {
+      clearInterval(autoCompleteInterval);
+      setAutoCompleteInterval(null);
+    }
+    setUserHasInteracted(false);
     setDemoExercises([
       {
         id: 'demo-exercise-1',
@@ -479,7 +610,8 @@ export function DemoWorkoutProvider({ children }) {
     ]);
     setCompletedExercises(new Set());
     setFocusedExerciseId(null);
-  }, [stopAutoComplete]);
+    setUserHasInteracted(false);
+  }, [autoCompleteInterval]);
 
   const value = {
     demoWorkout,
@@ -497,6 +629,10 @@ export function DemoWorkoutProvider({ children }) {
     editingExerciseDirty,
     setEditingExerciseDirty,
     autoCompleteEnabled,
+    setAutoCompleteEnabled,
+    currentExerciseIndex,
+    currentSetIndex,
+    userHasInteracted,
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
