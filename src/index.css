@@ -18,35 +18,8 @@
     @apply !bg-transparent !text-inherit !shadow-none !border-none;
   }
 
-  /* Demo workout border override */
-  .demo-workout-container [class*="border-l"],
-  .demo-workout-container [class*="border-r"] {
-    border-left: none !important;
-    border-right: none !important;
-  }
-
-  /* More specific overrides for Tailwind border classes */
-  .demo-workout-container .border-l,
-  .demo-workout-container .border-r,
-  .demo-workout-container .border-l-neutral-300,
-  .demo-workout-container .border-r-neutral-300 {
-    border-left: none !important;
-    border-right: none !important;
-  }
-
-  /* Comprehensive override for any element with left/right borders in demo */
-  .demo-workout-container * {
-    border-left: none !important;
-    border-right: none !important;
-  }
-
-  /* Restore top and bottom borders for proper card separation */
-  .demo-workout-container .border-t,
-  .demo-workout-container .border-b,
-  .demo-workout-container .border {
-    border-top: 1px solid rgb(212 212 212) !important;
-    border-bottom: 1px solid rgb(212 212 212) !important;
-  }
+  /* Demo workout border override - removed since we now use DeckWrapper */
+  /* The DeckWrapper component now handles all border styling consistently */
 }
 
 body {

@@ -4,6 +4,8 @@ import { useDemoWorkout } from '@/contexts/DemoWorkoutContext';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import SwiperForm from '@/components/molecules/swiper-form';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
+import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
+import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 
 export default function DemoWorkoutSection() {
   const {
@@ -65,20 +67,27 @@ export default function DemoWorkoutSection() {
 
   return (
     <div className="w-full bg-transparent flex-1 h-full">
-      {/* Exercise Cards Container - removed borders to prevent overlap */}
+      {/* Exercise Cards Container - now using DeckWrapper */}
       <div 
-        className="w-full demo-workout-container h-full flex flex-col items-center justify-center min-w-[325px] max-w-[450px]"
+        className="w-full demo-workout-container h-full flex flex-col items-center justify-center"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {trainingExercises.map((exercise, index) => {
-          const isFocused = focusedExerciseId === exercise.exercise_id;
-          const isCompleted = completedExercises.has(exercise.exercise_id);
-          const isLastExercise = index === trainingExercises.length - 1;
-          
-          return (
-            <div key={exercise.id} className="w-full max-w-[500px]">
-              <div 
+        <DeckWrapper
+          gap={0}
+          maxWidth={500}
+          minWidth={325}
+          className="h-full"
+        >
+          {trainingExercises.map((exercise, index) => {
+            const isFocused = focusedExerciseId === exercise.exercise_id;
+            const isCompleted = completedExercises.has(exercise.exercise_id);
+            const isLastExercise = index === trainingExercises.length - 1;
+            
+            return (
+              <CardWrapper
+                key={exercise.id}
+                reorderable={false}
                 className="cursor-pointer"
                 onClick={() => handleExerciseFocus(exercise.exercise_id)}
               >
@@ -102,12 +111,10 @@ export default function DemoWorkoutSection() {
                   totalCards={trainingExercises.length}
                   topOffset={80 + index * 64}
                 />
-              </div>
-              
-              {/* Add Exercise section removed - no more empty cell at bottom */}
-            </div>
-          );
-        })}
+              </CardWrapper>
+            );
+          })}
+        </DeckWrapper>
       </div>
 
       {/* Set Edit Form */}

@@ -91,12 +91,19 @@ const DeckWrapper = forwardRef(
               >
                 <div className="w-full">
                   {React.Children.toArray(children)[idx] && 
-                    React.cloneElement(React.Children.toArray(children)[idx], { 
-                      reorderable: true, 
-                      reorderValue: item, 
-                      isDragging: false, // We'll handle this differently
-                      isFirstCard: idx === 0
-                    })
+                    (() => {
+                      const childEl = React.Children.toArray(children)[idx];
+                      if (!React.isValidElement(childEl)) return childEl;
+                      const extraProps = {
+                        reorderable: true,
+                        reorderValue: item,
+                        isDragging: false, // We'll handle this differently,
+                      };
+                      if (typeof childEl.type !== 'string') {
+                        extraProps.isFirstCard = idx === 0;
+                      }
+                      return React.cloneElement(childEl, extraProps);
+                    })()
                   }
                 </div>
               </Reorder.Item>
@@ -125,8 +132,13 @@ const DeckWrapper = forwardRef(
               className={`w-full flex justify-center ${isFirstChild ? 'border-t border-neutral-300' : ''} border-b border-neutral-300`}
             >
               {React.cloneElement(child, {
-                ...child.props,
-                isFirstCard: index === 0
+                ...(() => {
+                  const { isFirstCard: _, ...filteredProps } = child.props;
+                  return filteredProps;
+                })(),
+                ...(
+                  typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}
+                )
               })}
             </div>
           );

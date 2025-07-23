@@ -144,7 +144,10 @@ const CardWrapper = React.forwardRef(({
           
           // Forward isFirstCard prop to children
           return React.cloneElement(child, {
-            ...child.props,
+            ...(() => {
+              const { isFirstCard: _, ...filteredProps } = child.props;
+              return filteredProps;
+            })(),
             isFirstCard: props.isFirstCard
           });
         })

@@ -21,9 +21,10 @@ const PageSectionWrapper = ({
   items = [],
   onReorder,
   extendToBottom = false,
-  isFirstCard, // Extract isFirstCard to prevent it from being spread to DOM
   ...props 
 }) => {
+  // Filter out isFirstCard from props to prevent React warning
+  const { isFirstCard, ...domProps } = props;
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -41,7 +42,7 @@ const PageSectionWrapper = ({
         "Workoutcardwrapper w-full bg-white border-t border-neutral-300 inline-flex flex-col justify-start items-center",
         className
       )}
-      {...props}
+      {...domProps}
     >
       {/* Header */}
       <SectionWrapperLabel showPlusButton={showPlusButton} onPlus={onPlus}>

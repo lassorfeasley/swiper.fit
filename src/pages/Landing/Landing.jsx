@@ -64,7 +64,7 @@ export default function Landing() {
                   <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Swipe sets to complete exercises</div>
                 </div>
               </div>
-              <div className="w-full h-[662px] max-w-[450px] min-w-80 outline outline-1 outline-neutral-neutral-300 flex flex-col justify-center items-center">
+              <div className="w-full h-[662px] max-w-[450px] min-w-80 flex flex-col justify-center items-center">
                 <DemoWorkoutSection />
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function Landing() {
         {/* Main Content - Centered with max-width */}
         <div className="max-w-[1643px] mx-auto px-16 flex justify-center items-center gap-6 md:gap-12 lg:gap-24">
           {/* Demo Workout Section */}
-          <div className="w-full h-[662px] max-w-[450px] min-w-80 outline outline-1 outline-neutral-neutral-300 flex flex-col justify-center items-center">
+          <div className="w-full h-[662px] max-w-[450px] min-w-80 flex flex-col justify-center items-center">
             <DemoWorkoutSection />
           </div>
           
