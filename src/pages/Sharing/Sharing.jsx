@@ -224,10 +224,11 @@ export default function Sharing() {
 
   return (
     <AppLayout title="Sharing">
-      <DeckWrapper gap={0} className="pb-24" style={{ paddingTop: 44, paddingLeft: 20, paddingRight: 20 }}>
+      <div className="flex justify-center">
+        <DeckWrapper gap={0} className="pb-24 min-h-screen">
         {/* Shared with me section */}
-        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 overflow-hidden mb-8 bg-white">
-          <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
+        <CardWrapper reorderable={false} className="w-full">
+          <div className="self-stretch px-5 py-4 border-b border-neutral-100 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared with me</div>
           </div>
           <div className="self-stretch px-5 pt-5 pb-3 flex flex-col justify-center items-start gap-14">
@@ -263,11 +264,11 @@ export default function Sharing() {
               </div>
             </div>
           </div>
-        </div>
+        </CardWrapper>
         
         {/* Shared by me section */}
-        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 overflow-hidden mb-8 bg-white">
-          <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
+        <CardWrapper reorderable={false} className="w-full">
+          <div className="self-stretch px-5 py-4 border-b border-neutral-100 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Shared by me</div>
           </div>
           <div className="self-stretch px-5 pt-5 pb-3 flex flex-col justify-center items-start gap-14">
@@ -302,11 +303,11 @@ export default function Sharing() {
               </div>
             </div>
           </div>
-        </div>
+        </CardWrapper>
         
         {/* Add people section */}
-        <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start border border-neutral-300 overflow-hidden bg-white">
-          <div className="self-stretch px-5 py-4 border-b border-neutral-300 inline-flex justify-start items-center gap-2.5">
+        <CardWrapper reorderable={false} className="w-full">
+          <div className="self-stretch px-5 py-4 border-b border-neutral-100 inline-flex justify-start items-center gap-2.5">
             <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Add people</div>
           </div>
           <div className="w-full self-stretch px-5 pt-5 pb-3 flex flex-col justify-center items-start gap-14">
@@ -331,8 +332,9 @@ export default function Sharing() {
               </div>
             </form>
           </div>
-        </div>
+        </CardWrapper>
       </DeckWrapper>
+      </div>
     </AppLayout>
   );
 } 

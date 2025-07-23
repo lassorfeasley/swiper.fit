@@ -9,7 +9,7 @@ export default function RequireAuth() {
 
   useEffect(() => {
     if (!session) {
-      navigate("/login");
+      navigate("/");
     } else if (location.search.includes('type=recovery')) {
       // Handle magic link sign in
       navigate('/update-password');
