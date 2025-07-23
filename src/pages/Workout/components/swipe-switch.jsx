@@ -1,5 +1,5 @@
 import { motion, useAnimation } from "framer-motion";
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
 import React from "react"; // Added missing import for React
 
@@ -34,6 +34,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   const dragMoved = useRef(false);
   const dragStartTime = useRef(0);
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
+  const [isManualSwipe, setIsManualSwipe] = useState(false);
+  const lastManualSwipeTime = useRef(0);
+  const hasManualSwipedThisSession = useRef(false);
+  // Flag to skip the very next automatic-complete animation if THIS window just swiped
+  const skipAutoCompleteOnce = useRef(false);
 
   const duration = timed_set_duration || 30;
   const [timer, setTimer] = useState(duration);
@@ -82,31 +87,80 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     return () => window.removeEventListener("resize", handleResize);
   }, [isDragging]);
 
-  // Reset swipedComplete when parent status changes
-  useLayoutEffect(() => {
-    if (status !== "default") {
-      setSwipedComplete(false);
-    }
-    // Reset drag detection when status changes to ensure clean state
-    dragMoved.current = false;
-  }, [status]);
+  // Helper function for the complete animation sequence
+  const triggerCompleteAnimation = useCallback(() => {
+    setSwipedComplete(true);
+    
+    // Step 1: Animate thumb smoothly to end position
+    controls.start({ 
+      x: thumbTravel, 
+      width: THUMB_WIDTH, 
+      backgroundColor: "#22C55E", 
+      borderRadius: THUMB_RADIUS 
+    }, tweenConfig);
 
-  // Persist styling for completed sets when status changes to 'complete'
-  useLayoutEffect(() => {
-    if (status === 'complete') {
-      // collapse padding and expand thumb to full rail with green background
+    // Step 2: After slide animation completes, expand thumb to fill inner rail area
+    const slideDurationMs = tweenConfig.duration * 1000; // 350ms
+    const expand1Delay = slideDurationMs + 100; // Small delay after slide
+    const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
+    setTimeout(() => {
+      controls.start({
+          x: 0,
+          width: getContentWidth(),
+          backgroundColor: "#22C55E",
+          borderRadius: RAIL_RADIUS
+      }, tweenConfig);
+    }, expand1Delay);
+
+    // Step 3: After first expansion, expand thumb to fill full rail and collapse padding
+    const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
+    const collapseDurationMs = 500; // Must match rail's transition duration
+    setTimeout(() => {
       setIsPaddingCollapsed(true);
-      controls.set({ x: 0, left: 0 });
       controls.start({
         x: 0,
         left: 0,
         width: '100%',
         height: '100%',
         backgroundColor: '#22C55E',
-        borderRadius: 0,
-      }, { type: 'tween', ease: 'easeInOut', duration: 0 });
+        borderRadius: 0
+      }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
+    }, collapseDelay);
+
+    // Step 4: Reset manual swipe flag after animation completes
+    const totalAnimationTime = collapseDelay + collapseDurationMs + 100; // Small buffer
+    setTimeout(() => {
+      setIsManualSwipe(false);
+    }, totalAnimationTime);
+  }, [controls, thumbTravel, tweenConfig, getContentWidth]);
+
+  // Reset flags when status changes
+  useLayoutEffect(() => {
+    // We only clear `swipedComplete` and manual-swipe flags if the set becomes editable again (status === 'default').
+    // When status moves to 'complete' we keep the flags so the originating window remembers it already animated.
+    if (status === "default") {
+      setSwipedComplete(false);
+      setIsManualSwipe(false);
+      hasManualSwipedThisSession.current = false;
+      skipAutoCompleteOnce.current = false;
     }
-  }, [status, controls]);
+    // Reset drag detection every status change
+    dragMoved.current = false;
+  }, [status]);
+
+  // Handle automatic completion with animation
+  useLayoutEffect(() => {
+    if (status === 'complete' && !swipedComplete && thumbTravel > 0) {
+      // If this window just performed a manual swipe, skip this round
+      if (skipAutoCompleteOnce.current) {
+        skipAutoCompleteOnce.current = false; // Reset for future sets
+        return;
+      }
+      triggerCompleteAnimation();
+    }
+  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation]);
+
+
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -116,44 +170,24 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
     if (status === "default" && info.offset.x >= travelNeeded) {
-      setSwipedComplete(true);
-      // We defer onComplete until after full animation sequence
-
-      // Step 1: Snap thumb to end
-      controls.set({ x: thumbTravel, width: THUMB_WIDTH, backgroundColor: "#22C55E", borderRadius: THUMB_RADIUS });
-
-      // Step 2: After 200ms, expand thumb to fill inner rail area
-      const expand1Delay = 200;
+      // Mark this as a manual swipe
+      setIsManualSwipe(true);
+      lastManualSwipeTime.current = Date.now();
+      hasManualSwipedThisSession.current = true;
+      // Tell automatic-complete logic to skip once after parent status update
+      skipAutoCompleteOnce.current = true;
+      triggerCompleteAnimation();
+      
+      // Call onComplete after animation sequence
+      const slideDurationMs = tweenConfig.duration * 1000; // 350ms
+      const expand1Delay = slideDurationMs + 100; // Small delay after slide
       const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
-      setTimeout(() => {
-        controls.start({
-            x: 0,
-            width: getContentWidth(),
-            backgroundColor: "#22C55E",
-            borderRadius: RAIL_RADIUS
-        }, tweenConfig);
-      }, expand1Delay);
-
-      // Step 3: After first expansion, expand thumb to fill full rail and collapse padding
       const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
       const collapseDurationMs = 500; // Must match rail's transition duration
-      setTimeout(() => {
-        setIsPaddingCollapsed(true);
-        controls.start({
-          x: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#22C55E',
-          borderRadius: 0
-        }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
-      }, collapseDelay);
-
-      // Step 4: After collapse duration, call onComplete
-      const finishTime = collapseDelay + collapseDurationMs + 200; // Buffer
+      const totalAnimationTime = collapseDelay + collapseDurationMs + 200; // Buffer
       setTimeout(() => {
         onCompleteRef.current?.();
-      }, finishTime);
+      }, totalAnimationTime);
     } else {
       // Incomplete: reset thumb
       controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);

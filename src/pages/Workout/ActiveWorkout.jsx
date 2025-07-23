@@ -146,10 +146,14 @@ const ActiveWorkoutContent = () => {
     const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
     
     if (hasExercises) {
-      // Sections are ready, restore focus immediately
-      console.log('[ActiveWorkout] Sections loaded, restoring focus immediately to:', activeWorkout.lastExerciseId);
+      // Sections are ready, restore focus with a small delay to avoid render-phase state updates
+      console.log('[ActiveWorkout] Sections loaded, restoring focus to:', activeWorkout.lastExerciseId);
       isRestoringFocusRef.current = true;
-      setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+      
+      // Use setTimeout to defer the state update to the next tick
+      setTimeout(() => {
+        setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+      }, 0);
     }
   }, [sectionExercises, activeWorkout?.lastExerciseId, setFocusedExerciseId]);
 
