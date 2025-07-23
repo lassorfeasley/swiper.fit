@@ -186,13 +186,7 @@ const ExerciseCard = ({
           {cardContent}
         </motion.div>
       ) : (
-        <div
-          className="w-full"
-          style={{
-            borderBottom: "1px solid #d4d4d4",
-            ...(isFirstCard && { borderTop: "1px solid #d4d4d4" })
-          }}
-        >
+        <div className="w-full">
           {cardContent}
         </div>
       )}

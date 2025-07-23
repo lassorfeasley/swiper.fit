@@ -29,6 +29,8 @@ const DeckWrapper = forwardRef(
     
     // Filter out isFirstCard from props to prevent React warning
     const { isFirstCard: _, ...domProps } = props;
+    // Also ensure isFirstCard is not in domProps (in case it came from ...props)
+    delete domProps.isFirstCard;
 
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
@@ -75,12 +77,10 @@ const DeckWrapper = forwardRef(
               <Reorder.Item
                 key={item.id}
                 value={item}
-                className="w-full flex justify-center"
+                className={`w-full flex justify-center ${idx === 0 ? 'border-t border-neutral-300' : ''} border-b border-neutral-300`}
                 style={{ 
                   touchAction: "none",
-                  position: "relative",
-                  borderBottom: "1px solid #d4d4d4",
-                  ...(idx === 0 && { borderTop: "1px solid #d4d4d4" })
+                  position: "relative"
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}
@@ -88,9 +88,7 @@ const DeckWrapper = forwardRef(
                 dragElastic={0}
                 whileDrag={{ 
                   zIndex: 9999,
-                  boxShadow: "0 20px 40px -8px rgba(0, 0, 0, 0.3), 0 10px 20px -4px rgba(0, 0, 0, 0.2)",
-                  borderBottom: "1px solid #d4d4d4",
-                  ...(idx === 0 && { borderTop: "1px solid #d4d4d4" })
+                  boxShadow: "0 20px 40px -8px rgba(0, 0, 0, 0.3), 0 10px 20px -4px rgba(0, 0, 0, 0.2)"
                 }}
               >
                 <div className="w-full">
@@ -120,11 +118,20 @@ const DeckWrapper = forwardRef(
         {React.Children.map(children, (child, index) => {
           if (!React.isValidElement(child)) return child;
           
-          // Add isFirstCard prop to the first child
-          return React.cloneElement(child, {
-            ...child.props,
-            isFirstCard: index === 0
-          });
+          // Wrap each child in a div with appropriate borders
+          const isLastChild = index === React.Children.count(children) - 1;
+          const isFirstChild = index === 0;
+          return (
+            <div 
+              key={child.key || index}
+              className={`w-full flex justify-center ${isFirstChild ? 'border-t border-neutral-300' : ''} border-b border-neutral-300`}
+            >
+              {React.cloneElement(child, {
+                ...child.props,
+                isFirstCard: index === 0
+              })}
+            </div>
+          );
         })}
       </div>
     );

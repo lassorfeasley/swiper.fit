@@ -58,6 +58,8 @@ const CardWrapper = React.forwardRef(({
   delete divProps.gridTemplateColumns;
   delete divProps.justifyGrid;
   delete divProps.maxWidth;
+  delete divProps.isFirstCard;
+  delete divProps.isLastCard;
 
   const zIndex = index + 1; // first card lowest, last highest
 
@@ -77,9 +79,7 @@ const CardWrapper = React.forwardRef(({
   }
 
   const containerClasses = cn(
-    "relative z-10 w-full mx-auto bg-transparent border-b border-neutral-300",
-    // Add top border if this is the first card
-    props.isFirstCard && "border-t border-neutral-300",
+    "relative z-10 w-full mx-auto bg-transparent",
     layoutClasses,
     className
   );
@@ -174,6 +174,7 @@ CardWrapper.propTypes = {
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,
   isFirstCard: PropTypes.bool,
+
 };
 
 export default CardWrapper;
