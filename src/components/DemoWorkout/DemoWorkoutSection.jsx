@@ -64,10 +64,10 @@ export default function DemoWorkoutSection() {
   const trainingExercises = demoExercises.filter(ex => ex.section === 'training');
 
   return (
-    <div className="w-full bg-white flex-1 h-full">
-      {/* Exercise Cards Container with border wrapper */}
+    <div className="w-full bg-transparent flex-1 h-full">
+      {/* Exercise Cards Container - removed borders to prevent overlap */}
       <div 
-        className="w-full border-l border-r border-neutral-300 demo-workout-container h-full"
+        className="w-full demo-workout-container h-full flex flex-col items-center justify-center min-w-[325px] max-w-[450px]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -77,7 +77,7 @@ export default function DemoWorkoutSection() {
           const isLastExercise = index === trainingExercises.length - 1;
           
           return (
-            <div key={exercise.id}>
+            <div key={exercise.id} className="w-full max-w-[500px]">
               <div 
                 className="cursor-pointer"
                 onClick={() => handleExerciseFocus(exercise.exercise_id)}
@@ -104,12 +104,7 @@ export default function DemoWorkoutSection() {
                 />
               </div>
               
-              {/* Show "Add Exercise" button only for the last exercise when it's focused */}
-              {isLastExercise && isFocused && (
-                <div className="px-3 pb-3 border-t border-neutral-300">
-                  {/* Add Exercise button removed - form functionality preserved */}
-                </div>
-              )}
+              {/* Add Exercise section removed - no more empty cell at bottom */}
             </div>
           );
         })}

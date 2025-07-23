@@ -27,7 +27,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'Set 1',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 1
         },
         {
@@ -38,7 +38,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'Set 2',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 2
         },
         {
@@ -49,7 +49,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'Set 3',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 3
         }
       ]
@@ -68,7 +68,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'ALTERNATING',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 1
         },
         {
@@ -79,7 +79,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'UNISON',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 2
         },
         {
@@ -90,7 +90,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'lbs',
           set_variant: 'WOODCHOP',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 3
         }
       ]
@@ -109,7 +109,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'body',
           set_variant: 'Set 1',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 1
         },
         {
@@ -120,7 +120,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'body',
           set_variant: 'Set 2',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 2
         },
         {
@@ -131,7 +131,7 @@ export function DemoWorkoutProvider({ children }) {
           weight_unit: 'body',
           set_variant: 'Set 3',
           set_type: 'reps',
-          status: 'incomplete',
+          status: 'default',
           set_order: 3
         }
       ]
@@ -367,7 +367,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'Set 1',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 1
           },
           {
@@ -378,7 +378,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'Set 2',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 2
           },
           {
@@ -389,7 +389,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'Set 3',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 3
           }
         ]
@@ -408,7 +408,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'ALTERNATING',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 1
           },
           {
@@ -419,7 +419,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'UNISON',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 2
           },
           {
@@ -430,7 +430,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'lbs',
             set_variant: 'WOODCHOP',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 3
           }
         ]
@@ -449,7 +449,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'body',
             set_variant: 'Set 1',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 1
           },
           {
@@ -460,7 +460,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'body',
             set_variant: 'Set 2',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 2
           },
           {
@@ -471,7 +471,7 @@ export function DemoWorkoutProvider({ children }) {
             weight_unit: 'body',
             set_variant: 'Set 3',
             set_type: 'reps',
-            status: 'incomplete',
+            status: 'default',
             set_order: 3
           }
         ]

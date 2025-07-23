@@ -174,19 +174,13 @@ const ActiveExerciseCard = React.forwardRef(({
     >
       <div
         className={cn(
-          "w-full bg-white",
-          index !== 0 && index !== totalCards - 1 && "border-l border-r border-neutral-300"
+          "w-full bg-white flex flex-col justify-start items-start",
+          // First card gets top, left, right borders only, others get bottom, left, right borders
+          index === 0 
+            ? "border-t border-l border-r border-neutral-300" 
+            : "border-b border-l border-r border-neutral-300"
         )}
       >
-        <div
-          className={cn(
-            "w-full bg-white flex flex-col justify-start items-start",
-            index === totalCards - 1
-              ? "border border-neutral-300"
-              : "border-t border-l border-r border-neutral-300"
-          )}
-          style={index !== 0 ? { width: 'calc(100% + 2px)', marginLeft: '-1px' } : {}}
-        >
           {/* Label Section */}
           <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
             <div className="flex-1 flex flex-col">
@@ -234,9 +228,6 @@ const ActiveExerciseCard = React.forwardRef(({
             </div>
           </div>
         </div>
-
-
-      </div>
     </CardWrapper>
   );
 });
