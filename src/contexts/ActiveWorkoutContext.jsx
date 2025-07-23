@@ -137,6 +137,11 @@ export function ActiveWorkoutProvider({ children }) {
             } catch (err) {
               console.error('[ActiveWorkout] Error converting workout_exercise_id in real-time update:', err);
             }
+          } else if (w.last_workout_exercise_id && w.last_workout_exercise_id === activeWorkout?.lastExerciseId) {
+            // Even if the lastExerciseId is the same, trigger focus restoration for cross-device sync
+            // This handles the case where both windows are working on the same exercise
+            console.log('[ActiveWorkout] Same exercise completed remotely, triggering focus restoration');
+            setLastExerciseIdChangeTrigger(prev => prev + 1);
           }
           
           // Handle workout completion
