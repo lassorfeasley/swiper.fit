@@ -152,6 +152,7 @@ export default function DemoWorkoutSection() {
               setEditSheetOpen(false);
               setEditingSet(null);
             }}
+            hideToggle={true}
           />
         </SwiperForm>
       )}
