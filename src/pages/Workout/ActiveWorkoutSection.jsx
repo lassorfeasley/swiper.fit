@@ -316,13 +316,7 @@ const ActiveWorkoutSection = ({
           const wasCompletedByCurrentUser = row.account_id === user?.id;
           const completedByUserType = wasCompletedByCurrentUser ? (isDelegated ? 'Manager' : 'Client') : (isDelegated ? 'Client' : 'Manager');
           
-          console.log('[Real-time] Showing toast for completion by:', completedByUserType, 'account_id:', row.account_id, 'user_id:', user?.id, 'isDelegated:', isDelegated, 'wasCompletedByCurrentUser:', wasCompletedByCurrentUser);
-          
-          // Show notification for set completion (shows on both sides)
-          toast(`${completedByUserType} completed a set!`, {
-            duration: 2000,
-            position: 'top-center'
-          });
+          console.log('[Real-time] Set completed by:', completedByUserType, 'account_id:', row.account_id, 'user_id:', user?.id, 'isDelegated:', isDelegated, 'wasCompletedByCurrentUser:', wasCompletedByCurrentUser);
           
           // Mark this set as toasted globally to prevent duplicates across sections
           markSetToasted(row.id);
@@ -357,13 +351,10 @@ const ActiveWorkoutSection = ({
           // Refresh exercises to get updated data
           fetchExercises();
           
-          // Show notification for new exercise additions
+          // Log new exercise additions
           if (eventType === "INSERT") {
             const swiperType = isDelegated ? 'Manager' : 'Client';
-            toast(`${swiperType} added exercise!`, {
-              duration: 2000,
-              position: 'top-center'
-            });
+            console.log('[Real-time] Exercise added by:', swiperType);
           }
         }
       })
