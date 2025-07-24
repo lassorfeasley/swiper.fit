@@ -3,6 +3,7 @@ import { supabase } from '@/supabaseClient';
 import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const ActiveWorkoutContext = createContext();
 

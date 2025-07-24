@@ -2,6 +2,7 @@ import ActiveExerciseCard from "./components/ActiveExerciseCard";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useAccount } from "@/contexts/AccountContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import SwiperForm from "@/components/molecules/swiper-form";
@@ -16,6 +17,7 @@ const ActiveWorkoutSection = ({
   onUpdateLastExercise,
 }) => {
   const { activeWorkout, markSetManuallyCompleted } = useActiveWorkout();
+  const { isDelegated } = useAccount();
   const {
     updateSectionExercises,
     markExerciseComplete,
@@ -288,6 +290,13 @@ const ActiveWorkoutSection = ({
         if (eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") {
           // This is a remote completion - mark it as manually completed to prevent animation
           markSetManuallyCompleted(row.id);
+          
+          // Show notification for remote completion
+          const swiperType = isDelegated ? 'Manager' : 'Client';
+          toast(`${swiperType} swiped!`, {
+            duration: 2000,
+            position: 'top-center'
+          });
         }
         if (!exerciseIds.includes(row.exercise_id)) return;
 
@@ -300,6 +309,40 @@ const ActiveWorkoutSection = ({
       void setsChan.unsubscribe();
     };
   }, [activeWorkout?.id, exercises, section, fetchExercises, markSetManuallyCompleted]);
+
+  // Real-time subscription for workout exercises in this section
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+
+    const exercisesChan = supabase
+      .channel(`workout-exercises-section-${section}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'workout_exercises', 
+        filter: `workout_id=eq.${activeWorkout.id}` 
+      }, ({ eventType, new: row, old }) => {
+        // Handle new exercise additions, updates, and deletions
+        if (eventType === "INSERT" || eventType === "UPDATE" || eventType === "DELETE") {
+          // Refresh exercises to get updated data
+          fetchExercises();
+          
+          // Show notification for new exercise additions
+          if (eventType === "INSERT") {
+            const swiperType = isDelegated ? 'Manager' : 'Client';
+            toast(`${swiperType} added exercise!`, {
+              duration: 2000,
+              position: 'top-center'
+            });
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      void exercisesChan.unsubscribe();
+    };
+  }, [activeWorkout?.id, section, fetchExercises, isDelegated]);
 
   // Memoized initial values for SetEditForm
   const setEditFormInitialValues = React.useMemo(() => {
@@ -374,6 +417,13 @@ const ActiveWorkoutSection = ({
     try {
       // Get current user for account_id - always use the authenticated user's ID, not the acting user
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Show notification for who swiped
+      const swiperType = isDelegated ? 'Manager' : 'Client';
+      toast(`${swiperType} swiped!`, {
+        duration: 2000,
+        position: 'top-center'
+      });
       
       // Debug logging
       if (import.meta.env.MODE === 'development') {
