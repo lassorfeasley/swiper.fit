@@ -26,6 +26,7 @@ export function ActiveWorkoutProvider({ children }) {
         setLoading(false);
         return;
       }
+      
       setLoading(true);
       try {
         // Fetch the active workout record and program metadata

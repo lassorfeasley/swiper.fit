@@ -173,6 +173,7 @@ const ActiveWorkoutSection = ({
               timed_set_duration: savedSet.timed_set_duration,
               status: savedSet.status || "default",
               set_order: template.set_order, // Use the actual set_order from template
+              account_id: savedSet.account_id, // Include account_id to track who completed the set
             });
           } else {
             mergedSetConfigs.push({
@@ -204,6 +205,7 @@ const ActiveWorkoutSection = ({
               timed_set_duration: saved.timed_set_duration,
               status: saved.status || "default",
               set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
+              account_id: saved.account_id, // Include account_id to track who completed the set
             });
           }
         });
@@ -370,12 +372,26 @@ const ActiveWorkoutSection = ({
   // Handle set completion
   const handleSetComplete = useCallback(async (exerciseId, setConfig) => {
     try {
+      // Get current user for account_id - always use the authenticated user's ID, not the acting user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Debug logging
+      if (import.meta.env.MODE === 'development') {
+        console.log('[ActiveWorkoutSection] Saving set with account_id:', {
+          userId: user?.id,
+          userEmail: user?.email,
+          setId: setConfig.id,
+          exerciseId
+        });
+      }
+      
       // Save set to database
       const payload = {
         workout_id: activeWorkout.id,
         exercise_id: exerciseId,
         set_variant: setConfig.set_variant,
-        status: 'complete'
+        status: 'complete',
+        account_id: user?.id // Always use the authenticated user's ID (manager's ID when delegating)
       };
 
       const isTimed = setConfig.set_type === 'timed';

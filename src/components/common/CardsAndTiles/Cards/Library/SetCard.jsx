@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import SwipeSwitch from 'components/workout/SwipeSwitch';
+import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
 import MetricPill from 'components/common/CardsAndTiles/MetricPill';
 import SlideUpForm from 'components/common/forms/SlideUpForm';
 import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';

@@ -27,7 +27,7 @@ import SideBarNav from "./components/organisms/side-bar-nav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 
-import { AccountProvider } from "@/contexts/AccountContext";
+import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -37,6 +37,7 @@ export const PageNameContext = createContext({
 function AppContent() {
   const location = useLocation();
   const { isWorkoutActive } = useActiveWorkout();
+  const { isDelegated } = useAccount();
   const navigate = useNavigate();
   const { navBarVisible } = useNavBarVisibility();
 
@@ -71,7 +72,15 @@ function AppContent() {
   ];
   
   // Check if current path is allowed
-  const isAllowedPath = allowedPaths.some(allowed => location.pathname === allowed || location.pathname.startsWith(allowed));
+  // When in delegate mode with active workout, be more restrictive - only allow essential pages
+  const isAllowedPath = isDelegated && isWorkoutActive 
+    ? ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].some(allowed => {
+        if (allowed === '/') {
+          return location.pathname === '/';
+        }
+        return location.pathname === allowed || location.pathname.startsWith(allowed + '/');
+      })
+    : allowedPaths.some(allowed => location.pathname === allowed || location.pathname.startsWith(allowed));
   
   // Guard: If workout is active and we're on a non-allowed page, immediately redirect
   const shouldRedirect = isWorkoutActive && !isAllowedPath;

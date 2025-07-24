@@ -2,7 +2,8 @@ import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
 import React from "react";
-import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext"; // Added missing import for React
+import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext";
+import { supabase } from "../../../supabaseClient";
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -25,7 +26,17 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     isOptimistic = false, // New prop for optimistic updates
     id: setId, // Get the set ID
     tempId, // Get the temp ID as fallback
+    account_id, // Get the account that completed this set
   } = set;
+  
+  // Debug logging for account_id
+  if (import.meta.env.MODE === 'development') {
+    console.log('[SwipeSwitch] Component rendered with account_id:', {
+      setId,
+      account_id,
+      status
+    });
+  }
   
   // Use setId or tempId as the unique identifier
   const uniqueSetId = setId || tempId || `unknown-${Math.random()}`;
@@ -50,6 +61,23 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   
   // Get the manually completed tracking from context
   const { markSetManuallyCompleted, isSetManuallyCompleted } = useActiveWorkout();
+
+  // Get authenticated user ID for comparison - always use the actual authenticated user, not the acting user
+  const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
+  
+  useEffect(() => {
+    const getAuthenticatedUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setAuthenticatedUserId(user?.id);
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Authenticated user set:', {
+          userId: user?.id,
+          userEmail: user?.email
+        });
+      }
+    };
+    getAuthenticatedUser();
+  }, []);
 
   const duration = timed_set_duration || 30;
   const [timer, setTimer] = useState(duration);
@@ -169,13 +197,34 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
         return;
       }
       
-      // Only trigger animation if this set was NOT manually completed in this session
-      // AND was not locally manually swiped (immediate check)
-      if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current) {
+      // Check if this set was completed by the authenticated user
+      const wasCompletedByAuthenticatedUser = account_id === authenticatedUserId;
+      
+      // Debug logging
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Animation check:', {
+          setId,
+          account_id,
+          authenticatedUserId,
+          wasCompletedByAuthenticatedUser,
+          isSetManuallyCompleted: isSetManuallyCompleted(setId),
+          locallyManuallySwiped: locallyManuallySwipedRef.current,
+          shouldAnimate: !isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current && !wasCompletedByAuthenticatedUser
+        });
+      }
+      
+      // Only trigger animation if:
+      // 1. This set was NOT manually completed in this session
+      // 2. Was not locally manually swiped (immediate check)
+      // 3. This set was NOT completed by the authenticated user (it was completed by someone else)
+      if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current && !wasCompletedByAuthenticatedUser) {
+        if (import.meta.env.MODE === 'development') {
+          console.log('[SwipeSwitch] Triggering animation for remote completion');
+        }
         triggerCompleteAnimation();
       }
     }
-  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId]);
+  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId, account_id, authenticatedUserId]);
 
 
 
