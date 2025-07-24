@@ -206,7 +206,7 @@ const ActiveExerciseCard = React.forwardRef(({
               <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
                 {sets.map((set, index) => (
                   <SwipeSwitch
-                    key={`${set.id || set.tempId || set.routine_set_id || "set"}-${index}`}
+                    key={set.id || set.tempId || set.routine_set_id}
                     set={set}
                     onComplete={() => handleSetComplete(index)}
                     onClick={(e) => {
