@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import SwipeSwitch from 'components/workout/SwipeSwitch';
-import MetricPill from 'components/common/CardsAndTiles/MetricPill';
-import SlideUpForm from 'components/common/forms/SlideUpForm';
-import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
-import NumericInput from 'components/common/forms/NumericInput';
-import Icon from 'components/common/Icon';
+import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
+import MetricPill from '@/components/common/CardsAndTiles/MetricPill';
+import SwiperForm from '@/components/molecules/swiper-form';
+import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
+import NumericInput from '@/components/molecules/numeric-input';
+import { ArrowRight } from 'lucide-react';
 import PropTypes from 'prop-types';
 import SetBadge from '@/components/molecules/SetBadge';
 
@@ -15,7 +15,8 @@ const SetCard = ({
   onSetComplete, 
   exerciseId, 
   setData = [], 
-  onSetDataChange 
+  onSetDataChange,
+  demo = false
 }) => {
   const [focused_view, setFocusedView] = useState(!default_view);
   const [editMetric, setEditMetric] = useState(null); // { metric: 'sets'|'reps'|'weight', setIdx: number|null }
@@ -66,6 +67,24 @@ const SetCard = ({
   };
 
   const handleSetComplete = (setId) => {
+    if (demo) {
+      // Demo mode: simplified completion without database logic
+      if (onSetComplete) {
+        const set = sets.find(s => s.id === setId);
+        if (set) {
+          onSetComplete({
+            setId,
+            exerciseId,
+            reps: set.reps,
+            weight: set.weight,
+            status: 'complete',
+          });
+        }
+      }
+      return;
+    }
+
+    // Regular mode: full logic with database handling
     if (onSetComplete) {
       const set = sets.find(s => s.id === setId);
       if (set) {
@@ -155,6 +174,23 @@ const SetCard = ({
 
   // Add this new function for default view swipe
   const handleCompleteAllSets = () => {
+    if (demo) {
+      // Demo mode: simplified completion
+      sets.forEach(set => {
+        if (onSetComplete) {
+          onSetComplete({
+            setId: set.id,
+            exerciseId,
+            reps: set.reps,
+            weight: set.weight,
+            status: 'complete',
+          });
+        }
+      });
+      return;
+    }
+
+    // Regular mode: full logic with database handling
     sets.forEach(set => {
       // Call onSetComplete for each set, as if it were individually completed
       if (onSetComplete) {
@@ -239,6 +275,7 @@ const SetCard = ({
                   status={set?.status}
                   onComplete={() => handleSetComplete(set?.id)}
                   duration={setType === 'timed' ? timedDuration : undefined}
+                  demo={demo}
                 />
               </div>
             );
@@ -248,19 +285,21 @@ const SetCard = ({
         <SwipeSwitch 
           status={activeSet?.status ?? 'locked'} 
           onComplete={handleCompleteAllSets} 
+          demo={demo}
         />
       )}
-      {/* SlideUpForm overlay for editing metric */}
+      {/* SwiperForm overlay for editing metric */}
       {editMetric && (
-        <SlideUpForm
-          formPrompt={`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}
-          onOverlayClick={handleOverlayClose}
-          className="z-[100]"
-          actionIcon={
-            <button onClick={handleMetricSubmit} style={{ background: 'none', border: 'none', padding: 0 }}>
-              <Icon name="arrow_forward" size={32} />
-            </button>
-          }
+        <SwiperForm
+          open={!!editMetric}
+          onOpenChange={(open) => !open && handleOverlayClose()}
+          title={`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}
+          leftAction={handleOverlayClose}
+          rightAction={handleMetricSubmit}
+          rightEnabled={true}
+          rightText="Save"
+          leftText="Cancel"
+          padding={0}
         >
           {editMetric.metric === 'sets' && (
             <NumericInput
@@ -292,7 +331,7 @@ const SetCard = ({
               onUnitChange={setWeightUnit}
             />
           )}
-        </SlideUpForm>
+        </SwiperForm>
       )}
     </div>
   );
@@ -309,7 +348,8 @@ SetCard.propTypes = {
   onSetComplete: PropTypes.func,
   exerciseId: PropTypes.string.isRequired,
   setData: PropTypes.array,
-  onSetDataChange: PropTypes.func
+  onSetDataChange: PropTypes.func,
+  demo: PropTypes.bool
 };
 
 export default SetCard; 
