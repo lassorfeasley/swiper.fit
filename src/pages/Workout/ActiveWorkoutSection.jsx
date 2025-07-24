@@ -2,6 +2,7 @@ import ActiveExerciseCard from "./components/ActiveExerciseCard";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useAccount } from "@/contexts/AccountContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import SwiperForm from "@/components/molecules/swiper-form";
@@ -16,6 +17,7 @@ const ActiveWorkoutSection = ({
   onUpdateLastExercise,
 }) => {
   const { activeWorkout, markSetManuallyCompleted } = useActiveWorkout();
+  const { isDelegated } = useAccount();
   const {
     updateSectionExercises,
     markExerciseComplete,
@@ -171,9 +173,9 @@ const ActiveWorkoutSection = ({
               set_variant: savedSet.set_variant,
               set_type: savedSet.set_type,
               timed_set_duration: savedSet.timed_set_duration,
-              account_id: savedSet.account_id, // propagate who completed
               status: savedSet.status || "default",
               set_order: template.set_order, // Use the actual set_order from template
+              account_id: savedSet.account_id, // Include account_id to track who completed the set
             });
           } else {
             mergedSetConfigs.push({
@@ -203,9 +205,9 @@ const ActiveWorkoutSection = ({
               set_variant: saved.set_variant,
               set_type: saved.set_type,
               timed_set_duration: saved.timed_set_duration,
-              account_id: saved.account_id, // propagate account id
               status: saved.status || "default",
               set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
+              account_id: saved.account_id, // Include account_id to track who completed the set
             });
           }
         });
@@ -284,6 +286,18 @@ const ActiveWorkoutSection = ({
         filter: `workout_id=eq.${activeWorkout.id}` 
       }, ({ eventType, new: row, old }) => {
         // Only process if the set belongs to an exercise in this section
+        // Check if this is a remote completion (not initiated by this window)
+        if (eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") {
+          // This is a remote completion - mark it as manually completed to prevent animation
+          markSetManuallyCompleted(row.id);
+          
+          // Show notification for remote completion
+          const swiperType = isDelegated ? 'Manager' : 'Client';
+          toast(`${swiperType} swiped!`, {
+            duration: 2000,
+            position: 'top-center'
+          });
+        }
         if (!exerciseIds.includes(row.exercise_id)) return;
 
         // Refresh exercises to get updated data
@@ -294,7 +308,41 @@ const ActiveWorkoutSection = ({
     return () => {
       void setsChan.unsubscribe();
     };
-  }, [activeWorkout?.id, exercises, section, fetchExercises]);
+  }, [activeWorkout?.id, exercises, section, fetchExercises, markSetManuallyCompleted]);
+
+  // Real-time subscription for workout exercises in this section
+  useEffect(() => {
+    if (!activeWorkout?.id) return;
+
+    const exercisesChan = supabase
+      .channel(`workout-exercises-section-${section}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'workout_exercises', 
+        filter: `workout_id=eq.${activeWorkout.id}` 
+      }, ({ eventType, new: row, old }) => {
+        // Handle new exercise additions, updates, and deletions
+        if (eventType === "INSERT" || eventType === "UPDATE" || eventType === "DELETE") {
+          // Refresh exercises to get updated data
+          fetchExercises();
+          
+          // Show notification for new exercise additions
+          if (eventType === "INSERT") {
+            const swiperType = isDelegated ? 'Manager' : 'Client';
+            toast(`${swiperType} added exercise!`, {
+              duration: 2000,
+              position: 'top-center'
+            });
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      void exercisesChan.unsubscribe();
+    };
+  }, [activeWorkout?.id, section, fetchExercises, isDelegated]);
 
   // Memoized initial values for SetEditForm
   const setEditFormInitialValues = React.useMemo(() => {
@@ -367,10 +415,25 @@ const ActiveWorkoutSection = ({
   // Handle set completion
   const handleSetComplete = useCallback(async (exerciseId, setConfig) => {
     try {
-      // Get current user ID for tracking who completed the set
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // Get current user for account_id - always use the authenticated user's ID, not the acting user
+      const { data: { user } } = await supabase.auth.getUser();
       
-      console.log('[ActiveWorkoutSection] handleSetComplete - currentUser:', currentUser?.id);
+      // Show notification for who swiped
+      const swiperType = isDelegated ? 'Manager' : 'Client';
+      toast(`${swiperType} swiped!`, {
+        duration: 2000,
+        position: 'top-center'
+      });
+      
+      // Debug logging
+      if (import.meta.env.MODE === 'development') {
+        console.log('[ActiveWorkoutSection] Saving set with account_id:', {
+          userId: user?.id,
+          userEmail: user?.email,
+          setId: setConfig.id,
+          exerciseId
+        });
+      }
       
       // Save set to database
       const payload = {
@@ -378,10 +441,8 @@ const ActiveWorkoutSection = ({
         exercise_id: exerciseId,
         set_variant: setConfig.set_variant,
         status: 'complete',
-        account_id: currentUser?.id // Track which account completed this set
+        account_id: user?.id // Always use the authenticated user's ID (manager's ID when delegating)
       };
-      
-      console.log('[ActiveWorkoutSection] handleSetComplete - payload:', payload);
 
       const isTimed = setConfig.set_type === 'timed';
 
@@ -417,7 +478,6 @@ const ActiveWorkoutSection = ({
 
       let data, error;
       if (setConfig.id && !setConfig.id.startsWith('temp-')) {
-        console.log('[ActiveWorkoutSection] Updating existing set:', setConfig.id);
         const updateResult = await supabase
           .from('sets')
           .update({ ...payload, status: 'complete' })
@@ -426,9 +486,7 @@ const ActiveWorkoutSection = ({
           .single();
         data = updateResult.data;
         error = updateResult.error;
-        console.log('[ActiveWorkoutSection] Update result:', { data, error });
       } else {
-        console.log('[ActiveWorkoutSection] Inserting new set');
         const insertResult = await supabase
           .from('sets')
           .insert(payload)
@@ -436,7 +494,6 @@ const ActiveWorkoutSection = ({
           .single();
         data = insertResult.data;
         error = insertResult.error;
-        console.log('[ActiveWorkoutSection] Insert result:', { data, error });
       }
       
       if (error) {

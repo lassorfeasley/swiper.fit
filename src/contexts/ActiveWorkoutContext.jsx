@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
-import { useCurrentUser, useAccount } from '@/contexts/AccountContext';
+import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const ActiveWorkoutContext = createContext();
 
 export function ActiveWorkoutProvider({ children }) {
   const user = useCurrentUser();
-  const { loading: accountLoading } = useAccount();
   const navigate = useNavigate();
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
@@ -23,19 +23,11 @@ export function ActiveWorkoutProvider({ children }) {
   // Effect to check for an active workout on load
   useEffect(() => {
     const checkForActiveWorkout = async () => {
-      console.log('[ActiveWorkout] checkForActiveWorkout called with user:', user?.id, 'email:', user?.email, 'accountLoading:', accountLoading);
-      
-      // Wait for account context to finish loading before checking for active workout
-      if (accountLoading) {
-        console.log('[ActiveWorkout] Account context still loading, waiting...');
-        return;
-      }
-      
       if (!user) {
-        console.log('[ActiveWorkout] No user, setting loading to false');
         setLoading(false);
         return;
       }
+      
       setLoading(true);
       try {
         // Fetch the active workout record and program metadata
@@ -51,12 +43,9 @@ export function ActiveWorkoutProvider({ children }) {
           return;
         }
         if (!workout) {
-          console.log('[ActiveWorkout] No active workout found for user:', user.id);
           setLoading(false);
           return;
         }
-        
-        console.log('[ActiveWorkout] Found active workout:', workout.id, 'for user:', user.id);
 
         // If there's a last_workout_exercise_id, convert it to exercise_id
         let lastExerciseId = null;
@@ -102,16 +91,6 @@ export function ActiveWorkoutProvider({ children }) {
           : 0;
         setElapsedTime(elapsed);
         setIsWorkoutActive(true);
-        
-        // Navigate to active workout page if we're not already there
-        // This ensures managers reconnecting to delegated user's active workout get redirected
-        console.log('[ActiveWorkout] Current pathname:', window.location.pathname);
-        if (window.location.pathname !== '/workout/active') {
-          console.log('[ActiveWorkout] Found active workout, navigating to /workout/active');
-          navigate('/workout/active', { replace: true });
-        } else {
-          console.log('[ActiveWorkout] Already on /workout/active, no navigation needed');
-        }
       } catch (err) {
         console.error('Error checking for active workout:', err);
       } finally {
@@ -119,7 +98,7 @@ export function ActiveWorkoutProvider({ children }) {
       }
     };
     checkForActiveWorkout();
-  }, [user, navigate, accountLoading]);
+  }, [user]);
 
   // Timer effect
   useEffect(() => {

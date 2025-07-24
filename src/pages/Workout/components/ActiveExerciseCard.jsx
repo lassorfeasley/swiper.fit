@@ -54,7 +54,6 @@ const ActiveExerciseCard = React.forwardRef(({
   totalCards,
   topOffset,
   isFirstCard,
-  demo = false,
 }, ref) => {
 
   const mountedRef = useRef(true);
@@ -127,12 +126,9 @@ const ActiveExerciseCard = React.forwardRef(({
       if (!mountedRef.current) return;
 
       const setToComplete = { ...sets[setIdx] };
-      
-      console.log('[ActiveExerciseCard] handleSetComplete called with setIdx:', setIdx, 'setToComplete:', setToComplete);
 
       // Call onSetComplete for the parent to handle
       if (onSetComplete) {
-        console.log('[ActiveExerciseCard] Calling onSetComplete with exerciseId:', exerciseId);
         Promise.resolve(
           onSetComplete(exerciseId, { ...setToComplete, status: "complete" })
         ).catch(console.error);
@@ -210,7 +206,7 @@ const ActiveExerciseCard = React.forwardRef(({
               <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
                 {sets.map((set, index) => (
                   <SwipeSwitch
-                    key={`${set.id || set.tempId || set.routine_set_id || "set"}-${index}`}
+                    key={set.id || set.tempId || set.routine_set_id}
                     set={set}
                     onComplete={() => handleSetComplete(index)}
                     onClick={(e) => {
@@ -220,7 +216,6 @@ const ActiveExerciseCard = React.forwardRef(({
                       }
                     }}
                     className="w-full"
-                    demo={demo}
                   />
                 ))}
                 <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
@@ -255,7 +250,6 @@ ActiveExerciseCard.propTypes = {
   totalCards: PropTypes.number,
   topOffset: PropTypes.number,
   isFirstCard: PropTypes.bool,
-  demo: PropTypes.bool,
 };
 
 export default ActiveExerciseCard; 

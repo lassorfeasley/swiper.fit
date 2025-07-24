@@ -2,6 +2,7 @@ import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
 import React from "react";
+import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext";
 import { supabase } from "../../../supabaseClient";
 
 // Debounce utility
@@ -13,8 +14,7 @@ function debounce(fn, delay) {
   };
 }
 
-export default function SwipeSwitch({ set, onComplete, onClick, className = "", demo = false }) {
-  console.log('[SwipeSwitch] Component rendered with onComplete:', !!onComplete, 'demo:', demo);
+export default function SwipeSwitch({ set, onComplete, onClick, className = "" }) {
   const {
     status = "locked",
     reps,
@@ -23,14 +23,23 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     set_variant,
     set_type,
     timed_set_duration,
-    isOptimistic = false,
-    id: setId,
-    tempId,
+    isOptimistic = false, // New prop for optimistic updates
+    id: setId, // Get the set ID
+    tempId, // Get the temp ID as fallback
     account_id, // Get the account that completed this set
   } = set;
   
-  // Derive a stable uniqueSetId at the top of the component
-  const uniqueSetId = setId || tempId;
+  // Debug logging for account_id
+  if (import.meta.env.MODE === 'development') {
+    console.log('[SwipeSwitch] Component rendered with account_id:', {
+      setId,
+      account_id,
+      status
+    });
+  }
+  
+  // Use setId or tempId as the unique identifier
+  const uniqueSetId = setId || tempId || `unknown-${Math.random()}`;
   
   // Animation controls for thumb only
   const controls = useAnimation();
@@ -43,28 +52,33 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const dragStartTime = useRef(0);
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
   const [isManualSwipe, setIsManualSwipe] = useState(false);
-  const [justManuallySwiped, setJustManuallySwiped] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const lastManualSwipeTime = useRef(0);
+  const hasManualSwipedThisSession = useRef(false);
+  // Flag to skip the very next automatic-complete animation if THIS window just swiped
+  const skipAutoCompleteOnce = useRef(false);
+  // Local flag to immediately track manual swipes before context updates
+  const locallyManuallySwipedRef = useRef(false);
   
-  // Use ref to track manual swipes more reliably
-  const justManuallySwipedRef = useRef(false);
-  
-  // Track the last manual swipe time to prevent immediate re-triggers
-  const lastManualSwipeTimeRef = useRef(0);
-  
-  // Track which specific set was manually swiped
-  const manuallySwipedSetIdRef = useRef(null);
-  
-  // Get current user ID for comparison
-  const [currentUserId, setCurrentUserId] = useState(null);
+  // Get the manually completed tracking from context
+  const { markSetManuallyCompleted, isSetManuallyCompleted } = useActiveWorkout();
+
+  // Get authenticated user ID for comparison - always use the actual authenticated user, not the acting user
+  const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
   
   useEffect(() => {
-    if (demo) return; // Skip in demo mode
-    const getCurrentUser = async () => {
+    const getAuthenticatedUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
+      setAuthenticatedUserId(user?.id);
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Authenticated user set:', {
+          userId: user?.id,
+          userEmail: user?.email
+        });
+      }
     };
-    getCurrentUser();
-  }, [demo]);
+    getAuthenticatedUser();
+  }, []);
 
   const duration = timed_set_duration || 30;
   const [timer, setTimer] = useState(duration);
@@ -115,6 +129,25 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
 
   // Helper function for the complete animation sequence
   const triggerCompleteAnimation = useCallback(() => {
+    if (import.meta.env.MODE === 'development') {
+      console.log('[SwipeSwitch] triggerCompleteAnimation called for setId:', setId);
+    }
+    
+    if (import.meta.env.MODE === 'development') {
+      console.log('[SwipeSwitch] Starting Step 1 animation - thumb to end position');
+      console.log('[SwipeSwitch] Animation values:', {
+        x: thumbTravel,
+        width: THUMB_WIDTH,
+        backgroundColor: "#22C55E",
+        borderRadius: THUMB_RADIUS,
+        controls: !!controls
+      });
+    }
+    
+    // Set animating state to true
+    setIsAnimating(true);
+    
+    // Set swipedComplete immediately to trigger the animation
     setSwipedComplete(true);
     
     // Step 1: Animate thumb smoothly to end position
@@ -130,6 +163,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     const expand1Delay = slideDurationMs + 100; // Small delay after slide
     const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
     setTimeout(() => {
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Starting Step 2 animation - expand thumb');
+      }
       controls.start({
           x: 0,
           width: getContentWidth(),
@@ -142,6 +178,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
     const collapseDurationMs = 500; // Must match rail's transition duration
     setTimeout(() => {
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Starting Step 3 animation - collapse padding');
+      }
       setIsPaddingCollapsed(true);
       controls.start({
         x: 0,
@@ -156,116 +195,102 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     // Step 4: Reset manual swipe flag after animation completes
     const totalAnimationTime = collapseDelay + collapseDurationMs + 100; // Small buffer
     setTimeout(() => {
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Animation complete - resetting manual swipe flag');
+      }
       setIsManualSwipe(false);
+      setIsAnimating(false);
     }, totalAnimationTime);
   }, [controls, thumbTravel, tweenConfig, getContentWidth]);
 
   // Reset flags when status changes
   useLayoutEffect(() => {
-    if (demo) return; // Skip in demo mode
-    
+    // We only clear `swipedComplete` and manual-swipe flags if the set becomes editable again (status === 'default').
+    // When status moves to 'complete' we keep the flags so the originating window remembers it already animated.
     if (status === "default") {
       setSwipedComplete(false);
       setIsManualSwipe(false);
-      setJustManuallySwiped(false);
-      justManuallySwipedRef.current = false;
-      // Don't reset lastManualSwipeTimeRef here - keep it persistent
+      setIsAnimating(false);
+      locallyManuallySwipedRef.current = false;
+      hasManualSwipedThisSession.current = false;
+      skipAutoCompleteOnce.current = false;
     }
     // Reset drag detection every status change
     dragMoved.current = false;
-  }, [status, demo]);
+  }, [status]);
 
   // Handle automatic completion with animation
   useLayoutEffect(() => {
-    console.log("[SwipeSwitch] useLayoutEffect called with demo:", demo, "status:", status);
+    // Debug logging for all cases
+    if (import.meta.env.MODE === 'development') {
+      console.log('[SwipeSwitch] useLayoutEffect triggered:', {
+        setId,
+        status,
+        swipedComplete,
+        thumbTravel,
+        account_id,
+        authenticatedUserId,
+        isSetManuallyCompleted: isSetManuallyCompleted(setId),
+        locallyManuallySwiped: locallyManuallySwipedRef.current,
+        skipAutoCompleteOnce: skipAutoCompleteOnce.current
+      });
+    }
     
-    if (demo) {
-      console.log("[SwipeSwitch] Demo mode active, handling status:", status);
-      // Demo mode: handle status changes differently
-      if (status === "complete" && thumbTravel > 0) {
-        console.log("[SwipeSwitch] Demo mode: triggering complete animation");
-        // In demo mode, use the full animation sequence
-        triggerCompleteAnimation();
+    if (status === 'complete' && !swipedComplete && thumbTravel > 0) {
+      // If this window just performed a manual swipe, skip this round
+      if (skipAutoCompleteOnce.current) {
+        skipAutoCompleteOnce.current = false; // Reset for future sets
+        if (import.meta.env.MODE === 'development') {
+          console.log('[SwipeSwitch] Skipping animation - manual swipe detected');
+        }
+        return;
       }
-      return;
+      
+      // Check if this set was completed by the authenticated user
+      const wasCompletedByAuthenticatedUser = account_id === authenticatedUserId;
+      
+      // Debug logging
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Animation check:', {
+          setId,
+          account_id,
+          authenticatedUserId,
+          wasCompletedByAuthenticatedUser,
+          isSetManuallyCompleted: isSetManuallyCompleted(setId),
+          locallyManuallySwiped: locallyManuallySwipedRef.current,
+          shouldAnimate: !isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current
+        });
+      }
+      
+      // Only trigger animation if:
+      // 1. This set was NOT manually completed in this session
+      // 2. Was not locally manually swiped (immediate check)
+      // 3. This is a remote completion (not initiated by this window)
+      if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current) {
+        if (import.meta.env.MODE === 'development') {
+          console.log('[SwipeSwitch] Triggering animation for remote completion');
+        }
+        triggerCompleteAnimation();
+      } else {
+        if (import.meta.env.MODE === 'development') {
+          console.log('[SwipeSwitch] Animation blocked:', {
+            isSetManuallyCompleted: isSetManuallyCompleted(setId),
+            locallyManuallySwiped: locallyManuallySwipedRef.current
+          });
+        }
+      }
+    } else {
+      if (import.meta.env.MODE === 'development') {
+        console.log('[SwipeSwitch] Animation conditions not met:', {
+          status,
+          swipedComplete,
+          thumbTravel
+        });
+      }
     }
-    
-    if (status !== "complete" || thumbTravel === 0) return;
+  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId, account_id, authenticatedUserId]);
 
-    const now = Date.now();
-    const timeSinceLastManualSwipe = now - lastManualSwipeTimeRef.current;
 
-    console.log("[SwipeSwitch] completion detected at:", now, ":", {
-      account_id,
-      currentUserId,
-      swipedComplete,
-      justManuallySwiped,
-      justManuallySwipedRef: justManuallySwipedRef.current,
-      timeSinceLastManualSwipe,
-      manuallySwipedSetId: manuallySwipedSetIdRef.current,
-      uniqueSetId
-    });
-
-    // If this specific set was manually swiped, skip the animation
-    if (manuallySwipedSetIdRef.current === uniqueSetId) {
-      console.log("[SwipeSwitch] this specific set was manually swiped, skipping animation");
-      return;
-    }
-
-    // If we just manually swiped this set (within last 2 seconds), skip the animation
-    if (timeSinceLastManualSwipe < 2000) {
-      console.log("[SwipeSwitch] recent manual swipe detected, skipping animation");
-      return;
-    }
-
-    // If we just manually swiped this set, skip the animation
-    if (justManuallySwipedRef.current) {
-      console.log("[SwipeSwitch] just manually swiped (ref), skipping animation");
-      return;
-    }
-
-    // If we just manually swiped this set, skip the animation
-    if (justManuallySwiped) {
-      console.log("[SwipeSwitch] just manually swiped (state), skipping animation");
-      return;
-    }
-
-    // If swipedComplete is true, it means we just manually swiped
-    if (swipedComplete) {
-      console.log("[SwipeSwitch] swipedComplete is true, skipping animation");
-      return;
-    }
-
-    // If account_id is null/undefined AND we have a currentUserId, 
-    // AND this happened very recently (within 1 second), it's likely a manual swipe
-    if (!account_id && currentUserId && timeSinceLastManualSwipe < 1000) {
-      console.log("[SwipeSwitch] likely manual swipe (null account_id + recent swipe), skipping animation");
-      return;
-    }
-
-    // If account_id is null/undefined, it might be a manual swipe that hasn't been updated yet
-    // Wait a bit longer before deciding it's a remote completion
-    if (!account_id && currentUserId) {
-      console.log("[SwipeSwitch] account_id is null, waiting for database update...");
-      return;
-    }
-
-    // Check if this set was completed by the current user
-    const wasCompletedByCurrentUser = account_id === currentUserId;
-
-    // If this set was completed by the current user, skip the animation
-    if (wasCompletedByCurrentUser) {
-      console.log("[SwipeSwitch] set completed by current user, skipping animation");
-      return;
-    }
-
-    // If we get here, it means none of the guards worked
-    // This should be a remote completion, but let's double-check
-    console.log("[SwipeSwitch] ⚠️ WARNING: All guards failed, but proceeding with animation");
-    console.log("[SwipeSwitch] Final check - account_id:", account_id, "currentUserId:", currentUserId);
-    console.log("[SwipeSwitch] This should be a remote completion - triggering animation");
-    triggerCompleteAnimation();
-  }, [status, thumbTravel, account_id, currentUserId, justManuallySwiped, swipedComplete, uniqueSetId, demo]);
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -274,70 +299,23 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const handleDragEnd = (_, info) => {
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
-    
-    console.log("[SwipeSwitch] handleDragEnd called with demo:", demo, "status:", status);
-    
-    // Demo mode: simplified logic without database complications
-    if (demo) {
-      if (status === "default" && info.offset.x >= travelNeeded) {
-        // Simple completion in demo mode
-        setSwipedComplete(true);
-        controls.start({ 
-          x: thumbTravel, 
-          width: THUMB_WIDTH, 
-          backgroundColor: "#22C55E", 
-          borderRadius: THUMB_RADIUS 
-        }, tweenConfig);
-        onCompleteRef.current?.();
-      } else {
-        // Reset in demo mode
-        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
-      }
-      setTimeout(() => {
-        dragMoved.current = false;
-      }, 50);
-      return;
-    }
-    
-    // Regular mode: full logic with database handling
     if (status === "default" && info.offset.x >= travelNeeded) {
-      const swipeTime = Date.now();
-      console.log('[SwipeSwitch] manual swipe detected at:', swipeTime);
+      // Mark this set as manually completed to prevent future animations
+      markSetManuallyCompleted(setId);
       
-      // Record the manual swipe time immediately
-      lastManualSwipeTimeRef.current = swipeTime;
+      // Set local flag immediately to prevent animation
+      locallyManuallySwipedRef.current = true;
       
-      // Mark this specific set as manually swiped
-      manuallySwipedSetIdRef.current = uniqueSetId;
-      
-      // Mark that we just manually swiped this set (ref first for immediate effect)
-      justManuallySwipedRef.current = true;
-      setJustManuallySwiped(true);
-      
-      // Update visual state immediately
+      // Set swipedComplete to true to trigger immediate animation
       setSwipedComplete(true);
       
-      // Provide immediate visual feedback for manual swipe
-      controls.start({ 
-        x: thumbTravel, 
-        width: THUMB_WIDTH, 
-        backgroundColor: "#22C55E", 
-        borderRadius: THUMB_RADIUS 
-      }, tweenConfig);
+      // Trigger the completion animation immediately for manual swipes
+      triggerCompleteAnimation();
       
-      // Invoke parent callback (this will update the database with account_id)
-      console.log('[SwipeSwitch] About to call onCompleteRef.current');
-      onCompleteRef.current?.();
-      console.log('[SwipeSwitch] Called onCompleteRef.current');
-      
-      // Clear the manual swipe flags after a delay
+      // Call onComplete after a short delay to allow animation to start
       setTimeout(() => {
-        console.log('[SwipeSwitch] clearing manual swipe flags after 5s');
-        setJustManuallySwiped(false);
-        setSwipedComplete(false);
-        justManuallySwipedRef.current = false;
-        manuallySwipedSetIdRef.current = null;
-      }, 5000); // 5 seconds should be enough for the database update
+        onCompleteRef.current?.();
+      }, 100);
     } else {
       // Incomplete: reset thumb
       controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
@@ -351,7 +329,10 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
 
   const isDefault = status === "default";
   const isComplete = status === "complete";
-  const isVisuallyComplete = isComplete || swipedComplete;
+  // Show visually complete if we've manually swiped OR if the status is complete (for remote completions)
+  // For remote completions, we want to show the animation first, then the completed state
+  // The key is that we only show the completed state if we've either manually swiped OR if the animation is done
+  const isVisuallyComplete = swipedComplete || (isComplete && !isAnimating);
 
   // Always use left for positioning, animate x (vertical centering via classes)
   const thumbStyle = {
