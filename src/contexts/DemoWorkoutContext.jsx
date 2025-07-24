@@ -334,9 +334,26 @@ export function DemoWorkoutProvider({ children }) {
       })
     );
     
+    // Check if the exercise should be removed from completedExercises
+    // If new sets were added (more sets than before), remove from completed
+    const currentExercise = demoExercises.find(ex => ex.id === editingExercise.id);
+    if (currentExercise) {
+      // Check if new sets were added or if any sets are now incomplete
+      const hasNewSets = setConfigs.length > currentExercise.setConfigs.length;
+      const hasIncompleteSets = setConfigs.some(set => set.status !== 'complete');
+      
+      if (hasNewSets || hasIncompleteSets) {
+        setCompletedExercises(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(currentExercise.exercise_id);
+          return newSet;
+        });
+      }
+    }
+    
     setEditingExercise(null);
     setEditingExerciseDirty(false);
-  }, [editingExercise]);
+  }, [editingExercise, demoExercises]);
 
   // Handle adding new exercise
   const handleAddExercise = useCallback((exerciseData) => {
@@ -361,6 +378,14 @@ export function DemoWorkoutProvider({ children }) {
     };
 
     setDemoExercises(prev => [...prev, newExercise]);
+    
+    // Ensure the new exercise is not marked as completed
+    setCompletedExercises(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(newExercise.exercise_id);
+      return newSet;
+    });
+    
     setShowAddExercise(false);
   }, []);
 
