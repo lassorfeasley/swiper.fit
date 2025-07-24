@@ -315,8 +315,8 @@ export function DemoWorkoutProvider({ children }) {
   const handleSaveExerciseEdit = useCallback((data) => {
     const { name, section, setConfigs } = data;
     
-    setDemoExercises(prev => 
-      prev.map(exercise => {
+    setDemoExercises(prev => {
+      const updatedExercises = prev.map(exercise => {
         if (exercise.id === editingExercise.id) {
           return {
             ...exercise,
@@ -331,29 +331,31 @@ export function DemoWorkoutProvider({ children }) {
           };
         }
         return exercise;
-      })
-    );
-    
-    // Check if the exercise should be removed from completedExercises
-    // If new sets were added (more sets than before), remove from completed
-    const currentExercise = demoExercises.find(ex => ex.id === editingExercise.id);
-    if (currentExercise) {
-      // Check if new sets were added or if any sets are now incomplete
-      const hasNewSets = setConfigs.length > currentExercise.setConfigs.length;
-      const hasIncompleteSets = setConfigs.some(set => set.status !== 'complete');
+      });
       
-      if (hasNewSets || hasIncompleteSets) {
-        setCompletedExercises(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(currentExercise.exercise_id);
-          return newSet;
-        });
+      // Check if the exercise should be removed from completedExercises
+      // If new sets were added (more sets than before), remove from completed
+      const currentExercise = prev.find(ex => ex.id === editingExercise.id);
+      if (currentExercise) {
+        // Check if new sets were added or if any sets are now incomplete
+        const hasNewSets = setConfigs.length > currentExercise.setConfigs.length;
+        const hasIncompleteSets = setConfigs.some(set => set.status !== 'complete');
+        
+        if (hasNewSets || hasIncompleteSets) {
+          setCompletedExercises(completedPrev => {
+            const newSet = new Set(completedPrev);
+            newSet.delete(currentExercise.exercise_id);
+            return newSet;
+          });
+        }
       }
-    }
+      
+      return updatedExercises;
+    });
     
     setEditingExercise(null);
     setEditingExerciseDirty(false);
-  }, [editingExercise, demoExercises]);
+  }, [editingExercise]);
 
   // Handle adding new exercise
   const handleAddExercise = useCallback((exerciseData) => {
