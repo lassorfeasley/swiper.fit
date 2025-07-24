@@ -300,11 +300,10 @@ const ActiveWorkoutSection = ({
           // Get current user to compare with the set's account_id
           const { data: { user } } = await supabase.auth.getUser();
           
-          // Only mark as manually completed if this was completed by the current user
-          // This allows the database animation to show for remote completions
-          if (row.account_id === user?.id) {
-            markSetManuallyCompleted(row.id);
-          }
+          // Note: We don't mark sets as manually completed here anymore
+          // This was causing issues where DB updates from other clients
+          // were being marked as manually completed, preventing animations
+          // Manual completion tracking is now handled only in the swipe-switch component
           
           // Show toast for ALL set completions (both local and remote) for debugging
           // Check if we've already shown a toast for this set globally
@@ -337,7 +336,7 @@ const ActiveWorkoutSection = ({
     return () => {
       void setsChan.unsubscribe();
     };
-  }, [activeWorkout?.id, section, fetchExercises, markSetManuallyCompleted, markSetToasted, isSetToasted]);
+  }, [activeWorkout?.id, section, fetchExercises, markSetToasted, isSetToasted]);
 
 
 
