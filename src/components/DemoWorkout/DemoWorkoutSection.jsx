@@ -69,7 +69,7 @@ export default function DemoWorkoutSection() {
 
   return (
     <div className="w-full bg-transparent h-full">
-      {/* Exercise Cards Container - now using DeckWrapper with full height */}
+      {/* Exercise Cards Container - now using DeckWrapper with mobile-appropriate height */}
       <div 
         className="w-full demo-workout-container h-full flex flex-col items-center justify-start"
       >
@@ -77,8 +77,11 @@ export default function DemoWorkoutSection() {
           gap={0}
           maxWidth={500}
           minWidth={325}
-          className="h-full flex justify-center items-start"
-          style={{ paddingTop: 0, paddingBottom: 0 }}
+          className="flex justify-center items-start h-[600px] md:h-full"
+          style={{ 
+            paddingTop: 0, 
+            paddingBottom: 0
+          }}
           extendToBottom={true}
         >
           {trainingExercises.map((exercise, index) => {

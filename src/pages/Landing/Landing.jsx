@@ -54,33 +54,26 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Main Content - Flexible height */}
+        {/* Main Content - Fixed height sections */}
         <div className="flex-1 flex flex-col">
-          {/* Text content at top */}
-          <div className="flex-shrink-0 px-5 pt-8 pb-6">
-            <div className="w-full max-w-[500px] mx-auto flex flex-col justify-start items-start gap-2.5">
-              <div className="w-full max-w-96 flex flex-col justify-start items-start gap-2">
-                <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Log workouts effortlessly.</div>
-                <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Enter your routine and start a workout. Never miss an exercise and track your progress with AI.</div>
-              </div>
+          {/* Text content section - Fixed height */}
+          <div className="w-full h-[371px] px-5 flex flex-col justify-center items-start gap-2.5">
+            <div className="w-full max-w-[400px] flex flex-col justify-start items-start gap-2">
+              <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Log workouts effortlessly.</div>
+              <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Enter your routine and start a workout. Never miss an exercise and monitor your progress with AI.</div>
             </div>
           </div>
 
-          {/* Demo workout section - extends to footer with vertical lines */}
-          <div className="flex-1 flex flex-col">
-            <div data-form-active="false" data-form-dormant="false" data-form="true" data-property-1="Default" className="w-full h-12 pl-3 bg-white border-t border-b border-neutral-neutral-300 inline-flex flex-col justify-center items-start">
-              <div className="self-stretch inline-flex justify-center items-center gap-2.5">
-                <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Swipe sets to complete exercises</div>
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col justify-start items-center">
+          {/* Demo workout section - Container that hugs content */}
+          <div className="w-full px-5 outline outline-1 outline-neutral-neutral-300 flex flex-col justify-center items-center">
+            <div className="w-full flex flex-col justify-center items-center">
               <DemoWorkoutSection />
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex-shrink-0 w-full px-3 pt-3 pb-6 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
+        {/* Footer - Fixed height */}
+        <div className="w-full h-[152px] px-3 pt-3 pb-[100px] bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
           <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">Developed by Lassor</div>
           <div className="self-stretch flex flex-col justify-start items-start gap-1">
             <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">www.Lassor.com</div>
