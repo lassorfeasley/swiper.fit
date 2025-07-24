@@ -167,7 +167,7 @@ export function DemoWorkoutProvider({ children }) {
   const currentSetIndexRef = useRef(0);
 
   // Handle set completion
-  const handleSetComplete = useCallback((exerciseId, setConfig) => {
+  const handleSetComplete = useCallback((exerciseId, setConfig, isManualSwipe = false) => {
     setDemoExercises(prev => 
       prev.map(exercise => {
         if (exercise.exercise_id === exerciseId) {
@@ -183,6 +183,24 @@ export function DemoWorkoutProvider({ children }) {
         return exercise;
       })
     );
+
+    // If this is a manual swipe, mark user interaction but don't stop manual swiping
+    if (isManualSwipe) {
+      setUserHasInteracted(true);
+      // Stop auto-complete if it's running
+      if (autoCompleteEnabledRef.current) {
+        setAutoCompleteEnabled(false);
+        autoCompleteEnabledRef.current = false;
+        setCurrentExerciseIndex(0);
+        setCurrentSetIndex(0);
+        currentExerciseIndexRef.current = 0;
+        currentSetIndexRef.current = 0;
+        if (autoCompleteInterval) {
+          clearInterval(autoCompleteInterval);
+          setAutoCompleteInterval(null);
+        }
+      }
+    }
 
     // Check if all sets in exercise are complete
     const exercise = demoExercises.find(ex => ex.exercise_id === exerciseId);
@@ -207,7 +225,7 @@ export function DemoWorkoutProvider({ children }) {
         }
       }
     }
-  }, [demoExercises, completedExercises, autoCompleteEnabled]);
+  }, [demoExercises, completedExercises, autoCompleteEnabled, autoCompleteInterval]);
 
   // Handle set editing
   const handleSetEdit = useCallback((exerciseId, setConfig, index) => {
@@ -411,7 +429,7 @@ export function DemoWorkoutProvider({ children }) {
     // Complete current set
     const currentSet = currentExercise.setConfigs[currentSetIndexRef.current];
     if (currentSet && currentSet.status !== 'complete') {
-      handleSetComplete(currentExercise.exercise_id, currentSet);
+      handleSetComplete(currentExercise.exercise_id, currentSet, false); // Not a manual swipe
     }
     
     // Move to next set

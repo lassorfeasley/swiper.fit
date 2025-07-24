@@ -92,7 +92,7 @@ export default function DemoWorkoutSection() {
                   exerciseId={exercise.exercise_id}
                   exerciseName={exercise.name}
                   initialSetConfigs={exercise.setConfigs}
-                  onSetComplete={handleSetComplete}
+                  onSetComplete={(exerciseId, setConfig) => handleSetComplete(exerciseId, setConfig, true)}
                   onSetDataChange={handleSetUpdate}
                   onExerciseComplete={() => {
                     // Mark exercise as completed
