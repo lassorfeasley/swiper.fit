@@ -54,6 +54,8 @@ const ActiveExerciseCard = React.forwardRef(({
   totalCards,
   topOffset,
   isFirstCard,
+  isCompleted = false,
+  demo = false,
 }, ref) => {
 
   const mountedRef = useRef(true);
@@ -94,8 +96,8 @@ const ActiveExerciseCard = React.forwardRef(({
   }, [initialSetConfigs]);
 
   const allComplete = useMemo(
-    () => sets.every((set) => set.status === "complete"),
-    [sets]
+    () => isCompleted || sets.every((set) => set.status === "complete"),
+    [sets, isCompleted]
   );
 
   // Handle set reordering - this is the new responsibility delegated to the card
@@ -216,6 +218,7 @@ const ActiveExerciseCard = React.forwardRef(({
                       }
                     }}
                     className="w-full"
+                    demo={demo}
                   />
                 ))}
                 <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
@@ -250,6 +253,8 @@ ActiveExerciseCard.propTypes = {
   totalCards: PropTypes.number,
   topOffset: PropTypes.number,
   isFirstCard: PropTypes.bool,
+  isCompleted: PropTypes.bool,
+  demo: PropTypes.bool,
 };
 
 export default ActiveExerciseCard; 

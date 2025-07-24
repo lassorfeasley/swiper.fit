@@ -12,6 +12,7 @@ export default function DemoWorkoutSection() {
     demoExercises,
     focusedExerciseId,
     completedExercises,
+    setCompletedExercises,
     showAddExercise,
     setShowAddExercise,
     editingSet,
@@ -43,13 +44,16 @@ export default function DemoWorkoutSection() {
   // Focus first exercise on component mount only if no exercise is focused
   React.useEffect(() => {
     if (trainingExercises.length > 0 && !focusedExerciseId) {
+      console.log('Auto-focusing first exercise:', trainingExercises[0].exercise_id);
       handleExerciseFocus(trainingExercises[0].exercise_id, false); // Not a manual click
     }
   }, [trainingExercises, focusedExerciseId, handleExerciseFocus]);
 
   // Auto-start the demo on component mount
   React.useEffect(() => {
+    console.log('Setting up auto-complete timer');
     const timer = setTimeout(() => {
+      console.log('Starting auto-complete from DemoWorkoutSection');
       startAutoComplete();
     }, 3000); // Start after 3 seconds to let first exercise stay focused
 
@@ -67,13 +71,13 @@ export default function DemoWorkoutSection() {
     <div className="w-full bg-transparent h-full">
       {/* Exercise Cards Container - now using DeckWrapper with full height */}
       <div 
-        className="w-full demo-workout-container h-full flex flex-col items-center justify-center"
+        className="w-full demo-workout-container h-full flex flex-col items-center justify-start"
       >
         <DeckWrapper
           gap={0}
           maxWidth={500}
           minWidth={325}
-          className="h-full flex justify-center items-center"
+          className="h-full flex justify-center items-start"
           style={{ paddingTop: 0, paddingBottom: 0 }}
           extendToBottom={true}
         >
@@ -81,6 +85,7 @@ export default function DemoWorkoutSection() {
             const isFocused = focusedExerciseId === exercise.exercise_id;
             const isCompleted = completedExercises.has(exercise.exercise_id);
             const isLastExercise = index === trainingExercises.length - 1;
+            console.log('Rendering exercise:', exercise.exercise_id, 'isCompleted:', isCompleted, 'completedExercises:', Array.from(completedExercises));
             
             return (
               <CardWrapper
@@ -108,6 +113,7 @@ export default function DemoWorkoutSection() {
                   totalCards={trainingExercises.length}
                   topOffset={80 + index * 64}
                   demo={true}
+                  isCompleted={isCompleted}
                 />
               </CardWrapper>
             );

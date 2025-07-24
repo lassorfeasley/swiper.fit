@@ -21,7 +21,7 @@ export function DemoWorkoutProvider({ children }) {
       setConfigs: [
         {
           id: 'demo-set-1-1',
-          routine_set_id: 'demo-routine-set-1',
+          routine_set_id: 'demo-routine-set-1-1',
           reps: 12,
           weight: 60,
           weight_unit: 'lbs',
@@ -32,7 +32,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-1-2',
-          routine_set_id: 'demo-routine-set-1',
+          routine_set_id: 'demo-routine-set-1-2',
           reps: 12,
           weight: 60,
           weight_unit: 'lbs',
@@ -43,7 +43,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-1-3',
-          routine_set_id: 'demo-routine-set-1',
+          routine_set_id: 'demo-routine-set-1-3',
           reps: 12,
           weight: 60,
           weight_unit: 'lbs',
@@ -62,7 +62,7 @@ export function DemoWorkoutProvider({ children }) {
       setConfigs: [
         {
           id: 'demo-set-2-1',
-          routine_set_id: 'demo-routine-set-2',
+          routine_set_id: 'demo-routine-set-2-1',
           reps: 25,
           weight: 0,
           weight_unit: 'body',
@@ -73,7 +73,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-2-2',
-          routine_set_id: 'demo-routine-set-2',
+          routine_set_id: 'demo-routine-set-2-2',
           reps: 25,
           weight: 0,
           weight_unit: 'body',
@@ -84,7 +84,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-2-3',
-          routine_set_id: 'demo-routine-set-2',
+          routine_set_id: 'demo-routine-set-2-3',
           reps: 25,
           weight: 0,
           weight_unit: 'body',
@@ -103,7 +103,7 @@ export function DemoWorkoutProvider({ children }) {
       setConfigs: [
         {
           id: 'demo-set-3-1',
-          routine_set_id: 'demo-routine-set-3',
+          routine_set_id: 'demo-routine-set-3-1',
           reps: 0,
           weight: 0,
           weight_unit: 'body',
@@ -115,7 +115,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-3-2',
-          routine_set_id: 'demo-routine-set-3',
+          routine_set_id: 'demo-routine-set-3-2',
           reps: 0,
           weight: 0,
           weight_unit: 'body',
@@ -127,7 +127,7 @@ export function DemoWorkoutProvider({ children }) {
         },
         {
           id: 'demo-set-3-3',
-          routine_set_id: 'demo-routine-set-3',
+          routine_set_id: 'demo-routine-set-3-3',
           reps: 0,
           weight: 0,
           weight_unit: 'body',
@@ -184,7 +184,7 @@ export function DemoWorkoutProvider({ children }) {
       })
     );
 
-    // If this is a manual swipe, mark user interaction but don't stop manual swiping
+    // If this is a manual swipe, stop auto-complete but allow continued manual swiping
     if (isManualSwipe) {
       setUserHasInteracted(true);
       // Stop auto-complete if it's running
@@ -208,12 +208,18 @@ export function DemoWorkoutProvider({ children }) {
       const allSetsComplete = exercise.setConfigs.every(set => 
         set.id === setConfig.id ? true : set.status === 'complete'
       );
+      console.log('Checking completion for exercise:', exerciseId, 'All sets complete:', allSetsComplete, 'Set statuses:', exercise.setConfigs.map(s => ({ id: s.id, status: s.status, isCurrent: s.id === setConfig.id })));
       
       if (allSetsComplete) {
-        setCompletedExercises(prev => new Set([...prev, exerciseId]));
+        console.log('Exercise completed:', exerciseId, 'All sets complete');
+        setCompletedExercises(prev => {
+          const newSet = new Set([...prev, exerciseId]);
+          console.log('Added exercise to completed list:', exerciseId, 'New completed list:', Array.from(newSet));
+          return newSet;
+        });
         
-        // Only auto-focus next incomplete exercise if auto-complete is enabled
-        if (autoCompleteEnabled) {
+        // Auto-focus next incomplete exercise (both for auto-complete and manual completion)
+        setTimeout(() => {
           const currentIndex = demoExercises.findIndex(ex => ex.exercise_id === exerciseId);
           for (let i = currentIndex + 1; i < demoExercises.length; i++) {
             const nextExercise = demoExercises[i];
@@ -222,7 +228,20 @@ export function DemoWorkoutProvider({ children }) {
               break;
             }
           }
-        }
+          
+          // If no next incomplete exercise found, focus back to the first incomplete exercise
+          if (currentIndex === demoExercises.length - 1 || 
+              demoExercises.slice(currentIndex + 1).every(ex => completedExercises.has(ex.exercise_id))) {
+            // Find the first incomplete exercise
+            for (let i = 0; i < demoExercises.length; i++) {
+              const exercise = demoExercises[i];
+              if (!completedExercises.has(exercise.exercise_id)) {
+                setFocusedExerciseId(exercise.exercise_id);
+                break;
+              }
+            }
+          }
+        }, 500); // Small delay to let the completion animation play
       }
     }
   }, [demoExercises, completedExercises, autoCompleteEnabled, autoCompleteInterval]);
@@ -438,7 +457,7 @@ export function DemoWorkoutProvider({ children }) {
     
     // Fixed 4-second delay before next set
     setTimeout(processNextSet, 4000);
-  }, [demoExercises, handleSetComplete, handleExerciseFocus, userHasInteracted, autoCompleteInterval, completedExercises]);
+  }, [demoExercises, handleSetComplete, handleExerciseFocus, autoCompleteInterval, completedExercises]);
 
   // Start auto-complete demo
   const startAutoComplete = useCallback(() => {
@@ -467,7 +486,7 @@ export function DemoWorkoutProvider({ children }) {
     
     // Start the process after a delay to ensure first exercise stays focused
     setTimeout(processNextSet, 1000);
-  }, [demoExercises, handleExerciseFocus, focusedExerciseId, userHasInteracted, processNextSet]);
+  }, [demoExercises, handleExerciseFocus, focusedExerciseId, processNextSet]);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -513,7 +532,7 @@ export function DemoWorkoutProvider({ children }) {
         setConfigs: [
           {
             id: 'demo-set-1-1',
-            routine_set_id: 'demo-routine-set-1',
+            routine_set_id: 'demo-routine-set-1-1',
             reps: 10,
             weight: 0,
             weight_unit: 'lbs',
@@ -524,7 +543,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-1-2',
-            routine_set_id: 'demo-routine-set-1',
+            routine_set_id: 'demo-routine-set-1-2',
             reps: 10,
             weight: 0,
             weight_unit: 'lbs',
@@ -535,7 +554,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-1-3',
-            routine_set_id: 'demo-routine-set-1',
+            routine_set_id: 'demo-routine-set-1-3',
             reps: 10,
             weight: 0,
             weight_unit: 'lbs',
@@ -554,7 +573,7 @@ export function DemoWorkoutProvider({ children }) {
         setConfigs: [
           {
             id: 'demo-set-2-1',
-            routine_set_id: 'demo-routine-set-2',
+            routine_set_id: 'demo-routine-set-2-1',
             reps: 25,
             weight: 0,
             weight_unit: 'body',
@@ -565,7 +584,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-2-2',
-            routine_set_id: 'demo-routine-set-2',
+            routine_set_id: 'demo-routine-set-2-2',
             reps: 25,
             weight: 0,
             weight_unit: 'body',
@@ -576,7 +595,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-2-3',
-            routine_set_id: 'demo-routine-set-2',
+            routine_set_id: 'demo-routine-set-2-3',
             reps: 25,
             weight: 0,
             weight_unit: 'body',
@@ -595,7 +614,7 @@ export function DemoWorkoutProvider({ children }) {
         setConfigs: [
           {
             id: 'demo-set-3-1',
-            routine_set_id: 'demo-routine-set-3',
+            routine_set_id: 'demo-routine-set-3-1',
             reps: 8,
             weight: 0,
             weight_unit: 'body',
@@ -606,7 +625,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-3-2',
-            routine_set_id: 'demo-routine-set-3',
+            routine_set_id: 'demo-routine-set-3-2',
             reps: 8,
             weight: 0,
             weight_unit: 'body',
@@ -617,7 +636,7 @@ export function DemoWorkoutProvider({ children }) {
           },
           {
             id: 'demo-set-3-3',
-            routine_set_id: 'demo-routine-set-3',
+            routine_set_id: 'demo-routine-set-3-3',
             reps: 6,
             weight: 0,
             weight_unit: 'body',
@@ -639,6 +658,7 @@ export function DemoWorkoutProvider({ children }) {
     demoExercises,
     focusedExerciseId,
     completedExercises,
+    setCompletedExercises,
     showAddExercise,
     setShowAddExercise,
     editingSet,

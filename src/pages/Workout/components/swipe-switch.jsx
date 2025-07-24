@@ -14,7 +14,7 @@ function debounce(fn, delay) {
   };
 }
 
-export default function SwipeSwitch({ set, onComplete, onClick, className = "" }) {
+export default function SwipeSwitch({ set, onComplete, onClick, className = "", demo = false }) {
   const {
     status = "locked",
     reps,
@@ -263,9 +263,10 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
     if (status === "default" && info.offset.x >= travelNeeded) {
-      // Mark this set as manually completed to prevent future animations
-      // Use uniqueSetId to ensure we track the correct set even if setId changes
-      markSetManuallyCompleted(uniqueSetId);
+      // Mark this set as manually completed to prevent future animations (only in non-demo mode)
+      if (!demo) {
+        markSetManuallyCompleted(uniqueSetId);
+      }
       
       // Set local flag immediately to prevent animation
       locallyManuallySwipedRef.current = true;
@@ -297,7 +298,10 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   // 2. We've manually swiped (locallyManuallySwipedRef.current) - fallback for immediate state
   // 3. The status is complete and we're not animating (for remote completions)
   // 4. We've set swipedComplete (for manual swipes that are in progress)
-  const isVisuallyComplete = isSetManuallyCompleted(uniqueSetId) || locallyManuallySwipedRef.current || (isComplete && !isAnimating) || swipedComplete;
+  // In demo mode, only use status and animation state, not manual completion tracking
+  const isVisuallyComplete = demo 
+    ? (isComplete && !isAnimating) || swipedComplete
+    : isSetManuallyCompleted(uniqueSetId) || locallyManuallySwipedRef.current || (isComplete && !isAnimating) || swipedComplete;
   
 
 
