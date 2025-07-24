@@ -369,34 +369,34 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
         {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
             {set_variant && (
-              <div className={`text-right text-xs font-bold uppercase leading-3 tracking-wide ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`}>
+              <div className="text-right text-xs font-bold uppercase leading-3 tracking-wide text-neutral-500">
                 {set_variant}
               </div>
             )}
             <div className="inline-flex justify-end items-center gap-2">
               {set_type === 'timed' && (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Clock className={`size-4 ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`} />
-                  <div className={`text-center text-lg font-bold ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`}>
+                  <Clock className="size-4 text-neutral-500" />
+                  <div className="text-center text-lg font-bold text-neutral-500">
                     {duration >= 60 ? formatTime(duration) : `${duration}`}
                   </div>
                 </div>
               )}
               {set_type !== 'timed' && typeof reps === 'number' && (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Repeat2 className={`size-4 ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`} />
-                  <div className={`text-center text-lg font-bold ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`}>{reps}</div>
+                  <Repeat2 className="size-4 text-neutral-500" />
+                  <div className="text-center text-lg font-bold text-neutral-500">{reps}</div>
                 </div>
               )}
               {weight_unit === 'body' ? (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Weight className={`size-4 ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`} />
-                  <div className={`text-center text-lg font-bold ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`}>BW</div>
+                  <Weight className="size-4 text-neutral-500" />
+                  <div className="text-center text-lg font-bold text-neutral-500">BW</div>
                 </div>
               ) : (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Weight className={`size-4 ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`} />
-                  <div className={`text-center text-lg font-bold ${isVisuallyComplete && status === 'complete' ? 'text-white' : 'text-neutral-500'}`}>{weight || 0}</div>
+                  <Weight className="size-4 text-neutral-500" />
+                  <div className="text-center text-lg font-bold text-neutral-500">{weight || 0}</div>
                 </div>
               )}
             </div>
