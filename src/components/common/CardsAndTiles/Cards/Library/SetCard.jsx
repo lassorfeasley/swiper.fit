@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
 import MetricPill from '@/components/common/CardsAndTiles/MetricPill';
-import SlideUpForm from '@/components/common/forms/SlideUpForm';
+import { SwiperSheet } from '@/components/molecules/swiper-sheet';
 import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
 import NumericInput from '@/components/common/forms/NumericInput';
 import Icon from '@/components/common/Icon';
@@ -250,18 +250,21 @@ const SetCard = ({
           onComplete={handleCompleteAllSets} 
         />
       )}
-      {/* SlideUpForm overlay for editing metric */}
+      {/* SwiperSheet overlay for editing metric */}
       {editMetric && (
-        <SlideUpForm
-          formPrompt={`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}
-          onOverlayClick={handleOverlayClose}
+        <SwiperSheet
+          open={!!editMetric}
+          onOpenChange={(open) => !open && handleOverlayClose()}
           className="z-[100]"
-          actionIcon={
-            <button onClick={handleMetricSubmit} style={{ background: 'none', border: 'none', padding: 0 }}>
-              <Icon name="arrow_forward" size={32} />
-            </button>
-          }
+          title={`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}
         >
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">{`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}</h3>
+              <button onClick={handleMetricSubmit} style={{ background: 'none', border: 'none', padding: 0 }}>
+                <Icon name="arrow_forward" size={32} />
+              </button>
+            </div>
           {editMetric.metric === 'sets' && (
             <NumericInput
               label="Sets"
@@ -292,7 +295,8 @@ const SetCard = ({
               onUnitChange={setWeightUnit}
             />
           )}
-        </SlideUpForm>
+          </div>
+        </SwiperSheet>
       )}
     </div>
   );
