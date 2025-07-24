@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
 import MetricPill from '@/components/common/CardsAndTiles/MetricPill';
 import { SwiperSheet } from '@/components/molecules/swiper-sheet';
-import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
+import WeightCompoundField from '@/components/common/forms/WeightCompoundField';
 import NumericInput from '@/components/common/forms/NumericInput';
-import Icon from '@/components/common/Icon';
+import { ArrowRight } from "lucide-react";
 import PropTypes from 'prop-types';
 import SetBadge from '@/components/molecules/SetBadge';
 
@@ -262,7 +262,7 @@ const SetCard = ({
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">{`Edit ${editMetric.metric}`.replace('sets', 'sets').replace('reps', 'reps').replace('weight', 'weight')}</h3>
               <button onClick={handleMetricSubmit} style={{ background: 'none', border: 'none', padding: 0 }}>
-                <Icon name="arrow_forward" size={32} />
+                <ArrowRight size={32} />
               </button>
             </div>
           {editMetric.metric === 'sets' && (
