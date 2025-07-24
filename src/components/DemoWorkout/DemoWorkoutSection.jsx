@@ -106,6 +106,7 @@ export default function DemoWorkoutSection() {
                   focusedIndex={trainingExercises.findIndex(e => e.exercise_id === focusedExerciseId)}
                   totalCards={trainingExercises.length}
                   topOffset={80 + index * 64}
+                  demo={true}
                 />
               </CardWrapper>
             );

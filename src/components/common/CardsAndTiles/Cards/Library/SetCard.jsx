@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
-import MetricPill from 'components/common/CardsAndTiles/MetricPill';
-import SlideUpForm from 'components/common/forms/SlideUpForm';
-import WeightCompoundField from 'components/common/forms/compound-fields/WeightCompoundField';
-import NumericInput from 'components/common/forms/NumericInput';
-import Icon from 'components/common/Icon';
+import MetricPill from '@/components/common/CardsAndTiles/MetricPill';
+import SlideUpForm from '@/components/common/forms/SlideUpForm';
+import WeightCompoundField from '@/components/common/forms/compound-fields/WeightCompoundField';
+import NumericInput from '@/components/common/forms/NumericInput';
+import Icon from '@/components/common/Icon';
 import PropTypes from 'prop-types';
 import SetBadge from '@/components/molecules/SetBadge';
 
