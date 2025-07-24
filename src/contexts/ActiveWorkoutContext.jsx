@@ -19,6 +19,9 @@ export function ActiveWorkoutProvider({ children }) {
   
   // Track sets that were manually completed in this session (to prevent animations)
   const [manuallyCompletedSets, setManuallyCompletedSets] = useState(new Set());
+  
+  // Track sets that have already shown completion toasts (to prevent duplicates across sections)
+  const [toastedSets, setToastedSets] = useState(new Set());
 
   // Effect to check for an active workout on load
   useEffect(() => {
@@ -477,9 +480,20 @@ export function ActiveWorkoutProvider({ children }) {
     return manuallyCompletedSets.has(setId);
   }, [manuallyCompletedSets]);
 
-  // Clear manually completed sets when workout changes
+  // Mark a set as toasted (to prevent duplicate notifications)
+  const markSetToasted = useCallback((setId) => {
+    setToastedSets(prev => new Set([...prev, setId]));
+  }, []);
+
+  // Check if a set has already been toasted
+  const isSetToasted = useCallback((setId) => {
+    return toastedSets.has(setId);
+  }, [toastedSets]);
+
+  // Clear manually completed sets and toasted sets when workout changes
   useEffect(() => {
     setManuallyCompletedSets(new Set());
+    setToastedSets(new Set());
   }, [activeWorkout?.id]);
 
   return (
@@ -496,7 +510,9 @@ export function ActiveWorkoutProvider({ children }) {
         loading,
         lastExerciseIdChangeTrigger,
         markSetManuallyCompleted,
-        isSetManuallyCompleted
+        isSetManuallyCompleted,
+        markSetToasted,
+        isSetToasted
       }}
     >
       {!loading && children}

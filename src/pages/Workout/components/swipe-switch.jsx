@@ -29,14 +29,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     account_id, // Get the account that completed this set
   } = set;
   
-  // Debug logging for account_id
-  if (import.meta.env.MODE === 'development') {
-    console.log('[SwipeSwitch] Component rendered with account_id:', {
-      setId,
-      account_id,
-      status
-    });
-  }
+
   
   // Use setId or tempId as the unique identifier
   const uniqueSetId = setId || tempId || `unknown-${Math.random()}`;
@@ -59,6 +52,8 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   const skipAutoCompleteOnce = useRef(false);
   // Local flag to immediately track manual swipes before context updates
   const locallyManuallySwipedRef = useRef(false);
+  // Flag to track if component is mounted
+  const isMountedRef = useRef(false);
   
   // Get the manually completed tracking from context
   const { markSetManuallyCompleted, isSetManuallyCompleted } = useActiveWorkout();
@@ -70,12 +65,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     const getAuthenticatedUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setAuthenticatedUserId(user?.id);
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Authenticated user set:', {
-          userId: user?.id,
-          userEmail: user?.email
-        });
-      }
+
     };
     getAuthenticatedUser();
   }, []);
@@ -129,19 +119,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
 
   // Helper function for the complete animation sequence
   const triggerCompleteAnimation = useCallback(() => {
-    if (import.meta.env.MODE === 'development') {
-      console.log('[SwipeSwitch] triggerCompleteAnimation called for setId:', setId);
-    }
-    
-    if (import.meta.env.MODE === 'development') {
-      console.log('[SwipeSwitch] Starting Step 1 animation - thumb to end position');
-      console.log('[SwipeSwitch] Animation values:', {
-        x: thumbTravel,
-        width: THUMB_WIDTH,
-        backgroundColor: "#22C55E",
-        borderRadius: THUMB_RADIUS,
-        controls: !!controls
-      });
+    // Check if component is mounted before starting animation
+    if (!isMountedRef.current) {
+      return;
     }
     
     // Set animating state to true
@@ -163,41 +143,36 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     const expand1Delay = slideDurationMs + 100; // Small delay after slide
     const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
     setTimeout(() => {
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Starting Step 2 animation - expand thumb');
+      if (isMountedRef.current) {
+        controls.start({
+            x: 0,
+            width: getContentWidth(),
+            backgroundColor: "#22C55E",
+            borderRadius: RAIL_RADIUS
+        }, tweenConfig);
       }
-      controls.start({
-          x: 0,
-          width: getContentWidth(),
-          backgroundColor: "#22C55E",
-          borderRadius: RAIL_RADIUS
-      }, tweenConfig);
     }, expand1Delay);
 
     // Step 3: After first expansion, expand thumb to fill full rail and collapse padding
     const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
     const collapseDurationMs = 500; // Must match rail's transition duration
     setTimeout(() => {
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Starting Step 3 animation - collapse padding');
+      if (isMountedRef.current) {
+        setIsPaddingCollapsed(true);
+        controls.start({
+          x: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#22C55E',
+          borderRadius: 0
+        }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
       }
-      setIsPaddingCollapsed(true);
-      controls.start({
-        x: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#22C55E',
-        borderRadius: 0
-      }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
     }, collapseDelay);
 
     // Step 4: Reset manual swipe flag after animation completes
     const totalAnimationTime = collapseDelay + collapseDurationMs + 100; // Small buffer
     setTimeout(() => {
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Animation complete - resetting manual swipe flag');
-      }
       setIsManualSwipe(false);
       setIsAnimating(false);
     }, totalAnimationTime);
@@ -221,45 +196,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
 
   // Handle automatic completion with animation
   useLayoutEffect(() => {
-    // Debug logging for all cases
-    if (import.meta.env.MODE === 'development') {
-      console.log('[SwipeSwitch] useLayoutEffect triggered:', {
-        setId,
-        status,
-        swipedComplete,
-        thumbTravel,
-        account_id,
-        authenticatedUserId,
-        isSetManuallyCompleted: isSetManuallyCompleted(setId),
-        locallyManuallySwiped: locallyManuallySwipedRef.current,
-        skipAutoCompleteOnce: skipAutoCompleteOnce.current
-      });
-    }
-    
     if (status === 'complete' && !swipedComplete && thumbTravel > 0) {
       // If this window just performed a manual swipe, skip this round
       if (skipAutoCompleteOnce.current) {
         skipAutoCompleteOnce.current = false; // Reset for future sets
-        if (import.meta.env.MODE === 'development') {
-          console.log('[SwipeSwitch] Skipping animation - manual swipe detected');
-        }
         return;
-      }
-      
-      // Check if this set was completed by the authenticated user
-      const wasCompletedByAuthenticatedUser = account_id === authenticatedUserId;
-      
-      // Debug logging
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Animation check:', {
-          setId,
-          account_id,
-          authenticatedUserId,
-          wasCompletedByAuthenticatedUser,
-          isSetManuallyCompleted: isSetManuallyCompleted(setId),
-          locallyManuallySwiped: locallyManuallySwipedRef.current,
-          shouldAnimate: !isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current
-        });
       }
       
       // Only trigger animation if:
@@ -267,25 +208,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
       // 2. Was not locally manually swiped (immediate check)
       // 3. This is a remote completion (not initiated by this window)
       if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current) {
-        if (import.meta.env.MODE === 'development') {
-          console.log('[SwipeSwitch] Triggering animation for remote completion');
-        }
         triggerCompleteAnimation();
-      } else {
-        if (import.meta.env.MODE === 'development') {
-          console.log('[SwipeSwitch] Animation blocked:', {
-            isSetManuallyCompleted: isSetManuallyCompleted(setId),
-            locallyManuallySwiped: locallyManuallySwipedRef.current
-          });
-        }
-      }
-    } else {
-      if (import.meta.env.MODE === 'development') {
-        console.log('[SwipeSwitch] Animation conditions not met:', {
-          status,
-          swipedComplete,
-          thumbTravel
-        });
       }
     }
   }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId, account_id, authenticatedUserId]);
@@ -295,6 +218,14 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  // Set mounted flag
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const handleDragEnd = (_, info) => {
     setIsDragging(false);
@@ -318,7 +249,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
       }, 100);
     } else {
       // Incomplete: reset thumb
-      controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
+      if (isMountedRef.current) {
+        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
+      }
     }
     
     // Reset drag detection after a short delay to allow for proper interaction detection

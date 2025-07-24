@@ -16,7 +16,7 @@ const ActiveWorkoutSection = ({
   onSectionComplete,
   onUpdateLastExercise,
 }) => {
-  const { activeWorkout, markSetManuallyCompleted } = useActiveWorkout();
+  const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted } = useActiveWorkout();
   const { isDelegated } = useAccount();
   const {
     updateSectionExercises,
@@ -274,8 +274,8 @@ const ActiveWorkoutSection = ({
   useEffect(() => {
     if (!activeWorkout?.id) return;
 
-    const exerciseIds = exercises.map(ex => ex.exercise_id);
-    if (exerciseIds.length === 0) return;
+    // We'll check exercise membership dynamically inside the callback
+    // to avoid recreating the subscription when exercises change
 
     const setsChan = supabase
       .channel(`sets-section-${section}`)
@@ -284,21 +284,47 @@ const ActiveWorkoutSection = ({
         schema: 'public', 
         table: 'sets', 
         filter: `workout_id=eq.${activeWorkout.id}` 
-      }, ({ eventType, new: row, old }) => {
+      }, async ({ eventType, new: row, old }) => {
+        console.log('[Real-time] Set change received:', { eventType, row, old });
+        
+        // Check if this set belongs to an exercise in this section FIRST
+        const currentExerciseIds = exercises.map(ex => ex.exercise_id);
+        if (!currentExerciseIds.includes(row.exercise_id)) return;
+        
         // Only process if the set belongs to an exercise in this section
-        // Check if this is a remote completion (not initiated by this window)
-        if (eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") {
+        // Check if this is a remote set completion (either INSERT or UPDATE)
+        if ((eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") ||
+            (eventType === "INSERT" && row.status === "complete")) {
+          console.log('[Real-time] Remote set completion detected:', row);
+          
           // This is a remote completion - mark it as manually completed to prevent animation
           markSetManuallyCompleted(row.id);
           
-          // Show notification for remote completion
-          const swiperType = isDelegated ? 'Manager' : 'Client';
-          toast(`${swiperType} swiped!`, {
+          // Get current user to compare with the set's account_id
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          // Show toast for ALL set completions (both local and remote) for debugging
+          // Check if we've already shown a toast for this set globally
+          if (isSetToasted(row.id)) {
+            console.log('[Real-time] Skipping toast - already shown for set:', row.id);
+            return;
+          }
+          
+          // Determine who completed the set based on account_id comparison
+          const wasCompletedByCurrentUser = row.account_id === user?.id;
+          const completedByUserType = wasCompletedByCurrentUser ? (isDelegated ? 'Manager' : 'Client') : (isDelegated ? 'Client' : 'Manager');
+          
+          console.log('[Real-time] Showing toast for completion by:', completedByUserType, 'account_id:', row.account_id, 'user_id:', user?.id, 'isDelegated:', isDelegated, 'wasCompletedByCurrentUser:', wasCompletedByCurrentUser);
+          
+          // Show notification for set completion (shows on both sides)
+          toast(`${completedByUserType} completed a set!`, {
             duration: 2000,
             position: 'top-center'
           });
+          
+          // Mark this set as toasted globally to prevent duplicates across sections
+          markSetToasted(row.id);
         }
-        if (!exerciseIds.includes(row.exercise_id)) return;
 
         // Refresh exercises to get updated data
         fetchExercises();
@@ -308,7 +334,9 @@ const ActiveWorkoutSection = ({
     return () => {
       void setsChan.unsubscribe();
     };
-  }, [activeWorkout?.id, exercises, section, fetchExercises, markSetManuallyCompleted]);
+  }, [activeWorkout?.id, section, fetchExercises, markSetManuallyCompleted, markSetToasted, isSetToasted]);
+
+
 
   // Real-time subscription for workout exercises in this section
   useEffect(() => {
@@ -417,23 +445,6 @@ const ActiveWorkoutSection = ({
     try {
       // Get current user for account_id - always use the authenticated user's ID, not the acting user
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Show notification for who swiped
-      const swiperType = isDelegated ? 'Manager' : 'Client';
-      toast(`${swiperType} swiped!`, {
-        duration: 2000,
-        position: 'top-center'
-      });
-      
-      // Debug logging
-      if (import.meta.env.MODE === 'development') {
-        console.log('[ActiveWorkoutSection] Saving set with account_id:', {
-          userId: user?.id,
-          userEmail: user?.email,
-          setId: setConfig.id,
-          exerciseId
-        });
-      }
       
       // Save set to database
       const payload = {
