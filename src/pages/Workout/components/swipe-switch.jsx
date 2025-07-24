@@ -207,11 +207,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
       // 1. This set was NOT manually completed in this session
       // 2. Was not locally manually swiped (immediate check)
       // 3. This is a remote completion (not initiated by this window)
-      if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current) {
+      // 4. We're not currently animating (to prevent interference with manual swipes)
+      if (!isSetManuallyCompleted(uniqueSetId) && !locallyManuallySwipedRef.current && !isAnimating) {
         triggerCompleteAnimation();
       }
     }
-  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId, account_id, authenticatedUserId]);
+  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId, account_id, authenticatedUserId, isAnimating]);
 
 
 
@@ -232,13 +233,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     const travelNeeded = thumbTravel * 0.6;
     if (status === "default" && info.offset.x >= travelNeeded) {
       // Mark this set as manually completed to prevent future animations
-      markSetManuallyCompleted(setId);
+      // Use uniqueSetId to ensure we track the correct set even if setId changes
+      markSetManuallyCompleted(uniqueSetId);
       
       // Set local flag immediately to prevent animation
       locallyManuallySwipedRef.current = true;
-      
-      // Set swipedComplete to true to trigger immediate animation
-      setSwipedComplete(true);
       
       // Trigger the completion animation immediately for manual swipes
       triggerCompleteAnimation();
@@ -262,10 +261,44 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
 
   const isDefault = status === "default";
   const isComplete = status === "complete";
-  // Show visually complete if we've manually swiped OR if the status is complete (for remote completions)
-  // For remote completions, we want to show the animation first, then the completed state
-  // The key is that we only show the completed state if we've either manually swiped OR if the animation is done
-  const isVisuallyComplete = swipedComplete || (isComplete && !isAnimating);
+  // Show visually complete if:
+  // 1. The set was manually completed in this session (isSetManuallyCompleted) - this is the most reliable
+  // 2. We've manually swiped (locallyManuallySwipedRef.current) - fallback for immediate state
+  // 3. The status is complete and we're not animating (for remote completions)
+  // 4. We've set swipedComplete (for manual swipes that are in progress)
+  const isVisuallyComplete = isSetManuallyCompleted(uniqueSetId) || locallyManuallySwipedRef.current || (isComplete && !isAnimating) || swipedComplete;
+  
+  // Debug logging to understand state
+  if (status === 'complete') {
+    console.log('[SwipeSwitch Debug]', {
+      setId,
+      uniqueSetId,
+      status,
+      isComplete,
+      isAnimating,
+      swipedComplete,
+      locallyManuallySwiped: locallyManuallySwipedRef.current,
+      isSetManuallyCompleted: isSetManuallyCompleted(uniqueSetId),
+      isVisuallyComplete
+    });
+  }
+
+  // Set animation controls to complete state when isVisuallyComplete is true but animation hasn't been triggered
+  useLayoutEffect(() => {
+    if (isVisuallyComplete && status === 'complete' && !isAnimating && thumbTravel > 0) {
+      // Set the animation controls to the final complete state without triggering the animation sequence
+      controls.set({
+        x: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#22C55E',
+        borderRadius: 0
+      });
+      // Also set the padding to collapsed state
+      setIsPaddingCollapsed(true);
+    }
+  }, [isVisuallyComplete, status, isAnimating, thumbTravel, controls]);
 
   // Always use left for positioning, animate x (vertical centering via classes)
   const thumbStyle = {
@@ -328,37 +361,37 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
             )}
           </div>
         </motion.div>
-        {isDefault && !isVisuallyComplete && (set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
+        {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
+          <div className={`absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none ${isVisuallyComplete ? 'text-white' : ''}`}>
             {set_variant && (
-              <div className="text-right text-neutral-500 text-xs font-bold uppercase leading-3 tracking-wide">
+              <div className={`text-right text-xs font-bold uppercase leading-3 tracking-wide ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`}>
                 {set_variant}
               </div>
             )}
             <div className="inline-flex justify-end items-center gap-2">
               {set_type === 'timed' && (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Clock className="size-4 text-neutral-500" />
-                  <div className="text-center text-neutral-500 text-lg font-bold">
+                  <Clock className={`size-4 ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`} />
+                  <div className={`text-center text-lg font-bold ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`}>
                     {duration >= 60 ? formatTime(duration) : `${duration}`}
                   </div>
                 </div>
               )}
               {set_type !== 'timed' && typeof reps === 'number' && (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Repeat2 className="size-4 text-neutral-500" />
-                  <div className="text-center text-neutral-500 text-lg font-bold">{reps}</div>
+                  <Repeat2 className={`size-4 ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`} />
+                  <div className={`text-center text-lg font-bold ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`}>{reps}</div>
                 </div>
               )}
               {weight_unit === 'body' ? (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-neutral-500 text-lg font-bold">BW</div>
+                  <Weight className={`size-4 ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`} />
+                  <div className={`text-center text-lg font-bold ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`}>BW</div>
                 </div>
               ) : (
                 <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-neutral-500 text-lg font-bold">{weight || 0}</div>
+                  <Weight className={`size-4 ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`} />
+                  <div className={`text-center text-lg font-bold ${isVisuallyComplete ? 'text-white' : 'text-neutral-500'}`}>{weight || 0}</div>
                 </div>
               )}
             </div>

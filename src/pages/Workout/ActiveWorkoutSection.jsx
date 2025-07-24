@@ -297,11 +297,14 @@ const ActiveWorkoutSection = ({
             (eventType === "INSERT" && row.status === "complete")) {
           console.log('[Real-time] Remote set completion detected:', row);
           
-          // This is a remote completion - mark it as manually completed to prevent animation
-          markSetManuallyCompleted(row.id);
-          
           // Get current user to compare with the set's account_id
           const { data: { user } } = await supabase.auth.getUser();
+          
+          // Only mark as manually completed if this was completed by the current user
+          // This allows the database animation to show for remote completions
+          if (row.account_id === user?.id) {
+            markSetManuallyCompleted(row.id);
+          }
           
           // Show toast for ALL set completions (both local and remote) for debugging
           // Check if we've already shown a toast for this set globally
