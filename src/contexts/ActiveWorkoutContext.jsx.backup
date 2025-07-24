@@ -330,25 +330,12 @@ export function ActiveWorkoutProvider({ children }) {
         console.error("Error snapshotting exercises:", snapshotError);
       } else if (exercisesData && exercisesData.length > 0) {
         insertedExercises = exercisesData;
-        // Find the first exercise by section priority (warmup -> training -> cooldown) then by exercise_order
-        const sectionPriority = { warmup: 1, training: 2, cooldown: 3 };
-        const firstExercise = insertedExercises.reduce((first, current) => {
-          // Get the section for each exercise from the original program data
-          const currentSection = program.routine_exercises.find(ex => ex.exercise_id === current.exercise_id)?.exercises?.section || "training";
-          const firstSection = program.routine_exercises.find(ex => ex.exercise_id === first.exercise_id)?.exercises?.section || "training";
-          
-          const currentPriority = sectionPriority[currentSection] || 2;
-          const firstPriority = sectionPriority[firstSection] || 2;
-          
-          // If sections are different, prioritize by section order
-          if (currentPriority !== firstPriority) {
-            return currentPriority < firstPriority ? current : first;
-          }
-          
-          // If sections are the same, prioritize by exercise_order
-          return current.exercise_order < first.exercise_order ? current : first;
-        });
-        firstWorkoutExerciseId = firstExercise.id;        
+        // Find the first exercise by exercise_order
+        const firstExercise = insertedExercises.reduce((first, current) => 
+          (current.exercise_order < first.exercise_order) ? current : first
+        );
+        firstWorkoutExerciseId = firstExercise.id;
+        
         // Update the workout to set the first exercise as last_workout_exercise_id
         const { error: updateError } = await supabase
           .from('workouts')

@@ -2,8 +2,7 @@ import React, {
   useState,
   useEffect,
   useContext,
-  useRef,
-  
+  useRef
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
@@ -128,9 +127,28 @@ const ActiveWorkoutContent = () => {
     const timer = setTimeout(() => {
       if (activeWorkout?.lastExerciseId) {
         // No database query needed - exercise_id is already loaded in ActiveWorkoutContext
-        console.log('[ActiveWorkout] Restoring focus to exercise:', activeWorkout.lastExerciseId);
+        console.log('[ActiveWorkout] Timer-based restoration setting focus to:', activeWorkout.lastExerciseId);
         isRestoringFocusRef.current = true;
         setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+      } else {
+        // Fallback: If no lastExerciseId, focus the first exercise of the first section
+        const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
+        
+        if (hasExercises) {
+          const sections = ['warmup', 'training', 'cooldown'];
+          let firstExercise = null;
+          
+          for (const section of sections) {
+            const exercises = sectionExercises[section] || [];
+            if (exercises.length > 0) {
+              firstExercise = exercises[0];
+              console.log(`[ActiveWorkout] Timer-based restoration defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
+              isRestoringFocusRef.current = true;
+              setFocusedExerciseId(firstExercise.exercise_id, section);
+              break;
+            }
+          }
+        }
       }
       // No else clause needed - all workouts now have lastExerciseId set
     }, 300); // Reduced from 1500ms to 300ms
@@ -152,10 +170,38 @@ const ActiveWorkoutContent = () => {
       
       // Use setTimeout to defer the state update to the next tick
       setTimeout(() => {
-        setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+        // Add a small delay to give timer-based restoration priority
+        setTimeout(() => {
+          console.log('[ActiveWorkout] Reactive restoration setting focus to:', activeWorkout.lastExerciseId);
+          setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+        }, 100);
       }, 0);
     }
   }, [sectionExercises, activeWorkout?.lastExerciseId, setFocusedExerciseId]);
+
+  // Fallback rule: If no exercise is focused, focus the first exercise of the first section
+  useEffect(() => {
+    if (!focusedExercise && !isRestoringFocusRef.current) {
+      // Check if any sections have loaded exercises
+      const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
+      
+      if (hasExercises) {
+        // Find the first exercise of the first section with exercises
+        const sections = ['warmup', 'training', 'cooldown'];
+        let firstExercise = null;
+        
+        for (const section of sections) {
+          const exercises = sectionExercises[section] || [];
+          if (exercises.length > 0) {
+            firstExercise = exercises[0];
+            console.log(`[ActiveWorkout] No exercise focused, defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
+            setFocusedExerciseId(firstExercise.exercise_id, section);
+            break;
+          }
+        }
+      }
+    }
+  }, [sectionExercises, focusedExercise, setFocusedExerciseId]);
 
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);

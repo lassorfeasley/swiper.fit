@@ -1,7 +1,8 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
-import React from "react"; // Added missing import for React
+import React from "react";
+import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext"; // Added missing import for React
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -22,7 +23,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     set_type,
     timed_set_duration,
     isOptimistic = false, // New prop for optimistic updates
+    id: setId, // Get the set ID
+    tempId, // Get the temp ID as fallback
   } = set;
+  
+  // Use setId or tempId as the unique identifier
+  const uniqueSetId = setId || tempId || `unknown-${Math.random()}`;
   
   // Animation controls for thumb only
   const controls = useAnimation();
@@ -39,6 +45,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
   const hasManualSwipedThisSession = useRef(false);
   // Flag to skip the very next automatic-complete animation if THIS window just swiped
   const skipAutoCompleteOnce = useRef(false);
+  // Local flag to immediately track manual swipes before context updates
+  const locallyManuallySwipedRef = useRef(false);
+  
+  // Get the manually completed tracking from context
+  const { markSetManuallyCompleted, isSetManuallyCompleted } = useActiveWorkout();
 
   const duration = timed_set_duration || 30;
   const [timer, setTimer] = useState(duration);
@@ -141,6 +152,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     if (status === "default") {
       setSwipedComplete(false);
       setIsManualSwipe(false);
+      locallyManuallySwipedRef.current = false;
       hasManualSwipedThisSession.current = false;
       skipAutoCompleteOnce.current = false;
     }
@@ -156,9 +168,14 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
         skipAutoCompleteOnce.current = false; // Reset for future sets
         return;
       }
-      triggerCompleteAnimation();
+      
+      // Only trigger animation if this set was NOT manually completed in this session
+      // AND was not locally manually swiped (immediate check)
+      if (!isSetManuallyCompleted(setId) && !locallyManuallySwipedRef.current) {
+        triggerCompleteAnimation();
+      }
     }
-  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation]);
+  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isSetManuallyCompleted, setId]);
 
 
 
@@ -170,24 +187,14 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "" }
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
     if (status === "default" && info.offset.x >= travelNeeded) {
-      // Mark this as a manual swipe
-      setIsManualSwipe(true);
-      lastManualSwipeTime.current = Date.now();
-      hasManualSwipedThisSession.current = true;
-      // Tell automatic-complete logic to skip once after parent status update
-      skipAutoCompleteOnce.current = true;
-      triggerCompleteAnimation();
+      // Mark this set as manually completed to prevent future animations
+      markSetManuallyCompleted(setId);
       
-      // Call onComplete after animation sequence
-      const slideDurationMs = tweenConfig.duration * 1000; // 350ms
-      const expand1Delay = slideDurationMs + 100; // Small delay after slide
-      const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
-      const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
-      const collapseDurationMs = 500; // Must match rail's transition duration
-      const totalAnimationTime = collapseDelay + collapseDurationMs + 200; // Buffer
-      setTimeout(() => {
-        onCompleteRef.current?.();
-      }, totalAnimationTime);
+      // Set local flag immediately to prevent animation
+      locallyManuallySwipedRef.current = true;
+      
+      // For manual swipes, just call onComplete immediately - no animation needed
+      onCompleteRef.current?.();
     } else {
       // Incomplete: reset thumb
       controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);

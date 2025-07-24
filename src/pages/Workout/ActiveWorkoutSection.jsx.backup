@@ -15,7 +15,7 @@ const ActiveWorkoutSection = ({
   onSectionComplete,
   onUpdateLastExercise,
 }) => {
-  const { activeWorkout, markSetManuallyCompleted } = useActiveWorkout();
+  const { activeWorkout } = useActiveWorkout();
   const {
     updateSectionExercises,
     markExerciseComplete,
@@ -264,7 +264,7 @@ const ActiveWorkoutSection = ({
   // Fetch exercises when workout changes
   useEffect(() => {
     fetchExercises();
-  }, [fetchExercises, markSetManuallyCompleted]);
+  }, [fetchExercises]);
 
   // Real-time subscription for sets in this section
   useEffect(() => {
@@ -282,11 +282,6 @@ const ActiveWorkoutSection = ({
         filter: `workout_id=eq.${activeWorkout.id}` 
       }, ({ eventType, new: row, old }) => {
         // Only process if the set belongs to an exercise in this section
-        // Check if this is a remote completion (not initiated by this window)
-        if (eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") {
-          // This is a remote completion - mark it as manually completed to prevent animation
-          markSetManuallyCompleted(row.id);
-        }
         if (!exerciseIds.includes(row.exercise_id)) return;
 
         // Refresh exercises to get updated data
@@ -297,7 +292,7 @@ const ActiveWorkoutSection = ({
     return () => {
       void setsChan.unsubscribe();
     };
-  }, [activeWorkout?.id, exercises, section, fetchExercises, markSetManuallyCompleted]);
+  }, [activeWorkout?.id, exercises, section, fetchExercises]);
 
   // Memoized initial values for SetEditForm
   const setEditFormInitialValues = React.useMemo(() => {
@@ -477,7 +472,7 @@ const ActiveWorkoutSection = ({
       console.error("Failed to save set:", error);
       toast.error(`Failed to save set. Please try again.`);
     }
-  }, [activeWorkout?.id, globalCompletedExercises, section, changeFocus, onSectionComplete, fetchExercises, markSetManuallyCompleted]);
+  }, [activeWorkout?.id, globalCompletedExercises, section, changeFocus, onSectionComplete, fetchExercises]);
 
   // Handle set data changes (inline editing)
   const handleSetDataChange = async (
@@ -1352,7 +1347,7 @@ const ActiveWorkoutSection = ({
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);
-          const isExpanded = isFocused || focusedExercise?.exercise_id === ex.exercise_id;
+          const isExpanded = isFocused;
           
           // Simplified stacking calculation
           const STACKING_OFFSET_PX = 64;

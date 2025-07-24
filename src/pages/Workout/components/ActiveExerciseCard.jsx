@@ -160,7 +160,7 @@ const ActiveExerciseCard = React.forwardRef(({
       reorderable={false}
       className={cardWrapperClass}
       id={`exercise-${exerciseId}`}
-      data-exercise-card="true"
+      data-exercise-card="true" data-exercise-id={exerciseId}
       status={cardStatus}
       onClick={() => {
         if (isFocused) {
