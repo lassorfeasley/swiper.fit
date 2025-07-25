@@ -34,6 +34,7 @@ export default function DemoWorkoutSection() {
     handleExerciseFocus,
     handleEditExercise,
     handleSaveExerciseEdit,
+    handleOpenAddExercise,
     handleAddExercise,
     startAutoComplete,
     stopAutoComplete,
@@ -117,8 +118,8 @@ export default function DemoWorkoutSection() {
             );
           })}
           <ActionCard
-            text="add demo exercise"
-            onClick={handleAddExercise}
+            text="add exercise"
+            onClick={handleOpenAddExercise}
           />
         </DeckWrapper>
       </div>
@@ -189,6 +190,7 @@ export default function DemoWorkoutSection() {
             formPrompt="Add a new training exercise"
             disabled={false}
             onActionIconClick={(data) => handleAddExercise(data)}
+            initialName="New exercise"
             initialSets={3}
             initialSection="training"
             initialSetConfigs={Array.from({ length: 3 }, () => ({

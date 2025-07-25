@@ -293,6 +293,14 @@ const ActiveWorkoutSection = ({
         const currentExerciseIds = exercises.map(ex => ex.exercise_id);
         if (!currentExerciseIds.includes(row.exercise_id)) return;
         
+        // Handle different event types
+        if (eventType === "DELETE") {
+          console.log('[Real-time] Set deleted:', old);
+          // For DELETE events, refresh exercises to get updated data
+          fetchExercises();
+          return;
+        }
+        
         // Only process if the set belongs to an exercise in this section
         // Check if this is a remote set completion (either INSERT or UPDATE)
         if ((eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") ||
@@ -324,7 +332,7 @@ const ActiveWorkoutSection = ({
           markSetToasted(row.id);
         }
 
-        // Refresh exercises to get updated data
+        // Refresh exercises to get updated data for all other events (INSERT, UPDATE)
         fetchExercises();
       })
       .subscribe();

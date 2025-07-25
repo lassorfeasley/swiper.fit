@@ -391,26 +391,33 @@ export function DemoWorkoutProvider({ children }) {
     setEditingExerciseDirty(false);
   }, [editingExercise]);
 
-  // Handle adding new exercise
+  // Handle opening the add exercise form
+  const handleOpenAddExercise = useCallback(() => {
+    setShowAddExercise(true);
+  }, []);
+
+  // Handle adding new exercise (form submission)
   const handleAddExercise = useCallback((exerciseData) => {
+    // Ensure all setConfigs have proper status and other required fields
+    const processedSetConfigs = (exerciseData.setConfigs || []).map((setConfig, index) => ({
+      id: setConfig.id || `demo-set-new-${Date.now()}-${index + 1}`,
+      routine_set_id: setConfig.routine_set_id || `demo-routine-set-new-${Date.now()}-${index + 1}`,
+      reps: setConfig.reps || 10,
+      weight: setConfig.weight || 0,
+      weight_unit: setConfig.weight_unit || setConfig.unit || 'lbs',
+      set_variant: setConfig.set_variant || `Set ${index + 1}`,
+      set_type: setConfig.set_type || 'reps',
+      timed_set_duration: setConfig.timed_set_duration || 30,
+      status: 'default', // Ensure status is always 'default' for new sets
+      set_order: setConfig.set_order || index + 1
+    }));
+
     const newExercise = {
       id: `demo-exercise-${Date.now()}`,
       exercise_id: `new-exercise-${Date.now()}`,
       name: exerciseData.name,
       section: exerciseData.section || 'training',
-      setConfigs: exerciseData.setConfigs || [
-        {
-          id: `demo-set-new-${Date.now()}-1`,
-          routine_set_id: `demo-routine-set-new-${Date.now()}-1`,
-          reps: 10,
-          weight: 0,
-          weight_unit: 'lbs',
-          set_variant: 'Set 1',
-          set_type: 'reps',
-          status: 'default',
-          set_order: 1
-        }
-      ]
+      setConfigs: processedSetConfigs
     };
 
     setDemoExercises(prev => [...prev, newExercise]);
@@ -748,6 +755,7 @@ export function DemoWorkoutProvider({ children }) {
     handleExerciseFocus,
     handleEditExercise,
     handleSaveExerciseEdit,
+    handleOpenAddExercise,
     handleAddExercise,
     setFocusedExerciseId,
     startAutoComplete,
