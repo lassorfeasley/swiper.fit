@@ -196,6 +196,7 @@ const RoutinesIndex = () => {
           gap={0} 
           extendToBottom={true}
           className="flex-1 h-full"
+          style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
