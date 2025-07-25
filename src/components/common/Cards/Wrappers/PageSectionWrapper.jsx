@@ -21,6 +21,7 @@ const PageSectionWrapper = ({
   items = [],
   onReorder,
   extendToBottom = false,
+  style,
   ...props 
 }) => {
   // Filter out isFirstCard from props to prevent React warning
@@ -57,6 +58,7 @@ const PageSectionWrapper = ({
           items={items}
           onReorder={onReorder}
           extendToBottom={extendToBottom}
+          style={style}
         >
           {children}
         </DeckWrapper>

@@ -298,16 +298,14 @@ const ActiveWorkoutContent = () => {
   return (
     <AppLayout
       hideHeader={true}
-      showAddButton={true}
-      addButtonText="Add exercise"
+      showAddButton={false}
+      showPlusButton={false}
       pageNameEditable={true}
       showBackButton={false}
       title=""
-      showAdd={true}
+      showAdd={false}
       showSettings={true}
-      onAdd={() => setShowAddExercise(true)}
       onSettings={() => setSettingsOpen(true)}
-      onAction={() => setShowAddExercise(true)}
       onTitleChange={handleTitleChange}
       onDelete={handleDeleteWorkout}
       showDeleteOption={true}
@@ -339,6 +337,7 @@ const ActiveWorkoutContent = () => {
           section="cooldown"
           onSectionComplete={handleSectionComplete}
           onUpdateLastExercise={updateLastExercise}
+          isLastSection={true}
         />
       </div>
 
@@ -368,11 +367,6 @@ const ActiveWorkoutContent = () => {
         totalSets={totalSets}
         onEnd={handleEndWorkout}
         onSettings={() => setSettingsOpen(true)}
-        onAdd={() => {
-          // Add exercise functionality is now handled by individual sections
-          // This could open a section selector or default to training
-          console.log("Add exercise button clicked - handled by sections");
-        }}
       />
 
       {/* Settings sheet for renaming workout */}

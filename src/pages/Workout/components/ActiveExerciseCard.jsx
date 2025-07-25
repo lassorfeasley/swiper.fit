@@ -177,7 +177,7 @@ const ActiveExerciseCard = React.forwardRef(({
     >
               <div
           className={cn(
-            "w-full bg-white flex flex-col justify-start items-start"
+            "w-full bg-white flex flex-col justify-start items-start border-b border-neutral-neutral-300"
           )}
         >
           {/* Label Section */}

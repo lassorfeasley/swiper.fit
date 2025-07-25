@@ -10,11 +10,13 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
+import { ActionCard } from "@/components/molecules/action-card";
 
 const ActiveWorkoutSection = ({
   section,
   onSectionComplete,
   onUpdateLastExercise,
+  isLastSection = false,
 }) => {
   const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted } = useActiveWorkout();
   const { isDelegated } = useAccount();
@@ -1347,8 +1349,9 @@ const ActiveWorkoutSection = ({
       <PageSectionWrapper
         key={section}
         section={section}
-        showPlusButton={true}
-        onPlus={handleAddExercise}
+        showPlusButton={false}
+        extendToBottom={isLastSection}
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         <div className="text-center py-8 text-gray-500">
           Loading {section} exercises...
@@ -1363,8 +1366,9 @@ const ActiveWorkoutSection = ({
         <PageSectionWrapper
           key={section}
           section={section}
-          showPlusButton={true}
-          onPlus={handleAddExercise}
+          showPlusButton={false}
+          extendToBottom={isLastSection}
+          style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           <div className="text-center py-8 text-gray-500">
             No {section} exercises yet. Add one to get started!
@@ -1417,8 +1421,9 @@ const ActiveWorkoutSection = ({
       <PageSectionWrapper
         key={section}
         section={section}
-        showPlusButton={true}
-        onPlus={handleAddExercise}
+        showPlusButton={false}
+        extendToBottom={isLastSection}
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);
@@ -1470,6 +1475,10 @@ const ActiveWorkoutSection = ({
             </CardWrapper>
           );
         })}
+        <ActionCard 
+          text="add exercise" 
+          onClick={handleAddExercise}
+        />
       </PageSectionWrapper>
 
       {/* Add Exercise Form */}
