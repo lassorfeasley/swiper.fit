@@ -82,7 +82,7 @@ const DemoActiveExerciseCard = React.forwardRef(({
       focusedIndex={focusedIndex}
       totalCards={totalCards}
     >
-      <div className={cn("w-full bg-white flex flex-col justify-start items-start")}> 
+      <div className={cn("w-full bg-white flex flex-col justify-start items-start border-b border-neutral-neutral-300")}> 
         {/* Label Section */}
         <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
           <div className="flex-1 flex flex-col">

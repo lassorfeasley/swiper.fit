@@ -6,6 +6,7 @@ import SwiperForm from '@/components/molecules/swiper-form';
 import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
+import { ActionCard } from '@/components/molecules/action-card';
 
 export default function DemoWorkoutSection() {
   const {
@@ -115,6 +116,10 @@ export default function DemoWorkoutSection() {
               </CardWrapper>
             );
           })}
+          <ActionCard
+            text="add demo exercise"
+            onClick={handleAddExercise}
+          />
         </DeckWrapper>
       </div>
 

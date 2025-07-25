@@ -78,10 +78,10 @@ const ExerciseCompletedCard = ({ exercise, setLog }) => {
   return (
     <div
       data-layer="Property 1=completed-workout" 
-      className="w-full bg-white inline-flex flex-col justify-start items-start overflow-hidden"
+      className="w-full bg-white inline-flex flex-col justify-start items-start overflow-hidden border-b border-neutral-300"
     >
         {/* Header */}
-        <div data-layer="Frame 61" className="self-stretch pl-3 border-b border-neutral-100 border-b-[0.25px] inline-flex justify-start items-center gap-4">
+        <div data-layer="Frame 61" className="self-stretch pl-3 bg-neutral-50 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
           <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
             {exercise.exercise}
           </div>
@@ -560,6 +560,7 @@ const CompletedWorkout = () => {
                 deckGap={0}
                 extendToBottom={idx === exercisesBySection.length - 1}
                 className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
+                style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
               >
                 {sectionExercises.map((exercise) => (
                   <ExerciseCompletedCard
