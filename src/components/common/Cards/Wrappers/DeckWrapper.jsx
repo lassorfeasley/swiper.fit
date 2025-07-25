@@ -86,7 +86,7 @@ const DeckWrapper = forwardRef(
                 dragElastic={0}
                 whileDrag={{ 
                   zIndex: 9999,
-                  boxShadow: "0 20px 40px -8px rgba(0, 0, 0, 0.3), 0 10px 20px -4px rgba(0, 0, 0, 0.2)"
+                  borderTop: "1px solid rgb(212 212 212)"
                 }}
               >
                 <div className="w-full">

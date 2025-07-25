@@ -657,6 +657,7 @@ const RoutineBuilder = () => {
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
+            style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
           >
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
