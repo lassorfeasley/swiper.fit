@@ -34,8 +34,8 @@ const DeckWrapper = forwardRef(
     
     const style = {
       gap,
-      paddingTop: 40,
-      paddingBottom: 80,
+      paddingTop: extendToBottom ? 0 : 40,
+      paddingBottom: extendToBottom ? 0 : 80,
       maxWidth: `${maxWidth}px`,
       minWidth: `${minWidth}px`,
       ...(props.style || {}),

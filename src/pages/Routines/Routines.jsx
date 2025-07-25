@@ -164,8 +164,12 @@ const RoutinesIndex = () => {
         }, 100);
       }}
     >
-      <div className="flex justify-center">
-        <DeckWrapper gap={20} className={filteredRoutines.length <= 1 && !loading ? "min-h-screen" : ""}>
+      <div className="flex justify-center flex-1 min-h-0">
+        <DeckWrapper 
+          gap={0} 
+          extendToBottom={true}
+          className="flex-1 h-full"
+        >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (
