@@ -34,7 +34,7 @@ const DeckWrapper = forwardRef(
     
     const style = {
       gap,
-      paddingTop: extendToBottom ? 0 : 40,
+      paddingTop: 40,
       paddingBottom: extendToBottom ? 0 : 80,
       maxWidth: `${maxWidth}px`,
       minWidth: `${minWidth}px`,
@@ -42,7 +42,7 @@ const DeckWrapper = forwardRef(
     };
 
     const containerClasses = cn(
-      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300",
+      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-5",
       extendToBottom && "min-h-screen",
       className
     );
@@ -109,6 +109,24 @@ const DeckWrapper = forwardRef(
               </Reorder.Item>
             ))}
           </Reorder.Group>
+          
+          {/* Render additional children that are not part of the reorderable items */}
+          {React.Children.toArray(children).slice(items.length).map((child, index) => {
+            if (!React.isValidElement(child)) return child;
+            return (
+              <div 
+                key={`additional-${index}`}
+                className="w-full flex justify-center"
+              >
+                {React.cloneElement(child, {
+                  ...(() => {
+                    const { isFirstCard: _, ...filteredProps } = child.props;
+                    return filteredProps;
+                  })(),
+                })}
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -129,7 +147,7 @@ const DeckWrapper = forwardRef(
           return (
             <div 
               key={child.key || index}
-              className={`w-full flex justify-center ${isFirstChild ? 'border-t border-neutral-300' : ''} border-b border-neutral-300`}
+              className={`w-full flex justify-center ${isFirstChild ? 'border-t border-neutral-300' : ''}`}
             >
               {React.cloneElement(child, {
                 ...(() => {

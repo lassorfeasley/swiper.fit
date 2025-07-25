@@ -18,6 +18,7 @@ import { Play } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "sonner";
 import { scrollToSection } from "@/lib/scroll";
+import { ActionCard } from "@/components/molecules/action-card";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -648,7 +649,7 @@ const RoutineBuilder = () => {
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
-                    <PageSectionWrapper
+          <PageSectionWrapper
             key={section}
             section={section} 
             id={`section-${section}`} 
@@ -656,8 +657,6 @@ const RoutineBuilder = () => {
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
-            showPlusButton={true}
-            onPlus={() => handleOpenAddExercise(section)}
           >
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
@@ -678,6 +677,10 @@ const RoutineBuilder = () => {
                 onCardClick={() => setEditingExercise(ex)}
               />
             ))}
+            <ActionCard 
+              text="add exercise" 
+              onClick={() => handleOpenAddExercise(section)}
+            />
           </PageSectionWrapper>
         ))}
         <SwiperForm

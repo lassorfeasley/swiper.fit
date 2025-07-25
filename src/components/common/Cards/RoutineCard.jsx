@@ -18,44 +18,24 @@ const RoutineCard = ({ id, name, lastCompleted, onStart, isFirstCard }) => {
   return (
     <div
       data-layer="Routine Card"
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white inline-flex flex-col justify-start items-start gap-10 cursor-pointer"
+      className="w-full max-w-[500px] p-3 bg-white border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-6 cursor-pointer"
       onClick={onStart}
     >
-      <div
-        data-layer="Frame 5001"
-        className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5"
-      >
-        <div
-          data-layer="Frame 5007"
-          className="Frame5007 self-stretch flex flex-col justify-start items-start"
-        >
-          <div
-            data-layer="Frame 5003"
-            className="Frame5003 self-stretch inline-flex justify-start items-start gap-5"
-          >
-            <div
-              data-layer={name}
-              className="BicepsAndChest flex-1 justify-start text-neutral-700 text-xl font-medium font-['Be Vietnam Pro'] leading-normal"
-            >
-              {name}
+      <div className="self-stretch flex flex-col justify-start items-start gap-5">
+        <div className="self-stretch flex flex-col justify-start items-start">
+          <div className="w-full justify-start text-neutral-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            {name}
+          </div>
+          {lastCompleted && (
+            <div className="text-center justify-center text-neutral-neutral-400 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+              {lastCompleted}
             </div>
-          </div>
-          <div
-            data-layer="Tap to start"
-            className="TapToStart text-center justify-center text-neutral-400 text-sm font-medium font-['Be Vietnam Pro'] leading-tight"
-          >
-            Tap to start
-          </div>
+          )}
         </div>
       </div>
-      {lastCompleted && (
-        <div
-          data-layer="Completed 5 days ago"
-          className="Completed5DaysAgo text-center justify-center text-neutral-400 text-sm font-medium font-['Be Vietnam Pro'] leading-tight"
-        >
-          {lastCompleted}
-        </div>
-      )}
+      <div className="text-center justify-center text-neutral-neutral-400 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+        Review and start workout
+      </div>
     </div>
   );
 };

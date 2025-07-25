@@ -18,6 +18,7 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import { ActionCard } from "@/components/molecules/action-card";
 import { toast } from "sonner";
 
 const RoutinesIndex = () => {
@@ -53,6 +54,10 @@ const RoutinesIndex = () => {
             exercise_id,
             exercises!fk_routine_exercises__exercises(name),
             routine_sets!fk_routine_sets__routine_exercises(id)
+          ),
+          workouts!fk_workouts__routines(
+            id,
+            completed_at
           )`
         )
         .eq("user_id", user.id)
@@ -69,12 +74,41 @@ const RoutinesIndex = () => {
           (total, pe) => total + (pe.routine_sets ? pe.routine_sets.length : 0),
           0
         );
+        
+        // Get the most recent completed workout
+        const completedWorkouts = (program.workouts || []).filter(w => w.completed_at);
+        const lastCompletedWorkout = completedWorkouts.length > 0 
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          : null;
+        
+        // Format the completion date
+        let lastCompletedText = null;
+        if (lastCompletedWorkout) {
+          const completedDate = new Date(lastCompletedWorkout.completed_at);
+          const now = new Date();
+          const diffTime = Math.abs(now - completedDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            lastCompletedText = "Completed yesterday";
+          } else if (diffDays < 7) {
+            lastCompletedText = `Completed ${diffDays} days ago`;
+          } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            lastCompletedText = `Completed ${weeks} week${weeks > 1 ? 's' : ''} ago`;
+          } else {
+            const months = Math.floor(diffDays / 30);
+            lastCompletedText = `Completed ${months} month${months > 1 ? 's' : ''} ago`;
+          }
+        }
+        
         return {
           ...program,
           setCount,
           exerciseNames: (program.routine_exercises || [])
             .map((pe) => pe.exercises?.name)
             .filter(Boolean),
+          lastCompleted: lastCompletedText,
         };
       });
       setRoutines(routinesWithExercises);
@@ -146,7 +180,7 @@ const RoutinesIndex = () => {
     <AppLayout
       reserveSpace={true}
       title="Routines"
-      showAdd={true}
+      showAdd={false}
       showSearch={true}
       showAddButton={false}
       showBackButton={false}
@@ -156,13 +190,6 @@ const RoutinesIndex = () => {
       onSearchChange={setSearch}
       pageContext="routines"
       data-component="AppHeader"
-      onAdd={() => {
-        setShowSheet(true);
-        setProgramName("");
-        setTimeout(() => {
-          if (inputRef.current) inputRef.current.focus();
-        }, 100);
-      }}
     >
       <div className="flex justify-center flex-1 min-h-0">
         <DeckWrapper 
@@ -180,11 +207,22 @@ const RoutinesIndex = () => {
                 <RoutineCard
                   id={program.id}
                   name={program.routine_name}
+                  lastCompleted={program.lastCompleted}
                   onStart={() => navigate(`/routines/${program.id}/configure`)}
                 />
               </CardWrapper>
             ))
           )}
+          <ActionCard 
+            text="create a new routine" 
+            onClick={() => {
+              setShowSheet(true);
+              setProgramName("");
+              setTimeout(() => {
+                if (inputRef.current) inputRef.current.focus();
+              }, 100);
+            }}
+          />
         </DeckWrapper>
       </div>
 
