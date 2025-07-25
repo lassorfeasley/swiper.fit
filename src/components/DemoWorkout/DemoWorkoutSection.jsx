@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import ActiveExerciseCard from '@/pages/Workout/components/ActiveExerciseCard';
+import DemoActiveExerciseCard from '@/pages/Landing/demo/DemoActiveExerciseCard';
 import { useDemoWorkout } from '@/contexts/DemoWorkoutContext';
 import SetEditForm from '@/components/common/forms/SetEditForm';
 import SwiperForm from '@/components/molecules/swiper-form';
@@ -29,6 +29,7 @@ export default function DemoWorkoutSection() {
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
+    handleSetDelete,
     handleExerciseFocus,
     handleEditExercise,
     handleSaveExerciseEdit,
@@ -96,16 +97,11 @@ export default function DemoWorkoutSection() {
                 reorderable={false}
                 className="cursor-pointer"
               >
-                <ActiveExerciseCard
+                <DemoActiveExerciseCard
                   exerciseId={exercise.exercise_id}
                   exerciseName={exercise.name}
                   initialSetConfigs={exercise.setConfigs}
                   onSetComplete={(exerciseId, setConfig) => handleSetComplete(exerciseId, setConfig, true)}
-                  onSetDataChange={handleSetUpdate}
-                  onExerciseComplete={() => {
-                    // Mark exercise as completed
-                    setCompletedExercises(prev => new Set([...prev, exercise.exercise_id]));
-                  }}
                   onSetPress={(setConfig, index) => handleSetEdit(exercise.exercise_id, setConfig, index)}
                   isFocused={isFocused}
                   isExpanded={isFocused}
@@ -114,8 +110,6 @@ export default function DemoWorkoutSection() {
                   index={index}
                   focusedIndex={trainingExercises.findIndex(e => e.exercise_id === focusedExerciseId)}
                   totalCards={trainingExercises.length}
-                  topOffset={80 + index * 64}
-                  demo={true}
                   isCompleted={isCompleted}
                 />
               </CardWrapper>
@@ -140,6 +134,7 @@ export default function DemoWorkoutSection() {
           rightText="Save"
           leftText="Cancel"
           padding={0}
+          className="edit-set-drawer"
         >
           <SetEditForm
             ref={setEditFormRef}
@@ -155,6 +150,11 @@ export default function DemoWorkoutSection() {
                 weight_unit: values.unit
               };
               handleSetUpdate(editingSet.exerciseId, editingSet.setConfig, updatedValues);
+              setEditSheetOpen(false);
+              setEditingSet(null);
+            }}
+            onDelete={() => {
+              handleSetDelete(editingSet.exerciseId, editingSet.setConfig);
               setEditSheetOpen(false);
               setEditingSet(null);
             }}

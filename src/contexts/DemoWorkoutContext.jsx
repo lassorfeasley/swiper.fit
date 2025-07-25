@@ -169,6 +169,18 @@ export function DemoWorkoutProvider({ children }) {
   const currentExerciseIndexRef = useRef(0);
   const currentSetIndexRef = useRef(0);
 
+  // Sync completedExercises with actual set statuses
+  useEffect(() => {
+    const newCompletedExercises = new Set();
+    demoExercises.forEach(exercise => {
+      const allSetsComplete = exercise.setConfigs.every(set => set.status === 'complete');
+      if (allSetsComplete) {
+        newCompletedExercises.add(exercise.exercise_id);
+      }
+    });
+    setCompletedExercises(newCompletedExercises);
+  }, [demoExercises]);
+
   // Handle set completion
   const handleSetComplete = useCallback((exerciseId, setConfig, isManualSwipe = false) => {
     setDemoExercises(prev => 
@@ -205,24 +217,16 @@ export function DemoWorkoutProvider({ children }) {
       }
     }
 
-    // Check if all sets in exercise are complete
-    const exercise = demoExercises.find(ex => ex.exercise_id === exerciseId);
-    if (exercise) {
-      const allSetsComplete = exercise.setConfigs.every(set => 
-        set.id === setConfig.id ? true : set.status === 'complete'
-      );
-      console.log('Checking completion for exercise:', exerciseId, 'All sets complete:', allSetsComplete, 'Set statuses:', exercise.setConfigs.map(s => ({ id: s.id, status: s.status, isCurrent: s.id === setConfig.id })));
-      
-      if (allSetsComplete) {
-        console.log('Exercise completed:', exerciseId, 'All sets complete');
-        setCompletedExercises(prev => {
-          const newSet = new Set([...prev, exerciseId]);
-          console.log('Added exercise to completed list:', exerciseId, 'New completed list:', Array.from(newSet));
-          return newSet;
-        });
+    // Only auto-focus next exercise if ALL sets in the current exercise are complete
+    setTimeout(() => {
+      const currentExercise = demoExercises.find(ex => ex.exercise_id === exerciseId);
+      if (currentExercise) {
+        const allSetsComplete = currentExercise.setConfigs.every(set => 
+          set.id === setConfig.id ? true : set.status === 'complete'
+        );
         
-        // Auto-focus next incomplete exercise (both for auto-complete and manual completion)
-        setTimeout(() => {
+        // Only move to next exercise if all sets in current exercise are complete
+        if (allSetsComplete) {
           const currentIndex = demoExercises.findIndex(ex => ex.exercise_id === exerciseId);
           for (let i = currentIndex + 1; i < demoExercises.length; i++) {
             const nextExercise = demoExercises[i];
@@ -244,9 +248,9 @@ export function DemoWorkoutProvider({ children }) {
               }
             }
           }
-        }, 500); // Small delay to let the completion animation play
+        }
       }
-    }
+    }, 500);
   }, [demoExercises, completedExercises, autoCompleteEnabled, autoCompleteInterval]);
 
   // Handle set editing
@@ -272,6 +276,44 @@ export function DemoWorkoutProvider({ children }) {
                   }
                 : set
             )
+          };
+        }
+        return exercise;
+      })
+    );
+  }, []);
+
+  // Handle set deletion
+  const handleSetDelete = useCallback((exerciseId, setConfig) => {
+    setDemoExercises(prev => 
+      prev.map(exercise => {
+        if (exercise.exercise_id === exerciseId) {
+          const filteredSetConfigs = exercise.setConfigs.filter(set => set.id !== setConfig.id);
+          
+          // If no sets remain, add a default set to prevent empty exercises
+          if (filteredSetConfigs.length === 0) {
+            filteredSetConfigs.push({
+              id: `demo-set-${exercise.exercise_id}-default`,
+              routine_set_id: `demo-routine-set-${exercise.exercise_id}-default`,
+              reps: 10,
+              weight: 0,
+              weight_unit: 'lbs',
+              set_variant: 'Set 1',
+              set_type: 'reps',
+              status: 'default',
+              set_order: 1
+            });
+          } else {
+            // Update set order numbers to be sequential
+            filteredSetConfigs.forEach((set, index) => {
+              set.set_order = index + 1;
+              set.set_variant = `Set ${index + 1}`;
+            });
+          }
+          
+          return {
+            ...exercise,
+            setConfigs: filteredSetConfigs
           };
         }
         return exercise;
@@ -318,37 +360,29 @@ export function DemoWorkoutProvider({ children }) {
     setDemoExercises(prev => {
       const updatedExercises = prev.map(exercise => {
         if (exercise.id === editingExercise.id) {
+          // Preserve status of existing sets by matching IDs
+          const updatedSetConfigs = setConfigs.map((config, index) => {
+            // Try to find existing set with same ID to preserve status
+            const existingSet = exercise.setConfigs.find(set => set.id === config.id);
+            return {
+              ...config,
+              id: config.id || `demo-set-${exercise.exercise_id}-${index + 1}`,
+              routine_set_id: config.routine_set_id || `demo-routine-set-${exercise.exercise_id}-${index + 1}`,
+              set_order: index + 1,
+              // Preserve status if set exists, otherwise default to 'default'
+              status: existingSet ? existingSet.status : 'default'
+            };
+          });
+          
           return {
             ...exercise,
             name: name,
             section: section,
-            setConfigs: setConfigs.map((config, index) => ({
-              ...config,
-              id: config.id || `demo-set-${exercise.exercise_id}-${index + 1}`,
-              routine_set_id: config.routine_set_id || `demo-routine-set-${exercise.exercise_id}-${index + 1}`,
-              set_order: index + 1
-            }))
+            setConfigs: updatedSetConfigs
           };
         }
         return exercise;
       });
-      
-      // Check if the exercise should be removed from completedExercises
-      // If new sets were added (more sets than before), remove from completed
-      const currentExercise = prev.find(ex => ex.id === editingExercise.id);
-      if (currentExercise) {
-        // Check if new sets were added or if any sets are now incomplete
-        const hasNewSets = setConfigs.length > currentExercise.setConfigs.length;
-        const hasIncompleteSets = setConfigs.some(set => set.status !== 'complete');
-        
-        if (hasNewSets || hasIncompleteSets) {
-          setCompletedExercises(completedPrev => {
-            const newSet = new Set(completedPrev);
-            newSet.delete(currentExercise.exercise_id);
-            return newSet;
-          });
-        }
-      }
       
       return updatedExercises;
     });
@@ -710,6 +744,7 @@ export function DemoWorkoutProvider({ children }) {
     handleSetComplete,
     handleSetEdit,
     handleSetUpdate,
+    handleSetDelete,
     handleExerciseFocus,
     handleEditExercise,
     handleSaveExerciseEdit,

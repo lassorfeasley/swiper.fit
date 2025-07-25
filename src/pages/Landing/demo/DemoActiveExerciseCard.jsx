@@ -16,6 +16,7 @@ const DemoActiveExerciseCard = React.forwardRef(({
   onFocus,
   onSetPress,
   onEditExercise,
+  onSetComplete,
   index,
   focusedIndex,
   totalCards,
@@ -23,12 +24,10 @@ const DemoActiveExerciseCard = React.forwardRef(({
   demo = true,
 }, ref) => {
   const setsRef = useRef([]);
-  const [reorderedSets, setReorderedSets] = useState(null);
 
-  // Use initialSetConfigs directly as sets, or reordered sets if available
+  // Use initialSetConfigs directly as sets - context is the single source of truth
   const sets = useMemo(() => {
-    const sourceSets = reorderedSets || initialSetConfigs;
-    return sourceSets.map((config, i) => ({
+    return initialSetConfigs.map((config, i) => ({
       ...config,
       id: config.id || null,
       tempId: config.id ? null : `temp-${i}`,
@@ -39,15 +38,11 @@ const DemoActiveExerciseCard = React.forwardRef(({
       set_variant: config.set_variant || `Set ${i + 1}`,
       routine_set_id: config.routine_set_id,
     }));
-  }, [initialSetConfigs, reorderedSets]);
+  }, [initialSetConfigs]);
 
   useEffect(() => {
     setsRef.current = sets;
   }, [sets]);
-
-  useEffect(() => {
-    setReorderedSets(null);
-  }, [initialSetConfigs]);
 
   const allComplete = useMemo(
     () => isCompleted || sets.every((set) => set.status === "complete"),
@@ -56,15 +51,13 @@ const DemoActiveExerciseCard = React.forwardRef(({
 
   const handleSetComplete = useCallback(
     (setIdx) => {
-      // In demo, just update local state
-      setReorderedSets((prev) => {
-        const currentSets = prev || initialSetConfigs;
-        return currentSets.map((set, i) =>
-          i === setIdx ? { ...set, status: "complete" } : set
-        );
-      });
+      // Notify parent context about the set completion
+      if (onSetComplete) {
+        const setToComplete = sets[setIdx];
+        onSetComplete(exerciseId, setToComplete);
+      }
     },
-    [initialSetConfigs]
+    [sets, exerciseId, onSetComplete]
   );
 
   const cardStatus = allComplete ? "complete" : "default";
@@ -149,6 +142,7 @@ DemoActiveExerciseCard.propTypes = {
   onFocus: PropTypes.func,
   onSetPress: PropTypes.func,
   onEditExercise: PropTypes.func,
+  onSetComplete: PropTypes.func,
   index: PropTypes.number,
   focusedIndex: PropTypes.number,
   totalCards: PropTypes.number,

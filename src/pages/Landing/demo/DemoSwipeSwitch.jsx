@@ -1,5 +1,5 @@
 import { motion, useAnimation } from "framer-motion";
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
 import React from "react";
 
@@ -13,6 +13,14 @@ function debounce(fn, delay) {
 }
 
 export default function DemoSwipeSwitch({ set, onComplete, onClick, className = "", demo = false }) {
+  // Constants
+  const THUMB_WIDTH = 80;
+  const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8;
+  const RAIL_RADIUS = '8px';
+  const THUMB_RADIUS = '8px';
+  const DRAG_COMPLETE_THRESHOLD = 70;
+
+  // Destructure set properties
   const {
     status = "locked",
     reps,
@@ -21,114 +29,121 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
     set_variant,
     set_type,
     timed_set_duration,
-    isOptimistic = false, // New prop for optimistic updates
-    id: setId, // Get the set ID
-    tempId, // Get the temp ID as fallback
-    account_id, // Get the account that completed this set
+    isOptimistic = false,
+    id: setId,
+    tempId,
+    account_id,
   } = set;
 
-  // Use routine_set_id as the primary identifier, fallback to setId or tempId
   const uniqueSetId = set.routine_set_id || setId || tempId || `unknown-${Math.random()}`;
 
-  // Animation controls for thumb only
+  // Core refs and state
   const controls = useAnimation();
   const trackRef = useRef(null);
-  const [thumbTravel, setThumbTravel] = useState(0);
-  const [trackWidth, setTrackWidth] = useState(0);
-  const [swipedComplete, setSwipedComplete] = useState(false);
+  const isMountedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  
+  // Stable drag constraints using refs
+  const dragConstraintsRef = useRef({ left: 0, right: 0 });
+  const thumbTravelRef = useRef(0);
+  
+  // Component state
   const [isDragging, setIsDragging] = useState(false);
-  const dragMoved = useRef(false);
-  const dragStartTime = useRef(0);
+  const [swipedComplete, setSwipedComplete] = useState(false);
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
   const [isManualSwipe, setIsManualSwipe] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const lastManualSwipeTime = useRef(0);
-  const hasManualSwipedThisSession = useRef(false);
-  // Flag to skip the very next automatic-complete animation if THIS window just swiped
-  const skipAutoCompleteOnce = useRef(false);
-  // Local flag to immediately track manual swipes before context updates
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Drag tracking refs
+  const dragMoved = useRef(false);
+  const dragStartTime = useRef(0);
   const locallyManuallySwipedRef = useRef(false);
-  // Flag to track if component is mounted
-  const isMountedRef = useRef(false);
+  const hasManualSwipedThisSession = useRef(false);
+  const skipAutoCompleteOnce = useRef(false);
+  const lastManualSwipeTime = useRef(0);
 
-  // --- REMOVED: useActiveWorkout context and supabase auth ---
-
+  // Timer state
   const duration = timed_set_duration || 30;
   const [timer, setTimer] = useState(duration);
   const timerInterval = useRef(null);
-  const onCompleteRef = useRef(onComplete);
 
-  // Use a smooth, non-bouncy tween for all transitions
+  // Animation config
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
-  const THUMB_WIDTH = 80; // w-20
-  const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // p-2 in Tailwind
-  const RAIL_RADIUS = '8px';
-  const THUMB_RADIUS = '8px';
-  const DRAG_COMPLETE_THRESHOLD = 70;
-  const getContentWidth = () => {
-    if (!trackWidth || isNaN(trackWidth)) return THUMB_WIDTH;
-    return Math.max(THUMB_WIDTH, trackWidth - RAIL_HORIZONTAL_PADDING_PER_SIDE * 2);
-  };
 
-  // Helper to display mm:ss for durations >= 60s (used in pill on the right)
+  // Helper functions
+  const getContentWidth = useCallback(() => {
+    if (!trackRef.current) return THUMB_WIDTH;
+    const railClientWidth = trackRef.current.clientWidth;
+    return Math.max(THUMB_WIDTH, railClientWidth - RAIL_HORIZONTAL_PADDING_PER_SIDE * 2);
+  }, []);
+
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
-  const updateThumbTravel = () => {
-    if (isDragging) return;
-    if (trackRef.current) {
-      const railClientWidth = trackRef.current.clientWidth;
-      setTrackWidth(railClientWidth);
-      const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
-      const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
-      const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
-      const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
-      setThumbTravel(finalThumbTravel);
+  // Stable thumb travel calculation
+  const calculateThumbTravel = useCallback(() => {
+    if (!trackRef.current) return;
+    
+    const railClientWidth = trackRef.current.clientWidth;
+    const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
+    const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
+    const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
+    const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
+    
+    thumbTravelRef.current = finalThumbTravel;
+    dragConstraintsRef.current = { left: 0, right: finalThumbTravel };
+    
+    if (!isInitialized) {
+      setIsInitialized(true);
     }
-  };
+  }, [isInitialized]);
 
-  const debouncedUpdateThumbTravel = debounce(updateThumbTravel, 200);
+  const debouncedCalculateThumbTravel = useMemo(
+    () => debounce(calculateThumbTravel, 200),
+    [calculateThumbTravel]
+  );
 
-  useEffect(() => {
-    updateThumbTravel();
-    const handleResize = () => {
-      if (!isDragging) debouncedUpdateThumbTravel();
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isDragging]);
-
-  // Helper function for the complete animation sequence
+  // Complete animation sequence
   const triggerCompleteAnimation = useCallback(() => {
-    if (!isMountedRef.current) {
-      return;
-    }
+    if (!isMountedRef.current || !isInitialized) return;
+    
     setIsAnimating(true);
     setSwipedComplete(true);
+    
+    const currentThumbTravel = thumbTravelRef.current;
+    
+    // Step 1: Animate thumb to end position
     controls.start({ 
-      x: thumbTravel, 
+      x: currentThumbTravel, 
       width: THUMB_WIDTH, 
       backgroundColor: "#22C55E", 
       borderRadius: THUMB_RADIUS 
     }, tweenConfig);
+
+    // Step 2: Expand thumb to fill inner rail area
     const slideDurationMs = tweenConfig.duration * 1000;
     const expand1Delay = slideDurationMs + 100;
     const expand1DurationMs = tweenConfig.duration * 1000;
+    
     setTimeout(() => {
       if (isMountedRef.current) {
         controls.start({
-            x: 0,
-            width: getContentWidth(),
-            backgroundColor: "#22C55E",
-            borderRadius: RAIL_RADIUS
+          x: 0,
+          width: getContentWidth(),
+          backgroundColor: "#22C55E",
+          borderRadius: RAIL_RADIUS
         }, tweenConfig);
       }
     }, expand1Delay);
+
+    // Step 3: Expand thumb to fill full rail and collapse padding
     const collapseDelay = expand1Delay + expand1DurationMs + 50;
     const collapseDurationMs = 500;
+    
     setTimeout(() => {
       if (isMountedRef.current) {
         setIsPaddingCollapsed(true);
@@ -142,13 +157,98 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
         }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
       }
     }, collapseDelay);
+
+    // Step 4: Reset flags after animation completes
     const totalAnimationTime = collapseDelay + collapseDurationMs + 100;
     setTimeout(() => {
-      setIsManualSwipe(false);
-      setIsAnimating(false);
+      if (isMountedRef.current) {
+        setIsManualSwipe(false);
+        setIsAnimating(false);
+      }
     }, totalAnimationTime);
-  }, [controls, thumbTravel, tweenConfig, getContentWidth]);
+  }, [controls, tweenConfig, getContentWidth, isInitialized]);
 
+  // Drag handlers
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+    dragMoved.current = false;
+    dragStartTime.current = Date.now();
+  }, []);
+
+  const handleDrag = useCallback((e, info) => {
+    if (Math.abs(info.delta.x) > 5 || Math.abs(info.delta.y) > 5 || Math.abs(info.offset.x) > 10) {
+      dragMoved.current = true;
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((_, info) => {
+    setIsDragging(false);
+    const travelNeeded = thumbTravelRef.current * 0.6;
+    
+    if (status === "default" && info.offset.x >= travelNeeded) {
+      locallyManuallySwipedRef.current = true;
+      triggerCompleteAnimation();
+      setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 100);
+    } else {
+      // Reset thumb to starting position
+      if (isMountedRef.current) {
+        controls.start({ 
+          x: 0, 
+          width: THUMB_WIDTH, 
+          backgroundColor: "#FFFFFF", 
+          borderRadius: THUMB_RADIUS 
+        }, tweenConfig);
+      }
+    }
+    
+    setTimeout(() => {
+      dragMoved.current = false;
+    }, 50);
+  }, [status, triggerCompleteAnimation, controls, tweenConfig]);
+
+  // Effects
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    // Set initial thumb position
+    controls.set({ 
+      x: 0, 
+      width: THUMB_WIDTH, 
+      backgroundColor: "#FFFFFF", 
+      borderRadius: THUMB_RADIUS 
+    });
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [controls]);
+
+  useEffect(() => {
+    // Initial calculation
+    const initTimer = setTimeout(() => {
+      calculateThumbTravel();
+    }, 0);
+    
+    const handleResize = () => {
+      if (!isDragging) {
+        debouncedCalculateThumbTravel();
+      }
+    };
+    
+    window.addEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(initTimer);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [calculateThumbTravel, debouncedCalculateThumbTravel, isDragging]);
+
+  // Reset flags when status changes
   useLayoutEffect(() => {
     if (status === "default") {
       setSwipedComplete(false);
@@ -157,74 +257,45 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       locallyManuallySwipedRef.current = false;
       hasManualSwipedThisSession.current = false;
       skipAutoCompleteOnce.current = false;
+      setIsInitialized(false);
     }
+    
     dragMoved.current = false;
+    
     if (status === 'complete') {
       setTimeout(() => {
-        updateThumbTravel();
+        calculateThumbTravel();
       }, 10);
     }
-  }, [status]);
+  }, [status, calculateThumbTravel]);
 
+  // Handle automatic completion
   useLayoutEffect(() => {
-    if (status === 'complete' && !swipedComplete && !isAnimating) {
+    if (status === 'complete' && !swipedComplete && !isAnimating && isInitialized) {
       if (skipAutoCompleteOnce.current) {
         skipAutoCompleteOnce.current = false;
         return;
       }
-      if (thumbTravel > 0) {
+      
+      if (thumbTravelRef.current > 0) {
         triggerCompleteAnimation();
       } else {
         setTimeout(() => {
-          updateThumbTravel();
+          calculateThumbTravel();
         }, 50);
       }
     }
-  }, [status, swipedComplete, thumbTravel, triggerCompleteAnimation, isAnimating]);
+  }, [status, swipedComplete, isAnimating, triggerCompleteAnimation, calculateThumbTravel, isInitialized]);
 
-  useEffect(() => {
-    if (status === 'complete' && !swipedComplete && !isAnimating && thumbTravel > 0) {
-      triggerCompleteAnimation();
-    }
-  }, [thumbTravel, status, swipedComplete, isAnimating, triggerCompleteAnimation]);
-
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  const handleDragEnd = (_, info) => {
-    setIsDragging(false);
-    const travelNeeded = thumbTravel * 0.6;
-    if (status === "default" && info.offset.x >= travelNeeded) {
-      locallyManuallySwipedRef.current = true;
-      triggerCompleteAnimation();
-      setTimeout(() => {
-        onCompleteRef.current?.();
-      }, 100);
-    } else {
-      if (isMountedRef.current) {
-        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
-      }
-    }
-    setTimeout(() => {
-      dragMoved.current = false;
-    }, 50);
-  };
-
+  // Computed values
   const isDefault = status === "default";
   const isComplete = status === "complete";
   const isVisuallyComplete = (isComplete && !isAnimating) || swipedComplete;
-
+  
+  // Thumb style
   const thumbStyle = {
     zIndex: 2,
-    height: "48px", // h-12
+    height: "48px",
     left: RAIL_HORIZONTAL_PADDING_PER_SIDE,
     borderRadius: THUMB_RADIUS,
   };
@@ -251,17 +322,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
           drag={!isVisuallyComplete && isDefault ? "x" : false}
           dragElastic={0}
           dragMomentum={false}
-          dragConstraints={{ left: 0, right: thumbTravel }}
-          onDragStart={() => { 
-            setIsDragging(true); 
-            dragMoved.current = false;
-            dragStartTime.current = Date.now();
-          }}
-          onDrag={(e, info) => {
-            if (Math.abs(info.delta.x) > 5 || Math.abs(info.delta.y) > 5 || Math.abs(info.offset.x) > 10) {
-              dragMoved.current = true;
-            }
-          }}
+          dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 80 }}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           animate={controls}
           whileDrag={{ cursor: "grabbing" }}
@@ -279,6 +342,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
             )}
           </div>
         </motion.div>
+        
         {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
             {set_variant && (
@@ -315,6 +379,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
             </div>
           </div>
         )}
+        
         {isOptimistic && (
           <div className="absolute top-1 right-1">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
