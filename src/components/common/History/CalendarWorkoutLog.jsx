@@ -203,9 +203,10 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
       </Card>
 
       {/* Events list */}
-      <div className="flex justify-center">
+      <div className="flex justify-center flex-1 min-h-0">
         <DeckWrapper
           gap={0}
+          extendToBottom={true}
         >
           {events.length === 0 ? (
             <div className="text-sm text-muted-foreground">No workouts logged</div>

@@ -211,7 +211,7 @@ const History = () => {
       pageContext="history"
       data-component="AppHeader"
     >
-      <MainContentSection className="!p-0">
+      <MainContentSection className="!p-0 flex-1 min-h-0">
         {/* Calendar Log */}
         {!loading && (
           <CalendarWorkoutLog

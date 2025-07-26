@@ -7,6 +7,7 @@ const ToggleInput = ({
   options = [],
   value,
   onValueChange,
+  onChange,
   className = "",
   disabled = false,
 }) => {
@@ -25,7 +26,7 @@ const ToggleInput = ({
       <ToggleGroup
         type="single"
         value={value}
-        onValueChange={disabled ? undefined : onValueChange}
+        onValueChange={disabled ? undefined : (onValueChange || onChange)}
         disabled={disabled}
         className="gap-0 self-stretch rounded-sm border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0"
       >
