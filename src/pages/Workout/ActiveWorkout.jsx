@@ -10,7 +10,7 @@ import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import AppLayout from "@/components/layout/AppLayout";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { toast } from "sonner";
@@ -341,24 +341,20 @@ const ActiveWorkoutContent = () => {
         />
       </div>
 
-      <SwiperAlertDialog
-        open={isDeleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        onConfirm={handleConfirmDelete}
-        title="Delete Workout?"
-        description="Are you sure you want to delete this workout? This will end the workout without saving any progress."
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
-
-      <SwiperAlertDialog
+      <SwiperDialog
         open={isEndConfirmOpen}
         onOpenChange={setEndConfirmOpen}
         onConfirm={handleConfirmEnd}
-        title="End Workout?"
-        description="Are you sure you want to end this workout? Your progress will be saved."
-        confirmText="End Workout"
-        cancelText="Cancel"
+        onCancel={() => setEndConfirmOpen(false)}
+        title="End workout?"
+        confirmText="End workout"
+        cancelText="Keep working out"
+        confirmVariant="outline"
+        cancelVariant="destructive"
+        contentClassName="w-[1340px] h-[866px] px-5 bg-white/80 backdrop-blur-[2px] inline-flex flex-col justify-center items-center"
+        headerClassName="w-full flex-1 max-w-[500px] border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5"
+        titleClassName="self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
+        footerClassName="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
       />
 
       {/* Persistent bottom nav for active workout */}
