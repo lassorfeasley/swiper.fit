@@ -12,6 +12,9 @@ import {
   SwiperCard,
   SwiperCardContent,
 } from "@/components/molecules/swiper-card";
+import LoggedOutNav from "@/components/layout/LoggedOutNav";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -55,62 +58,109 @@ export default function UpdatePassword() {
   };
 
   return (
-    <AppLayout showSidebar={false}>
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-        <SwiperCard className="w-full max-w-md mx-4">
-          <SwiperCardContent className="flex flex-col gap-5 p-5">
-            <div className="text-slate-600 text-xl font-medium leading-9 mb-2">
-              Update Password
+    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">
+      {/* Navigation */}
+      <LoggedOutNav showAuthButtons={false} />
+
+      {/* Main Content */}
+      <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
+        <DeckWrapper gap={0} className="flex-1">
+          <CardWrapper>
+            <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
+                {/* Header */}
+                <div className="self-stretch flex flex-col gap-2">
+                  <div className="justify-center text-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Update Password
+                  </div>
+                  <div className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
+                    Set a new password for your account
+                  </div>
+                </div>
+
+                {/* Status messages */}
+                {status.type === "error" && (
+                  <div className="self-stretch p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <div className="text-red-800 text-sm font-['Be_Vietnam_Pro']">
+                      {status.message}
+                    </div>
+                  </div>
+                )}
+                {status.type === "success" && (
+                  <div className="self-stretch p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <div className="text-green-800 text-sm font-['Be_Vietnam_Pro']">
+                      {status.message}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Password field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        New Password
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    icon={true}
+                  />
+                </div>
+
+                {/* Confirm Password field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Confirm Password
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    icon={true}
+                  />
+                </div>
+
+                {/* Update Password button */}
+                <button
+                  type="submit"
+                  className="self-stretch h-12 px-4 py-2 bg-neutral-600 hover:bg-neutral-700 disabled:bg-neutral-400 inline-flex justify-center items-center gap-2.5 transition-colors"
+                >
+                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Update Password
+                  </div>
+                </button>
+              </form>
             </div>
-            <div className="text-slate-600 text-sm font-normal mb-4">
-              Set a new password for your account
-            </div>
-            {status.type === "error" && (
-              <Alert variant="destructive" className="mb-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{status.message}</AlertDescription>
-              </Alert>
-            )}
-            {status.type === "success" && (
-              <Alert className="mb-2 bg-green-50 border-green-200 text-green-800">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription>{status.message}</AlertDescription>
-              </Alert>
-            )}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-slate-600 text-sm font-bold">
-                  New Password
-                </label>
-                <TextInput
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  icon={<Eye className="size-6 text-neutral-300" />}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-slate-600 text-sm font-bold">
-                  Confirm Password
-                </label>
-                <TextInput
-                  type="password"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  icon={<Eye className="size-6 text-neutral-300" />}
-                />
-              </div>
-              <Button type="submit" className="w-full h-[56px]">
-                Update Password
-              </Button>
-            </form>
-          </SwiperCardContent>
-        </SwiperCard>
+          </CardWrapper>
+        </DeckWrapper>
       </div>
-    </AppLayout>
+
+      {/* Footer */}
+      <div className="self-stretch h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-300 flex flex-col justify-start items-start gap-3">
+        <div className="self-stretch min-w-36 justify-start text-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
+          Developed by Lassor
+        </div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            www.Lassor.com
+          </div>
+          <div className="w-56 justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            Feasley@Lassor.com
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

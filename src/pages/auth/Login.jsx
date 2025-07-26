@@ -13,6 +13,9 @@ import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
 import { Eye } from "lucide-react";
 import { toast } from "sonner";
+import LoggedOutNav from "@/components/layout/LoggedOutNav";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -60,80 +63,115 @@ export default function Login() {
   };
 
   return (
-    <AppLayout showSidebar={false} hideHeader>
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-        <SwiperCard className="w-full max-w-md mx-4">
-          <SwiperCardContent className="p-5">
-            <form onSubmit={handleLogin} className="flex flex-col gap-5">
-              {/* Header row */}
-              <div className="self-stretch inline-flex justify-between items-center">
-                <div className="text-slate-600 text-xl font-medium leading-9">
-                  Login to your account
-                </div>
-                <div
-                  className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
-                  onClick={() => navigate("/create-account")}
-                >
-                  Sign up
-                </div>
-              </div>
-              {/* Email field label */}
-              <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-                <div className="self-stretch inline-flex justify-between items-start">
-                  <div className="flex-1 text-slate-600 text-sm font-bold leading-tight">
-                    Email
+    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">
+      {/* Navigation */}
+      <LoggedOutNav showAuthButtons={false} />
+
+      {/* Main Content */}
+      <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
+        <DeckWrapper gap={0} className="flex-1">
+          <CardWrapper>
+            <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+              <form onSubmit={handleLogin} className="w-full flex flex-col gap-5">
+                {/* Header row */}
+                <div className="self-stretch inline-flex justify-between items-center">
+                  <div className="justify-center text-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Login to your account
+                  </div>
+                  <div 
+                    className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
+                    onClick={() => navigate("/create-account")}
+                  >
+                    Sign up
                   </div>
                 </div>
-                <div className="mb-4 w-full">
+
+                {/* Email field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Email
+                      </div>
+                    </div>
+                  </div>
                   <TextInput
                     type="email"
                     id="login-email"
-                    placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loginMutation.isPending}
-                    error={emailError ? errorMessage : undefined}
+                    error={emailError}
                   />
+                  {emailError && (
+                    <div className="text-red-500 text-sm font-['Be_Vietnam_Pro']">
+                      {errorMessage}
+                    </div>
+                  )}
                 </div>
-              </div>
-              {/* Password field label and forgot link */}
-              <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-                <div className="self-stretch inline-flex justify-between items-start">
-                  <div className="text-slate-600 text-sm font-bold leading-tight">
-                    Password
+
+                {/* Password field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Password
+                      </div>
+                    </div>
+                    <div className="flex-1 flex justify-between items-start">
+                      <div 
+                        className="flex-1 text-right justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
+                        onClick={() => navigate("/reset-password")}
+                      >
+                        Forgot?
+                      </div>
+                    </div>
                   </div>
-                  <div
-                    className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
-                    onClick={() => navigate("/reset-password")}
-                  >
-                    Forgot your password?
-                  </div>
-                </div>
-                <div className="mb-4 w-full">
                   <TextInput
                     type="password"
                     id="login-password"
-                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loginMutation.isPending}
-                    icon={<Eye className="size-6 text-neutral-300" />}
-                    error={passwordError ? errorMessage : undefined}
+                    error={passwordError}
                   />
+                  {passwordError && (
+                    <div className="text-red-500 text-sm font-['Be_Vietnam_Pro']">
+                      {errorMessage}
+                    </div>
+                  )}
                 </div>
-              </div>
-              {/* Login button */}
-              <Button
-                type="submit"
-                disabled={loginMutation.isPending}
-                className="w-full h-[56px]"
-              >
-                {loginMutation.isPending ? "Logging in..." : "Login"}
-              </Button>
-            </form>
-          </SwiperCardContent>
-        </SwiperCard>
+
+                {/* Login button */}
+                <button
+                  type="submit"
+                  disabled={loginMutation.isPending}
+                  className="self-stretch h-12 px-4 py-2 bg-neutral-600 hover:bg-neutral-700 disabled:bg-neutral-400 border-b border-neutral-300 inline-flex justify-center items-center gap-2.5 transition-colors"
+                >
+                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    {loginMutation.isPending ? "Logging in..." : "Login"}
+                  </div>
+                </button>
+              </form>
+            </div>
+          </CardWrapper>
+        </DeckWrapper>
       </div>
-    </AppLayout>
+
+      {/* Footer */}
+      <div className="self-stretch h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-300 flex flex-col justify-start items-start gap-3">
+        <div className="self-stretch min-w-36 justify-start text-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
+          Developed by Lassor
+        </div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            www.Lassor.com
+          </div>
+          <div className="self-stretch justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            Feasley@Lassor.com
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

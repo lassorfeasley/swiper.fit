@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { DemoWorkoutProvider } from "@/contexts/DemoWorkoutContext";
 import DemoWorkoutSection from "@/components/DemoWorkout/DemoWorkoutSection";
 import { MoveUpRight } from "lucide-react";
+import LoggedOutNav from "@/components/layout/LoggedOutNav";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -25,34 +26,8 @@ export default function Landing() {
     <DemoWorkoutProvider>
       {/* Mobile Layout - Only visible on mobile breakpoints */}
       <div className="md:hidden w-full min-h-screen bg-white flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0">
-          <div className="w-full h-11 border-b border-neutral-neutral-300 inline-flex justify-start items-center">
-            <button 
-              onClick={() => navigate('/login')}
-              className="flex-1 h-11 px-5 py-2.5 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
-            >
-              <div className="justify-start text-black text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
-              <MoveUpRight className="w-2.5 h-2.5 text-neutral-neutral-700" />
-            </button>
-            <button 
-              onClick={() => navigate('/create-account')}
-              className="flex-1 h-11 max-w-96 px-4 py-2 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
-            >
-              <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
-              <MoveUpRight className="w-2.5 h-2.5 text-neutral-neutral-700" />
-            </button>
-          </div>
-          <div className="w-full h-11 pl-5 border-b border-neutral-neutral-300 inline-flex justify-between items-center">
-            <div className="w-28 inline-flex flex-col justify-start items-start gap-2.5">
-              <img 
-                src="/images/swiper-logo.png" 
-                alt="Swiper Logo" 
-                className="w-28 h-11 object-contain"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Navigation */}
+        <LoggedOutNav showAuthButtons={true} />
 
         {/* Main Content - Fixed height sections */}
         <div className="flex-1 flex flex-col">
@@ -84,30 +59,8 @@ export default function Landing() {
 
       {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
       <div className="hidden md:block w-full bg-white">
-        {/* Header - Full width, flush with top */}
-        <div className="w-full h-11 pl-5 border-b border-neutral-neutral-300 flex justify-between items-center">
-          <div className="w-28 inline-flex flex-col justify-start items-start gap-2.5">
-            <img 
-              src="/images/swiper-logo.png" 
-              alt="Swiper Logo" 
-              className="w-28 h-11 object-contain"
-            />
-          </div>
-          <div className="flex justify-start items-center">
-            <button 
-              onClick={() => navigate('/login')}
-              className="h-11 px-5 py-2.5 border-l border-neutral-neutral-300 flex justify-center items-center gap-2.5 hover:bg-neutral-100 transition-colors cursor-pointer"
-            >
-              <div className="justify-start text-black text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
-            </button>
-            <button 
-              onClick={() => navigate('/create-account')}
-              className="h-11 w-48 max-w-96 px-4 py-2 bg-slate-slate-600 flex justify-center items-center gap-2.5 hover:bg-slate-700 transition-colors cursor-pointer"
-            >
-              <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
-            </button>
-          </div>
-        </div>
+        {/* Navigation */}
+        <LoggedOutNav showAuthButtons={true} />
 
         {/* Main Content - Full viewport height with demo workout spanning full height */}
         <div className="w-full h-screen max-w-[1643px] mx-auto px-16 flex justify-center items-center gap-6 md:gap-12 lg:gap-24">

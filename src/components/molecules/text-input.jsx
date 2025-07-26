@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Input } from "@/components/atoms/input";
 import { cn } from "@/lib/utils";
-import { Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 const TextInput = React.forwardRef(
   (
@@ -19,6 +19,8 @@ const TextInput = React.forwardRef(
     },
     ref
   ) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+
     const getInputStyles = () => {
       // Base field style (height / spacing / typography / colours according to spec)
       const baseBase =
@@ -64,6 +66,14 @@ const TextInput = React.forwardRef(
 
     const iconPresent = !!icon;
 
+    const handleIconClick = () => {
+      if (typeof icon === "boolean" && icon) {
+        setShowPassword(!showPassword);
+      } else if (onClick) {
+        onClick();
+      }
+    };
+
     return (
       <div className="w-full inline-flex flex-col justify-start items-start gap-2">
         {label && (
@@ -79,27 +89,27 @@ const TextInput = React.forwardRef(
         <div className={cn("relative w-full group", className)}>
           <Input
             ref={ref}
+            type={typeof icon === "boolean" && icon && showPassword ? "text" : props.type}
             className={cn(
               getInputStyles(),
               iconPresent && "pr-14" // leave space for the icon container (w-12 + gap)
             )}
             disabled={disabled}
             placeholder={customPlaceholder}
-            onClick={onClick}
             {...props}
           />
           {iconPresent && (
             <div
               className={cn(
-                "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l",
+                "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l cursor-pointer",
                 disabled && "border-neutral-300 text-neutral-300",
                 !disabled && error && "border-red-400 text-slate-600",
                 !disabled && !error &&
                   "border-neutral-300 text-slate-500 group-hover:border-slate-600 group-focus-within:border-slate-600"
               )}
-              onClick={onClick}
+              onClick={handleIconClick}
             >
-              {typeof icon === "boolean" ? <Eye /> : icon}
+              {typeof icon === "boolean" ? (showPassword ? <Eye /> : <EyeOff />) : icon}
             </div>
           )}
         </div>

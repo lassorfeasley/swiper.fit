@@ -1,13 +1,21 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/atoms/button";
 import { useMutation } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/atoms/card";
-import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/atoms/alert";
+import { AlertCircle } from "lucide-react";
+import {
+  SwiperCard,
+  SwiperCardContent,
+} from "@/components/molecules/swiper-card";
 import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/molecules/text-input";
+import { ActionCard } from "@/components/molecules/action-card";
 import { Eye } from "lucide-react";
-import { toast } from "sonner";
+import LoggedOutNav from "@/components/layout/LoggedOutNav";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
@@ -29,7 +37,6 @@ export default function CreateAccount() {
           ? "Account created! Welcome aboard."
           : "Account created! Check your email to confirm your address.";
       setSuccessMessage(msg);
-      toast.success(msg);
 
       // Ensure the session is fully populated by signing in explicitly.
       try {
@@ -44,7 +51,6 @@ export default function CreateAccount() {
       setErrorMessage(error.message);
       setSuccessMessage("");
       console.error("Signup error:", error);
-      toast.error(error.message);
     },
   });
 
@@ -54,74 +60,100 @@ export default function CreateAccount() {
   };
 
   return (
-    <AppLayout showSidebar={false} hideHeader>
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="flex flex-col gap-5 p-5">
-            {/* Header row */}
-            <div className="self-stretch inline-flex justify-between items-center">
-              <div className="text-slate-600 text-xl font-medium leading-9">
-                Create an account
-              </div>
-              <div
-                className="text-slate-600 text-sm font-normal leading-tight cursor-pointer"
-                onClick={() => navigate("/login")}
-              >
-                Log in
-              </div>
-            </div>
-            {/* Email field label */}
-            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-              <div className="self-stretch inline-flex justify-between items-start">
-                <div className="flex-1 text-slate-600 text-sm font-bold leading-tight">
-                  Email
+    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">
+      {/* Navigation */}
+      <LoggedOutNav showAuthButtons={false} />
+
+      {/* Main Content */}
+      <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
+        <DeckWrapper gap={0} className="flex-1">
+          <CardWrapper>
+            <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+              <form onSubmit={handleSignup} className="w-full flex flex-col gap-5">
+                {/* Header row */}
+                <div className="self-stretch inline-flex justify-between items-center">
+                  <div className="justify-center text-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Create an account
+                  </div>
+                  <div 
+                    className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
+                    onClick={() => navigate("/login")}
+                  >
+                    Log in
+                  </div>
                 </div>
-              </div>
-              <div className="mb-4 w-full">
-                <TextInput
-                  type="email"
-                  id="create-account-email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-            </div>
-            {/* Password field label */}
-            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
-              <div className="self-stretch inline-flex justify-between items-start">
-                <div className="text-slate-600 text-sm font-bold leading-tight">
-                  Password
+
+                {/* Email field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Email
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="email"
+                    id="create-account-email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={signupMutation.isPending}
+                    error={!!errorMessage}
+                  />
                 </div>
-              </div>
-              <div className="mb-4 w-full">
-                <TextInput
-                  type="password"
-                  id="create-account-password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={signupMutation.isPending}
-                  icon={<Eye className="size-6 text-neutral-300" />}
-                />
-              </div>
+
+                {/* Password field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Password
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="password"
+                    id="create-account-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={signupMutation.isPending}
+                    error={!!errorMessage}
+                  />
+                </div>
+
+                {/* Success messages only */}
+                {successMessage && (
+                  <div className="text-green-500 text-sm font-['Be_Vietnam_Pro']">
+                    {successMessage}
+                  </div>
+                )}
+              </form>
             </div>
-            {/* Create Account button */}
-            <Button
-              type="submit"
-              data-layer="Button"
-              disabled={signupMutation.isPending}
-              className="w-full h-[56px]"
-              onClick={handleSignup}
-            >
-              {signupMutation.isPending
-                ? "Creating Account..."
-                : "Create Account"}
-            </Button>
-          </CardContent>
-        </Card>
+          </CardWrapper>
+
+          {/* Create Account Action Card */}
+          <ActionCard
+            text={signupMutation.isPending ? "Creating Account..." : "Create Account"}
+            onClick={handleSignup}
+            disabled={signupMutation.isPending}
+          />
+        </DeckWrapper>
       </div>
-    </AppLayout>
+
+      {/* Footer */}
+      <div className="self-stretch h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-300 flex flex-col justify-start items-start gap-3">
+        <div className="self-stretch min-w-36 justify-start text-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
+          Developed by Lassor
+        </div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            www.Lassor.com
+          </div>
+          <div className="w-56 justify-start text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            Feasley@Lassor.com
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
