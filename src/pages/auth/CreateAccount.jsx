@@ -16,6 +16,7 @@ import { Eye } from "lucide-react";
 import LoggedOutNav from "@/components/layout/LoggedOutNav";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ export default function CreateAccount() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
+  const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const signupMutation = useMutation({
     mutationFn: async ({ email, password }) => {
@@ -45,7 +47,21 @@ export default function CreateAccount() {
         console.error("Post-signup login failed", e);
       }
 
-      navigate("/routines");
+      // Wait for workout context to load, then redirect appropriately
+      const checkWorkoutAndRedirect = () => {
+        if (!workoutLoading) {
+          if (isWorkoutActive) {
+            navigate("/workout/active");
+          } else {
+            navigate("/routines");
+          }
+        } else {
+          // If still loading, check again in a moment
+          setTimeout(checkWorkoutAndRedirect, 100);
+        }
+      };
+      
+      checkWorkoutAndRedirect();
     },
     onError: (error) => {
       setErrorMessage(error.message);
@@ -58,6 +74,18 @@ export default function CreateAccount() {
     e.preventDefault();
     signupMutation.mutate({ email, password });
   };
+
+  // Show loading state while workout context is loading after signup
+  if (signupMutation.isSuccess && workoutLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">

@@ -25,9 +25,22 @@ export function ActiveWorkoutProvider({ children }) {
 
   // Effect to check for an active workout on load
   useEffect(() => {
+    console.log('[ActiveWorkout] User changed, checking for active workout:', user?.id);
+    
+    // Clear existing workout state when user changes
+    setActiveWorkout(null);
+    setIsWorkoutActive(false);
+    setElapsedTime(0);
+    setIsPaused(false);
+    
     const checkForActiveWorkout = async () => {
       if (!user) {
         setLoading(false);
+        // Clear workout state when no user
+        setActiveWorkout(null);
+        setIsWorkoutActive(false);
+        setElapsedTime(0);
+        setIsPaused(false);
         return;
       }
       
@@ -43,10 +56,20 @@ export function ActiveWorkoutProvider({ children }) {
         if (workoutError) {
           console.error('Error fetching active workout row:', workoutError);
           setLoading(false);
+          // Clear workout state on error
+          setActiveWorkout(null);
+          setIsWorkoutActive(false);
+          setElapsedTime(0);
+          setIsPaused(false);
           return;
         }
         if (!workout) {
           setLoading(false);
+          // Clear workout state when no active workout found
+          setActiveWorkout(null);
+          setIsWorkoutActive(false);
+          setElapsedTime(0);
+          setIsPaused(false);
           return;
         }
 
@@ -94,6 +117,8 @@ export function ActiveWorkoutProvider({ children }) {
           : 0;
         setElapsedTime(elapsed);
         setIsWorkoutActive(true);
+        
+        console.log('[ActiveWorkout] Active workout found and set:', workoutData);
       } catch (err) {
         console.error('Error checking for active workout:', err);
       } finally {
@@ -515,7 +540,7 @@ export function ActiveWorkoutProvider({ children }) {
         isSetToasted
       }}
     >
-      {!loading && children}
+      {children}
     </ActiveWorkoutContext.Provider>
   );
 }

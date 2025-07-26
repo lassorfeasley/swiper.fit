@@ -36,7 +36,7 @@ export const PageNameContext = createContext({
 
 function AppContent() {
   const location = useLocation();
-  const { isWorkoutActive } = useActiveWorkout();
+  const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
   const { isDelegated } = useAccount();
   const navigate = useNavigate();
   const { navBarVisible } = useNavBarVisibility();
@@ -62,9 +62,10 @@ function AppContent() {
   const hideNavForPublic = isPublicHistoryView;
 
   // Define paths that should be allowed even when workout is active
+  // When a workout is active, users should ONLY be able to access the workout page and essential auth pages
   const allowedPaths = [
     '/workout/active',           // The active workout page itself
-    '/',                         // Landing page
+    '/',                         // Landing page (for logout)
     '/login',                    // Authentication pages
     '/create-account',
     '/reset-password',
@@ -72,25 +73,84 @@ function AppContent() {
   ];
   
   // Check if current path is allowed
-  // When in delegate mode with active workout, be more restrictive - only allow essential pages
-  const isAllowedPath = isDelegated && isWorkoutActive 
+  // When any workout is active (delegate or regular user), be very restrictive
+  const isAllowedPath = isWorkoutActive 
     ? ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].some(allowed => {
         if (allowed === '/') {
           return location.pathname === '/';
         }
+        // More precise path matching - exact match or starts with allowed path followed by /
         return location.pathname === allowed || location.pathname.startsWith(allowed + '/');
       })
-    : allowedPaths.some(allowed => location.pathname === allowed || location.pathname.startsWith(allowed));
+    : true; // If no workout is active, allow all paths
   
   // Guard: If workout is active and we're on a non-allowed page, immediately redirect
-  const shouldRedirect = isWorkoutActive && !isAllowedPath;
+  // Don't redirect while workout context is still loading to avoid premature redirects
+  const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading;
+
+  // Debug logging for workout redirect logic
+  useEffect(() => {
+    console.log('[App] Workout redirect state:', {
+      isWorkoutActive,
+      workoutLoading,
+      isAllowedPath,
+      shouldRedirect,
+      currentPath: location.pathname,
+      isDelegated,
+      allowedPaths: ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password']
+    });
+    
+    // Additional debugging for path matching
+    if (isWorkoutActive) {
+      const pathChecks = ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].map(allowed => {
+        const isMatch = allowed === '/' ? location.pathname === '/' : 
+                       location.pathname === allowed || location.pathname.startsWith(allowed + '/');
+        return { allowed, isMatch };
+      });
+      console.log('[App] Path matching details:', pathChecks);
+    }
+  }, [isWorkoutActive, workoutLoading, isAllowedPath, shouldRedirect, location.pathname, isDelegated]);
 
   // Redirect to active workout when one is live
   useEffect(() => {
     if (shouldRedirect) {
+      console.log('[App] Redirecting to active workout');
       navigate('/workout/active', { replace: true });
     }
   }, [shouldRedirect, navigate]);
+
+  // Immediate redirect when workout context finishes loading and detects active workout
+  useEffect(() => {
+    if (!workoutLoading && isWorkoutActive && location.pathname !== '/workout/active') {
+      console.log('[App] Immediate redirect to active workout after loading');
+      navigate('/workout/active', { replace: true });
+    }
+  }, [workoutLoading, isWorkoutActive, location.pathname, navigate]);
+
+  // Additional safety checks: immediately redirect if on restricted pages with active workout
+  useEffect(() => {
+    if (!workoutLoading && isWorkoutActive) {
+      const restrictedPaths = ['/routines', '/history', '/sharing', '/account', '/dashboard'];
+      const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
+      
+      if (isOnRestrictedPath && location.pathname !== '/workout/active') {
+        console.log('[App] Safety redirect: on restricted page with active workout:', location.pathname);
+        navigate('/workout/active', { replace: true });
+      }
+    }
+  }, [workoutLoading, isWorkoutActive, location.pathname, navigate]);
+
+  // Show loading state while workout context is loading to prevent premature navigation
+  if (workoutLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking for active workouts...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Don't render any content if we should be redirecting - this prevents the page from showing briefly
   if (shouldRedirect) {

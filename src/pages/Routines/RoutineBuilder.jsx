@@ -36,8 +36,7 @@ const RoutineBuilder = () => {
   const [isEditProgramOpen, setEditProgramOpen] = useState(false);
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
-  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
-  const [pendingRoutineToStart, setPendingRoutineToStart] = useState(null);
+
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
@@ -311,29 +310,17 @@ const RoutineBuilder = () => {
     
     console.log('[RoutineBuilder] handleStartWorkout invoked for routine:', routine);
     
-    if (isWorkoutActive) {
-      setPendingRoutineToStart(routine);
-      setConfirmStartDialogOpen(true);
-    } else {
-      startWorkout(routine)
-        .then(() => navigate("/workout/active"))
-        .catch((error) => {
-          console.error('[RoutineBuilder] startWorkout error for routine', routine, error);
-          toast.error('Failed to start workout: ' + error.message);
-        });
-    }
-  };
-
-  const handleConfirmStartWorkout = () => {
-    console.log('[RoutineBuilder] handleConfirmStartWorkout for pending routine:', pendingRoutineToStart);
-    setConfirmStartDialogOpen(false);
-    startWorkout(pendingRoutineToStart)
+    // Users should never be able to access this page with an active workout due to redirect logic
+    // If they somehow do, just start the workout (this will end the current one)
+    startWorkout(routine)
       .then(() => navigate("/workout/active"))
       .catch((error) => {
-        console.error('[RoutineBuilder] startWorkout error on confirm for routine', pendingRoutineToStart, error);
+        console.error('[RoutineBuilder] startWorkout error for routine', routine, error);
         toast.error('Failed to start workout: ' + error.message);
       });
   };
+
+
 
   const handleAddExercise = async (exerciseData) => {
     try {
@@ -811,15 +798,7 @@ const RoutineBuilder = () => {
         description="This action cannot be undone and the exercise will be removed from this program."
         confirmText="Delete"
       />
-      <SwiperAlertDialog
-        open={confirmStartDialogOpen}
-        onOpenChange={setConfirmStartDialogOpen}
-        onConfirm={handleConfirmStartWorkout}
-        title="End current workout?"
-        description="Starting this routine will end your current workout. Continue?"
-        confirmText="End & Start"
-        cancelText="Cancel"
-      />
+
     </>
   );
 };

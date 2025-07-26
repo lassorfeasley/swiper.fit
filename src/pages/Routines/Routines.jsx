@@ -17,7 +17,6 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import { ActionCard } from "@/components/molecules/action-card";
 import { toast } from "sonner";
 
@@ -26,8 +25,7 @@ const RoutinesIndex = () => {
   const user = useCurrentUser();
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const [routines, setRoutines] = useState([]);
-  const [pendingProgramToStart, setPendingProgramToStart] = useState(null);
-  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
   const [programName, setProgramName] = useState("");
@@ -140,31 +138,7 @@ const RoutinesIndex = () => {
 
   const isReady = programName.trim().length > 0;
 
-  const handleStart = (program) => {
-    console.log('[Routines] handleStart invoked for program:', program);
-    if (isWorkoutActive) {
-      setPendingProgramToStart(program);
-      setConfirmStartDialogOpen(true);
-    } else {
-      startWorkout(program)
-        .then(() => navigate("/workout/active"))
-        .catch((error) => {
-          console.error('[Routines] startWorkout error for program', program, error);
-          toast.error('Failed to start workout: ' + error.message);
-        });
-    }
-  };
 
-  const handleConfirmStart = () => {
-    console.log('[Routines] handleConfirmStart for pending program:', pendingProgramToStart);
-    setConfirmStartDialogOpen(false);
-    startWorkout(pendingProgramToStart)
-      .then(() => navigate("/workout/active"))
-      .catch((error) => {
-        console.error('[Routines] startWorkout error on confirm for program', pendingProgramToStart, error);
-        toast.error('Failed to start workout: ' + error.message);
-      });
-  };
 
   // Filter routines by search
   const filteredRoutines = routines.filter((program) => {
@@ -247,14 +221,7 @@ const RoutinesIndex = () => {
           />
         </SwiperForm.Section>
       </SwiperForm>
-      <SwiperAlertDialog
-        open={confirmStartDialogOpen}
-        onOpenChange={setConfirmStartDialogOpen}
-        onConfirm={handleConfirmStart}
-        title="End current workout?"
-        description="Starting this routine will end your current workout. Continue?"
-        confirmText="End & Start"
-      />
+
     </AppLayout>
   );
 };

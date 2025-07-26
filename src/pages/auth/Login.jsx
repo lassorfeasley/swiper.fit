@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import LoggedOutNav from "@/components/layout/LoggedOutNav";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -24,6 +25,7 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }) => {
@@ -39,7 +41,22 @@ export default function Login() {
       setPasswordError(false);
       setErrorMessage("");
       toast.success("Logged in successfully");
-      navigate("/routines");
+      
+      // Wait for workout context to load, then redirect appropriately
+      const checkWorkoutAndRedirect = () => {
+        if (!workoutLoading) {
+          if (isWorkoutActive) {
+            navigate("/workout/active");
+          } else {
+            navigate("/routines");
+          }
+        } else {
+          // If still loading, check again in a moment
+          setTimeout(checkWorkoutAndRedirect, 100);
+        }
+      };
+      
+      checkWorkoutAndRedirect();
     },
     onError: (error) => {
       const msg = error.message.toLowerCase();
@@ -61,6 +78,18 @@ export default function Login() {
     e.preventDefault();
     loginMutation.mutate({ email, password });
   };
+
+  // Show loading state while workout context is loading after login
+  if (loginMutation.isSuccess && workoutLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking for active workouts...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">

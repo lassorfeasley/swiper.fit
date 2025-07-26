@@ -55,6 +55,17 @@ export const AccountProvider = ({ children }) => {
   // The user the app should act as for queries
   const currentUser = actingUser || authUser;
   const isDelegated = Boolean(actingUser);
+  
+  // Debug logging for user changes
+  useEffect(() => {
+    console.log('[AccountContext] User state changed:', {
+      authUserId: authUser?.id,
+      actingUserId: actingUser?.id,
+      currentUserId: currentUser?.id,
+      isDelegated,
+      loading
+    });
+  }, [authUser?.id, actingUser?.id, currentUser?.id, isDelegated, loading]);
 
   return (
     <AccountContext.Provider

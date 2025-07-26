@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useEffect } from "react";
 import { DemoWorkoutProvider } from "@/contexts/DemoWorkoutContext";
 import DemoWorkoutSection from "@/components/DemoWorkout/DemoWorkoutSection";
@@ -9,13 +10,32 @@ import LoggedOutNav from "@/components/layout/LoggedOutNav";
 export default function Landing() {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
-  // Redirect authenticated users to routines page
+  // Redirect authenticated users based on workout state
   useEffect(() => {
-    if (session) {
-      navigate("/routines", { replace: true });
+    if (session && !workoutLoading) {
+      if (isWorkoutActive) {
+        // If there's an active workout, redirect to it immediately
+        navigate("/workout/active", { replace: true });
+      } else {
+        // Otherwise, redirect to routines page
+        navigate("/routines", { replace: true });
+      }
     }
-  }, [session, navigate]);
+  }, [session, isWorkoutActive, workoutLoading, navigate]);
+
+  // Show loading state while workout context is loading
+  if (session && workoutLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking for active workouts...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Don't render if we're redirecting
   if (session) {
