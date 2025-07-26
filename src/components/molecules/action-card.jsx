@@ -8,7 +8,12 @@ const ActionCard = React.forwardRef(({
   ...props 
 }, ref) => {
   return (
-    <div ref={ref} className={`${className} !border-b-0 w-full`} onClick={onClick} {...props}>
+    <div 
+      ref={ref} 
+      className={`${className} !border-b-0 w-full cursor-pointer hover:cursor-pointer`} 
+      onClick={onClick} 
+      {...props}
+    >
       <div className="w-full pt-5 pb-20">
         <div className="w-full pl-3 bg-neutral-100 border-t border-b border-neutral-neutral-300 flex justify-between items-center">
           <div className="justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">{text}</div>
