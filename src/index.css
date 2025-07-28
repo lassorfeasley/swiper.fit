@@ -1,5 +1,5 @@
 @import "./styles/colors.css";
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -28,7 +28,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
   @apply bg-stone-200;
+  /* Prevent font loading layout shifts */
+  font-display: swap;
+  /* Safari smoothing */
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Keep only essential optimizations */
 
 /* Mobile viewport height fix for keyboard handling */
 @supports (height: 100dvh) {

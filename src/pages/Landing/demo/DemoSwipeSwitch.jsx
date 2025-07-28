@@ -315,6 +315,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       <div
         ref={trackRef}
         className={`Rail self-stretch flex-1 inline-flex items-center justify-end relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
+
       >
         <motion.div
           className="Thumb w-20 bg-white flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
