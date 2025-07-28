@@ -3,16 +3,12 @@ import {
   AlertDialog,
   AlertDialogPortal,
   AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
 } from "@/components/atoms/alert-dialog";
+import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
+import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { SwiperButton } from './swiper-button';
 
+// Force hot reload - AlertDialogCancel and AlertDialogAction removed
 const SwiperDialog = ({
   open,
   isOpen,
@@ -50,55 +46,63 @@ const SwiperDialog = ({
   return (
     <AlertDialog open={controlledOpen} onOpenChange={onOpenChange}>
       <AlertDialogPortal>
-        <AlertDialogOverlay className="backdrop-blur-[2px] fixed inset-0 z-50" />
-        <AlertDialogContent 
-          className={`w-[1340px] h-[866px] px-5 bg-white/80 backdrop-blur-[2px] inline-flex flex-col justify-center items-center shadow-none ${contentClassName || ''}`}
-          {...props}
+        <div 
+          className={`fixed left-[50%] top-[50%] z-[100] translate-x-[-50%] translate-y-[-50%] w-full h-full px-5 bg-white/80 backdrop-blur-[2px] inline-flex flex-col justify-center items-center ${contentClassName || ''}`}
+          onClick={handleCancel}
         >
-          <div className="w-96 flex-1 max-w-96 border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5">
-            <div className="w-full max-w-[500px] bg-white flex flex-col justify-start items-center">
+          <DeckWrapper 
+            className="w-full flex-1 flex flex-col justify-center items-center gap-2.5" 
+            maxWidth={500} 
+            minWidth={325}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div 
+              className="w-full max-w-[500px] bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               {title && (
-                <AlertDialogHeader className={`w-full ${headerClassName || ''}`}>
-                  <AlertDialogTitle className={`self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start ${titleClassName || ''}`}>
-                    <div className="self-stretch inline-flex justify-center items-center gap-2.5">
-                      <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
-                    </div>
-                  </AlertDialogTitle>
-                </AlertDialogHeader>
+                <div className="self-stretch h-12 px-3 bg-white border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
+                  <div className="self-stretch inline-flex justify-center items-center gap-2.5">
+                    <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
+                  </div>
+                </div>
               )}
-              
               {description && (
-                <AlertDialogDescription className={`text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight ${descriptionClassName || ''}`}>
-                  {description}
-                </AlertDialogDescription>
+                <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
+                  <div className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">{description}</div>
+                </div>
               )}
-              
               {children}
-              
-                              <AlertDialogFooter className={`self-stretch px-3 py-5 flex flex-col justify-center items-center gap-4 w-full ${footerClassName || ''}`}>
-                <AlertDialogAction asChild className="w-full m-0 p-0 !m-0">
-                  <SwiperButton 
-                    variant={confirmVariant}
-                    onClick={handleConfirm}
-                    className="w-full !m-0 !ml-0"
-                  >
-                    {confirmText}
-                  </SwiperButton>
-                </AlertDialogAction>
-                
-                <AlertDialogCancel asChild className="w-full m-0 p-0 !m-0">
-                  <SwiperButton 
-                    variant={cancelVariant}
-                    onClick={handleCancel}
-                    className="w-full !m-0 !ml-0"
-                  >
-                    {cancelText}
-                  </SwiperButton>
-                </AlertDialogCancel>
-              </AlertDialogFooter>
+              <div 
+                className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SwiperButton 
+                  variant={confirmVariant}
+                  onClick={(e) => {
+                    console.log('Confirm button clicked!');
+                    e.stopPropagation();
+                    handleConfirm();
+                  }}
+                  className="self-stretch h-12 px-4 py-2 bg-neutral-Neutral-50 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
+                >
+                  {confirmText}
+                </SwiperButton>
+                <SwiperButton 
+                  variant={cancelVariant}
+                  onClick={(e) => {
+                    console.log('Cancel button clicked!');
+                    e.stopPropagation();
+                    handleCancel();
+                  }}
+                  className="self-stretch h-12 px-4 py-2 bg-red-red-300 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
+                >
+                  {cancelText}
+                </SwiperButton>
+              </div>
             </div>
-          </div>
-        </AlertDialogContent>
+          </DeckWrapper>
+        </div>
       </AlertDialogPortal>
     </AlertDialog>
   );
