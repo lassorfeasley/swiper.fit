@@ -141,25 +141,18 @@ const ActiveWorkoutSection = ({
         }));
       });
 
-              // Group saved sets by exercise_id (excluding hidden sets)
+              // Group saved sets by exercise_id (include hidden so we can match them to templates)
         const savedSetsMap = {};
-        console.log("All saved sets:", savedSets);
         (savedSets || []).forEach((set) => {
-          // Skip hidden sets
-          if (set.status === "hidden") {
-            console.log("Found hidden set:", set);
-            return;
-          }
-          
           if (!savedSetsMap[set.exercise_id]) {
             savedSetsMap[set.exercise_id] = [];
           }
           savedSetsMap[set.exercise_id].push(set);
         });
-        console.log("Filtered saved sets map:", savedSetsMap);
 
               // Build exercise objects with merged set configs
         const processedExercises = filteredExercises.map((we) => {
+          console.log(`Processing exercise ID: ${we.exercise_id}`);
           const templateConfigs = templateSetsMap[we.exercise_id] || [];
           const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
 
@@ -211,6 +204,8 @@ const ActiveWorkoutSection = ({
         // Add orphaned saved sets at the end
         let orphanIndex = templateConfigs.length;
         savedSetsForExercise.forEach((saved) => {
+          if (saved.status === "hidden") return; // never render hidden orphan sets
+
           const hasTemplateCounterpart = templateConfigs.some(
             (template) => template.routine_set_id === saved.routine_set_id
           );
@@ -1280,6 +1275,8 @@ const ActiveWorkoutSection = ({
           status: "hidden", // Mark as hidden to exclude from display
         };
 
+        console.log("Creating hidden set for exercise ID:", editingSet.exerciseId);
+        console.log("Hidden set data:", hiddenSetData);
         const { error } = await supabase
           .from("sets")
           .insert(hiddenSetData);
@@ -1410,6 +1407,7 @@ const ActiveWorkoutSection = ({
         section={section}
         showPlusButton={false}
         extendToBottom={isLastSection}
+        isFirst={section === "warmup"}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         <div className="text-center py-8 text-gray-500">
@@ -1427,6 +1425,7 @@ const ActiveWorkoutSection = ({
           section={section}
           showPlusButton={false}
           extendToBottom={isLastSection}
+          isFirst={section === "warmup"}
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           <div className="text-center py-8 text-gray-500">
@@ -1482,6 +1481,7 @@ const ActiveWorkoutSection = ({
         section={section}
         showPlusButton={false}
         extendToBottom={isLastSection}
+        isFirst={section === "warmup"}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         {exercises.map((ex, index) => {

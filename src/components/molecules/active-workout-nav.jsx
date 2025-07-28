@@ -40,15 +40,25 @@ export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onE
             {activeWorkout?.routineName || ''}
           </div>
         </div>
-        <div data-layer="Frame 53" className="Frame53 self-stretch h-full border-l border-neutral-300 flex justify-start items-center gap-0.5">
+        <div 
+          data-layer="Frame 53" 
+          className="Frame53 self-stretch h-full border-l border-neutral-300 flex justify-start items-center gap-0.5 cursor-pointer hover:bg-neutral-100"
+          onClick={onEnd}
+        >
           <div data-layer="icons-wrapper" className="IconsWrapper w-7 self-stretch flex justify-end items-center">
             <div data-layer="Frame 23" className="Frame23 flex-1 h-full flex justify-end items-center gap-2.5">
-              <Square className="w-6 h-6 fill-red-400 stroke-none" onClick={onEnd} />
+              <Square className="w-6 h-6 fill-red-400 stroke-none" />
             </div>
           </div>
-          <div data-layer="icons-wrapper" className="IconsWrapper h-full flex justify-start items-center">
+          <div 
+            data-layer="icons-wrapper" 
+            className="IconsWrapper h-full flex justify-start items-center"
+          >
             <div data-layer="Frame 23" className="Frame23 h-full pr-2 flex justify-center items-center">
-              <div data-layer="0:00:00" className="0000 justify-center text-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
+              <div 
+                data-layer="0:00:00" 
+                className="0000 justify-center text-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+              >
                 {formattedTime}
               </div>
             </div>
