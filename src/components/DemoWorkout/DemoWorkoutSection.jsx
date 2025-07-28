@@ -199,6 +199,8 @@ export default function DemoWorkoutSection() {
               unit: "lbs",
             }))}
             hideActionButtons={true}
+            showAddToProgramToggle={false}
+            showSectionToggle={false}
           />
         </div>
       </SwiperForm>
@@ -237,6 +239,7 @@ export default function DemoWorkoutSection() {
               initialSetConfigs={editingExercise.setConfigs}
               hideActionButtons={true}
               showAddToProgramToggle={false}
+              showSectionToggle={false} // Hide section toggle on landing page
               hideSetDefaults={true}
               onActionIconClick={(data) => handleSaveExerciseEdit(data)}
               onDirtyChange={setEditingExerciseDirty}

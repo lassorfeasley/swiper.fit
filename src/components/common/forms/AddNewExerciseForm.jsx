@@ -22,6 +22,7 @@ const AddNewExerciseForm = React.forwardRef(
       onDirtyChange,
       hideActionButtons = false,
       showAddToProgramToggle = true,
+      showSectionToggle = true,
       showUpdateTypeToggle = false,
       updateType = "today",
       onUpdateTypeChange,
@@ -200,16 +201,18 @@ const AddNewExerciseForm = React.forwardRef(
             disabled={disabled}
           />
           
-          <ToggleInput
-            value={section}
-            onValueChange={(value) => value && setSection(value)}
-            options={[
-              { label: "Warmup", value: "warmup" },
-              { label: "Training", value: "training" },
-              { label: "Cooldown", value: "cooldown" },
-            ]}
-            disabled={disabled}
-          />
+          {showSectionToggle && (
+            <ToggleInput
+              value={section}
+              onValueChange={(value) => value && setSection(value)}
+              options={[
+                { label: "Warmup", value: "warmup" },
+                { label: "Training", value: "training" },
+                { label: "Cooldown", value: "cooldown" },
+              ]}
+              disabled={disabled}
+            />
+          )}
           
           <NumericInput
             label="Sets"
@@ -339,6 +342,7 @@ AddNewExerciseForm.propTypes = {
   onDirtyChange: PropTypes.func,
   hideActionButtons: PropTypes.bool,
   showAddToProgramToggle: PropTypes.bool,
+  showSectionToggle: PropTypes.bool,
   showUpdateTypeToggle: PropTypes.bool,
   updateType: PropTypes.string,
   onUpdateTypeChange: PropTypes.func,
