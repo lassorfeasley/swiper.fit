@@ -1428,9 +1428,10 @@ const ActiveWorkoutSection = ({
           isFirst={section === "warmup"}
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
-          <div className="text-center py-8 text-gray-500">
-            No {section} exercises yet. Add one to get started!
-          </div>
+          <ActionCard 
+            text="add exercise" 
+            onClick={handleAddExercise}
+          />
         </PageSectionWrapper>
 
         {/* Add Exercise Form */}

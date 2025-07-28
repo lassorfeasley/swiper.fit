@@ -351,10 +351,6 @@ const ActiveWorkoutContent = () => {
         cancelText="End workout"
         confirmVariant="outline"
         cancelVariant="destructive"
-        contentClassName="w-[1340px] h-[866px] px-5 inline-flex flex-col justify-center items-center"
-                      headerClassName="w-full flex-1 max-w-[400px] border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5"
-        titleClassName="self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
-        footerClassName="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
       />
 
       {/* Persistent bottom nav for active workout */}

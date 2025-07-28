@@ -169,6 +169,7 @@ const RoutinesIndex = () => {
         <DeckWrapper 
           gap={0} 
           extendToBottom={true}
+          forceMinHeight={true}
           className="flex-1 h-full"
           style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >

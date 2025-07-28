@@ -194,19 +194,21 @@ const PageHeader = forwardRef(({
               </button>
             )}
             {showStartWorkout && (
-              <div className="pr-3 bg-green-600 flex items-center">
-                <button
+              <div 
+                className="pr-3 bg-green-600 flex items-center cursor-pointer"
+                onClick={onStartWorkout}
+                aria-label="Start Workout"
+              >
+                <div
                   className={cn(
                     "w-11 h-11 flex items-center justify-center",
                     variant === 'dark-fixed'
                       ? "border-l border-neutral-600"
                       : "border-l border-neutral-300"
                   )}
-                  onClick={onStartWorkout}
-                  aria-label="Start Workout"
                 >
                   <Play className="w-6 h-6 text-white fill-white" />
-                </button>
+                </div>
                 <div className="text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
                   start workout
                 </div>

@@ -56,7 +56,7 @@ const SwiperDialog = ({
             maxWidth={400} 
             minWidth={325}
             extendToBottom={true}
-            style={{ paddingTop: 0, paddingBottom: 0 }}
+            style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div 
@@ -87,7 +87,7 @@ const SwiperDialog = ({
                     e.stopPropagation();
                     handleConfirm();
                   }}
-                  className="self-stretch h-12 px-4 py-2 bg-neutral-Neutral-50 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
+                  className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
                 >
                   {confirmText}
                 </SwiperButton>
@@ -98,7 +98,7 @@ const SwiperDialog = ({
                     e.stopPropagation();
                     handleCancel();
                   }}
-                  className="self-stretch h-12 px-4 py-2 bg-red-red-300 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
+                  className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
                 >
                   {cancelText}
                 </SwiperButton>

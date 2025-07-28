@@ -19,6 +19,7 @@ const DeckWrapper = forwardRef(
       reorderable = false,
       items = [],
       onReorder,
+      forceMinHeight = false, // Force minimum screen height
       ...props
     },
     ref
@@ -43,7 +44,7 @@ const DeckWrapper = forwardRef(
 
     const containerClasses = cn(
       "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-5",
-      extendToBottom && "min-h-screen",
+      extendToBottom && (forceMinHeight ? "min-h-screen" : "flex-1"),
       className
     );
 
@@ -180,6 +181,7 @@ DeckWrapper.propTypes = {
   onReorder: PropTypes.func,
   isFirstCard: PropTypes.bool,
   extendToBottom: PropTypes.bool,
+  forceMinHeight: PropTypes.bool,
 };
 
 export default DeckWrapper; 

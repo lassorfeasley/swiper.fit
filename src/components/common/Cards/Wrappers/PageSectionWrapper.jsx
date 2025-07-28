@@ -40,7 +40,8 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white border-t border-neutral-300 inline-flex flex-col justify-start items-center",
+        "Workoutcardwrapper w-full bg-white inline-flex flex-col justify-start items-center",
+        !isFirst && "border-t border-neutral-300",
         className
       )}
       {...domProps}
