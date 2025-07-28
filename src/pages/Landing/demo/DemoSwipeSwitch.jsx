@@ -43,6 +43,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   const isMountedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   
+  // Add stability tracking like the real component
+  const [trackWidth, setTrackWidth] = useState(0);
+  
   // Stable drag constraints using refs
   const dragConstraintsRef = useRef({ left: 0, right: 0 });
   const thumbTravelRef = useRef(0);
@@ -84,27 +87,29 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
     return `${m}:${s}`;
   };
 
-  // Stable thumb travel calculation
-  const calculateThumbTravel = useCallback(() => {
-    if (!trackRef.current) return;
-    
-    const railClientWidth = trackRef.current.clientWidth;
-    const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
-    const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
-    const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
-    const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
-    
-    thumbTravelRef.current = finalThumbTravel;
-    dragConstraintsRef.current = { left: 0, right: finalThumbTravel };
-    
-    if (!isInitialized) {
-      setIsInitialized(true);
+  // Production-stable thumb travel calculation (pattern from working real component)
+  const updateThumbTravel = useCallback(() => {
+    if (isDragging) return;
+    if (trackRef.current) {
+      const railClientWidth = trackRef.current.clientWidth;
+      setTrackWidth(railClientWidth);
+      const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
+      const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
+      const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
+      const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
+      
+      thumbTravelRef.current = finalThumbTravel;
+      dragConstraintsRef.current = { left: 0, right: finalThumbTravel };
+      
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
     }
-  }, [isInitialized]);
+  }, [isDragging, isInitialized]);
 
-  const debouncedCalculateThumbTravel = useMemo(
-    () => debounce(calculateThumbTravel, 200),
-    [calculateThumbTravel]
+  const debouncedUpdateThumbTravel = useMemo(
+    () => debounce(updateThumbTravel, 200),
+    [updateThumbTravel]
   );
 
   // Complete animation sequence
@@ -230,23 +235,13 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   }, [controls]);
 
   useEffect(() => {
-    // Initial calculation
-    const initTimer = setTimeout(() => {
-      calculateThumbTravel();
-    }, 0);
-    
+    updateThumbTravel();
     const handleResize = () => {
-      if (!isDragging) {
-        debouncedCalculateThumbTravel();
-      }
+      if (!isDragging) debouncedUpdateThumbTravel();
     };
-    
     window.addEventListener("resize", handleResize);
-    return () => {
-      clearTimeout(initTimer);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [calculateThumbTravel, debouncedCalculateThumbTravel, isDragging]);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isDragging, updateThumbTravel, debouncedUpdateThumbTravel]);
 
   // Reset flags when status changes
   useLayoutEffect(() => {
@@ -262,12 +257,12 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
     
     dragMoved.current = false;
     
-    if (status === 'complete') {
-      setTimeout(() => {
-        calculateThumbTravel();
-      }, 10);
-    }
-  }, [status, calculateThumbTravel]);
+         if (status === 'complete') {
+       setTimeout(() => {
+         updateThumbTravel();
+       }, 10);
+     }
+     }, [status, updateThumbTravel]);
 
   // Handle automatic completion
   useLayoutEffect(() => {
@@ -280,12 +275,12 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       if (thumbTravelRef.current > 0) {
         triggerCompleteAnimation();
       } else {
-        setTimeout(() => {
-          calculateThumbTravel();
-        }, 50);
+                 setTimeout(() => {
+           updateThumbTravel();
+         }, 50);
       }
     }
-  }, [status, swipedComplete, isAnimating, triggerCompleteAnimation, calculateThumbTravel, isInitialized]);
+     }, [status, swipedComplete, isAnimating, triggerCompleteAnimation, updateThumbTravel, isInitialized]);
 
   // Computed values
   const isDefault = status === "default";
