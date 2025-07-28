@@ -9,6 +9,7 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
@@ -790,13 +791,20 @@ const RoutineBuilder = () => {
         confirmText="Delete"
         cancelText="Cancel"
       />
-      <SwiperAlertDialog
+      <SwiperDialog
         open={isDeleteExerciseConfirmOpen}
         onOpenChange={setDeleteExerciseConfirmOpen}
-        onConfirm={handleConfirmDeleteExercise}
-        title="Are you sure you want to delete this exercise?"
-        description="This action cannot be undone and the exercise will be removed from this program."
-        confirmText="Delete"
+        onConfirm={() => setDeleteExerciseConfirmOpen(false)}
+        onCancel={handleConfirmDeleteExercise}
+        title="Delete Exercise"
+        confirmText="Cancel"
+        cancelText="Delete"
+        confirmVariant="outline"
+        cancelVariant="destructive"
+        contentClassName="w-[1340px] h-[866px] inline-flex flex-col justify-center items-center"
+        headerClassName="w-full flex-1 max-w-[500px] border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5"
+        titleClassName="self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
+        footerClassName="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
       />
 
     </>

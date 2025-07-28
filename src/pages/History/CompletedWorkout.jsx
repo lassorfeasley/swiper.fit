@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentUser } from "@/contexts/AccountContext";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/molecules/text-input";
@@ -589,14 +590,16 @@ const CompletedWorkout = () => {
           onCopy={handleCopyLink}
           onTogglePublic={handleTogglePublic}
         />
-        <SwiperAlertDialog
-          isOpen={isDeleteConfirmOpen}
+        <SwiperDialog
+          open={isDeleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}
           onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteConfirmOpen(false)}
           title="Delete workout?"
-          description="This workout and its sets will be deleted permanently."
           confirmText="Delete"
           cancelText="Cancel"
+          confirmVariant="destructive"
+          cancelVariant="outline"
         />
         <SwiperForm
           open={isEditWorkoutOpen}

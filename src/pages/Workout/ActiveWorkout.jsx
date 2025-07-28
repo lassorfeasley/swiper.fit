@@ -344,14 +344,14 @@ const ActiveWorkoutContent = () => {
       <SwiperDialog
         open={isEndConfirmOpen}
         onOpenChange={setEndConfirmOpen}
-        onConfirm={handleConfirmEnd}
-        onCancel={() => setEndConfirmOpen(false)}
+        onConfirm={() => setEndConfirmOpen(false)}
+        onCancel={handleConfirmEnd}
         title="End workout?"
-        confirmText="End workout"
-        cancelText="Keep working out"
+        confirmText="Keep working out"
+        cancelText="End workout"
         confirmVariant="outline"
         cancelVariant="destructive"
-        contentClassName="w-[1340px] h-[866px] px-5 bg-white/80 backdrop-blur-[2px] inline-flex flex-col justify-center items-center"
+        contentClassName="w-[1340px] h-[866px] px-5 inline-flex flex-col justify-center items-center"
         headerClassName="w-full flex-1 max-w-[500px] border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5"
         titleClassName="self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
         footerClassName="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"

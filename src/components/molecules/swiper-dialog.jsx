@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-  AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-} from "@/components/atoms/alert-dialog";
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+} from "@/components/atoms/dialog";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { SwiperButton } from './swiper-button';
@@ -44,20 +45,22 @@ const SwiperDialog = ({
   };
 
   return (
-    <AlertDialog open={controlledOpen} onOpenChange={onOpenChange}>
-      <AlertDialogPortal>
-        <div 
-          className={`fixed left-[50%] top-[50%] z-[100] translate-x-[-50%] translate-y-[-50%] w-full h-full px-5 bg-white/80 backdrop-blur-[2px] inline-flex flex-col justify-center items-center ${contentClassName || ''}`}
-          onClick={handleCancel}
+    <Dialog open={controlledOpen} onOpenChange={onOpenChange}>
+      <DialogPortal>
+        <DialogOverlay className="bg-white/65 backdrop-blur-[.1px] z-[9999]" />
+        <DialogContent 
+          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] ${contentClassName || ''}`}
         >
           <DeckWrapper 
-            className="w-full flex-1 flex flex-col justify-center items-center gap-2.5" 
-            maxWidth={500} 
+            className="w-full h-screen flex flex-col justify-center items-center gap-2.5" 
+            maxWidth={400} 
             minWidth={325}
+            extendToBottom={true}
+            style={{ paddingTop: 0, paddingBottom: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
             <div 
-              className="w-full max-w-[500px] bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center"
+              className="w-full bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center"
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
@@ -102,9 +105,9 @@ const SwiperDialog = ({
               </div>
             </div>
           </DeckWrapper>
-        </div>
-      </AlertDialogPortal>
-    </AlertDialog>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
   );
 };
 

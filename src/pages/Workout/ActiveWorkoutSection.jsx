@@ -126,9 +126,9 @@ const ActiveWorkoutSection = ({
         console.error("Error fetching saved sets:", savedError);
       }
 
-      // Group template sets by exercise_id
-      const templateSetsMap = {};
-      (templateSets || []).forEach((re) => {
+              // Group template sets by exercise_id
+        const templateSetsMap = {};
+        (templateSets || []).forEach((re) => {
         templateSetsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
           id: null,
           routine_set_id: rs.id,
@@ -141,28 +141,47 @@ const ActiveWorkoutSection = ({
         }));
       });
 
-      // Group saved sets by exercise_id
-      const savedSetsMap = {};
-      (savedSets || []).forEach((set) => {
-        if (!savedSetsMap[set.exercise_id]) {
-          savedSetsMap[set.exercise_id] = [];
-        }
-        savedSetsMap[set.exercise_id].push(set);
-      });
+              // Group saved sets by exercise_id (excluding hidden sets)
+        const savedSetsMap = {};
+        console.log("All saved sets:", savedSets);
+        (savedSets || []).forEach((set) => {
+          // Skip hidden sets
+          if (set.status === "hidden") {
+            console.log("Found hidden set:", set);
+            return;
+          }
+          
+          if (!savedSetsMap[set.exercise_id]) {
+            savedSetsMap[set.exercise_id] = [];
+          }
+          savedSetsMap[set.exercise_id].push(set);
+        });
+        console.log("Filtered saved sets map:", savedSetsMap);
 
-      // Build exercise objects with merged set configs
-      const processedExercises = filteredExercises.map((we) => {
-        const templateConfigs = templateSetsMap[we.exercise_id] || [];
-        const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
+              // Build exercise objects with merged set configs
+        const processedExercises = filteredExercises.map((we) => {
+          const templateConfigs = templateSetsMap[we.exercise_id] || [];
+          const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
 
         // Merge template sets with saved sets
         const mergedSetConfigs = [];
 
         // Start with template sets in their original order
+        console.log("Template configs for this exercise:", templateConfigs);
+        console.log("Saved sets for this exercise:", savedSetsForExercise);
         templateConfigs.forEach((template) => {
           const savedSet = savedSetsForExercise.find(
             (saved) => saved.routine_set_id === template.routine_set_id
           );
+
+          console.log(`Checking template ${template.routine_set_id}:`, template);
+          console.log(`Found saved set:`, savedSet);
+
+          // Skip this template set if there's a hidden saved set for it
+          if (savedSet && savedSet.status === "hidden") {
+            console.log(`Skipping template ${template.routine_set_id} due to hidden set`);
+            return;
+          }
 
           if (savedSet) {
             mergedSetConfigs.push({
@@ -1220,7 +1239,11 @@ const ActiveWorkoutSection = ({
 
   // Handle set delete
   const handleSetDelete = async () => {
-    if (!editingSet?.setConfig?.id) {
+    // Check if this is a saved set (has an id) or a template set (has routine_set_id)
+    const isSavedSet = editingSet?.setConfig?.id;
+    const isTemplateSet = editingSet?.setConfig?.routine_set_id;
+    
+    if (!isSavedSet && !isTemplateSet) {
       toast.error("Cannot delete unsaved set");
       setEditSheetOpen(false);
       return;
@@ -1228,7 +1251,7 @@ const ActiveWorkoutSection = ({
 
     try {
       // If setUpdateType is "future" and we have a routine_set_id, delete from routine template
-      if (setUpdateType === "future" && editingSet.setConfig.routine_set_id) {
+      if (setUpdateType === "future" && isTemplateSet) {
         const { error: routineSetError } = await supabase
           .from("routine_sets")
           .delete()
@@ -1242,12 +1265,40 @@ const ActiveWorkoutSection = ({
         }
       }
 
-      const { error } = await supabase
-        .from("sets")
-        .delete()
-        .eq("id", editingSet.setConfig.id);
+      // For template sets in "today" mode, create a hidden set to override the template
+      if (setUpdateType === "today" && isTemplateSet) {
+        const hiddenSetData = {
+          workout_id: activeWorkout.id,
+          exercise_id: editingSet.exerciseId,
+          routine_set_id: editingSet.setConfig.routine_set_id,
+          reps: editingSet.setConfig.reps,
+          weight: editingSet.setConfig.weight,
+          weight_unit: editingSet.setConfig.unit,
+          set_type: editingSet.setConfig.set_type,
+          set_variant: editingSet.setConfig.set_variant,
+          timed_set_duration: editingSet.setConfig.timed_set_duration,
+          status: "hidden", // Mark as hidden to exclude from display
+        };
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from("sets")
+          .insert(hiddenSetData);
+
+        if (error) {
+          console.error("Error creating hidden set:", error);
+          throw error;
+        }
+      }
+
+      // Delete from sets table if it's a saved set
+      if (isSavedSet) {
+        const { error } = await supabase
+          .from("sets")
+          .delete()
+          .eq("id", editingSet.setConfig.id);
+
+        if (error) throw error;
+      }
 
       toast.success("Set deleted successfully");
       setEditSheetOpen(false);
