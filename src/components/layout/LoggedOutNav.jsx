@@ -14,8 +14,6 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Login button clicked (mobile)');
-                console.log('Current location before navigation:', window.location.href);
                 // Force navigation with window.location.href
                 window.location.href = '/login';
               }}
@@ -28,8 +26,6 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Create account button clicked (mobile)');
-                console.log('Current location before navigation:', window.location.href);
                 // Force navigation with window.location.href
                 window.location.href = '/create-account';
               }}
@@ -81,8 +77,6 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Login button clicked (desktop)');
-                  console.log('Current location before navigation:', window.location.href);
                   // Force navigation with window.location.href
                   window.location.href = '/login';
                 }}
@@ -95,8 +89,6 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Create account button clicked (desktop)');
-                console.log('Current location before navigation:', window.location.href);
                 // Force navigation with window.location.href
                 window.location.href = '/create-account';
               }}

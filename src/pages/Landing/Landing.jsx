@@ -8,22 +8,18 @@ import { MoveUpRight } from "lucide-react";
 import LoggedOutNav from "@/components/layout/LoggedOutNav";
 
 export default function Landing() {
-  console.log('[Landing] Component rendered');
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   // Redirect authenticated users based on workout state
   useEffect(() => {
-    console.log('Landing: Auth state check:', { session: !!session, isWorkoutActive, workoutLoading });
     if (session && !workoutLoading) {
       if (isWorkoutActive) {
         // If there's an active workout, redirect to it immediately
-        console.log('Landing: Redirecting to active workout');
         navigate("/workout/active", { replace: true });
       } else {
         // Otherwise, redirect to routines page
-        console.log('Landing: Redirecting to routines');
         navigate("/routines", { replace: true });
       }
     }
