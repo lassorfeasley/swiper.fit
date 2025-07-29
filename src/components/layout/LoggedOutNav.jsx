@@ -15,7 +15,17 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Login button clicked (mobile)');
-                navigate('/login');
+                console.log('Current location before navigation:', window.location.href);
+                // Try direct navigation as fallback
+                try {
+                  navigate('/login');
+                } catch (error) {
+                  console.log('React Router navigation failed, trying direct navigation');
+                  window.location.href = '/login';
+                }
+                setTimeout(() => {
+                  console.log('Location after 100ms:', window.location.href);
+                }, 100);
               }}
               className="flex-1 h-11 px-5 py-2.5 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
@@ -27,7 +37,17 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Create account button clicked (mobile)');
-                navigate('/create-account');
+                console.log('Current location before navigation:', window.location.href);
+                // Try direct navigation as fallback
+                try {
+                  navigate('/create-account');
+                } catch (error) {
+                  console.log('React Router navigation failed, trying direct navigation');
+                  window.location.href = '/create-account';
+                }
+                setTimeout(() => {
+                  console.log('Location after 100ms:', window.location.href);
+                }, 100);
               }}
               className="flex-1 h-11 max-w-96 px-4 py-2 bg-green-600 flex justify-center items-center gap-2 hover:bg-green-700 transition-colors cursor-pointer"
             >
@@ -78,7 +98,17 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Login button clicked (desktop)');
-                  navigate('/login');
+                  console.log('Current location before navigation:', window.location.href);
+                  // Try direct navigation as fallback
+                  try {
+                    navigate('/login');
+                  } catch (error) {
+                    console.log('React Router navigation failed, trying direct navigation');
+                    window.location.href = '/login';
+                  }
+                  setTimeout(() => {
+                    console.log('Location after 100ms:', window.location.href);
+                  }, 100);
                 }}
                 className="h-11 px-5 py-2.5 border-l border-neutral-neutral-300 flex justify-center items-center gap-2.5 hover:bg-neutral-100 transition-colors cursor-pointer flex-shrink-0"
               >
@@ -90,7 +120,17 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Create account button clicked (desktop)');
-                navigate('/create-account');
+                console.log('Current location before navigation:', window.location.href);
+                // Try direct navigation as fallback
+                try {
+                  navigate('/create-account');
+                } catch (error) {
+                  console.log('React Router navigation failed, trying direct navigation');
+                  window.location.href = '/create-account';
+                }
+                setTimeout(() => {
+                  console.log('Location after 100ms:', window.location.href);
+                }, 100);
               }}
               className="h-11 w-48 max-w-96 px-4 py-2 bg-green-600 flex justify-center items-center gap-2.5 hover:bg-green-700 transition-colors cursor-pointer flex-shrink-0"
             >
