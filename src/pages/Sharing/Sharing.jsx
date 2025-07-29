@@ -14,6 +14,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapperLabel";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
@@ -27,6 +28,15 @@ export default function Sharing() {
   // Form
   const [email, setEmail] = useState("");
   const [showAddPerson, setShowAddPerson] = useState(false);
+
+  // Form state for dialog
+  const [showAddPersonDialog, setShowAddPersonDialog] = useState(false);
+  const [dialogEmail, setDialogEmail] = useState("");
+  const [dialogPermissions, setDialogPermissions] = useState({
+    can_create_routines: true,
+    can_start_workouts: true,
+    can_review_history: true
+  });
 
   // Helper function to format user display name
   const formatUserDisplay = (profile) => {
@@ -306,6 +316,120 @@ export default function Sharing() {
     }
   };
 
+  const handleDialogSubmit = async () => {
+    if (!dialogEmail.trim()) return;
+
+    try {
+      console.log("Dialog form submitted with email:", dialogEmail);
+      
+      // Look up the user by email
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", dialogEmail.trim().toLowerCase())
+        .limit(1);
+
+      if (profileError) {
+        console.error("Profile lookup error:", profileError);
+        throw profileError;
+      }
+
+      console.log("Profile lookup result:", profiles);
+
+      if (!profiles?.length) {
+        console.log("No user found with email:", dialogEmail);
+        alert("No user found with that email address.");
+        return;
+      }
+
+      const targetUserId = profiles[0].id;
+      console.log("Target user ID:", targetUserId);
+
+      // Check if user is trying to share with themselves
+      if (targetUserId === user.id) {
+        console.log("User trying to share with themselves");
+        alert("You cannot share access with yourself.");
+        return;
+      }
+
+      // Check if already shared (I am the owner, they are the delegate) - check ALL shares, not just non-revoked ones
+      const { data: existingShares } = await supabase
+        .from("account_shares")
+        .select("id, revoked_at")
+        .eq("owner_user_id", user.id)
+        .eq("delegate_user_id", targetUserId)
+        .limit(1);
+
+      console.log("Existing shares check:", existingShares);
+
+      if (existingShares?.length > 0) {
+        const existingShare = existingShares[0];
+        if (existingShare.revoked_at) {
+          console.log("Found revoked share, reactivating it");
+          // Reactivate the revoked share instead of creating a new one
+          await updateSharePermissionsMutation.mutateAsync({
+            shareId: existingShare.id,
+            permissions: { 
+              revoked_at: null,
+              ...dialogPermissions
+            }
+          });
+          console.log("Revoked share reactivated successfully");
+        } else {
+          console.log("Active share already exists");
+          alert("Access already shared with this user.");
+          return;
+        }
+      } else {
+        console.log("Creating share with data:", {
+          owner_user_id: user.id,
+          delegate_user_id: targetUserId,
+          delegate_email: dialogEmail.trim().toLowerCase(),
+          ...dialogPermissions
+        });
+
+        // Create the share with the selected permissions
+        await createShareMutation.mutateAsync({
+          owner_user_id: user.id,
+          delegate_user_id: targetUserId,
+          delegate_email: dialogEmail.trim().toLowerCase(),
+          ...dialogPermissions
+        });
+        
+        console.log("Share created successfully");
+      }
+
+      // Reset form and close dialog
+      setDialogEmail("");
+      setDialogPermissions({
+        can_create_routines: true,
+        can_start_workouts: true,
+        can_review_history: true
+      });
+      setShowAddPersonDialog(false);
+    } catch (error) {
+      console.error("Error sharing access:", error);
+      alert("Failed to share access. Please try again.");
+    }
+  };
+
+  const handleDialogCancel = () => {
+    setDialogEmail("");
+    setDialogPermissions({
+      can_create_routines: true,
+      can_start_workouts: true,
+      can_review_history: true
+    });
+    setShowAddPersonDialog(false);
+  };
+
+  const handleDialogPermissionToggle = (permission, value) => {
+    setDialogPermissions(prev => ({
+      ...prev,
+      [permission]: value
+    }));
+  };
+
   const handlePermissionToggle = (shareId, permission, value) => {
     updateSharePermissionsMutation.mutate({
       shareId,
@@ -374,88 +498,102 @@ export default function Sharing() {
                   {formatUserDisplay(share.profile)}'s permissions
                 </div>
               </div>
-              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5">
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Create routines</div>
-                <div 
-                  data-on-off={share.can_create_routines ? "true" : "false"} 
-                  data-property-1="of" 
-                  className="w-14 h-8 p-1 bg-neutral-neutral-100 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-start items-center gap-1 cursor-pointer"
-                  onClick={() => handlePermissionToggle(share.id, 'can_create_routines', !share.can_create_routines)}
-                >
-                  <div className={`w-6 self-stretch ${share.can_create_routines ? 'bg-neutral-neutral-700' : 'bg-neutral-neutral-300'}`} />
-                </div>
+              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
+                <SwiperFormSwitch
+                  label="Create routines"
+                  checked={share.can_create_routines}
+                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_create_routines', checked)}
+                />
               </div>
-              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5">
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Start workouts</div>
-                <div 
-                  data-on-off={share.can_start_workouts ? "true" : "false"} 
-                  data-property-1="of" 
-                  className="w-14 h-8 p-1 bg-neutral-neutral-100 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-start items-center gap-1 cursor-pointer"
-                  onClick={() => handlePermissionToggle(share.id, 'can_start_workouts', !share.can_start_workouts)}
-                >
-                  <div className={`w-6 self-stretch ${share.can_start_workouts ? 'bg-neutral-neutral-700' : 'bg-neutral-neutral-300'}`} />
-                </div>
+              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
+                <SwiperFormSwitch
+                  label="Start workouts"
+                  checked={share.can_start_workouts}
+                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_start_workouts', checked)}
+                />
               </div>
-              <div className="self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5">
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
-                <div 
-                  data-on-off={share.can_review_history ? "true" : "false"} 
-                  data-property-1="of" 
-                  className="w-14 h-8 p-1 bg-neutral-neutral-100 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-start items-center gap-1 cursor-pointer"
-                  onClick={() => handlePermissionToggle(share.id, 'can_review_history', !share.can_review_history)}
-                >
-                  <div className={`w-6 self-stretch ${share.can_review_history ? 'bg-neutral-neutral-700' : 'bg-neutral-neutral-300'}`} />
-                </div>
+              <div className="self-stretch h-[52px] px-3">
+                <SwiperFormSwitch
+                  label="Review history"
+                  checked={share.can_review_history}
+                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_review_history', checked)}
+                />
               </div>
             </div>
           ))}
           
           {/* Add new person section */}
-          <div className="w-full max-w-[500px] pt-5 pb-5 inline-flex justify-between items-center">
-            <div className="flex-1 pl-3 bg-neutral-neutral-100 border-t border-b border-neutral-neutral-300 flex justify-between items-center">
-              <div className="justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">share with new person</div>
+          <div className="w-full max-w-[500px] inline-flex flex-col justify-start items-start">
+            <div className="w-full pt-5 pb-20">
               <div 
-                data-property-1="left-border" 
-                className="p-2.5 border-l border-neutral-neutral-300 flex justify-start items-center gap-2.5 cursor-pointer"
-                onClick={() => setShowAddPerson(!showAddPerson)}
+                className="w-full pl-3 bg-neutral-100 border-t border-b border-neutral-neutral-300 flex justify-between items-center cursor-pointer"
+                onClick={() => setShowAddPersonDialog(true)}
               >
-                <div className="w-6 h-6 relative overflow-hidden">
-                  <Plus className="w-3.5 h-3.5" />
+                <div className="justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">share with new person</div>
+                <div 
+                  data-property-1="left-border" 
+                  className="p-2.5 border-l border-neutral-neutral-300 flex justify-start items-center gap-2.5"
+                >
+                  <Plus className="w-6 h-6 text-neutral-neutral-700" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Add person form */}
-          {showAddPerson && (
-            <div className="w-full max-w-[500px] border-b border-neutral-neutral-300 flex flex-col justify-start items-start">
-              <div className="self-stretch px-3 py-4 bg-neutral-Neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
-                <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Add new person</div>
-              </div>
-              <div className="self-stretch p-3 border-b-[0.50px] border-neutral-neutral-300">
-                <form onSubmit={handleSubmit} className="w-full">
-                  <div className="self-stretch flex flex-col justify-start items-start gap-3">
-                    <div className="self-stretch inline-flex justify-start items-start gap-3 w-full">
-                      <div className="flex-grow">
-                        <TextInput
-                          id="sharing-email-input"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          customPlaceholder="Enter email address"
-                          onKeyDown={handleKeyDown}
-                          icon={<UserRoundPlus />}
-                        />
-                      </div>
-                      <Button type="submit" variant="primary" size="icon" disabled={createShareMutation.isPending}>
-                        <UserRoundPlus className="text-white" />
-                      </Button>
-                    </div>
+          {/* Add person dialog */}
+          <SwiperDialog
+            open={showAddPersonDialog}
+            onOpenChange={setShowAddPersonDialog}
+            title="Add a manager"
+            confirmText="Share Access"
+            cancelText="Cancel"
+            confirmVariant="outline"
+            cancelVariant="destructive"
+            onConfirm={handleDialogSubmit}
+            onCancel={handleDialogCancel}
+          >
+            <div className="self-stretch p-3 border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-2.5">
+              <div data-focused="true" data-is-optional="false" data-property-1="default" data-show-field-name="true" data-show-icon="false" data-show-text-labels="true" className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                <div className="self-stretch inline-flex justify-start items-start gap-2">
+                  <div className="flex-1 flex justify-between items-start">
+                    <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Email</div>
                   </div>
-                </form>
+                </div>
+                <div className="self-stretch h-11 pl-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
+                  <input
+                    type="email"
+                    value={dialogEmail}
+                    onChange={(e) => setDialogEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight bg-transparent border-none outline-none"
+                  />
+                </div>
               </div>
             </div>
-          )}
+            <div className="self-stretch border-b border-neutral-neutral-300 flex flex-col justify-start items-start">
+                             <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
+                 <SwiperFormSwitch
+                   label="Create routines"
+                   checked={dialogPermissions.can_create_routines}
+                   onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
+                 />
+               </div>
+              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
+                <SwiperFormSwitch
+                  label="Start workouts"
+                  checked={dialogPermissions.can_start_workouts}
+                  onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
+                />
+              </div>
+              <div className="self-stretch h-[52px] px-3">
+                <SwiperFormSwitch
+                  label="Review history"
+                  checked={dialogPermissions.can_review_history}
+                  onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
+                />
+              </div>
+            </div>
+          </SwiperDialog>
 
           {ownerSharesQuery.isSuccess && (!ownerSharesQuery.data || ownerSharesQuery.data.length === 0) && !showAddPerson && (
             <div className="text-neutral-neutral-400 text-sm font-medium">

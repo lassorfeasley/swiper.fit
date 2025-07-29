@@ -1,16 +1,13 @@
 import React from "react";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 
 /**
  * A labeled switch component styled for use inside Swiper forms.
  *
- * Design specs (off state):
- * - Container: w-14 h-8 p-1 bg-slate-200 rounded-sm flex justify-start items-center
- * - Thumb: w-6 h-full rounded-sm bg-stone-700
- *
- * On checked, the container justifies content to the end and the thumb turns green.
+ * Design specs:
+ * - OFF: Container with justify-start, grey thumb (bg-neutral-700)
+ * - ON: Container with justify-end, green thumb (bg-green-500)
  */
 const SwiperFormSwitch = ({
   label,
@@ -24,7 +21,7 @@ const SwiperFormSwitch = ({
   return (
     <div
       className={cn(
-        "w-full h-12 px-3 py-2.5 rounded-sm border border-neutral-300 bg-white inline-flex justify-end items-center gap-2.5",
+        "w-full h-12 bg-white inline-flex justify-end items-center gap-2.5",
         className
       )}
     >
@@ -36,21 +33,21 @@ const SwiperFormSwitch = ({
           {label}
         </label>
       )}
-      <SwitchPrimitive.Root
+      <div
         id={switchId}
-        checked={checked}
-        onCheckedChange={onCheckedChange}
         className={cn(
-          "relative w-14 h-8 p-1 bg-slate-200 rounded-sm flex items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600"
+          "w-14 h-8 p-1 bg-neutral-100 border border-neutral-300 inline-flex items-center gap-1 cursor-pointer",
+          checked ? "justify-end" : "justify-start"
         )}
+        onClick={() => onCheckedChange?.(!checked)}
       >
-        <SwitchPrimitive.Thumb
+        <div 
           className={cn(
-            "pointer-events-none w-6 h-full rounded-sm shadow-sm ring-0 transition-transform duration-200 ease-in-out",
-            checked ? "translate-x-6 bg-green-500" : "translate-x-0 bg-stone-700"
-          )}
+            "w-6 self-stretch",
+            checked ? "bg-green-500" : "bg-neutral-700"
+          )} 
         />
-      </SwitchPrimitive.Root>
+      </div>
     </div>
   );
 };
