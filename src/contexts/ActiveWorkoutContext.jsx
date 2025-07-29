@@ -34,10 +34,15 @@ export function ActiveWorkoutProvider({ children }) {
     setIsPaused(false);
     
     // Add timeout to prevent blocking navigation
-    const timeoutId = setTimeout(() => {
-      console.log('[ActiveWorkout] Timeout reached, setting loading to false');
-      setLoading(false);
-    }, 5000); // 5 second timeout
+    let timeoutId;
+    try {
+      timeoutId = setTimeout(() => {
+        console.log('[ActiveWorkout] Timeout reached, setting loading to false');
+        setLoading(false);
+      }, 5000); // 5 second timeout
+    } catch (error) {
+      console.error('[ActiveWorkout] Error setting timeout:', error);
+    }
     
     const checkForActiveWorkout = async () => {
       if (!user) {
@@ -49,7 +54,13 @@ export function ActiveWorkoutProvider({ children }) {
         setIsPaused(false);
         
         // Clear timeout since we completed
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          try {
+            clearTimeout(timeoutId);
+          } catch (error) {
+            console.error('[ActiveWorkout] Error clearing timeout:', error);
+          }
+        }
         return;
       }
       
@@ -72,7 +83,13 @@ export function ActiveWorkoutProvider({ children }) {
         setIsPaused(false);
         
         // Clear timeout since we completed (with error)
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          try {
+            clearTimeout(timeoutId);
+          } catch (error) {
+            console.error('[ActiveWorkout] Error clearing timeout:', error);
+          }
+        }
           return;
         }
         if (!workout) {
@@ -84,7 +101,13 @@ export function ActiveWorkoutProvider({ children }) {
         setIsPaused(false);
         
         // Clear timeout since we successfully completed
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          try {
+            clearTimeout(timeoutId);
+          } catch (error) {
+            console.error('[ActiveWorkout] Error clearing timeout:', error);
+          }
+        }
           return;
         }
 
@@ -134,7 +157,13 @@ export function ActiveWorkoutProvider({ children }) {
         setIsWorkoutActive(true);
         
         // Clear timeout since we successfully loaded
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          try {
+            clearTimeout(timeoutId);
+          } catch (error) {
+            console.error('[ActiveWorkout] Error clearing timeout:', error);
+          }
+        }
         
         console.log('[ActiveWorkout] Active workout found and set:', workoutData);
       } catch (err) {
@@ -147,7 +176,13 @@ export function ActiveWorkoutProvider({ children }) {
     
     // Cleanup function
     return () => {
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        try {
+          clearTimeout(timeoutId);
+        } catch (error) {
+          console.error('[ActiveWorkout] Error clearing timeout in cleanup:', error);
+        }
+      }
     };
   }, [user]);
 
