@@ -74,6 +74,7 @@ function AppContent() {
   
   // Check if current path is allowed
   // When any workout is active (delegate or regular user), be very restrictive
+  // BUT always allow login and create-account pages
   const isAllowedPath = isWorkoutActive 
     ? ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].some(allowed => {
         if (allowed === '/') {
@@ -81,8 +82,16 @@ function AppContent() {
         }
         // More precise path matching - exact match or starts with allowed path followed by /
         return location.pathname === allowed || location.pathname.startsWith(allowed + '/');
-      })
+      }) || ['/login', '/create-account'].includes(location.pathname)
     : true; // If no workout is active, allow all paths
+  
+  console.log('[App] Path check:', {
+    isWorkoutActive,
+    locationPathname: location.pathname,
+    isAllowedPath,
+    shouldRedirect,
+    isLoginOrCreateAccount: ['/login', '/create-account'].includes(location.pathname)
+  });
   
   // Guard: If workout is active and we're on a non-allowed page, immediately redirect
   // Don't redirect while workout context is still loading to avoid premature redirects
@@ -153,10 +162,14 @@ function AppContent() {
   }
 
   // Don't render any content if we should be redirecting - this prevents the page from showing briefly
-  if (shouldRedirect) {
+  // BUT allow login and create-account pages even when there's an active workout
+  if (shouldRedirect && !['/login', '/create-account'].includes(location.pathname)) {
+    console.log('[App] Should redirect is true, returning null');
     return null;
   }
 
+  console.log('[App] Rendering with pathname:', location.pathname, 'shouldRedirect:', shouldRedirect);
+  
   return (
     <div className="min-h-screen relative overflow-auto">
       {/* Main Content */}
