@@ -198,7 +198,7 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
 /* === Fix for mobile sticky positioning === */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific fixes */
-  .sticky {
+  .sticky:not([data-no-transform]) {
     position: -webkit-sticky;
     position: sticky;
     /* Improve mobile sticky performance */
@@ -210,7 +210,7 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
 
 /* Ensure sticky elements work properly on mobile */
 @media (max-width: 768px) {
-  .sticky {
+  .sticky:not([data-no-transform]) {
     /* Force hardware acceleration on mobile */
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
@@ -225,7 +225,7 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
   }
   
   /* Improve mobile sticky behavior */
-  .sticky {
+  .sticky:not([data-no-transform]) {
     /* Ensure sticky elements have proper containing block */
     contain: layout style paint;
   }
@@ -235,6 +235,47 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
   scroll-snap-align: var(--card-snap-align, start);
   /* Offset programmatic scroll to 25% down viewport */
   scroll-margin-top: var(--card-scroll-margin-top, 25vh);
+}
+
+/* === Navigation element fixes === */
+/* Ensure navigation buttons work properly in Safari */
+nav button,
+.nav button,
+[role="navigation"] button,
+.logged-out-nav button,
+.logged-out-nav button * {
+  /* Prevent hardware acceleration from breaking click events */
+  -webkit-transform: none !important;
+  transform: none !important;
+  will-change: auto !important;
+  -webkit-backface-visibility: visible !important;
+  backface-visibility: visible !important;
+  /* Ensure proper touch handling */
+  touch-action: manipulation;
+}
+
+/* Additional Safari-specific fixes for navigation */
+@supports (-webkit-touch-callout: none) {
+  .logged-out-nav {
+    /* Prevent Safari from applying hardware acceleration to navigation */
+    -webkit-transform: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+  
+  /* Ensure buttons work properly in Safari */
+  .logged-out-nav button {
+    /* Force proper touch handling */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Ensure click events work */
+    pointer-events: auto !important;
+    /* Prevent any transform interference */
+    -webkit-transform: none !important;
+    transform: none !important;
+  }
 }
 
 /* === Scroll snap utility classes === */
