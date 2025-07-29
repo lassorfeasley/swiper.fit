@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 /**
  * A labeled switch component styled for use inside Swiper forms.
@@ -17,6 +18,32 @@ const SwiperFormSwitch = ({
   id,
 }) => {
   const switchId = id || `swiper-form-switch-${label?.toLowerCase().replace(/\s+/g, "-") || "input"}`;
+  const containerRef = useRef(null);
+  const thumbRef = useRef(null);
+  const [animationDistance, setAnimationDistance] = useState(0);
+  const [internalChecked, setInternalChecked] = useState(checked);
+
+  // Sync internal state with external checked prop
+  useEffect(() => {
+    setInternalChecked(checked);
+  }, [checked]);
+
+  useEffect(() => {
+    if (containerRef.current && thumbRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const thumbWidth = thumbRef.current.offsetWidth;
+      const padding = 8; // p-1 = 4px on each side
+      const availableSpace = containerWidth - padding;
+      const distance = availableSpace - thumbWidth - 2; // Subtract 2px buffer to ensure it stays within bounds
+      setAnimationDistance(Math.max(0, distance)); // Ensure distance is never negative
+    }
+  }, []);
+
+  const handleToggle = () => {
+    const newState = !internalChecked;
+    setInternalChecked(newState);
+    onCheckedChange?.(newState);
+  };
 
   return (
     <div
@@ -34,18 +61,22 @@ const SwiperFormSwitch = ({
         </label>
       )}
       <div
+        ref={containerRef}
         id={switchId}
-        className={cn(
-          "w-14 h-8 p-1 bg-neutral-100 border border-neutral-300 inline-flex items-center gap-1 cursor-pointer",
-          checked ? "justify-end" : "justify-start"
-        )}
-        onClick={() => onCheckedChange?.(!checked)}
+        className="w-14 h-8 p-1 bg-neutral-100 border border-neutral-300 inline-flex items-center gap-1 cursor-pointer relative overflow-hidden"
+        onClick={handleToggle}
       >
-        <div 
-          className={cn(
-            "w-6 self-stretch",
-            checked ? "bg-green-500" : "bg-neutral-700"
-          )} 
+        <motion.div 
+          ref={thumbRef}
+          className="w-6 self-stretch"
+          animate={{
+            backgroundColor: internalChecked ? "#22c55e" : "#374151", // green-500 : neutral-700
+            x: internalChecked ? animationDistance : 0
+          }}
+          transition={{
+            duration: 0.2,
+            ease: "easeInOut"
+          }}
         />
       </div>
     </div>
