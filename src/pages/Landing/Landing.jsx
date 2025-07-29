@@ -8,6 +8,7 @@ import { MoveUpRight } from "lucide-react";
 import LoggedOutNav from "@/components/layout/LoggedOutNav";
 
 export default function Landing() {
+  console.log('[Landing] Component rendered');
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();

@@ -180,7 +180,8 @@ body:has(.edit-exercise-drawer[data-state="open"]) main {
 }
 
 .add-exercise-drawer {
-  transition: opacity 0.3s ease-in-out;
+  /* Disable transition for performance */
+  /* transition: opacity 0.3s ease-in-out; */
 }
 
 /* === Scroll snap for ActiveWorkout === */
@@ -197,25 +198,25 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
 
 /* === Fix for mobile sticky positioning === */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari specific fixes */
+  /* iOS Safari specific fixes - DISABLED for performance */
   .sticky:not([data-no-transform]) {
     position: -webkit-sticky;
     position: sticky;
-    /* Improve mobile sticky performance */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: transform;
+    /* Disable hardware acceleration for performance */
+    /* -webkit-transform: translateZ(0); */
+    /* transform: translateZ(0); */
+    /* will-change: transform; */
   }
 }
 
 /* Ensure sticky elements work properly on mobile */
 @media (max-width: 768px) {
   .sticky:not([data-no-transform]) {
-    /* Force hardware acceleration on mobile */
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+    /* Disable hardware acceleration for performance */
+    /* -webkit-transform: translate3d(0, 0, 0); */
+    /* transform: translate3d(0, 0, 0); */
+    /* -webkit-backface-visibility: hidden; */
+    /* backface-visibility: hidden; */
   }
   
   /* Fix for mobile browsers where sticky doesn't work in certain containers */
@@ -252,6 +253,9 @@ nav button,
   backface-visibility: visible !important;
   /* Ensure proper touch handling */
   touch-action: manipulation;
+  /* Disable all transitions for performance */
+  transition: none !important;
+  animation: none !important;
 }
 
 /* Additional Safari-specific fixes for navigation */
