@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Context to expose account-switching helpers
 const AccountContext = createContext(null);
 
 export const AccountProvider = ({ children }) => {
   const { user: authUser } = useAuth(); // signed-in user
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [actingUser, setActingUser] = useState(null); // delegator we are impersonating
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,9 @@ export const AccountProvider = ({ children }) => {
   const returnToSelf = () => {
     setActingUser(null);
     localStorage.removeItem("actingUserId");
+    if (location.pathname.includes("/workout/")) {
+      navigate("/sharing");
+    }
   };
 
   // The user the app should act as for queries

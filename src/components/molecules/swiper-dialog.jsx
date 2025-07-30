@@ -64,7 +64,7 @@ const SwiperDialog = ({
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
-                <div className="self-stretch h-12 px-3 bg-white border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
+                <div className="self-stretch h-12 px-3 bg-neutral-50 border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
                   <div className="self-stretch inline-flex justify-center items-center gap-2.5">
                     <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
                   </div>
@@ -75,33 +75,41 @@ const SwiperDialog = ({
                   <div className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">{description}</div>
                 </div>
               )}
-              {children}
-              <div 
-                className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <SwiperButton 
-                  variant={confirmVariant}
-                  onClick={(e) => {
-                    console.log('Confirm button clicked!');
-                    e.stopPropagation();
-                    handleConfirm();
-                  }}
-                  className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
-                >
-                  {confirmText}
-                </SwiperButton>
-                <SwiperButton 
-                  variant={cancelVariant}
-                  onClick={(e) => {
-                    console.log('Cancel button clicked!');
-                    e.stopPropagation();
-                    handleCancel();
-                  }}
-                  className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
-                >
-                  {cancelText}
-                </SwiperButton>
+              <div className="self-stretch max-h-[500px] overflow-y-auto">
+                {children}
+                {(confirmText || cancelText) && (
+                  <div 
+                    className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {confirmText && (
+                      <SwiperButton 
+                        variant={confirmVariant}
+                        onClick={(e) => {
+                          console.log('Confirm button clicked!');
+                          e.stopPropagation();
+                          handleConfirm();
+                        }}
+                        className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
+                      >
+                        {confirmText}
+                      </SwiperButton>
+                    )}
+                    {cancelText && (
+                      <SwiperButton 
+                        variant={cancelVariant}
+                        onClick={(e) => {
+                          console.log('Cancel button clicked!');
+                          e.stopPropagation();
+                          handleCancel();
+                        }}
+                        className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
+                      >
+                        {cancelText}
+                      </SwiperButton>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </DeckWrapper>
