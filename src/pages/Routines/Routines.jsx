@@ -4,7 +4,7 @@ import { supabase } from "@/supabaseClient";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
-import { useCurrentUser } from "@/contexts/AccountContext";
+import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
 import { FormHeader, SheetTitle, SheetFooter } from "@/components/atoms/sheet";
 import { Input } from "@/components/atoms/input";
 import { Button } from "@/components/atoms/button";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const user = useCurrentUser();
+  const { isDelegated } = useAccount();
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const [routines, setRoutines] = useState([]);
 
@@ -164,6 +165,7 @@ const RoutinesIndex = () => {
       onSearchChange={setSearch}
       pageContext="routines"
       data-component="AppHeader"
+      showSidebar={!isDelegated}
     >
       <div className="flex justify-center flex-1 min-h-0">
         <DeckWrapper 

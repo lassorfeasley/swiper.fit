@@ -16,7 +16,7 @@ const DelegateModeHeader = forwardRef(function DelegateModeHeader(_, ref) {
     <header
       ref={ref}
       data-layer="PageHeader"
-      className="self-stretch bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center fixed top-0 left-0 right-0 z-[60] h-11"
+      className="self-stretch bg-green-700 border-b border-neutral-600 inline-flex justify-between items-center fixed top-0 left-0 right-0 z-[60] h-11"
     >
       <div
         data-layer="title-back-wrapper"
@@ -38,7 +38,7 @@ const DelegateModeHeader = forwardRef(function DelegateModeHeader(_, ref) {
         <button
           aria-label="Exit delegate mode"
           onClick={returnToSelf}
-          className="p-2.5 border-l border-neutral-600 flex items-center justify-center"
+          className="p-2.5 border-l border-white flex items-center justify-center"
         >
           <X className="w-6 h-6 text-white" />
         </button>

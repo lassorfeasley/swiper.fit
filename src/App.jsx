@@ -89,7 +89,9 @@ function AppContent() {
   
   // Guard: If workout is active and we're on a non-allowed page, immediately redirect
   // Don't redirect while workout context is still loading to avoid premature redirects
-  const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading;
+  // Allow delegates to access history pages even with active workouts
+  const isDelegateOnHistory = isDelegated && location.pathname.startsWith('/history');
+  const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading && !isDelegateOnHistory;
 
   // Debug logging for workout redirect logic
   useEffect(() => {
@@ -136,12 +138,15 @@ function AppContent() {
       const restrictedPaths = ['/routines', '/history', '/sharing', '/account', '/dashboard'];
       const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
       
-      if (isOnRestrictedPath && location.pathname !== '/workout/active') {
+      // Allow delegates to access history pages even with active workouts
+      const isDelegateOnHistory = isDelegated && location.pathname.startsWith('/history');
+      
+      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegateOnHistory) {
         console.log('[App] Safety redirect: on restricted page with active workout:', location.pathname);
         navigate('/workout/active', { replace: true });
       }
     }
-  }, [workoutLoading, isWorkoutActive, location.pathname, navigate]);
+  }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
 
   // Show loading state while workout context is loading to prevent premature navigation
   if (workoutLoading) {

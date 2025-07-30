@@ -53,9 +53,8 @@ export const AccountProvider = ({ children }) => {
   const returnToSelf = () => {
     setActingUser(null);
     localStorage.removeItem("actingUserId");
-    if (location.pathname.includes("/workout/")) {
-      navigate("/sharing");
-    }
+    // Always return to sharing page when exiting delegate mode
+    navigate("/sharing");
   };
 
   // The user the app should act as for queries

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { useCurrentUser } from "@/contexts/AccountContext";
+import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Share2 } from "lucide-react";
@@ -24,6 +24,7 @@ const History = () => {
   const [shareAll, setShareAll] = useState(false);
   const [search, setSearch] = useState("");
   const user = useCurrentUser();
+  const { isDelegated } = useAccount();
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
@@ -200,7 +201,7 @@ const History = () => {
     <AppLayout
       reserveSpace={true}
       title="History"
-      showSidebar={!paramUserId}
+      showSidebar={!paramUserId && !isDelegated}
       showShare={viewingOwn}
       onShare={handleShare}
       showBackButton={false}

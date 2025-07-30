@@ -17,6 +17,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { Play } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
 import { scrollToSection } from "@/lib/scroll";
 import { ActionCard } from "@/components/molecules/action-card";
@@ -26,6 +27,7 @@ const RoutineBuilder = () => {
   const navigate = useNavigate();
   const { setPageName } = useContext(PageNameContext);
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
+  const { isDelegated } = useAccount();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState("");
@@ -624,7 +626,7 @@ const RoutineBuilder = () => {
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
         showBackButton
-        showStartWorkout={true}
+        showStartWorkout={!isDelegated && true}
         onStartWorkout={handleStartWorkout}
         pageContext="program-builder"
         showSectionNav={true}

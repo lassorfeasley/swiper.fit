@@ -559,10 +559,6 @@ export default function Sharing() {
     setClientRoutines([]);
   };
 
-  if (isDelegated) {
-    return <Navigate to="/routines" replace />;
-  }
-
   return (
     <AppLayout title="" hideHeader>
       <div className="w-full">
@@ -594,7 +590,15 @@ export default function Sharing() {
               </div>
               <div 
                 className="self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5 cursor-pointer"
-                onClick={() => switchToUser(share.profile)}
+                onClick={() => {
+                  console.log('Review history clicked for user:', share.profile.id);
+                  // Switch to the user first, then navigate to history after a delay
+                  switchToUser(share.profile);
+                  setTimeout(() => {
+                    console.log('Navigating to history after user switch');
+                    navigate('/history');
+                  }, 200);
+                }}
               >
                 <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Review {formatUserDisplay(share.profile)}'s history</div>
                 <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
@@ -722,6 +726,8 @@ export default function Sharing() {
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
             title="Select routine to start workout"
+            confirmText=""
+            cancelText=""
             onCancel={() => {
               setShowRoutineSelectionDialog(false);
               setSelectedClient(null);
