@@ -20,9 +20,30 @@ export function ActiveWorkoutProvider({ children }) {
   console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
   console.log('[ActiveWorkout] Full user object:', user);
   
-
+  // Test if Supabase real-time is working at all
+  useEffect(() => {
+    console.log('[ActiveWorkout] Testing Supabase real-time connection');
+    const testChan = supabase
+      .channel('test-connection')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'workouts'
+      }, (payload) => {
+        console.log('[Realtime][CONNECTION TEST] Any workout change:', payload);
+      })
+      .subscribe();
+    
+    return () => {
+      console.log('[ActiveWorkout] Cleaning up test connection');
+      void testChan.unsubscribe();
+    };
+  }, []);
   
-
+  // Debug useEffect to see when user changes
+  useEffect(() => {
+    console.log('[ActiveWorkout] User changed effect triggered');
+    console.log('[ActiveWorkout] User in effect:', user);
+    console.log('[ActiveWorkout] User ID in effect:', user?.id);
+  }, [user]);
   
   // Track sets that were manually completed in this session (to prevent animations)
   const [manuallyCompletedSets, setManuallyCompletedSets] = useState(new Set());
@@ -260,10 +281,12 @@ export function ActiveWorkoutProvider({ children }) {
       return;
     }
     console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
+    
+    // Use the newer Supabase v2.5+ syntax for real-time subscriptions with RLS
     const globalChan = supabase
-      .channel('global-workouts')
+      .channel(`realtime:public:workouts:user_id=eq.${user.id}`)
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'workouts', filter: `user_id=eq.${user.id}`
+        event: 'INSERT'
       }, async ({ new: w }) => {
         console.log('[Realtime][INSERT] New workout detected:', w);
         console.log('[Realtime][global new workout]', w);
@@ -308,9 +331,20 @@ export function ActiveWorkoutProvider({ children }) {
 
     console.log('[ActiveWorkout] Real-time subscription created for user:', user.id);
 
+    // Add a test subscription to see if real-time is working at all
+    const testChan = supabase
+      .channel('test-workouts')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'workouts'
+      }, (payload) => {
+        console.log('[Realtime][TEST] Any workout change detected:', payload);
+      })
+      .subscribe();
+
     return () => {
       console.log('[ActiveWorkout] Cleaning up real-time subscription for user:', user.id);
       void globalChan.unsubscribe();
+      void testChan.unsubscribe();
     };
   }, [user?.id]);
 
@@ -455,6 +489,23 @@ export function ActiveWorkoutProvider({ children }) {
 
   const endWorkout = useCallback(async () => {
     if (!activeWorkout?.id) return false;
+    console.log('[ActiveWorkout] endWorkout called for workout:', activeWorkout.id);
+    console.log('[ActiveWorkout] Current user context:', user?.id);
+    
+    // Fetch the workout details to see which user it belongs to
+    const { data: workoutDetails, error: workoutError } = await supabase
+      .from('workouts')
+      .select('user_id, workout_name')
+      .eq('id', activeWorkout.id)
+      .single();
+    
+    if (workoutError) {
+      console.error('[ActiveWorkout] Error fetching workout details:', workoutError);
+    } else {
+      console.log('[ActiveWorkout] Workout belongs to user:', workoutDetails.user_id);
+      console.log('[ActiveWorkout] Workout name:', workoutDetails.workout_name);
+    }
+    
     let saved = false;
     try {
       // Check if any completed sets have been logged for this workout
@@ -557,6 +608,14 @@ export function ActiveWorkoutProvider({ children }) {
     setToastedSets(new Set());
   }, [activeWorkout?.id]);
 
+  const clearWorkoutState = useCallback(() => {
+    console.log('[ActiveWorkout] Clearing workout state manually');
+    setActiveWorkout(null);
+    setIsWorkoutActive(false);
+    setElapsedTime(0);
+    setIsPaused(false);
+  }, []);
+
   return (
     <ActiveWorkoutContext.Provider 
       value={{ 
@@ -573,7 +632,8 @@ export function ActiveWorkoutProvider({ children }) {
         markSetManuallyCompleted,
         isSetManuallyCompleted,
         markSetToasted,
-        isSetToasted
+        isSetToasted,
+        clearWorkoutState
       }}
     >
       {children}

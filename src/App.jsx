@@ -120,9 +120,16 @@ function AppContent() {
   useEffect(() => {
     if (shouldRedirect) {
       console.log('[App] Redirecting to active workout');
+      console.log('[App] Redirect details:', {
+        isWorkoutActive,
+        workoutLoading,
+        isAllowedPath,
+        currentPath: location.pathname,
+        isDelegated
+      });
       navigate('/workout/active', { replace: true });
     }
-  }, [shouldRedirect, navigate]);
+  }, [shouldRedirect, navigate, isWorkoutActive, workoutLoading, isAllowedPath, location.pathname, isDelegated]);
 
   // Immediate redirect when workout context finishes loading and detects active workout
   useEffect(() => {
@@ -138,10 +145,11 @@ function AppContent() {
       const restrictedPaths = ['/routines', '/history', '/sharing', '/account', '/dashboard'];
       const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
       
-      // Allow delegates to access history pages even with active workouts
+      // Allow delegates to access history pages and sharing page even with active workouts
       const isDelegateOnHistory = isDelegated && location.pathname.startsWith('/history');
+      const isDelegateOnSharing = isDelegated && location.pathname.startsWith('/sharing');
       
-      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegateOnHistory) {
+      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegateOnHistory && !isDelegateOnSharing) {
         console.log('[App] Safety redirect: on restricted page with active workout:', location.pathname);
         navigate('/workout/active', { replace: true });
       }

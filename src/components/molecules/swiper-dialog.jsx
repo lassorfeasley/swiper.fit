@@ -4,6 +4,7 @@ import {
   DialogPortal,
   DialogOverlay,
   DialogContent,
+  DialogTitle,
 } from "@/components/atoms/dialog";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -51,6 +52,9 @@ const SwiperDialog = ({
         <DialogContent 
           className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] ${contentClassName || ''}`}
         >
+          <DialogTitle className="sr-only">
+            {title || 'Dialog'}
+          </DialogTitle>
           <DeckWrapper 
             className="w-full h-screen flex flex-col justify-center items-center gap-2.5" 
             maxWidth={400} 

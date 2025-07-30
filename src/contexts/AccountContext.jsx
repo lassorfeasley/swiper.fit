@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useActiveWorkout } from "./ActiveWorkoutContext";
 
 // Context to expose account-switching helpers
 const AccountContext = createContext(null);
@@ -51,6 +52,9 @@ export const AccountProvider = ({ children }) => {
   };
 
   const returnToSelf = () => {
+    console.log('[AccountContext] returnToSelf called');
+    console.log('[AccountContext] Current acting user:', actingUser?.id);
+    console.log('[AccountContext] Current auth user:', authUser?.id);
     setActingUser(null);
     localStorage.removeItem("actingUserId");
     // Force a page reload to clear all contexts and ensure clean state
@@ -71,6 +75,13 @@ export const AccountProvider = ({ children }) => {
       isDelegated,
       loading
     });
+    
+    // Log when delegation state changes
+    if (isDelegated) {
+      console.log('[AccountContext] Currently delegated to:', actingUser?.id);
+    } else {
+      console.log('[AccountContext] Not delegated, using auth user:', authUser?.id);
+    }
   }, [authUser?.id, actingUser?.id, currentUser?.id, isDelegated, loading]);
 
   return (

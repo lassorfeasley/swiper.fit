@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TextInput } from "@/components/molecules/text-input";
 import { Button } from "@/components/atoms/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Settings, History, MoveUpRight } from "lucide-react";
+import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Settings, History, MoveUpRight, X } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import EditableTextInput from "@/components/molecules/editable-text-input";
 import { useAccount } from "@/contexts/AccountContext";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate, Navigate } from "react-router-dom";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -15,10 +16,12 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapperLabel";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { toast } from "sonner";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
   const { switchToUser, isDelegated } = useAccount();
+  const { startWorkout } = useActiveWorkout();
   const navigate = useNavigate();
 
   // Redirect handled in render below to avoid hook order issues
@@ -43,6 +46,9 @@ export default function Sharing() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
   const [activeWorkout, setActiveWorkout] = useState(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
+  const subscriptionRef = useRef(null);
+  const retryTimeoutRef = useRef(null);
 
   // Helper function to format user display name
   const formatUserDisplay = (profile) => {
@@ -71,12 +77,44 @@ export default function Sharing() {
     return email;
   };
 
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    console.log('[Sharing] Manual refresh triggered');
+    setLastRefreshTime(Date.now());
+    queryClient.invalidateQueries(["shares_shared_with_me", user?.id]);
+    queryClient.invalidateQueries(["shares_owned_by_me", user?.id]);
+  };
+
+  // Test real-time function
+  const handleTestRealtime = async () => {
+    console.log('[Sharing] Testing real-time by updating a record...');
+    if (ownerSharesQuery.data && ownerSharesQuery.data.length > 0) {
+      const firstShare = ownerSharesQuery.data[0];
+      console.log('[Sharing] Updating share:', firstShare.id);
+      
+      const { data, error } = await supabase
+        .from('account_shares')
+        .update({ can_create_routines: !firstShare.can_create_routines })
+        .eq('id', firstShare.id)
+        .select();
+      
+      if (error) {
+        console.error('[Sharing] Test update error:', error);
+      } else {
+        console.log('[Sharing] Test update successful:', data);
+      }
+    } else {
+      console.log('[Sharing] No shares to test with');
+    }
+  };
+
   // -------------------------------
   // Queries
   // -------------------------------
   const ownerSharesQuery = useQuery({
     queryKey: ["shares_owned_by_me", user?.id],
     queryFn: async () => {
+      console.log('[Sharing] Fetching owned by me data for user:', user.id);
       // Get accounts I've shared my account with (I am the owner)
       const { data: shares, error } = await supabase
         .from("account_shares")
@@ -98,7 +136,7 @@ export default function Sharing() {
       if (profileError) throw profileError;
 
       // Combine the data
-      return shares.map(share => ({
+      const combinedData = shares.map(share => ({
         ...share,
         profile: profiles?.find(profile => profile.id === share.delegate_user_id) || {
           email: share.delegate_email,
@@ -106,6 +144,13 @@ export default function Sharing() {
           last_name: ""
         }
       }));
+      
+      // Sort by profile name for consistent ordering
+      return combinedData.sort((a, b) => {
+        const nameA = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim().toLowerCase();
+        const nameB = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     },
     enabled: !!user?.id,
   });
@@ -113,6 +158,7 @@ export default function Sharing() {
   const sharedWithMeQuery = useQuery({
     queryKey: ["shares_shared_with_me", user?.id],
     queryFn: async () => {
+      console.log('[Sharing] Fetching shared with me data for user:', user.id);
       // Get accounts that have shared their account with me (I am the delegate)
       const { data: shares, error } = await supabase
         .from("account_shares")
@@ -134,13 +180,124 @@ export default function Sharing() {
       if (profileError) throw profileError;
 
       // Combine the data
-      return shares.map(share => ({
+      const combinedData = shares.map(share => ({
         ...share,
         profile: profiles?.find(profile => profile.id === share.owner_user_id) || null
       }));
+      
+      // Sort by profile name for consistent ordering
+      return combinedData.sort((a, b) => {
+        const nameA = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim().toLowerCase();
+        const nameB = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     },
     enabled: !!user?.id,
   });
+
+  // Real-time subscription for account_shares changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Prevent multiple subscriptions
+    if (subscriptionRef.current) {
+      console.log('[Sharing] Subscription already exists, skipping');
+      return;
+    }
+
+    const setupSubscription = () => {
+      console.log('[Sharing] Setting up real-time subscription for account_shares');
+      console.log('[Sharing] User ID:', user.id);
+      
+      // Use a simple, stable channel name
+      const channel = supabase
+        .channel('account-shares-realtime')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'account_shares'
+        }, (payload) => {
+          console.log('[Sharing] ===== REAL-TIME EVENT DETECTED =====');
+          console.log('[Sharing] Full payload:', JSON.stringify(payload, null, 2));
+          console.log('[Sharing] Account shares change detected:', payload);
+          console.log('[Sharing] Event type:', payload.eventType);
+          console.log('[Sharing] New record:', payload.new);
+          console.log('[Sharing] Old record:', payload.old);
+          
+          // Check if this change affects the current user
+          const record = payload.new || payload.old;
+          if (record) {
+            console.log('[Sharing] Record delegate_user_id:', record.delegate_user_id);
+            console.log('[Sharing] Record owner_user_id:', record.owner_user_id);
+            console.log('[Sharing] Current user ID:', user.id);
+            
+            if (record.delegate_user_id === user.id || record.owner_user_id === user.id) {
+              console.log('[Sharing] Change affects current user, invalidating queries');
+              // Invalidate both queries to refresh the data
+              queryClient.invalidateQueries(["shares_shared_with_me", user.id]);
+              queryClient.invalidateQueries(["shares_owned_by_me", user.id]);
+              console.log('[Sharing] Queries invalidated');
+              // Update last refresh time
+              setLastRefreshTime(Date.now());
+            } else {
+              console.log('[Sharing] Change does not affect current user, ignoring');
+            }
+          }
+        })
+        .subscribe((status) => {
+          console.log('[Sharing] Subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('[Sharing] Successfully subscribed to real-time updates');
+            subscriptionRef.current = channel;
+            // Clear any retry timeout since we're successfully connected
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current);
+              retryTimeoutRef.current = null;
+            }
+          } else if (status === 'CLOSED') {
+            console.error('[Sharing] Subscription closed unexpectedly');
+            subscriptionRef.current = null;
+            // Retry after 2 seconds
+            retryTimeoutRef.current = setTimeout(() => {
+              console.log('[Sharing] Retrying subscription after CLOSED...');
+              setupSubscription();
+            }, 2000);
+          } else if (status === 'TIMED_OUT') {
+            console.error('[Sharing] Subscription timed out');
+            subscriptionRef.current = null;
+            // Retry after 3 seconds
+            retryTimeoutRef.current = setTimeout(() => {
+              console.log('[Sharing] Retrying subscription after TIMED_OUT...');
+              setupSubscription();
+            }, 3000);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('[Sharing] Channel error occurred');
+            subscriptionRef.current = null;
+            // Retry after 5 seconds
+            retryTimeoutRef.current = setTimeout(() => {
+              console.log('[Sharing] Retrying subscription after CHANNEL_ERROR...');
+              setupSubscription();
+            }, 5000);
+          }
+        });
+
+      console.log('[Sharing] Real-time subscription created');
+    };
+
+    setupSubscription();
+
+    return () => {
+      console.log('[Sharing] Cleaning up account_shares real-time subscription');
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, [user?.id]); // Remove queryClient from dependencies to prevent frequent re-subscriptions
 
   // -------------------------------
   // Mutations
@@ -446,7 +603,7 @@ export default function Sharing() {
   const handleStartWorkout = async (clientProfile) => {
     setSelectedClient(clientProfile);
     
-    // Fetch active routines for this specific client with workout completion data
+    // Fetch active routines for this specific client with workout completion data and exercises
     try {
       const { data: routines, error } = await supabase
         .from("routines")
@@ -455,6 +612,25 @@ export default function Sharing() {
           workouts!fk_workouts__routines(
             id,
             completed_at
+          ),
+          routine_exercises!fk_routine_exercises__routines(
+            id,
+            exercise_order,
+            exercises!fk_routine_exercises__exercises(
+              id,
+              name,
+              section
+            ),
+            routine_sets!fk_routine_sets__routine_exercises(
+              id,
+              reps,
+              weight,
+              weight_unit,
+              set_order,
+              set_variant,
+              set_type,
+              timed_set_duration
+            )
           )
         `)
         .eq("user_id", clientProfile.id)
@@ -543,7 +719,7 @@ export default function Sharing() {
       switchToUser(selectedClient);
       
       // Navigate to active workout
-      navigate(`/workout?workoutId=${activeWorkout.id}&clientId=${selectedClient.id}`);
+      navigate('/workout/active');
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);
       setClientRoutines([]);
@@ -551,17 +727,82 @@ export default function Sharing() {
     }
   };
 
-  const handleRoutineSelect = (routine) => {
-    // Navigate to active workout with the selected routine
-    navigate(`/workout?routineId=${routine.id}&clientId=${selectedClient.id}`);
-    setShowRoutineSelectionDialog(false);
-    setSelectedClient(null);
-    setClientRoutines([]);
+  const handleRoutineSelect = async (routine) => {
+    try {
+      console.log('[Sharing] Starting workout for client:', selectedClient.id);
+      console.log('[Sharing] Selected routine:', routine);
+      
+      // Switch to the client's account context first
+      switchToUser(selectedClient);
+      
+      // Format the routine data to match what startWorkout expects
+      const routineData = {
+        id: routine.id,
+        routine_name: routine.routine_name,
+        routine_exercises: (routine.routine_exercises || []).map((re) => ({
+          id: re.id,
+          exercise_id: re.exercises.id,
+          exercises: {
+            name: re.exercises.name,
+            section: re.exercises.section
+          },
+          routine_sets: (re.routine_sets || []).map((rs) => ({
+            id: rs.id,
+            reps: rs.reps,
+            weight: rs.weight,
+            weight_unit: rs.weight_unit,
+            set_order: rs.set_order,
+            set_variant: rs.set_variant,
+            set_type: rs.set_type,
+            timed_set_duration: rs.timed_set_duration,
+          }))
+        }))
+      };
+      
+      console.log('[Sharing] Formatted routine data:', routineData);
+      
+      // Start the workout using the context function
+      const result = await startWorkout(routineData);
+      console.log('[Sharing] Workout started successfully:', result);
+      
+      // Show success message to delegate
+      toast.success(`Workout started for ${formatUserDisplay(selectedClient)}. They will be notified when they open the app.`);
+      
+      // Navigate to the active workout page
+      navigate('/workout/active');
+      
+      setShowRoutineSelectionDialog(false);
+      setSelectedClient(null);
+      setClientRoutines([]);
+    } catch (error) {
+      console.error('Error starting workout:', error);
+      // You might want to show an error message to the user here
+    }
   };
 
   return (
     <AppLayout title="" hideHeader>
       <div className="w-full">
+        {/* Refresh indicator and button */}
+        <div className="flex justify-between items-center px-4 py-2 bg-neutral-50 border-b border-neutral-neutral-300">
+          <div className="text-xs text-neutral-neutral-500">
+            Last updated: {new Date(lastRefreshTime).toLocaleTimeString()}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleTestRealtime}
+              className="px-3 py-1 text-xs bg-blue-200 text-blue-700 rounded hover:bg-blue-300"
+            >
+              Test Realtime
+            </button>
+            <button
+              onClick={handleManualRefresh}
+              className="px-3 py-1 text-xs bg-neutral-neutral-200 text-neutral-neutral-700 rounded hover:bg-neutral-neutral-300"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
         {/* Shared with me section */}
         <PageSectionWrapper 
           section="Shared with me"
@@ -573,24 +814,44 @@ export default function Sharing() {
                 <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
                   Manage {formatUserDisplay(share.profile)}'s account
                 </div>
+                {(!share.can_start_workouts || !share.can_create_routines || !share.can_review_history) && (
+                  <div className="ml-auto px-2 py-1 bg-neutral-neutral-200 text-neutral-neutral-500 text-xs rounded">
+                    Some permissions denied
+                  </div>
+                )}
               </div>
               <div 
-                className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 cursor-pointer"
-                onClick={() => handleStartWorkout(share.profile)}
+                className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                onClick={() => share.can_start_workouts && handleStartWorkout(share.profile)}
+                title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
               >
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Start a workout</div>
-                <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_start_workouts ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                  Start a workout
+                </div>
+                {share.can_start_workouts ? (
+                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                ) : (
+                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                )}
               </div>
               <div 
-                className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 cursor-pointer"
-                onClick={() => switchToUser(share.profile)}
+                className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_create_routines ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                onClick={() => share.can_create_routines && switchToUser(share.profile)}
+                title={!share.can_create_routines ? "Permission denied by account owner" : ""}
               >
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
-                <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_create_routines ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                  Create or edit routines
+                </div>
+                {share.can_create_routines ? (
+                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                ) : (
+                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                )}
               </div>
               <div 
-                className="self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5 cursor-pointer"
+                className={`self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5 ${share.can_review_history ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 onClick={() => {
+                  if (!share.can_review_history) return;
                   console.log('Review history clicked for user:', share.profile.id);
                   // Switch to the user first, then navigate to history after a delay
                   switchToUser(share.profile);
@@ -599,9 +860,16 @@ export default function Sharing() {
                     navigate('/history');
                   }, 200);
                 }}
+                title={!share.can_review_history ? "Permission denied by account owner" : ""}
               >
-                <div className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Review {formatUserDisplay(share.profile)}'s history</div>
-                <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_review_history ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                  Review {formatUserDisplay(share.profile)}'s history
+                </div>
+                {share.can_review_history ? (
+                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                ) : (
+                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                )}
               </div>
             </div>
           ))}

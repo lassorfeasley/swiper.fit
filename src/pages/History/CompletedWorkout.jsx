@@ -292,9 +292,11 @@ const CompletedWorkout = () => {
     }
   }, [workout]);
 
-  // Fetch owner name when not owner
+  // Fetch owner name when not owner or when delegated
   useEffect(() => {
-    if (!workout || isOwner) return;
+    if (!workout) return;
+    // Fetch owner name if not owner OR if delegated (to show client name)
+    if (isOwner && !isDelegated) return;
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -306,7 +308,7 @@ const CompletedWorkout = () => {
         setOwnerName(name || "User");
       }
     })();
-  }, [workout, isOwner]);
+  }, [workout, isOwner, isDelegated]);
 
   // -------------------------------------------------------------
   // Fetch whether the workout owner's history is globally shared
@@ -529,7 +531,7 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         variant="dark-fixed"
-        title={isOwner ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
+        title={isOwner && !isDelegated ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
         pageNameEditable={isOwner || isDelegated}
         showShare={!isPublicWorkoutView && (isOwner || isDelegated)}
         onShare={handleShare}
