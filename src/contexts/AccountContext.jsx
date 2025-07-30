@@ -53,8 +53,9 @@ export const AccountProvider = ({ children }) => {
   const returnToSelf = () => {
     setActingUser(null);
     localStorage.removeItem("actingUserId");
-    // Always return to sharing page when exiting delegate mode
-    navigate("/sharing");
+    // Force a page reload to clear all contexts and ensure clean state
+    // This prevents the delegate from remaining in the client's workout context
+    window.location.href = "/sharing";
   };
 
   // The user the app should act as for queries

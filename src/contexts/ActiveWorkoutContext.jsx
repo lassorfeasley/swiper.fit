@@ -17,6 +17,13 @@ export function ActiveWorkoutProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState(0);
   
+  console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
+  console.log('[ActiveWorkout] Full user object:', user);
+  
+
+  
+
+  
   // Track sets that were manually completed in this session (to prevent animations)
   const [manuallyCompletedSets, setManuallyCompletedSets] = useState(new Set());
   
@@ -26,6 +33,7 @@ export function ActiveWorkoutProvider({ children }) {
   // Effect to check for an active workout on load
   useEffect(() => {
     console.log('[ActiveWorkout] User changed, checking for active workout:', user?.id);
+    console.log('[ActiveWorkout] Clearing workout state due to user change');
     
     // Clear existing workout state when user changes
     setActiveWorkout(null);
@@ -244,13 +252,22 @@ export function ActiveWorkoutProvider({ children }) {
 
   // Auto-navigate into any new active workout for this user (delegate or delegator), and initialize context
   useEffect(() => {
-    if (!user?.id) return;
+    console.log('[ActiveWorkout] Real-time subscription useEffect triggered');
+    console.log('[ActiveWorkout] User object in useEffect:', user);
+    console.log('[ActiveWorkout] User ID in useEffect:', user?.id);
+    if (!user?.id) {
+      console.log('[ActiveWorkout] No user ID, skipping real-time subscription setup');
+      return;
+    }
+    console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
     const globalChan = supabase
       .channel('global-workouts')
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'workouts', filter: `user_id=eq.${user.id}`
       }, async ({ new: w }) => {
+        console.log('[Realtime][INSERT] New workout detected:', w);
         console.log('[Realtime][global new workout]', w);
+        console.log('[Realtime] Current activeWorkout:', activeWorkout);
         if (!activeWorkout?.id) {
           try {
             // Fetch full workout record with routine join
@@ -289,11 +306,19 @@ export function ActiveWorkoutProvider({ children }) {
       })
       .subscribe();
 
-    return () => void globalChan.unsubscribe();
-  }, [user?.id, activeWorkout?.id, navigate]);
+    console.log('[ActiveWorkout] Real-time subscription created for user:', user.id);
+
+    return () => {
+      console.log('[ActiveWorkout] Cleaning up real-time subscription for user:', user.id);
+      void globalChan.unsubscribe();
+    };
+  }, [user?.id]);
 
   const startWorkout = useCallback(async (program) => {
     if (!user) throw new Error("User not authenticated.");
+    
+    console.log('[ActiveWorkout] startWorkout called for user:', user.id);
+    console.log('[ActiveWorkout] Program data:', program);
 
     // 1) Make sure there isn't already an active workout for this user.
     //    If there is, mark it complete so the unique-constraint (or RLS) on
@@ -326,6 +351,7 @@ export function ActiveWorkoutProvider({ children }) {
         .single();
       if (insertErr) throw insertErr;
       workout = inserted;
+      console.log('[ActiveWorkout] Workout created successfully:', workout);
     } catch (e) {
       if (e.code === '23505') {
         console.warn('Active workout already exists; fetching existing record');
