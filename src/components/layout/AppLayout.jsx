@@ -109,15 +109,16 @@ export default function AppLayout({
             "--mobile-nav-height": "80px",
             paddingTop: `${totalHeaderHeight}px`,
             transition: 'padding-top 0.3s ease-in-out',
+            height: '100%',
             ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
           }}
           className="flex flex-col flex-1 min-h-0 overflow-y-auto"
         >
-          <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col" style={{ height: '100%' }}>
             <div className="flex-1 min-h-0">
               {children}
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto" style={{ marginTop: 'auto' }}>
               <Footer />
             </div>
           </div>
