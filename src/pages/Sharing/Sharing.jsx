@@ -6,6 +6,7 @@ import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Settings, History, MoveUpRight, X } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
+import { generateWorkoutName } from "@/lib/utils";
 import EditableTextInput from "@/components/molecules/editable-text-input";
 import { useAccount } from "@/contexts/AccountContext";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
@@ -20,7 +21,7 @@ import { toast } from "sonner";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
-  const { switchToUser, isDelegated } = useAccount();
+  const { isDelegated, switchToUser } = useAccount();
   const { startWorkout } = useActiveWorkout();
   const navigate = useNavigate();
 
@@ -46,7 +47,6 @@ export default function Sharing() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
   const [activeWorkout, setActiveWorkout] = useState(null);
-  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
   const subscriptionRef = useRef(null);
   const retryTimeoutRef = useRef(null);
 
@@ -77,35 +77,31 @@ export default function Sharing() {
     return email;
   };
 
-  // Manual refresh function
-  const handleManualRefresh = () => {
-    console.log('[Sharing] Manual refresh triggered');
-    setLastRefreshTime(Date.now());
-    queryClient.invalidateQueries(["shares_shared_with_me", user?.id]);
-    queryClient.invalidateQueries(["shares_owned_by_me", user?.id]);
+
+
+  // New handlers for delegate actions without switching context
+  const handleCreateRoutinesForOwner = async (ownerProfile) => {
+    console.log('[Sharing] Opening routine builder for owner:', ownerProfile.id);
+    // Navigate to routines page with owner context
+    navigate('/routines', { 
+      state: { 
+        managingForOwner: true, 
+        ownerId: ownerProfile.id,
+        ownerName: formatUserDisplay(ownerProfile)
+      } 
+    });
   };
 
-  // Test real-time function
-  const handleTestRealtime = async () => {
-    console.log('[Sharing] Testing real-time by updating a record...');
-    if (ownerSharesQuery.data && ownerSharesQuery.data.length > 0) {
-      const firstShare = ownerSharesQuery.data[0];
-      console.log('[Sharing] Updating share:', firstShare.id);
-      
-      const { data, error } = await supabase
-        .from('account_shares')
-        .update({ can_create_routines: !firstShare.can_create_routines })
-        .eq('id', firstShare.id)
-        .select();
-      
-      if (error) {
-        console.error('[Sharing] Test update error:', error);
-      } else {
-        console.log('[Sharing] Test update successful:', data);
-      }
-    } else {
-      console.log('[Sharing] No shares to test with');
-    }
+  const handleReviewHistoryForOwner = async (ownerProfile) => {
+    console.log('[Sharing] Opening history for owner:', ownerProfile.id);
+    // Navigate to history page with owner context
+    navigate('/history', { 
+      state: { 
+        managingForOwner: true, 
+        ownerId: ownerProfile.id,
+        ownerName: formatUserDisplay(ownerProfile)
+      } 
+    });
   };
 
   // -------------------------------
@@ -195,109 +191,45 @@ export default function Sharing() {
     enabled: !!user?.id,
   });
 
-  // Real-time subscription for account_shares changes
-  useEffect(() => {
-    if (!user?.id) return;
+  // Temporarily disabled real-time subscription due to WebSocket connection issues
+  // useEffect(() => {
+  //   if (!user?.id) return;
 
-    // Prevent multiple subscriptions
-    if (subscriptionRef.current) {
-      console.log('[Sharing] Subscription already exists, skipping');
-      return;
-    }
+  //   // Add a small delay to ensure the component is fully mounted
+  //   const timeoutId = setTimeout(() => {
+  //     const channel = supabase
+  //       .channel('account-shares-realtime')
+  //       .on('postgres_changes', {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'account_shares'
+  //       }, (payload) => {
+  //         const record = payload.new || payload.old;
+  //         if (record && (record.delegate_user_id === user.id || record.owner_user_id === user.id)) {
+  //           queryClient.invalidateQueries(["shares_shared_with_me", user.id]);
+  //           queryClient.invalidateQueries(["shares_owned_by_me", user.id]);
+  //         }
+  //       })
+  //       .subscribe((status) => {
+  //         // Log status for debugging
+  //         if (status === 'SUBSCRIBED') {
+  //           console.log('[Sharing] Real-time subscription connected');
+  //         } else if (status === 'CLOSED' || status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+  //           console.log('[Sharing] Real-time subscription failed:', status);
+  //         }
+  //       });
 
-    const setupSubscription = () => {
-      console.log('[Sharing] Setting up real-time subscription for account_shares');
-      console.log('[Sharing] User ID:', user.id);
-      
-      // Use a simple, stable channel name
-      const channel = supabase
-        .channel('account-shares-realtime')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'account_shares'
-        }, (payload) => {
-          console.log('[Sharing] ===== REAL-TIME EVENT DETECTED =====');
-          console.log('[Sharing] Full payload:', JSON.stringify(payload, null, 2));
-          console.log('[Sharing] Account shares change detected:', payload);
-          console.log('[Sharing] Event type:', payload.eventType);
-          console.log('[Sharing] New record:', payload.new);
-          console.log('[Sharing] Old record:', payload.old);
-          
-          // Check if this change affects the current user
-          const record = payload.new || payload.old;
-          if (record) {
-            console.log('[Sharing] Record delegate_user_id:', record.delegate_user_id);
-            console.log('[Sharing] Record owner_user_id:', record.owner_user_id);
-            console.log('[Sharing] Current user ID:', user.id);
-            
-            if (record.delegate_user_id === user.id || record.owner_user_id === user.id) {
-              console.log('[Sharing] Change affects current user, invalidating queries');
-              // Invalidate both queries to refresh the data
-              queryClient.invalidateQueries(["shares_shared_with_me", user.id]);
-              queryClient.invalidateQueries(["shares_owned_by_me", user.id]);
-              console.log('[Sharing] Queries invalidated');
-              // Update last refresh time
-              setLastRefreshTime(Date.now());
-            } else {
-              console.log('[Sharing] Change does not affect current user, ignoring');
-            }
-          }
-        })
-        .subscribe((status) => {
-          console.log('[Sharing] Subscription status:', status);
-          if (status === 'SUBSCRIBED') {
-            console.log('[Sharing] Successfully subscribed to real-time updates');
-            subscriptionRef.current = channel;
-            // Clear any retry timeout since we're successfully connected
-            if (retryTimeoutRef.current) {
-              clearTimeout(retryTimeoutRef.current);
-              retryTimeoutRef.current = null;
-            }
-          } else if (status === 'CLOSED') {
-            console.error('[Sharing] Subscription closed unexpectedly');
-            subscriptionRef.current = null;
-            // Retry after 2 seconds
-            retryTimeoutRef.current = setTimeout(() => {
-              console.log('[Sharing] Retrying subscription after CLOSED...');
-              setupSubscription();
-            }, 2000);
-          } else if (status === 'TIMED_OUT') {
-            console.error('[Sharing] Subscription timed out');
-            subscriptionRef.current = null;
-            // Retry after 3 seconds
-            retryTimeoutRef.current = setTimeout(() => {
-              console.log('[Sharing] Retrying subscription after TIMED_OUT...');
-              setupSubscription();
-            }, 3000);
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[Sharing] Channel error occurred');
-            subscriptionRef.current = null;
-            // Retry after 5 seconds
-            retryTimeoutRef.current = setTimeout(() => {
-              console.log('[Sharing] Retrying subscription after CHANNEL_ERROR...');
-              setupSubscription();
-            }, 5000);
-          }
-        });
+  //     subscriptionRef.current = channel;
+  //   }, 1000); // 1 second delay
 
-      console.log('[Sharing] Real-time subscription created');
-    };
-
-    setupSubscription();
-
-    return () => {
-      console.log('[Sharing] Cleaning up account_shares real-time subscription');
-      if (subscriptionRef.current) {
-        supabase.removeChannel(subscriptionRef.current);
-        subscriptionRef.current = null;
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-        retryTimeoutRef.current = null;
-      }
-    };
-  }, [user?.id]); // Remove queryClient from dependencies to prevent frequent re-subscriptions
+  //   return () => {
+  //     clearTimeout(timeoutId);
+  //     if (subscriptionRef.current) {
+  //       supabase.removeChannel(subscriptionRef.current);
+  //       subscriptionRef.current = null;
+  //     }
+  //   };
+  // }, [user?.id, queryClient]);
 
   // -------------------------------
   // Mutations
@@ -714,11 +646,11 @@ export default function Sharing() {
   };
 
   const handleJoinActiveWorkout = () => {
-    if (activeWorkout) {
-      // Switch to the client's account context first
+    if (activeWorkout && selectedClient) {
+      // Switch to the account owner's context so we can see their active workout
       switchToUser(selectedClient);
       
-      // Navigate to active workout
+      // Navigate to active workout page
       navigate('/workout/active');
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);
@@ -731,9 +663,6 @@ export default function Sharing() {
     try {
       console.log('[Sharing] Starting workout for client:', selectedClient.id);
       console.log('[Sharing] Selected routine:', routine);
-      
-      // Switch to the client's account context first
-      switchToUser(selectedClient);
       
       // Format the routine data to match what startWorkout expects
       const routineData = {
@@ -761,14 +690,97 @@ export default function Sharing() {
       
       console.log('[Sharing] Formatted routine data:', routineData);
       
-      // Start the workout using the context function
-      const result = await startWorkout(routineData);
-      console.log('[Sharing] Workout started successfully:', result);
+      // Create workout directly for the account owner (not the delegate)
+      const workoutName = generateWorkoutName();
+      
+      // 1) Make sure there isn't already an active workout for the account owner
+      try {
+        await supabase
+          .from("workouts")
+          .update({ is_active: false, completed_at: new Date().toISOString() })
+          .eq("user_id", selectedClient.id)
+          .eq("is_active", true);
+      } catch (e) {
+        console.warn("Failed to auto-close previous active workouts", e);
+      }
+
+      // 2) Create the workout for the account owner
+      let workout;
+      try {
+        const { data: inserted, error: insertErr } = await supabase
+          .from('workouts')
+          .insert({
+            user_id: selectedClient.id, // Use account owner's ID, not delegate's
+            routine_id: routine.id,
+            workout_name: workoutName,
+            is_active: true,
+          })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+        workout = inserted;
+        console.log('[Sharing] Workout created for account owner:', workout);
+      } catch (e) {
+        console.error('Error creating workout for account owner:', e);
+        throw new Error('Could not start workout. Please try again.');
+      }
+
+      // 3) Snapshot exercises for the workout
+      try {
+        const snapshotPayload = routineData.routine_exercises.map((progEx, idx) => ({
+          workout_id: workout.id,
+          exercise_id: progEx.exercise_id,
+          exercise_order: idx + 1,
+          snapshot_name: progEx.exercises.name || `Exercise ${idx + 1}`,
+        }));
+
+        const { data: insertedExercises, error: snapshotErr } = await supabase
+          .from('workout_exercises')
+          .insert(snapshotPayload)
+          .select();
+
+        if (snapshotErr) throw snapshotErr;
+
+        // 4) Snapshot sets for each exercise
+        for (const progEx of routineData.routine_exercises) {
+          const workoutExercise = insertedExercises.find(we => we.exercise_id === progEx.exercise_id);
+          if (workoutExercise && progEx.routine_sets.length > 0) {
+            const setsPayload = progEx.routine_sets.map((set, setIdx) => ({
+              workout_exercise_id: workoutExercise.id,
+              reps: set.reps,
+              weight: set.weight,
+              weight_unit: set.weight_unit,
+              set_order: set.set_order || setIdx + 1,
+              set_variant: set.set_variant,
+              set_type: set.set_type,
+              timed_set_duration: set.timed_set_duration,
+              user_id: selectedClient.id, // Use account owner's ID
+              account_id: selectedClient.id, // Use account owner's ID
+            }));
+
+            const { error: setsErr } = await supabase
+              .from('sets')
+              .insert(setsPayload);
+
+            if (setsErr) {
+              console.error('Error creating sets for exercise:', setsErr);
+            }
+          }
+        }
+
+        console.log('[Sharing] Workout and exercises created successfully for account owner');
+      } catch (err) {
+        console.error("Error snapshotting exercises for workout:", err);
+        throw new Error('Could not create workout exercises. Please try again.');
+      }
       
       // Show success message to delegate
       toast.success(`Workout started for ${formatUserDisplay(selectedClient)}. They will be notified when they open the app.`);
       
-      // Navigate to the active workout page
+      // Switch to the account owner's context so delegate can see the active workout in manager mode
+      switchToUser(selectedClient);
+      
+      // Navigate to active workout page so delegate can see what they created
       navigate('/workout/active');
       
       setShowRoutineSelectionDialog(false);
@@ -776,33 +788,13 @@ export default function Sharing() {
       setClientRoutines([]);
     } catch (error) {
       console.error('Error starting workout:', error);
-      // You might want to show an error message to the user here
+      toast.error('Failed to start workout. Please try again.');
     }
   };
 
   return (
     <AppLayout title="" hideHeader>
       <div className="w-full">
-        {/* Refresh indicator and button */}
-        <div className="flex justify-between items-center px-4 py-2 bg-neutral-50 border-b border-neutral-neutral-300">
-          <div className="text-xs text-neutral-neutral-500">
-            Last updated: {new Date(lastRefreshTime).toLocaleTimeString()}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleTestRealtime}
-              className="px-3 py-1 text-xs bg-blue-200 text-blue-700 rounded hover:bg-blue-300"
-            >
-              Test Realtime
-            </button>
-            <button
-              onClick={handleManualRefresh}
-              className="px-3 py-1 text-xs bg-neutral-neutral-200 text-neutral-neutral-700 rounded hover:bg-neutral-neutral-300"
-            >
-              Refresh
-            </button>
-          </div>
-        </div>
         {/* Shared with me section */}
         <PageSectionWrapper 
           section="Shared with me"
@@ -814,61 +806,47 @@ export default function Sharing() {
                 <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
                   Manage {formatUserDisplay(share.profile)}'s account
                 </div>
-                {(!share.can_start_workouts || !share.can_create_routines || !share.can_review_history) && (
-                  <div className="ml-auto px-2 py-1 bg-neutral-neutral-200 text-neutral-neutral-500 text-xs rounded">
-                    Some permissions denied
-                  </div>
-                )}
               </div>
               <div 
                 className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 onClick={() => share.can_start_workouts && handleStartWorkout(share.profile)}
                 title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
               >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_start_workouts ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_start_workouts ? 'text-neutral-700' : 'text-neutral-300'}`}>
                   Start a workout
                 </div>
                 {share.can_start_workouts ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
                 ) : (
-                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                  <X className="w-4 h-4 text-neutral-300" />
                 )}
               </div>
               <div 
                 className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_create_routines ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                onClick={() => share.can_create_routines && switchToUser(share.profile)}
+                onClick={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
                 title={!share.can_create_routines ? "Permission denied by account owner" : ""}
               >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_create_routines ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_create_routines ? 'text-neutral-700' : 'text-neutral-300'}`}>
                   Create or edit routines
                 </div>
                 {share.can_create_routines ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
                 ) : (
-                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                  <X className="w-4 h-4 text-neutral-300" />
                 )}
               </div>
               <div 
                 className={`self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5 ${share.can_review_history ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                onClick={() => {
-                  if (!share.can_review_history) return;
-                  console.log('Review history clicked for user:', share.profile.id);
-                  // Switch to the user first, then navigate to history after a delay
-                  switchToUser(share.profile);
-                  setTimeout(() => {
-                    console.log('Navigating to history after user switch');
-                    navigate('/history');
-                  }, 200);
-                }}
+                onClick={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
                 title={!share.can_review_history ? "Permission denied by account owner" : ""}
               >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_review_history ? 'text-neutral-neutral-700' : 'text-neutral-neutral-300'}`}>
+                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_review_history ? 'text-neutral-700' : 'text-neutral-300'}`}>
                   Review {formatUserDisplay(share.profile)}'s history
                 </div>
                 {share.can_review_history ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-neutral-700" />
+                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
                 ) : (
-                  <X className="w-4 h-4 text-neutral-neutral-300" />
+                  <X className="w-4 h-4 text-neutral-300" />
                 )}
               </div>
             </div>

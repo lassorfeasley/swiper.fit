@@ -39,16 +39,8 @@ body {
 /* Mobile viewport height fix for keyboard handling */
 @supports (height: 100dvh) {
   @media (max-width: 768px) {
-    html,
-    body {
-      max-height: 100dvh;
-      overflow-x: clip;
-    }
-
     #root {
       min-height: 100dvh;
-      overflow-y: visible;
-      overflow-x: clip;
     }
   }
 }

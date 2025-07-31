@@ -78,14 +78,20 @@ const ActiveWorkoutContent = () => {
     // Only redirect after loading has finished
     if (loading) return;
     if (!isWorkoutActive) {
+      console.log('[ActiveWorkout] Workout not active, checking auto-redirect...');
+      console.log('[ActiveWorkout] skipAutoRedirectRef.current:', skipAutoRedirectRef.current);
+      console.log('[ActiveWorkout] Current user:', user?.id);
+      
       // Skip auto-redirect if user just ended workout
       if (skipAutoRedirectRef.current) {
+        console.log('[ActiveWorkout] Skipping auto-redirect (user ended workout)');
         skipAutoRedirectRef.current = false;
         return;
       }
+      console.log('[ActiveWorkout] Auto-redirecting to routines');
       navigate("/routines", { replace: true });
     }
-  }, [loading, isWorkoutActive, navigate]);
+  }, [loading, isWorkoutActive, navigate, user?.id]);
 
   useEffect(() => {
     setNavBarVisible(false);
@@ -275,6 +281,8 @@ const ActiveWorkoutContent = () => {
           setWorkoutAutoEnded(true);
           (async () => {
             const wid = activeWorkout?.id;
+            // Prevent the auto-redirect effect from firing
+            skipAutoRedirectRef.current = true;
             // End workout first to clear active context and prevent redirects
             const saved = await contextEndWorkout();
             if (saved && wid) {
@@ -314,10 +322,10 @@ const ActiveWorkoutContent = () => {
       onSearchChange={setSearch}
       pageContext="workout"
       enableScrollSnap={true}
-      noTopPadding={true}
+      noTopPadding={!isDelegated}
       showSidebar={false}
     >
-      <div ref={listRef} style={{ paddingTop: isDelegated ? "88px" : "44px" }}>
+      <div ref={listRef}>
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"

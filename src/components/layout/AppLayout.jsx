@@ -79,8 +79,9 @@ export default function AppLayout({
   const variant = restHeaderProps.variant;
   const reserveSpace = restHeaderProps.reserveSpace;
 
-  const baseHeaderHeight = hideHeader || noTopPadding ? 0 : headerHeight;
-  const totalHeaderHeight = isDelegated ? baseHeaderHeight * 2 : baseHeaderHeight;
+  // Calculate header height - when delegated, we need space for the delegate header even if hideHeader is true
+  const baseHeaderHeight = hideHeader && !isDelegated ? 0 : headerHeight;
+  const totalHeaderHeight = isDelegated ? (hideHeader ? 44 : baseHeaderHeight + 44) : baseHeaderHeight;
 
   return (
     <div className="min-h-screen flex bg-white">
@@ -110,7 +111,7 @@ export default function AppLayout({
             transition: 'padding-top 0.3s ease-in-out',
             ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
           }}
-          className="flex flex-col flex-1 min-h-0"
+          className="flex flex-col flex-1 min-h-0 overflow-y-auto"
         >
           <div className="flex-1 min-h-0 flex flex-col">
             <div className="flex-1 min-h-0">

@@ -165,7 +165,7 @@ export function ActiveWorkoutProvider({ children }) {
     checkForActiveWorkout();
     
 
-  }, [user]);
+  }, [user?.id]);
 
   // Timer effect
   useEffect(() => {
@@ -219,17 +219,30 @@ export function ActiveWorkoutProvider({ children }) {
           // Handle workout completion
           setIsWorkoutActive(w.is_active);
           if (!w.is_active) {
-            console.log('[Real-time] Workout ended remotely, navigating...');
-            // Navigate to completed workout before clearing state (for remote workout endings)
-            if (activeWorkout?.id && w.completed_at) {
-              navigate(`/history/${activeWorkout.id}`);
-            } else {
-              // Workout was ended but no completion timestamp (shouldn't happen, but handle gracefully)
-              navigate('/routines');
-            }
+            console.log('[Real-time] Workout ended remotely, clearing state...');
+            console.log('[Real-time] Workout ID:', activeWorkout?.id);
+            console.log('[Real-time] Was completed:', w.completed_at);
+            console.log('[Real-time] Current user:', user?.id);
+            
+            // Store workout ID before clearing state for navigation
+            const workoutId = activeWorkout?.id;
+            const wasCompleted = w.completed_at;
+            // Clear workout state - let the ActiveWorkout page handle navigation
             setActiveWorkout(null);
             setElapsedTime(0);
             setIsPaused(false);
+            
+            // Navigate based on whether workout was completed or deleted
+            // Add a small delay to ensure this takes precedence over auto-redirect logic
+            setTimeout(() => {
+              if (workoutId && wasCompleted) {
+                console.log('[Real-time] Navigating to workout summary:', workoutId);
+                navigate(`/history/${workoutId}`);
+              } else {
+                console.log('[Real-time] Navigating to routines (workout deleted)');
+                navigate('/routines');
+              }
+            }, 100);
           }
         } else if (eventType === 'DELETE') {
           console.log('[Real-time] Workout deleted remotely, ending local session...');
@@ -286,8 +299,13 @@ export function ActiveWorkoutProvider({ children }) {
     const globalChan = supabase
       .channel(`realtime:public:workouts:user_id=eq.${user.id}`)
       .on('postgres_changes', {
-        event: 'INSERT'
+        event: 'INSERT',
+        schema: 'public',
+        table: 'workouts'
       }, async ({ new: w }) => {
+        // Filter in the callback to ensure we only process workouts for this user
+        if (w.user_id !== user.id) return;
+        console.log('[Realtime][INSERT] New workout detected for user:', user.id, w);
         console.log('[Realtime][INSERT] New workout detected:', w);
         console.log('[Realtime][global new workout]', w);
         console.log('[Realtime] Current activeWorkout:', activeWorkout);
@@ -327,24 +345,20 @@ export function ActiveWorkoutProvider({ children }) {
           }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[ActiveWorkout] Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[ActiveWorkout] Successfully subscribed to workout changes for user:', user.id);
+        } else if (status === 'CLOSED' || status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+          console.error('[ActiveWorkout] Real-time subscription failed:', status);
+        }
+      });
 
     console.log('[ActiveWorkout] Real-time subscription created for user:', user.id);
-
-    // Add a test subscription to see if real-time is working at all
-    const testChan = supabase
-      .channel('test-workouts')
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'workouts'
-      }, (payload) => {
-        console.log('[Realtime][TEST] Any workout change detected:', payload);
-      })
-      .subscribe();
 
     return () => {
       console.log('[ActiveWorkout] Cleaning up real-time subscription for user:', user.id);
       void globalChan.unsubscribe();
-      void testChan.unsubscribe();
     };
   }, [user?.id]);
 

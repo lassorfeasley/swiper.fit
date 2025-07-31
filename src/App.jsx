@@ -212,8 +212,8 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Show normal navigation only when no workout is active */}
-      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && <MobileNav />}
+      {/* Show normal navigation only when no workout is active and not delegated */}
+      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
 
       {/* Global toast notifications */}

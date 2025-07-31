@@ -531,7 +531,7 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         variant="dark-fixed"
-        title={isOwner && !isDelegated ? workout?.workout_name : `${ownerName || "User"}'s ${workout?.workout_name}`}
+        title={workout?.workout_name}
         pageNameEditable={isOwner || isDelegated}
         showShare={!isPublicWorkoutView && (isOwner || isDelegated)}
         onShare={handleShare}
@@ -551,29 +551,37 @@ const CompletedWorkout = () => {
         pageContext="workout"
         showDeleteOption={isOwner || isDelegated}
         onDelete={handleDeleteWorkout}
+        showSidebar={!isDelegated}
       >
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
           exercisesBySection.length > 0 ? (
-            exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => (
-              <PageSectionWrapper
-                key={section}
-                section={section}
-                deckGap={0}
-                extendToBottom={idx === exercisesBySection.length - 1}
-                className={idx === exercisesBySection.length - 1 ? "flex-1" : ""}
-                style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
-              >
-                {sectionExercises.map((exercise) => (
-                  <ExerciseCompletedCard
-                    key={exercise.id}
-                    exercise={exercise}
-                    setLog={exercise.setLog}
-                  />
-                ))}
-              </PageSectionWrapper>
-            ))
+            exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
+              // Only extend to bottom if this is the last section AND there's enough content to warrant it
+              const isLastSection = idx === exercisesBySection.length - 1;
+              const totalExercises = exercisesBySection.reduce((total, section) => total + section.exercises.length, 0);
+              const shouldExtend = isLastSection && totalExercises > 2; // Only extend if there are more than 2 exercises total
+              
+              return (
+                <PageSectionWrapper
+                  key={section}
+                  section={section}
+                  deckGap={0}
+                  extendToBottom={shouldExtend}
+                  className={shouldExtend ? "flex-1" : ""}
+                  style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
+                >
+                  {sectionExercises.map((exercise) => (
+                    <ExerciseCompletedCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      setLog={exercise.setLog}
+                    />
+                  ))}
+                </PageSectionWrapper>
+              );
+            })
           ) : (
             <div className="text-center py-10">
               <p>No sets were logged for this workout.</p>

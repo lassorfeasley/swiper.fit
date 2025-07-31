@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,17 +24,42 @@ const History = () => {
   const [shareAll, setShareAll] = useState(false);
   const [search, setSearch] = useState("");
   const user = useCurrentUser();
-  const { isDelegated } = useAccount();
+  const { isDelegated, switchToUser } = useAccount();
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [hasSwitchedContext, setHasSwitchedContext] = useState(false);
+
+  // Check if we're managing history for an owner (from sharing page)
+  const managingForOwner = location.state?.managingForOwner;
+  const ownerId = location.state?.ownerId;
+  const ownerNameFromState = location.state?.ownerName;
 
   // Determine whose history we're viewing and whether it's the owner
-  const targetUserId = paramUserId || user?.id;
-  const viewingOwn = !!user && (!paramUserId || paramUserId === user.id);
+  const targetUserId = paramUserId || ownerId || user?.id;
+  const viewingOwn = !!user && (!paramUserId || paramUserId === user.id) && !managingForOwner;
+
+  /* ------------------------------------------------------------------
+    Handle delegation context when coming from sharing page
+  ------------------------------------------------------------------*/
+  useEffect(() => {
+    if (managingForOwner && ownerId && switchToUser && !hasSwitchedContext) {
+      console.log('[History] Switching to owner context for history:', ownerId);
+      // Create a mock profile object for the owner
+      const ownerProfile = {
+        id: ownerId,
+        first_name: ownerNameFromState?.split(' ')[0] || '',
+        last_name: ownerNameFromState?.split(' ').slice(1).join(' ') || '',
+        email: ''
+      };
+      switchToUser(ownerProfile);
+      setHasSwitchedContext(true);
+    }
+  }, [managingForOwner, ownerId, ownerNameFromState, switchToUser, hasSwitchedContext]);
 
   /* ------------------------------------------------------------------
     Fetch the user's global share preference when Auth state changes
