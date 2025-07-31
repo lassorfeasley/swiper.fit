@@ -7,8 +7,10 @@ import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { ActionCard } from '@/components/molecules/action-card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function DemoWorkoutSection() {
+  const isMobile = useIsMobile();
   const {
     demoExercises,
     focusedExerciseId,
@@ -82,7 +84,7 @@ export default function DemoWorkoutSection() {
           minWidth={325}
           className="flex justify-center items-start h-[600px] md:h-full"
           style={{ 
-            paddingTop: 0, 
+            paddingTop: isMobile ? 40 : 0, 
             paddingBottom: 0
           }}
           extendToBottom={true}
