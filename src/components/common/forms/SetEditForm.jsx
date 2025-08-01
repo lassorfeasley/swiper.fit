@@ -127,6 +127,21 @@ const FormContent = ({
         </div>
       </div>
       
+      {/* Keep new settings toggle (only for active workouts) */}
+      {!hideToggle && (
+        <FormSectionWrapper className="p-4" bordered={false}>
+          <ToggleInput
+            label="Keep new settings?"
+            value={addType}
+            onValueChange={(value) => value && onAddTypeChange(value)}
+            options={[
+              { label: "Just for today", value: "today" },
+              { label: "Permanently", value: "future" },
+            ]}
+          />
+        </FormSectionWrapper>
+      )}
+
       <FormSectionWrapper className="p-4 border-t border-neutral-300">
         <button
           onClick={handleDeleteClick}

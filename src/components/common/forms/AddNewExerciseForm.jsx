@@ -322,6 +322,22 @@ const AddNewExerciseForm = React.forwardRef(
           </FormSectionWrapper>
         )}
 
+        {/* Keep new settings toggle (only for active workouts when editing) */}
+        {showUpdateTypeToggle && (
+          <FormSectionWrapper className="p-4 border-t border-neutral-300" bordered={false}>
+            <ToggleInput
+              label="Keep new settings?"
+              value={updateType}
+              onValueChange={(value) => value && onUpdateTypeChange(value)}
+              options={[
+                { label: "Just for today", value: "today" },
+                { label: "Permanently", value: "future" },
+              ]}
+              disabled={disabled}
+            />
+          </FormSectionWrapper>
+        )}
+
         {/* Hidden form for submission */}
         <form ref={ref} onSubmit={handleSave} className="hidden">
           <button type="submit" />

@@ -778,6 +778,7 @@ const RoutineBuilder = () => {
         <SetEditForm
           hideInternalHeader
           hideActionButtons
+          hideToggle={true}
           onDirtyChange={setEditingSetFormDirty}
           onValuesChange={setEditingSet}
           onDelete={handleSetDelete}

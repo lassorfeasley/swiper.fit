@@ -146,6 +146,7 @@ export default function DemoWorkoutSection() {
         >
           <SetEditForm
             ref={setEditFormRef}
+            hideToggle={true}
             initialValues={{
               ...editingSet.setConfig,
               // Map weight_unit to unit for the form
