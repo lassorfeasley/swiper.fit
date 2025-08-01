@@ -9,7 +9,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
       {/* Mobile Layout - Only visible on mobile breakpoints */}
       <div className="md:hidden w-full flex-shrink-0 bg-white logged-out-nav">
         {showAuthButtons && (
-          <div className="w-full h-11 border-b border-neutral-neutral-300 inline-flex justify-start items-center">
+          <div className="w-full h-11 border-b border-neutral-neutral-300 flex items-center">
             <button 
               onClick={(e) => {
                 e.preventDefault();
@@ -17,9 +17,9 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 // Force navigation with window.location.href
                 window.location.href = '/login';
               }}
-              className="flex-1 h-11 px-5 py-2.5 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
+              className="flex-1 h-11 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
-              <div className="justify-start text-black text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
+              <div className="justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
               <MoveUpRight className="w-2.5 h-2.5 text-neutral-neutral-700" />
             </button>
             <button 
@@ -29,9 +29,9 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
                 // Force navigation with window.location.href
                 window.location.href = '/create-account';
               }}
-              className="flex-1 h-11 max-w-96 px-4 py-2 bg-green-600 flex justify-center items-center gap-2 hover:bg-green-700 transition-colors cursor-pointer"
+              className="flex-1 h-11 bg-green-600 flex justify-center items-center gap-2 hover:bg-green-700 transition-colors cursor-pointer"
             >
-              <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
+              <div className="justify-start text-white text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
               <MoveUpRight className="w-2.5 h-2.5 text-white" />
             </button>
           </div>
