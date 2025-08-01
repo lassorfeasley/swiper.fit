@@ -274,3 +274,194 @@ nav button,
   scroll-snap-align: var(--card-snap-align, start);
   scroll-margin-top: var(--card-scroll-margin-top, 0);
 }
+
+/* max-width: 1280px;
+margin: 0 auto;
+padding: 2rem; */
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background-color: #ffffff;
+}
+
+/* Clean up the debugging styles */
+/* div {
+  border: none;
+} */
+
+.text-heading {
+  font-size: 25px;
+}
+
+.text-heading-black {
+  color: #2F3640;
+}
+
+.text-metric {
+  font-size: 16px;
+}
+
+.font-metric {
+  font-weight: 500;
+}
+
+.leading-metric {
+  line-height: 15px;
+}
+
+body[data-env="development"] [data-component]:hover::after {
+  content: attr(data-component);
+  position: fixed;
+  left: 0;
+  top: 0;
+  background: rgba(30,30,40,0.85);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 2px 10px;
+  z-index: 99999;
+  pointer-events: none;
+  font-family: monospace;
+}
+
+/* Safari-specific viewport height and flexbox fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  html, body, #root {
+    /* Use dynamic viewport height for better Safari compatibility */
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Fix for Safari flexbox issues with viewport height */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Ensure proper flex container behavior in Safari */
+  .flex.flex-col.flex-1 {
+    /* Force Safari to properly calculate flex basis */
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  
+  /* Fix for footer positioning in Safari */
+  .mt-auto {
+    /* Ensure margin-top: auto works properly in Safari */
+    margin-top: auto !important;
+  }
+  
+  /* Additional Safari-specific layout fixes */
+  .flex.flex-col.flex-1.min-h-0 {
+    /* Ensure proper flex behavior in Safari */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  
+  /* Fix for main container height calculation in Safari */
+  main.flex.flex-col.flex-1.min-h-0 {
+    /* Ensure main container takes full available height */
+    height: 100%;
+    min-height: 0;
+  }
+  
+  /* Comprehensive Safari layout fix */
+  .min-h-screen {
+    /* Force proper viewport height calculation in Safari */
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+  }
+  
+  /* Ensure proper flex behavior in Safari */
+  .flex.flex-col {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .flex-1 {
+    flex: 1 1 auto !important;
+  }
+  
+  /* Fix for Safari's flexbox viewport height issues */
+  body > div:first-child {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Prevent horizontal scrolling in dialogs */
+  [data-radix-dialog-content] {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure dialog content doesn't overflow */
+  [data-radix-dialog-content] * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Remove unwanted borders and focus outlines from dialogs */
+  [data-radix-dialog-content] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Remove focus outlines from dialog content */
+  [data-radix-dialog-content]:focus,
+  [data-radix-dialog-content]:focus-visible {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Remove any default browser focus styles from dialog elements */
+  [data-radix-dialog-content] *:focus,
+  [data-radix-dialog-content] *:focus-visible {
+    outline: none !important;
+    border: none !important;
+  }
+  
+  /* Prevent borders during all animation states */
+  [data-radix-dialog-content][data-state="open"],
+  [data-radix-dialog-content][data-state="closed"],
+  [data-radix-dialog-content][data-state="open"] *,
+  [data-radix-dialog-content][data-state="closed"] * {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Remove borders during all transition phases */
+  [data-radix-dialog-content].animate-in,
+  [data-radix-dialog-content].animate-out,
+  [data-radix-dialog-content].fade-in-0,
+  [data-radix-dialog-content].fade-out-0,
+  [data-radix-dialog-content].zoom-in-95,
+  [data-radix-dialog-content].zoom-out-95,
+  [data-radix-dialog-content].slide-in-from-left-1\/2,
+  [data-radix-dialog-content].slide-out-to-left-1\/2,
+  [data-radix-dialog-content].slide-in-from-top-\[48\%\],
+  [data-radix-dialog-content].slide-out-to-top-\[48\%\] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Immediate border removal for any dialog content */
+  [data-radix-dialog-content],
+  [data-radix-dialog-content] * {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}

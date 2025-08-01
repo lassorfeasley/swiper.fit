@@ -47,6 +47,7 @@ export default function Sharing() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
   const [activeWorkout, setActiveWorkout] = useState(null);
+  const [dialogMode, setDialogMode] = useState('workout'); // 'workout' or 'manage'
   const subscriptionRef = useRef(null);
   const retryTimeoutRef = useRef(null);
 
@@ -82,14 +83,99 @@ export default function Sharing() {
   // New handlers for delegate actions without switching context
   const handleCreateRoutinesForOwner = async (ownerProfile) => {
     console.log('[Sharing] Opening routine builder for owner:', ownerProfile.id);
-    // Navigate to routines page with owner context
-    navigate('/routines', { 
-      state: { 
-        managingForOwner: true, 
-        ownerId: ownerProfile.id,
-        ownerName: formatUserDisplay(ownerProfile)
-      } 
-    });
+    setSelectedClient(ownerProfile);
+    setDialogMode('manage');
+    
+    // Fetch routines for this specific owner
+    try {
+      const { data: routines, error } = await supabase
+        .from("routines")
+        .select(`
+          *,
+          workouts!fk_workouts__routines(
+            id,
+            completed_at
+          ),
+          routine_exercises!fk_routine_exercises__routines(
+            id,
+            exercise_order,
+            exercises!fk_routine_exercises__exercises(
+              id,
+              name,
+              section
+            ),
+            routine_sets!fk_routine_sets__routine_exercises(
+              id,
+              reps,
+              weight,
+              weight_unit,
+              set_order,
+              set_variant,
+              set_type,
+              timed_set_duration
+            )
+          )
+        `)
+        .eq("user_id", ownerProfile.id)
+        .eq("is_archived", false)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching routines:", error);
+        return;
+      }
+
+      // Process routines to add completion status
+      const routinesWithCompletion = (routines || []).map((routine) => {
+        // Get the most recent completed workout
+        const completedWorkouts = (routine.workouts || []).filter(w => w.completed_at);
+        const lastCompletedWorkout = completedWorkouts.length > 0 
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          : null;
+        
+        // Format the completion date
+        let lastCompletedText = null;
+        if (lastCompletedWorkout) {
+          const completedDate = new Date(lastCompletedWorkout.completed_at);
+          const now = new Date();
+          
+          // Compare dates only (not time)
+          const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+          const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          
+          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 0) {
+            lastCompletedText = "Completed today";
+          } else if (diffDays === 1) {
+            lastCompletedText = "Completed yesterday";
+          } else if (diffDays < 7) {
+            lastCompletedText = `Completed ${diffDays} days ago`;
+          } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            lastCompletedText = `Completed ${weeks} week${weeks > 1 ? 's' : ''} ago`;
+          } else {
+            const months = Math.floor(diffDays / 30);
+            lastCompletedText = `Completed ${months} month${months > 1 ? 's' : ''} ago`;
+          }
+        }
+
+        return {
+          ...routine,
+          lastCompletedText
+        };
+      });
+
+      console.log("Fetched routines for owner:", ownerProfile.id);
+      console.log("Routine data structure:", routinesWithCompletion);
+      console.log("Number of routines found:", routinesWithCompletion?.length || 0);
+      
+      setClientRoutines(routinesWithCompletion || []);
+      setShowRoutineSelectionDialog(true);
+    } catch (error) {
+      console.error("Error fetching routines:", error);
+    }
   };
 
   const handleReviewHistoryForOwner = async (ownerProfile) => {
@@ -659,6 +745,26 @@ export default function Sharing() {
     }
   };
 
+  const handleRoutineManage = (routine) => {
+    if (selectedClient) {
+      // Switch to the account owner's context
+      switchToUser(selectedClient);
+      
+      // Navigate to routine builder with the specific routine
+      navigate(`/routines/${routine.id}/configure`, { 
+        state: { 
+          managingForOwner: true, 
+          ownerId: selectedClient.id,
+          ownerName: formatUserDisplay(selectedClient)
+        } 
+      });
+      setShowRoutineSelectionDialog(false);
+      setSelectedClient(null);
+      setClientRoutines([]);
+      setActiveWorkout(null);
+    }
+  };
+
   const handleRoutineSelect = async (routine) => {
     try {
       console.log('[Sharing] Starting workout for client:', selectedClient.id);
@@ -971,17 +1077,18 @@ export default function Sharing() {
           <SwiperDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title="Select routine to start workout"
+            title={dialogMode === 'workout' ? "Select routine to start workout" : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
             confirmText=""
             cancelText=""
             onCancel={() => {
               setShowRoutineSelectionDialog(false);
               setSelectedClient(null);
               setClientRoutines([]);
+              setDialogMode('workout');
             }}
           >
             <div className="self-stretch flex flex-col justify-start items-start">
-              {activeWorkout && (
+              {dialogMode === 'workout' && activeWorkout && (
                 <div 
                   className="w-full p-3 bg-green-50 border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-green-100"
                   onClick={handleJoinActiveWorkout}
@@ -1002,42 +1109,70 @@ export default function Sharing() {
                 </div>
               )}
               {clientRoutines
-                .filter(routine => !activeWorkout || routine.id !== activeWorkout.routine_id)
+                .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
                 .map((routine, index) => (
                 <div 
                   key={routine.id}
                   className={`w-full p-3 bg-white flex flex-col justify-start items-start gap-6 ${
-                    activeWorkout ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-50'
+                    dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-50'
                   } ${
-                    index < clientRoutines.filter(r => !activeWorkout || r.id !== activeWorkout.routine_id).length - 1 ? 'border-b border-neutral-neutral-300' : ''
+                    index < clientRoutines.filter(r => dialogMode === 'workout' ? (!activeWorkout || r.id !== activeWorkout.routine_id) : true).length - 1 ? 'border-b border-neutral-neutral-300' : ''
                   }`}
-                  onClick={activeWorkout ? undefined : () => handleRoutineSelect(routine)}
+                  onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
                 >
                   <div className="self-stretch flex flex-col justify-start items-start gap-5">
                     <div className="self-stretch flex flex-col justify-start items-start">
                       <div className={`w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                        activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
+                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
                       }`}>
                         {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
                       </div>
                       <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                        activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
+                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
                       }`}>
                         {routine.lastCompletedText || 'Never completed'}
                       </div>
                     </div>
                   </div>
                   <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                    activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
+                    dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
                   }`}>
-                    Start workout
+                    {dialogMode === 'workout' ? 'Start workout' : 'Edit routine'}
                   </div>
                 </div>
               ))}
               {clientRoutines.length === 0 && (
                 <div className="w-full max-w-[500px] p-3 bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-6">
                   <div className="text-center justify-center text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    No routines found for this client.
+                    {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
+                  </div>
+                </div>
+              )}
+              {dialogMode === 'manage' && (
+                <div 
+                  className="w-full p-3 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-neutral-50"
+                  onClick={() => {
+                    if (selectedClient) {
+                      // Switch to the account owner's context
+                      switchToUser(selectedClient);
+                      
+                      // Navigate to routine builder to create a new routine
+                      navigate('/routines', { 
+                        state: { 
+                          managingForOwner: true, 
+                          ownerId: selectedClient.id,
+                          ownerName: formatUserDisplay(selectedClient)
+                        } 
+                      });
+                      setShowRoutineSelectionDialog(false);
+                      setSelectedClient(null);
+                      setClientRoutines([]);
+                      setActiveWorkout(null);
+                    }
+                  }}
+                >
+                  <div className="text-center justify-center text-neutral-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
+                    Create new routine
                   </div>
                 </div>
               )}

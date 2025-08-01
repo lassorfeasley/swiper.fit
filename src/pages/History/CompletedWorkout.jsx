@@ -537,10 +537,19 @@ const CompletedWorkout = () => {
         onShare={handleShare}
         showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
         onSettings={() => setEditWorkoutOpen(true)}
-        showBackButton={!isPublicWorkoutView || ownerHistoryPublic}
+        showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
         onBack={() => {
           if (isPublicWorkoutView && workout) {
             navigate(`/history/public/${workout.user_id}`);
+          } else if (isDelegated && workout) {
+            // For delegates, navigate to the owner's history page
+            navigate(`/history`, { 
+              state: { 
+                managingForOwner: true, 
+                ownerId: workout.user_id,
+                ownerName: ownerName
+              } 
+            });
           } else {
             navigate('/history');
           }

@@ -89,9 +89,8 @@ function AppContent() {
   
   // Guard: If workout is active and we're on a non-allowed page, immediately redirect
   // Don't redirect while workout context is still loading to avoid premature redirects
-  // Allow delegates to access history pages even with active workouts
-  const isDelegateOnHistory = isDelegated && location.pathname.startsWith('/history');
-  const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading && !isDelegateOnHistory;
+  // Delegates should NEVER be redirected to active workouts - they should be able to manage accounts freely
+  const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading && !isDelegated;
 
   // Debug logging for workout redirect logic
   useEffect(() => {
@@ -132,8 +131,9 @@ function AppContent() {
   }, [shouldRedirect, navigate, isWorkoutActive, workoutLoading, isAllowedPath, location.pathname, isDelegated]);
 
   // Immediate redirect when workout context finishes loading and detects active workout
+  // But NEVER redirect delegates - they should be able to manage accounts freely
   useEffect(() => {
-    if (!workoutLoading && isWorkoutActive && location.pathname !== '/workout/active') {
+    if (!workoutLoading && isWorkoutActive && location.pathname !== '/workout/active' && !isDelegated) {
       console.log('[App] Immediate redirect to active workout after loading');
       navigate('/workout/active', { replace: true });
     }
@@ -145,11 +145,8 @@ function AppContent() {
       const restrictedPaths = ['/routines', '/history', '/sharing', '/account', '/dashboard'];
       const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
       
-      // Allow delegates to access history pages and sharing page even with active workouts
-      const isDelegateOnHistory = isDelegated && location.pathname.startsWith('/history');
-      const isDelegateOnSharing = isDelegated && location.pathname.startsWith('/sharing');
-      
-      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegateOnHistory && !isDelegateOnSharing) {
+      // Delegates should NEVER be redirected - they can access all pages freely
+      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegated) {
         console.log('[App] Safety redirect: on restricted page with active workout:', location.pathname);
         navigate('/workout/active', { replace: true });
       }

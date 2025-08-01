@@ -50,21 +50,21 @@ const SwiperDialog = ({
       <DialogPortal>
         <DialogOverlay className="bg-white/65 backdrop-blur-[.1px] z-[9999]" />
         <DialogContent 
-          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] ${contentClassName || ''}`}
+          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0 ${contentClassName || ''}`}
         >
           <DialogTitle className="sr-only">
             {title || 'Dialog'}
           </DialogTitle>
           <DeckWrapper 
-            className="w-full h-screen flex flex-col justify-center items-center gap-2.5" 
-            maxWidth={400} 
-            minWidth={325}
+            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0" 
+            maxWidth={null}
+            minWidth={null}
             extendToBottom={true}
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div 
-              className="w-full bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center"
+              className="w-full bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center overflow-x-hidden focus:outline-none focus:border-none focus:ring-0"
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
@@ -79,7 +79,7 @@ const SwiperDialog = ({
                   <div className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">{description}</div>
                 </div>
               )}
-              <div className="self-stretch max-h-[500px] overflow-y-auto">
+              <div className="self-stretch max-h-[500px] overflow-y-auto overflow-x-hidden">
                 {children}
                 {(confirmText || cancelText) && (
                   <div 
