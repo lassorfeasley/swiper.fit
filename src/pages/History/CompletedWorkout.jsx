@@ -565,8 +565,9 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          exercisesBySection.length > 0 ? (
-            exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
+          <div className="flex flex-col min-h-screen">
+            {exercisesBySection.length > 0 ? (
+              exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
               // Only extend to bottom if this is the last section AND there's enough content to warrant it
               const isLastSection = idx === exercisesBySection.length - 1;
               const totalExercises = exercisesBySection.reduce((total, section) => total + section.exercises.length, 0);
@@ -578,7 +579,8 @@ const CompletedWorkout = () => {
                   section={section}
                   deckGap={0}
                   extendToBottom={shouldExtend}
-                  className={shouldExtend ? "flex-1" : ""}
+                  isFirst={idx === 0}
+                  className={`${shouldExtend ? "flex-1" : ""} ${idx > 0 ? "border-t-0" : ""}`}
                   style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
                 >
                   {sectionExercises.map((exercise) => (
@@ -595,7 +597,8 @@ const CompletedWorkout = () => {
             <div className="text-center py-10">
               <p>No sets were logged for this workout.</p>
             </div>
-          )
+          )}
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <p>Workout not found.</p>

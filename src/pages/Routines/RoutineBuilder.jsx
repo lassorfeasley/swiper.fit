@@ -639,7 +639,7 @@ const RoutineBuilder = () => {
         showSidebar={!isDelegated}
         // vertical snap disabled
       >
-        {exercisesBySection.map(({ section, exercises: secExercises }) => (
+        {exercisesBySection.map(({ section, exercises: secExercises }, index) => (
           <PageSectionWrapper
             key={section}
             section={section} 
@@ -648,6 +648,7 @@ const RoutineBuilder = () => {
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
+            extendToBottom={index === exercisesBySection.length - 1}
             style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
           >
             {secExercises.length === 0 && !loading ? (

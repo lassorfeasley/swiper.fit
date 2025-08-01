@@ -20,9 +20,11 @@ const SideBarNav = () => {
       <div data-layer="Frame 18" className="Frame18 w-64 self-stretch inline-flex flex-col justify-between items-stretch h-full overflow-x-hidden">
         <div data-layer="Frame 21" className="Frame21 self-stretch px-4 py-5 border-b border-neutral-300 flex justify-start items-center">
           <div data-svg-wrapper data-layer="Vector" className="Vector">
-            <svg width="24" height="19" viewBox="0 0 40 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M40 4.85713L13.8329 31L0 18.3308L4.52049 13.2704L13.6322 21.6156L35.269 0L40 4.85713Z" fill="var(--green-500, #22C55E)"/>
-            </svg>
+            <img 
+              src="/images/swiper-logo.png" 
+              alt="Swiper Logo" 
+              className="w-[130px] h-auto object-contain"
+            />
           </div>
         </div>
         <div data-layer="MaxWidthWrapper" className="Maxwidthwrapper self-stretch flex-1 flex flex-col justify-center items-stretch">

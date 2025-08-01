@@ -40,7 +40,7 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white inline-flex flex-col justify-start items-center",
+        "Workoutcardwrapper w-full bg-white flex flex-col justify-start items-center",
         !isFirst && "border-t border-neutral-300",
         className
       )}
@@ -52,7 +52,7 @@ const PageSectionWrapper = ({
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch px-0 flex justify-center")}>
+      <div className={cn("w-full self-stretch px-0 flex justify-center", extendToBottom && "flex-1")}>
         <DeckWrapper 
           gap={deckGap} 
           reorderable={reorderable}

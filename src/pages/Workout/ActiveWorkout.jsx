@@ -347,7 +347,7 @@ const ActiveWorkoutContent = () => {
       noTopPadding={!isDelegated}
       showSidebar={false}
     >
-      <div ref={listRef}>
+      <div ref={listRef} className="flex flex-col min-h-screen">
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"
