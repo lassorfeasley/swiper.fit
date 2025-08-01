@@ -22,14 +22,14 @@ const SectionWrapperLabel = ({
   return (
     <div
       className={cn(
-        "h-[44px] self-stretch pl-3 bg-white border-b border-neutral-300 inline-flex items-center z-30",
+        "h-[44px] self-stretch pl-3 bg-neutral-50 border-t border-b border-neutral-300 inline-flex items-center z-30",
         className
       )}
       {...props}
     >
       <div className="flex-1 flex items-center gap-2.5">
         <div data-layer="title" className="Title flex-1 self-stretch px-3 inline-flex justify-start items-center gap-2.5">
-          <div data-layer="Programs" className="Programs justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+          <div data-layer="Programs" className="Programs justify-start text-slate-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
             {children}
           </div>
         </div>

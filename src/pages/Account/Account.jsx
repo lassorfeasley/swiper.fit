@@ -9,7 +9,7 @@ import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapp
 import ToggleInput from "@/components/molecules/toggle-input";
 import { toast } from "sonner";
 import EditableTextInput from "@/components/molecules/editable-text-input";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Pencil } from "lucide-react";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 
 const Account = () => {
@@ -153,9 +153,9 @@ const Account = () => {
 
   return (
     <AppLayout title="Account" hideHeader>
-      {/* Container to ensure last section fills viewport */}
-      <div className="flex flex-col h-full">
-        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center">
+      <div className="w-full inline-flex flex-col justify-start items-start overflow-hidden">
+        {/* Personal Information Section */}
+        <div className="self-stretch bg-white flex flex-col justify-center items-center">
           <SectionWrapperLabel
             isEditing={isEditingName}
             onEdit={() => setIsEditingName(true)}
@@ -173,33 +173,71 @@ const Account = () => {
           >
             Personal information
           </SectionWrapperLabel>
-          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-              <EditableTextInput
-                label="First name"
-                value={firstName}
-                onChange={(val) => {
-                  setFirstName(val);
-                  setDirtyName(true);
-                }}
-                editing={isEditingName}
-                onActivate={() => setIsEditingName(true)}
-              />
-              <EditableTextInput
-                label="Last name"
-                value={lastName}
-                onChange={(val) => {
-                  setLastName(val);
-                  setDirtyName(true);
-                }}
-                editing={isEditingName}
-                onActivate={() => setIsEditingName(true)}
-              />
+          <div className="self-stretch px-5 flex flex-col justify-start items-center gap-10">
+            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start">
+              <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-center items-center gap-4">
+                {/* First Name Field */}
+                <EditableTextInput
+                  label="First name"
+                  value={firstName}
+                  onChange={(value) => {
+                    setFirstName(value);
+                    setDirtyName(true);
+                  }}
+                  editing={isEditingName}
+                  onActivate={() => setIsEditingName(true)}
+                  className="w-full"
+                />
+
+                {/* Last Name Field */}
+                <EditableTextInput
+                  label="Last name"
+                  value={lastName}
+                  onChange={(value) => {
+                    setLastName(value);
+                    setDirtyName(true);
+                  }}
+                  editing={isEditingName}
+                  onActivate={() => setIsEditingName(true)}
+                  className="w-full"
+                />
+
+                {/* Action Buttons */}
+                {isEditingName && (
+                  <>
+                    <div 
+                      className="self-stretch h-12 px-4 py-2 bg-green-200 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                      onClick={() => {
+                        handleSaveName();
+                        setIsEditingName(false);
+                      }}
+                    >
+                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Save changes
+                      </div>
+                    </div>
+                    <div 
+                      className="self-stretch h-12 px-4 py-2 bg-red-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                      onClick={() => {
+                        setFirstName(profile.first_name);
+                        setLastName(profile.last_name);
+                        setDirtyName(false);
+                        setIsEditingName(false);
+                      }}
+                    >
+                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Discard changes
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center">
+        {/* Login and Password Section */}
+        <div className="self-stretch bg-white flex flex-col justify-center items-center">
           <SectionWrapperLabel
             isEditing={isEditingLogin}
             onEdit={() => setIsEditingLogin(true)}
@@ -217,64 +255,104 @@ const Account = () => {
           >
             Login and password
           </SectionWrapperLabel>
-          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-              <EditableTextInput
-                label="Email"
-                value={email}
-                onChange={(val) => {
-                  setEmail(val);
-                  setDirtyEmail(true);
-                }}
-                editing={isEditingLogin}
-                onActivate={() => setIsEditingLogin(true)}
-                inputProps={{ type: "email", placeholder: "Enter your email" }}
-              />
-              <EditableTextInput
-                label="Password"
-                value={newPassword}
-                onChange={setNewPassword}
-                editing={isEditingLogin}
-                onActivate={() => setIsEditingLogin(true)}
-                inputProps={{
-                  type: showPasswordLogin ? "text" : "password",
-                  placeholder: "",
-                  icon: showPasswordLogin ? (
-                    <Eye
-                      className="size-6 text-neutral-300"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPasswordLogin(false);
+          <div className="self-stretch px-5 flex flex-col justify-start items-center gap-10">
+            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-center items-center gap-2.5">
+              <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+                {/* Email Field */}
+                <EditableTextInput
+                  label="Email"
+                  value={email}
+                  onChange={(value) => {
+                    setEmail(value);
+                    setDirtyEmail(true);
+                  }}
+                  editing={isEditingLogin}
+                  onActivate={() => setIsEditingLogin(true)}
+                  className="w-full"
+                />
+
+                {/* Password Field */}
+                <EditableTextInput
+                  label="Password"
+                  value="●●●●●●●●●"
+                  onChange={(value) => {
+                    setNewPassword(value);
+                  }}
+                  editing={isEditingLogin}
+                  onActivate={() => setIsEditingLogin(true)}
+                  className="w-full"
+                  inputProps={{
+                    type: "password",
+                    placeholder: "Enter new password"
+                  }}
+                />
+
+                {/* Action Buttons for Login Section */}
+                {isEditingLogin && (
+                  <>
+                    <div 
+                      className="self-stretch h-12 px-4 py-2 bg-green-200 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                      onClick={() => {
+                        handleSaveLoginSection();
+                        setIsEditingLogin(false);
                       }}
-                    />
-                  ) : (
-                    <EyeOff
-                      className="size-6 text-neutral-300"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPasswordLogin(true);
+                    >
+                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Save changes
+                      </div>
+                    </div>
+                    <div 
+                      className="self-stretch h-12 px-4 py-2 bg-red-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                      onClick={() => {
+                        setEmail(user.email || "");
+                        setDirtyEmail(false);
+                        setNewPassword("");
+                        setIsEditingLogin(false);
                       }}
-                    />
-                  ),
-                }}
-              />
+                    >
+                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Discard changes
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="self-stretch bg-white shadow-[0px_0px_20px_0px_rgba(64,64,64,0.20)] border-b border-neutral-100 flex flex-col justify-start items-center flex-1">
-          <SectionWrapperLabel>Account</SectionWrapperLabel>
-          <div className="self-stretch px-5 pt-10 pb-14 flex flex-col items-center gap-10">
-            <div className="w-full max-w-[800px] grid grid-cols-1 md:grid-cols-2 gap-5">
-              <SwiperButton onClick={handleLogout} className="w-full">
-                Log out
-              </SwiperButton>
-              <SwiperButton variant="destructive" onClick={() => setDeleteConfirmOpen(true)} className="w-full">
-                Delete account
-              </SwiperButton>
+        {/* Account Section */}
+        <div className="self-stretch bg-white flex flex-col justify-center items-center">
+          <SectionWrapperLabel>
+            Account
+          </SectionWrapperLabel>
+          <div className="self-stretch flex flex-col justify-start items-center gap-10">
+            <div className="self-stretch flex flex-col justify-start items-center gap-2.5">
+              <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start gap-5">
+                <div className="self-stretch p-5 bg-white border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+                  <div 
+                    className="self-stretch h-12 px-4 py-2 bg-neutral-600 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"
+                    onClick={handleLogout}
+                  >
+                    <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      Log out
+                    </div>
+                  </div>
+                  <div 
+                    className="self-stretch h-12 px-4 py-2 bg-red-400 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-500"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                  >
+                    <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      Delete account
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+
       </div>
 
       <SwiperAlertDialog

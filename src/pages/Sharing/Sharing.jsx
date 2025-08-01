@@ -900,7 +900,7 @@ export default function Sharing() {
 
   return (
     <AppLayout title="" hideHeader>
-      <div className="w-full">
+      <div className="w-full flex flex-col min-h-screen">
         {/* Shared with me section */}
         <PageSectionWrapper 
           section="Shared with me"
@@ -967,6 +967,8 @@ export default function Sharing() {
         {/* Shared by me section */}
         <PageSectionWrapper 
           section="Shared by me"
+          className="border-t-0 flex-1"
+          extendToBottom={true}
           style={{ paddingBottom: 80, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           {ownerSharesQuery.data?.map((share) => (

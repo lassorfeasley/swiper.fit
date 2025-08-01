@@ -37,8 +37,8 @@ const SideBarNav = () => {
               data-layer={`Selected=${selectedAccount ? 'selected' : 'Default'}`}
               className={cn(
                 "inline-flex justify-start items-center gap-1 w-full p-4",
-                selectedAccount ? "bg-white border-t border-b border-neutral-300" : "bg-neutral-100",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                selectedAccount ? "bg-white" : "bg-neutral-100",
+                "focus-visible:outline-none",
                 isDelegated && "opacity-50 cursor-not-allowed"
               )}
               aria-current={selectedAccount ? "page" : undefined}
