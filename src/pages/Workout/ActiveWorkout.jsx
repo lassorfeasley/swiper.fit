@@ -63,7 +63,7 @@ const ActiveWorkoutContent = () => {
   const [newWorkoutName, setNewWorkoutName] = useState(
     activeWorkout?.workoutName || ""
   );
-  const { isDelegated } = useAccount();
+  const { isDelegated, returnToSelf } = useAccount();
   const { user } = useAuth();
   
   // Sync local name when workoutName changes
@@ -219,10 +219,19 @@ const ActiveWorkoutContent = () => {
     try {
       const saved = await contextEndWorkout();
       if (saved && activeWorkout?.id) {
-        navigate(`/history/${activeWorkout.id}`);
+        if (isDelegated) {
+          // For delegates, return to their own sharing page
+          returnToSelf();
+        } else {
+          navigate(`/history/${activeWorkout.id}`);
+        }
       } else {
-        // No sets saved – redirect back to routines
-        navigate("/routines");
+        // No sets saved – redirect back to routines or sharing page
+        if (isDelegated) {
+          returnToSelf();
+        } else {
+          navigate("/routines");
+        }
       }
     } catch (error) {
       console.error("Error ending workout:", error);
@@ -255,7 +264,11 @@ const ActiveWorkoutContent = () => {
     try {
       // End the workout without saving (this will clear the context)
       await contextEndWorkout();
-      navigate("/routines");
+      if (isDelegated) {
+        returnToSelf();
+      } else {
+        navigate("/routines");
+      }
     } catch (err) {
       alert("Failed to delete workout: " + err.message);
     } finally {
@@ -286,9 +299,18 @@ const ActiveWorkoutContent = () => {
             // End workout first to clear active context and prevent redirects
             const saved = await contextEndWorkout();
             if (saved && wid) {
-              navigate(`/history/${wid}`);
+              if (isDelegated) {
+                // For delegates, return to their own sharing page
+                returnToSelf();
+              } else {
+                navigate(`/history/${wid}`);
+              }
             } else {
-              navigate("/routines");
+              if (isDelegated) {
+                returnToSelf();
+              } else {
+                navigate("/routines");
+              }
             }
           })();
         }
