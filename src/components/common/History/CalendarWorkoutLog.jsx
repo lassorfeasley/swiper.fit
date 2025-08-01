@@ -207,7 +207,9 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
         <DeckWrapper
           gap={0}
           extendToBottom={true}
-          style={{ paddingBottom: 80 }}
+          paddingBottom={80}
+          maxWidth={viewingOwn ? null : 500}
+          minWidth={viewingOwn ? null : 325}
         >
           {events.length === 0 ? (
             <div className="text-sm text-muted-foreground">No workouts logged</div>

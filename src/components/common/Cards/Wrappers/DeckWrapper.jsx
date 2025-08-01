@@ -20,6 +20,7 @@ const DeckWrapper = forwardRef(
       items = [],
       onReorder,
       forceMinHeight = false, // Force minimum screen height
+      paddingBottom, // custom bottom padding
       ...props
     },
     ref
@@ -36,9 +37,9 @@ const DeckWrapper = forwardRef(
     const style = {
       gap,
       paddingTop: 40,
-      paddingBottom: extendToBottom ? 0 : 80,
-      maxWidth: `${maxWidth}px`,
-      minWidth: `${minWidth}px`,
+      paddingBottom: paddingBottom !== undefined ? paddingBottom : (extendToBottom ? 0 : 80),
+      ...(maxWidth && { maxWidth: `${maxWidth}px` }),
+      ...(minWidth && { minWidth: `${minWidth}px` }),
       ...(props.style || {}),
     };
 
@@ -182,6 +183,7 @@ DeckWrapper.propTypes = {
   isFirstCard: PropTypes.bool,
   extendToBottom: PropTypes.bool,
   forceMinHeight: PropTypes.bool,
+  paddingBottom: PropTypes.number,
 };
 
 export default DeckWrapper; 

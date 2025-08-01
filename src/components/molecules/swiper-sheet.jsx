@@ -25,7 +25,7 @@ const SwiperSheet = ({
       <SheetContent
         side={isMobile ? "bottom" : "right"}
         className={cn(
-          isMobile ? "h-[85vh] w-full" : "w-[350px] sm:max-w-none",
+          isMobile ? "h-[85vh] w-full px-5" : "w-[350px] sm:max-w-none",
           "bg-stone-50 p-0 gap-0 flex flex-col",
           className
         )}

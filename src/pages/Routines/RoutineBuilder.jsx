@@ -625,7 +625,7 @@ const RoutineBuilder = () => {
         onSettings={() => setEditProgramOpen(true)}
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
-        showBackButton
+        showBackButton={!isDelegated}
         showStartWorkout={!isDelegated && true}
         onStartWorkout={handleStartWorkout}
         pageContext="program-builder"
@@ -636,6 +636,7 @@ const RoutineBuilder = () => {
           setSectionFilter(val);
           scrollSectionIntoView(val);
         }}
+        showSidebar={!isDelegated}
         // vertical snap disabled
       >
         {exercisesBySection.map(({ section, exercises: secExercises }) => (
