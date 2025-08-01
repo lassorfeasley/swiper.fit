@@ -117,7 +117,13 @@ const FormContent = ({
           </div>
           <div data-feild-label="false" data-optional="false" data-property-1="default" data-show-units="true" className="self-stretch flex flex-col justify-start items-start gap-2">
             <NumericInput
-              value={weight}
+              value={
+                weight !== undefined && unit !== "body"
+                  ? weight
+                  : unit === "body"
+                  ? "body"
+                  : 0
+              }
               onChange={weightOnChange}
               onBlur={showSetNameField ? syncWithParent : undefined}
               unitLabel={unit === "body" ? "Body weight" : unit}

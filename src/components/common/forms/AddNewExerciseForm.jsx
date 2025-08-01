@@ -293,7 +293,13 @@ const AddNewExerciseForm = React.forwardRef(
 
                 <NumericInput
                   label="Weight"
-                  value={defaults.weight}
+                  value={
+                    defaults.weight !== undefined && defaults.unit !== "body"
+                      ? defaults.weight
+                      : defaults.unit === "body"
+                      ? "body"
+                      : 0
+                  }
                   onChange={(value) => updateDefault("weight", value)}
                   min={0}
                   max={999}

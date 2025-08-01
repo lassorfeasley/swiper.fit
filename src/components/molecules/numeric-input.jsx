@@ -116,6 +116,21 @@ const NumericInput = ({
     onChange(num);
   };
 
+  // Special case for bodyweight
+  if (value === "body") {
+    return (
+      <div
+        className={cn("w-full inline-flex flex-col justify-start items-start gap-0", className)}
+      >
+        <div className="self-stretch h-12 bg-white rounded outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-start items-center gap-1">
+          <div className="flex-1 inline-flex flex-col justify-center items-start gap-1">
+            <div className="self-stretch text-center justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Bodyweight</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn("w-full inline-flex flex-col justify-start items-start gap-0", className)}
