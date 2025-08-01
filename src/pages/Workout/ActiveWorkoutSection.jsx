@@ -1406,9 +1406,8 @@ const ActiveWorkoutSection = ({
         key={section}
         section={section}
         showPlusButton={false}
-        extendToBottom={isLastSection}
         isFirst={section === "warmup"}
-        className={section !== "warmup" ? "border-t-0" : ""}
+        className={`${section !== "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         <div className="text-center py-8 text-gray-500">
@@ -1425,9 +1424,8 @@ const ActiveWorkoutSection = ({
           key={section}
           section={section}
           showPlusButton={false}
-          extendToBottom={isLastSection}
           isFirst={section === "warmup"}
-          className={section !== "warmup" ? "border-t-0" : ""}
+          className={`${section !== "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           <ActionCard 
@@ -1483,9 +1481,8 @@ const ActiveWorkoutSection = ({
         key={section}
         section={section}
         showPlusButton={false}
-        extendToBottom={isLastSection}
         isFirst={section === "warmup"}
-        className={section !== "warmup" ? "border-t-0" : ""}
+        className={`${section !== "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
       >
         {exercises.map((ex, index) => {

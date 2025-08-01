@@ -3,7 +3,7 @@ import { Button } from "@/components/atoms/button";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const swiperButtonVariants = cva("text-base font-normal h-[52px] rounded-none border border-neutral-300", {
+const swiperButtonVariants = cva("text-base font-normal h-[52px] rounded-none border border-neutral-300 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0", {
   variants: {
     variant: {
       default: "bg-slate-600 text-white hover:bg-slate-500",

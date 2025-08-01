@@ -28,8 +28,8 @@ const DeckWrapper = forwardRef(
     const [dragging, setDragging] = useState(false);
     const containerRef = useRef(null);
     
-    // Filter out isFirstCard and extendToBottom from props to prevent React warning
-    const { isFirstCard, extendToBottom, ...domProps } = props;
+    // Filter out isFirstCard from props to prevent React warning
+    const { isFirstCard, ...domProps } = props;
 
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
@@ -37,7 +37,7 @@ const DeckWrapper = forwardRef(
     const style = {
       gap,
       paddingTop: 40,
-      paddingBottom: paddingBottom !== undefined ? paddingBottom : (extendToBottom ? 0 : 80),
+      paddingBottom: paddingBottom !== undefined ? paddingBottom : 80,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
       ...(props.style || {}),
@@ -45,7 +45,6 @@ const DeckWrapper = forwardRef(
 
     const containerClasses = cn(
       "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-5",
-      extendToBottom && (forceMinHeight ? "min-h-screen" : "flex-1"),
       className
     );
 
@@ -181,7 +180,6 @@ DeckWrapper.propTypes = {
   items: PropTypes.array,
   onReorder: PropTypes.func,
   isFirstCard: PropTypes.bool,
-  extendToBottom: PropTypes.bool,
   forceMinHeight: PropTypes.bool,
   paddingBottom: PropTypes.number,
 };

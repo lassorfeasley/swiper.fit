@@ -568,19 +568,16 @@ const CompletedWorkout = () => {
           <div className="flex flex-col min-h-screen">
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
-              // Only extend to bottom if this is the last section AND there's enough content to warrant it
+              // Simple approach: extend the last section
               const isLastSection = idx === exercisesBySection.length - 1;
-              const totalExercises = exercisesBySection.reduce((total, section) => total + section.exercises.length, 0);
-              const shouldExtend = isLastSection && totalExercises > 2; // Only extend if there are more than 2 exercises total
               
               return (
                 <PageSectionWrapper
                   key={section}
                   section={section}
                   deckGap={0}
-                  extendToBottom={shouldExtend}
                   isFirst={idx === 0}
-                  className={`${shouldExtend ? "flex-1" : ""} ${idx > 0 ? "border-t-0" : ""}`}
+                  className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
                   style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
                 >
                   {sectionExercises.map((exercise) => (

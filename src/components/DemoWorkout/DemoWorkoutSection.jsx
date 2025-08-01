@@ -87,7 +87,7 @@ export default function DemoWorkoutSection() {
             paddingTop: isMobile ? 40 : 0, 
             paddingBottom: 0
           }}
-          extendToBottom={true}
+
         >
           {trainingExercises.map((exercise, index) => {
             const isFocused = focusedExerciseId === exercise.exercise_id;

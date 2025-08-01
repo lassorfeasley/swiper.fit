@@ -158,7 +158,7 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
   const calendarSelected = filterMode === "all" ? undefined : (mode === "single" ? date : range);
 
   return (
-    <div className="w-full" data-component="CalendarWorkoutLog">
+    <div className="w-full flex flex-col min-h-screen" data-component="CalendarWorkoutLog">
       {/* Calendar + toggle section */}
       <Card className="w-full pt-0 mb-0 bg-transparent border-none shadow-none rounded-none">
         <CardContent ref={calendarContainerRef} className="space-y-2 flex flex-col items-center bg-white w-full !p-5">
@@ -203,10 +203,9 @@ const CalendarWorkoutLog = ({ workouts = [], date, setDate, viewingOwn = true })
       </Card>
 
       {/* Events list */}
-      <div className="flex justify-center flex-1 min-h-0">
+      <div className="flex justify-center flex-1">
         <DeckWrapper
           gap={0}
-          extendToBottom={true}
           paddingBottom={80}
           maxWidth={500}
           minWidth={325}

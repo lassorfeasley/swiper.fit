@@ -167,14 +167,13 @@ const RoutinesIndex = () => {
       data-component="AppHeader"
       showSidebar={!isDelegated}
     >
-      <div className="flex justify-center flex-1 min-h-0">
-        <DeckWrapper 
-          gap={0} 
-          extendToBottom={true}
-          forceMinHeight={true}
-          className="flex-1 h-full"
-          style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
-        >
+      <div className="flex flex-col min-h-screen">
+        <div className="flex justify-center flex-1">
+          <DeckWrapper 
+            gap={0} 
+            className="flex-1"
+            style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
+          >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (
@@ -202,6 +201,7 @@ const RoutinesIndex = () => {
             }}
           />
         </DeckWrapper>
+        </div>
       </div>
 
       <SwiperForm

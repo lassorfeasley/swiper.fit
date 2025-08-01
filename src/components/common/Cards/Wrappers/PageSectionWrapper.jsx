@@ -20,7 +20,7 @@ const PageSectionWrapper = ({
   reorderable = false,
   items = [],
   onReorder,
-  extendToBottom = false,
+
   style,
   ...props 
 }) => {
@@ -41,7 +41,6 @@ const PageSectionWrapper = ({
     <div
       className={cn(
         "Workoutcardwrapper w-full bg-white flex flex-col justify-start items-center",
-        !isFirst && "border-t border-neutral-300",
         className
       )}
       {...domProps}
@@ -52,13 +51,13 @@ const PageSectionWrapper = ({
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch px-0 flex justify-center", extendToBottom && "flex-1")}>
+      <div className={cn("w-full self-stretch px-0 flex justify-center", className?.includes("flex-1") && "flex-1")}>
         <DeckWrapper 
           gap={deckGap} 
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
-          extendToBottom={extendToBottom}
+          className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
         >
           {children}
@@ -79,7 +78,7 @@ PageSectionWrapper.propTypes = {
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
-  extendToBottom: PropTypes.bool,
+
 };
 
 export default PageSectionWrapper; 

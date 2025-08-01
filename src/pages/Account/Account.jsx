@@ -153,7 +153,7 @@ const Account = () => {
 
   return (
     <AppLayout title="Account" hideHeader>
-      <div className="w-full inline-flex flex-col justify-start items-start overflow-hidden">
+      <div className="w-full flex flex-col min-h-screen">
         {/* Personal Information Section */}
         <div className="self-stretch bg-white flex flex-col justify-center items-center">
           <SectionWrapperLabel
@@ -173,8 +173,8 @@ const Account = () => {
           >
             Personal information
           </SectionWrapperLabel>
-          <div className="self-stretch px-5 flex flex-col justify-start items-center gap-10">
-            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start">
+          <div className="self-stretch px-5 flex flex-col justify-start items-center flex-1">
+            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start flex-1">
               <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-center items-center gap-4">
                 {/* First Name Field */}
                 <EditableTextInput
@@ -255,8 +255,8 @@ const Account = () => {
           >
             Login and password
           </SectionWrapperLabel>
-          <div className="self-stretch px-5 flex flex-col justify-start items-center gap-10">
-            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-center items-center gap-2.5">
+          <div className="self-stretch px-5 flex flex-col justify-start items-center flex-1">
+            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-center items-center gap-2.5 flex-1">
               <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
                 {/* Email Field */}
                 <EditableTextInput
@@ -322,13 +322,13 @@ const Account = () => {
         </div>
 
         {/* Account Section */}
-        <div className="self-stretch bg-white flex flex-col justify-center items-center">
+        <div className="self-stretch bg-white flex flex-col justify-center items-center flex-1">
           <SectionWrapperLabel>
             Account
           </SectionWrapperLabel>
-          <div className="self-stretch flex flex-col justify-start items-center gap-10">
-            <div className="self-stretch flex flex-col justify-start items-center gap-2.5">
-              <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start gap-5">
+          <div className="self-stretch flex flex-col justify-start items-center flex-1">
+            <div className="self-stretch flex flex-col justify-start items-center gap-2.5 flex-1">
+              <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start gap-5 flex-1">
                 <div className="self-stretch p-5 bg-white border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
                   <div 
                     className="self-stretch h-12 px-4 py-2 bg-neutral-600 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"

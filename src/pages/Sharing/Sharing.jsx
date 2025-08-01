@@ -968,7 +968,7 @@ export default function Sharing() {
         <PageSectionWrapper 
           section="Shared by me"
           className="border-t-0 flex-1"
-          extendToBottom={true}
+          
           style={{ paddingBottom: 80, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
         >
           {ownerSharesQuery.data?.map((share) => (

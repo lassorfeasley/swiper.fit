@@ -59,7 +59,7 @@ const SwiperDialog = ({
             className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0" 
             maxWidth={null}
             minWidth={null}
-            extendToBottom={true}
+
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
             onClick={(e) => e.stopPropagation()}
           >

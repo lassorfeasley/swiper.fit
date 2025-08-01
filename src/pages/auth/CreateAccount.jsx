@@ -17,8 +17,11 @@ import LoggedOutNav from "@/components/layout/LoggedOutNav";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { toast } from "sonner";
 
 export default function CreateAccount() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,9 +30,31 @@ export default function CreateAccount() {
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const signupMutation = useMutation({
-    mutationFn: async ({ email, password }) => {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+    mutationFn: async ({ email, password, firstName, lastName }) => {
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          }
+        }
+      });
       if (error) throw error;
+      
+      // Create profile record with first and last name
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            first_name: firstName,
+            last_name: lastName,
+          });
+        if (profileError) throw profileError;
+      }
+      
       return data;
     },
     onSuccess: async () => {
@@ -39,6 +64,7 @@ export default function CreateAccount() {
           ? "Account created! Welcome aboard."
           : "Account created! Check your email to confirm your address.";
       setSuccessMessage(msg);
+      toast.success(msg);
 
       // Ensure the session is fully populated by signing in explicitly.
       try {
@@ -66,13 +92,14 @@ export default function CreateAccount() {
     onError: (error) => {
       setErrorMessage(error.message);
       setSuccessMessage("");
+      toast.error(error.message);
       console.error("Signup error:", error);
     },
   });
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    signupMutation.mutate({ email, password });
+    signupMutation.mutate({ email, password, firstName, lastName });
   };
 
   // Show loading state while workout context is loading after signup
@@ -109,6 +136,46 @@ export default function CreateAccount() {
                   >
                     Log in
                   </div>
+                </div>
+
+                {/* First Name field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        First name
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="text"
+                    id="create-account-first-name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={signupMutation.isPending}
+                    error={!!errorMessage}
+                    required
+                  />
+                </div>
+
+                {/* Last Name field */}
+                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                  <div className="self-stretch inline-flex justify-start items-start gap-2">
+                    <div className="flex-1 flex justify-between items-start">
+                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                        Last name
+                      </div>
+                    </div>
+                  </div>
+                  <TextInput
+                    type="text"
+                    id="create-account-last-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={signupMutation.isPending}
+                    error={!!errorMessage}
+                    required
+                  />
                 </div>
 
                 {/* Email field */}
@@ -155,16 +222,27 @@ export default function CreateAccount() {
                     {successMessage}
                   </div>
                 )}
+
+                {/* Create Account Button */}
+                <div 
+                  className={`self-stretch h-12 px-4 py-2 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5 ${
+                    signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()
+                      ? 'bg-neutral-300 cursor-not-allowed'
+                      : 'bg-green-200 hover:bg-green-300 cursor-pointer'
+                  }`}
+                  onClick={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() ? undefined : handleSignup}
+                >
+                  <div className={`justify-start text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${
+                    signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()
+                      ? 'text-neutral-500'
+                      : 'text-neutral-neutral-600'
+                  }`}>
+                    {signupMutation.isPending ? "Creating Account..." : "Create Account"}
+                  </div>
+                </div>
               </form>
             </div>
           </CardWrapper>
-
-          {/* Create Account Action Card */}
-          <ActionCard
-            text={signupMutation.isPending ? "Creating Account..." : "Create Account"}
-            onClick={handleSignup}
-            disabled={signupMutation.isPending}
-          />
         </DeckWrapper>
       </div>
 
