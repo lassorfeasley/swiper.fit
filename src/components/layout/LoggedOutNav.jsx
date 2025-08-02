@@ -20,7 +20,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
               className="flex-1 h-11 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               <div className="justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
-              <MoveUpRight className="w-2.5 h-2.5 text-neutral-neutral-700" />
+              <MoveUpRight className="w-5 h-5 text-neutral-neutral-700" />
             </button>
             <button 
               onClick={(e) => {
@@ -32,7 +32,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
               className="flex-1 h-11 bg-green-600 flex justify-center items-center gap-2 hover:bg-green-700 transition-colors cursor-pointer"
             >
               <div className="justify-start text-white text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
-              <MoveUpRight className="w-2.5 h-2.5 text-white" />
+              <MoveUpRight className="w-5 h-5 text-white" />
             </button>
           </div>
         )}
