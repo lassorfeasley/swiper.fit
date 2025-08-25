@@ -326,8 +326,8 @@ const ActiveWorkoutContent = () => {
       showSidebar={false}
     >
       <div ref={listRef} className="flex flex-col min-h-screen">
-        {/* Spacer to clear fixed ActiveWorkoutNav (32px + 44px = 76px) */}
-        <div className="h-[76px]" aria-hidden="true" />
+        {/* Spacer to clear fixed ActiveWorkoutNav */}
+        <div className="h-[68px]" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"

@@ -46,3 +46,11 @@ export const formatSeconds = (totalSeconds) => {
     return `${minString}:${secString}`;
   }
 };
+
+// Always format as HH:MM:SS with leading zeros
+export const formatSecondsHHMMSS = (totalSeconds) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.max(0, totalSeconds % 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
