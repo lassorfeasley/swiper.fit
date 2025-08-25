@@ -10,8 +10,8 @@ export default function ActiveWorkoutNav({ onEnd }) {
   const formattedTime = formatSeconds(elapsedTime);
   return (
     <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch bg-white inline-flex flex-col justify-start items-start overflow-hidden z-50`}>
-      <div className="self-stretch bg-neutral-700">
-        <div className="MaxWidthWrapper px-3 py-2 inline-flex justify-start items-center overflow-hidden">
+      <div className="self-stretch bg-neutral-700 h-8">
+        <div className="MaxWidthWrapper h-full px-3 inline-flex justify-start items-center overflow-hidden">
           <div className="justify-center text-white text-xs font-bold uppercase leading-3 tracking-wide">
             {activeWorkout?.routineName || ''}
           </div>
