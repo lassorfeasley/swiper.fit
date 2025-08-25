@@ -37,6 +37,75 @@ const PageHeader = forwardRef(({
     }
   }, [searchActive]);
 
+  // Programs variant (routine builder) – two-row header
+  if (variant === 'programs') {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "fixed top-0 z-50 self-stretch bg-neutral-700 inline-flex flex-col justify-start items-start",
+          showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
+          className
+        )}
+      >
+        {/* Row 1 */}
+        <div className="self-stretch inline-flex justify-between items-stretch">
+          <div className="flex-1 flex justify-start items-center">
+            {showBackButton ? (
+              <button
+                onClick={onBack}
+                aria-label="Back"
+                className="p-2.5 border-r border-neutral-600 flex justify-start items-center"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+            ) : (
+              <div className="p-2.5 border-r border-neutral-600 flex justify-start items-center">
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </div>
+            )}
+            <div className="self-stretch px-3 flex justify-center items-center">
+              <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Programs</div>
+            </div>
+          </div>
+          <div className="flex justify-start items-center">
+            {showShare && (
+              <button
+                onClick={onShare}
+                aria-label="Share"
+                className="p-2.5 border-l border-neutral-600 flex justify-start items-center"
+              >
+                <Share2 className="w-5 h-5 text-white" />
+              </button>
+            )}
+            {showSettings && (
+              <button
+                onClick={onSettings}
+                aria-label="Settings"
+                className="p-2.5 border-l border-neutral-600 flex justify-start items-center"
+              >
+                <Settings2 className="w-5 h-5 text-white" />
+              </button>
+            )}
+          </div>
+        </div>
+        {/* Row 2 */}
+        {showStartWorkout && (
+          <div className="self-stretch h-9 pr-3 bg-green-600 inline-flex justify-start items-center">
+            <button
+              onClick={onStartWorkout}
+              aria-label="Start Workout"
+              className="self-stretch p-2.5 flex justify-start items-center"
+            >
+              <Play className="w-5 h-5 text-white fill-white" />
+            </button>
+            <div className="justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Tap to start workout</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <header
       ref={ref}

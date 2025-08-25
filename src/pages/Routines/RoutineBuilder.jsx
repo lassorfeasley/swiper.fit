@@ -612,15 +612,15 @@ const RoutineBuilder = () => {
   return (
     <>
       <AppLayout
-        variant="dark-fixed"
+        variant="programs"
         reserveSpace={true}
         title={programName}
         pageNameEditable={true}
         onBack={handleBack}
-        showSearch={true}
-        search={true}
-        searchValue={search}
-        onSearchChange={setSearch}
+        showSearch={false}
+        search={false}
+        searchValue={undefined}
+        onSearchChange={() => {}}
         showSettings={true}
         onSettings={() => setEditProgramOpen(true)}
         onDelete={handleDeleteProgram}
