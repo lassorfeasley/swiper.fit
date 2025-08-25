@@ -11,11 +11,9 @@ import { PageNameContext } from "@/App";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
-import SwiperForm from "@/components/molecules/swiper-form";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
 import { toast } from "sonner";
-import { TextInput } from "@/components/molecules/text-input";
-import { SwiperButton } from "@/components/molecules/swiper-button";
+ 
 import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ActiveWorkoutSection from "./ActiveWorkoutSection";
@@ -58,18 +56,11 @@ const ActiveWorkoutContent = () => {
   const [isEndConfirmOpen, setEndConfirmOpen] = useState(false);
   const skipAutoRedirectRef = useRef(false);
 
-  // State for settings sheet
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [newWorkoutName, setNewWorkoutName] = useState(
-    activeWorkout?.workoutName || ""
-  );
+  
   const { isDelegated, returnToSelf } = useAccount();
   const { user } = useAuth();
   
-  // Sync local name when workoutName changes
-  useEffect(() => {
-    setNewWorkoutName(activeWorkout?.workoutName || "");
-  }, [activeWorkout?.workoutName]);
+  
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
@@ -241,20 +232,7 @@ const ActiveWorkoutContent = () => {
     }
   };
 
-  const handleTitleChange = async (newTitle) => {
-    try {
-      const { error } = await supabase
-        .from("workouts")
-        .update({ workout_name: newTitle })
-        .eq("id", activeWorkout.id);
-
-      if (error) throw error;
-      // Update the active workout context with new name
-      // Note: You might need to add a method to update the workout name in the context
-    } catch (err) {
-      alert("Failed to update workout name: " + err.message);
-    }
-  };
+  
 
   const handleDeleteWorkout = () => {
     setDeleteConfirmOpen(true);
@@ -330,13 +308,13 @@ const ActiveWorkoutContent = () => {
       hideHeader={true}
       showAddButton={false}
       showPlusButton={false}
-      pageNameEditable={true}
+      pageNameEditable={false}
       showBackButton={false}
       title=""
       showAdd={false}
-      showSettings={true}
-      onSettings={() => setSettingsOpen(true)}
-      onTitleChange={handleTitleChange}
+      showSettings={false}
+      onSettings={undefined}
+      onTitleChange={undefined}
       onDelete={handleDeleteWorkout}
       showDeleteOption={true}
       search={true}
@@ -388,33 +366,9 @@ const ActiveWorkoutContent = () => {
         completedSets={completedSets}
         totalSets={totalSets}
         onEnd={handleEndWorkout}
-        onSettings={() => setSettingsOpen(true)}
       />
 
-      {/* Settings sheet for renaming workout */}
-      <SwiperForm
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        title="Workout"
-        leftAction={() => setSettingsOpen(false)}
-        leftText="Cancel"
-        rightAction={() => handleTitleChange(newWorkoutName)}
-        rightText="Save"
-        rightEnabled={
-          newWorkoutName.trim() !== (activeWorkout?.workoutName || "").trim()
-        }
-        padding={0}
-        className="settings-drawer"
-      >
-        <div className="p-4">
-          <TextInput
-            label="Workout Name"
-            value={newWorkoutName}
-            onChange={(e) => setNewWorkoutName(e.target.value)}
-            placeholder="Enter workout name"
-          />
-        </div>
-      </SwiperForm>
+      
     </AppLayout>
   );
 };

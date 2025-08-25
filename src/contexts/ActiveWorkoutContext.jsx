@@ -13,7 +13,6 @@ export function ActiveWorkoutProvider({ children }) {
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState(0);
   
@@ -60,7 +59,6 @@ export function ActiveWorkoutProvider({ children }) {
     setActiveWorkout(null);
     setIsWorkoutActive(false);
     setElapsedTime(0);
-    setIsPaused(false);
     
     const checkForActiveWorkout = async () => {
       if (!user) {
@@ -69,7 +67,6 @@ export function ActiveWorkoutProvider({ children }) {
         setActiveWorkout(null);
         setIsWorkoutActive(false);
         setElapsedTime(0);
-        setIsPaused(false);
         
 
         return;
@@ -91,7 +88,6 @@ export function ActiveWorkoutProvider({ children }) {
         setActiveWorkout(null);
         setIsWorkoutActive(false);
         setElapsedTime(0);
-        setIsPaused(false);
         
 
           return;
@@ -102,7 +98,6 @@ export function ActiveWorkoutProvider({ children }) {
         setActiveWorkout(null);
         setIsWorkoutActive(false);
         setElapsedTime(0);
-        setIsPaused(false);
         
 
           return;
@@ -167,18 +162,21 @@ export function ActiveWorkoutProvider({ children }) {
 
   }, [user?.id]);
 
-  // Timer effect
+  // Timer effect: derive strictly from workout startTime (created_at)
   useEffect(() => {
     let timer;
-    if (isWorkoutActive && !isPaused) {
-      timer = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
+    if (isWorkoutActive && activeWorkout?.startTime) {
+      const update = () => {
+        const start = new Date(activeWorkout.startTime).getTime();
+        setElapsedTime(Math.floor((Date.now() - start) / 1000));
+      };
+      update();
+      timer = setInterval(update, 1000);
     }
     return () => {
       clearInterval(timer);
     };
-  }, [isWorkoutActive, isPaused]);
+  }, [isWorkoutActive, activeWorkout?.startTime]);
 
   // Real-time subscriptions for workout status changes only
   useEffect(() => {
@@ -230,7 +228,6 @@ export function ActiveWorkoutProvider({ children }) {
             // Clear workout state - let the ActiveWorkout page handle navigation
             setActiveWorkout(null);
             setElapsedTime(0);
-            setIsPaused(false);
             
             // Navigate based on whether workout was completed or deleted
             // Add a small delay to ensure this takes precedence over auto-redirect logic
@@ -250,7 +247,6 @@ export function ActiveWorkoutProvider({ children }) {
           setIsWorkoutActive(false);
           setActiveWorkout(null);
           setElapsedTime(0);
-          setIsPaused(false);
           navigate('/routines');
         }
       })
@@ -337,7 +333,6 @@ export function ActiveWorkoutProvider({ children }) {
               ? Math.floor((new Date() - new Date(workoutRec.created_at)) / 1000)
               : 0;
             setElapsedTime(elapsed);
-            setIsPaused(false);
             // Navigate into the record page
             navigate('/workout/active');
           } catch (e) {
@@ -492,14 +487,9 @@ export function ActiveWorkoutProvider({ children }) {
     setActiveWorkout(updatedWorkoutData);
     setIsWorkoutActive(true);
     setElapsedTime(0);
-    setIsPaused(false);
 
     return workoutData;
   }, [user]);
-
-  const togglePause = useCallback(() => {
-    setIsPaused(prev => !prev);
-  }, []);
 
   const endWorkout = useCallback(async () => {
     if (!activeWorkout?.id) return false;
@@ -568,7 +558,6 @@ export function ActiveWorkoutProvider({ children }) {
     setIsWorkoutActive(false);
     setActiveWorkout(null);
     setElapsedTime(0);
-    setIsPaused(false);
     return saved;
   }, [activeWorkout, elapsedTime]);
 
@@ -627,7 +616,6 @@ export function ActiveWorkoutProvider({ children }) {
     setActiveWorkout(null);
     setIsWorkoutActive(false);
     setElapsedTime(0);
-    setIsPaused(false);
   }, []);
 
   return (
@@ -637,8 +625,6 @@ export function ActiveWorkoutProvider({ children }) {
         isWorkoutActive, 
         startWorkout,
         elapsedTime,
-        isPaused,
-        togglePause,
         endWorkout,
         updateLastExercise,
         loading,

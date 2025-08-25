@@ -1,71 +1,32 @@
 import React from "react";
-import {
-  PlayCircle,
-  ChevronRightCircle,
-  PauseCircle,
-  StopCircle,
-  Circle,
-  Undo2,
-  Search,
-  Settings2,
-  Plus,
-  Square,
-} from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
-import { useNavigate } from "react-router-dom";
-import { cn, formatSeconds } from "@/lib/utils";
-import SwiperProgress from './swiper-progress';
+import { formatSeconds } from "@/lib/utils";
 
-export default function ActiveWorkoutNav({ completedSets = 0, totalSets = 1, onEnd, onSettings, onAdd }) {
+export default function ActiveWorkoutNav({ onEnd }) {
   const { activeWorkout, elapsedTime } = useActiveWorkout();
   const { isDelegated } = useAccount();
-  // when in delegate mode, push nav below the delegate header
   const topOffset = isDelegated ? 'top-11' : 'top-0';
-  const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
   const formattedTime = formatSeconds(elapsedTime);
   return (
-    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full h-11 self-stretch bg-neutral-200 border-b border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden z-50`}>
-      <div data-layer="max-width-wrapper" className="MaxWidthWrapper self-stretch inline-flex justify-start items-center h-full">
-        <div data-layer="icons-wrapper" className="IconsWrapper w-11 h-full border-r border-neutral-300 flex justify-center items-center">
-          <div data-layer="Frame 23" className="Frame23 size-12 flex justify-center items-center gap-2.5">
-            <Settings2 className="w-6 h-6 text-neutral-700" onClick={onSettings} />
-          </div>
-        </div>
-        <div data-layer="Frame 22" className="Frame22 flex-1 h-10 pl-3 inline-flex flex-col justify-center items-start">
-          <div data-layer="timeer" className="Timeer justify-center text-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
-            {activeWorkout?.workoutName || 'Workout'}
-          </div>
-          <div data-layer="timeer" className="Timeer justify-center text-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch bg-white inline-flex flex-col justify-start items-start overflow-hidden z-50`}>
+      <div className="self-stretch bg-neutral-700">
+        <div className="MaxWidthWrapper px-3 py-2 inline-flex justify-start items-center overflow-hidden">
+          <div className="justify-center text-white text-xs font-bold uppercase leading-3 tracking-wide">
             {activeWorkout?.routineName || ''}
           </div>
         </div>
-        <div 
-          data-layer="Frame 53" 
-          className="Frame53 self-stretch h-full border-l border-neutral-300 flex justify-start items-center gap-0.5 cursor-pointer hover:bg-neutral-100"
-          onClick={onEnd}
-        >
-          <div data-layer="icons-wrapper" className="IconsWrapper w-7 self-stretch flex justify-end items-center">
-            <div data-layer="Frame 23" className="Frame23 flex-1 h-full flex justify-end items-center gap-2.5">
-              <Square className="w-6 h-6 fill-red-400 stroke-none" />
-            </div>
-          </div>
-          <div 
-            data-layer="icons-wrapper" 
-            className="IconsWrapper h-full flex justify-start items-center"
-          >
-            <div data-layer="Frame 23" className="Frame23 h-full pr-2 flex justify-center items-center">
-              <div 
-                data-layer="0:00:00" 
-                className="0000 justify-center text-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
-              >
-                {formattedTime}
-              </div>
-            </div>
+      </div>
+      <div className="self-stretch h-11 border-b border-neutral-300">
+        <div className="MaxWidthWrapper h-full pl-3 flex justify-between items-center">
+          <div className="justify-center text-neutral-700 text-2xl font-bold leading-8">{formattedTime}</div>
+          <div role="button" onClick={onEnd} className="w-48 h-full px-4 py-2 bg-white border-l border-neutral-300 flex justify-center items-center gap-2.5 cursor-pointer select-none">
+            <div className="justify-start text-red-600 text-base font-medium leading-tight">End workout</div>
           </div>
         </div>
       </div>
-      <SwiperProgress completedSets={completedSets} totalSets={totalSets} />
     </div>
   );
 }
+
+
