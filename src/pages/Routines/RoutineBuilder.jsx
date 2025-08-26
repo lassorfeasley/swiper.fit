@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
@@ -11,11 +11,12 @@ import AppLayout from "@/components/layout/AppLayout";
 import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
+import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Play } from "lucide-react";
+import { Play, Copy } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import { ActionCard } from "@/components/molecules/action-card";
 const RoutineBuilder = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setPageName } = useContext(PageNameContext);
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const { isDelegated } = useAccount();
@@ -39,6 +41,8 @@ const RoutineBuilder = () => {
   const [isEditProgramOpen, setEditProgramOpen] = useState(false);
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
 
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
@@ -69,10 +73,11 @@ const RoutineBuilder = () => {
       setLoading(true);
       const { data: programData } = await supabase
         .from("routines")
-        .select("routine_name")
+        .select("routine_name, is_public")
         .eq("id", programId)
         .single();
       setProgramName(programData?.routine_name || "");
+      setIsPublic(Boolean(programData?.is_public));
 
       const { data: progExs, error } = await supabase
         .from("routine_exercises")
@@ -275,12 +280,54 @@ const RoutineBuilder = () => {
 
   const handleBack = () => {
     saveOrder();
-    navigate(-1);
+    if (location.state && location.state.fromPublicImport) {
+      navigate('/routines');
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleOpenAddExercise = (section) => {
     setAddExerciseSection(section);
     setShowAddExercise(true);
+  };
+  
+  const openShareDialog = () => {
+    setShareDialogOpen(true);
+  };
+
+  const handleTogglePublic = async (val) => {
+    // Optimistic update
+    const prev = isPublic;
+    setIsPublic(val);
+    try {
+      await supabase
+        .from("routines")
+        .update({ is_public: val })
+        .eq("id", programId);
+    } catch (e) {
+      setIsPublic(prev);
+      toast.error("Failed: " + (e?.message || "Could not update setting"));
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      // Ensure public before copying, but do not block if already true
+      if (!isPublic) {
+        await supabase
+          .from("routines")
+          .update({ is_public: true })
+          .eq("id", programId);
+        setIsPublic(true);
+      }
+      const shareUrl = `${window.location.origin}/routines/public/${programId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Share link copied to clipboard");
+    } catch (e) {
+      console.error("Failed to copy share link", e);
+      toast.error("Failed to copy link");
+    }
   };
 
   const handleStartWorkout = () => {
@@ -623,6 +670,8 @@ const RoutineBuilder = () => {
         onSearchChange={() => {}}
         showSettings={true}
         onSettings={() => setEditProgramOpen(true)}
+        showShare={!isDelegated}
+        onShare={openShareDialog}
         onDelete={handleDeleteProgram}
         showDeleteOption={true}
         showBackButton={!isDelegated}
@@ -738,6 +787,40 @@ const RoutineBuilder = () => {
         </SwiperForm>
       </AppLayout>
 
+      {/* Share Routine Sheet */}
+      <SwiperForm
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        title="Share"
+        leftAction={() => setShareDialogOpen(false)}
+        leftText="Close"
+      >
+        <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+          <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
+            Publish your routine <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
+          </p>
+        </SwiperForm.Section>
+
+        <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+          <SwiperFormSwitch
+            label="Public link"
+            checked={isPublic}
+            onCheckedChange={handleTogglePublic}
+          />
+
+          {isPublic && (
+            <TextInput
+              label="Click to copy"
+              value={`${window.location.origin}/routines/public/${programId}`}
+              readOnly
+              onFocus={(e) => e.target.select()}
+              onClick={handleCopyShareLink}
+              icon={<Copy />}
+            />
+          )}
+        </SwiperForm.Section>
+      </SwiperForm>
+
       <SwiperForm
         open={isEditProgramOpen}
         onOpenChange={setEditProgramOpen}
@@ -789,14 +872,15 @@ const RoutineBuilder = () => {
         />
       </SwiperForm>
 
-      <SwiperAlertDialog
+      <SwiperDialog
         open={isDeleteProgramConfirmOpen}
         onOpenChange={setDeleteProgramConfirmOpen}
         onConfirm={handleConfirmDeleteProgram}
-        title="Confirm deletion"
-        description="Deleting this program will not affect your completed workout history."
-        confirmText="Delete"
+        title="Delete routine?"
+        confirmText="Delete forever"
         cancelText="Cancel"
+        confirmVariant="destructive"
+        cancelVariant="outline"
       />
       <SwiperDialog
         open={isDeleteExerciseConfirmOpen}

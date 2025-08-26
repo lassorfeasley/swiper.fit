@@ -2,20 +2,22 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
-const PageHeader = forwardRef(({
+const PageHeader = forwardRef(({ 
   reserveSpace = false,
   variant = 'default',
   showBackButton = false,
   title = "Page",
+  titleRightText,
   showSearch = false,
   showSettings = false,
   showPlusButton = false,
   showShare = false,
   showStartWorkout = false,
+  startCtaText,
   showSidebar = false,
   onBack,
   onSearch,
@@ -43,7 +45,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 self-stretch bg-neutral-700 inline-flex flex-col justify-start items-start",
+          "fixed top-0 z-50 self-stretch bg-white inline-flex flex-col justify-start items-start",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
           className
         )}
@@ -55,51 +57,56 @@ const PageHeader = forwardRef(({
               <button
                 onClick={onBack}
                 aria-label="Back"
-                className="p-2.5 border-r border-neutral-600 flex justify-start items-center"
+                className="p-2.5 border-r border-neutral-300 flex justify-start items-center"
               >
-                <ArrowLeft className="w-5 h-5 text-white" />
+                <ArrowLeft className="w-5 h-5 text-neutral-700" />
+              </button>
+            ) : null}
+            {showSettings ? (
+              <button
+                onClick={onSettings}
+                aria-label="Edit routine"
+                className="self-stretch h-11 px-3 flex items-center gap-2 cursor-pointer flex-1 justify-between"
+              >
+                <div className="flex-1 text-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide text-left">{title}</div>
+                <PenLine className="w-5 h-5 text-neutral-700" />
               </button>
             ) : (
-              <div className="p-2.5 border-r border-neutral-600 flex justify-start items-center">
-                <ArrowLeft className="w-5 h-5 text-white" />
+              <div className="self-stretch h-11 px-3 flex items-center gap-2 flex-1">
+                <div className="flex-1 text-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide text-left">{title}</div>
+                {titleRightText && (
+                  <div className="text-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">{titleRightText}</div>
+                )}
               </div>
             )}
-            <div className="self-stretch px-3 flex justify-center items-center">
-              <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Programs</div>
-            </div>
           </div>
           <div className="flex justify-start items-center">
             {showShare && (
               <button
                 onClick={onShare}
                 aria-label="Share"
-                className="p-2.5 border-l border-neutral-600 flex justify-start items-center"
+                className="self-stretch p-2.5 bg-neutral-950 flex justify-start items-center gap-2"
               >
-                <Share2 className="w-5 h-5 text-white" />
-              </button>
-            )}
-            {showSettings && (
-              <button
-                onClick={onSettings}
-                aria-label="Settings"
-                className="p-2.5 border-l border-neutral-600 flex justify-start items-center"
-              >
-                <Settings2 className="w-5 h-5 text-white" />
+                <Blend className="w-5 h-5 text-white" />
+                <span className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Share routine</span>
               </button>
             )}
           </div>
         </div>
         {/* Row 2 */}
         {showStartWorkout && (
-          <div className="self-stretch h-9 pr-3 bg-green-600 inline-flex justify-start items-center">
-            <button
-              onClick={onStartWorkout}
-              aria-label="Start Workout"
-              className="self-stretch p-2.5 flex justify-start items-center"
-            >
+          <div
+            className="self-stretch h-9 pr-3 bg-green-600 inline-flex justify-start items-center cursor-pointer"
+            onClick={onStartWorkout}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWorkout?.(); } }}
+            aria-label="Tap to start workout"
+          >
+            <div className="self-stretch p-2.5 flex justify-start items-center">
               <Play className="w-5 h-5 text-white fill-white" />
-            </button>
-            <div className="justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Tap to start workout</div>
+            </div>
+            <div className="justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">{startCtaText || 'Tap to start workout'}</div>
           </div>
         )}
       </div>

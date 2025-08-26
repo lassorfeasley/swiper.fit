@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home/Home";
 import Landing from "./pages/Landing/Landing";
 import Routines from "./pages/Routines/Routines";
+import PublicRoutine from "./pages/Routines/PublicRoutine";
 import History from "./pages/History/History";
 import ActiveWorkout from "./pages/Workout/ActiveWorkout";
 import CompletedWorkout from "./pages/History/CompletedWorkout";
@@ -57,9 +58,10 @@ function AppContent() {
     "/reset-password",
   ].includes(location.pathname);
 
-  // Detect public shared views (history list or workout)
+  // Detect public shared views (history list, workout, or routine)
   const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
-  const hideNavForPublic = isPublicHistoryView;
+  const isPublicRoutineView = /^\/routines\/public\//.test(location.pathname);
+  const hideNavForPublic = isPublicHistoryView || isPublicRoutineView;
 
   // Define paths that should be allowed even when workout is active
   // When a workout is active, users should ONLY be able to access the workout page and essential auth pages
@@ -206,6 +208,8 @@ function AppContent() {
           <Route path="/history/public/:userId" element={<History />} />
           {/* Public shared single workout view (unauthenticated) */}
           <Route path="/history/public/workout/:workoutId" element={<CompletedWorkout />} />
+          {/* Public shared routine view (unauthenticated) */}
+          <Route path="/routines/public/:routineId" element={<PublicRoutine />} />
         </Routes>
       </main>
 

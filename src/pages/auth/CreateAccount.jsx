@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/atoms/button";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/atoms/alert";
@@ -27,7 +27,85 @@ export default function CreateAccount() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
+  const importRoutineId = new URLSearchParams(location.search).get('importRoutineId');
+
+  const cloneRoutineForCurrentUser = async (sourceRoutineId) => {
+    try {
+      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
+        source_routine_id: sourceRoutineId,
+        new_name: null,
+      });
+      if (!rpcError && newId) return newId;
+    } catch (_) {}
+
+    // Fallback manual clone
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth?.user?.id;
+    if (!uid) throw new Error('Not authenticated');
+
+    const { data: src, error: srcErr } = await supabase
+      .from('routines')
+      .select(`
+        id,
+        routine_name,
+        routine_exercises!fk_routine_exercises__routines(
+          id,
+          exercise_order,
+          exercises!fk_routine_exercises__exercises(id),
+          routine_sets!fk_routine_sets__routine_exercises(
+            id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration
+          )
+        )
+      `)
+      .eq('id', sourceRoutineId)
+      .eq('is_public', true)
+      .single();
+    if (srcErr || !src) throw new Error('Shared routine not available');
+
+    const { data: newRoutine, error: newErr } = await supabase
+      .from('routines')
+      .insert({ routine_name: src.routine_name, user_id: uid, is_archived: false, is_public: false })
+      .select('id')
+      .single();
+    if (newErr || !newRoutine) throw newErr || new Error('Failed to create routine');
+    const newRoutineId = newRoutine.id;
+
+    const exercisesPayload = (src.routine_exercises || [])
+      .sort((a,b) => (a.exercise_order||0) - (b.exercise_order||0))
+      .map((re) => ({ routine_id: newRoutineId, exercise_id: re.exercises.id, exercise_order: re.exercise_order || 0, user_id: uid }));
+    let inserted = [];
+    if (exercisesPayload.length > 0) {
+      const { data: reRows, error: reErr } = await supabase
+        .from('routine_exercises')
+        .insert(exercisesPayload)
+        .select('id, exercise_id');
+      if (reErr) throw reErr;
+      inserted = reRows || [];
+    }
+    for (const re of src.routine_exercises || []) {
+      const target = inserted.find((x) => x.exercise_id === re.exercises.id);
+      if (!target) continue;
+      const setsPayload = (re.routine_sets || []).sort((a,b)=> (a.set_order||0)-(b.set_order||0)).map((rs) => ({
+        routine_exercise_id: target.id,
+        set_order: rs.set_order,
+        reps: rs.reps,
+        weight: rs.weight,
+        weight_unit: rs.weight_unit,
+        set_type: rs.set_type,
+        timed_set_duration: rs.timed_set_duration,
+        set_variant: rs.set_variant,
+        user_id: uid,
+      }));
+      if (setsPayload.length > 0) {
+        const { error: rsErr } = await supabase.from('routine_sets').insert(setsPayload);
+        if (rsErr) throw rsErr;
+      }
+    }
+
+    return newRoutineId;
+  };
 
   const signupMutation = useMutation({
     mutationFn: async ({ email, password, firstName, lastName }) => {
@@ -73,7 +151,19 @@ export default function CreateAccount() {
         console.error("Post-signup login failed", e);
       }
 
-      // Wait for workout context to load, then redirect appropriately
+      // If coming from a public routine, import it now and jump into builder
+      try {
+        if (importRoutineId) {
+          const newId = await cloneRoutineForCurrentUser(importRoutineId);
+          navigate(`/routines/${newId}/configure`, { replace: true, state: { fromPublicImport: true } });
+          return;
+        }
+      } catch (e) {
+        // Fall through to normal redirect on failure
+        console.warn('Routine import after signup failed:', e);
+      }
+
+      // Otherwise, redirect based on workout state
       const checkWorkoutAndRedirect = () => {
         if (!workoutLoading) {
           if (isWorkoutActive) {
@@ -82,11 +172,9 @@ export default function CreateAccount() {
             navigate("/routines");
           }
         } else {
-          // If still loading, check again in a moment
           setTimeout(checkWorkoutAndRedirect, 100);
         }
       };
-      
       checkWorkoutAndRedirect();
     },
     onError: (error) => {

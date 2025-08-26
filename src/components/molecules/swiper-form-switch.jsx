@@ -48,7 +48,7 @@ const SwiperFormSwitch = ({
   return (
     <div
       className={cn(
-        "w-full h-12 bg-white inline-flex justify-end items-center gap-2.5",
+        "w-full h-12 bg-transparent inline-flex justify-end items-center gap-2.5",
         className
       )}
     >
@@ -63,7 +63,7 @@ const SwiperFormSwitch = ({
       <div
         ref={containerRef}
         id={switchId}
-        className="w-14 h-8 p-1 bg-neutral-100 border border-neutral-300 inline-flex items-center gap-1 cursor-pointer relative overflow-hidden"
+        className="w-14 h-8 p-1 bg-transparent border border-neutral-300 inline-flex items-center gap-1 cursor-pointer relative overflow-hidden"
         onClick={handleToggle}
       >
         <motion.div 

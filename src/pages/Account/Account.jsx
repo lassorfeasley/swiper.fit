@@ -10,7 +10,7 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { toast } from "sonner";
 import EditableTextInput from "@/components/molecules/editable-text-input";
 import { Eye, EyeOff, Pencil } from "lucide-react";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 
 const Account = () => {
   const { isDelegated } = useAccount();
@@ -355,26 +355,31 @@ const Account = () => {
 
       </div>
 
-      <SwiperAlertDialog
+      <SwiperDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title="Confirm account deletion"
-        description={
-          <>
-            <p>Please enter your password to permanently delete your account.</p>
-            <TextInput
-              label="Password"
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              customPlaceholder="Enter your password"
-            />
-          </>
-        }
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        title="Confirm deletion"
+        description="Deleting your account is permanent. This action cannot be undone."
         confirmText="Delete account"
         cancelText="Cancel"
-        onConfirm={handleConfirmDelete}
-      />
+        confirmVariant="destructive"
+        cancelVariant="outline"
+      >
+        <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
+          <p className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">
+            Please enter your password to permanently delete your account.
+          </p>
+          <TextInput
+            label="Password"
+            type="password"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            customPlaceholder="Enter your password"
+          />
+        </div>
+      </SwiperDialog>
     </AppLayout>
   );
 };

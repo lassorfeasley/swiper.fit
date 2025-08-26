@@ -18,6 +18,8 @@ const ExerciseCard = ({
   onCardClick,
   isDragging = false,
   isFirstCard,
+  hideGrip = false,
+  addTopBorder = false,
   ...props
 }) => {
   // Filter out isFirstCard from props to prevent React warning
@@ -112,19 +114,24 @@ const ExerciseCard = ({
       {...domProps}
     >
       {/* Header */}
-      <div data-layer="Frame 61" className="self-stretch pl-3 bg-neutral-50 border-b border-neutral-300 inline-flex justify-start items-center gap-4">
-        <div data-layer="Exercise name" className="flex-1 justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+      <div
+        data-layer="Frame 61"
+        className={`self-stretch pl-3 bg-neutral-50 border-b border-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? ' border-t border-neutral-300' : ''}`}
+      >
+        <div data-layer="Exercise name" className="flex-1 h-11 flex items-center justify-start text-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
           {exerciseName}
         </div>
-        <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
-          <button 
-            onClick={handleMenuClick}
-            className="size-6 relative overflow-hidden flex items-center justify-center"
-            aria-label="Exercise options"
-          >
-            <Grip className="size-6 text-neutral-300" />
-          </button>
-        </div>
+        {!hideGrip && (
+          <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
+            <button 
+              onClick={handleMenuClick}
+              className="size-6 relative overflow-hidden flex items-center justify-center"
+              aria-label="Exercise options"
+            >
+              <Grip className="size-6 text-neutral-300" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Set rows */}
