@@ -83,7 +83,7 @@ export default function PublicRoutine() {
     try {
       const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
         source_routine_id: routine.id,
-        new_name: null,
+        new_name: `${routine.routine_name} | Shared by ${routine.owner_name || 'User'}`,
       });
       if (!rpcError && newId) return newId;
     } catch (_) {}
@@ -93,7 +93,7 @@ export default function PublicRoutine() {
     const { data: newRoutine, error: routineErr } = await supabase
       .from('routines')
       .insert({
-        routine_name: `${routine.routine_name} (Copy)`,
+        routine_name: `${routine.routine_name} | Shared by ${routine.owner_name || 'User'}`,
         user_id: user.id,
         is_archived: false,
         is_public: false,

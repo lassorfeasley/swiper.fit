@@ -33,9 +33,29 @@ export default function CreateAccount() {
 
   const cloneRoutineForCurrentUser = async (sourceRoutineId) => {
     try {
+      // Lookup owner name for attribution used in RPC new_name
+      let ownerName;
+      try {
+        const { data: srcOwner } = await supabase
+          .from('routines')
+          .select('user_id')
+          .eq('id', sourceRoutineId)
+          .maybeSingle();
+        if (srcOwner?.user_id) {
+          const { data: owner } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', srcOwner.user_id)
+            .maybeSingle();
+          if (owner) {
+            ownerName = `${owner.first_name || ''} ${owner.last_name || ''}`.trim();
+          }
+        }
+      } catch (_) {}
+
       const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
         source_routine_id: sourceRoutineId,
-        new_name: null,
+        new_name: ownerName ? `| Shared by ${ownerName}` : null,
       });
       if (!rpcError && newId) return newId;
     } catch (_) {}
@@ -66,7 +86,7 @@ export default function CreateAccount() {
 
     const { data: newRoutine, error: newErr } = await supabase
       .from('routines')
-      .insert({ routine_name: src.routine_name, user_id: uid, is_archived: false, is_public: false })
+      .insert({ routine_name: ownerName ? `${src.routine_name} | Shared by ${ownerName}` : src.routine_name, user_id: uid, is_archived: false, is_public: false })
       .select('id')
       .single();
     if (newErr || !newRoutine) throw newErr || new Error('Failed to create routine');
