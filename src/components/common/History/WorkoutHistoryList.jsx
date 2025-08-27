@@ -18,11 +18,6 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
 
   return (
     <div className="w-full flex flex-col min-h-screen" data-component="WorkoutHistoryList">
-      {/* Simple header */}
-      <div className="w-full bg-white border-b border-neutral-300 px-5 py-4">
-        <h2 className="text-xl font-semibold text-center">Workout History</h2>
-      </div>
-
       {/* Workouts list */}
       <div className="flex justify-center flex-1">
         <DeckWrapper

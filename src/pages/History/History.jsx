@@ -15,7 +15,7 @@ import StaticCard from "@/components/organisms/static-card";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { TextInput } from "@/components/molecules/text-input";
 import { Copy } from "lucide-react";
-import CalendarWorkoutLog from "@/components/common/History/CalendarWorkoutLog";
+import WorkoutHistoryList from "@/components/common/History/WorkoutHistoryList";
 import MainContentSection from "@/components/layout/MainContentSection";
 import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 
@@ -31,7 +31,7 @@ const History = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [hasSwitchedContext, setHasSwitchedContext] = useState(false);
 
   // Check if we're managing history for an owner (from sharing page)
@@ -238,12 +238,10 @@ const History = () => {
       data-component="AppHeader"
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">
-        {/* Calendar Log */}
+        {/* Workout History List */}
         {!loading && (
-          <CalendarWorkoutLog
+          <WorkoutHistoryList
             workouts={workouts}
-            date={selectedDate}
-            setDate={setSelectedDate}
             viewingOwn={viewingOwn}
           />
         )}

@@ -10,14 +10,7 @@
     @apply mt-0;
   }
 
-  /* Ensure days that are outside the current month do not inherit hasWorkout styling */
-  .rdp-day_outside.rdp-day_hasWorkout > button {
-    @apply !bg-transparent !text-inherit;
-  }
 
-  .rdp-day_outside.rdp-day_hasWorkout {
-    @apply !bg-transparent !text-inherit !shadow-none !border-none;
-  }
 
   /* Demo workout border override - removed since we now use DeckWrapper */
   /* The DeckWrapper component now handles all border styling consistently */
