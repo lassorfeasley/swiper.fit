@@ -27,6 +27,45 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 
 // Database analysis functions
+const getAccessibleUserIds = async (db, userId) => {
+  const ids = new Set([userId]);
+  try {
+    // account_shares: owner_user_id shared with delegate
+    const { data: shares1 } = await db
+      .from('account_shares')
+      .select('owner_user_id, delegate_user_id, shared_with')
+      .or(`delegate_user_id.eq.${userId},shared_with.eq.${userId}`);
+    (shares1 || []).forEach(r => ids.add(r.owner_user_id));
+    // legacy shares table
+    const { data: shares2 } = await db
+      .from('shares')
+      .select('owner_user_id, delegate_user_id')
+      .eq('delegate_user_id', userId);
+    (shares2 || []).forEach(r => ids.add(r.owner_user_id));
+  } catch (e) {
+    // ignore share lookup errors; fallback to self id
+  }
+  return Array.from(ids);
+};
+
+const findExerciseByName = async (db, userId, name) => {
+  const accessibleUserIds = await getAccessibleUserIds(db, userId);
+  const term = name.trim().toLowerCase();
+  // Try exact ilike, then loose contains
+  const { data: ex1 } = await db
+    .from('exercises')
+    .select('id, name')
+    .in('user_id', accessibleUserIds)
+    .ilike('name', term);
+  if (ex1 && ex1.length) return ex1[0];
+  const { data: ex2 } = await db
+    .from('exercises')
+    .select('id, name')
+    .in('user_id', accessibleUserIds)
+    .ilike('name', `%${term}%`)
+    .limit(1);
+  return ex2 && ex2.length ? ex2[0] : null;
+};
 const analyzeUserProgress = async (db, userId) => {
   try {
     console.log('🔍 Database Debug - Starting analysis for user:', userId);
@@ -37,10 +76,11 @@ const analyzeUserProgress = async (db, userId) => {
     let sets = [];
 
     // Get user's workout history
+    const accessibleUserIds = await getAccessibleUserIds(db, userId);
     const { data: workoutsData, error: workoutError } = await db
       .from('workouts')
       .select('*')
-      .eq('user_id', userId)
+      .in('user_id', accessibleUserIds)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -79,6 +119,15 @@ const analyzeUserProgress = async (db, userId) => {
         console.log('🔍 Database Debug - Sample set:', sets[0]);
       } else {
         console.log('🔍 Database Debug - No workout exercises found');
+        // Try fetching sets directly by workout_id (your schema has sets.workout_id)
+        const { data: setsViaWorkout, error: setsByWorkoutErr } = await db
+          .from('sets')
+          .select('*')
+          .in('workout_id', workoutIds)
+          .eq('user_id', userId);
+        if (setsByWorkoutErr) throw setsByWorkoutErr;
+        sets = setsViaWorkout || [];
+        console.log('🔍 Direct sets by workout_id:', sets.length);
         // Fallback: derive from routine_exercises and routine_sets via the workout's routine_id
         const routineIds = Array.from(new Set(workouts.map(w => w.routine_id).filter(Boolean)));
         if (routineIds.length) {
@@ -95,7 +144,7 @@ const analyzeUserProgress = async (db, userId) => {
             exercises: { name: re.exercises?.name || 'Exercise' },
           }));
           // Create synthetic sets list based on routine_sets counts
-          sets = [];
+          if (!sets.length) sets = [];
           (routineExerciseRows || []).forEach(re => {
             const count = (re.routine_sets || []).length;
             for (let i = 0; i < count; i++) {
@@ -130,44 +179,29 @@ const analyzeExerciseProgress = async (db, userId, exerciseName) => {
 
     const exerciseId = exercises[0].id;
 
-    // Get workout exercises for this specific exercise
-    const { data: workoutExercises, error: weError } = await db
-      .from('workout_exercises')
-      .select('*')
-      .eq('exercise_id', exerciseId);
-
-    if (weError) throw weError;
-
-    // Filter by user workouts
-    const workoutIds = workoutExercises.map(we => we.workout_id);
-    const { data: userWorkouts, error: workoutError } = await db
-      .from('workouts')
-      .select('*')
-      .eq('user_id', userId)
-      .in('id', workoutIds);
-
-    if (workoutError) throw workoutError;
-
-    // Filter workout exercises to only include user's workouts
-    const userWorkoutIds = userWorkouts.map(w => w.id);
-    const filteredWorkoutExercises = workoutExercises.filter(we => 
-      userWorkoutIds.includes(we.workout_id)
-    );
-
-    // Get sets data for these workout exercises
+    // Get sets for this exercise (works even if workout_exercises is empty)
+    const accessibleUserIds = await getAccessibleUserIds(db, userId);
     const { data: sets, error: setsError } = await db
       .from('sets')
-      .select('*')
-      .in('workout_exercise_id', filteredWorkoutExercises.map(we => we.id));
-
+      .select('id, workout_id, exercise_id, reps, weight, created_at')
+      .eq('exercise_id', exerciseId)
+      .in('user_id', accessibleUserIds);
     if (setsError) throw setsError;
 
-    return { 
-      exercises, 
-      workoutExercises: filteredWorkoutExercises, 
-      sets,
-      userWorkouts 
-    };
+    // Retrieve involved workouts for context
+    const workoutIds = Array.from(new Set((sets || []).map(s => s.workout_id).filter(Boolean)));
+    let userWorkouts = [];
+    if (workoutIds.length) {
+      const { data: uw, error: workoutError } = await db
+        .from('workouts')
+        .select('*')
+        .in('user_id', accessibleUserIds)
+        .in('id', workoutIds);
+      if (workoutError) throw workoutError;
+      userWorkouts = uw || [];
+    }
+
+    return { exercises, workoutExercises: [], sets, userWorkouts };
   } catch (error) {
     console.error('Exercise analysis error:', error);
     throw error;
@@ -194,32 +228,23 @@ const generateProgressInsights = (data) => {
 
     // Analyze strength trends
     if (data.sets && data.sets.length > 0) {
-      const exerciseGroups = {};
-      data.sets.forEach(set => {
-        const exerciseId = set.workout_exercise_id;
-        if (!exerciseGroups[exerciseId]) {
-          exerciseGroups[exerciseId] = [];
-        }
-        exerciseGroups[exerciseId].push({
-          weight: set.weight,
-          reps: set.reps,
-          date: set.created_at
-        });
+      const groups = {};
+      data.sets.forEach(s => {
+        const key = s.exercise_id || s.workout_exercise_id || 'unknown';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, date: s.created_at });
       });
-
-      Object.values(exerciseGroups).forEach(exerciseSets => {
-        if (exerciseSets.length > 1) {
-          const sortedSets = exerciseSets.sort((a, b) => new Date(a.date) - new Date(b.date));
-          const firstSet = sortedSets[0];
-          const lastSet = sortedSets[sortedSets.length - 1];
-          
-          if (lastSet.weight > firstSet.weight) {
-            insights.strengthTrends.push({
-              exercise: 'Exercise',
-              improvement: `${lastSet.weight - firstSet.weight} lbs`,
-              period: `${Math.round((new Date(lastSet.date) - new Date(firstSet.date)) / (1000 * 60 * 60 * 24))} days`
-            });
-          }
+      Object.values(groups).forEach(arr => {
+        if (arr.length < 2) return;
+        const sorted = arr.sort((a,b) => new Date(a.date) - new Date(b.date));
+        const first = sorted[0];
+        const last = sorted[sorted.length-1];
+        if ((last.weight || 0) > (first.weight || 0)) {
+          insights.strengthTrends.push({
+            exercise: 'Exercise',
+            improvement: `${(last.weight||0) - (first.weight||0)} lbs`,
+            period: `${Math.round((new Date(last.date) - new Date(first.date)) / (1000*60*60*24))} days`
+          });
         }
       });
     }
@@ -328,31 +353,26 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ message: 'Messages array is required' });
     }
 
-    // Focused system prompt for fitness analysis
-    const systemPrompt = `You are Swiper, a specialized AI fitness analyst focused on analyzing workout data, performance trends, and fitness progress.
+    // Focused system prompt for fitness analysis (never ask user for data; fetch from DB; troubleshoot gaps)
+    const systemPrompt = `You are Swiper, a specialized AI fitness analyst. You must proactively query the user's workout database (via the backend) to answer questions. Do not ask the user to provide data that is available in the database. If data needed for an answer is missing or access is blocked, clearly explain what is missing and provide precise troubleshooting steps (e.g., which tables/columns, likely RLS/policy issues, or that no rows exist yet). Never request the user to paste data.
 
 Your expertise is in:
+1) Performance analysis (weights, reps, volume, intensity, durations)
+2) Progress tracking and plateaus
+3) Workout frequency/consistency and adherence
+4) Data-backed recommendations
 
-1. **Performance Analysis**: Analyzing workout data, strength progress, and fitness metrics
-2. **Progress Tracking**: Identifying trends, plateaus, and improvement areas
-3. **Data Insights**: Interpreting workout patterns, volume analysis, and consistency metrics
-4. **Goal Assessment**: Evaluating progress toward fitness goals and milestones
-5. **Recommendations**: Suggesting data-driven improvements based on analysis
+Response guidelines:
+- Base conclusions on actual database reads returned by the API.
+- Quantify with concrete numbers, dates, and simple aggregates when possible.
+- If a metric cannot be calculated, state exactly which data is missing (table/field) and suggest a specific fix (e.g., check RLS on sets, ensure sets.workout_id is populated).
+- Prefer concise, actionable summaries over generic advice. No requests for the user to provide more data.
 
-Your responses should:
-- Focus on analyzing and interpreting fitness data
-- Provide insights about performance trends and patterns
-- Suggest specific metrics to track for better analysis
-- Recommend data visualization approaches (charts, graphs)
-- Be analytical yet encouraging
-- Ask clarifying questions about what data is available
-
-When analyzing fitness data, provide:
-- Performance insights and trends
-- Specific metrics to focus on
-- Chart and visualization suggestions
-- Data collection recommendations
-- Progress assessment and goal tracking advice
+When analyzing, include where relevant:
+- Performance insights and trends (delta over time)
+- Key metrics to focus on next
+- Simple charts to suggest (by name) but do not ask for data
+- Clear next steps if data or permissions are absent.
 
 Keep responses focused on analysis and data interpretation rather than creating new routines or exercises.`;
 
@@ -425,14 +445,18 @@ Would you like me to help you set up tracking for specific metrics, or do you ha
         }
       }
 
-      // Analyze specific exercise progress
-      if (text.includes('chest press') || 
-          text.includes('bench press') ||
-          text.includes('how have') ||
-          text.includes('progress')) {
-        
-        const exerciseName = lastMessage.toLowerCase().includes('chest') ? 'chest press' : 'bench press';
-        analysisData = await analyzeExerciseProgress(authScopedSupabase, userId, exerciseName);
+      // Analyze specific exercise progress (detect exercise names dynamically)
+      if (text.includes('progress') || text.includes('trend') || text.includes('how have')) {
+        // Heuristic: find an exercise name in the prompt
+        const knownKeywords = ['press','bench','squat','deadlift','row','curl','sled','trap bar squat','trap bar','trap'];
+        let candidate = knownKeywords.find(k => text.includes(k)) || '';
+        if (candidate === 'press' && text.includes('bench')) candidate = 'bench press';
+        if (candidate === 'trap') candidate = 'trap bar squat';
+        if (candidate) {
+          const exercise = await findExerciseByName(authScopedSupabase, userId, candidate);
+          const nameForQuery = exercise?.name || candidate;
+          analysisData = await analyzeExerciseProgress(authScopedSupabase, userId, nameForQuery);
+        }
         
         if (analysisData.error) {
           responseContent = `I couldn't find data for ${exerciseName} in your workout history. This could mean:
@@ -442,9 +466,9 @@ Would you like me to help you set up tracking for specific metrics, or do you ha
 3. You need to complete some workouts first
 
 To get started, try completing a few workouts with ${exerciseName} and then ask me to analyze your progress again!`;
-        } else {
+        } else if (analysisData) {
           const insights = generateProgressInsights(analysisData);
-          responseContent = `Here's your ${exerciseName} progress analysis:
+          responseContent = `Here's your ${candidate || 'exercise'} progress analysis:
 
 **Workout Summary:**
 - Total ${exerciseName} sessions: ${insights.totalWorkouts}
@@ -465,6 +489,8 @@ ${insights.strengthTrends.length > 0 ?
 - Consider tracking additional metrics like RPE (Rate of Perceived Exertion)
 
 Would you like me to analyze any other exercises or provide more detailed insights?`;
+        } else {
+          responseContent = `I couldn't match an exercise name from your request. Try asking about a specific exercise (e.g., "bench press trend" or "trap bar squat progress").`;
         }
       }
       // Recent workout(s) summary (prioritize over general analysis)
