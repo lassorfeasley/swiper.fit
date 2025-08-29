@@ -15,61 +15,95 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize OpenAI
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const hasOpenAIKey = !!OPENAI_KEY;
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'demo-key',
+  apiKey: OPENAI_KEY || 'demo-key',
 });
 
 // Initialize Supabase
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const SUPABASE_URL = 'https://tdevpmxmvrgouozsgplu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 
 // Database analysis functions
-const analyzeUserProgress = async (userId) => {
+const analyzeUserProgress = async (db, userId) => {
   try {
     console.log('🔍 Database Debug - Starting analysis for user:', userId);
-    
+
+    // Always initialize safe defaults
+    let workouts = [];
+    let workoutExercises = [];
+    let sets = [];
+
     // Get user's workout history
-    const { data: workouts, error: workoutError } = await supabase
+    const { data: workoutsData, error: workoutError } = await db
       .from('workouts')
       .select('*')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
       .limit(50);
 
     if (workoutError) throw workoutError;
-    console.log('🔍 Database Debug - Found workouts:', workouts?.length || 0);
-    console.log('🔍 Database Debug - Sample workout:', workouts?.[0]);
+    workouts = workoutsData || [];
+    console.log('🔍 Database Debug - Found workouts:', workouts.length);
+    console.log('🔍 Database Debug - Sample workout:', workouts[0]);
 
     // Get workout exercises and sets
-    if (workouts && workouts.length > 0) {
+    if (workouts.length > 0) {
       const workoutIds = workouts.map(w => w.id);
       console.log('🔍 Database Debug - Looking for exercises in workout IDs:', workoutIds);
-      
-      const { data: workoutExercises, error: exerciseError } = await supabase
+
+      const { data: weData, error: exerciseError } = await db
         .from('workout_exercises')
         .select('*')
         .in('workout_id', workoutIds);
 
       if (exerciseError) throw exerciseError;
-      console.log('🔍 Database Debug - Found workout exercises:', workoutExercises?.length || 0);
-      console.log('🔍 Database Debug - Sample workout exercise:', workoutExercises?.[0]);
+      workoutExercises = weData || [];
+      console.log('🔍 Database Debug - Found workout exercises:', workoutExercises.length);
+      console.log('🔍 Database Debug - Sample workout exercise:', workoutExercises[0]);
 
-      // Get sets data
-      if (workoutExercises && workoutExercises.length > 0) {
+      if (workoutExercises.length > 0) {
         const workoutExerciseIds = workoutExercises.map(we => we.id);
         console.log('🔍 Database Debug - Looking for sets in workout exercise IDs:', workoutExerciseIds);
-        
-        const { data: sets, error: setsError } = await supabase
+
+        const { data: setsData, error: setsError } = await db
           .from('sets')
           .select('*')
           .in('workout_exercise_id', workoutExerciseIds);
 
         if (setsError) throw setsError;
-        console.log('🔍 Database Debug - Found sets:', sets?.length || 0);
-        console.log('🔍 Database Debug - Sample set:', sets?.[0]);
+        sets = setsData || [];
+        console.log('🔍 Database Debug - Found sets:', sets.length);
+        console.log('🔍 Database Debug - Sample set:', sets[0]);
       } else {
         console.log('🔍 Database Debug - No workout exercises found');
+        // Fallback: derive from routine_exercises and routine_sets via the workout's routine_id
+        const routineIds = Array.from(new Set(workouts.map(w => w.routine_id).filter(Boolean)));
+        if (routineIds.length) {
+          const { data: routineExerciseRows, error: reErr } = await db
+            .from('routine_exercises')
+            .select('id, routine_id, exercises!fk_routine_exercises__exercises(name), routine_sets!fk_routine_sets__routine_exercises(id)')
+            .in('routine_id', routineIds);
+          if (reErr) throw reErr;
+          // Create synthetic workoutExercises list (one per routine exercise, not tied to workout id)
+          workoutExercises = (routineExerciseRows || []).map(re => ({
+            id: re.id,
+            workout_id: null,
+            exercise_id: null,
+            exercises: { name: re.exercises?.name || 'Exercise' },
+          }));
+          // Create synthetic sets list based on routine_sets counts
+          sets = [];
+          (routineExerciseRows || []).forEach(re => {
+            const count = (re.routine_sets || []).length;
+            for (let i = 0; i < count; i++) {
+              sets.push({ id: `${re.id}-rs-${i}`, workout_exercise_id: re.id });
+            }
+          });
+          console.log('🔍 Fallback - routine_exercises found:', routineExerciseRows?.length || 0, 'synthetic sets:', sets.length);
+        }
       }
     } else {
       console.log('🔍 Database Debug - No workouts found');
@@ -82,10 +116,10 @@ const analyzeUserProgress = async (userId) => {
   }
 };
 
-const analyzeExerciseProgress = async (userId, exerciseName) => {
+const analyzeExerciseProgress = async (db, userId, exerciseName) => {
   try {
     // Find exercise by name
-    const { data: exercises, error: exerciseError } = await supabase
+    const { data: exercises, error: exerciseError } = await db
       .from('exercises')
       .select('*')
       .ilike('name', `%${exerciseName}%`);
@@ -97,7 +131,7 @@ const analyzeExerciseProgress = async (userId, exerciseName) => {
     const exerciseId = exercises[0].id;
 
     // Get workout exercises for this specific exercise
-    const { data: workoutExercises, error: weError } = await supabase
+    const { data: workoutExercises, error: weError } = await db
       .from('workout_exercises')
       .select('*')
       .eq('exercise_id', exerciseId);
@@ -106,7 +140,7 @@ const analyzeExerciseProgress = async (userId, exerciseName) => {
 
     // Filter by user workouts
     const workoutIds = workoutExercises.map(we => we.workout_id);
-    const { data: userWorkouts, error: workoutError } = await supabase
+    const { data: userWorkouts, error: workoutError } = await db
       .from('workouts')
       .select('*')
       .eq('user_id', userId)
@@ -121,7 +155,7 @@ const analyzeExerciseProgress = async (userId, exerciseName) => {
     );
 
     // Get sets data for these workout exercises
-    const { data: sets, error: setsError } = await supabase
+    const { data: sets, error: setsError } = await db
       .from('sets')
       .select('*')
       .in('workout_exercise_id', filteredWorkoutExercises.map(we => we.id));
@@ -194,6 +228,97 @@ const generateProgressInsights = (data) => {
   return insights;
 };
 
+// Fetch a concise summary of the user's most recent workouts (read-only)
+const getRecentWorkoutsSummary = async (db, userId, limit = 3) => {
+  // Always return a structured object for safety
+  const result = {
+    workouts: [],
+  };
+
+  // 1) Recent workouts
+  const { data: recent, error: recentErr } = await db
+    .from('workouts')
+    .select('id, workout_name, created_at, duration_seconds, last_workout_exercise_id, routine_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (recentErr) throw recentErr;
+  result.workouts = recent || [];
+
+  if (!result.workouts.length) return result;
+
+  // 2) Exercises for these workouts
+  const workoutIds = result.workouts.map(w => w.id);
+  const { data: we, error: weErr } = await db
+    .from('workout_exercises')
+    .select('id, workout_id, exercise_id, exercises(name)')
+    .in('workout_id', workoutIds);
+  if (weErr) throw weErr;
+  const workoutIdToExercises = {};
+  (we || []).forEach(row => {
+    if (!workoutIdToExercises[row.workout_id]) workoutIdToExercises[row.workout_id] = [];
+    workoutIdToExercises[row.workout_id].push({
+      workoutExerciseId: row.id,
+      name: row.exercises?.name || 'Exercise',
+    });
+  });
+
+  // 3) Sets for those workout_exercises
+  const weIds = (we || []).map(r => r.id);
+  let sets = [];
+  if (weIds.length) {
+    const { data: setsData, error: setsErr } = await db
+      .from('sets')
+      .select('id, workout_exercise_id, reps, weight')
+      .in('workout_exercise_id', weIds);
+    if (setsErr) throw setsErr;
+    sets = setsData || [];
+  }
+  const weIdToSetCount = {};
+  sets.forEach(s => {
+    weIdToSetCount[s.workout_exercise_id] = (weIdToSetCount[s.workout_exercise_id] || 0) + 1;
+  });
+
+  // 3b) Fallback: template-based set counts from routine_sets when no logged sets are found
+  const routineIds = Array.from(new Set((result.workouts || []).map(w => w.routine_id).filter(Boolean)));
+  let routineIdToSummary = {};
+  if (routineIds.length) {
+    const { data: reRows, error: reErr } = await db
+      .from('routine_exercises')
+      .select('routine_id, exercises!fk_routine_exercises__exercises(name), routine_sets!fk_routine_sets__routine_exercises(id)')
+      .in('routine_id', routineIds);
+    if (!reErr && reRows) {
+      routineIds.forEach(rid => {
+        const rows = reRows.filter(r => r.routine_id === rid);
+        const names = rows.map(r => r.exercises?.name).filter(Boolean);
+        const setCount = rows.reduce((sum, r) => sum + ((r.routine_sets || []).length), 0);
+        routineIdToSummary[rid] = { names, setCount };
+      });
+    }
+  }
+
+  // 4) Attach simple summaries to each workout
+  result.workouts = result.workouts.map(w => {
+    const exs = workoutIdToExercises[w.id] || [];
+    let totalSets = exs.reduce((sum, e) => sum + (weIdToSetCount[e.workoutExerciseId] || 0), 0);
+    let topExercises = exs.slice(0, 3).map(e => e.name);
+    if (totalSets === 0 && w.routine_id && routineIdToSummary[w.routine_id]) {
+      totalSets = routineIdToSummary[w.routine_id].setCount || 0;
+      if (topExercises.length === 0) {
+        topExercises = (routineIdToSummary[w.routine_id].names || []).slice(0, 3);
+      }
+    }
+    return {
+      ...w,
+      exerciseCount: exs.length,
+      totalSets,
+      topExercises,
+    };
+  });
+
+  return result;
+};
+
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
   try {
@@ -234,7 +359,11 @@ Keep responses focused on analysis and data interpretation rather than creating 
     try {
       // Check if user is asking for data analysis
       const lastMessage = messages[messages.length - 1]?.content || '';
+      const text = lastMessage.toLowerCase();
+      const isRecentQuery = /latest|recent|last workout|last workouts|most recent/.test(text);
+      const isGeneralAnalysis = /progress|analysis|overview|workout history|see my|my data|my workouts/.test(text);
       const userId = req.body.userId;
+      const accessToken = req.body.accessToken;
       
       // Debug logging
       console.log('API Debug - Received userId:', userId);
@@ -283,14 +412,27 @@ Would you like me to help you set up tracking for specific metrics, or do you ha
         return;
       }
 
+      // If we have an access token, set it on the Supabase client for row-level security context
+      let authScopedSupabase = supabase;
+      if (accessToken) {
+        try {
+          authScopedSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${accessToken}` } },
+            auth: { persistSession: false },
+          });
+        } catch (e) {
+          // Fallback silently if we cannot scope
+        }
+      }
+
       // Analyze specific exercise progress
-      if (lastMessage.toLowerCase().includes('chest press') || 
-          lastMessage.toLowerCase().includes('bench press') ||
-          lastMessage.toLowerCase().includes('how have') ||
-          lastMessage.toLowerCase().includes('progress')) {
+      if (text.includes('chest press') || 
+          text.includes('bench press') ||
+          text.includes('how have') ||
+          text.includes('progress')) {
         
         const exerciseName = lastMessage.toLowerCase().includes('chest') ? 'chest press' : 'bench press';
-        analysisData = await analyzeExerciseProgress(userId, exerciseName);
+        analysisData = await analyzeExerciseProgress(authScopedSupabase, userId, exerciseName);
         
         if (analysisData.error) {
           responseContent = `I couldn't find data for ${exerciseName} in your workout history. This could mean:
@@ -325,16 +467,29 @@ ${insights.strengthTrends.length > 0 ?
 Would you like me to analyze any other exercises or provide more detailed insights?`;
         }
       }
+      // Recent workout(s) summary (prioritize over general analysis)
+      else if (isRecentQuery) {
+        const recent = await getRecentWorkoutsSummary(authScopedSupabase, userId, 3);
+        if (!recent.workouts.length) {
+          responseContent = `I couldn't find any completed workouts yet. Once you log a workout, I'll summarize it here.`;
+        } else {
+          const lines = recent.workouts.map((w, idx) => {
+            const date = new Date(w.created_at).toLocaleDateString();
+            const durationMin = w.duration_seconds ? Math.round(w.duration_seconds / 60) : null;
+            const durationText = durationMin ? `${durationMin} min` : 'n/a';
+            const exText = w.exerciseCount ? `${w.exerciseCount} exercises` : '0 exercises';
+            const setText = `${w.totalSets} sets`;
+            const top = w.topExercises && w.topExercises.length ? ` (e.g., ${w.topExercises.join(', ')})` : '';
+            return `#${idx + 1} ${w.workout_name || 'Workout'} on ${date} — ${exText}, ${setText}, duration ${durationText}${top}`;
+          }).join('\n');
+          responseContent = `Here are your recent workouts:\n\n${lines}\n\nWant me to analyze trends across these sessions or dive into a specific exercise?`;
+        }
+        analysisData = { recent: true };
+      }
       // General progress analysis
-      else if (lastMessage.toLowerCase().includes('progress') || 
-               lastMessage.toLowerCase().includes('analysis') ||
-               lastMessage.toLowerCase().includes('overview') ||
-               lastMessage.toLowerCase().includes('workout history') ||
-               lastMessage.toLowerCase().includes('see my') ||
-               lastMessage.toLowerCase().includes('my data') ||
-               lastMessage.toLowerCase().includes('my workouts')) {
+      else if (isGeneralAnalysis) {
         
-        analysisData = await analyzeUserProgress(userId);
+        analysisData = await analyzeUserProgress(authScopedSupabase, userId);
         const insights = generateProgressInsights(analysisData);
         
         responseContent = `Here's your overall fitness progress analysis:
@@ -363,23 +518,27 @@ Would you like me to dive deeper into any specific exercise or aspect of your tr
       }
       // Default AI response
       else {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            ...messages.map(msg => ({
-              role: msg.role,
-              content: msg.content
-            }))
-          ],
-          max_tokens: 800,
-          temperature: 0.7,
-        });
-        
-        responseContent = completion.choices[0].message.content;
+        // If no OpenAI key, provide a graceful mock response instead of 500
+        if (!hasOpenAIKey) {
+          responseContent = `I can analyze your workout data and trends. To enable live AI responses, add an OpenAI API key.\n\nIn the meantime, ask me analysis-focused questions like:\n- \"Analyze my progress\"\n- \"How are my chest presses trending?\"\n- \"What should I track to improve strength?\"`;
+        } else {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt
+              },
+              ...messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+              }))
+            ],
+            max_tokens: 800,
+            temperature: 0.7,
+          });
+          responseContent = completion.choices[0].message.content;
+        }
       }
 
       res.json({ 
@@ -387,7 +546,12 @@ Would you like me to dive deeper into any specific exercise or aspect of your tr
         hasData: !!analysisData
       });
     } catch (openaiError) {
-      if (openaiError.message.includes('quota') || openaiError.message.includes('429')) {
+      if (
+        openaiError.message.includes('quota') ||
+        openaiError.message.includes('429') ||
+        openaiError.code === 'invalid_api_key' ||
+        openaiError.status === 401
+      ) {
         // Provide a helpful mock response when quota is exceeded
         const lastMessage = messages[messages.length - 1]?.content || '';
         

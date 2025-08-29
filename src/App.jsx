@@ -29,6 +29,7 @@ import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
+import Chatbot from "./pages/Chatbot/Chatbot";
 
 export const PageNameContext = createContext({
   setPageName: () => {},
@@ -199,6 +200,7 @@ function AppContent() {
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
 
