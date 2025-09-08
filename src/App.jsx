@@ -59,8 +59,8 @@ function AppContent() {
   ].includes(location.pathname);
 
   // Detect public shared views (history list, workout, or routine)
-  const isPublicHistoryView = /^\/history\/public\//.test(location.pathname);
-  const isPublicRoutineView = /^\/routines\/public\//.test(location.pathname);
+  const isPublicHistoryView = /^\/(app\/)?history\/public\//.test(location.pathname);
+  const isPublicRoutineView = /^\/(app\/)?routines\/public\//.test(location.pathname);
   const hideNavForPublic = isPublicHistoryView || isPublicRoutineView;
 
   // Define paths that should be allowed even when workout is active
@@ -206,10 +206,16 @@ function AppContent() {
 
           {/* Public shared history route (unauthenticated) */}
           <Route path="/history/public/:userId" element={<History />} />
+          {/* App-prefixed alias used by OG pages */}
+          <Route path="/app/history/public/:userId" element={<History />} />
           {/* Public shared single workout view (unauthenticated) */}
           <Route path="/history/public/workout/:workoutId" element={<CompletedWorkout />} />
+          {/* App-prefixed alias used by OG pages */}
+          <Route path="/app/history/public/workout/:workoutId" element={<CompletedWorkout />} />
           {/* Public shared routine view (unauthenticated) */}
           <Route path="/routines/public/:routineId" element={<PublicRoutine />} />
+          {/* App-prefixed alias used by OG pages */}
+          <Route path="/app/routines/public/:routineId" element={<PublicRoutine />} />
         </Routes>
       </main>
 
