@@ -300,8 +300,8 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
       </div>
       
       <div class="cta">
-        <a href="/history/public/workout/${workoutId}" class="button">
-          View Full Workout
+        <a href="/app/history/public/workout/${workoutId}" class="button">
+          Open in App
         </a>
         <p class="redirect-note">
           Click to see the complete interactive workout details
