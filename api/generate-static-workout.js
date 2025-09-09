@@ -98,6 +98,7 @@ export default async function handler(req, res) {
     const title = `${ownerName}'s ${workout.workout_name}`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
     const url = `${process.env.VERCEL_URL || 'https://swiperfit.com'}/history/public/workout/${workoutId}`;
+    const ogImage = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com'}/api/og?title=${encodeURIComponent(title)}&category=${encodeURIComponent(workout.routines?.routine_name || 'Workout')}&date=${encodeURIComponent(date)}&duration=${encodeURIComponent(duration || '1h 20m')}&exercises=${encodeURIComponent(exerciseCount)}&sets=${encodeURIComponent(setCount)}`;
 
     // Generate HTML
     const html = generateHTML({
@@ -109,7 +110,8 @@ export default async function handler(req, res) {
       exerciseCount,
       setCount,
       date,
-      duration
+      duration,
+      ogImage
     });
 
     // In a real implementation, you'd save this to a file system or CDN
@@ -131,7 +133,7 @@ export default async function handler(req, res) {
   }
 }
 
-function generateHTML({ title, description, url, workoutName, ownerName, exerciseCount, setCount, date, duration }) {
+function generateHTML({ title, description, url, workoutName, ownerName, exerciseCount, setCount, date, duration, ogImage }) {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -149,12 +151,16 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:site_name" content="SwiperFit" />
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="${url}" />
     <meta property="twitter:title" content="${title}" />
     <meta property="twitter:description" content="${description}" />
+    <meta property="twitter:image" content="${ogImage}" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
