@@ -49,21 +49,19 @@ export default function Landing() {
         {/* Navigation */}
         <LoggedOutNav showAuthButtons={true} />
 
-        {/* Main Content - Fixed height sections */}
-        <div className="flex-1 flex flex-col">
-          {/* Text content section - Fixed height */}
-          <div className="w-full h-[371px] px-5 flex flex-col justify-center items-start gap-2.5">
+        {/* Main Content - Flexible sections */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Text content section - Responsive height */}
+          <div className="w-full px-5 py-8 flex flex-col justify-center items-start gap-2.5">
             <div className="w-full max-w-[400px] flex flex-col justify-start items-start gap-2">
               <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Log workouts effortlessly.</div>
               <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Enter your routine and start a workout. Never miss an exercise and monitor your progress with AI.</div>
             </div>
           </div>
 
-          {/* Demo workout section - Container that hugs content */}
-          <div className="w-full px-5 outline outline-1 outline-neutral-neutral-300 flex flex-col justify-center items-center">
-            <div className="w-full flex flex-col justify-center items-center">
-              <DemoWorkoutSection />
-            </div>
+          {/* Demo workout section - fills remaining space, prevents overflow */}
+          <div className="w-full px-5 outline outline-1 outline-neutral-neutral-300 flex-1 min-h-0 overflow-hidden">
+            <DemoWorkoutSection />
           </div>
         </div>
 
@@ -82,10 +80,13 @@ export default function Landing() {
         {/* Navigation */}
         <LoggedOutNav showAuthButtons={true} />
 
-        {/* Main Content - Full viewport height with demo workout spanning full height */}
-        <div className="w-full h-screen max-w-[1643px] mx-auto px-16 flex justify-center items-center gap-6 md:gap-12 lg:gap-24">
+        {/* Main Content - at least viewport height minus navbar; footer flows below */}
+        <div
+          className="w-full max-w-[1643px] mx-auto px-16 flex justify-center items-stretch gap-6 md:gap-12 lg:gap-24 min-h-0"
+          style={{ minHeight: 'calc(100vh - 44px)' }}
+        >
           {/* Demo Workout Section - spans full height */}
-          <div className="w-full max-w-[450px] min-w-80 h-full flex flex-col justify-center items-center">
+          <div className="w-full max-w-[450px] min-w-80 h-full flex flex-col justify-start items-stretch">
             <DemoWorkoutSection />
           </div>
           
