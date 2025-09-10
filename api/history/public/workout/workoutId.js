@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 const supabase = createClient(
   'https://tdevpmxmvrgouozsgplu.supabase.co',
@@ -8,35 +6,47 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  const workoutId = req.query.id || '3de533f8-7d05-47a9-ac1d-159268b509a4'; // fallback for testing
+  const workoutId = req.query.workoutId;
   const userAgent = req.headers['user-agent'] || '';
-  const forceOG = req.query.og === 'true'; // Allow forcing OG mode for testing
 
-  // Check if this is a crawler/bot or if OG mode is forced
-  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin|postinspector|linkedinbot|orcascan|opengraph|og|meta|validator/i.test(userAgent);
+  // Check if this is a crawler/bot
+  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin|postinspector|linkedinbot/i.test(userAgent);
 
-  if (!isBot && !forceOG) {
-    // Real user - serve the built SPA HTML dynamically to always reference the correct hashed asset names
-    try {
-      const distIndexPath = path.join(process.cwd(), 'dist', 'index.html');
-      const indexHtml = await fs.readFile(distIndexPath, 'utf8');
-      res.setHeader('Content-Type', 'text/html');
-      return res.status(200).send(indexHtml);
-    } catch (err) {
-      console.error('Error reading built index.html:', err);
-      // Fallback: redirect to root so Vercel will serve the SPA index.html via static routing
-      return res.redirect(302, '/');
-    }
+  if (!isBot) {
+    // Real user - redirect to the main app
+    return res.redirect(302, '/');
   }
 
-  // Bot/crawler - serve static HTML
+  // Bot/crawler - serve static HTML with OG tags
   try {
-    // Fetch workout data (same as generate-static-workout.js)
+    if (!workoutId) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Workout Not Found - SwiperFit</title>
+            <meta name="description" content="Workout not found." />
+          </head>
+          <body>
+            <h1>Workout Not Found</h1>
+            <p>The requested workout could not be found.</p>
+          </body>
+        </html>
+      `);
+    }
+
+    // Fetch workout data
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
         *,
-        routines!workouts_routine_id_fkey(routine_name)
+        routines!workouts_routine_id_fkey(routine_name),
+        accounts!workouts_user_id_fkey(full_name),
+        workout_exercises(
+          id,
+          exercises(name)
+        ),
+        sets!sets_workout_id_fkey(id)
       `)
       .eq('id', workoutId)
       .eq('is_public', true)
@@ -48,51 +58,20 @@ export default async function handler(req, res) {
         <html>
           <head>
             <title>Workout Not Found - SwiperFit</title>
-            <meta name="description" content="This workout was not found or is not public." />
+            <meta name="description" content="This workout is not public or was not found." />
           </head>
           <body>
             <h1>Workout Not Found</h1>
-            <p>This workout was not found or is not public.</p>
+            <p>This workout is not public or was not found.</p>
           </body>
         </html>
       `);
     }
 
-    // Fetch completed sets
-    const { data: sets, error: setsError } = await supabase
-      .from('sets')
-      .select('exercise_id, reps, weight, weight_unit, set_type, timed_set_duration')
-      .eq('workout_id', workoutId)
-      .eq('status', 'complete');
-
-    if (setsError) {
-      console.error('Error fetching sets:', setsError);
-    }
-
-    // Fetch owner profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('id', workout.user_id)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-    }
-
     // Calculate metrics
-    const validSets = (sets || []).filter(set => {
-      if (set.set_type === 'timed') {
-        return typeof set.timed_set_duration === 'number' && set.timed_set_duration > 0;
-      }
-      return typeof set.reps === 'number' && set.reps > 0;
-    });
-
-    const exerciseCount = new Set(validSets.map(s => s.exercise_id)).size;
-    const setCount = validSets.length;
-    const ownerName = profile ? 
-      `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User' : 
-      'User';
+    const exerciseCount = workout.workout_exercises?.length || 0;
+    const setCount = workout.sets?.length || 0;
+    const ownerName = workout.accounts?.full_name || 'User';
 
     // Format date
     const date = new Date(workout.created_at).toLocaleDateString('en-US', {
@@ -120,17 +99,17 @@ export default async function handler(req, res) {
     const duration = workout.duration_seconds ? formatDuration(workout.duration_seconds) : '';
 
     // Generate meta data
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
+    const pageUrl = `${baseUrl}/history/public/workout/${workoutId}`;
     const title = `${ownerName}'s ${workout.workout_name}`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
-    const url = `${req.headers.host}/history/public/workout/${workoutId}`;
-    const host = `https://${req.headers.host}`;
-    const ogImage = `${host}/api/og-image?workoutId=${workoutId}`;
+    const ogImage = `${baseUrl}/api/og-image?workoutId=${workoutId}`;
 
     // Generate and serve HTML
     const html = generateHTML({
       title,
       description,
-      url: `https://${url}`,
+      url: pageUrl,
       workoutName: workout.workout_name,
       ownerName,
       exerciseCount,
@@ -145,7 +124,7 @@ export default async function handler(req, res) {
     return res.status(200).send(html);
 
   } catch (error) {
-    console.error('Error serving static workout:', error);
+    console.error('Error serving workout OG:', error);
     return res.status(500).send(`
       <!DOCTYPE html>
       <html>
@@ -153,8 +132,8 @@ export default async function handler(req, res) {
           <title>Error - SwiperFit</title>
         </head>
         <body>
-          <h1>Error Loading Workout</h1>
-          <p>There was an error loading this workout.</p>
+          <h1>Error</h1>
+          <p>There was an error loading this page.</p>
         </body>
       </html>
     `);
@@ -270,18 +249,11 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
       .button:hover {
         background: #047857;
       }
-      .redirect-note {
-        margin-top: 16px;
-        font-size: 14px;
-        color: #6b7280;
-      }
       .branding {
         text-align: center;
-        margin-top: 40px;
-        padding-top: 24px;
-        border-top: 1px solid #e5e7eb;
-        color: #9ca3af;
+        margin-top: 32px;
         font-size: 14px;
+        color: #6b7280;
       }
     </style>
   </head>
@@ -303,17 +275,12 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
         </div>
         ${duration ? `<div class="stat">
           <span class="stat-number">${duration.split(' ')[0]}</span>
-          <div class="stat-label">${duration.includes('hour') ? (duration.includes('and') ? 'Hours+' : 'Hours') : 'Minutes'}</div>
+          <div class="stat-label">${duration.includes('hour') ? 'Hours' : 'Minutes'}</div>
         </div>` : ''}
       </div>
       
       <div class="cta">
-        <a href="/app/history/public/workout/${workoutId}" class="button">
-          Open in App
-        </a>
-        <p class="redirect-note">
-          Click to see the complete interactive workout details
-        </p>
+        <a href="/" class="button">Open in SwiperFit</a>
       </div>
       
       <div class="branding">
@@ -322,4 +289,4 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     </div>
   </body>
 </html>`;
-} 
+}
