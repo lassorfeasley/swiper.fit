@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'image/png');
 
   try {
+    console.log('Generating OG image for workout:', workoutId);
     // Fetch workout data
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
@@ -246,6 +247,11 @@ export default async function handler(req, res) {
     );
   } catch (error) {
     console.error('Error generating OG image:', error);
-    return res.status(500).json({ error: 'Failed to generate image' });
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ 
+      error: 'Failed to generate image',
+      details: error.message,
+      workoutId: workoutId
+    });
   }
 }
