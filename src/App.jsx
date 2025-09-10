@@ -22,6 +22,7 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
+import OGImageTest from "./pages/OGImageTest";
 import Sharing from "./pages/Sharing/Sharing";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
@@ -200,6 +201,7 @@ function AppContent() {
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
+            <Route path="/og-test" element={<OGImageTest />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
 
           </Route>
