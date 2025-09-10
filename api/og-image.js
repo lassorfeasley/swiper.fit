@@ -85,23 +85,8 @@ export default async function handler(req, res) {
 
     const duration = workout.duration_seconds ? formatDuration(workout.duration_seconds) : '';
 
-    // Generate SVG
-    const svg = generateSVG({
-      routineName: workout.routines?.routine_name || 'Workout',
-      workoutName: workout.workout_name,
-      ownerName,
-      date,
-      duration,
-      exerciseCount,
-      setCount
-    });
-
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).send(svg);
+    // For now, redirect to static image to test compatibility
+    res.redirect(302, '/images/og-workout-default.svg');
 
   } catch (error) {
     console.error('Error generating SVG:', error);
@@ -109,59 +94,142 @@ export default async function handler(req, res) {
   }
 }
 
-function generateSVG({ routineName, workoutName, ownerName, date, duration, exerciseCount, setCount }) {
-  // Escape text for SVG
-  const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function generateHTMLImage({ routineName, workoutName, ownerName, date, duration, exerciseCount, setCount }) {
+  // Escape text for HTML
+  const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   
-  return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<font-face font-family="Arial, sans-serif" font-weight="300" font-style="normal"/>
-<font-face font-family="Arial, sans-serif" font-weight="700" font-style="normal"/>
-</defs>
-
-<!-- White background -->
-<rect width="1200" height="630" fill="white"/>
-
-<!-- Main content container -->
-<g transform="translate(60, 60)">
-  
-  <!-- Top bar -->
-  <g transform="translate(0, 0)">
-    <!-- Routine name -->
-    <text x="0" y="30" fill="#737373" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(routineName.toUpperCase())}</text>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     
-    <!-- Date -->
-    <text x="1080" y="30" text-anchor="end" fill="#737373" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(date.toUpperCase())}</text>
-  </g>
-  
-  <!-- Workout name (centered) -->
-  <text x="540" y="300" text-anchor="middle" fill="#171717" font-family="Arial, sans-serif" font-size="80" font-weight="700" line-height="90px">${escape(workoutName)}</text>
-  
-  <!-- Bottom bar -->
-  <g transform="translate(0, 442)">
+    body {
+      width: 1200px;
+      height: 630px;
+      background: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
     
-    <!-- Metrics container -->
-    <g transform="translate(0, 0)">
-      
-      ${duration ? `<!-- Duration box -->
-      <rect x="0" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="70" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${escape(duration)}</text>` : ''}
-      
-      <!-- Total exercises box -->
-      <rect x="${duration ? '160' : '0'}" y="0" width="200" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="${duration ? '260' : '100'}" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${exerciseCount} EXERCISES</text>
-      
-      <!-- Total sets box -->
-      <rect x="${duration ? '380' : '220'}" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="${duration ? '450' : '290'}" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${setCount} SETS</text>
-      
-    </g>
+    .container {
+      width: 1080px;
+      height: 510px;
+      margin: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
     
-    <!-- Large green checkmark -->
-    <rect x="760" y="-182.38" width="320" height="250.38" fill="#22C55E"/>
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
     
-  </g>
-  
-</g>
-</svg>`;
+    .routine-name, .date {
+      color: #737373;
+      font-size: 30px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    
+    .workout-name {
+      text-align: center;
+      color: #171717;
+      font-size: 80px;
+      font-weight: 700;
+      line-height: 90px;
+    }
+    
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 68px;
+    }
+    
+    .metrics {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .metric-box {
+      padding: 20px;
+      background: #FAFAFA;
+      border-radius: 10px;
+      border: 2px solid #D4D4D4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .metric-text {
+      color: #404040;
+      font-size: 30px;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    
+    .duration-box {
+      width: 140px;
+      height: 68px;
+    }
+    
+    .exercises-box {
+      width: 200px;
+      height: 68px;
+    }
+    
+    .sets-box {
+      width: 140px;
+      height: 68px;
+    }
+    
+    .checkmark {
+      width: 320px;
+      height: 250.38px;
+      background: #22C55E;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div class="routine-name">${escape(routineName.toUpperCase())}</div>
+      <div class="date">${escape(date.toUpperCase())}</div>
+    </div>
+    
+    <div class="workout-name">${escape(workoutName)}</div>
+    
+    <div class="bottom-bar">
+      <div class="metrics">
+        ${duration ? `<div class="metric-box duration-box">
+          <div class="metric-text">${escape(duration)}</div>
+        </div>` : ''}
+        
+        <div class="metric-box exercises-box">
+          <div class="metric-text">${exerciseCount} EXERCISES</div>
+        </div>
+        
+        <div class="metric-box sets-box">
+          <div class="metric-text">${setCount} SETS</div>
+        </div>
+      </div>
+      
+      <div class="checkmark"></div>
+    </div>
+  </div>
+</body>
+</html>`;
 }
