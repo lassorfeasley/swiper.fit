@@ -98,6 +98,9 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(200).send(svg);
 
   } catch (error) {
@@ -112,8 +115,8 @@ function generateSVG({ routineName, workoutName, ownerName, date, duration, exer
   
   return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<font-face font-family="Be Vietnam Pro" font-weight="300" font-style="normal"/>
-<font-face font-family="Be Vietnam Pro" font-weight="700" font-style="normal"/>
+<font-face font-family="Arial, sans-serif" font-weight="300" font-style="normal"/>
+<font-face font-family="Arial, sans-serif" font-weight="700" font-style="normal"/>
 </defs>
 
 <!-- White background -->
@@ -125,14 +128,14 @@ function generateSVG({ routineName, workoutName, ownerName, date, duration, exer
   <!-- Top bar -->
   <g transform="translate(0, 0)">
     <!-- Routine name -->
-    <text x="0" y="30" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(routineName.toUpperCase())}</text>
+    <text x="0" y="30" fill="#737373" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(routineName.toUpperCase())}</text>
     
     <!-- Date -->
-    <text x="1080" y="30" text-anchor="end" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(date.toUpperCase())}</text>
+    <text x="1080" y="30" text-anchor="end" fill="#737373" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(date.toUpperCase())}</text>
   </g>
   
   <!-- Workout name (centered) -->
-  <text x="540" y="300" text-anchor="middle" fill="#171717" font-family="Be Vietnam Pro" font-size="80" font-weight="700" line-height="90px">${escape(workoutName)}</text>
+  <text x="540" y="300" text-anchor="middle" fill="#171717" font-family="Arial, sans-serif" font-size="80" font-weight="700" line-height="90px">${escape(workoutName)}</text>
   
   <!-- Bottom bar -->
   <g transform="translate(0, 442)">
@@ -142,15 +145,15 @@ function generateSVG({ routineName, workoutName, ownerName, date, duration, exer
       
       ${duration ? `<!-- Duration box -->
       <rect x="0" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="70" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${escape(duration)}</text>` : ''}
+      <text x="70" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${escape(duration)}</text>` : ''}
       
       <!-- Total exercises box -->
       <rect x="${duration ? '160' : '0'}" y="0" width="200" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="${duration ? '260' : '100'}" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${exerciseCount} EXERCISES</text>
+      <text x="${duration ? '260' : '100'}" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${exerciseCount} EXERCISES</text>
       
       <!-- Total sets box -->
       <rect x="${duration ? '380' : '220'}" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
-      <text x="${duration ? '450' : '290'}" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${setCount} SETS</text>
+      <text x="${duration ? '450' : '290'}" y="44" text-anchor="middle" fill="#404040" font-family="Arial, sans-serif" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${setCount} SETS</text>
       
     </g>
     
