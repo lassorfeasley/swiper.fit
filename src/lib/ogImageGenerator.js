@@ -64,21 +64,27 @@ export function generateOGImagePNG(workoutData) {
       // Sets box
       drawMetricBox(ctx, xOffset, 502, 140, 68, `${workoutData.setCount} SETS`);
       
-      // Draw green checkmark
+      // Draw green checkmark background
       ctx.fillStyle = '#22C55E';
       ctx.fillRect(760, 319.62, 320, 250.38);
       
       // Draw white checkmark inside the green square
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = 20;
+      ctx.lineWidth = 25;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
-      // Checkmark path
+      // Checkmark path - centered in the green area
+      const centerX = 760 + 160; // Center of green square (760 + 320/2)
+      const centerY = 319.62 + 125; // Center of green square (319.62 + 250.38/2)
+      
       ctx.beginPath();
-      ctx.moveTo(820, 400); // Start of checkmark
-      ctx.lineTo(880, 460); // First diagonal line
-      ctx.lineTo(980, 360); // Second diagonal line
+      // Start of checkmark (left side)
+      ctx.moveTo(centerX - 60, centerY);
+      // First diagonal line (down and right)
+      ctx.lineTo(centerX - 20, centerY + 40);
+      // Second diagonal line (up and right)
+      ctx.lineTo(centerX + 60, centerY - 40);
       ctx.stroke();
       
       // Convert to PNG
