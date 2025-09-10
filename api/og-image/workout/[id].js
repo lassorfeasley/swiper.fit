@@ -103,7 +103,7 @@ export default async function handler(req, res) {
       duration
     });
 
-    // Set headers for HTML response
+    // Set headers for HTML response (social media crawlers will render this)
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
     
@@ -132,8 +132,64 @@ export default async function handler(req, res) {
   }
 }
 
-// Generate HTML for Open Graph images
+// Generate SVG for Open Graph images (better compatibility with social media crawlers)
 function generateOGImageHTML({ workoutName, ownerName, exerciseCount, setCount, date, duration }) {
+  const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Main container -->
+  <rect x="100" y="65" width="1000" height="500" rx="20" fill="white" stroke="none"/>
+  
+  <!-- Logo -->
+  <rect x="570" y="120" width="60" height="60" rx="12" fill="#059669"/>
+  <text x="600" y="155" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">S</text>
+  
+  <!-- Title -->
+  <text x="600" y="250" text-anchor="middle" fill="#111827" font-family="Arial, sans-serif" font-size="48" font-weight="700">${workoutName}</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="290" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="24" font-weight="500">by ${ownerName}</text>
+  
+  <!-- Stats -->
+  <g transform="translate(300, 350)">
+    <!-- Exercise count -->
+    <text x="0" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${exerciseCount}</text>
+    <text x="0" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Exercises</text>
+    
+    <!-- Set count -->
+    <text x="300" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${setCount}</text>
+    <text x="300" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Sets</text>
+    
+    ${duration ? `
+    <!-- Duration -->
+    <text x="600" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${duration}</text>
+    <text x="600" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Minutes</text>
+    ` : ''}
+  </g>
+  
+  <!-- Footer -->
+  <line x1="160" y1="520" x2="1040" y2="520" stroke="#f3f4f6" stroke-width="2"/>
+  
+  <!-- Date -->
+  <text x="160" y="550" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">${date}</text>
+  
+  <!-- Brand -->
+  <text x="600" y="550" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="20" font-weight="600">SwiperFit</text>
+  
+  ${duration ? `
+  <!-- Duration in footer -->
+  <text x="1040" y="550" text-anchor="end" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">${duration} min</text>
+  ` : ''}
+</svg>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -141,151 +197,21 @@ function generateOGImageHTML({ workoutName, ownerName, exerciseCount, setCount, 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workout Preview</title>
   <style>
-    * {
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
       width: 1200px;
       height: 630px;
-      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
     }
-    
-    .container {
-      width: 1000px;
-      height: 500px;
-      background: white;
-      border-radius: 20px;
-      padding: 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      position: relative;
-    }
-    
-    .header {
-      text-align: center;
-    }
-    
-    .logo {
-      width: 60px;
-      height: 60px;
-      background: #059669;
-      border-radius: 12px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-    }
-    
-    .title {
-      font-size: 48px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 12px;
-      line-height: 1.1;
-    }
-    
-    .subtitle {
-      font-size: 24px;
-      color: #6b7280;
-      font-weight: 500;
-    }
-    
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      margin: 40px 0;
-    }
-    
-    .stat {
-      text-align: center;
-      flex: 1;
-    }
-    
-    .stat-number {
-      font-size: 36px;
-      font-weight: 700;
-      color: #059669;
-      display: block;
-      margin-bottom: 8px;
-    }
-    
-    .stat-label {
-      font-size: 18px;
-      color: #6b7280;
-      font-weight: 500;
-    }
-    
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 20px;
-      border-top: 2px solid #f3f4f6;
-    }
-    
-    .date {
-      font-size: 20px;
-      color: #6b7280;
-      font-weight: 500;
-    }
-    
-    .brand {
-      font-size: 20px;
-      color: #059669;
-      font-weight: 600;
-    }
-    
-    .duration {
-      font-size: 20px;
-      color: #6b7280;
-      font-weight: 500;
+    svg {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">S</div>
-      <h1 class="title">${workoutName}</h1>
-      <p class="subtitle">by ${ownerName}</p>
-    </div>
-    
-    <div class="stats">
-      <div class="stat">
-        <span class="stat-number">${exerciseCount}</span>
-        <span class="stat-label">Exercises</span>
-      </div>
-      <div class="stat">
-        <span class="stat-number">${setCount}</span>
-        <span class="stat-label">Sets</span>
-      </div>
-      ${duration ? `
-      <div class="stat">
-        <span class="stat-number">${duration}</span>
-        <span class="stat-label">Minutes</span>
-      </div>
-      ` : ''}
-    </div>
-    
-    <div class="footer">
-      <span class="date">${date}</span>
-      <span class="brand">SwiperFit</span>
-      ${duration ? `<span class="duration">${duration} min</span>` : ''}
-    </div>
-  </div>
+  ${svg}
 </body>
 </html>`;
 }
