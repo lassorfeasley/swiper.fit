@@ -253,6 +253,164 @@ const generateProgressInsights = (data) => {
   return insights;
 };
 
+// Generate HTML for Open Graph images
+const generateOGImageHTML = ({ workoutName, ownerName, exerciseCount, setCount, date, duration }) => {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 1200px;
+      height: 630px;
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .container {
+      width: 1000px;
+      height: 500px;
+      background: white;
+      border-radius: 20px;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    
+    .header {
+      text-align: center;
+    }
+    
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: #059669;
+      border-radius: 12px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .title {
+      font-size: 48px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+    
+    .subtitle {
+      font-size: 24px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 40px 0;
+    }
+    
+    .stat {
+      text-align: center;
+      flex: 1;
+    }
+    
+    .stat-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: #059669;
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      font-size: 18px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 2px solid #f3f4f6;
+    }
+    
+    .date {
+      font-size: 20px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .brand {
+      font-size: 20px;
+      color: #059669;
+      font-weight: 600;
+    }
+    
+    .duration {
+      font-size: 20px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">S</div>
+      <h1 class="title">${workoutName}</h1>
+      <p class="subtitle">by ${ownerName}</p>
+    </div>
+    
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-number">${exerciseCount}</span>
+        <span class="stat-label">Exercises</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">${setCount}</span>
+        <span class="stat-label">Sets</span>
+      </div>
+      ${duration ? `
+      <div class="stat">
+        <span class="stat-number">${duration}</span>
+        <span class="stat-label">Minutes</span>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="footer">
+      <span class="date">${date}</span>
+      <span class="brand">SwiperFit</span>
+      ${duration ? `<span class="duration">${duration} min</span>` : ''}
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
 // Fetch a concise summary of the user's most recent workouts (read-only)
 const getRecentWorkoutsSummary = async (db, userId, limit = 3) => {
   // Always return a structured object for safety
@@ -670,6 +828,104 @@ Note: I'm currently in demo mode due to API limits. To get personalized AI respo
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Swiper API is running' });
+});
+
+// Test endpoint for Open Graph image generation
+app.get('/api/og-image/test', (req, res) => {
+  const html = generateOGImageHTML({
+    workoutName: 'Test Workout',
+    ownerName: 'Test User',
+    exerciseCount: 5,
+    setCount: 15,
+    date: 'Jan 10, 2025',
+    duration: 45
+  });
+
+  res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.status(200).send(html);
+});
+
+// Dynamic Open Graph image generation endpoint
+app.get('/api/og-image/workout/:id', async (req, res) => {
+  try {
+    const workoutId = req.params.id;
+    
+    if (!workoutId) {
+      return res.status(400).json({ error: 'Workout ID is required' });
+    }
+
+    // Fetch workout data
+    const { data: workout, error: workoutError } = await supabase
+      .from('workouts')
+      .select(`
+        id,
+        workout_name,
+        created_at,
+        duration_seconds,
+        user_id,
+        users!inner(name)
+      `)
+      .eq('id', workoutId)
+      .single();
+
+    if (workoutError || !workout) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    // Fetch workout exercises and sets
+    const { data: workoutExercises, error: exercisesError } = await supabase
+      .from('workout_exercises')
+      .select(`
+        id,
+        exercises!inner(name)
+      `)
+      .eq('workout_id', workoutId);
+
+    if (exercisesError) {
+      console.error('Error fetching workout exercises:', exercisesError);
+    }
+
+    // Fetch sets for this workout
+    const { data: sets, error: setsError } = await supabase
+      .from('sets')
+      .select('id, reps, weight')
+      .eq('workout_id', workoutId);
+
+    if (setsError) {
+      console.error('Error fetching sets:', setsError);
+    }
+
+    // Calculate stats
+    const exerciseCount = workoutExercises?.length || 0;
+    const setCount = sets?.length || 0;
+    const duration = workout.duration_seconds ? Math.round(workout.duration_seconds / 60) : null;
+    const date = new Date(workout.created_at).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    // Generate HTML for the image
+    const html = generateOGImageHTML({
+      workoutName: workout.workout_name || 'Workout',
+      ownerName: workout.users?.name || 'User',
+      exerciseCount,
+      setCount,
+      date,
+      duration
+    });
+
+    // Set headers for HTML response (browsers will render this as an image)
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    
+    return res.status(200).send(html);
+
+  } catch (error) {
+    console.error('Error generating OG image:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Debug endpoint to examine database structure

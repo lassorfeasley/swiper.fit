@@ -148,13 +148,17 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     <meta property="og:url" content="${url}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="https://swiper.fit/api/og-image/workout/${workoutId}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="SwiperFit" />
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="${url}" />
     <meta property="twitter:title" content="${title}" />
     <meta property="twitter:description" content="${description}" />
+    <meta property="twitter:image" content="https://swiper.fit/api/og-image/workout/${workoutId}" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
