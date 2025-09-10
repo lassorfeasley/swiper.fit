@@ -1,51 +1,51 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-<stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-<stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-</linearGradient>
+<font-face font-family="Be Vietnam Pro" font-weight="300" font-style="normal"/>
+<font-face font-family="Be Vietnam Pro" font-weight="700" font-style="normal"/>
 </defs>
 
-<!-- Background -->
-<rect width="1200" height="630" fill="url(#bg)"/>
+<!-- White background -->
+<rect width="1200" height="630" fill="white"/>
 
-<!-- Main container -->
-<rect x="100" y="65" width="1000" height="500" rx="20" fill="white" stroke="none"/>
-
-<!-- Logo -->
-<rect x="570" y="120" width="60" height="60" rx="12" fill="#059669"/>
-<text x="600" y="155" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">S</text>
-
-<!-- Title -->
-<text x="600" y="250" text-anchor="middle" fill="#111827" font-family="Arial, sans-serif" font-size="48" font-weight="700">Workout</text>
-
-<!-- Subtitle -->
-<text x="600" y="290" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="24" font-weight="500">by User</text>
-
-<!-- Stats -->
-<g transform="translate(300, 350)">
-<!-- Exercise count -->
-<text x="0" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">10</text>
-<text x="0" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Exercises</text>
-
-<!-- Set count -->
-<text x="300" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">30</text>
-<text x="300" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Sets</text>
-
-<!-- Duration -->
-<text x="600" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">45</text>
-<text x="600" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Minutes</text>
+<!-- Main content container -->
+<g transform="translate(60, 60)">
+  
+  <!-- Top bar -->
+  <g transform="translate(0, 0)">
+    <!-- Routine name -->
+    <text x="0" y="30" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">Chest and tricepts</text>
+    
+    <!-- Date -->
+    <text x="1080" y="30" text-anchor="end" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">May, 10 2025</text>
+  </g>
+  
+  <!-- Workout name (centered) -->
+  <text x="540" y="300" text-anchor="middle" fill="#171717" font-family="Be Vietnam Pro" font-size="80" font-weight="700" line-height="90px">Lassor's Sunday night workout</text>
+  
+  <!-- Bottom bar -->
+  <g transform="translate(0, 442)">
+    
+    <!-- Metrics container -->
+    <g transform="translate(0, 0)">
+      
+      <!-- Time to complete box -->
+      <rect x="0" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="70" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">1h 20m</text>
+      
+      <!-- Total exercises box -->
+      <rect x="160" y="0" width="200" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="260" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">20 exercises</text>
+      
+      <!-- Total sets box -->
+      <rect x="380" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="450" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">60 sets</text>
+      
+    </g>
+    
+    <!-- Large green checkmark -->
+    <rect x="760" y="-182.38" width="320" height="250.38" fill="#22C55E"/>
+    
+  </g>
+  
 </g>
-
-<!-- Footer -->
-<line x1="160" y1="520" x2="1040" y2="520" stroke="#f3f4f6" stroke-width="2"/>
-
-<!-- Date -->
-<text x="160" y="550" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">Jan 10, 2025</text>
-
-<!-- Brand -->
-<text x="600" y="550" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="20" font-weight="600">SwiperFit</text>
-
-<!-- Duration in footer -->
-<text x="1040" y="550" text-anchor="end" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">45 min</text>
 </svg>

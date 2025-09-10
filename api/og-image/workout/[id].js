@@ -6,212 +6,159 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const workoutId = req.query.id;
+  const workoutId = req.query.id || '6385499d-a9f2-4161-b6bb-1b90256d605c';
   
-  if (!workoutId) {
-    return res.status(400).json({ error: 'Workout ID is required' });
-  }
-
   try {
     // Fetch workout data
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
-        id,
-        workout_name,
-        created_at,
-        duration_seconds,
-        user_id,
-        users!inner(name)
+        *,
+        routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
+      .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {
-      // Return a default image for missing workouts
-      const html = generateOGImageHTML({
-        workoutName: 'Workout Not Found',
-        ownerName: 'SwiperFit',
-        exerciseCount: 0,
-        setCount: 0,
-        date: new Date().toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        }),
-        duration: null
-      });
-
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
-      return res.status(200).send(html);
+      return res.status(404).send('Workout not found');
     }
 
-    // Fetch workout exercises and sets
-    const { data: workoutExercises, error: exercisesError } = await supabase
-      .from('workout_exercises')
-      .select(`
-        id,
-        exercises!inner(name)
-      `)
-      .eq('workout_id', workoutId);
-
-    if (exercisesError) {
-      console.error('Error fetching workout exercises:', exercisesError);
-    }
-
-    // Fetch sets for this workout
+    // Fetch completed sets
     const { data: sets, error: setsError } = await supabase
       .from('sets')
-      .select('id, reps, weight')
-      .eq('workout_id', workoutId);
+      .select('exercise_id, reps, weight, weight_unit, set_type, timed_set_duration')
+      .eq('workout_id', workoutId)
+      .eq('status', 'complete');
 
     if (setsError) {
       console.error('Error fetching sets:', setsError);
     }
 
-    // Calculate stats
-    const exerciseCount = workoutExercises?.length || 0;
-    const setCount = sets?.length || 0;
-    const duration = workout.duration_seconds ? Math.round(workout.duration_seconds / 60) : null;
+    // Fetch owner profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', workout.user_id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+
+    // Calculate metrics
+    const validSets = (sets || []).filter(set => {
+      if (set.set_type === 'timed') {
+        return typeof set.timed_set_duration === 'number' && set.timed_set_duration > 0;
+      }
+      return typeof set.reps === 'number' && set.reps > 0;
+    });
+
+    const exerciseCount = new Set(validSets.map(s => s.exercise_id)).size;
+    const setCount = validSets.length;
+    const ownerName = profile ? 
+      `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User' : 
+      'User';
+
+    // Format date
     const date = new Date(workout.created_at).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      month: 'long', 
+      day: 'numeric'
     });
 
-    // Generate HTML for the image
-    const html = generateOGImageHTML({
-      workoutName: workout.workout_name || 'Workout',
-      ownerName: workout.users?.name || 'User',
-      exerciseCount,
-      setCount,
+    // Format duration
+    const formatDuration = (seconds) => {
+      if (!seconds) return '';
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      if (hours > 0 && minutes > 0) {
+        return `${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        return `${hours}h`;
+      } else if (minutes > 0) {
+        return `${minutes}m`;
+      }
+      return '';
+    };
+
+    const duration = workout.duration_seconds ? formatDuration(workout.duration_seconds) : '';
+
+    // Generate SVG
+    const svg = generateSVG({
+      routineName: workout.routines?.routine_name || 'Workout',
+      workoutName: workout.workout_name,
+      ownerName,
       date,
-      duration
+      duration,
+      exerciseCount,
+      setCount
     });
 
-    // Set headers for HTML response (social media crawlers will render this)
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-    
-    return res.status(200).send(html);
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.status(200).send(svg);
 
   } catch (error) {
-    console.error('Error generating OG image:', error);
-    
-    // Return a fallback image on error
-    const html = generateOGImageHTML({
-      workoutName: 'Error Loading Workout',
-      ownerName: 'SwiperFit',
-      exerciseCount: 0,
-      setCount: 0,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      }),
-      duration: null
-    });
-
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
-    return res.status(200).send(html);
+    console.error('Error generating SVG:', error);
+    return res.status(500).send('Error generating image');
   }
 }
 
-// Generate SVG for Open Graph images (better compatibility with social media crawlers)
-function generateOGImageHTML({ workoutName, ownerName, exerciseCount, setCount, date, duration }) {
-  const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+function generateSVG({ routineName, workoutName, ownerName, date, duration, exerciseCount, setCount }) {
+  // Escape text for SVG
+  const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<font-face font-family="Be Vietnam Pro" font-weight="300" font-style="normal"/>
+<font-face font-family="Be Vietnam Pro" font-weight="700" font-style="normal"/>
+</defs>
+
+<!-- White background -->
+<rect width="1200" height="630" fill="white"/>
+
+<!-- Main content container -->
+<g transform="translate(60, 60)">
   
-  <!-- Main container -->
-  <rect x="100" y="65" width="1000" height="500" rx="20" fill="white" stroke="none"/>
-  
-  <!-- Logo -->
-  <rect x="570" y="120" width="60" height="60" rx="12" fill="#059669"/>
-  <text x="600" y="155" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">S</text>
-  
-  <!-- Title -->
-  <text x="600" y="250" text-anchor="middle" fill="#111827" font-family="Arial, sans-serif" font-size="48" font-weight="700">${workoutName}</text>
-  
-  <!-- Subtitle -->
-  <text x="600" y="290" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="24" font-weight="500">by ${ownerName}</text>
-  
-  <!-- Stats -->
-  <g transform="translate(300, 350)">
-    <!-- Exercise count -->
-    <text x="0" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${exerciseCount}</text>
-    <text x="0" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Exercises</text>
+  <!-- Top bar -->
+  <g transform="translate(0, 0)">
+    <!-- Routine name -->
+    <text x="0" y="30" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(routineName.toUpperCase())}</text>
     
-    <!-- Set count -->
-    <text x="300" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${setCount}</text>
-    <text x="300" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Sets</text>
-    
-    ${duration ? `
-    <!-- Duration -->
-    <text x="600" y="0" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="36" font-weight="700">${duration}</text>
-    <text x="600" y="30" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="18" font-weight="500">Minutes</text>
-    ` : ''}
+    <!-- Date -->
+    <text x="1080" y="30" text-anchor="end" fill="#737373" font-family="Be Vietnam Pro" font-size="30" font-weight="700" text-transform="uppercase" letter-spacing="1.2px">${escape(date.toUpperCase())}</text>
   </g>
   
-  <!-- Footer -->
-  <line x1="160" y1="520" x2="1040" y2="520" stroke="#f3f4f6" stroke-width="2"/>
+  <!-- Workout name (centered) -->
+  <text x="540" y="300" text-anchor="middle" fill="#171717" font-family="Be Vietnam Pro" font-size="80" font-weight="700" line-height="90px">${escape(workoutName)}</text>
   
-  <!-- Date -->
-  <text x="160" y="550" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">${date}</text>
+  <!-- Bottom bar -->
+  <g transform="translate(0, 442)">
+    
+    <!-- Metrics container -->
+    <g transform="translate(0, 0)">
+      
+      ${duration ? `<!-- Duration box -->
+      <rect x="0" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="70" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${escape(duration)}</text>` : ''}
+      
+      <!-- Total exercises box -->
+      <rect x="${duration ? '160' : '0'}" y="0" width="200" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="${duration ? '260' : '100'}" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${exerciseCount} EXERCISES</text>
+      
+      <!-- Total sets box -->
+      <rect x="${duration ? '380' : '220'}" y="0" width="140" height="68" rx="10" fill="#FAFAFA" stroke="#D4D4D4" stroke-width="2"/>
+      <text x="${duration ? '450' : '290'}" y="44" text-anchor="middle" fill="#404040" font-family="Be Vietnam Pro" font-size="30" font-weight="300" text-transform="uppercase" letter-spacing="1.2px">${setCount} SETS</text>
+      
+    </g>
+    
+    <!-- Large green checkmark -->
+    <rect x="760" y="-182.38" width="320" height="250.38" fill="#22C55E"/>
+    
+  </g>
   
-  <!-- Brand -->
-  <text x="600" y="550" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="20" font-weight="600">SwiperFit</text>
-  
-  ${duration ? `
-  <!-- Duration in footer -->
-  <text x="1040" y="550" text-anchor="end" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="500">${duration} min</text>
-  ` : ''}
+</g>
 </svg>`;
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Preview</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      width: 1200px;
-      height: 630px;
-      overflow: hidden;
-    }
-    svg {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-</head>
-<body>
-  ${svg}
-</body>
-</html>`;
 }
