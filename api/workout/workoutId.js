@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const userAgent = req.headers['user-agent'] || '';
 
   // Check if this is a crawler/bot
-  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin/i.test(userAgent);
+  const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin|postinspector|linkedinbot/i.test(userAgent);
 
   if (!isBot) {
     // Real user - serve the built SPA HTML dynamically to always reference the correct hashed asset names
@@ -123,7 +123,7 @@ export default async function handler(req, res) {
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
     const url = `${req.headers.host}/history/public/workout/${workoutId}`;
     const host = `https://${req.headers.host}`;
-    const ogImage = `${host}/images/swiper-logo.png`;
+    const ogImage = `${host}/api/og-image/workout/${workoutId}`;
 
     // Generate and serve HTML
     const html = generateHTML({

@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     const title = `${ownerName}'s ${workout.workout_name}`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
     const url = `${process.env.VERCEL_URL || 'https://swiperfit.com'}/history/public/workout/${workoutId}`;
-    const ogImage = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com'}/images/swiper-logo.png`;
+    const ogImage = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com'}/api/og-image/workout/${workoutId}`;
 
     // Generate HTML
     const html = generateHTML({
