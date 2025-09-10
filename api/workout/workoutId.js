@@ -123,7 +123,7 @@ export default async function handler(req, res) {
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
     const url = `${req.headers.host}/history/public/workout/${workoutId}`;
     const host = `https://${req.headers.host}`;
-    const ogImage = `${host}/api/og-image/workout/${workoutId}`;
+    const ogImage = `${host}/api/og-image?workoutId=${workoutId}`;
 
     // Generate and serve HTML
     const html = generateHTML({
