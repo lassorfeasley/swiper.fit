@@ -22,7 +22,7 @@ export function generateOGImagePNG(workoutData) {
       
       // Draw top bar
       ctx.fillStyle = '#737373';
-      ctx.font = '700 30px Arial, sans-serif';
+      ctx.font = '700 30px "Be Vietnam Pro", Arial, sans-serif';
       ctx.textTransform = 'uppercase';
       
       // Routine name (left)
@@ -39,7 +39,7 @@ export function generateOGImagePNG(workoutData) {
       
       // Draw workout name (centered)
       ctx.fillStyle = '#171717';
-      ctx.font = '700 80px Arial, sans-serif';
+      ctx.font = '700 80px "Be Vietnam Pro", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(workoutData.workoutName, 600, 300);
@@ -47,7 +47,7 @@ export function generateOGImagePNG(workoutData) {
       // Draw metrics boxes
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '300 30px Arial, sans-serif';
+      ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
       
       let xOffset = 60;
       
@@ -113,7 +113,7 @@ function drawMetricBox(ctx, x, y, width, height, text) {
   
   // Draw text
   ctx.fillStyle = '#404040';
-  ctx.font = '300 30px Arial, sans-serif';
+  ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x + width / 2, y + height / 2);
