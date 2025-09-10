@@ -53,7 +53,7 @@ export function generateOGImagePNG(workoutData) {
       
       // Duration box (if exists)
       if (workoutData.duration) {
-        drawMetricBox(ctx, xOffset, 502, 140, 68, workoutData.duration);
+        drawMetricBox(ctx, xOffset, 502, 140, 68, workoutData.duration.toUpperCase());
         xOffset += 160;
       }
       
