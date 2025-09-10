@@ -169,19 +169,34 @@ function drawMetricBox(ctx, x, y, width, height, text) {
 }
 
 /**
- * Generate and upload OG image for a workout
+ * Generate and upload OG image for a workout using server-side generation
  * @param {string} workoutId - The workout ID
  * @param {Object} workoutData - The workout data
  * @returns {Promise<string>} - The public URL of the uploaded image
  */
 export async function generateAndUploadOGImage(workoutId, workoutData) {
   try {
-    // Generate PNG
-    const pngDataUrl = await generateOGImagePNG(workoutData);
+    // Generate server-side OG image
+    const response = await fetch(`/api/generate-og-image?workoutId=${workoutId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to generate OG image: ${response.statusText}`);
+    }
+    
+    // Convert response to blob
+    const blob = await response.blob();
+    
+    // Convert blob to data URL for upload
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
     
     // Upload to Supabase Storage
     const { uploadOGImage, updateWorkoutOGImage } = await import('./ogImageStorage.js');
-    const imageUrl = await uploadOGImage(workoutId, pngDataUrl);
+    const imageUrl = await uploadOGImage(workoutId, dataUrl);
     
     // Update workout record
     await updateWorkoutOGImage(workoutId, imageUrl);

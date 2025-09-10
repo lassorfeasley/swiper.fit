@@ -122,12 +122,16 @@ function generateHTML({ title, description, url, routineName, ownerName, exercis
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:site_name" content="SwiperFit" />
+    <meta property="og:image" content="https://www.swiper.fit/api/generate-routine-og-image?routineId=${routineId}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="${url}" />
     <meta property="twitter:title" content="${title}" />
     <meta property="twitter:description" content="${description}" />
+    <meta property="twitter:image" content="https://www.swiper.fit/api/generate-routine-og-image?routineId=${routineId}" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />

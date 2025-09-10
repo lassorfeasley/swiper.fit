@@ -4,6 +4,7 @@ import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 const ActiveWorkoutContext = createContext();
 
@@ -491,6 +492,61 @@ export function ActiveWorkoutProvider({ children }) {
     return workoutData;
   }, [user]);
 
+  // Helper function to gather workout data for OG image generation
+  const gatherWorkoutDataForOG = useCallback(async (workoutId) => {
+    try {
+      // Fetch comprehensive workout data
+      const { data: workout, error: workoutError } = await supabase
+        .from('workouts')
+        .select(`
+          *,
+          routines!workouts_routine_id_fkey(routine_name),
+          workout_exercises(
+            id,
+            exercises(name)
+          ),
+          sets!sets_workout_id_fkey(id)
+        `)
+        .eq('id', workoutId)
+        .single();
+
+      if (workoutError || !workout) {
+        console.error('Error fetching workout data for OG image:', workoutError);
+        return null;
+      }
+
+      // Calculate metrics
+      const exerciseCount = workout.workout_exercises?.length || 0;
+      const setCount = workout.sets?.length || 0;
+      
+      // Format duration
+      const durationSeconds = workout.duration_seconds || elapsedTime;
+      const hours = Math.floor(durationSeconds / 3600);
+      const minutes = Math.floor((durationSeconds % 3600) / 60);
+      const duration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+      // Format date
+      const completedDate = new Date(workout.completed_at || new Date());
+      const date = completedDate.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+
+      return {
+        routineName: workout.routines?.routine_name || 'Workout',
+        workoutName: workout.workout_name || 'Completed Workout',
+        date: date,
+        duration: duration,
+        exerciseCount: exerciseCount,
+        setCount: setCount
+      };
+    } catch (error) {
+      console.error('Error gathering workout data for OG image:', error);
+      return null;
+    }
+  }, [elapsedTime]);
+
   const endWorkout = useCallback(async () => {
     if (!activeWorkout?.id) return false;
     console.log('[ActiveWorkout] endWorkout called for workout:', activeWorkout.id);
@@ -547,8 +603,27 @@ export function ActiveWorkoutProvider({ children }) {
 
         if (error) {
           console.error('Error ending workout:', error);
+        } else {
+          saved = true;
+          
+          // Generate OG image for completed workout (fire and forget)
+          try {
+            const workoutData = await gatherWorkoutDataForOG(activeWorkout.id);
+            if (workoutData) {
+              console.log('[ActiveWorkout] Generating OG image for workout:', activeWorkout.id);
+              // Don't await this - let it run in background
+              generateAndUploadOGImage(activeWorkout.id, workoutData)
+                .then(imageUrl => {
+                  console.log('[ActiveWorkout] OG image generated successfully:', imageUrl);
+                })
+                .catch(error => {
+                  console.error('[ActiveWorkout] Error generating OG image:', error);
+                });
+            }
+          } catch (error) {
+            console.error('[ActiveWorkout] Error in OG image generation flow:', error);
+          }
         }
-        saved = true;
       }
     } catch (err) {
       console.error('Unexpected error ending workout:', err);
@@ -559,7 +634,7 @@ export function ActiveWorkoutProvider({ children }) {
     setActiveWorkout(null);
     setElapsedTime(0);
     return saved;
-  }, [activeWorkout, elapsedTime]);
+  }, [activeWorkout, elapsedTime, gatherWorkoutDataForOG]);
 
   const updateLastExercise = useCallback(async (workoutExerciseId) => {
     if (!activeWorkout?.id) {

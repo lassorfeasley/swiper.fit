@@ -30,9 +30,9 @@ export default async function handler(req, res) {
       return res.redirect(302, workout.og_image_url);
     }
 
-    // If no OG image exists, redirect to static fallback
+    // If no OG image exists, generate one server-side
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.redirect(302, '/images/og-workout-default.svg');
+    return res.redirect(302, `/api/generate-og-image?workoutId=${workoutId}`);
 
   } catch (error) {
     console.error('Error in OG image handler:', error);
