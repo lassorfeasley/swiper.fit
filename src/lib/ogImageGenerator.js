@@ -68,6 +68,19 @@ export function generateOGImagePNG(workoutData) {
       ctx.fillStyle = '#22C55E';
       ctx.fillRect(760, 319.62, 320, 250.38);
       
+      // Draw white checkmark inside the green square
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 20;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Checkmark path
+      ctx.beginPath();
+      ctx.moveTo(820, 400); // Start of checkmark
+      ctx.lineTo(880, 460); // First diagonal line
+      ctx.lineTo(980, 360); // Second diagonal line
+      ctx.stroke();
+      
       // Convert to PNG
       const dataUrl = canvas.toDataURL('image/png');
       resolve(dataUrl);
