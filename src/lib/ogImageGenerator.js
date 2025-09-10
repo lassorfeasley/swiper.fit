@@ -23,26 +23,25 @@ export function generateOGImagePNG(workoutData) {
       // Draw top bar
       ctx.fillStyle = '#737373';
       ctx.font = '700 30px "Be Vietnam Pro", Arial, sans-serif';
-      ctx.textTransform = 'uppercase';
       
-      // Routine name (left)
+      // Routine name (left) - with letter spacing
       const routineName = (workoutData.routineName || 'Workout').toUpperCase();
-      ctx.fillText(routineName, 60, 60);
+      drawTextWithLetterSpacing(ctx, routineName, 60, 60, 1.2);
       
-      // Date (right)
+      // Date (right) - with letter spacing
       const date = workoutData.date.toUpperCase();
       ctx.textAlign = 'right';
-      ctx.fillText(date, 1140, 60);
+      drawTextWithLetterSpacing(ctx, date, 1140, 60, 1.2);
       
       // Reset text alignment
       ctx.textAlign = 'left';
       
-      // Draw workout name (centered)
+      // Draw workout name (centered) - with letter spacing
       ctx.fillStyle = '#171717';
       ctx.font = '700 80px "Be Vietnam Pro", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(workoutData.workoutName, 600, 300);
+      drawTextWithLetterSpacing(ctx, workoutData.workoutName, 600, 300, 0);
       
       // Draw metrics boxes
       ctx.textAlign = 'center';
@@ -99,24 +98,64 @@ export function generateOGImagePNG(workoutData) {
 }
 
 /**
- * Draw a metric box with text
+ * Draw text with letter spacing
+ */
+function drawTextWithLetterSpacing(ctx, text, x, y, letterSpacing) {
+  if (letterSpacing === 0) {
+    ctx.fillText(text, x, y);
+    return;
+  }
+  
+  const chars = text.split('');
+  let currentX = x;
+  
+  // Calculate total width with letter spacing for centering
+  let totalWidth = 0;
+  for (let i = 0; i < chars.length; i++) {
+    totalWidth += ctx.measureText(chars[i]).width;
+    if (i < chars.length - 1) {
+      totalWidth += letterSpacing;
+    }
+  }
+  
+  // Adjust starting position for centering
+  if (ctx.textAlign === 'center') {
+    currentX = x - totalWidth / 2;
+  } else if (ctx.textAlign === 'right') {
+    currentX = x - totalWidth;
+  }
+  
+  for (let i = 0; i < chars.length; i++) {
+    ctx.fillText(chars[i], currentX, y);
+    const charWidth = ctx.measureText(chars[i]).width;
+    currentX += charWidth + letterSpacing;
+  }
+}
+
+/**
+ * Draw a metric box with text - exact specifications
  */
 function drawMetricBox(ctx, x, y, width, height, text) {
   // Draw box background
   ctx.fillStyle = '#FAFAFA';
   ctx.fillRect(x, y, width, height);
   
-  // Draw border
+  // Draw inset border (outline with -2px offset)
   ctx.strokeStyle = '#D4D4D4';
   ctx.lineWidth = 2;
-  ctx.strokeRect(x, y, width, height);
+  ctx.strokeRect(x + 2, y + 2, width - 4, height - 4);
   
-  // Draw text
+  // Draw text with letter spacing
   ctx.fillStyle = '#404040';
   ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + width / 2, y + height / 2);
+  
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  
+  // Draw text with letter spacing
+  drawTextWithLetterSpacing(ctx, text, centerX, centerY, 1.2);
 }
 
 /**
