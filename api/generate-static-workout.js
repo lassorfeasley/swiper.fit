@@ -97,8 +97,8 @@ export default async function handler(req, res) {
     // Generate meta data
     const title = `${ownerName}'s ${workout.workout_name}`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
-    const url = `${process.env.VERCEL_URL || 'https://swiperfit.com'}/history/public/workout/${workoutId}`;
-    const ogImage = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com'}/api/og-image?workoutId=${workoutId}`;
+    const url = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/history/public/workout/${workoutId}`;
+    const ogImage = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/og-image?workoutId=${workoutId}`;
 
     // Generate HTML
     const html = generateHTML({

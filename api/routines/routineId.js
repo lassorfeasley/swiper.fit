@@ -80,7 +80,7 @@ export default async function handler(req, res) {
     const exerciseCount = (routineExercises || []).length;
     const setCount = (routineSets || []).length;
 
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com';
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/routines/public/${routineId}`;
     const title = `${routine.routine_name} — ${ownerName}`;
     const description = `${ownerName} shared a routine with ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} and ${setCount} set${setCount !== 1 ? 's' : ''}.`;

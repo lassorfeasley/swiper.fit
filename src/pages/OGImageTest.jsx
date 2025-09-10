@@ -4,8 +4,6 @@ import { useWorkouts } from '../hooks/useWorkouts';
 
 export default function OGImageTest() {
   const [workoutId, setWorkoutId] = useState('');
-  const [routineId, setRoutineId] = useState('test-routine-id');
-  const [userId, setUserId] = useState('test-user-id');
   const [generatedUrl, setGeneratedUrl] = useState('');
   const { generateOGImage, isGenerating, error } = useOGImageGenerator();
   const { workouts, loading: workoutsLoading, error: workoutsError } = useWorkouts();
@@ -184,101 +182,6 @@ export default function OGImageTest() {
           </div>
         </div>
 
-        {/* Routine OG Image Test */}
-        <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
-          <h2>Routine OG Image</h2>
-          <div style={{ marginBottom: '20px' }}>
-            <label>
-              Routine ID:
-              <input
-                type="text"
-                value={routineId}
-                onChange={(e) => setRoutineId(e.target.value)}
-                style={{ width: '100%', marginTop: '5px', padding: '8px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <a
-              href={`https://www.swiper.fit/api/generate-routine-og-image?routineId=${routineId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '5px'
-              }}
-            >
-              Test Routine OG Image
-            </a>
-            
-            <a
-              href={`https://www.swiper.fit/routines/public/${routineId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '5px'
-              }}
-            >
-              Test Routine Page
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* User History OG Image Test */}
-      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-        <h2>User History OG Image</h2>
-        <div style={{ marginBottom: '20px' }}>
-          <label>
-            User ID:
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              style={{ width: '100%', marginTop: '5px', padding: '8px' }}
-            />
-          </label>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <a
-            href={`https://www.swiper.fit/api/generate-user-history-og-image?userId=${userId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}
-          >
-            Test User History OG Image
-          </a>
-          
-          <a
-            href={`https://www.swiper.fit/history/public/${userId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}
-          >
-            Test History Page
-          </a>
-        </div>
       </div>
 
       {error && (
@@ -303,57 +206,6 @@ export default function OGImageTest() {
         </div>
       )}
 
-      {/* Social Media Testing */}
-      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
-        <h2>Social Media Testing</h2>
-        <p>Use these tools to test how your OG images appear on social media:</p>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=https://www.swiper.fit/history/public/workout/${workoutId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#1877f2',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}
-          >
-            Test on Facebook
-          </a>
-          
-          <a
-            href={`https://twitter.com/intent/tweet?url=https://www.swiper.fit/history/public/workout/${workoutId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#1da1f2',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}
-          >
-            Test on Twitter
-          </a>
-          
-          <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.swiper.fit/history/public/workout/${workoutId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#0077b5',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}
-          >
-            Test on LinkedIn
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

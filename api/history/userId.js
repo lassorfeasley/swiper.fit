@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     }
 
     // Build OG metadata
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiperfit.com';
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/history/public/${userId}`;
     const title = `${ownerName}'s Workout History`;
     const description = `${ownerName} is sharing their workout history on SwiperFit. View recent workouts and stats.`;
