@@ -1,0 +1,68 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  'https://tdevpmxmvrgouozsgplu.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
+);
+
+/**
+ * Upload a PNG image to Supabase Storage
+ * @param {string} workoutId - The workout ID
+ * @param {string} pngDataUrl - Base64 PNG data URL
+ * @returns {Promise<string>} - The public URL of the uploaded image
+ */
+export async function uploadOGImage(workoutId, pngDataUrl) {
+  try {
+    // Convert data URL to blob
+    const response = await fetch(pngDataUrl);
+    const blob = await response.blob();
+    
+    // Create filename
+    const fileName = `${workoutId}.png`;
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('og-images')
+      .upload(fileName, blob, {
+        contentType: 'image/png',
+        upsert: true // Overwrite if exists
+      });
+    
+    if (error) {
+      console.error('Error uploading OG image:', error);
+      throw error;
+    }
+    
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('og-images')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
+  } catch (error) {
+    console.error('Error in uploadOGImage:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update workout with OG image URL
+ * @param {string} workoutId - The workout ID
+ * @param {string} imageUrl - The URL of the uploaded image
+ */
+export async function updateWorkoutOGImage(workoutId, imageUrl) {
+  try {
+    const { error } = await supabase
+      .from('workouts')
+      .update({ og_image_url: imageUrl })
+      .eq('id', workoutId);
+    
+    if (error) {
+      console.error('Error updating workout OG image URL:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateWorkoutOGImage:', error);
+    throw error;
+  }
+}
