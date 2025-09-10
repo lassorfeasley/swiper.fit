@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { useOGImageGenerator } from '../hooks/useOGImageGenerator';
+import { useWorkouts } from '../hooks/useWorkouts';
 
 export default function OGImageTest() {
-  const [workoutId, setWorkoutId] = useState('6385499d-a9f2-4161-b6bb-1b90256d605c');
+  const [workoutId, setWorkoutId] = useState('');
   const [routineId, setRoutineId] = useState('test-routine-id');
   const [userId, setUserId] = useState('test-user-id');
   const [generatedUrl, setGeneratedUrl] = useState('');
   const { generateOGImage, isGenerating, error } = useOGImageGenerator();
+  const { workouts, loading: workoutsLoading, error: workoutsError } = useWorkouts();
 
   const handleGenerateWorkoutOG = async () => {
+    if (!workoutId) {
+      alert('Please select a workout first');
+      return;
+    }
+
     try {
       const imageUrl = await generateOGImage(workoutId, {
         routineName: 'Chest and Triceps',
@@ -24,6 +31,8 @@ export default function OGImageTest() {
     }
   };
 
+  const selectedWorkout = workouts.find(w => w.id === workoutId);
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>OG Image Generator Test</h1>
@@ -32,28 +41,92 @@ export default function OGImageTest() {
         {/* Workout OG Image Test */}
         <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
           <h2>Workout OG Image</h2>
+          
+          {/* Workout Selection Dropdown */}
           <div style={{ marginBottom: '20px' }}>
             <label>
-              Workout ID:
+              Select Workout:
+              <select
+                value={workoutId}
+                onChange={(e) => setWorkoutId(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  marginTop: '5px', 
+                  padding: '8px',
+                  fontSize: '14px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: 'white'
+                }}
+                disabled={workoutsLoading}
+              >
+                <option value="">
+                  {workoutsLoading ? 'Loading workouts...' : 'Choose a workout'}
+                </option>
+                {workouts.map((workout) => (
+                  <option key={workout.id} value={workout.id}>
+                    {workout.workout_name} - {workout.accounts?.full_name || 'User'} ({new Date(workout.created_at).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+            </label>
+            
+            {workoutsError && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+                Error loading workouts: {workoutsError}
+              </div>
+            )}
+          </div>
+
+          {/* Manual Workout ID Input (fallback) */}
+          <div style={{ marginBottom: '20px' }}>
+            <label>
+              Or enter Workout ID manually:
               <input
                 type="text"
                 value={workoutId}
                 onChange={(e) => setWorkoutId(e.target.value)}
-                style={{ width: '100%', marginTop: '5px', padding: '8px' }}
+                placeholder="Enter workout ID"
+                style={{ 
+                  width: '100%', 
+                  marginTop: '5px', 
+                  padding: '8px',
+                  fontSize: '14px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px'
+                }}
               />
             </label>
           </div>
 
+          {/* Selected Workout Info */}
+          {selectedWorkout && (
+            <div style={{ 
+              marginBottom: '20px', 
+              padding: '10px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
+              <strong>Selected Workout:</strong><br />
+              Name: {selectedWorkout.workout_name}<br />
+              User: {selectedWorkout.accounts?.full_name || 'Unknown'}<br />
+              Routine: {selectedWorkout.routines?.routine_name || 'Unknown'}<br />
+              Date: {new Date(selectedWorkout.created_at).toLocaleDateString()}<br />
+              Duration: {selectedWorkout.duration_seconds ? `${Math.floor(selectedWorkout.duration_seconds / 60)} minutes` : 'Unknown'}
+            </div>
+          )}
+
           <button
             onClick={handleGenerateWorkoutOG}
-            disabled={isGenerating}
+            disabled={isGenerating || !workoutId}
             style={{
               padding: '10px 20px',
-              backgroundColor: isGenerating ? '#ccc' : '#059669',
+              backgroundColor: (isGenerating || !workoutId) ? '#ccc' : '#059669',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
-              cursor: isGenerating ? 'not-allowed' : 'pointer',
+              cursor: (isGenerating || !workoutId) ? 'not-allowed' : 'pointer',
               marginBottom: '20px'
             }}
           >
@@ -67,10 +140,11 @@ export default function OGImageTest() {
               rel="noopener noreferrer"
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#007bff',
+                backgroundColor: workoutId ? '#007bff' : '#ccc',
                 color: 'white',
                 textDecoration: 'none',
-                borderRadius: '5px'
+                borderRadius: '5px',
+                pointerEvents: workoutId ? 'auto' : 'none'
               }}
             >
               Test Server-Side Generation
@@ -82,13 +156,30 @@ export default function OGImageTest() {
               rel="noopener noreferrer"
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#28a745',
+                backgroundColor: workoutId ? '#28a745' : '#ccc',
                 color: 'white',
                 textDecoration: 'none',
-                borderRadius: '5px'
+                borderRadius: '5px',
+                pointerEvents: workoutId ? 'auto' : 'none'
               }}
             >
               Test OG Image API
+            </a>
+            
+            <a
+              href={`https://www.swiper.fit/history/public/workout/${workoutId}?og=true`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                backgroundColor: workoutId ? '#6f42c1' : '#ccc',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '5px',
+                pointerEvents: workoutId ? 'auto' : 'none'
+              }}
+            >
+              Test Workout Page
             </a>
           </div>
         </div>
