@@ -67,17 +67,34 @@ export function generateOGImagePNG(workoutData) {
       ctx.fillStyle = '#22C55E';
       ctx.fillRect(760, 319.62, 320, 250.38);
       
-      // Draw white checkmark using Unicode character
+      // Draw white checkmark using a custom path
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 200px "Be Vietnam Pro", Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 25;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       
       const centerX = 760 + 160; // Center of green square
       const centerY = 319.62 + 125; // Center of green square
       
-      // Use Unicode checkmark character
-      ctx.fillText('✓', centerX, centerY);
+      // Create a clean checkmark path
+      ctx.beginPath();
+      // Start at bottom left of checkmark
+      ctx.moveTo(centerX - 60, centerY + 20);
+      // Draw first line up and right
+      ctx.lineTo(centerX - 10, centerY - 10);
+      // Draw second line up and right
+      ctx.lineTo(centerX + 60, centerY - 50);
+      ctx.stroke();
+      
+      // Add a subtle shadow for depth
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX - 60, centerY + 22);
+      ctx.lineTo(centerX - 10, centerY - 8);
+      ctx.lineTo(centerX + 60, centerY - 48);
+      ctx.stroke();
       
       // Convert to PNG
       const dataUrl = canvas.toDataURL('image/png');
