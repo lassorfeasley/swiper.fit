@@ -1,6 +1,6 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-360
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
@@ -160,6 +160,7 @@ const CompletedWorkout = () => {
   const [isOwner, setIsOwner] = useState(false);
   const [publicLink, setPublicLink] = useState(false);
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
+  const ogAttemptedRef = useRef(false);
 
   const { isDelegated } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
@@ -282,6 +283,49 @@ const CompletedWorkout = () => {
       }
       setExercises(exercisesObj);
       setLoading(false);
+
+      // Fallback: if this completed workout has no og_image_url, generate now using valid sets
+      try {
+        if (!ogAttemptedRef.current && workoutData && !workoutData.og_image_url) {
+          const validSetsNow = deduped;
+          if (validSetsNow.length > 0) {
+            ogAttemptedRef.current = true;
+            const uniqueExercises = new Set(validSetsNow.map(s => s.exercise_id).filter(Boolean));
+            const exerciseCount = uniqueExercises.size;
+            const setCount = validSetsNow.length;
+            const durationSeconds = workoutData.duration_seconds || 0;
+            const hours = Math.floor(durationSeconds / 3600);
+            const minutes = Math.floor((durationSeconds % 3600) / 60);
+            const duration = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m` : '';
+            const date = new Date(workoutData.completed_at || workoutData.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const data = {
+              routineName: workoutData?.routines?.routine_name || 'Workout',
+              workoutName: workoutData?.workout_name || 'Completed Workout',
+              date,
+              duration,
+              exerciseCount,
+              setCount
+            };
+            try {
+              await generateAndUploadOGImage(workoutId, data);
+              // Refresh workout row to capture og_image_url
+              const { data: refreshed } = await supabase
+                .from('workouts')
+                .select('og_image_url')
+                .eq('id', workoutId)
+                .maybeSingle();
+              if (refreshed?.og_image_url) {
+                setWorkout(prev => prev ? { ...prev, og_image_url: refreshed.og_image_url } : prev);
+                toast.success('Social image generated');
+              }
+            } catch (e) {
+              console.warn('[CompletedWorkout] Fallback OG generation failed:', e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[CompletedWorkout] Fallback OG generation guard error:', e);
+      }
     };
     if (workoutId) fetchData();
   }, [workoutId, user, currentUser]);
