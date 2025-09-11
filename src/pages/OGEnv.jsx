@@ -92,17 +92,28 @@ export default function OGEnv() {
       if (exErr) throw exErr;
       const { data: setRows, error: setErr } = await supabase
         .from('sets')
-        .select('id, exercise_id')
+        .select('id, exercise_id, status, set_type, reps, timed_set_duration')
         .eq('workout_id', selectedWorkoutId);
       if (setErr) throw setErr;
 
-      // Prefer snapshot rows; fallback to counting unique exercise_id in sets
-      let exerciseCount = Array.isArray(exRows) ? exRows.length : 0;
-      if (exerciseCount === 0 && Array.isArray(setRows)) {
-        const uniq = new Set(setRows.map(s => s.exercise_id).filter(Boolean));
+      // Completed/valid sets only
+      const validSets = (setRows || []).filter(s => {
+        if (s?.status !== 'complete') return false;
+        if (s?.set_type === 'timed') {
+          return typeof s?.timed_set_duration === 'number' && s.timed_set_duration > 0;
+        }
+        return typeof s?.reps === 'number' && s.reps > 0;
+      });
+
+      // Prefer distinct exercises from valid sets; fallback to snapshot count
+      let exerciseCount = 0;
+      if (validSets.length > 0) {
+        const uniq = new Set(validSets.map(s => s.exercise_id).filter(Boolean));
         exerciseCount = uniq.size;
+      } else {
+        exerciseCount = Array.isArray(exRows) ? exRows.length : 0;
       }
-      const setCount = Array.isArray(setRows) ? setRows.length : 0;
+      const setCount = validSets.length;
 
       // Format data for canvas renderer
       const durationSeconds = workout?.duration_seconds || 0;

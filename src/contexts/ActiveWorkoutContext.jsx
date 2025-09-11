@@ -506,7 +506,7 @@ export function ActiveWorkoutProvider({ children }) {
             id,
             exercises(name)
           ),
-          sets!sets_workout_id_fkey(id)
+          sets!sets_workout_id_fkey(id, exercise_id, status, set_type, reps, timed_set_duration)
         `)
         .eq('id', workoutId)
         .single();
@@ -516,17 +516,22 @@ export function ActiveWorkoutProvider({ children }) {
         return null;
       }
 
-      // Calculate metrics
-      let exerciseCount = workout.workout_exercises?.length || 0;
-      const setCount = workout.sets?.length || 0;
-      // Fallback: if no snapshot rows exist (older workouts), infer exercises from sets
-      if (exerciseCount === 0 && Array.isArray(workout.sets)) {
-        const uniqueExercises = new Set(
-          workout.sets
-            .map(s => s.exercise_id)
-            .filter(id => id !== null && id !== undefined)
-        );
+      // Calculate metrics based on completed/valid sets only
+      const validSets = (workout.sets || []).filter(s => {
+        if (s?.status !== 'complete') return false;
+        if (s?.set_type === 'timed') {
+          return typeof s?.timed_set_duration === 'number' && s.timed_set_duration > 0;
+        }
+        return typeof s?.reps === 'number' && s.reps > 0;
+      });
+      const setCount = validSets.length;
+      let exerciseCount = 0;
+      if (setCount > 0) {
+        const uniqueExercises = new Set(validSets.map(s => s.exercise_id).filter(Boolean));
         exerciseCount = uniqueExercises.size;
+      } else {
+        // Fallback if no valid sets logged yet
+        exerciseCount = workout.workout_exercises?.length || 0;
       }
       
       // Format duration

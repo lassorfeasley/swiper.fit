@@ -94,7 +94,8 @@ export default async function handler(req, res) {
       `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User' : 
       'User';
 
-    // Format date
+    // Format dates
+    const publishedAt = new Date(workout.completed_at || workout.created_at || Date.now());
     const date = new Date(workout.created_at).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long', 
@@ -120,7 +121,8 @@ export default async function handler(req, res) {
     const duration = workout.duration_seconds ? formatDuration(workout.duration_seconds) : '';
 
     // Generate meta data
-    const title = `${ownerName}'s ${workout.workout_name}`;
+    const routinePhrase = workout?.routines?.routine_name || 'workout';
+    const title = `${ownerName} completed a ${routinePhrase} workout on Swiper.fit`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}${duration ? ` over ${duration}` : ''} on ${date}.`;
     const url = `${req.headers.host}/history/public/workout/${workoutId}`;
     const host = `https://${req.headers.host}`;
@@ -138,7 +140,8 @@ export default async function handler(req, res) {
       date,
       duration,
       workoutId,
-      ogImage
+      ogImage,
+      publishedAt: publishedAt.toISOString()
     });
 
     res.setHeader('Content-Type', 'text/html');
@@ -161,7 +164,7 @@ export default async function handler(req, res) {
   }
 }
 
-function generateHTML({ title, description, url, workoutName, ownerName, exerciseCount, setCount, date, duration, workoutId, ogImage }) {
+function generateHTML({ title, description, url, workoutName, ownerName, exerciseCount, setCount, date, duration, workoutId, ogImage, publishedAt }) {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -172,9 +175,10 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     <title>${title}</title>
     <meta name="title" content="${title}" />
     <meta name="description" content="${description}" />
+    <meta name="author" content="${ownerName}" />
     
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="article" />
     <meta property="og:url" content="${url}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
@@ -182,6 +186,9 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     <meta property="og:image" content="${ogImage}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="article:author" content="${ownerName}" />
+    <meta property="article:published_time" content="${publishedAt}" />
+    <meta property="og:updated_time" content="${publishedAt}" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
@@ -288,8 +295,8 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="title">${workoutName}</h1>
-        <p class="subtitle">by ${ownerName} • ${date}</p>
+        <h1 class="title">${title}</h1>
+        <p class="subtitle">Log workouts effortlessly with Swiper.Fit</p>
       </div>
       
       <div class="stats">
