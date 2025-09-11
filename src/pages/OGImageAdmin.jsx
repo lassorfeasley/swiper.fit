@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
+import { generateOGImagePNG } from '@/lib/ogImageGenerator';
+import { uploadOGImage, updateWorkoutOGImage } from '@/lib/ogImageStorage';
 
 // Simple client-side OG image placeholder generator
 async function generateImageBlob(titleText) {
@@ -143,29 +145,12 @@ export default function OGImageAdmin() {
       alert('Please select at least one workout');
       return;
     }
-
     setIsGenerating(true);
     setResults(null);
-
     try {
-      // Use server bulk endpoint which renders the new OG design
-      const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workoutIds: selectedWorkouts, onlyMissing: false, isPublicOnly: false })
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
-
-      setResults({
-        success: true,
-        processed: data.processed,
-        failed: data.failed,
-        errors: data.errors
-      });
-
+      const { processed, failed, errors } = await clientSideGenerate(selectedWorkouts);
+      setResults({ success: true, processed, failed, errors });
       await loadWorkouts();
-
     } catch (error) {
       console.error('Error generating OG images:', error);
       setResults({ success: false, error: error.message });
@@ -177,25 +162,11 @@ export default function OGImageAdmin() {
   const handleGenerateAllMissing = async () => {
     setIsGenerating(true);
     setResults(null);
-
     try {
-      const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
-
-      setResults({
-        success: true,
-        processed: data.processed,
-        failed: data.failed,
-        errors: data.errors
-      });
-
+      const ids = filteredWorkouts.map(w => w.id);
+      const { processed, failed, errors } = await clientSideGenerate(ids);
+      setResults({ success: true, processed, failed, errors });
       await loadWorkouts();
-
     } catch (error) {
       console.error('Error generating OG images:', error);
       setResults({ success: false, error: error.message });
@@ -203,6 +174,81 @@ export default function OGImageAdmin() {
       setIsGenerating(false);
     }
   };
+
+  async function clientSideGenerate(workoutIds) {
+    const concurrency = 3;
+    let processed = 0;
+    let failed = 0;
+    const errors = [];
+    let index = 0;
+
+    async function worker() {
+      while (index < workoutIds.length) {
+        const myIndex = index++;
+        const id = workoutIds[myIndex];
+        try {
+          const data = await buildCanvasData(id);
+          const dataUrl = await generateOGImagePNG(data);
+          const url = await uploadOGImage(id, dataUrl);
+          await updateWorkoutOGImage(id, url);
+          processed++;
+        } catch (e) {
+          failed++;
+          errors.push({ workoutId: id, error: e.message });
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(concurrency, workoutIds.length) }, () => worker());
+    await Promise.all(workers);
+    return { processed, failed, errors };
+  }
+
+  async function buildCanvasData(workoutId) {
+    // Load base workout info
+    const { data: w, error: wErr } = await supabase
+      .from('workouts')
+      .select('user_id, workout_name, completed_at, created_at, duration_seconds, routines!workouts_routine_id_fkey(routine_name)')
+      .eq('id', workoutId)
+      .single();
+    if (wErr || !w) throw new Error('Workout not found');
+
+    // Counts
+    const [{ count: exCount = 0 }, { count: setCount = 0 }] = await Promise.all([
+      supabase.from('workout_exercises').select('id', { count: 'exact', head: true }).eq('workout_id', workoutId),
+      supabase.from('sets').select('id', { count: 'exact', head: true }).eq('workout_id', workoutId)
+    ]);
+
+    // Owner name (first)
+    let first = '';
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', w.user_id)
+        .single();
+      const full = `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim();
+      first = (full.split(' ')[0] || '').trim();
+    } catch (_) {}
+    const possessive = first ? first + (first.toLowerCase().endsWith('s') ? "'" : "'s") + ' ' : '';
+    const displayWorkoutName = `${possessive}${w.workout_name || 'Completed Workout'}`;
+
+    // Format duration/date
+    const secs = w.duration_seconds || 0;
+    const hours = Math.floor(secs / 3600);
+    const minutes = Math.floor((secs % 3600) / 60);
+    const duration = hours > 0 ? `${hours}h ${minutes}m` : (minutes > 0 ? `${minutes}m` : '');
+    const date = new Date(w.completed_at || w.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+    return {
+      routineName: w.routines?.routine_name || 'Workout',
+      workoutName: displayWorkoutName,
+      date,
+      duration,
+      exerciseCount: exCount,
+      setCount: setCount
+    };
+  }
 
   if (!user) {
     return (
