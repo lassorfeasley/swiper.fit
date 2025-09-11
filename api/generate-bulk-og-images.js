@@ -104,22 +104,14 @@ export default async function handler(req, res) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          // Convert response to blob
+          // Convert response to blob and upload directly
           const blob = await response.blob();
-          
-          // Convert blob to data URL for upload
-          const reader = new FileReader();
-          const dataUrl = await new Promise((resolve, reject) => {
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          
-          // Upload to Supabase Storage
+
+          // Upload to Supabase Storage (overwrite existing)
           const fileName = `${workout.id}.png`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('og-images')
-            .upload(fileName, dataUrl.split(',')[1], {
+            .upload(fileName, blob, {
               contentType: 'image/png',
               upsert: true
             });

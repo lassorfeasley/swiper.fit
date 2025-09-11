@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       .from('workouts')
       .select(`
         id,
+        user_id,
         workout_name,
         duration_seconds,
         completed_at,

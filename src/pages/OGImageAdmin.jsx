@@ -146,77 +146,27 @@ export default function OGImageAdmin() {
     setResults(null);
 
     try {
-      const results = {
-        processed: 0,
-        failed: 0,
-        errors: []
-      };
-
-      // Process selected workouts
-      for (const workoutId of selectedWorkouts) {
-        try {
-          console.log(`Generating OG image for workout: ${workoutId}`);
-          
-          // Create a simple image locally and upload bytes
-          const imgBlob = await generateImageBlob('Workout OG Image');
-          
-          // Upload to Supabase Storage
-          const fileName = `${workoutId}.png`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('og-images')
-            .upload(fileName, imgBlob, {
-              contentType: 'image/png',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
-          
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('og-images')
-            .getPublicUrl(fileName);
-          
-          // Update workout record
-          const { error: updateError } = await supabase
-            .from('workouts')
-            .update({ og_image_url: publicUrl })
-            .eq('id', workoutId);
-          
-          if (updateError) {
-            throw new Error(`Database update failed: ${updateError.message}`);
-          }
-
-          console.log(`✅ Successfully generated OG image for workout: ${workoutId}`);
-          results.processed++;
-          
-        } catch (error) {
-          console.error(`❌ Failed to generate OG image for workout ${workoutId}:`, error.message);
-          results.failed++;
-          results.errors.push({
-            workoutId: workoutId,
-            error: error.message
-          });
-        }
-      }
+      // Use server bulk endpoint which renders the new OG design
+      const resp = await fetch('/api/generate-bulk-og-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workoutIds: selectedWorkouts, onlyMissing: false, isPublicOnly: false })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
 
       setResults({
         success: true,
-        processed: results.processed,
-        failed: results.failed,
-        errors: results.errors
+        processed: data.processed,
+        failed: data.failed,
+        errors: data.errors
       });
-      
-      // Refresh workouts to get updated OG image URLs
+
       await loadWorkouts();
-      
+
     } catch (error) {
       console.error('Error generating OG images:', error);
-      setResults({
-        success: false,
-        error: error.message
-      });
+      setResults({ success: false, error: error.message });
     } finally {
       setIsGenerating(false);
     }
@@ -227,82 +177,26 @@ export default function OGImageAdmin() {
     setResults(null);
 
     try {
-      const results = {
-        processed: 0,
-        failed: 0,
-        errors: []
-      };
-
-      // Get all workouts missing OG images
-      const missingWorkouts = workouts.filter(workout => !workout.og_image_url);
-      
-      console.log(`Found ${missingWorkouts.length} workouts missing OG images`);
-
-      // Process missing workouts
-      for (const workout of missingWorkouts) {
-        try {
-          console.log(`Generating OG image for workout: ${workout.id}`);
-          
-          // Create a simple image locally and upload bytes
-          const imgBlob = await generateImageBlob(workout.workout_name);
-          
-          // Upload to Supabase Storage
-          const fileName = `${workout.id}.png`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('og-images')
-            .upload(fileName, imgBlob, {
-              contentType: 'image/png',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
-          
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('og-images')
-            .getPublicUrl(fileName);
-          
-          // Update workout record
-          const { error: updateError } = await supabase
-            .from('workouts')
-            .update({ og_image_url: publicUrl })
-            .eq('id', workout.id);
-          
-          if (updateError) {
-            throw new Error(`Database update failed: ${updateError.message}`);
-          }
-
-          console.log(`✅ Successfully generated OG image for workout: ${workout.id}`);
-          results.processed++;
-          
-        } catch (error) {
-          console.error(`❌ Failed to generate OG image for workout ${workout.id}:`, error.message);
-          results.failed++;
-          results.errors.push({
-            workoutId: workout.id,
-            error: error.message
-          });
-        }
-      }
+      const resp = await fetch('/api/generate-bulk-og-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
 
       setResults({
         success: true,
-        processed: results.processed,
-        failed: results.failed,
-        errors: results.errors
+        processed: data.processed,
+        failed: data.failed,
+        errors: data.errors
       });
-      
-      // Refresh workouts to get updated OG image URLs
+
       await loadWorkouts();
-      
+
     } catch (error) {
       console.error('Error generating OG images:', error);
-      setResults({
-        success: false,
-        error: error.message
-      });
+      setResults({ success: false, error: error.message });
     } finally {
       setIsGenerating(false);
     }
