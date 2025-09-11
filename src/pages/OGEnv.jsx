@@ -152,6 +152,9 @@ export default function OGEnv() {
     try {
       setSaving(true);
       setSaveMsg('');
+      if (!user?.id) {
+        throw new Error('Not signed in');
+      }
 
       // Prefer client preview if present; otherwise call server endpoint to fetch image and upload
       let dataUrl = fallbackUrl;
@@ -169,8 +172,40 @@ export default function OGEnv() {
 
       const url = await uploadOGImage(selectedWorkoutId, dataUrl);
       if (!url) throw new Error('No public URL returned');
-      await updateWorkoutOGImage(selectedWorkoutId, url);
-      setSaveMsg('Saved to bucket and updated workout record.');
+
+      // Verify existence in storage (diagnostic)
+      try {
+        const path = `${selectedWorkoutId}.png`;
+        const list = await supabase.storage.from('og-images').list('', { limit: 100, search: selectedWorkoutId });
+        if (list?.error) {
+          console.warn('Storage list error:', list.error);
+        } else {
+          const found = (list?.data || []).some((f) => f.name === `${selectedWorkoutId}.png`);
+          if (!found) {
+            console.warn('Uploaded file not visible in list yet:', path);
+          }
+        }
+      } catch (e) {
+        console.warn('Storage verification failed:', e);
+      }
+
+      const { error: updateErr } = await supabase
+        .from('workouts')
+        .update({ og_image_url: url })
+        .eq('id', selectedWorkoutId);
+      if (updateErr) throw new Error(`DB update failed: ${updateErr.message}`);
+
+      // Confirm DB write
+      const { data: chk, error: chkErr } = await supabase
+        .from('workouts')
+        .select('og_image_url')
+        .eq('id', selectedWorkoutId)
+        .single();
+      if (chkErr) {
+        console.warn('Post-update read failed:', chkErr);
+      }
+
+      setSaveMsg(`Saved ✓ URL: <a href="${chk?.og_image_url || url}" target="_blank" rel="noreferrer">${chk?.og_image_url || url}</a>`);
       // refresh list to reflect og_image_url presence
       setRefreshKey((k) => k + 1);
     } catch (e) {
@@ -222,7 +257,10 @@ export default function OGEnv() {
           </button>
         </div>
         {saveMsg && (
-          <div style={{ marginTop: 8, color: saveMsg.startsWith('Save failed') ? '#b91c1c' : '#065f46', background: saveMsg.startsWith('Save failed') ? '#fee2e2' : '#ecfdf5', border: '1px solid #d1fae5', padding: 8, borderRadius: 6 }}>{saveMsg}</div>
+          <div
+            style={{ marginTop: 8, color: saveMsg.startsWith('Save failed') ? '#b91c1c' : '#065f46', background: saveMsg.startsWith('Save failed') ? '#fee2e2' : '#ecfdf5', border: '1px solid #d1fae5', padding: 8, borderRadius: 6 }}
+            dangerouslySetInnerHTML={{ __html: saveMsg }}
+          />
         )}
         {workoutApi && (
           <div style={{ marginTop: 12 }}>

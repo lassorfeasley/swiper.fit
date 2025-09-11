@@ -372,7 +372,7 @@ export default function OGImageAdmin() {
         borderRadius: '8px' 
       }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Quick Test Links</h3>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <a
             href="/api/test-og"
             target="_blank"
@@ -433,6 +433,40 @@ export default function OGImageAdmin() {
           >
             Live OG Image (Production)
           </a>
+          <button
+            onClick={async () => {
+              try {
+                setIsGenerating(true);
+                const resp = await fetch('/api/generate-bulk-og-images', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
+                alert(`Bulk complete. Processed: ${data.processed}/${data.total}. Failed: ${data.failed}`);
+                await loadWorkouts();
+              } catch (e) {
+                console.error('Bulk generate failed:', e);
+                alert(`Bulk generate failed: ${e.message}`);
+              } finally {
+                setIsGenerating(false);
+              }
+            }}
+            disabled={isGenerating}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: isGenerating ? '#ccc' : '#111827',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              border: 'none',
+              cursor: isGenerating ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isGenerating ? 'Generating…' : 'Generate For All (Missing)'}
+          </button>
         </div>
       </div>
       
