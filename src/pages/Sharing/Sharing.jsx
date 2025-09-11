@@ -820,6 +820,7 @@ export default function Sharing() {
             routine_id: routine.id,
             workout_name: workoutName,
             is_active: true,
+            is_public: true,
           })
           .select()
           .single();

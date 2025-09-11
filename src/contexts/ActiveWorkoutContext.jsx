@@ -390,6 +390,7 @@ export function ActiveWorkoutProvider({ children }) {
           routine_id: program.id,
           workout_name: workoutName,
           is_active: true,
+          is_public: true,
         })
         .select()
         .single();
