@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/supabaseClient';
 import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
@@ -16,6 +16,8 @@ export function ActiveWorkoutProvider({ children }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState(0);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const isFinishingRef = useRef(false);
   
   console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
   console.log('[ActiveWorkout] Full user object:', user);
@@ -233,6 +235,10 @@ export function ActiveWorkoutProvider({ children }) {
             // Navigate based on whether workout was completed or deleted
             // Add a small delay to ensure this takes precedence over auto-redirect logic
             setTimeout(() => {
+              if (isFinishingRef.current) {
+                console.log('[Real-time] Finish in progress; skipping auto-navigation');
+                return;
+              }
               if (workoutId && wasCompleted) {
                 console.log('[Real-time] Navigating to workout summary:', workoutId);
                 navigate(`/history/${workoutId}`);
@@ -566,6 +572,8 @@ export function ActiveWorkoutProvider({ children }) {
     if (!activeWorkout?.id) return false;
     console.log('[ActiveWorkout] endWorkout called for workout:', activeWorkout.id);
     console.log('[ActiveWorkout] Current user context:', user?.id);
+    setIsFinishing(true);
+    isFinishingRef.current = true;
     
     // Fetch the workout details to see which user it belongs to
     const { data: workoutDetails, error: workoutError } = await supabase
@@ -621,13 +629,34 @@ export function ActiveWorkoutProvider({ children }) {
         } else {
           saved = true;
           
-          // Generate OG image for completed workout (now await to ensure it completes)
+          // Generate OG image for completed workout (await + retry + queue fallback)
           try {
             const workoutData = await gatherWorkoutDataForOG(activeWorkout.id);
             if (workoutData) {
               console.log('[ActiveWorkout] Generating OG image for workout:', activeWorkout.id);
-              const imageUrl = await generateAndUploadOGImage(activeWorkout.id, workoutData);
-              console.log('[ActiveWorkout] OG image generated successfully:', imageUrl);
+              try {
+                const imageUrl = await generateAndUploadOGImage(activeWorkout.id, workoutData);
+                console.log('[ActiveWorkout] OG image generated successfully:', imageUrl);
+                toast.success('Social image generated');
+              } catch (firstErr) {
+                console.warn('[ActiveWorkout] First OG image attempt failed; retrying once...', firstErr);
+                try {
+                  const imageUrl = await generateAndUploadOGImage(activeWorkout.id, workoutData);
+                  console.log('[ActiveWorkout] OG image generated on retry:', imageUrl);
+                  toast.success('Social image generated');
+                } catch (secondErr) {
+                  console.error('[ActiveWorkout] Retry failed; queueing for background generation', secondErr);
+                  try {
+                    const key = 'og_generation_queue';
+                    const queue = JSON.parse(localStorage.getItem(key) || '[]');
+                    if (!queue.includes(activeWorkout.id)) {
+                      queue.push(activeWorkout.id);
+                      localStorage.setItem(key, JSON.stringify(queue));
+                    }
+                  } catch (_) {}
+                  toast.error('Could not create social image now; will retry in background.');
+                }
+              }
             } else {
               console.warn('[ActiveWorkout] No workout data for OG image; skipping generation');
             }
@@ -644,6 +673,8 @@ export function ActiveWorkoutProvider({ children }) {
     setIsWorkoutActive(false);
     setActiveWorkout(null);
     setElapsedTime(0);
+    setIsFinishing(false);
+    isFinishingRef.current = false;
     return saved;
   }, [activeWorkout, elapsedTime, gatherWorkoutDataForOG]);
 
