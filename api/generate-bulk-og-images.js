@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { getApiBase } from './og-config.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+// Prefer secure env keys when available; fall back to anon for local/dev
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tdevpmxmvrgouozsgplu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY);
 
 export default async function handler(req, res) {
   // CORS for local admin page calls
@@ -83,6 +86,8 @@ export default async function handler(req, res) {
       errors: []
     };
 
+    const apiBase = getApiBase(req);
+
     for (let i = 0; i < workouts.length; i += batchSize) {
       const batch = workouts.slice(i, i + batchSize);
       console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(workouts.length / batchSize)}`);
@@ -90,55 +95,28 @@ export default async function handler(req, res) {
       // Process batch in parallel
       const batchPromises = batch.map(async (workout) => {
         try {
-          console.log(`Generating OG image for workout: ${workout.id}`);
-          
-          // Call the OG image generation API
-          const response = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/generate-og-image?workoutId=${workout.id}`);
-          
+          console.log(`Generating OG image for workout (server JSON): ${workout.id}`);
+
+          const response = await fetch(`${apiBase}/api/generate-and-store-og-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workoutId: workout.id })
+          });
+          const payload = await response.json().catch(() => ({}));
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          // Convert response to blob and upload directly
-          const blob = await response.blob();
-
-          // Upload to Supabase Storage (overwrite existing)
-          const fileName = `${workout.id}.png`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('og-images')
-            .upload(fileName, blob, {
-              contentType: 'image/png',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
-          
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('og-images')
-            .getPublicUrl(fileName);
-          
-          // Update workout record
-          const { error: updateError } = await supabase
-            .from('workouts')
-            .update({ og_image_url: publicUrl })
-            .eq('id', workout.id);
-          
-          if (updateError) {
-            throw new Error(`Database update failed: ${updateError.message}`);
+            const msg = payload?.details || payload?.error || `${response.status} ${response.statusText}`;
+            throw new Error(`generate-and-store failed: ${msg}`);
           }
 
           console.log(`Successfully generated OG image for workout: ${workout.id}`);
-          return { workoutId: workout.id, success: true, imageUrl: publicUrl };
+          return { workoutId: workout.id, success: true, imageUrl: payload.imageUrl };
           
         } catch (error) {
           console.error(`Failed to generate OG image for workout ${workout.id}:`, error);
           return { 
             workoutId: workout.id, 
             success: false, 
-            error: error.message 
+            error: error.message || String(error)
           };
         }
       });

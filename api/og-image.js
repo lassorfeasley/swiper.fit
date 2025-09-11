@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { TEMPLATE_VERSION, createSupabaseServerClient } from './og-config.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = createSupabaseServerClient();
 
 export default async function handler(req, res) {
   const workoutId = req.query.workoutId || '6385499d-a9f2-4161-b6bb-1b90256d605c';
@@ -23,13 +20,28 @@ export default async function handler(req, res) {
       return res.status(404).send('Workout not found');
     }
 
-    // If workout has an OG image URL, redirect to it
-    if (workout.og_image_url) {
+    // If we have a stored URL that already matches our versioned filename, prefer it
+    if (workout.og_image_url && workout.og_image_url.includes(`-v${TEMPLATE_VERSION}.png`)) {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       return res.redirect(302, workout.og_image_url);
     }
 
-    // If no OG image exists, generate one server-side
+    // If no current-version file exists, generate and store, then redirect
+    try {
+      const genResp = await fetch(`${req.headers.origin || ''}/api/generate-and-store-og-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workoutId })
+      });
+      const payload = await genResp.json();
+      if (genResp.ok && payload?.imageUrl) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.redirect(302, payload.imageUrl);
+      }
+    } catch (e) {
+      // fall through to on-demand rendering endpoint as a last resort
+    }
+
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.redirect(302, `/api/generate-og-image?workoutId=${workoutId}`);
 

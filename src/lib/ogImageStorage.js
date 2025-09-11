@@ -47,9 +47,11 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
  */
 export async function updateWorkoutOGImage(workoutId, imageUrl) {
   try {
+    // Append cache-busting param so clients and crawlers fetch the latest image
+    const cacheBustedUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
     const { error } = await supabase
       .from('workouts')
-      .update({ og_image_url: imageUrl })
+      .update({ og_image_url: cacheBustedUrl })
       .eq('id', workoutId);
     
     if (error) {

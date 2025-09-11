@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '@/supabaseClient';
 
 // Simple client-side OG image placeholder generator
 async function generateImageBlob(titleText) {
@@ -43,7 +43,7 @@ async function generateImageBlob(titleText) {
 }
 
 export default function OGImageAdmin() {
-  const { supabase, user } = useAuth();
+  const { user } = useAuth();
   const [selectedWorkouts, setSelectedWorkouts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState(null);
@@ -149,7 +149,7 @@ export default function OGImageAdmin() {
 
     try {
       // Use server bulk endpoint which renders the new OG design
-      const resp = await fetch('/api/generate-bulk-og-images', {
+      const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workoutIds: selectedWorkouts, onlyMissing: false, isPublicOnly: false })
@@ -179,7 +179,7 @@ export default function OGImageAdmin() {
     setResults(null);
 
     try {
-      const resp = await fetch('/api/generate-bulk-og-images', {
+      const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
@@ -350,7 +350,7 @@ export default function OGImageAdmin() {
             onClick={async () => {
               try {
                 setIsGenerating(true);
-                const resp = await fetch('/api/generate-bulk-og-images', {
+                const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
@@ -379,6 +379,42 @@ export default function OGImageAdmin() {
             }}
           >
             {isGenerating ? 'Generating…' : 'Generate For All (Missing)'}
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!confirm('This will overwrite OG images for ALL completed workouts. Continue?')) return;
+              try {
+                setIsGenerating(true);
+                const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ onlyMissing: false, isPublicOnly: false, batchSize: 10 })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data?.error || 'Bulk overwrite failed');
+                alert(`Overwrite complete. Processed: ${data.processed}/${data.total}. Failed: ${data.failed}`);
+                await loadWorkouts();
+              } catch (e) {
+                console.error('Bulk overwrite failed:', e);
+                alert(`Bulk overwrite failed: ${e.message}`);
+              } finally {
+                setIsGenerating(false);
+              }
+            }}
+            disabled={isGenerating}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: isGenerating ? '#ccc' : '#f59e0b',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              border: 'none',
+              cursor: isGenerating ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isGenerating ? 'Overwriting…' : 'Regenerate All (Overwrite)'}
           </button>
         </div>
       </div>

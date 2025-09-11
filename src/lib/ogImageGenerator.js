@@ -299,53 +299,28 @@ function drawSvgCheckmark(ctx, boxX, boxY, boxW, boxH, fill = '#22C55E') {
  */
 export async function generateAndUploadOGImage(workoutId, workoutData, maxRetries = 3) {
   let lastError;
-  
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[OGImage] Attempt ${attempt}/${maxRetries} for workout ${workoutId}`);
-      
-      // Generate server-side OG image
-      const response = await fetch(`/api/generate-og-image?workoutId=${workoutId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to generate OG image: ${response.statusText}`);
-      }
-      
-      // Convert response to blob
-      const blob = await response.blob();
-      
-      // Convert blob to data URL for upload
-      const reader = new FileReader();
-      const dataUrl = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+      const resp = await fetch('/api/generate-and-store-og-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workoutId })
       });
-      
-      // Upload to Supabase Storage
-      const { uploadOGImage, updateWorkoutOGImage } = await import('./ogImageStorage.js');
-      const imageUrl = await uploadOGImage(workoutId, dataUrl);
-      
-      // Update workout record
-      await updateWorkoutOGImage(workoutId, imageUrl);
-      
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.error || 'Failed to generate');
       console.log(`[OGImage] Successfully generated OG image for workout ${workoutId} on attempt ${attempt}`);
-      return imageUrl;
-      
+      return data.imageUrl;
     } catch (error) {
       lastError = error;
       console.error(`[OGImage] Attempt ${attempt}/${maxRetries} failed for workout ${workoutId}:`, error);
-      
-      // If this is not the last attempt, wait before retrying
       if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt - 1) * 1000;
         console.log(`[OGImage] Waiting ${delay}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
-  
-  // All retries failed
   console.error(`[OGImage] All ${maxRetries} attempts failed for workout ${workoutId}`);
   throw lastError;
 }
