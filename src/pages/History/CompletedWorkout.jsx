@@ -18,6 +18,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
 import { Share2, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
+import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
 
@@ -291,6 +292,65 @@ const CompletedWorkout = () => {
       setPublicLink(Boolean(workout.is_public));
     }
   }, [workout]);
+
+  // Background processor: drain any queued OG generations (e.g., if Finish ran while tab navigated)
+  useEffect(() => {
+    (async () => {
+      try {
+        const key = 'og_generation_queue';
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        let queue = [];
+        try { queue = JSON.parse(raw) || []; } catch (_) { queue = []; }
+        if (!Array.isArray(queue) || queue.length === 0) return;
+
+        // Process one by one to reduce load
+        const remaining = [];
+        for (const id of queue) {
+          try {
+            // Fetch data needed for generation
+            const { data: w } = await supabase
+              .from('workouts')
+              .select(`*, routines!workouts_routine_id_fkey(routine_name)`) 
+              .eq('id', id)
+              .maybeSingle();
+            if (!w) { continue; }
+            // Build minimal metrics via completed sets
+            const { data: sets } = await supabase
+              .from('sets')
+              .select('id, exercise_id, status, set_type, reps, timed_set_duration')
+              .eq('workout_id', id);
+            const valid = (sets || []).filter(s => s?.status === 'complete' && (s?.set_type === 'timed' ? (s?.timed_set_duration||0) > 0 : (s?.reps||0) > 0));
+            const ex = new Set(valid.map(s => s.exercise_id).filter(Boolean));
+            const durationSeconds = w?.duration_seconds || 0;
+            const hours = Math.floor(durationSeconds / 3600);
+            const minutes = Math.floor((durationSeconds % 3600) / 60);
+            const duration = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m` : '';
+            const date = new Date(w?.completed_at || w?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const data = {
+              routineName: w?.routines?.routine_name || 'Workout',
+              workoutName: w?.workout_name || 'Completed Workout',
+              date,
+              duration,
+              exerciseCount: ex.size || (w?.workout_exercises?.length || 0),
+              setCount: valid.length
+            };
+            await generateAndUploadOGImage(id, data);
+          } catch (e) {
+            console.warn('[OGQueue] generation failed for', id, e);
+            remaining.push(id);
+          }
+        }
+        if (remaining.length === 0) {
+          localStorage.removeItem(key);
+        } else {
+          localStorage.setItem(key, JSON.stringify(remaining));
+        }
+      } catch (e) {
+        console.warn('[OGQueue] processor error', e);
+      }
+    })();
+  }, []);
 
   // Fetch owner name when not owner or when delegated
   useEffect(() => {
