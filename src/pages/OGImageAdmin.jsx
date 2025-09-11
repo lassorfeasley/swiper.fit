@@ -59,7 +59,7 @@ export default function OGImageAdmin() {
   const originBase = typeof window !== 'undefined' ? window.location.origin : '';
   const apiBase = originBase.includes('localhost') ? 'https://www.swiper.fit' : originBase;
   const previewSrc = previewWorkoutId
-    ? `${apiBase}/api/generate-og-image?workoutId=${encodeURIComponent(previewWorkoutId)}&t=${refreshKey}`
+    ? `${apiBase}/api/og-image?workoutId=${encodeURIComponent(previewWorkoutId)}&t=${refreshKey}`
     : '';
 
   // Load workouts on component mount
