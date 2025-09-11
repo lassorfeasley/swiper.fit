@@ -332,21 +332,7 @@ export default function OGImageAdmin() {
       }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Quick Test Links</h3>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <a
-            href="/api/test-og"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          >
-            Test API Endpoint
-          </a>
+          {/* Removed server test endpoint (no longer used) */}
           <a
             href="/og-test"
             target="_blank"
@@ -378,7 +364,7 @@ export default function OGImageAdmin() {
             OG Environment
           </a>
           <a
-            href="https://www.swiper.fit/api/generate-og-image?workoutId=6385499d-a9f2-4161-b6bb-1b90256d605c"
+            href="https://www.swiper.fit/api/og-image?workoutId=6385499d-a9f2-4161-b6bb-1b90256d605c"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -396,14 +382,9 @@ export default function OGImageAdmin() {
             onClick={async () => {
               try {
                 setIsGenerating(true);
-                const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ onlyMissing: true, isPublicOnly: false, batchSize: 10 })
-                });
-                const data = await resp.json();
-                if (!resp.ok) throw new Error(data?.error || 'Bulk generation failed');
-                alert(`Bulk complete. Processed: ${data.processed}/${data.total}. Failed: ${data.failed}`);
+                const ids = filteredWorkouts.map(w => w.id);
+                const { processed, failed, errors } = await clientSideGenerate(ids);
+                alert(`Bulk complete. Processed: ${processed}/${ids.length}. Failed: ${failed}`);
                 await loadWorkouts();
               } catch (e) {
                 console.error('Bulk generate failed:', e);
@@ -432,14 +413,9 @@ export default function OGImageAdmin() {
               if (!confirm('This will overwrite OG images for ALL completed workouts. Continue?')) return;
               try {
                 setIsGenerating(true);
-                const resp = await fetch(`${apiBase}/api/generate-bulk-og-images`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ onlyMissing: false, isPublicOnly: false, batchSize: 10 })
-                });
-                const data = await resp.json();
-                if (!resp.ok) throw new Error(data?.error || 'Bulk overwrite failed');
-                alert(`Overwrite complete. Processed: ${data.processed}/${data.total}. Failed: ${data.failed}`);
+                const ids = workouts.map(w => w.id);
+                const { processed, failed } = await clientSideGenerate(ids);
+                alert(`Overwrite complete. Processed: ${processed}/${ids.length}. Failed: ${failed}`);
                 await loadWorkouts();
               } catch (e) {
                 console.error('Bulk overwrite failed:', e);
