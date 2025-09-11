@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('Generating OG image for workout:', workoutId);
-    // Fetch workout data (public only here). Avoid deep joins to reduce RLS issues.
+    // Fetch workout data. Avoid deep joins to reduce RLS issues.
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
@@ -40,11 +40,10 @@ export default async function handler(req, res) {
         routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
-      .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {
-      return res.status(404).json({ error: 'Workout not found or not public' });
+      return res.status(404).json({ error: 'Workout not found' });
     }
 
     // Exact counts using head:true to avoid selecting row data

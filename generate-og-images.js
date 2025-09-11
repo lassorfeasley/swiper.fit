@@ -53,15 +53,21 @@ async function generateOGImage(workoutId) {
       setCount: setCount
     };
 
-    // For now, we'll create a simple placeholder URL
-    // In production, this would call the actual OG image generation API
-    const placeholderUrl = `https://via.placeholder.com/1200x630/22C55E/FFFFFF?text=${encodeURIComponent(ogImageData.workoutName)}`;
+    // Generate OG image using the proper API endpoint
+    const response = await fetch(`https://www.swiper.fit/api/generate-og-image?workoutId=${workoutId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to generate OG image: ${response.statusText}`);
+    }
+    
+    // Convert response to blob
+    const blob = await response.blob();
     
     // Upload to Supabase Storage
     const fileName = `${workoutId}.png`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('og-images')
-      .upload(fileName, placeholderUrl, {
+      .upload(fileName, blob, {
         contentType: 'image/png',
         upsert: true
       });

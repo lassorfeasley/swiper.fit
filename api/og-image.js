@@ -17,7 +17,6 @@ export default async function handler(req, res) {
         routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
-      .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {

@@ -38,12 +38,7 @@ export default async function handler(req, res) {
         completed_at,
         is_public,
         og_image_url,
-        routines!workouts_routine_id_fkey(routine_name),
-        workout_exercises(
-          id,
-          exercises(name)
-        ),
-        sets!sets_workout_id_fkey(id)
+        routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('is_active', false) // Only completed workouts
       .not('completed_at', 'is', null);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useAuth } from '../contexts/AuthContext';
 
 // Simple client-side OG image placeholder generator
 async function generateImageBlob(titleText) {
@@ -11,7 +12,7 @@ async function generateImageBlob(titleText) {
   const ctx = canvas.getContext('2d');
 
   // Background
-  ctx.fillStyle = '#E5F0FA';
+  ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, width, height);
 
   // Title
@@ -41,12 +42,8 @@ async function generateImageBlob(titleText) {
   return blob;
 }
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
-
 export default function OGImageAdmin() {
+  const { supabase, user } = useAuth();
   const [selectedWorkouts, setSelectedWorkouts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState(null);
@@ -67,8 +64,13 @@ export default function OGImageAdmin() {
 
   // Load workouts on component mount
   useEffect(() => {
-    loadWorkouts();
-  }, []);
+    if (user) {
+      loadWorkouts();
+    } else {
+      setWorkoutsLoading(false);
+      setWorkoutsError('Please log in to access the OG Image Admin');
+    }
+  }, [user]);
 
   const loadWorkouts = async () => {
     try {
@@ -201,6 +203,23 @@ export default function OGImageAdmin() {
       setIsGenerating(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h1>OG Image Admin</h1>
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: '#f8d7da', 
+          border: '1px solid #f5c6cb', 
+          borderRadius: '8px',
+          color: '#721c24'
+        }}>
+          Please log in to access the OG Image Admin interface.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
