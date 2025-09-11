@@ -302,15 +302,13 @@ export async function generateAndUploadOGImage(workoutId, workoutData, maxRetrie
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[OGImage] Attempt ${attempt}/${maxRetries} for workout ${workoutId}`);
-      const resp = await fetch('/api/generate-and-store-og-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workoutId })
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || 'Failed to generate');
+      // Client-side render -> data URL
+      const dataUrl = await generateOGImagePNG(workoutData);
+      const { uploadOGImage, updateWorkoutOGImage } = await import('./ogImageStorage.js');
+      const imageUrl = await uploadOGImage(workoutId, dataUrl);
+      await updateWorkoutOGImage(workoutId, imageUrl);
       console.log(`[OGImage] Successfully generated OG image for workout ${workoutId} on attempt ${attempt}`);
-      return data.imageUrl;
+      return imageUrl;
     } catch (error) {
       lastError = error;
       console.error(`[OGImage] Attempt ${attempt}/${maxRetries} failed for workout ${workoutId}:`, error);
