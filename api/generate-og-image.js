@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('Generating OG image for workout:', workoutId);
-    // Fetch workout data (public only). Avoid deep joins to reduce RLS issues.
+    // Fetch workout data (public only here). Avoid deep joins to reduce RLS issues.
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
@@ -79,7 +79,21 @@ export default async function handler(req, res) {
       year: 'numeric' 
     });
 
-    // Generate OG image using Vercel's ImageResponse
+    // Owner possessive + workout title
+    let ownerFirst = '';
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', workout.user_id)
+        .single();
+      const full = `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim();
+      ownerFirst = (full.split(' ')[0] || '').trim();
+    } catch (_) {}
+    const possessive = ownerFirst ? ownerFirst + (ownerFirst.toLowerCase().endsWith('s') ? "'" : "'s") + ' ' : '';
+    const displayWorkoutName = `${possessive}${workout.workout_name || 'Completed Workout'}`;
+
+    // Generate OG image using Vercel's ImageResponse (match client preview)
     return new ImageResponse(
       (
         <div
@@ -136,19 +150,30 @@ export default async function handler(req, res) {
             </div>
           </div>
 
-          {/* Main workout name */}
+          {/* Main workout name left-aligned and wrapping */}
           <div
             style={{
-              fontSize: '80px',
-              fontWeight: '700',
-              color: '#171717',
-              letterSpacing: '0px',
-              textAlign: 'center',
-              marginTop: '60px',
-              marginBottom: '60px',
+              position: 'absolute',
+              left: '60px',
+              right: '60px',
+              top: '180px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '6px',
             }}
           >
-            {workout.workout_name || 'Completed Workout'}
+            <div
+              style={{
+                fontSize: '68px',
+                fontWeight: '700',
+                color: '#171717',
+                lineHeight: '75px',
+                wordBreak: 'break-word',
+              }}
+            >
+              {displayWorkoutName}
+            </div>
           </div>
 
           {/* Metrics boxes */}
@@ -165,18 +190,18 @@ export default async function handler(req, res) {
             {duration && (
               <div
                 style={{
-                  width: '140px',
+                  minWidth: '140px',
                   height: '68px',
                   backgroundColor: '#FAFAFA',
                   border: '2px solid #D4D4D4',
-                  borderRadius: '4px',
+                  borderRadius: '10px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: '0 28px',
                   fontSize: '30px',
                   fontWeight: '300',
                   color: '#404040',
-                  letterSpacing: '1.2px',
                   textTransform: 'uppercase',
                 }}
               >
@@ -187,18 +212,18 @@ export default async function handler(req, res) {
             {/* Exercises box */}
             <div
               style={{
-                width: '200px',
+                minWidth: '200px',
                 height: '68px',
                 backgroundColor: '#FAFAFA',
                 border: '2px solid #D4D4D4',
-                borderRadius: '4px',
+                borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '0 28px',
                 fontSize: '30px',
                 fontWeight: '300',
                 color: '#404040',
-                letterSpacing: '1.2px',
                 textTransform: 'uppercase',
               }}
             >
@@ -208,18 +233,18 @@ export default async function handler(req, res) {
             {/* Sets box */}
             <div
               style={{
-                width: '140px',
+                minWidth: '140px',
                 height: '68px',
                 backgroundColor: '#FAFAFA',
                 border: '2px solid #D4D4D4',
-                borderRadius: '4px',
+                borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '0 28px',
                 fontSize: '30px',
                 fontWeight: '300',
                 color: '#404040',
-                letterSpacing: '1.2px',
                 textTransform: 'uppercase',
               }}
             >
@@ -227,7 +252,7 @@ export default async function handler(req, res) {
             </div>
           </div>
 
-          {/* Green checkmark */}
+          {/* Green checkmark SVG aligned with date */}
           <div
             style={{
               position: 'absolute',
@@ -235,29 +260,15 @@ export default async function handler(req, res) {
               top: '50%',
               transform: 'translateY(-50%)',
               width: '320px',
-              height: '250px',
-              backgroundColor: '#22C55E',
+              height: '251px',
+              backgroundColor: 'transparent',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            {/* Checkmark SVG */}
-            <svg
-              width="120"
-              height="120"
-              viewBox="0 0 120 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M20 60L45 85L100 30"
-                stroke="white"
-                strokeWidth="25"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
+            <svg width="320" height="251" viewBox="0 0 320 251" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M320 39.8487L110.663 251L0 148.673L36.1637 107.801L109.058 175.204L282.151 0.6185L320 39.8487Z" fill="#22C55E" />
             </svg>
           </div>
         </div>
