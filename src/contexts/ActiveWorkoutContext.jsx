@@ -517,8 +517,17 @@ export function ActiveWorkoutProvider({ children }) {
       }
 
       // Calculate metrics
-      const exerciseCount = workout.workout_exercises?.length || 0;
+      let exerciseCount = workout.workout_exercises?.length || 0;
       const setCount = workout.sets?.length || 0;
+      // Fallback: if no snapshot rows exist (older workouts), infer exercises from sets
+      if (exerciseCount === 0 && Array.isArray(workout.sets)) {
+        const uniqueExercises = new Set(
+          workout.sets
+            .map(s => s.exercise_id)
+            .filter(id => id !== null && id !== undefined)
+        );
+        exerciseCount = uniqueExercises.size;
+      }
       
       // Format duration
       const durationSeconds = workout.duration_seconds || elapsedTime;
@@ -607,19 +616,15 @@ export function ActiveWorkoutProvider({ children }) {
         } else {
           saved = true;
           
-          // Generate OG image for completed workout (fire and forget)
+          // Generate OG image for completed workout (now await to ensure it completes)
           try {
             const workoutData = await gatherWorkoutDataForOG(activeWorkout.id);
             if (workoutData) {
               console.log('[ActiveWorkout] Generating OG image for workout:', activeWorkout.id);
-              // Don't await this - let it run in background
-              generateAndUploadOGImage(activeWorkout.id, workoutData)
-                .then(imageUrl => {
-                  console.log('[ActiveWorkout] OG image generated successfully:', imageUrl);
-                })
-                .catch(error => {
-                  console.error('[ActiveWorkout] Error generating OG image:', error);
-                });
+              const imageUrl = await generateAndUploadOGImage(activeWorkout.id, workoutData);
+              console.log('[ActiveWorkout] OG image generated successfully:', imageUrl);
+            } else {
+              console.warn('[ActiveWorkout] No workout data for OG image; skipping generation');
             }
           } catch (error) {
             console.error('[ActiveWorkout] Error in OG image generation flow:', error);

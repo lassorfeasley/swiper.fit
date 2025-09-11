@@ -214,10 +214,17 @@ export default function OGImageAdmin() {
     if (wErr || !w) throw new Error('Workout not found');
 
     // Counts
-    const [{ count: exCount = 0 }, { count: setCount = 0 }] = await Promise.all([
+    const [{ count: exCountRaw = 0 }, { data: setsRows, error: setsErr }] = await Promise.all([
       supabase.from('workout_exercises').select('id', { count: 'exact', head: true }).eq('workout_id', workoutId),
-      supabase.from('sets').select('id', { count: 'exact', head: true }).eq('workout_id', workoutId)
+      supabase.from('sets').select('id, exercise_id', { count: 'exact' }).eq('workout_id', workoutId)
     ]);
+    if (setsErr) throw setsErr;
+    const setCount = Array.isArray(setsRows) ? setsRows.length : 0;
+    let exCount = exCountRaw || 0;
+    if (exCount === 0 && Array.isArray(setsRows)) {
+      const uniq = new Set(setsRows.map(s => s.exercise_id).filter(Boolean));
+      exCount = uniq.size;
+    }
 
     // Owner name (first)
     let first = '';

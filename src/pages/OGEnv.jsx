@@ -92,11 +92,16 @@ export default function OGEnv() {
       if (exErr) throw exErr;
       const { data: setRows, error: setErr } = await supabase
         .from('sets')
-        .select('id')
+        .select('id, exercise_id')
         .eq('workout_id', selectedWorkoutId);
       if (setErr) throw setErr;
 
-      const exerciseCount = Array.isArray(exRows) ? exRows.length : 0;
+      // Prefer snapshot rows; fallback to counting unique exercise_id in sets
+      let exerciseCount = Array.isArray(exRows) ? exRows.length : 0;
+      if (exerciseCount === 0 && Array.isArray(setRows)) {
+        const uniq = new Set(setRows.map(s => s.exercise_id).filter(Boolean));
+        exerciseCount = uniq.size;
+      }
       const setCount = Array.isArray(setRows) ? setRows.length : 0;
 
       // Format data for canvas renderer
