@@ -93,8 +93,8 @@ export default async function handler(req, res) {
     const possessive = ownerFirst ? ownerFirst + (ownerFirst.toLowerCase().endsWith('s') ? "'" : "'s") + ' ' : '';
     const displayWorkoutName = `${possessive}${workout.workout_name || 'Completed Workout'}`;
 
-    // Generate OG image using Vercel's ImageResponse (match client preview)
-    return new ImageResponse(
+    // Generate OG image using @vercel/og and send as PNG buffer (works on Node serverless)
+    const image = new ImageResponse(
       (
         <div
           style={{
@@ -108,7 +108,6 @@ export default async function handler(req, res) {
             fontFamily: 'system-ui, sans-serif',
           }}
         >
-          {/* Top bar */}
           <div
             style={{
               position: 'absolute',
@@ -123,7 +122,6 @@ export default async function handler(req, res) {
               backgroundColor: 'white',
             }}
           >
-            {/* Routine name */}
             <div
               style={{
                 fontSize: '30px',
@@ -135,8 +133,6 @@ export default async function handler(req, res) {
             >
               {workout.routines?.routine_name || 'Workout'}
             </div>
-            
-            {/* Date */}
             <div
               style={{
                 fontSize: '30px',
@@ -149,8 +145,6 @@ export default async function handler(req, res) {
               {date}
             </div>
           </div>
-
-          {/* Main workout name left-aligned and wrapping */}
           <div
             style={{
               position: 'absolute',
@@ -175,8 +169,6 @@ export default async function handler(req, res) {
               {displayWorkoutName}
             </div>
           </div>
-
-          {/* Metrics boxes */}
           <div
             style={{
               position: 'absolute',
@@ -186,7 +178,6 @@ export default async function handler(req, res) {
               gap: '20px',
             }}
           >
-            {/* Duration box */}
             {duration && (
               <div
                 style={{
@@ -208,8 +199,6 @@ export default async function handler(req, res) {
                 {duration}
               </div>
             )}
-            
-            {/* Exercises box */}
             <div
               style={{
                 minWidth: '200px',
@@ -229,8 +218,6 @@ export default async function handler(req, res) {
             >
               {exerciseCount} EXERCISES
             </div>
-            
-            {/* Sets box */}
             <div
               style={{
                 minWidth: '140px',
@@ -251,8 +238,6 @@ export default async function handler(req, res) {
               {setCount} SETS
             </div>
           </div>
-
-          {/* Green checkmark SVG aligned with date */}
           <div
             style={{
               position: 'absolute',
@@ -278,6 +263,11 @@ export default async function handler(req, res) {
         height: 630,
       }
     );
+
+    const arrayBuffer = await image.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    res.setHeader('Content-Type', 'image/png');
+    return res.status(200).end(buffer);
   } catch (error) {
     console.error('Error generating OG image:', error);
     console.error('Error stack:', error.stack);
