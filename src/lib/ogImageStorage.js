@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+import { supabase } from '@/supabaseClient';
 
 /**
  * Upload a PNG image to Supabase Storage
@@ -20,25 +15,25 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
     // Create filename
     const fileName = `${workoutId}.png`;
     
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    // Upload to Supabase Storage using authenticated client
+    const { error: uploadError } = await supabase.storage
       .from('og-images')
       .upload(fileName, blob, {
         contentType: 'image/png',
-        upsert: true // Overwrite if exists
+        upsert: true
       });
     
-    if (error) {
-      console.error('Error uploading OG image:', error);
-      throw error;
+    if (uploadError) {
+      console.error('Error uploading OG image:', uploadError);
+      throw uploadError;
     }
     
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: publicData } = supabase.storage
       .from('og-images')
       .getPublicUrl(fileName);
     
-    return publicUrl;
+    return publicData?.publicUrl;
   } catch (error) {
     console.error('Error in uploadOGImage:', error);
     throw error;

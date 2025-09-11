@@ -7,6 +7,14 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  // CORS headers for local debugging
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
   const { workoutId } = req.query;
   
   if (!workoutId) {
@@ -19,35 +27,49 @@ export default async function handler(req, res) {
 
   try {
     console.log('Generating OG image for workout:', workoutId);
-    // Fetch workout data
+    // Fetch workout data (public only). Avoid deep joins to reduce RLS issues.
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
-        *,
-        routines!workouts_routine_id_fkey(routine_name),
-        workout_exercises(
-          id,
-          exercises(name)
-        ),
-        sets!sets_workout_id_fkey(id)
+        id,
+        workout_name,
+        duration_seconds,
+        completed_at,
+        is_public,
+        routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
       .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {
-      return res.status(404).json({ error: 'Workout not found' });
+      return res.status(404).json({ error: 'Workout not found or not public' });
     }
 
-    // Calculate metrics
-    const exerciseCount = workout.workout_exercises?.length || 0;
-    const setCount = workout.sets?.length || 0;
+    // Exact counts using head:true to avoid selecting row data
+    const { count: exerciseCount = 0, error: exErr } = await supabase
+      .from('workout_exercises')
+      .select('id', { count: 'exact', head: true })
+      .eq('workout_id', workoutId);
+
+    if (exErr) {
+      console.warn('Exercise count error:', exErr);
+    }
+
+    const { count: setCount = 0, error: setErr } = await supabase
+      .from('sets')
+      .select('id', { count: 'exact', head: true })
+      .eq('workout_id', workoutId);
+
+    if (setErr) {
+      console.warn('Set count error:', setErr);
+    }
     
     // Format duration
     const durationSeconds = workout.duration_seconds || 0;
     const hours = Math.floor(durationSeconds / 3600);
     const minutes = Math.floor((durationSeconds % 3600) / 60);
-    const duration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    const duration = hours > 0 ? `${hours}h ${minutes}m` : (minutes > 0 ? `${minutes}m` : '');
 
     // Format date
     const completedDate = new Date(workout.completed_at || new Date());
@@ -248,10 +270,14 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Error generating OG image:', error);
     console.error('Error stack:', error.stack);
+    console.error('Workout ID:', workoutId);
+    
+    // Return a fallback error response
     return res.status(500).json({ 
       error: 'Failed to generate image',
       details: error.message,
-      workoutId: workoutId
+      workoutId: workoutId,
+      timestamp: new Date().toISOString()
     });
   }
 }

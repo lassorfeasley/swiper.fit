@@ -23,11 +23,13 @@ import RequireAuth from "@/lib/auth/RequireAuth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
 import OGImageTest from "./pages/OGImageTest";
+import OGImageAdmin from "./pages/OGImageAdmin";
 import Sharing from "./pages/Sharing/Sharing";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
+import OGEnv from "./pages/OGEnv";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
@@ -202,6 +204,8 @@ function AppContent() {
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/og-test" element={<OGImageTest />} />
+            <Route path="/og-image-admin" element={<OGImageAdmin />} />
+            <Route path="/og-env" element={<OGEnv />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
 
           </Route>

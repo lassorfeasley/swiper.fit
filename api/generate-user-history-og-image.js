@@ -1,13 +1,22 @@
 import { ImageResponse } from '@vercel/og';
 import { createClient } from '@supabase/supabase-js';
 
+// Use static values to avoid Edge runtime env access issues
 const supabase = createClient(
   'https://tdevpmxmvrgouozsgplu.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
 );
 
 export default async function handler(req, res) {
-  const { userId } = req.query;
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  const userId = req.query.userId || req.query.userid;
   
   if (!userId) {
     return res.status(400).json({ error: 'User ID is required' });
@@ -18,16 +27,23 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'image/png');
 
   try {
-    // Fetch user data
-    const { data: user, error: userError } = await supabase
-      .from('accounts')
-      .select('full_name')
+    // Fetch public profile data
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, share_all_workouts')
       .eq('id', userId)
       .single();
 
-    if (userError || !user) {
+    if (profileError || !profile) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    // Respect privacy
+    if (!profile.share_all_workouts) {
+      return res.status(403).json({ error: 'User history is not public' });
+    }
+
+    const ownerName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
 
     // Generate OG image using Vercel's ImageResponse
     return new ImageResponse(
@@ -82,7 +98,7 @@ export default async function handler(req, res) {
                 textTransform: 'uppercase',
               }}
             >
-              {user.full_name?.toUpperCase() || 'USER'}
+              {ownerName.toUpperCase()}
             </div>
           </div>
 
