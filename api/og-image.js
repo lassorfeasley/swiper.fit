@@ -12,10 +12,7 @@ export default async function handler(req, res) {
     // Fetch workout data
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
-      .select(`
-        *,
-        routines!workouts_routine_id_fkey(routine_name)
-      `)
+      .select(`og_image_url`)
       .eq('id', workoutId)
       .single();
 
@@ -25,12 +22,13 @@ export default async function handler(req, res) {
 
     // If workout has an OG image URL, redirect to it (client-generated)
     if (workout.og_image_url) {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      // Short cache to mitigate CDN sticky caches while we roll out new images
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
       return res.redirect(302, workout.og_image_url);
     }
 
     // Fallback to a static default image bundled with the app
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
     return res.redirect(302, '/images/og-workout-default.svg');
 
   } catch (error) {

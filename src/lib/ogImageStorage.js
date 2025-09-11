@@ -1,5 +1,8 @@
 import { supabase } from '@/supabaseClient';
 
+// Bump this when the OG template changes to force new filenames
+const TEMPLATE_VERSION = '2';
+
 /**
  * Upload a PNG image to Supabase Storage
  * @param {string} workoutId - The workout ID
@@ -12,8 +15,8 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
     const response = await fetch(pngDataUrl);
     const blob = await response.blob();
     
-    // Create filename
-    const fileName = `${workoutId}.png`;
+    // Create versioned filename to avoid CDN cache collisions
+    const fileName = `${workoutId}-v${TEMPLATE_VERSION}-${Date.now()}.png`;
     
     // Upload to Supabase Storage using authenticated client
     const { error: uploadError } = await supabase.storage
@@ -47,11 +50,9 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
  */
 export async function updateWorkoutOGImage(workoutId, imageUrl) {
   try {
-    // Append cache-busting param so clients and crawlers fetch the latest image
-    const cacheBustedUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
     const { error } = await supabase
       .from('workouts')
-      .update({ og_image_url: cacheBustedUrl })
+      .update({ og_image_url: imageUrl })
       .eq('id', workoutId);
     
     if (error) {
