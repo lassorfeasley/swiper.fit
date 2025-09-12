@@ -49,7 +49,6 @@ const PageSectionWrapper = ({
       <SectionWrapperLabel 
         showPlusButton={showPlusButton} 
         onPlus={onPlus}
-        className={isFirst ? 'border-t-0' : undefined}
       >
         {displayTitle}
       </SectionWrapperLabel>

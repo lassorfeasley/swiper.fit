@@ -17,7 +17,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Share2, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
+import { Blend, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
@@ -165,6 +165,9 @@ const CompletedWorkout = () => {
   const { isDelegated } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
+
+  // Sharing busy state
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     setIsOwner(user && workout && workout.user_id === currentUser?.id);
@@ -582,7 +585,7 @@ const CompletedWorkout = () => {
   };
 
   const handleShare = () => {
-    setShareDialogOpen(true);
+    shareWorkout();
   };
 
   const handleTogglePublic = async (val) => {
@@ -629,16 +632,65 @@ const CompletedWorkout = () => {
     }
   };
 
+  // Unified share handler: share link only (no image). Mobile uses Web Share API;
+  // desktop falls back to copying the URL.
+  const shareWorkout = async () => {
+    setSharing(true);
+    try {
+      await ensurePublic();
+
+      const url = `${window.location.origin}/history/public/workout/${workoutId}`;
+      const title = workout?.workout_name || 'Completed Workout';
+      const text = title;
+
+      // Prefer native share whenever available; do not fall back to copy
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+        } catch (shareErr) {
+          // Swallow user cancellations or share errors; no clipboard fallback when share is supported
+          // Common names: AbortError, NotAllowedError, TypeError
+        } finally {
+          setSharing(false);
+        }
+        return;
+      }
+
+      // Desktop/unsupported fallback: copy URL only
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied');
+      } catch (copyErr) {
+        try {
+          // Legacy execCommand fallback
+          const tmp = document.createElement('input');
+          tmp.style.position = 'fixed';
+          tmp.style.opacity = '0';
+          tmp.value = url;
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          document.body.removeChild(tmp);
+          toast.success('Link copied');
+        } catch {
+          toast.message('Share this link:', { description: url });
+        }
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
 
 
   return (
     <>
       <AppLayout
-        variant="dark-fixed"
+        hideHeader={true}
         title={workout?.workout_name}
         pageNameEditable={isOwner || isDelegated}
-        showShare={!isPublicWorkoutView && (isOwner || isDelegated)}
-        onShare={handleShare}
+        showShare={false}
+        onShare={undefined}
         showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
         onSettings={() => setEditWorkoutOpen(true)}
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
@@ -664,12 +716,45 @@ const CompletedWorkout = () => {
         pageContext="workout"
         showDeleteOption={isOwner || isDelegated}
         onDelete={handleDeleteWorkout}
-        showSidebar={!isDelegated}
+        showSidebar={!isPublicWorkoutView && !isDelegated}
       >
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
           <div className="flex flex-col min-h-screen">
+            {/* Replace PageHeader with full-width share bar + preview */}
+            <div
+              className="self-stretch inline-flex flex-col justify-start items-center cursor-pointer"
+              onClick={shareWorkout}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); shareWorkout(); } }}
+              aria-label="Tap to share workout"
+              aria-busy={sharing}
+            >
+              {/* Top green share bar */}
+              <div className="self-stretch pr-5 bg-green-600 inline-flex justify-start items-center">
+                <div className="size-11 flex justify-center items-center">
+                  <Blend className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex justify-center items-center">
+                  <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    Tap to share workout
+                  </div>
+                </div>
+              </div>
+              {/* Centered preview image */}
+              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center gap-5">
+                <div className="w-full sm:w-[500px] inline-flex flex-col justify-center items-center">
+                  <img
+                    src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
+                    alt="Workout social preview"
+                    className="w-full sm:w-[500px] h-auto sm:h-64 sm:object-cover sm:border-l sm:border-r border-neutral-neutral-300"
+                    draggable={false}
+                  />
+                </div>
+              </div>
+            </div>
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
               // Simple approach: extend the last section
