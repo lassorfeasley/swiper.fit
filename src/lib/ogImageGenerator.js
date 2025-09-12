@@ -136,14 +136,17 @@ export function generateRoutineOGImagePNG(routineData) {
       drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 0);
       ctx.textAlign = 'left';
 
-      // Big routine title
+      // Big routine title (always suffix " routine" unless already present)
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '700 80px "Be Vietnam Pro", Arial, sans-serif';
       ctx.textBaseline = 'middle';
       const titleLeft = 60;
       const titleRightMargin = 60;
       const titleMaxWidth = 1200 - titleLeft - titleRightMargin; // full width margins
-      drawWrappedLeftText(ctx, routineData?.routineName || 'Routine', titleLeft, 300, titleMaxWidth, 90);
+      const rawName = (routineData?.routineName || 'Routine').trim();
+      const hasSuffix = /\broutine\b/i.test(rawName);
+      const titleText = hasSuffix ? rawName : `${rawName} routine`;
+      drawWrappedLeftText(ctx, titleText, titleLeft, 300, titleMaxWidth, 90);
 
       // Bottom metrics
       ctx.textAlign = 'center';
