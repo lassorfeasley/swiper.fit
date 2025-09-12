@@ -12,6 +12,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import ActiveWorkoutNav from "@/components/molecules/active-workout-nav";
+import SwiperProgress from "@/components/molecules/swiper-progress";
 import { toast } from "sonner";
  
 import { useAccount } from "@/contexts/AccountContext";
@@ -369,6 +370,9 @@ const ActiveWorkoutContent = () => {
         totalSets={totalSets}
         onEnd={handleEndWorkout}
       />
+
+      {/* Bottom progress bar */}
+      <SwiperProgress completedSets={completedSets} totalSets={totalSets} />
 
       
     </AppLayout>
