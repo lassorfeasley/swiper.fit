@@ -17,7 +17,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Blend, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
@@ -650,6 +650,14 @@ const CompletedWorkout = () => {
     }
   };
 
+  const handleOpenRoutine = () => {
+    if (!workout?.routine_id) return;
+    const target = (isOwner && !isPublicWorkoutView)
+      ? `/routines/${workout.routine_id}/configure`
+      : `/routines/public/${workout.routine_id}`;
+    navigate(target);
+  };
+
   // Unified share handler: share link only (no image). Mobile uses Web Share API;
   // desktop falls back to copying the URL.
   const shareWorkout = async () => {
@@ -770,6 +778,27 @@ const CompletedWorkout = () => {
                     className="w-full sm:w-[500px] h-auto sm:h-64 sm:object-cover sm:border-l sm:border-r border-neutral-neutral-300"
                     draggable={false}
                   />
+                </div>
+              </div>
+
+              {/* Routine link row */}
+              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center">
+                <div
+                  className="w-full sm:w-[500px] pr-5 bg-neutral-Neutral-50 sm:border-l sm:border-r border-t border-neutral-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); handleOpenRoutine(); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleOpenRoutine(); } }}
+                  aria-label="Open routine"
+                >
+                  <div className="p-2.5 flex justify-start items-center">
+                    <Star className="size-5 text-neutral-neutral-700" />
+                  </div>
+                  <div className="flex justify-center items-center">
+                    <div className="justify-center text-neutral-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                      {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
