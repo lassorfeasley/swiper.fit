@@ -128,11 +128,12 @@ export function generateRoutineOGImagePNG(routineData) {
       // Top bar
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '700 30px "Be Vietnam Pro", Arial, sans-serif';
-      drawTextWithLetterSpacing(ctx, 'CLICK TO COPY', 60, 60, 1.2);
+      // Avoid manual letter-spacing to preserve font kerning
+      drawTextWithLetterSpacing(ctx, 'CLICK TO COPY', 60, 60, 0);
       ctx.textAlign = 'right';
       const owner = (routineData?.ownerName || '').trim();
       const rightLabel = `SHARED BY ${owner ? owner.toUpperCase() : ''}`.trim();
-      drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 1.2);
+      drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 0);
       ctx.textAlign = 'left';
 
       // Big routine title
@@ -303,22 +304,27 @@ function drawMetricPill(ctx, x, y, text, minWidth = 140, height = 68) {
 
   // Background
   ctx.fillStyle = '#FFFFFF';
-  drawRoundedRectPath(ctx, x, y, boxWidth, height, 10);
+  // Align to half-pixel to get a crisp 2px inner stroke
+  const bgX = Math.round(x) + 0.5;
+  const bgY = Math.round(y) + 0.5;
+  drawRoundedRectPath(ctx, bgX, bgY, boxWidth, height, 10);
   ctx.fill();
 
   // Border
   ctx.strokeStyle = '#D4D4D4';
   ctx.lineWidth = 2;
-  drawRoundedRectPath(ctx, x + 2, y + 2, boxWidth - 4, height - 4, 10);
+  // True 2px inner stroke with crisp edges
+  drawRoundedRectPath(ctx, bgX + 1, bgY + 1, boxWidth - 2, height - 2, 10);
   ctx.stroke();
 
   // Text
   ctx.fillStyle = '#0A0A0A';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const centerX = x + boxWidth / 2;
-  const centerY = y + height / 2;
-  drawTextWithLetterSpacing(ctx, text, centerX, centerY, 1.2);
+  const centerX = bgX + boxWidth / 2;
+  const centerY = bgY + height / 2;
+  // No letter spacing to avoid kerning artifacts
+  drawTextWithLetterSpacing(ctx, text, centerX, centerY, 0);
 
   return boxWidth;
 }
