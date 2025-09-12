@@ -2,13 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateOGImagePNG } from '@/lib/ogImageGenerator';
-import { uploadOGImage, updateWorkoutOGImage, uploadRoutineOGImage, updateRoutineOGImage } from '@/lib/ogImageStorage';
+import { uploadOGImage, uploadRoutineOGImage } from '@/lib/ogImageStorage';
 
 export default function OGEnv() {
   const { user } = useAuth();
 
   const [mode, setMode] = useState('workout'); // 'workout' | 'routine'
-  const [refreshKey, setRefreshKey] = useState(0);
+  // no server OG refresh key needed anymore
   const [imgError, setImgError] = useState(null);
 
   // Public workouts for current user
@@ -93,23 +93,13 @@ export default function OGEnv() {
   }, [user?.id]);
 
   const originBase = typeof window !== 'undefined' ? window.location.origin : '';
-  const apiBase = originBase.includes('localhost') ? 'https://www.swiper.fit' : originBase;
 
-  const workoutApi = useMemo(() => {
-    if (!selectedWorkoutId) return '';
-    return `${apiBase}/api/generate-og-image?workoutId=${encodeURIComponent(selectedWorkoutId)}&t=${refreshKey}`;
-  }, [apiBase, selectedWorkoutId, refreshKey]);
-
-  const routineApi = useMemo(() => {
-    if (!selectedRoutineId) return '';
-    return `${apiBase}/api/generate-routine-og-image?routineId=${encodeURIComponent(selectedRoutineId)}&t=${refreshKey}`;
-  }, [apiBase, selectedRoutineId, refreshKey]);
+  // server OG not used in OGEnv
 
   const handleRefresh = () => {
     setImgError(null);
     setFallbackUrl('');
     setSaveMsg('');
-    setRefreshKey((k) => k + 1);
   };
 
   const linkStyleMemo = (enabled, color = '#007bff') => linkStyle(enabled, color);
@@ -269,20 +259,9 @@ export default function OGEnv() {
       if (!user?.id) {
         throw new Error('Not signed in');
       }
+      if (!fallbackUrl) throw new Error('Build the client preview first');
 
-      // Prefer client preview if present; otherwise call server endpoint to fetch image and upload
-      let dataUrl = fallbackUrl;
-      if (!dataUrl) {
-        const resp = await fetch(`${apiBase}/api/generate-og-image?workoutId=${encodeURIComponent(selectedWorkoutId)}`);
-        if (!resp.ok) throw new Error('Server generation failed');
-        const blob = await resp.blob();
-        dataUrl = await new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(r.result);
-          r.onerror = reject;
-          r.readAsDataURL(blob);
-        });
-      }
+      const dataUrl = fallbackUrl;
 
       const url = await uploadOGImage(selectedWorkoutId, dataUrl);
       if (!url) throw new Error('No public URL returned');
@@ -320,8 +299,6 @@ export default function OGEnv() {
       }
 
       setSaveMsg(`Saved ✓ URL: <a href="${chk?.og_image_url || url}" target="_blank" rel="noreferrer">${chk?.og_image_url || url}</a>`);
-      // refresh list to reflect og_image_url presence
-      setRefreshKey((k) => k + 1);
     } catch (e) {
       console.error('Save to bucket failed:', e);
       setSaveMsg(`Save failed: ${e.message}`);
@@ -410,9 +387,6 @@ export default function OGEnv() {
               </option>
             ))}
           </select>
-          <a href={workoutApi || '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedWorkoutId)}>
-            Generate (Workout)
-          </a>
           <a href={selectedWorkoutId ? `${originBase}/history/public/workout/${encodeURIComponent(selectedWorkoutId)}` : '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedWorkoutId, '#6f42c1')}>
             Public Workout Page
           </a>
@@ -422,7 +396,7 @@ export default function OGEnv() {
           <button onClick={generateFallback} disabled={!selectedWorkoutId || fallbackLoading} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedWorkoutId && !fallbackLoading ? 'pointer' : 'not-allowed' }}>
             {fallbackLoading ? 'Building Fallback…' : 'Build Client Preview'}
           </button>
-          <button onClick={saveToBucket} disabled={!selectedWorkoutId || saving || (!fallbackUrl && !workoutApi)} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedWorkoutId && !saving ? 'pointer' : 'not-allowed' }}>
+          <button onClick={saveToBucket} disabled={!selectedWorkoutId || saving || !fallbackUrl} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedWorkoutId && !saving ? 'pointer' : 'not-allowed' }}>
             {saving ? 'Saving…' : 'Save to Bucket'}
           </button>
         </div>
@@ -432,18 +406,7 @@ export default function OGEnv() {
             dangerouslySetInnerHTML={{ __html: saveMsg }}
           />
         )}
-        {workoutApi && (
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>Server OG</div>
-            <img
-              key={`w-api-${refreshKey}`}
-              src={workoutApi}
-              alt="Workout OG"
-              onError={() => { setImgError('Failed to load workout image.'); }}
-              style={{ width: '100%', maxWidth: 800, border: '1px solid #ddd', borderRadius: 6 }}
-            />
-          </div>
-        )}
+        
         {imgError && (
           <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fecaca', padding: 8, borderRadius: 6, marginTop: 8 }}>{imgError}</div>
         )}
@@ -480,37 +443,23 @@ export default function OGEnv() {
               </option>
             ))}
           </select>
-          <a href={routineApi || '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedRoutineId)}>
-            Generate (Routine)
-          </a>
           <a href={selectedRoutineId ? `${originBase}/routines/public/${encodeURIComponent(selectedRoutineId)}` : '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedRoutineId, '#6f42c1')}>
             Public Routine Page
           </a>
-          <button onClick={() => { setImgError(null); setFallbackUrl(''); setSaveMsg(''); setRefreshKey((k) => k + 1); }} disabled={!selectedRoutineId} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId ? 'pointer' : 'not-allowed' }}>
+          <button onClick={() => { setImgError(null); setFallbackUrl(''); setSaveMsg(''); }} disabled={!selectedRoutineId} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId ? 'pointer' : 'not-allowed' }}>
             Refresh Preview
           </button>
           <button onClick={generateRoutineFallback} disabled={!selectedRoutineId || fallbackLoading} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId && !fallbackLoading ? 'pointer' : 'not-allowed' }}>
             {fallbackLoading ? 'Building Fallback…' : 'Build Client Preview'}
           </button>
-          <button onClick={saveRoutineToBucket} disabled={!selectedRoutineId || saving || (!fallbackUrl && !routineApi)} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId && !saving ? 'pointer' : 'not-allowed' }}>
+          <button onClick={saveRoutineToBucket} disabled={!selectedRoutineId || saving || !fallbackUrl} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId && !saving ? 'pointer' : 'not-allowed' }}>
             {saving ? 'Saving…' : 'Save to Bucket'}
           </button>
         </div>
         {routinesError && (
           <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fecaca', padding: 8, borderRadius: 6, marginTop: 8 }}>{routinesError}</div>
         )}
-        {routineApi && (
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>Server OG</div>
-            <img
-              key={`r-api-${refreshKey}`}
-              src={routineApi}
-              alt="Routine OG"
-              onError={() => { setImgError('Failed to load routine image.'); }}
-              style={{ width: '100%', maxWidth: 800, border: '1px solid #ddd', borderRadius: 6 }}
-            />
-          </div>
-        )}
+        
         {imgError && (
           <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fecaca', padding: 8, borderRadius: 6, marginTop: 8 }}>{imgError}</div>
         )}
