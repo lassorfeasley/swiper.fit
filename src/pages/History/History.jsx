@@ -227,8 +227,7 @@ const History = () => {
       reserveSpace={true}
       title="History"
       showSidebar={!paramUserId && !isDelegated}
-      showShare={viewingOwn}
-      onShare={handleShare}
+      showShare={false}
       showBackButton={false}
       search={true}
       searchPlaceholder="Search workouts"
