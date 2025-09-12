@@ -301,9 +301,27 @@ const CompletedWorkout = () => {
             const minutes = Math.floor((durationSeconds % 3600) / 60);
             const duration = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m` : '';
             const date = new Date(workoutData.completed_at || workoutData.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            // Build owner possessive + workout name for the main title
+            let ownerFullName = '';
+            try {
+              const { data: prof } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', workoutData.user_id)
+                .maybeSingle();
+              if (prof) {
+                const first = prof.first_name || '';
+                const last = prof.last_name || '';
+                ownerFullName = `${first} ${last}`.trim();
+              }
+            } catch (_) {}
+            const ownerFirst = (ownerFullName.trim().split(' ')[0] || '').trim();
+            const possessive = ownerFirst ? ownerFirst + (ownerFirst.toLowerCase().endsWith('s') ? "'" : "'s") + ' ' : '';
+            const displayWorkoutName = `${possessive}${workoutData?.workout_name || 'Completed Workout'}`;
+
             const data = {
               routineName: workoutData?.routines?.routine_name || 'Workout',
-              workoutName: workoutData?.workout_name || 'Completed Workout',
+              workoutName: displayWorkoutName,
               date,
               duration,
               exerciseCount,
