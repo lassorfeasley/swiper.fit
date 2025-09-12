@@ -2,11 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateOGImagePNG } from '@/lib/ogImageGenerator';
-import { uploadOGImage, updateWorkoutOGImage } from '@/lib/ogImageStorage';
+import { uploadOGImage, updateWorkoutOGImage, uploadRoutineOGImage, updateRoutineOGImage } from '@/lib/ogImageStorage';
 
 export default function OGEnv() {
   const { user } = useAuth();
 
+  const [mode, setMode] = useState('workout'); // 'workout' | 'routine'
   const [refreshKey, setRefreshKey] = useState(0);
   const [imgError, setImgError] = useState(null);
 
@@ -21,6 +22,12 @@ export default function OGEnv() {
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+
+  // Public routines for current user
+  const [routines, setRoutines] = useState([]);
+  const [selectedRoutineId, setSelectedRoutineId] = useState('');
+  const [loadingRoutines, setLoadingRoutines] = useState(false);
+  const [routinesError, setRoutinesError] = useState(null);
 
   // Load public workouts for the logged-in user
   useEffect(() => {
@@ -54,6 +61,37 @@ export default function OGEnv() {
     })();
   }, [user?.id]);
 
+  // Load public routines for the logged-in user
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) {
+        setRoutines([]);
+        setSelectedRoutineId('');
+        return;
+      }
+      try {
+        setLoadingRoutines(true);
+        setRoutinesError(null);
+        const { data, error } = await supabase
+          .from('routines')
+          .select('id, routine_name, created_at, is_public, og_image_url')
+          .eq('user_id', user.id)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        const list = Array.isArray(data) ? data : [];
+        setRoutines(list);
+        setSelectedRoutineId(list.length > 0 ? list[0].id : '');
+      } catch (e) {
+        console.error('Failed to load routines:', e);
+        setRoutinesError(e.message);
+      } finally {
+        setLoadingRoutines(false);
+      }
+    })();
+  }, [user?.id]);
+
   const originBase = typeof window !== 'undefined' ? window.location.origin : '';
   const apiBase = originBase.includes('localhost') ? 'https://www.swiper.fit' : originBase;
 
@@ -61,6 +99,11 @@ export default function OGEnv() {
     if (!selectedWorkoutId) return '';
     return `${apiBase}/api/generate-og-image?workoutId=${encodeURIComponent(selectedWorkoutId)}&t=${refreshKey}`;
   }, [apiBase, selectedWorkoutId, refreshKey]);
+
+  const routineApi = useMemo(() => {
+    if (!selectedRoutineId) return '';
+    return `${apiBase}/api/generate-routine-og-image?routineId=${encodeURIComponent(selectedRoutineId)}&t=${refreshKey}`;
+  }, [apiBase, selectedRoutineId, refreshKey]);
 
   const handleRefresh = () => {
     setImgError(null);
@@ -163,6 +206,61 @@ export default function OGEnv() {
     }
   }
 
+  // Routine fallback builder
+  async function generateRoutineFallback() {
+    if (!selectedRoutineId) return;
+    try {
+      setSaveMsg('');
+      setFallbackLoading(true);
+      // Minimal counts
+      const { data: rx, error: rxErr } = await supabase
+        .from('routine_exercises')
+        .select('id')
+        .eq('routine_id', selectedRoutineId);
+      if (rxErr) throw rxErr;
+      const { data: rs, error: rsErr } = await supabase
+        .from('routine_sets')
+        .select('id')
+        .eq('routine_id', selectedRoutineId);
+      if (rsErr) throw rsErr;
+
+      // Routine and owner
+      const { data: routine, error: rErr } = await supabase
+        .from('routines')
+        .select('routine_name, user_id')
+        .eq('id', selectedRoutineId)
+        .single();
+      if (rErr) throw rErr;
+
+      let ownerName = '';
+      try {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', routine?.user_id)
+          .single();
+        if (prof) ownerName = `${prof.first_name || ''} ${prof.last_name || ''}`.trim();
+      } catch (_) {}
+
+      const exerciseCount = Array.isArray(rx) ? rx.length : 0;
+      const setCount = Array.isArray(rs) ? rs.length : 0;
+
+      const dataUrl = await generateOGImagePNG({
+        routineName: routine?.routine_name || 'Routine',
+        workoutName: routine?.routine_name || 'Routine',
+        date: (ownerName || 'ROUTINE').toUpperCase(),
+        duration: null,
+        exerciseCount,
+        setCount,
+      });
+      setFallbackUrl(dataUrl);
+    } catch (e) {
+      console.error('Routine fallback failed:', e);
+    } finally {
+      setFallbackLoading(false);
+    }
+  }
+
   async function saveToBucket() {
     if (!selectedWorkoutId) return;
     try {
@@ -232,12 +330,68 @@ export default function OGEnv() {
     }
   }
 
+  async function saveRoutineToBucket() {
+    if (!selectedRoutineId) return;
+    try {
+      setSaving(true);
+      setSaveMsg('');
+      if (!user?.id) throw new Error('Not signed in');
+
+      let dataUrl = fallbackUrl;
+      if (!dataUrl) {
+        const resp = await fetch(`${apiBase}/api/generate-routine-og-image?routineId=${encodeURIComponent(selectedRoutineId)}`);
+        if (!resp.ok) throw new Error('Server generation failed');
+        const blob = await resp.blob();
+        dataUrl = await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(blob);
+        });
+      }
+
+      const url = await uploadRoutineOGImage(selectedRoutineId, dataUrl);
+      if (!url) throw new Error('No public URL returned');
+
+      const { error: updateErr } = await supabase
+        .from('routines')
+        .update({ og_image_url: url })
+        .eq('id', selectedRoutineId);
+      if (updateErr) throw new Error(`DB update failed: ${updateErr.message}`);
+
+      setSaveMsg(`Saved ✓ URL: <a href="${url}" target="_blank" rel="noreferrer">${url}</a>`);
+      setRefreshKey((k) => k + 1);
+    } catch (e) {
+      console.error('Save routine to bucket failed:', e);
+      setSaveMsg(`Save failed: ${e.message}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
       <h1>Open Graph Templates Environment</h1>
       <p style={{ color: '#555' }}>Quickly preview OG templates and endpoints with your IDs.</p>
 
+      {/* Mode toggle */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button
+          onClick={() => { setMode('workout'); setImgError(null); setFallbackUrl(''); setSaveMsg(''); }}
+          style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: mode === 'workout' ? '#111827' : '#fff', color: mode === 'workout' ? '#fff' : '#111' }}
+        >
+          Workouts
+        </button>
+        <button
+          onClick={() => { setMode('routine'); setImgError(null); setFallbackUrl(''); setSaveMsg(''); }}
+          style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: mode === 'routine' ? '#111827' : '#fff', color: mode === 'routine' ? '#fff' : '#111' }}
+        >
+          Routines
+        </button>
+      </div>
+
       {/* Public Workouts (current user) */}
+      {mode === 'workout' && (
       <section style={{ marginTop: 24, padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
         <h2 style={{ marginTop: 0 }}>Public Workouts (your account)</h2>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -304,6 +458,74 @@ export default function OGEnv() {
           </div>
         )}
       </section>
+      )}
+
+      {/* Public Routines (current user) */}
+      {mode === 'routine' && (
+      <section style={{ marginTop: 24, padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
+        <h2 style={{ marginTop: 0 }}>Public Routines (your account)</h2>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select
+            value={selectedRoutineId}
+            onChange={(e) => { setSelectedRoutineId(e.target.value); setImgError(null); setFallbackUrl(''); setSaveMsg(''); }}
+            disabled={!user?.id || loadingRoutines}
+            style={{ flex: '1 1 360px', padding: 8, border: '1px solid #ccc', borderRadius: 4, background: 'white' }}
+          >
+            <option value="">
+              {!user?.id ? 'Log in to view routines' : loadingRoutines ? 'Loading routines...' : (routines.length ? 'Choose a routine' : 'No public routines')}
+            </option>
+            {routines.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.routine_name} ({new Date(r.created_at).toLocaleDateString()})
+              </option>
+            ))}
+          </select>
+          <a href={routineApi || '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedRoutineId)}>
+            Generate (Routine)
+          </a>
+          <a href={selectedRoutineId ? `${originBase}/routines/public/${encodeURIComponent(selectedRoutineId)}` : '#'} target="_blank" rel="noreferrer" style={linkStyleMemo(!!selectedRoutineId, '#6f42c1')}>
+            Public Routine Page
+          </a>
+          <button onClick={() => { setImgError(null); setFallbackUrl(''); setSaveMsg(''); setRefreshKey((k) => k + 1); }} disabled={!selectedRoutineId} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId ? 'pointer' : 'not-allowed' }}>
+            Refresh Preview
+          </button>
+          <button onClick={generateRoutineFallback} disabled={!selectedRoutineId || fallbackLoading} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId && !fallbackLoading ? 'pointer' : 'not-allowed' }}>
+            {fallbackLoading ? 'Building Fallback…' : 'Build Client Preview'}
+          </button>
+          <button onClick={saveRoutineToBucket} disabled={!selectedRoutineId || saving || (!fallbackUrl && !routineApi)} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', background: '#fff', cursor: selectedRoutineId && !saving ? 'pointer' : 'not-allowed' }}>
+            {saving ? 'Saving…' : 'Save to Bucket'}
+          </button>
+        </div>
+        {routinesError && (
+          <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fecaca', padding: 8, borderRadius: 6, marginTop: 8 }}>{routinesError}</div>
+        )}
+        {routineApi && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>Server OG</div>
+            <img
+              key={`r-api-${refreshKey}`}
+              src={routineApi}
+              alt="Routine OG"
+              onError={() => { setImgError('Failed to load routine image.'); }}
+              style={{ width: '100%', maxWidth: 800, border: '1px solid #ddd', borderRadius: 6 }}
+            />
+          </div>
+        )}
+        {imgError && (
+          <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fecaca', padding: 8, borderRadius: 6, marginTop: 8 }}>{imgError}</div>
+        )}
+        {fallbackUrl && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>Client Preview (fallback)</div>
+            <img
+              src={fallbackUrl}
+              alt="Client Preview"
+              style={{ width: '100%', maxWidth: 800, border: '1px solid #ddd', borderRadius: 6 }}
+            />
+          </div>
+        )}
+      </section>
+      )}
     </div>
   );
 }

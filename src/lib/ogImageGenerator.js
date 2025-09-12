@@ -322,3 +322,38 @@ export async function generateAndUploadOGImage(workoutId, workoutData, maxRetrie
   console.error(`[OGImage] All ${maxRetries} attempts failed for workout ${workoutId}`);
   throw lastError;
 }
+
+/**
+ * Generate and upload OG image for a routine
+ * @param {string} routineId
+ * @param {Object} routineData - { routineName, ownerName, exerciseCount, setCount }
+ * @param {number} maxRetries
+ * @returns {Promise<string>} public URL
+ */
+export async function generateAndUploadRoutineOGImage(routineId, routineData, maxRetries = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const dataUrl = await generateOGImagePNG({
+        routineName: routineData?.routineName || 'Routine',
+        workoutName: routineData?.routineName || 'Routine',
+        // Reuse the date slot to display owner name label
+        date: (routineData?.ownerName || 'ROUTINE').toUpperCase(),
+        duration: null,
+        exerciseCount: routineData?.exerciseCount ?? 0,
+        setCount: routineData?.setCount ?? 0,
+      });
+      const { uploadRoutineOGImage, updateRoutineOGImage } = await import('./ogImageStorage.js');
+      const imageUrl = await uploadRoutineOGImage(routineId, dataUrl);
+      await updateRoutineOGImage(routineId, imageUrl);
+      return imageUrl;
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastError;
+}
