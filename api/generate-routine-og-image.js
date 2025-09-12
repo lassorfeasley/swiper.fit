@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       return res.redirect(302, routine.og_image_url);
     }
 
-    return res.redirect(302, '/images/og-routine-default.svg');
+    return res.redirect(302, '/images/default-open-graph.png');
   } catch (e) {
     console.error('Error in routine OG image handler:', e);
     return res.status(500).send('Error generating image');

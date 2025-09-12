@@ -27,9 +27,9 @@ export default async function handler(req, res) {
       return res.redirect(302, workout.og_image_url);
     }
 
-    // Fallback to a static default image bundled with the app
+    // Fallback to a static default site-wide image
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
-    return res.redirect(302, '/images/og-workout-default.svg');
+    return res.redirect(302, '/images/default-open-graph.png');
 
   } catch (error) {
     console.error('Error in OG image handler:', error);

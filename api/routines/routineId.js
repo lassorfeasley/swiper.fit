@@ -94,12 +94,12 @@ export default async function handler(req, res) {
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/routines/public/${routineId}`;
     // Headline and subtitle for OG cards and visible header
-    const title = `Create a Swiper account`;
-    const description = `Log workouts effortlessly`;
+    const title = `${ownerName} shared an exercise routine on Swiper.Fit`;
+    const description = `Swiper.Fit is the effortless way to log workouts`;
 
     const html = generateHTML({
-      title,
-      description,
+      title: title || 'Lassor shared an exercise routine on Swiper.Fit',
+      description: description || 'Swiper.Fit is the effortless way to log workouts',
       url: pageUrl,
       routineName: routine.routine_name,
       ownerName,
