@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     // Fetch routine and visibility
     const { data: routine, error: routineError } = await supabase
       .from('routines')
-      .select(`id, routine_name, is_public, owner_id`)
+      .select(`id, routine_name, is_public, user_id`)
       .eq('id', routineId)
       .single();
 
@@ -54,23 +54,34 @@ export default async function handler(req, res) {
     }
 
     // Fetch minimal exercise/set counts
-    const { data: routineExercises } = await supabase
+    const { data: routineExercises, error: rxErr } = await supabase
       .from('routine_exercises')
       .select('id')
       .eq('routine_id', routineId);
+    if (rxErr) {
+      throw rxErr;
+    }
 
-    const { data: routineSets } = await supabase
-      .from('routine_sets')
-      .select('id')
-      .eq('routine_id', routineId);
+    let routineSets = [];
+    const routineExerciseIds = (routineExercises || []).map(r => r.id);
+    if (routineExerciseIds.length > 0) {
+      const rsResp = await supabase
+        .from('routine_sets')
+        .select('id')
+        .in('routine_exercise_id', routineExerciseIds);
+      if (rsResp.error) {
+        throw rsResp.error;
+      }
+      routineSets = rsResp.data || [];
+    }
 
     // Owner name
     let ownerName = 'User';
-    if (routine.owner_id) {
+    if (routine.user_id) {
       const { data: owner } = await supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', routine.owner_id)
+        .eq('id', routine.user_id)
         .single();
       if (owner) {
         ownerName = `${owner.first_name || ''} ${owner.last_name || ''}`.trim() || 'User';
