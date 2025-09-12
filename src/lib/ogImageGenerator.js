@@ -104,6 +104,77 @@ export function generateOGImagePNG(workoutData) {
 }
 
 /**
+ * Generate a PNG for Routine OG image using the green theme
+ * @param {Object} routineData - { routineName, ownerName, exerciseCount, setCount }
+ * @returns {Promise<string>} Base64 PNG data URL
+ */
+export function generateRoutineOGImagePNG(routineData) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 630;
+      const ctx = canvas.getContext('2d');
+
+      try { if (document?.fonts?.ready) { await document.fonts.ready; } } catch (_) {}
+
+      // Background: green 600
+      ctx.fillStyle = '#00A63E';
+      ctx.fillRect(0, 0, 1200, 630);
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+
+      // Top bar
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 30px "Be Vietnam Pro", Arial, sans-serif';
+      drawTextWithLetterSpacing(ctx, 'CLICK TO COPY', 60, 60, 1.2);
+      ctx.textAlign = 'right';
+      const owner = (routineData?.ownerName || '').trim();
+      const rightLabel = `SHARED BY ${owner ? owner.toUpperCase() : ''}`.trim();
+      drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 1.2);
+      ctx.textAlign = 'left';
+
+      // Big routine title
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 80px "Be Vietnam Pro", Arial, sans-serif';
+      ctx.textBaseline = 'middle';
+      const titleLeft = 60;
+      const titleRightMargin = 60;
+      const titleMaxWidth = 1200 - titleLeft - titleRightMargin; // full width margins
+      drawWrappedLeftText(ctx, routineData?.routineName || 'Routine', titleLeft, 300, titleMaxWidth, 90);
+
+      // Bottom metrics
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
+
+      let xOffset = 60;
+      const metricGap = 20;
+      const exercisesText = `${routineData?.exerciseCount ?? 0} EXERCISES`;
+      const setsText = `${routineData?.setCount ?? 0} SETS`;
+
+      const usedA = drawMetricPill(ctx, xOffset, 502, exercisesText, 200, 68);
+      xOffset += usedA + metricGap;
+      drawMetricPill(ctx, xOffset, 502, setsText, 140, 68);
+
+      // Dark-green checkmark at bottom-right inside 60px margin
+      const checkWidth = 320;
+      const checkHeight = 251;
+      const checkX = 1200 - 60 - checkWidth;
+      const checkY = 60 + 510 - checkHeight; // align with AllContent bottom
+      drawSvgCheckmark(ctx, checkX, checkY, checkWidth, checkHeight, '#0D542B');
+
+      const dataUrl = canvas.toDataURL('image/png');
+      resolve(dataUrl);
+    } catch (error) {
+      console.error('Error generating Routine OG image:', error);
+      reject(error);
+    }
+  });
+}
+
+/**
  * Draw text with letter spacing
  */
 function drawTextWithLetterSpacing(ctx, text, x, y, letterSpacing) {
@@ -223,6 +294,35 @@ function drawMetricBox(ctx, x, y, width, height, text, horizontalPadding = 20) {
   return boxWidth;
 }
 
+// Draw white pill metric with gray border and dynamic width
+function drawMetricPill(ctx, x, y, text, minWidth = 140, height = 68) {
+  ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
+  const paddingX = 20;
+  const textWidth = ctx.measureText(text).width;
+  const boxWidth = Math.max(minWidth, Math.ceil(textWidth + paddingX * 2));
+
+  // Background
+  ctx.fillStyle = '#FFFFFF';
+  drawRoundedRectPath(ctx, x, y, boxWidth, height, 10);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = '#D4D4D4';
+  ctx.lineWidth = 2;
+  drawRoundedRectPath(ctx, x + 2, y + 2, boxWidth - 4, height - 4, 10);
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle = '#0A0A0A';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const centerX = x + boxWidth / 2;
+  const centerY = y + height / 2;
+  drawTextWithLetterSpacing(ctx, text, centerX, centerY, 1.2);
+
+  return boxWidth;
+}
+
 // Helper to draw a rounded rectangle path
 function drawRoundedRectPath(ctx, x, y, width, height, radius = 10) {
   const r = Math.max(0, Math.min(radius, width / 2, height / 2));
@@ -334,12 +434,9 @@ export async function generateAndUploadRoutineOGImage(routineId, routineData, ma
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const dataUrl = await generateOGImagePNG({
+      const dataUrl = await generateRoutineOGImagePNG({
         routineName: routineData?.routineName || 'Routine',
-        workoutName: routineData?.routineName || 'Routine',
-        // Reuse the date slot to display owner name label
-        date: (routineData?.ownerName || 'ROUTINE').toUpperCase(),
-        duration: null,
+        ownerName: routineData?.ownerName || '',
         exerciseCount: routineData?.exerciseCount ?? 0,
         setCount: routineData?.setCount ?? 0,
       });
