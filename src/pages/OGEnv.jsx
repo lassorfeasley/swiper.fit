@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
-import { generateOGImagePNG } from '@/lib/ogImageGenerator';
+import { generateOGImagePNG, generateRoutineOGImagePNG } from '@/lib/ogImageGenerator';
 import { uploadOGImage, uploadRoutineOGImage } from '@/lib/ogImageStorage';
 
 export default function OGEnv() {
@@ -235,11 +235,9 @@ export default function OGEnv() {
       const exerciseCount = Array.isArray(rx) ? rx.length : 0;
       const setCount = Array.isArray(rs) ? rs.length : 0;
 
-      const dataUrl = await generateOGImagePNG({
+      const dataUrl = await generateRoutineOGImagePNG({
         routineName: routine?.routine_name || 'Routine',
-        workoutName: routine?.routine_name || 'Routine',
-        date: (ownerName || 'ROUTINE').toUpperCase(),
-        duration: null,
+        ownerName: ownerName,
         exerciseCount,
         setCount,
       });
@@ -314,18 +312,8 @@ export default function OGEnv() {
       setSaveMsg('');
       if (!user?.id) throw new Error('Not signed in');
 
-      let dataUrl = fallbackUrl;
-      if (!dataUrl) {
-        const resp = await fetch(`${apiBase}/api/generate-routine-og-image?routineId=${encodeURIComponent(selectedRoutineId)}`);
-        if (!resp.ok) throw new Error('Server generation failed');
-        const blob = await resp.blob();
-        dataUrl = await new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(r.result);
-          r.onerror = reject;
-          r.readAsDataURL(blob);
-        });
-      }
+      if (!fallbackUrl) throw new Error('Build the client preview first');
+      const dataUrl = fallbackUrl;
 
       const url = await uploadRoutineOGImage(selectedRoutineId, dataUrl);
       if (!url) throw new Error('No public URL returned');
@@ -337,7 +325,6 @@ export default function OGEnv() {
       if (updateErr) throw new Error(`DB update failed: ${updateErr.message}`);
 
       setSaveMsg(`Saved ✓ URL: <a href="${url}" target="_blank" rel="noreferrer">${url}</a>`);
-      setRefreshKey((k) => k + 1);
     } catch (e) {
       console.error('Save routine to bucket failed:', e);
       setSaveMsg(`Save failed: ${e.message}`);
