@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/supabaseClient';
-import { generateOGImagePNG } from '@/lib/ogImageGenerator';
-import { uploadOGImage, updateWorkoutOGImage } from '@/lib/ogImageStorage';
+import { generateOGImagePNG, generateRoutineOGImagePNG } from '@/lib/ogImageGenerator';
+import { uploadOGImage, updateWorkoutOGImage, uploadRoutineOGImage, updateRoutineOGImage } from '@/lib/ogImageStorage';
 
 // Simple client-side OG image placeholder generator
 async function generateImageBlob(titleText) {
@@ -46,6 +46,7 @@ async function generateImageBlob(titleText) {
 
 export default function OGImageAdmin() {
   const { user } = useAuth();
+  const [mode, setMode] = useState('workout'); // 'workout' | 'routine'
   const [selectedWorkouts, setSelectedWorkouts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState(null);
@@ -53,6 +54,12 @@ export default function OGImageAdmin() {
   const [workouts, setWorkouts] = useState([]);
   const [workoutsLoading, setWorkoutsLoading] = useState(true);
   const [workoutsError, setWorkoutsError] = useState(null);
+
+  // Routines state
+  const [selectedRoutines, setSelectedRoutines] = useState([]);
+  const [routines, setRoutines] = useState([]);
+  const [routinesLoading, setRoutinesLoading] = useState(true);
+  const [routinesError, setRoutinesError] = useState(null);
 
   // Inline preview controls
   const [previewWorkoutId, setPreviewWorkoutId] = useState('');
@@ -66,12 +73,15 @@ export default function OGImageAdmin() {
 
   // Load workouts on component mount
   useEffect(() => {
-    if (user) {
-      loadWorkouts();
-    } else {
+    if (!user) {
       setWorkoutsLoading(false);
       setWorkoutsError('Please log in to access the OG Image Admin');
+      setRoutinesLoading(false);
+      setRoutinesError('Please log in to access the OG Image Admin');
+      return;
     }
+    loadWorkouts();
+    loadRoutines();
   }, [user]);
 
   const loadWorkouts = async () => {
@@ -108,6 +118,26 @@ export default function OGImageAdmin() {
     }
   };
 
+  const loadRoutines = async () => {
+    try {
+      setRoutinesLoading(true);
+      setRoutinesError(null);
+
+      const { data, error } = await supabase
+        .from('routines')
+        .select('id, routine_name, created_at, is_public, og_image_url, user_id')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setRoutines(data || []);
+    } catch (error) {
+      console.error('Error loading routines:', error);
+      setRoutinesError(error.message);
+    } finally {
+      setRoutinesLoading(false);
+    }
+  };
+
   // Filter workouts based on current filter
   const filteredWorkouts = workouts.filter(workout => {
     if (!workout.completed_at) return false; // Only completed workouts
@@ -124,6 +154,20 @@ export default function OGImageAdmin() {
     }
   });
 
+  // Filter routines based on current filter
+  const filteredRoutines = routines.filter(routine => {
+    switch (filter) {
+      case 'missing':
+        return !routine.og_image_url;
+      case 'public':
+        return routine.is_public;
+      case 'all':
+        return true;
+      default:
+        return true;
+    }
+  });
+
   const handleWorkoutToggle = (workoutId) => {
     setSelectedWorkouts(prev => 
       prev.includes(workoutId) 
@@ -133,24 +177,35 @@ export default function OGImageAdmin() {
   };
 
   const handleSelectAll = () => {
-    if (selectedWorkouts.length === filteredWorkouts.length) {
-      setSelectedWorkouts([]);
+    if (mode === 'workout') {
+      if (selectedWorkouts.length === filteredWorkouts.length) {
+        setSelectedWorkouts([]);
+      } else {
+        setSelectedWorkouts(filteredWorkouts.map(w => w.id));
+      }
     } else {
-      setSelectedWorkouts(filteredWorkouts.map(w => w.id));
+      if (selectedRoutines.length === filteredRoutines.length) {
+        setSelectedRoutines([]);
+      } else {
+        setSelectedRoutines(filteredRoutines.map(r => r.id));
+      }
     }
   };
 
   const handleBulkGenerate = async () => {
-    if (selectedWorkouts.length === 0) {
-      alert('Please select at least one workout');
-      return;
+    if (mode === 'workout') {
+      if (selectedWorkouts.length === 0) { alert('Please select at least one workout'); return; }
+    } else {
+      if (selectedRoutines.length === 0) { alert('Please select at least one routine'); return; }
     }
     setIsGenerating(true);
     setResults(null);
     try {
-      const { processed, failed, errors } = await clientSideGenerate(selectedWorkouts);
+      const { processed, failed, errors } = mode === 'workout'
+        ? await clientSideGenerate(selectedWorkouts)
+        : await clientSideGenerateRoutines(selectedRoutines);
       setResults({ success: true, processed, failed, errors });
-      await loadWorkouts();
+      await (mode === 'workout' ? loadWorkouts() : loadRoutines());
     } catch (error) {
       console.error('Error generating OG images:', error);
       setResults({ success: false, error: error.message });
@@ -163,10 +218,12 @@ export default function OGImageAdmin() {
     setIsGenerating(true);
     setResults(null);
     try {
-      const ids = filteredWorkouts.map(w => w.id);
-      const { processed, failed, errors } = await clientSideGenerate(ids);
+      const ids = (mode === 'workout' ? filteredWorkouts.map(w => w.id) : filteredRoutines.map(r => r.id));
+      const { processed, failed, errors } = mode === 'workout'
+        ? await clientSideGenerate(ids)
+        : await clientSideGenerateRoutines(ids);
       setResults({ success: true, processed, failed, errors });
-      await loadWorkouts();
+      await (mode === 'workout' ? loadWorkouts() : loadRoutines());
     } catch (error) {
       console.error('Error generating OG images:', error);
       setResults({ success: false, error: error.message });
@@ -202,6 +259,79 @@ export default function OGImageAdmin() {
     const workers = Array.from({ length: Math.min(concurrency, workoutIds.length) }, () => worker());
     await Promise.all(workers);
     return { processed, failed, errors };
+  }
+
+  async function clientSideGenerateRoutines(routineIds) {
+    const concurrency = 3;
+    let processed = 0;
+    let failed = 0;
+    const errors = [];
+    let index = 0;
+
+    async function worker() {
+      while (index < routineIds.length) {
+        const myIndex = index++;
+        const id = routineIds[myIndex];
+        try {
+          const data = await buildRoutineCanvasData(id);
+          const dataUrl = await generateRoutineOGImagePNG(data);
+          const url = await uploadRoutineOGImage(id, dataUrl);
+          await updateRoutineOGImage(id, url);
+          processed++;
+        } catch (e) {
+          failed++;
+          errors.push({ routineId: id, error: e.message });
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(concurrency, routineIds.length) }, () => worker());
+    await Promise.all(workers);
+    return { processed, failed, errors };
+  }
+
+  async function buildRoutineCanvasData(routineId) {
+    const { data: routine, error: rErr } = await supabase
+      .from('routines')
+      .select('routine_name, user_id')
+      .eq('id', routineId)
+      .single();
+    if (rErr || !routine) throw new Error('Routine not found');
+
+    const { data: rx, error: rxErr } = await supabase
+      .from('routine_exercises')
+      .select('id')
+      .eq('routine_id', routineId);
+    if (rxErr) throw rxErr;
+    const routineExerciseIds = (rx || []).map(r => r.id);
+    let setCount = 0;
+    if (routineExerciseIds.length > 0) {
+      const rsResp = await supabase
+        .from('routine_sets')
+        .select('id')
+        .in('routine_exercise_id', routineExerciseIds);
+      if (rsResp.error) throw rsResp.error;
+      setCount = (rsResp.data || []).length;
+    }
+    const exerciseCount = routineExerciseIds.length;
+
+    // Owner display name
+    let ownerName = '';
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', routine.user_id)
+        .single();
+      if (prof) ownerName = `${prof.first_name || ''} ${prof.last_name || ''}`.trim();
+    } catch (_) {}
+
+    return {
+      routineName: routine.routine_name || 'Routine',
+      ownerName,
+      exerciseCount,
+      setCount
+    };
   }
 
   async function buildCanvasData(workoutId) {
@@ -277,6 +407,10 @@ export default function OGImageAdmin() {
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>OG Image Admin</h1>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        <button onClick={() => setMode('workout')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: mode === 'workout' ? '#111827' : '#fff', color: mode === 'workout' ? '#fff' : '#111' }}>Workouts</button>
+        <button onClick={() => setMode('routine')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: mode === 'routine' ? '#111827' : '#fff', color: mode === 'routine' ? '#fff' : '#111' }}>Routines</button>
+      </div>
       
       {/* Inline Preview */}
       <div style={{ 
@@ -451,20 +585,20 @@ export default function OGImageAdmin() {
       {/* Filter Controls */}
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <label>
-          Filter workouts:
+          Filter {mode === 'workout' ? 'workouts' : 'routines'}:
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             style={{ marginLeft: '10px', padding: '5px' }}
           >
             <option value="missing">Missing OG Images</option>
-            <option value="public">Public Workouts</option>
-            <option value="all">All Completed Workouts</option>
+            <option value="public">Public {mode === 'workout' ? 'Workouts' : 'Routines'}</option>
+            <option value="all">All {mode === 'workout' ? 'Completed Workouts' : 'Routines'}</option>
           </select>
         </label>
         
         <div style={{ marginLeft: '20px', fontSize: '14px', color: '#666' }}>
-          Showing {filteredWorkouts.length} workouts
+          Showing {mode === 'workout' ? filteredWorkouts.length : filteredRoutines.length} {mode === 'workout' ? 'workouts' : 'routines'}
         </div>
       </div>
 
@@ -549,7 +683,8 @@ export default function OGImageAdmin() {
         </div>
       )}
 
-      {/* Workout List */}
+      {/* Lists */}
+      {mode === 'workout' ? (
       <div style={{ border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
         <div style={{ 
           backgroundColor: '#f8f9fa', 
@@ -708,6 +843,129 @@ export default function OGImageAdmin() {
           ))
         )}
       </div>
+      ) : (
+      <div style={{ border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
+        <div style={{ 
+          backgroundColor: '#f8f9fa', 
+          padding: '10px', 
+          borderBottom: '1px solid #ccc',
+          fontWeight: 'bold'
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 120px 120px', gap: '10px' }}>
+            <div>Select</div>
+            <div>Routine</div>
+            <div>Public</div>
+            <div>OG Image</div>
+          </div>
+        </div>
+
+        {routinesLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading routines...</div>
+        ) : routinesError ? (
+          <div style={{ padding: '20px', color: 'red' }}>Error loading routines: {routinesError}</div>
+        ) : filteredRoutines.length === 0 ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+            No routines found matching the current filter.
+          </div>
+        ) : (
+          filteredRoutines.map((routine) => (
+            <div 
+              key={routine.id} 
+              style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '40px 1fr 120px 120px', 
+                gap: '10px',
+                padding: '10px',
+                borderBottom: '1px solid #eee',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                <input
+                  type="checkbox"
+                  checked={selectedRoutines.includes(routine.id)}
+                  onChange={() => setSelectedRoutines(prev => prev.includes(routine.id) ? prev.filter(id => id !== routine.id) : [...prev, routine.id])}
+                />
+              </div>
+              <div>
+                <div style={{ fontWeight: '500' }}>{routine.routine_name}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  {new Date(routine.created_at).toLocaleDateString()}
+                </div>
+              </div>
+              <div>
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  backgroundColor: routine.is_public ? '#d4edda' : '#f8d7da',
+                  color: routine.is_public ? '#155724' : '#721c24'
+                }}>
+                  {routine.is_public ? 'Public' : 'Private'}
+                </span>
+              </div>
+              <div>
+                {routine.og_image_url ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      backgroundColor: '#d4edda',
+                      color: '#155724'
+                    }}>
+                      Generated
+                    </span>
+                    <a
+                      href={routine.og_image_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ 
+                        fontSize: '12px', 
+                        color: '#007bff',
+                        textDecoration: 'none',
+                        padding: '2px 6px',
+                        border: '1px solid #007bff',
+                        borderRadius: '4px',
+                        backgroundColor: '#f8f9fa'
+                      }}
+                    >
+                      View Image
+                    </a>
+                    <a
+                      href={`/routines/public/${routine.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ 
+                        fontSize: '12px', 
+                        color: '#6f42c1',
+                        textDecoration: 'none',
+                        padding: '2px 6px',
+                        border: '1px solid #6f42c1',
+                        borderRadius: '4px',
+                        backgroundColor: '#f8f9fa'
+                      }}
+                    >
+                      Public Page
+                    </a>
+                  </div>
+                ) : (
+                  <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    backgroundColor: '#f8d7da',
+                    color: '#721c24'
+                  }}>
+                    Missing
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      )}
     </div>
   );
 }

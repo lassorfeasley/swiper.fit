@@ -105,3 +105,4 @@ after update of first_name, last_name on public.profiles
 for each row execute function public.mark_routine_og_dirty_on_profiles();
 
 
+
