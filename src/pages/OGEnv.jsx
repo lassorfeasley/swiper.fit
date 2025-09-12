@@ -208,11 +208,16 @@ export default function OGEnv() {
         .select('id')
         .eq('routine_id', selectedRoutineId);
       if (rxErr) throw rxErr;
-      const { data: rs, error: rsErr } = await supabase
-        .from('routine_sets')
-        .select('id')
-        .eq('routine_id', selectedRoutineId);
-      if (rsErr) throw rsErr;
+      const routineExerciseIds = (rx || []).map((r) => r.id);
+      let rs = [];
+      if (routineExerciseIds.length > 0) {
+        const rsResp = await supabase
+          .from('routine_sets')
+          .select('id')
+          .in('routine_exercise_id', routineExerciseIds);
+        if (rsResp.error) throw rsResp.error;
+        rs = rsResp.data || [];
+      }
 
       // Routine and owner
       const { data: routine, error: rErr } = await supabase
