@@ -68,8 +68,8 @@ export default async function handler(req, res) {
     const description = `${ownerName} is sharing their workout history on SwiperFit. View recent workouts and stats.`;
 
     const html = generateHTML({
-      title: title || 'Lassor shared an exercise routine on Swiper.Fit',
-      description: description || 'Swiper.Fit is the effortless way to log workouts',
+      title: title || 'Log workouts effortlessly with Swiper.fit',
+      description: description || 'Enter your routine and start a workout. Never miss an exercise and track your progress with AI.',
       url: pageUrl,
       ownerName,
       userId
