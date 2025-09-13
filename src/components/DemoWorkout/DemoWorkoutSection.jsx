@@ -76,17 +76,17 @@ export default function DemoWorkoutSection() {
     <div className="w-full bg-transparent h-full">
       {/* Exercise Cards Container - flexible height, scroll within on mobile */}
       <div 
-        className="w-full demo-workout-container flex-1 h-full min-h-0 flex flex-col items-stretch justify-start overflow-y-visible"
+        className="w-full demo-workout-container flex-1 h-full min-h-0 flex flex-col items-center justify-start overflow-y-visible px-0"
       >
         <DeckWrapper
           gap={0}
-          maxWidth={500}
-          minWidth={isMobile ? 280 : 325}
           className="flex flex-1 justify-center items-start h-full"
           style={{ 
             minHeight: '100vh',
             paddingTop: 40,
-            paddingBottom: 0
+            paddingBottom: 0,
+            maxWidth: '500px',
+            minWidth: '325px'
           }}
 
         >
