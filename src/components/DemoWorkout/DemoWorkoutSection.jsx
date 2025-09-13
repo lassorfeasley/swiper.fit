@@ -80,12 +80,12 @@ export default function DemoWorkoutSection() {
       >
         <DeckWrapper
           gap={0}
+          maxWidth={500}
           className="flex flex-1 justify-center items-start h-full"
           style={{ 
             minHeight: '100vh',
             paddingTop: 40,
             paddingBottom: 0,
-            maxWidth: '500px',
             minWidth: '325px'
           }}
 
