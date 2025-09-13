@@ -44,7 +44,7 @@ const DeckWrapper = forwardRef(
     };
 
     const containerClasses = cn(
-      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-5",
+      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-2 md:mx-5",
       className
     );
 
