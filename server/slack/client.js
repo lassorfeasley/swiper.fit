@@ -3,11 +3,17 @@
 
 const DEFAULT_TIMEOUT_MS = 8000;
 
-// Ensure a fetch implementation exists (Node 18+ has global fetch; fallback to node-fetch otherwise)
-let fetchImpl = globalThis.fetch;
-if (!fetchImpl) {
-  const mod = await import('node-fetch');
-  fetchImpl = mod.default;
+// Lazily acquire a fetch implementation to avoid top-level awaits in serverless runtimes
+let cachedFetch = null;
+async function getFetchImpl() {
+  if (typeof globalThis.fetch === 'function') {
+    return globalThis.fetch;
+  }
+  if (!cachedFetch) {
+    const mod = await import('node-fetch');
+    cachedFetch = mod.default;
+  }
+  return cachedFetch;
 }
 
 function getWebhookUrl() {
@@ -20,6 +26,7 @@ function getWebhookUrl() {
 
 export async function sendSlackMessage(payload, options = {}) {
   const webhookUrl = getWebhookUrl();
+  const fetchImpl = await getFetchImpl();
   const canAbort = typeof AbortController !== 'undefined';
   const controller = canAbort ? new AbortController() : null;
   const timeout = setTimeout(() => {
