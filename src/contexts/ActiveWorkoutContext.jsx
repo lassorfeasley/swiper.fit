@@ -22,7 +22,10 @@ export function ActiveWorkoutProvider({ children }) {
   // Fire-and-forget Slack event
   const postSlackEvent = useCallback((event, data) => {
     try {
-      fetch('/api/slack/notify', {
+      const base = window?.location?.origin?.includes('localhost')
+        ? 'https://www.swiper.fit' // call prod when running locally
+        : '';
+      fetch(`${base}/api/slack/notify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
