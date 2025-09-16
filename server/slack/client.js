@@ -3,6 +3,13 @@
 
 const DEFAULT_TIMEOUT_MS = 8000;
 
+// Ensure a fetch implementation exists (Node 18+ has global fetch; fallback to node-fetch otherwise)
+let fetchImpl = globalThis.fetch;
+if (!fetchImpl) {
+  const mod = await import('node-fetch');
+  fetchImpl = mod.default;
+}
+
 function getWebhookUrl() {
   const url = process.env.SLACK_WEBHOOK_URL;
   if (!url) {
@@ -13,14 +20,17 @@ function getWebhookUrl() {
 
 export async function sendSlackMessage(payload, options = {}) {
   const webhookUrl = getWebhookUrl();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || DEFAULT_TIMEOUT_MS);
+  const canAbort = typeof AbortController !== 'undefined';
+  const controller = canAbort ? new AbortController() : null;
+  const timeout = setTimeout(() => {
+    if (controller && canAbort) controller.abort();
+  }, options.timeoutMs || DEFAULT_TIMEOUT_MS);
   try {
-    const resp = await fetch(webhookUrl, {
+    const resp = await fetchImpl(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: controller.signal,
+      ...(controller && canAbort ? { signal: controller.signal } : {}),
     });
     if (!resp.ok) {
       const text = await safeReadText(resp);
