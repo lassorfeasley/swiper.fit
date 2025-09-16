@@ -19,6 +19,22 @@ export function ActiveWorkoutProvider({ children }) {
   const [isFinishing, setIsFinishing] = useState(false);
   const isFinishingRef = useRef(false);
   
+  // Fire-and-forget Slack event
+  const postSlackEvent = useCallback((event, data) => {
+    try {
+      fetch('/api/slack/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event,
+          context: { env: import.meta?.env?.MODE || 'production', source: 'client' },
+          data,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch (_) {}
+  }, []);
+  
   console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
   console.log('[ActiveWorkout] Full user object:', user);
   
@@ -403,6 +419,13 @@ export function ActiveWorkoutProvider({ children }) {
       if (insertErr) throw insertErr;
       workout = inserted;
       console.log('[ActiveWorkout] Workout created successfully:', workout);
+      // Notify Slack (non-blocking)
+      postSlackEvent('workout.started', {
+        workout_id: workout.id,
+        user_id: user.id,
+        routine_id: program.id,
+        started_at: new Date().toISOString(),
+      });
     } catch (e) {
       if (e.code === '23505') {
         console.warn('Active workout already exists; fetching existing record');
@@ -628,6 +651,16 @@ export function ActiveWorkoutProvider({ children }) {
           console.error('Error ending workout:', error);
         } else {
           saved = true;
+          // Notify Slack (non-blocking)
+          postSlackEvent('workout.ended', {
+            workout_id: activeWorkout.id,
+            user_id: user?.id,
+            routine_id: activeWorkout.programId,
+            ended_at: new Date().toISOString(),
+            duration_sec: elapsedTime,
+            total_sets: typeof setCount === 'number' ? setCount : undefined,
+            status: 'completed',
+          });
           
           // Generate OG image for completed workout (await + retry + queue fallback)
           try {
