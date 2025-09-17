@@ -17,6 +17,7 @@ import LoggedOutNav from "@/components/layout/LoggedOutNav";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { postSlackEvent } from "@/lib/slackEvents";
 import { toast } from "sonner";
 
 export default function CreateAccount() {
@@ -170,6 +171,19 @@ export default function CreateAccount() {
       } catch (e) {
         console.error("Post-signup login failed", e);
       }
+
+      // Slack: account created
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          postSlackEvent('account.created', {
+            account_id: uid,
+            user_id: uid,
+            email,
+          });
+        }
+      } catch (_) {}
 
       // If coming from a public routine, import it now and jump into builder
       try {

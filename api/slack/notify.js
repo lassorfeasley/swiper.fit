@@ -80,6 +80,26 @@ async function buildFriendlyPayload(event, context, data) {
     return { text: line, blocks: [contextLabel, { type: 'section', text: { type: 'mrkdwn', text: line } }] };
   }
 
+  if (event === 'account.created') {
+    const name = (await getUserDisplayName(data.user_id)) || data.email || 'New user';
+    const line = `🎉 ${name} created an account.`;
+    return { text: line, blocks: [contextLabel, { type: 'section', text: { type: 'mrkdwn', text: line } }] };
+  }
+
+  if (event === 'routine.created') {
+    const name = (await getUserDisplayName(data.user_id)) || 'Someone';
+    const routine = data.routine_name || (await getRoutineName(data.routine_id)) || 'a new';
+    const line = `📝 ${name} created routine “${routine}”.`;
+    return { text: line, blocks: [contextLabel, { type: 'section', text: { type: 'mrkdwn', text: line } }] };
+  }
+
+  if (event === 'sharing.connected') {
+    const owner = (await getUserDisplayName(data.from_account_id)) || 'Someone';
+    const delegate = (await getUserDisplayName(data.to_account_id)) || 'a teammate';
+    const line = `🤝 ${owner} shared account access with ${delegate}.`;
+    return { text: line, blocks: [contextLabel, { type: 'section', text: { type: 'mrkdwn', text: line } }] };
+  }
+
   // Fallback: structured dump
   return {
     text: `${event} (${env})`,

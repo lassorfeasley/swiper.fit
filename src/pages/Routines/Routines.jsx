@@ -1,6 +1,7 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=48-601
 
 import { supabase } from "@/supabaseClient";
+import { postSlackEvent } from "@/lib/slackEvents";
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageNameContext } from "@/App";
@@ -131,6 +132,12 @@ const RoutinesIndex = () => {
       setShowSheet(false);
       setProgramName("");
       setRefreshFlag((f) => f + 1);
+      // Slack notify (fire-and-forget)
+      postSlackEvent('routine.created', {
+        routine_id: program_id,
+        user_id: user.id,
+        routine_name: program.routine_name || programName,
+      });
       navigate(`/routines/${program_id}/configure`);
     } catch (err) {
       alert(err.message || "Failed to create program");

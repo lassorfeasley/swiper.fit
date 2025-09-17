@@ -18,6 +18,7 @@ import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapp
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import { toast } from "sonner";
+import { postSlackEvent } from "@/lib/slackEvents";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
@@ -344,6 +345,19 @@ export default function Sharing() {
       queryClient.invalidateQueries(["shares_owned_by_me"]);
       setEmail("");
       setShowAddPerson(false);
+      try {
+        postSlackEvent('sharing.connected', {
+          share_id: undefined,
+          from_account_id: user.id,
+          to_account_id: undefined,
+          granted_by_user_id: user.id,
+          permissions: {
+            can_create_routines: permissions.can_create_routines,
+            can_start_workouts: permissions.can_start_workouts,
+            can_review_history: permissions.can_review_history,
+          },
+        });
+      } catch (_) {}
     },
     onError: (error) => {
       console.error("Mutation onError called:", error);
