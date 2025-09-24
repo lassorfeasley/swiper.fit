@@ -113,6 +113,62 @@ const PageHeader = forwardRef(({
     );
   }
 
+  // Glass variant for iOS-style workout summary
+  if (variant === 'glass') {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "fixed top-0 z-50 w-full px-3 py-3 inline-flex justify-between items-center",
+          showSidebar ? "md:ml-64 md:w-[calc(100%-16rem)]" : "",
+          className
+        )}
+      >
+        {/* Left side - Back button and title */}
+        <div className="flex justify-start items-center gap-3">
+          {showBackButton && (
+            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center">
+              <button
+                onClick={onBack}
+                aria-label="Back"
+                className="flex items-center justify-center"
+              >
+                <ArrowLeft className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            </div>
+          )}
+          <div className="flex flex-col justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-5">
+            {title}
+          </div>
+        </div>
+
+        {/* Right side - Action buttons */}
+        <div className="flex flex-col justify-center items-end gap-2.5">
+          <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+            {showShare && (
+              <button
+                onClick={onShare}
+                aria-label="Share"
+                className="flex items-center justify-center"
+              >
+                <Share2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
+            {showSettings && (
+              <button
+                onClick={onSettings}
+                aria-label="Settings"
+                className="flex items-center justify-center"
+              >
+                <Settings2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <header
       ref={ref}
@@ -299,7 +355,7 @@ const PageHeader = forwardRef(({
 
 PageHeader.propTypes = {
   reserveSpace: PropTypes.bool,
-  variant: PropTypes.oneOf(['default', 'dark-fixed']),
+  variant: PropTypes.oneOf(['default', 'dark-fixed', 'programs', 'glass']),
   showBackButton: PropTypes.bool,
   title: PropTypes.string,
   showSearch: PropTypes.bool,
