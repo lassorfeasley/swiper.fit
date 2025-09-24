@@ -755,7 +755,45 @@ const CompletedWorkout = () => {
           <div className="p-6">Loading...</div>
         ) : workout ? (
           <div className="flex flex-col min-h-screen">
-            {/* Workout content starts here - no custom header needed */}
+            {/* Styled Image and Routine Label Section */}
+            <div className="self-stretch pt-10 pb-5 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch px-5 flex flex-col justify-center items-center gap-5">
+                {/* Image Container */}
+                <div className="w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex flex-col justify-center items-center overflow-hidden">
+                  <img 
+                    className="w-[500px] h-64" 
+                    src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
+                    alt="Workout social preview"
+                    draggable={false}
+                  />
+                </div>
+                
+                {/* Routine Label Container */}
+                {workout?.routine_id && (
+                  <div 
+                    className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+                    onClick={handleOpenRoutine}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
+                    aria-label="Open routine"
+                  >
+                    <div className="p-2.5 flex justify-start items-center gap-2.5">
+                      <div className="relative">
+                        <Star className="w-6 h-6 text-neutral-600" strokeWidth={2} />
+                      </div>
+                    </div>
+                    <div className="flex justify-center items-center gap-5">
+                      <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                        {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Exercise List */}
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
               // Simple approach: extend the last section
