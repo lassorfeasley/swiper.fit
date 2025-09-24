@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -19,12 +19,16 @@ const PageHeader = forwardRef(({
   showStartWorkout = false,
   startCtaText,
   showSidebar = false,
+  showUpload = false,
+  showDelete = false,
   onBack,
   onSearch,
   onSettings,
   onAdd,
   onShare,
   onStartWorkout,
+  onUpload,
+  onDelete,
   searchValue = "",
   onSearchChange = () => {},
   className,
@@ -164,6 +168,30 @@ const PageHeader = forwardRef(({
               </button>
             )}
           </div>
+          
+          {/* Second set of action icons */}
+          {(showUpload || showDelete) && (
+            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+              {showUpload && (
+                <button
+                  onClick={onUpload}
+                  aria-label="Upload"
+                  className="flex items-center justify-center"
+                >
+                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                </button>
+              )}
+              {showDelete && (
+                <button
+                  onClick={onDelete}
+                  aria-label="Delete"
+                  className="flex items-center justify-center"
+                >
+                  <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -364,12 +392,16 @@ PageHeader.propTypes = {
   showShare: PropTypes.bool,
   showStartWorkout: PropTypes.bool,
   showSidebar: PropTypes.bool,
+  showUpload: PropTypes.bool,
+  showDelete: PropTypes.bool,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,
   onAdd: PropTypes.func,
   onShare: PropTypes.func,
   onStartWorkout: PropTypes.func,
+  onUpload: PropTypes.func,
+  onDelete: PropTypes.func,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   className: PropTypes.string,

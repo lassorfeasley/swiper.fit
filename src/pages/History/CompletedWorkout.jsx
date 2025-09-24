@@ -734,6 +734,13 @@ const CompletedWorkout = () => {
         }}
         showShare={true}
         onShare={shareWorkout}
+        showUpload={true}
+        onUpload={() => {
+          // TODO: Implement upload functionality
+          console.log('Upload clicked');
+        }}
+        showDelete={isOwner || isDelegated}
+        onDelete={handleDeleteWorkout}
         showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
         onSettings={() => setEditWorkoutOpen(true)}
         search={true}
