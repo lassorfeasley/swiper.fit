@@ -46,7 +46,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
             className="w-28 inline-flex flex-col justify-start items-start gap-2.5 cursor-pointer p-1 rounded"
           >
             <img 
-              src="/images/swiper-logo.png" 
+              src="/images/swiper-fav-icon.png" 
               alt="Swiper Logo" 
               className="w-28 h-11 object-contain"
             />
@@ -65,7 +65,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
           className="w-28 inline-flex flex-col justify-start items-start gap-2.5 cursor-pointer p-1 rounded flex-shrink-0"
         >
           <img 
-            src="/images/swiper-logo.png" 
+            src="/images/swiper-fav-icon.png" 
             alt="Swiper Logo" 
             className="w-28 h-11 object-contain"
           />
