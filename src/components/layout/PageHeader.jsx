@@ -131,7 +131,7 @@ const PageHeader = forwardRef(({
         {/* Left side - Back button and title */}
         <div className="flex justify-start items-center gap-3">
           {showBackButton && (
-            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center">
+            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center md:hidden">
               <button
                 onClick={onBack}
                 aria-label="Back"
@@ -148,29 +148,11 @@ const PageHeader = forwardRef(({
 
         {/* Right side - Action buttons */}
         <div className="flex flex-col justify-center items-end gap-2.5">
-          <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
-            {showShare && (
+          <div className="h-[54px] px-3 pr-5 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+            {showUpload && (
               <button
                 onClick={onShare}
                 aria-label="Share"
-                className="flex items-center justify-center"
-              >
-                <Share2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-              </button>
-            )}
-            {showSettings && (
-              <button
-                onClick={onSettings}
-                aria-label="Settings"
-                className="flex items-center justify-center"
-              >
-                <Settings2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-              </button>
-            )}
-            {showUpload && (
-              <button
-                onClick={onUpload}
-                aria-label="Upload"
                 className="flex items-center justify-center"
               >
                 <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
