@@ -748,100 +748,89 @@ const CompletedWorkout = () => {
           <div className="p-6">Loading...</div>
         ) : workout ? (
           <div className="flex flex-col min-h-screen">
-            {/* Workout Summary Card with iOS Glass Style */}
-            <div className="mx-4 mt-4 mb-6">
-              <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg overflow-hidden">
-                {/* Workout Header */}
-                <div className="px-6 py-4 border-b border-white/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                      {workout?.routines?.routine_name || 'WORKOUT'}
-                    </div>
-                    <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                      {new Date(workout?.completed_at || workout?.created_at || Date.now()).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
-                      }).toUpperCase()}
-                    </div>
+            {/* Replace PageHeader with full-width share bar + preview */}
+            <div
+              className="self-stretch inline-flex flex-col justify-start items-center cursor-pointer"
+              onClick={shareWorkout}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); shareWorkout(); } }}
+              aria-label="Tap to share workout"
+              aria-busy={sharing}
+            >
+              {/* Top green share bar */}
+              <div className="self-stretch pr-5 bg-green-600 inline-flex justify-start items-center">
+                <div className="size-11 flex justify-center items-center">
+                  <Blend className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex justify-center items-center">
+                  <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    Tap to share workout
                   </div>
-                  <h1 className="text-2xl font-bold text-neutral-900 mb-4">
-                    {workout?.workout_name || 'Completed Workout'}
-                  </h1>
-                  
-                  {/* Stats */}
-                  <div className="flex gap-3 mb-4">
-                    <div className="px-3 py-1 bg-neutral-100/80 backdrop-blur-sm rounded-full border border-white/20">
-                      <span className="text-sm font-medium text-neutral-600">
-                        {Math.floor((workout?.duration_seconds || 0) / 3600)}H {Math.floor(((workout?.duration_seconds || 0) % 3600) / 60)}M
-                      </span>
-                    </div>
-                    <div className="px-3 py-1 bg-neutral-100/80 backdrop-blur-sm rounded-full border border-white/20">
-                      <span className="text-sm font-medium text-neutral-600">
-                        {Object.keys(exercises).length} EXERCISES
-                      </span>
-                    </div>
-                    <div className="px-3 py-1 bg-neutral-100/80 backdrop-blur-sm rounded-full border border-white/20">
-                      <span className="text-sm font-medium text-neutral-600">
-                        {sets.length} SETS
-                      </span>
-                    </div>
+                </div>
+              </div>
+              {/* Centered preview image */}
+              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center gap-5">
+                <div className="w-full sm:w-[500px] inline-flex flex-col justify-center items-center">
+                  <img
+                    src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
+                    alt="Workout social preview"
+                    className="w-full sm:w-[500px] h-auto sm:h-64 sm:object-cover sm:border-l sm:border-r border-neutral-neutral-300"
+                    draggable={false}
+                  />
+                </div>
+              </div>
+
+              {/* Routine link row */}
+              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center">
+                <div
+                  className="w-full sm:w-[500px] pr-5 bg-neutral-Neutral-50 sm:border-l sm:border-r border-t border-neutral-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); handleOpenRoutine(); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleOpenRoutine(); } }}
+                  aria-label="Open routine"
+                >
+                  <div className="p-2.5 flex justify-start items-center">
+                    <Star className="size-5 text-neutral-neutral-700" />
                   </div>
-                  
-                  {/* Completion Checkmark */}
-                  <div className="flex justify-end">
-                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                      <Check className="w-8 h-8 text-white" />
+                  <div className="flex justify-center items-center">
+                    <div className="justify-center text-neutral-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                      {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
                     </div>
                   </div>
                 </div>
-                
-                {/* Routine Link */}
-                {workout?.routine_id && (
-                  <div 
-                    className="px-6 py-4 bg-neutral-50/80 backdrop-blur-sm cursor-pointer hover:bg-neutral-100/80 transition-colors"
-                    onClick={handleOpenRoutine}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Star className="w-5 h-5 text-neutral-600" />
-                      <span className="text-sm font-bold text-neutral-700 uppercase tracking-wide">
-                        {workout?.routines?.routine_name ? `${workout.routines.routine_name} ROUTINE` : 'VIEW ROUTINE'}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
-
-            {/* Exercise List */}
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
-                const isLastSection = idx === exercisesBySection.length - 1;
-                
-                return (
-                  <PageSectionWrapper
-                    key={section}
-                    section={section}
-                    deckGap={0}
-                    isFirst={idx === 0}
-                    className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-                    style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
-                  >
-                    {sectionExercises.map((exercise) => (
-                      <ExerciseCompletedCard
-                        key={exercise.id}
-                        exercise={exercise}
-                        setLog={exercise.setLog}
-                      />
-                    ))}
-                  </PageSectionWrapper>
-                );
-              })
-            ) : (
-              <div className="text-center py-10">
-                <p>No sets were logged for this workout.</p>
-              </div>
-            )}
+              // Simple approach: extend the last section
+              const isLastSection = idx === exercisesBySection.length - 1;
+              
+              return (
+                <PageSectionWrapper
+                  key={section}
+                  section={section}
+                  deckGap={0}
+                  isFirst={idx === 0}
+                  className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
+                  style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
+                >
+                  {sectionExercises.map((exercise) => (
+                    <ExerciseCompletedCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      setLog={exercise.setLog}
+                    />
+                  ))}
+                </PageSectionWrapper>
+              );
+            })
+          ) : (
+            <div className="text-center py-10">
+              <p>No sets were logged for this workout.</p>
+            </div>
+          )}
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
