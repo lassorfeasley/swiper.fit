@@ -167,31 +167,25 @@ const PageHeader = forwardRef(({
                 <Settings2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
               </button>
             )}
+            {showUpload && (
+              <button
+                onClick={onUpload}
+                aria-label="Upload"
+                className="flex items-center justify-center"
+              >
+                <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
+            {showDelete && (
+              <button
+                onClick={onDelete}
+                aria-label="Delete"
+                className="flex items-center justify-center"
+              >
+                <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
           </div>
-          
-          {/* Second set of action icons */}
-          {(showUpload || showDelete) && (
-            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
-              {showUpload && (
-                <button
-                  onClick={onUpload}
-                  aria-label="Upload"
-                  className="flex items-center justify-center"
-                >
-                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showDelete && (
-                <button
-                  onClick={onDelete}
-                  aria-label="Delete"
-                  className="flex items-center justify-center"
-                >
-                  <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
