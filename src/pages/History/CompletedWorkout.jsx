@@ -712,13 +712,9 @@ const CompletedWorkout = () => {
   return (
     <>
       <AppLayout
-        hideHeader={true}
-        title={workout?.workout_name}
-        pageNameEditable={isOwner || isDelegated}
-        showShare={false}
-        onShare={undefined}
-        showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
-        onSettings={() => setEditWorkoutOpen(true)}
+        hideHeader={false}
+        title="Workout summary"
+        variant="glass"
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
         onBack={() => {
           if (isPublicWorkoutView && workout) {
@@ -736,6 +732,17 @@ const CompletedWorkout = () => {
             navigate('/history');
           }
         }}
+        showShare={true}
+        onShare={shareWorkout}
+        showUpload={true}
+        onUpload={() => {
+          // TODO: Implement upload functionality
+          console.log('Upload clicked');
+        }}
+        showDelete={isOwner || isDelegated}
+        onDelete={handleDeleteWorkout}
+        showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
+        onSettings={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
@@ -748,60 +755,45 @@ const CompletedWorkout = () => {
           <div className="p-6">Loading...</div>
         ) : workout ? (
           <div className="flex flex-col min-h-screen">
-            {/* Replace PageHeader with full-width share bar + preview */}
-            <div
-              className="self-stretch inline-flex flex-col justify-start items-center cursor-pointer"
-              onClick={shareWorkout}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); shareWorkout(); } }}
-              aria-label="Tap to share workout"
-              aria-busy={sharing}
-            >
-              {/* Top green share bar */}
-              <div className="self-stretch pr-5 bg-green-600 inline-flex justify-start items-center">
-                <div className="size-11 flex justify-center items-center">
-                  <Blend className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex justify-center items-center">
-                  <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                    Tap to share workout
-                  </div>
-                </div>
-              </div>
-              {/* Centered preview image */}
-              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center gap-5">
-                <div className="w-full sm:w-[500px] inline-flex flex-col justify-center items-center">
-                  <img
+            {/* Styled Image and Routine Label Section */}
+            <div className="self-stretch pb-5 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch px-3 md:px-0 flex flex-col justify-center items-center gap-5">
+                {/* Image Container */}
+                <div className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] overflow-hidden">
+                  <img 
+                    className="w-full h-auto block" 
                     src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
                     alt="Workout social preview"
-                    className="w-full sm:w-[500px] h-auto sm:h-64 sm:object-cover sm:border-l sm:border-r border-neutral-neutral-300"
                     draggable={false}
                   />
                 </div>
-              </div>
-
-              {/* Routine link row */}
-              <div className="self-stretch px-0 sm:px-5 inline-flex justify-center items-center">
-                <div
-                  className="w-full sm:w-[500px] pr-5 bg-neutral-Neutral-50 sm:border-l sm:border-r border-t border-neutral-neutral-300 inline-flex justify-start items-center cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); handleOpenRoutine(); }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleOpenRoutine(); } }}
-                  aria-label="Open routine"
-                >
-                  <div className="p-2.5 flex justify-start items-center">
-                    <Star className="size-5 text-neutral-neutral-700" />
-                  </div>
-                  <div className="flex justify-center items-center">
-                    <div className="justify-center text-neutral-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                      {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                
+                {/* Routine Label Container */}
+                {workout?.routine_id && (
+                  <div 
+                    className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+                    onClick={handleOpenRoutine}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
+                    aria-label="Open routine"
+                  >
+                    <div className="p-2.5 flex justify-start items-center gap-2.5">
+                      <div className="relative">
+                        <Star className="w-6 h-6 text-neutral-600" strokeWidth={2} />
+                      </div>
+                    </div>
+                    <div className="flex justify-center items-center gap-5">
+                      <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                        {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
+
+            {/* Exercise List */}
             {exercisesBySection.length > 0 ? (
               exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
               // Simple approach: extend the last section

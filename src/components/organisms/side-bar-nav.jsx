@@ -21,7 +21,7 @@ const SideBarNav = () => {
         <div data-layer="Frame 21" className="Frame21 self-stretch px-4 py-5 border-b border-neutral-300 flex justify-start items-center">
           <div data-svg-wrapper data-layer="Vector" className="Vector">
             <img 
-              src="/images/swiper-logo.png" 
+              src="/images/swiper-fav-icon.png" 
               alt="Swiper Logo" 
               className="w-[130px] h-auto object-contain"
             />

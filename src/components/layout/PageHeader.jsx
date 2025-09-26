@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -19,12 +19,16 @@ const PageHeader = forwardRef(({
   showStartWorkout = false,
   startCtaText,
   showSidebar = false,
+  showUpload = false,
+  showDelete = false,
   onBack,
   onSearch,
   onSettings,
   onAdd,
   onShare,
   onStartWorkout,
+  onUpload,
+  onDelete,
   searchValue = "",
   onSearchChange = () => {},
   className,
@@ -109,6 +113,62 @@ const PageHeader = forwardRef(({
             <div className="justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">{startCtaText || 'Tap to start workout'}</div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Glass variant for iOS-style workout summary
+  if (variant === 'glass') {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "fixed top-0 z-50 w-full px-3 pt-4 pb-3 inline-flex justify-between items-center bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]",
+          showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
+          className
+        )}
+      >
+        {/* Left side - Back button and title */}
+        <div className="flex justify-start items-center gap-3">
+          {showBackButton && (
+            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center md:hidden">
+              <button
+                onClick={onBack}
+                aria-label="Back"
+                className="flex items-center justify-center"
+              >
+                <ArrowLeft className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            </div>
+          )}
+          <div className="flex flex-col justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-5">
+            {title}
+          </div>
+        </div>
+
+        {/* Right side - Action buttons */}
+        <div className="flex flex-col justify-center items-end gap-2.5">
+          <div className="h-[54px] px-3 pr-5 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+            {showUpload && (
+              <button
+                onClick={onShare}
+                aria-label="Share"
+                className="flex items-center justify-center"
+              >
+                <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
+            {showDelete && (
+              <button
+                onClick={onDelete}
+                aria-label="Delete"
+                className="flex items-center justify-center"
+              >
+                <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -299,7 +359,7 @@ const PageHeader = forwardRef(({
 
 PageHeader.propTypes = {
   reserveSpace: PropTypes.bool,
-  variant: PropTypes.oneOf(['default', 'dark-fixed']),
+  variant: PropTypes.oneOf(['default', 'dark-fixed', 'programs', 'glass']),
   showBackButton: PropTypes.bool,
   title: PropTypes.string,
   showSearch: PropTypes.bool,
@@ -308,12 +368,16 @@ PageHeader.propTypes = {
   showShare: PropTypes.bool,
   showStartWorkout: PropTypes.bool,
   showSidebar: PropTypes.bool,
+  showUpload: PropTypes.bool,
+  showDelete: PropTypes.bool,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,
   onAdd: PropTypes.func,
   onShare: PropTypes.func,
   onStartWorkout: PropTypes.func,
+  onUpload: PropTypes.func,
+  onDelete: PropTypes.func,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,
   className: PropTypes.string,
