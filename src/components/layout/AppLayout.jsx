@@ -108,7 +108,7 @@ export default function AppLayout({
           data-no-top-padding={noTopPadding}
           style={{
             "--mobile-nav-height": "80px",
-            paddingTop: `${totalHeaderHeight}px`,
+            paddingTop: reserveSpace ? `${totalHeaderHeight}px` : 0,
             transition: 'padding-top 0.3s ease-in-out',
             height: '100%',
             ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
