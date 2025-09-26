@@ -25,7 +25,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
           paddingBottom={80}
           maxWidth={500}
           minWidth={325}
-          className="mt-[82px]"
+          style={{ paddingTop: 0 }}
         >
           {workouts.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">No workouts logged</div>
