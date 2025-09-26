@@ -16,10 +16,10 @@ const SidebarNavItems = () => {
                 <div
                   key={item.to}
                   data-layer="Selected=disabled"
-                  className="inline-flex justify-start items-center gap-1 w-full p-4 bg-neutral-100"
+                  className="inline-flex justify-start items-center gap-1 w-full p-4"
                 >
-                  <div data-layer="Icon-text-wrapper" className="IconTextWrapper self-stretch h-6 py-2 rounded-sm inline-flex justify-start items-center gap-2">
-                    <div data-svg-wrapper data-layer="lucide" className="Lucide relative">
+                  <div data-layer="Icon-text-wrapper" className="IconTextWrapper flex-1 self-stretch h-6 py-2 rounded-sm inline-flex justify-start items-center gap-2">
+                    <div data-svg-wrapper data-layer="lucide" className="Lucide relative size-6">
                       {React.cloneElement(item.icon, { className: "size-5 text-neutral-400" })}
                     </div>
                     <div data-layer="Text-wrapper" className="TextWrapper inline-flex flex-col justify-center items-start gap-1">
@@ -43,21 +43,21 @@ const SidebarNavItems = () => {
                 to={item.to}
                 data-layer={`Selected=${selected ? 'selected' : 'Default'}`}
                 className={cn(
-                  "inline-flex justify-start items-center gap-1 w-full p-4",
-                  selected ? "bg-white border-t border-b border-neutral-300" : "bg-neutral-100",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  "self-stretch inline-flex justify-start items-center gap-1 w-full p-4",
+                  selected ? "rounded-xl bg-neutral-neutral-100" : "rounded-[20px]",
+                  "focus-visible:outline-none"
                 )}
                 aria-current={selected ? "page" : undefined}
               >
-                <div data-layer="icon-text-wrapper" className="flex-1 self-stretch flex items-center gap-2 rounded-sm">
+                <div data-layer="icon-text-wrapper" className="flex-1 self-stretch flex items-center gap-2 rounded-sm h-6 py-2">
                   <div data-layer="lucide" className="size-6 relative overflow-hidden">
                     {React.cloneElement(item.icon, {
-                      className: selected ? "size-5 text-neutral-neutral-500" : "size-5 text-neutral-neutral-400"
+                      className: selected ? "size-5 text-neutral-neutral-600" : "size-5 text-neutral-neutral-600"
                     })}
                   </div>
                   <div data-layer="Page name" className={cn(
                     "text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide",
-                    selected ? "text-neutral-neutral-500" : "text-neutral-neutral-400"
+                    selected ? "text-neutral-neutral-600" : "text-neutral-neutral-600"
                   )}>
                     {item.label}
                   </div>
