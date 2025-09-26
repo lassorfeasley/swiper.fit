@@ -17,14 +17,14 @@ const MobileNav = () => {
       {isWorkoutActive ? (
         <ActiveWorkoutNav />
       ) : (
-        <div className="self-stretch px-5 pb-4 flex flex-col justify-start items-start gap-2.5">
-          <div className="self-stretch min-h-16 bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-center px-0.5 py-1">
+        <div className="self-stretch px-5 py-2 flex flex-col justify-start items-start">
+          <div className="self-stretch bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-stretch px-0.5 py-0.5">
             {navItems.map((item) => {
               const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
 
               if (item.disabled) {
                 return (
-                  <div key={item.to} className="flex-1 py-2 inline-flex flex-col justify-center items-stretch gap-2 opacity-50 cursor-not-allowed w-full">
+                  <div key={item.to} className="flex-1 py-0 inline-flex flex-col justify-center items-stretch gap-2 opacity-50 cursor-not-allowed w-full">
                     <div className="self-stretch w-full py-1 rounded-[100px] flex flex-col justify-center items-center gap-2 min-h-12">
                     <div className="size-6 relative">
                         <span className="text-neutral-400">{item.icon}</span>
@@ -39,12 +39,12 @@ const MobileNav = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="flex-1 py-2 inline-flex flex-col justify-center items-stretch gap-2 w-full"
+                  className="flex-1 py-0 inline-flex flex-col justify-center items-stretch gap-2 w-full"
                   aria-current={selected ? "page" : undefined}
                 >
                   <div className={cn(
-                    "self-stretch w-full rounded-[100px] flex flex-col justify-center items-center gap-2 min-h-12",
-                    selected ? "py-2 bg-neutral-100/60" : "py-1"
+                    "self-stretch w-full rounded-[100px] flex flex-col justify-center items-center gap-2",
+                    selected ? "py-0.5 bg-neutral-100/60" : "py-0.5"
                   )}>
                     <div className="size-6 relative">
                       <span className={cn(selected ? "text-neutral-700" : "text-neutral-400")}>{item.icon}</span>
