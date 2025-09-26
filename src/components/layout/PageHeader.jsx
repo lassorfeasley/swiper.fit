@@ -156,7 +156,7 @@ const PageHeader = forwardRef(({
                   aria-label="Share"
                   className="flex items-center justify-center"
                 >
-                  <Share2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
               {showSettings && (
