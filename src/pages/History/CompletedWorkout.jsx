@@ -164,6 +164,8 @@ const CompletedWorkout = () => {
 
   const { isDelegated } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
+
+  const openShareSettings = () => setShareDialogOpen(true);
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
 
   // Sharing busy state
@@ -748,7 +750,6 @@ const CompletedWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
         showDeleteOption={isOwner || isDelegated}
-        onDelete={handleDeleteWorkout}
         showSidebar={!isPublicWorkoutView && !isDelegated}
       >
         {loading ? (
@@ -759,8 +760,8 @@ const CompletedWorkout = () => {
             <div className="self-stretch pt-[82px] pb-5 inline-flex flex-col justify-start items-center">
               <div className="self-stretch px-3 md:px-0 flex flex-col justify-center items-center gap-5">
                 {/* Image Container */}
-                <div className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] overflow-hidden">
-                  <img 
+                <div className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] overflow-hidden cursor-pointer" onClick={openShareSettings} title="Share settings">
+                  <img
                     className="w-full h-auto block" 
                     src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
                     alt="Workout social preview"
