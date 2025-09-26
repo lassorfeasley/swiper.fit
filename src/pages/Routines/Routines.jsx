@@ -160,16 +160,14 @@ const RoutinesIndex = () => {
 
   return (
     <AppLayout
-      reserveSpace={true}
+      reserveSpace={false}
+      variant="glass"
       title="Routines"
       showAdd={false}
-      showSearch={true}
+      showSearch={false}
       showAddButton={false}
       showBackButton={false}
-      search={true}
-      searchPlaceholder="Search routines or exercises"
-      searchValue={search}
-      onSearchChange={setSearch}
+      search={false}
       pageContext="routines"
       data-component="AppHeader"
       showSidebar={!isDelegated}
@@ -178,8 +176,9 @@ const RoutinesIndex = () => {
         <div className="flex justify-center flex-1">
           <DeckWrapper 
             gap={0} 
+            paddingTop={82}
             className="flex-1"
-            style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
+            style={{ maxWidth: '500px', minWidth: '325px' }}
           >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
