@@ -732,16 +732,16 @@ const CompletedWorkout = () => {
             navigate('/history');
           }
         }}
-        showShare={true}
+        showShare={false}
         onShare={shareWorkout}
-        showUpload={true}
+        showUpload={false}
         onUpload={() => {
           // TODO: Implement upload functionality
           console.log('Upload clicked');
         }}
-        showDelete={isOwner || isDelegated}
+        showDelete={false}
         onDelete={handleDeleteWorkout}
-        showSettings={!isPublicWorkoutView && (isOwner || isDelegated)}
+        showSettings={false}
         onSettings={() => setEditWorkoutOpen(true)}
         search={true}
         searchValue={search}
