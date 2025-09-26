@@ -732,14 +732,14 @@ const CompletedWorkout = () => {
             navigate('/history');
           }
         }}
-        showShare={false}
+        showShare={true}
         onShare={shareWorkout}
         showUpload={false}
         onUpload={() => {
           // TODO: Implement upload functionality
           console.log('Upload clicked');
         }}
-        showDelete={false}
+        showDelete={isOwner || isDelegated}
         onDelete={handleDeleteWorkout}
         showSettings={false}
         onSettings={() => setEditWorkoutOpen(true)}
