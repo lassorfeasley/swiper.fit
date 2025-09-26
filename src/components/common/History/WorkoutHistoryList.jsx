@@ -22,10 +22,11 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
       <div className="flex justify-center flex-1">
         <DeckWrapper
           gap={0}
+          paddingTop={82}
           paddingBottom={80}
           maxWidth={500}
           minWidth={325}
-          style={{ paddingTop: 0 }}
+          className="mt-0"
         >
           {workouts.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">No workouts logged</div>

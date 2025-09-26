@@ -13,6 +13,7 @@ const DeckWrapper = forwardRef(
       children,
       gap = 0, // spacing between items
       paddingX = 20, // horizontal padding (px)
+      paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
       minWidth = 325, // minimum width (px)
       className,
@@ -36,7 +37,7 @@ const DeckWrapper = forwardRef(
     
     const style = {
       gap,
-      paddingTop: 40,
+      paddingTop,
       paddingBottom: paddingBottom !== undefined ? paddingBottom : 80,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
