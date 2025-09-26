@@ -173,15 +173,15 @@ const RoutinesIndex = () => {
       data-component="AppHeader"
       showSidebar={!isDelegated}
     >
-      <MainContentSection className="!p-0 flex-1 min-h-0">
+      <MainContentSection className="!p-0 flex-1 min-h-0 flex flex-col">
         <div className="flex justify-center flex-1">
           <DeckWrapper 
             gap={0} 
             paddingTop={82}
-            paddingBottom={80}
+            paddingBottom={0}
             maxWidth={500}
             minWidth={325}
-            className="flex-1 mt-0"
+            className="flex-1 mt-0 min-h-screen"
           >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>

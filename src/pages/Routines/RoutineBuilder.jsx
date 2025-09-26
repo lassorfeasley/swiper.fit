@@ -774,7 +774,7 @@ const RoutineBuilder = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col min-h-screen pb-24 pt-20">
+        <div className="flex flex-col min-h-screen pt-20">
           {/* Routine Image Section */}
           <div className="self-stretch pb-5 bg-white inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
