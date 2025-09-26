@@ -757,7 +757,7 @@ const CompletedWorkout = () => {
           <div className="flex flex-col min-h-screen">
             {/* Styled Image and Routine Label Section */}
             <div className="self-stretch pb-5 inline-flex flex-col justify-start items-center">
-              <div className="self-stretch px-5 md:px-0 flex flex-col justify-center items-center gap-5">
+              <div className="self-stretch px-3 md:px-0 flex flex-col justify-center items-center gap-5">
                 {/* Image Container */}
                 <div className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] overflow-hidden">
                   <img 
