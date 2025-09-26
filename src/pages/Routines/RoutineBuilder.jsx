@@ -16,12 +16,13 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Play, Copy } from "lucide-react";
+import { Play, Copy, Cog } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
 import { scrollToSection } from "@/lib/scroll";
 import { ActionCard } from "@/components/molecules/action-card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -30,6 +31,7 @@ const RoutineBuilder = () => {
   const { setPageName } = useContext(PageNameContext);
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const { isDelegated } = useAccount();
+  const isMobile = useIsMobile();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [programName, setProgramName] = useState("");
@@ -729,10 +731,10 @@ const RoutineBuilder = () => {
     <>
       <AppLayout
         hideHeader={true}
-        showSidebar={!isDelegated}
+        showSidebar={!isDelegated && !isMobile}
       >
         {/* Custom Glass Header */}
-        <div className="fixed top-0 left-0 right-0 md:left-64 z-50 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] inline-flex justify-between items-center">
+        <div className={`fixed top-0 left-0 right-0 z-50 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] inline-flex justify-between items-center ${!isMobile && !isDelegated ? 'md:left-64' : ''}`}>
           <div className="flex justify-start items-center gap-3">
             <div 
               className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-4 cursor-pointer"
@@ -744,20 +746,15 @@ const RoutineBuilder = () => {
                 </svg>
               </div>
             </div>
-            <div className="justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-              {programName}
-            </div>
-            <div 
-              className="relative cursor-pointer pr-3"
-              onClick={() => setEditProgramOpen(true)}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.9999 20.9999H20.9999M21.1739 6.81189C21.7026 6.28332 21.9997 5.56636 21.9998 4.81875C21.9999 4.07113 21.703 3.3541 21.1744 2.82539C20.6459 2.29668 19.9289 1.99961 19.1813 1.99951C18.4337 1.99942 17.7166 2.29632 17.1879 2.82489L3.84193 16.1739C3.60975 16.4054 3.43805 16.6904 3.34193 17.0039L2.02093 21.3559C1.99509 21.4424 1.99314 21.5342 2.01529 21.6217C2.03743 21.7092 2.08285 21.7891 2.14673 21.8529C2.21061 21.9167 2.29055 21.962 2.37809 21.984C2.46563 22.006 2.55749 22.0039 2.64393 21.9779L6.99693 20.6579C7.3101 20.5626 7.59511 20.392 7.82693 20.1609L21.1739 6.81189Z" stroke="#D4D4D4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
           </div>
           <div className="inline-flex flex-col justify-center items-end gap-2.5">
             <div className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+              <div 
+                className="relative cursor-pointer"
+                onClick={() => setEditProgramOpen(true)}
+              >
+                <Cog className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+              </div>
               <div 
                 className="relative cursor-pointer"
                 onClick={shareRoutine}
@@ -899,7 +896,7 @@ const RoutineBuilder = () => {
         
         {/* Start Workout Button - Absolutely positioned at bottom */}
         {!isDelegated && (
-          <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]" style={{ paddingBottom: '20px' }}>
+          <div className={`fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] ${!isMobile && !isDelegated ? 'md:left-64' : ''}`} style={{ paddingBottom: '20px' }}>
             <div 
               className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
               onClick={handleStartWorkout}

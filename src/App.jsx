@@ -46,7 +46,7 @@ function AppContent() {
   const { navBarVisible } = useNavBarVisibility();
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
-    /^\/routines\/[^/]+(\/edit)?$/.test(location.pathname) ||
+    /^\/routines\/[^/]+(\/edit|\/configure)?$/.test(location.pathname) ||
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
     location.pathname === "/create-account" ||
@@ -226,7 +226,7 @@ function AppContent() {
       </main>
 
       {/* Show normal navigation only when no workout is active and not delegated */}
-      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && <MobileNav />}
+      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
 
       {/* Global toast notifications */}
