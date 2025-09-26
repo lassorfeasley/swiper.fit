@@ -43,8 +43,8 @@ const MobileNav = () => {
                   aria-current={selected ? "page" : undefined}
                 >
                   <div className={cn(
-                    "self-stretch flex-1 py-1 rounded-[100px] flex flex-col justify-center items-center gap-2",
-                    selected && "bg-neutral-100/60"
+                    "self-stretch flex-1 rounded-[100px] flex flex-col justify-center items-center gap-2",
+                    selected ? "py-2 bg-neutral-100/60" : "py-1"
                   )}>
                     <div className="size-6 relative">
                       <span className={cn(selected ? "text-neutral-700" : "text-neutral-400")}>{item.icon}</span>
