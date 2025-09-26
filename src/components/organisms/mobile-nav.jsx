@@ -24,8 +24,8 @@ const MobileNav = () => {
 
               if (item.disabled) {
                 return (
-                  <div key={item.to} className="flex-1 h-14 py-2 inline-flex flex-col justify-center items-stretch gap-2 opacity-50 cursor-not-allowed w-full">
-                    <div className="self-stretch w-full flex-1 py-1 rounded-[100px] flex flex-col justify-center items-center gap-2">
+                  <div key={item.to} className="flex-1 py-2 inline-flex flex-col justify-center items-stretch gap-2 opacity-50 cursor-not-allowed w-full">
+                    <div className="self-stretch w-full py-1 rounded-[100px] flex flex-col justify-center items-center gap-2 min-h-12">
                     <div className="size-6 relative">
                         <span className="text-neutral-400">{item.icon}</span>
                       </div>
@@ -39,11 +39,11 @@ const MobileNav = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="flex-1 h-14 py-2 inline-flex flex-col justify-center items-stretch gap-2 w-full"
+                  className="flex-1 py-2 inline-flex flex-col justify-center items-stretch gap-2 w-full"
                   aria-current={selected ? "page" : undefined}
                 >
                   <div className={cn(
-                    "self-stretch w-full flex-1 rounded-[100px] flex flex-col justify-center items-center gap-2",
+                    "self-stretch w-full rounded-[100px] flex flex-col justify-center items-center gap-2 min-h-12",
                     selected ? "py-2 bg-neutral-100/60" : "py-1"
                   )}>
                     <div className="size-6 relative">

@@ -341,6 +341,11 @@ body[data-env="development"] [data-component]:hover::after {
     flex: 1 1 auto;
     min-height: 0;
   }
+
+  /* Ensure mobile nav pills expand to full height in Safari */
+  .mobile-nav .min-h-12 {
+    min-height: 3rem;
+  }
   
   /* Fix for footer positioning in Safari */
   .mt-auto {
