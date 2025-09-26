@@ -224,16 +224,15 @@ const History = () => {
 
   return (
     <AppLayout
-      reserveSpace={true}
+      reserveSpace={false}
+      variant="glass"
       title="History"
       showSidebar={!paramUserId && !isDelegated}
       showShare={false}
       showBackButton={false}
-      search={true}
-      searchPlaceholder="Search workouts"
-      searchValue={search}
-      onSearchChange={setSearch}
+      search={false}
       pageContext="history"
+      className="bg-gradient-to-l from-white/0 to-white backdrop-blur-[2px] px-3 pt-4 pb-3"
       data-component="AppHeader"
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">
