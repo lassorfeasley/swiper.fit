@@ -18,14 +18,14 @@ const MobileNav = () => {
         <ActiveWorkoutNav />
       ) : (
         <div className="self-stretch px-5 pb-4 flex flex-col justify-start items-start gap-2.5">
-          <div className="self-stretch min-h-16 bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-center">
+          <div className="self-stretch min-h-16 bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-center px-0.5 py-1">
             {navItems.map((item) => {
               const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
 
               if (item.disabled) {
                 return (
-                  <div key={item.to} className="flex-1 h-14 p-2 inline-flex flex-col justify-center items-center gap-2 opacity-50 cursor-not-allowed">
-                  <div className="self-stretch flex-1 py-1 rounded-[100px] flex flex-col justify-center items-center gap-2">
+                  <div key={item.to} className="flex-1 h-14 py-2 inline-flex flex-col justify-center items-stretch gap-2 opacity-50 cursor-not-allowed w-full">
+                    <div className="self-stretch w-full flex-1 py-1 rounded-[100px] flex flex-col justify-center items-center gap-2">
                     <div className="size-6 relative">
                         <span className="text-neutral-400">{item.icon}</span>
                       </div>
@@ -39,11 +39,11 @@ const MobileNav = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="flex-1 h-14 p-2 inline-flex flex-col justify-center items-center gap-2"
+                  className="flex-1 h-14 py-2 inline-flex flex-col justify-center items-stretch gap-2 w-full"
                   aria-current={selected ? "page" : undefined}
                 >
                   <div className={cn(
-                    "self-stretch flex-1 rounded-[100px] flex flex-col justify-center items-center gap-2",
+                    "self-stretch w-full flex-1 rounded-[100px] flex flex-col justify-center items-center gap-2",
                     selected ? "py-2 bg-neutral-100/60" : "py-1"
                   )}>
                     <div className="size-6 relative">
