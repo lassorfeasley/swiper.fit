@@ -123,7 +123,7 @@ const RoutinesIndex = () => {
       // 1. Insert program
       const { data: program, error: programError } = await supabase
         .from("routines")
-        .insert({ routine_name: programName, user_id: user.id })
+        .insert({ routine_name: programName, user_id: user.id, is_public: true })
         .select()
         .single();
       if (programError || !program) throw new Error("Failed to create program");
@@ -169,16 +169,19 @@ const RoutinesIndex = () => {
       showBackButton={false}
       search={false}
       pageContext="routines"
+      className="bg-gradient-to-l from-white/0 to-white backdrop-blur-[2px] px-3 pt-4 pb-3"
       data-component="AppHeader"
       showSidebar={!isDelegated}
     >
-      <div className="flex flex-col min-h-screen">
+      <MainContentSection className="!p-0 flex-1 min-h-0">
         <div className="flex justify-center flex-1">
           <DeckWrapper 
             gap={0} 
             paddingTop={82}
-            className="flex-1"
-            style={{ maxWidth: '500px', minWidth: '325px' }}
+            paddingBottom={80}
+            maxWidth={500}
+            minWidth={325}
+            className="flex-1 mt-0"
           >
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -208,7 +211,7 @@ const RoutinesIndex = () => {
           />
         </DeckWrapper>
         </div>
-      </div>
+      </MainContentSection>
 
       <SwiperForm
         open={showSheet}

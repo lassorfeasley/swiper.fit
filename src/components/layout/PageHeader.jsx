@@ -147,9 +147,18 @@ const PageHeader = forwardRef(({
         </div>
 
         {/* Right side - Action buttons (render only if any are shown) */}
-        {(showUpload || showDelete || showShare || showSettings) && (
+        {(showUpload || showDelete || showShare || showSettings || showSearch) && (
           <div className="flex flex-col justify-center items-end gap-2.5">
             <div className="h-[54px] px-3 pr-5 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+              {showSearch && (
+                <button
+                  onClick={onSearch}
+                  aria-label="Search"
+                  className="flex items-center justify-center"
+                >
+                  <Search className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                </button>
+              )}
               {showShare && (
                 <button
                   onClick={onShare}

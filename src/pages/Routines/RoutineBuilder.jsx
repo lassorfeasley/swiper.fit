@@ -42,7 +42,9 @@ const RoutineBuilder = () => {
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true); // All routines are now public
+  const [sharing, setSharing] = useState(false);
+  const [program, setProgram] = useState(null);
 
   const isUnmounted = useRef(false);
   const [dirty, setDirty] = useState(false);
@@ -68,16 +70,21 @@ const RoutineBuilder = () => {
     };
   }, []);
 
+
   useEffect(() => {
     async function fetchProgramAndExercises() {
       setLoading(true);
       const { data: programData } = await supabase
         .from("routines")
-        .select("routine_name, is_public")
+        .select("routine_name, is_public, og_image_url")
         .eq("id", programId)
         .single();
       setProgramName(programData?.routine_name || "");
-      setIsPublic(Boolean(programData?.is_public));
+      setIsPublic(true); // All routines are now public
+      setProgram(programData);
+      console.log('Program data:', programData);
+      console.log('OG Image URL:', programData?.og_image_url);
+
 
       const { data: progExs, error } = await supabase
         .from("routine_exercises")
@@ -129,6 +136,36 @@ const RoutineBuilder = () => {
           }),
       }));
       setExercises(items);
+      
+      // Generate OG image if it doesn't exist
+      if (!programData?.og_image_url) {
+        try {
+          console.log('No OG image found, generating one...');
+          
+          // Calculate routine metrics
+          const exerciseCount = items.length;
+          const setCount = items.reduce((total, ex) => total + (ex.setConfigs?.length || 0), 0);
+          
+          // Import the generation function
+          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+          
+          const routineData = {
+            routineName: programData.routine_name,
+            ownerName: '', // We'll need to get this from user context
+            exerciseCount,
+            setCount
+          };
+          
+          const imageUrl = await generateAndUploadRoutineOGImage(programId, routineData);
+          
+          // Update the program state with the new image URL
+          setProgram(prev => ({ ...prev, og_image_url: imageUrl }));
+          console.log('Generated OG image:', imageUrl);
+        } catch (error) {
+          console.error('Failed to generate OG image:', error);
+        }
+      }
+      
       // Automatically open add exercise form when no exercises exist
       if (items.length === 0) {
         setShowAddExercise(true);
@@ -296,24 +333,23 @@ const RoutineBuilder = () => {
     setShareDialogOpen(true);
   };
 
-  const handleTogglePublic = async (val) => {
-    // Optimistic update
-    const prev = isPublic;
-    setIsPublic(val);
+
+  const handleCopyLink = async () => {
     try {
-      await supabase
-        .from("routines")
-        .update({ is_public: val })
-        .eq("id", programId);
+      const shareUrl = `${window.location.origin}/routines/public/${programId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied");
     } catch (e) {
-      setIsPublic(prev);
-      toast.error("Failed: " + (e?.message || "Could not update setting"));
+      console.error("Failed to copy share link", e);
+      toast.error("Failed to copy link");
     }
   };
 
-  const handleCopyShareLink = async () => {
+
+  const shareRoutine = async () => {
+    setSharing(true);
     try {
-      // Ensure public before copying, but do not block if already true
+      // Ensure routine is public
       if (!isPublic) {
         await supabase
           .from("routines")
@@ -321,12 +357,45 @@ const RoutineBuilder = () => {
           .eq("id", programId);
         setIsPublic(true);
       }
-      const shareUrl = `${window.location.origin}/routines/public/${programId}`;
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Share link copied to clipboard");
-    } catch (e) {
-      console.error("Failed to copy share link", e);
-      toast.error("Failed to copy link");
+
+      const url = `${window.location.origin}/routines/public/${programId}`;
+      const title = programName || 'Routine';
+      const text = title;
+
+      // Prefer native share whenever available
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+        } catch (shareErr) {
+          // Swallow user cancellations or share errors
+        } finally {
+          setSharing(false);
+        }
+        return;
+      }
+
+      // Desktop/unsupported fallback: copy URL only
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied');
+      } catch (copyErr) {
+        try {
+          // Legacy execCommand fallback
+          const tmp = document.createElement('input');
+          tmp.style.position = 'fixed';
+          tmp.style.opacity = '0';
+          tmp.value = url;
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          document.body.removeChild(tmp);
+          toast.success('Link copied');
+        } catch {
+          toast.message('Share this link:', { description: url });
+        }
+      }
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -659,36 +728,78 @@ const RoutineBuilder = () => {
   return (
     <>
       <AppLayout
-        variant="programs"
-        reserveSpace={true}
-        title={programName}
-        pageNameEditable={true}
-        onBack={handleBack}
-        showSearch={false}
-        search={false}
-        searchValue={undefined}
-        onSearchChange={() => {}}
-        showSettings={true}
-        onSettings={() => setEditProgramOpen(true)}
-        showShare={!isDelegated}
-        onShare={openShareDialog}
-        onDelete={handleDeleteProgram}
-        showDeleteOption={true}
-        showBackButton={!isDelegated}
-        showStartWorkout={!isDelegated && true}
-        onStartWorkout={handleStartWorkout}
-        pageContext="program-builder"
-        showSectionNav={true}
-        sectionNavValue={sectionFilter}
-        onSectionNavChange={(val) => {
-          if (!val) return;
-          setSectionFilter(val);
-          scrollSectionIntoView(val);
-        }}
+        hideHeader={true}
         showSidebar={!isDelegated}
-        // vertical snap disabled
       >
-        <div className="flex flex-col min-h-screen">
+        {/* Custom Glass Header */}
+        <div className="fixed top-0 left-0 right-0 md:left-64 z-50 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] inline-flex justify-between items-center">
+          <div className="flex justify-start items-center gap-3">
+            <div 
+              className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-4 cursor-pointer"
+              onClick={handleBack}
+            >
+              <div className="relative">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15.9993 25.3332L6.66602 15.9998M6.66602 15.9998L15.9993 6.6665M6.66602 15.9998H25.3327" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <div className="justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+              {programName}
+            </div>
+            <div 
+              className="relative cursor-pointer pr-3"
+              onClick={() => setEditProgramOpen(true)}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.9999 20.9999H20.9999M21.1739 6.81189C21.7026 6.28332 21.9997 5.56636 21.9998 4.81875C21.9999 4.07113 21.703 3.3541 21.1744 2.82539C20.6459 2.29668 19.9289 1.99961 19.1813 1.99951C18.4337 1.99942 17.7166 2.29632 17.1879 2.82489L3.84193 16.1739C3.60975 16.4054 3.43805 16.6904 3.34193 17.0039L2.02093 21.3559C1.99509 21.4424 1.99314 21.5342 2.01529 21.6217C2.03743 21.7092 2.08285 21.7891 2.14673 21.8529C2.21061 21.9167 2.29055 21.962 2.37809 21.984C2.46563 22.006 2.55749 22.0039 2.64393 21.9779L6.99693 20.6579C7.3101 20.5626 7.59511 20.392 7.82693 20.1609L21.1739 6.81189Z" stroke="#D4D4D4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div className="inline-flex flex-col justify-center items-end gap-2.5">
+            <div className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+              <div 
+                className="relative cursor-pointer"
+                onClick={shareRoutine}
+              >
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16.0007 2.6665V19.9998M16.0007 2.6665L21.334 7.99984M16.0007 2.6665L10.6673 7.99984M5.33398 15.9998V26.6665C5.33398 27.3737 5.61494 28.052 6.11503 28.5521C6.61513 29.0522 7.29341 29.3332 8.00065 29.3332H24.0006C24.7079 29.3332 25.3862 29.0522 25.8863 28.5521C26.3864 28.052 26.6673 27.3737 26.6673 26.6665V15.9998" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div 
+                className="relative cursor-pointer"
+                onClick={() => setDeleteProgramConfirmOpen(true)}
+              >
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3333 14.6665V22.6665M18.6667 14.6665V22.6665M25.3333 7.99984V26.6665C25.3333 27.3737 25.0524 28.052 24.5523 28.5521C24.0522 29.0522 23.3739 29.3332 22.6667 29.3332H9.33333C8.62609 29.3332 7.94781 29.0522 7.44772 28.5521C6.94762 28.052 6.66667 27.3737 6.66667 26.6665V7.99984M4 7.99984H28M10.6667 7.99984V5.33317C10.6667 4.62593 10.9476 3.94765 11.4477 3.44755C11.9478 2.94746 12.6261 2.6665 13.3333 2.6665H18.6667C19.3739 2.6665 20.0522 2.94746 20.5523 3.44755C21.0524 3.94765 21.3333 4.62593 21.3333 5.33317V7.99984" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col min-h-screen pb-24 pt-20">
+          {/* Routine Image Section */}
+          <div className="self-stretch pb-5 bg-white inline-flex flex-col justify-start items-center">
+            <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
+              <div 
+                className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] overflow-hidden cursor-pointer"
+                onClick={shareRoutine}
+              >
+                <img 
+                  className="w-full h-auto block" 
+                  src={program?.og_image_url || "https://placehold.co/500x262"} 
+                  alt={`${programName} routine`}
+                  draggable={false}
+                  onError={(e) => {
+                    console.log('Image failed to load:', program?.og_image_url);
+                    e.target.src = "https://placehold.co/500x262";
+                  }}
+                  onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
+                />
+              </div>
+            </div>
+          </div>
+          
           {exercisesBySection.map(({ section, exercises: secExercises }, index) => (
           <PageSectionWrapper
             key={section}
@@ -785,6 +896,31 @@ const RoutineBuilder = () => {
             </div>
           </div>
         </SwiperForm>
+        
+        {/* Start Workout Button - Absolutely positioned at bottom */}
+        {!isDelegated && (
+          <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]" style={{ paddingBottom: '20px' }}>
+            <div 
+              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+              onClick={handleStartWorkout}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStartWorkout?.(); } }}
+              aria-label="Start workout"
+            >
+              <div className="p-2.5 flex justify-start items-center gap-2.5">
+                <div className="relative">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3L20 12L5 21V3Z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="flex justify-center items-center gap-5">
+                <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Start workout</div>
+              </div>
+            </div>
+          </div>
+        )}
       </AppLayout>
 
       {/* Share Routine Sheet */}
@@ -802,22 +938,14 @@ const RoutineBuilder = () => {
         </SwiperForm.Section>
 
         <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
-          <SwiperFormSwitch
-            label="Public link"
-            checked={isPublic}
-            onCheckedChange={handleTogglePublic}
+          <TextInput
+            label="Click to copy"
+            value={`${window.location.origin}/routines/public/${programId}`}
+            readOnly
+            onFocus={(e) => e.target.select()}
+            onClick={handleCopyLink}
+            icon={<Copy />}
           />
-
-          {isPublic && (
-            <TextInput
-              label="Click to copy"
-              value={`${window.location.origin}/routines/public/${programId}`}
-              readOnly
-              onFocus={(e) => e.target.select()}
-              onClick={handleCopyShareLink}
-              icon={<Copy />}
-            />
-          )}
         </SwiperForm.Section>
       </SwiperForm>
 
