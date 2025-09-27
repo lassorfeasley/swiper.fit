@@ -202,9 +202,6 @@ const ActiveExerciseCard = React.forwardRef(({
               <div className="text-neutral-600 text-lg font-medium leading-tight">
                 {exerciseName}
               </div>
-              <div className="text-neutral-400 text-sm font-medium leading-none">
-                {sets.length} {sets.length === 1 ? "set" : "sets"}
-              </div>
             </div>
             <div className="size-8 flex items-center justify-center">
               {allComplete
