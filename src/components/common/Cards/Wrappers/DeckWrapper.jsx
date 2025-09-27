@@ -12,7 +12,7 @@ const DeckWrapper = forwardRef(
     {
       children,
       gap = 0, // spacing between items
-      paddingX = 20, // horizontal padding (px)
+      paddingX = 0, // horizontal padding (px) – using external margin for gutters
       paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
       minWidth = 0, // minimum width (px)
@@ -42,11 +42,13 @@ const DeckWrapper = forwardRef(
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
       ...(paddingX !== undefined ? { paddingLeft: paddingX, paddingRight: paddingX } : {}),
+      marginLeft: 28,
+      marginRight: 28,
       ...(props.style || {}),
     };
 
     const containerClasses = cn(
-      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300 mx-2 md:mx-5",
+      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300",
       className
     );
 

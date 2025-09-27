@@ -86,7 +86,7 @@ export default function DemoWorkoutSection() {
             paddingTop: 40,
             paddingBottom: 0,
             maxWidth: '400px',
-            minWidth: '325px'
+            minWidth: '0px'
           }}
 
         >
