@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { 
   areAllExercisesComplete
 } from '@/lib/exerciseNavigation';
 import { useWorkoutAutoFocus } from '@/hooks/useAutoFocus';
+import { ANIMATION_DURATIONS } from '@/lib/scrollSnap';
 
 const WorkoutNavigationContext = createContext();
 
@@ -42,6 +43,8 @@ export const WorkoutNavigationProvider = ({ children }) => {
   
   // Store the currently focused exercise
   const [focusedExercise, setFocusedExercise] = useState(null);
+  // Timeout handle for deferring focus until previous card collapses
+  const pendingFocusTimeoutRef = useRef(null);
   
   // Flag to prevent auto-focus when restoring from database
   const [isRestoringFocus, setIsRestoringFocus] = useState(false);
@@ -68,10 +71,47 @@ export const WorkoutNavigationProvider = ({ children }) => {
     });
   }, []);
 
-  // Set the focused exercise
+  // Set the focused exercise; when switching between different cards, defer until collapse completes
   const setFocusedExerciseId = useCallback((exerciseId, section) => {
     if (!exerciseId) {
       setFocusedExercise(null);
+      return;
+    }
+
+    // Clear any pending focus timer
+    if (pendingFocusTimeoutRef.current) {
+      clearTimeout(pendingFocusTimeoutRef.current);
+      pendingFocusTimeoutRef.current = null;
+    }
+
+    const applyFocus = () => {
+      if (section) {
+        const exercises = sectionExercises[section] || [];
+        const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+        if (exercise) {
+          setFocusedExercise({ ...exercise, section });
+        }
+      } else {
+        setIsRestoringFocus(true);
+        const { exercise, section: foundSection } = findExerciseInSections(exerciseId, sectionExercises);
+        if (exercise) {
+          setFocusedExercise({ ...exercise, section: foundSection });
+          setIsRestoringFocus(false);
+        } else {
+          setFocusedExercise({ exercise_id: exerciseId, section: null });
+        }
+      }
+    };
+
+    // If switching from one focused exercise to another, first clear focus so the open card collapses,
+    // then wait for the collapse animation to finish before focusing the new one.
+    if (focusedExercise?.exercise_id && focusedExercise.exercise_id !== exerciseId) {
+      setFocusedExercise(null);
+      const delay = (ANIMATION_DURATIONS?.CARD_ANIMATION_DURATION_MS ?? 500) + 50;
+      pendingFocusTimeoutRef.current = setTimeout(() => {
+        applyFocus();
+        pendingFocusTimeoutRef.current = null;
+      }, delay);
       return;
     }
 
@@ -97,7 +137,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
         setFocusedExercise({ exercise_id: exerciseId, section: null });
       }
     }
-  }, [sectionExercises]);
+  }, [sectionExercises, focusedExercise]);
 
   // Resolve focus when exercises are loaded (for restoration)
   useEffect(() => {
