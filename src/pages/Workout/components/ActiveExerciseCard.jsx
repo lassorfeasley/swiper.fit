@@ -156,9 +156,24 @@ const ActiveExerciseCard = React.forwardRef(({
     // Ensure drop shadow is never clipped
   });
 
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return;
+    const handleTouchMove = (e) => {
+      if (isFocused) e.preventDefault();
+    };
+    node.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => node.removeEventListener('touchmove', handleTouchMove);
+  }, [isFocused]);
+
   return (
     <CardWrapper
-      ref={ref}
+      ref={(node) => {
+        cardRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
       reorderable={false}
       className={cardWrapperClass}
       id={`exercise-${exerciseId}`}
@@ -174,6 +189,7 @@ const ActiveExerciseCard = React.forwardRef(({
       index={index}
       focusedIndex={focusedIndex}
       totalCards={totalCards}
+      style={{ touchAction: isFocused ? 'pan-x' : 'auto', overscrollBehaviorY: isFocused ? 'contain' : 'auto' }}
     >
               <div
           className={cn(

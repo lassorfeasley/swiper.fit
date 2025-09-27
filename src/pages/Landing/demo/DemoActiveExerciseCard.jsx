@@ -63,9 +63,20 @@ const DemoActiveExerciseCard = React.forwardRef(({
   const cardStatus = allComplete ? "complete" : "default";
   const cardWrapperClass = cn({});
 
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return;
+    const handleTouchMove = (e) => {
+      if (isFocused) e.preventDefault();
+    };
+    node.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => node.removeEventListener('touchmove', handleTouchMove);
+  }, [isFocused]);
+
   return (
     <CardWrapper
-      ref={ref}
+      ref={(node) => { cardRef.current = node; if (typeof ref === 'function') ref(node); else if (ref) ref.current = node; }}
       reorderable={false}
       className={cardWrapperClass}
       id={`exercise-${exerciseId}`}
@@ -81,6 +92,7 @@ const DemoActiveExerciseCard = React.forwardRef(({
       index={index}
       focusedIndex={focusedIndex}
       totalCards={totalCards}
+      style={{ touchAction: isFocused ? 'pan-x' : 'auto', overscrollBehaviorY: isFocused ? 'contain' : 'auto' }}
     >
       <div className={cn("w-full bg-white flex flex-col justify-start items-start border-b border-neutral-neutral-300")}> 
         {/* Label Section */}

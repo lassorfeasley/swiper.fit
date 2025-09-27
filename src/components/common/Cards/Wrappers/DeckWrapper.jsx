@@ -15,7 +15,7 @@ const DeckWrapper = forwardRef(
       paddingX = 20, // horizontal padding (px)
       paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
-      minWidth = 325, // minimum width (px)
+      minWidth = 0, // minimum width (px)
       className,
       reorderable = false,
       items = [],
@@ -41,6 +41,7 @@ const DeckWrapper = forwardRef(
       paddingBottom: paddingBottom !== undefined ? paddingBottom : 80,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
+      ...(paddingX !== undefined ? { paddingLeft: paddingX, paddingRight: paddingX } : {}),
       ...(props.style || {}),
     };
 

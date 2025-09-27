@@ -62,6 +62,7 @@ const PageSectionWrapper = ({
           onReorder={onReorder}
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
+          paddingX={36}
         >
           {children}
         </DeckWrapper>
