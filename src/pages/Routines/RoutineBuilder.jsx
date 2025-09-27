@@ -802,7 +802,8 @@ const RoutineBuilder = () => {
             key={section}
             section={section} 
             id={`section-${section}`} 
-            deckGap={0} 
+            deckGap={20} 
+            deckVariant="cards"
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
@@ -829,7 +830,8 @@ const RoutineBuilder = () => {
               />
             ))}
             <ActionCard 
-              text="add exercise" 
+              variant="primary"
+              text="Add another exercise" 
               onClick={() => handleOpenAddExercise(section)}
             />
           </PageSectionWrapper>

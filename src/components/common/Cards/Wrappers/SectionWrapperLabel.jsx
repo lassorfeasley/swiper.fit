@@ -22,24 +22,20 @@ const SectionWrapperLabel = ({
   return (
     <div
       className={cn(
-        "h-[44px] self-stretch pl-3 bg-neutral-50 border-t border-b border-neutral-300 inline-flex items-center z-30",
+        "self-stretch px-[28px] mb-5 inline-flex justify-center items-center",
         className
       )}
       {...props}
     >
-      <div className="flex-1 flex items-center gap-2.5">
-        <div data-layer="title" className="Title flex-1 self-stretch px-3 inline-flex justify-start items-center gap-2.5">
-          <div data-layer="Programs" className="Programs justify-start text-slate-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-            {children}
-          </div>
+      <div className="w-full max-w-[500px] flex items-center justify-between">
+        <div data-layer="section" className="Section justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+          {children}
         </div>
-        <div className="flex items-center gap-5">
-          {showPlusButton && (
-            <button onClick={onPlus} aria-label="Add" className="p-2.5 border-l border-neutral-300 flex items-center justify-center">
-              <Plus className="w-6 h-6 text-neutral-700" />
-            </button>
-          )}
-        </div>
+        {showPlusButton && (
+          <button onClick={onPlus} aria-label="Add" className="p-2.5 flex items-center justify-center">
+            <Plus className="w-6 h-6 text-neutral-neutral-700" />
+          </button>
+        )}
       </div>
     </div>
   );
