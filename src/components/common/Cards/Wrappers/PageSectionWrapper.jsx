@@ -54,7 +54,7 @@ const PageSectionWrapper = ({
       </SectionWrapperLabel>
 
       {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch px-0 flex justify-center", className?.includes("flex-1") && "flex-1")}>
+      <div className={cn("w-full self-stretch px-[28px] flex justify-center", className?.includes("flex-1") && "flex-1")}>
         <DeckWrapper 
           gap={deckGap} 
           reorderable={reorderable}
