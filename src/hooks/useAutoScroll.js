@@ -9,6 +9,8 @@ import { useEffect, useRef } from 'react';
  * @param {string} options.scrollBehavior - Scroll behavior ('smooth', 'auto', 'instant')
  * @param {number} options.debounceMs - Debounce delay in milliseconds (default 100ms)
  * @param {number} options.maxRetries - Maximum number of retry attempts (default 10)
+ * @param {number} options.recenterOnIdleMs - If set, after this many ms of no interaction, recenter focused element (default 5000)
+ * @param {number} options.recenterThresholdPx - How far off-target before we recenter (default 24px)
  */
 export const useAutoScroll = ({
   focusedId,
@@ -16,11 +18,15 @@ export const useAutoScroll = ({
   viewportPosition = 0.2,
   scrollBehavior = 'smooth',
   debounceMs = 100,
-  maxRetries = 10
+  maxRetries = 10,
+  recenterOnIdleMs = 5000,
+  recenterThresholdPx = 24
 }) => {
   const timeoutRef = useRef(null);
   const lastFocusedIdRef = useRef(null);
   const retryCountRef = useRef(0);
+  const idleTimeoutRef = useRef(null);
+  const suppressRecenterUntilRef = useRef(0);
 
   useEffect(() => {
     if (!focusedId) return;
@@ -121,11 +127,67 @@ export const useAutoScroll = ({
           top: scrollOffset,
           behavior: scrollBehavior
         });
+        // Suppress idle recenter reaction to our own programmatic scroll
+        suppressRecenterUntilRef.current = Date.now() + 600;
       } else {
         console.log(`[useAutoScroll] Skipping scroll for exercise ${focusedId} - offset too small: ${scrollOffset}px`);
       }
     }, 50);
   };
+
+  // === Idle recenter on user inactivity ===
+  useEffect(() => {
+    if (!focusedId) return;
+
+    const scheduleIdleCheck = () => {
+      if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+      if (recenterOnIdleMs <= 0) return;
+      idleTimeoutRef.current = setTimeout(() => {
+        // Avoid reacting immediately after our own programmatic scrolls
+        if (Date.now() < suppressRecenterUntilRef.current) return;
+
+        const elementId = elementPrefix ? `${elementPrefix}${focusedId}` : focusedId;
+        const element = document.getElementById(elementId) ||
+                        document.querySelector(`[data-exercise-id="${focusedId}"]`) ||
+                        document.querySelector(`[data-exercise="${focusedId}"]`) ||
+                        document.querySelector(`[data-id="${focusedId}"]`);
+        if (!element) return;
+
+        const viewportHeight = window.innerHeight;
+        const targetPosition = viewportHeight * viewportPosition;
+        const { top: elementTop } = element.getBoundingClientRect();
+        const delta = elementTop - targetPosition;
+        if (Math.abs(delta) >= recenterThresholdPx) {
+          console.log(`[useAutoScroll] Idle recentering exercise ${focusedId} (delta ${Math.round(delta)}px)`);
+          performScroll(element, focusedId, viewportPosition, 'smooth');
+        }
+      }, recenterOnIdleMs);
+    };
+
+    const onAnyInteraction = () => {
+      scheduleIdleCheck();
+    };
+
+    // Initial schedule (in case the user doesn't interact after focus change)
+    scheduleIdleCheck();
+
+    window.addEventListener('scroll', onAnyInteraction, { passive: true });
+    window.addEventListener('wheel', onAnyInteraction, { passive: true });
+    window.addEventListener('touchstart', onAnyInteraction, { passive: true });
+    window.addEventListener('touchmove', onAnyInteraction, { passive: true });
+    window.addEventListener('pointerdown', onAnyInteraction, { passive: true });
+    window.addEventListener('keydown', onAnyInteraction);
+
+    return () => {
+      if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+      window.removeEventListener('scroll', onAnyInteraction);
+      window.removeEventListener('wheel', onAnyInteraction);
+      window.removeEventListener('touchstart', onAnyInteraction);
+      window.removeEventListener('touchmove', onAnyInteraction);
+      window.removeEventListener('pointerdown', onAnyInteraction);
+      window.removeEventListener('keydown', onAnyInteraction);
+    };
+  }, [focusedId, elementPrefix, viewportPosition, recenterOnIdleMs, recenterThresholdPx]);
 };
 
 /**
