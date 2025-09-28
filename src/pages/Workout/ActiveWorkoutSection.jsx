@@ -1408,6 +1408,7 @@ const ActiveWorkoutSection = ({
         showPlusButton={false}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
+        deckGap={12}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
       >
         <div className="text-center py-8 text-gray-500">
@@ -1426,6 +1427,7 @@ const ActiveWorkoutSection = ({
           showPlusButton={false}
           isFirst={section === "warmup"}
           className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
+          deckGap={12}
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
         >
           <ActionCard 
@@ -1484,6 +1486,7 @@ const ActiveWorkoutSection = ({
         showPlusButton={false}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
+        deckGap={12}
         style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
       >
         {exercises.map((ex, index) => {
