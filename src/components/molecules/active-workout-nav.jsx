@@ -9,7 +9,7 @@ export default function ActiveWorkoutNav({ onEnd }) {
   const topOffset = isDelegated ? 'top-11' : 'top-0';
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
   return (
-    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch inline-flex flex-col justify-start items-start z-50 bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]`}>
+    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch inline-flex flex-col justify-start items-start z-50 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]`}>
       {/* Timer + Action icon row (full-bleed) */}
       <div className="self-stretch pt-5 px-5">
         <div data-layer="Frame 57" className="Frame57 w-full inline-flex justify-between items-start">
