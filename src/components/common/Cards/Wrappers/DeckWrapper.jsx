@@ -11,7 +11,7 @@ const DeckWrapper = forwardRef(
   (
     {
       children,
-      gap = 20, // spacing between items (px) — align with Routine Builder
+      gap = 12, // spacing between items (px)
       paddingX = 20, // horizontal padding (px)
       paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
@@ -158,25 +158,20 @@ const DeckWrapper = forwardRef(
         )}
         {React.Children.map(children, (child, index) => {
           if (!React.isValidElement(child)) return child;
-          
-          // Wrap each child in a div with appropriate borders
-          const isFirstChild = index === 0;
           return (
-            <div 
+            <div
               key={child.key || index}
-              className={cn(
-                "w-full flex justify-center"
-              )}
-              style={{ marginTop: index > 0 ? gap : 0 }}
+              className={cn("w-full flex justify-center")}
             >
               {React.cloneElement(child, {
                 ...(() => {
-                  const { isFirstCard: _, ...filteredProps } = child.props;
-                  return filteredProps;
+                  const { isFirstCard: _, style: childStyle, ...filteredProps } = child.props;
+                  return {
+                    ...filteredProps,
+                    style: childStyle,
+                  };
                 })(),
-                ...(
-                  typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}
-                )
+                ...(typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}),
               })}
             </div>
           );

@@ -12,18 +12,20 @@ import PropTypes from "prop-types";
 const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
-      className="w-full max-w-[500px] p-4 bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-2"
+      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2"
       {...props}
     >
-      <div className="w-full text-slate-950 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight truncate">
-        {name}
-      </div>
-      <div className="w-full flex justify-between items-center gap-2">
-        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none truncate">
-          {subtitle}
+      <div className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">
+        <div className="Frame5011 self-stretch inline-flex justify-start items-center gap-px">
+          <div className="flex-1 truncate text-neutral-900 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            {name}
+          </div>
+          <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight whitespace-nowrap">
+            {relativeLabel}
+          </div>
         </div>
-        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none whitespace-nowrap">
-          {relativeLabel}
+        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight truncate">
+          {subtitle}
         </div>
       </div>
     </div>

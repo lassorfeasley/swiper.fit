@@ -21,7 +21,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
       {/* Workouts list */}
       <div className="flex justify-center flex-1">
         <DeckWrapper
-          gap={0}
+          gap={12}
           paddingTop={82}
           paddingBottom={80}
           maxWidth={500}
