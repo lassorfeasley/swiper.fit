@@ -1429,6 +1429,7 @@ const ActiveWorkoutSection = ({
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
         >
           <ActionCard 
+            variant="primary"
             text="add exercise" 
             onClick={handleAddExercise}
           />
@@ -1536,6 +1537,7 @@ const ActiveWorkoutSection = ({
           );
         })}
         <ActionCard 
+          variant="primary"
           text="add exercise" 
           onClick={handleAddExercise}
         />

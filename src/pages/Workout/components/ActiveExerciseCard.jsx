@@ -191,51 +191,52 @@ const ActiveExerciseCard = React.forwardRef(({
       totalCards={totalCards}
       style={{ touchAction: isFocused ? 'pan-x' : 'auto', overscrollBehaviorY: isFocused ? 'contain' : 'auto' }}
     >
-              <div
+        <div
           className={cn(
-            "w-full bg-white flex flex-col justify-start items-start border-b border-neutral-neutral-300"
+            "w-full bg-white rounded-[12px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex flex-col justify-center items-center overflow-hidden",
+            (isFocused || isExpanded) && "gap-4"
           )}
         >
-          {/* Label Section */}
-          <div className="self-stretch h-16 px-3 inline-flex justify-start items-center gap-2">
-            <div className="flex-1 flex flex-col">
-              <div className="text-neutral-600 text-lg font-medium leading-tight">
-                {exerciseName}
+          <div className={cn("self-stretch p-3 flex flex-col justify-start items-start", (isFocused || isExpanded) && "gap-5")}>
+            {/* Label Section */}
+            <div className="self-stretch inline-flex justify-start items-center gap-5">
+              <div className="flex-1 inline-flex flex-col justify-start items-start gap-0.5">
+                <div className="self-stretch justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">
+                  {exerciseName}
+                </div>
+              </div>
+              <div className="size-8 flex items-center justify-center">
+                {allComplete
+                  ? <Check className="w-6 h-6 text-green-500" />
+                  : <Check className="w-6 h-6 text-neutral-300" />}
               </div>
             </div>
-            <div className="size-8 flex items-center justify-center">
-              {allComplete
-                ? <Check className="w-6 h-6 text-green-500" />
-                : <Check className="w-6 h-6 text-neutral-300" />}
-            </div>
-          </div>
 
-          {/* Swiper Section (collapsible) */}
-          <div
-            className={`grid w-full transition-[grid-template-rows] ease-in-out ${
-              isFocused || isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-            }`}
-            style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
-          >
-            <div className="overflow-hidden w-full">
-              <div className={`w-full px-3 flex flex-col justify-start gap-3 ${isFocused ? 'pb-3' : ''}`}>
-                {sets.map((set, index) => (
-                  <SwipeSwitch
-                    key={set.routine_set_id || set.tempId || set.id || `exercise-${exerciseId}-set-${index}`}
-                    set={set}
-                    onComplete={() => handleSetComplete(index)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onSetPress) {
-                        onSetPress(set, index);
-                      }
-                    }}
-                    className="w-full"
-                    demo={demo}
-                  />
-                ))}
-                <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-none py-2">
-                  Tap to edit set. Swipe to complete.
+            {/* Swiper Section (collapsible) */}
+            <div
+              className={`grid w-full transition-[grid-template-rows] ease-in-out ${
+                isFocused || isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+              style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
+            >
+              <div className="overflow-hidden w-full">
+                <div className={`w-full flex flex-col justify-start gap-3`}>
+                  {sets.map((set, index) => (
+                    <SwipeSwitch
+                      key={set.routine_set_id || set.tempId || set.id || `exercise-${exerciseId}-set-${index}`}
+                      set={set}
+                      onComplete={() => handleSetComplete(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onSetPress) {
+                          onSetPress(set, index);
+                        }
+                      }}
+                      className="w-full"
+                      demo={demo}
+                    />
+                  ))}
+                  {/* hint removed per new design */}
                 </div>
               </div>
             </div>

@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import SectionWrapperLabel from "./SectionWrapperLabel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,13 +12,14 @@ const PageSectionWrapper = ({
   section, 
   children, 
   className, 
-  deckGap = 0, 
+  deckGap = 12, 
   showPlusButton = false, 
   onPlus, 
   isFirst = false,
   reorderable = false,
   items = [],
   onReorder,
+  deckVariant = "list",
 
   style,
   ...props 
@@ -45,23 +45,29 @@ const PageSectionWrapper = ({
       )}
       {...domProps}
     >
-      {/* Header */}
-      <SectionWrapperLabel 
-        showPlusButton={showPlusButton} 
-        onPlus={onPlus}
-      >
-        {displayTitle}
-      </SectionWrapperLabel>
-
-      {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch px-[28px] flex justify-center", className?.includes("flex-1") && "flex-1")}>
+      {/* Content with the section title rendered inside DeckWrapper header */}
+      <div className={cn("w-full self-stretch px-[28px] pb-10 flex justify-center", className?.includes("flex-1") && "flex-1") }>
         <DeckWrapper 
           gap={deckGap} 
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
+          variant={deckVariant}
+          paddingBottom={40}
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
+          header={
+            <div className="w-full max-w-[500px] flex items-center justify-between">
+              <div className="Section justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+                {displayTitle}
+              </div>
+              {showPlusButton && (
+                <button onClick={onPlus} aria-label="Add" className="p-2.5 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M12 5V19" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              )}
+            </div>
+          }
         >
           {children}
         </DeckWrapper>
@@ -81,6 +87,7 @@ PageSectionWrapper.propTypes = {
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
+  deckVariant: PropTypes.oneOf(["list", "cards"]),
 
 };
 

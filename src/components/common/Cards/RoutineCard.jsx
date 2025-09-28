@@ -18,7 +18,7 @@ const RoutineCard = ({ id, name, lastCompleted, onStart, isFirstCard }) => {
   return (
     <div
       data-layer="Routine Card"
-      className="w-full max-w-[500px] p-3 bg-white border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-6 cursor-pointer"
+      className="w-full max-w-[500px] p-3 bg-white inline-flex flex-col justify-start items-start gap-6 cursor-pointer"
       onClick={onStart}
     >
       <div className="self-stretch flex flex-col justify-start items-start gap-5">
