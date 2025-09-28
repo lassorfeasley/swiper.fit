@@ -193,7 +193,7 @@ const ActiveExerciseCard = React.forwardRef(({
     >
         <div
           className={cn(
-            "w-full bg-white rounded-[12px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex flex-col justify-center items-center overflow-hidden",
+            "w-full bg-white rounded-[12px] border border-neutral-300 inline-flex flex-col justify-center items-center overflow-hidden",
             (isFocused || isExpanded) && "gap-4"
           )}
         >
