@@ -33,7 +33,7 @@ const SwiperForm = ({
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent
-            className={cn("p-0 max-h-[90dvh] z-[100]", className)}
+            className={cn("p-0 max-h-[90dvh]", className)}
             style={delegateOverlayStyle}
           >
             {leftAction && (
@@ -54,7 +54,7 @@ const SwiperForm = ({
         <SwiperSheet
           open={open}
           onOpenChange={onOpenChange}
-          className={cn("z-[100] p-0", className)}
+          className={cn("p-0", className)}
           style={delegateOverlayStyle}
           title={title}
           description={description}
