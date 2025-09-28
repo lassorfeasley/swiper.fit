@@ -59,7 +59,7 @@ const PageSectionWrapper = ({
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
           header={
-            <div className="w-full max-w-[500px] pb-5 inline-flex justify-center items-center gap-2.5">
+            <div className="w-full max-w-[500px] pb-3 inline-flex justify-center items-center gap-2.5">
               <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
                 {displayTitle}
               </div>
