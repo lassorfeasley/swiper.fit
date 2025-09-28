@@ -11,7 +11,7 @@ const DeckWrapper = forwardRef(
   (
     {
       children,
-      gap = 0, // spacing between items
+      gap = 12, // spacing between items (px)
       paddingX = 0, // horizontal padding (px)
       paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
@@ -49,7 +49,6 @@ const DeckWrapper = forwardRef(
 
     const containerClasses = cn(
       "card-container w-full flex flex-col items-center",
-      variant === "list" && "border-l border-r border-neutral-300",
       className
     );
 
@@ -87,13 +86,12 @@ const DeckWrapper = forwardRef(
                 key={item.id}
                 value={item}
                 className={cn(
-                  "w-full flex justify-center",
-                  variant === "list" && (idx === 0 ? "border-t border-neutral-300" : undefined),
-                  variant === "list" && "border-b border-neutral-300"
+                  "w-full flex justify-center"
                 )}
                 style={{ 
                   touchAction: "none",
-                  position: "relative"
+                  position: "relative",
+                  marginTop: idx > 0 ? gap : 0
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}
@@ -167,9 +165,9 @@ const DeckWrapper = forwardRef(
             <div 
               key={child.key || index}
               className={cn(
-                "w-full flex justify-center",
-                variant === "list" && (isFirstChild ? "border-t border-neutral-300" : undefined)
+                "w-full flex justify-center"
               )}
+              style={{ marginTop: index > 0 ? gap : 0 }}
             >
               {React.cloneElement(child, {
                 ...(() => {

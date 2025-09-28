@@ -12,7 +12,7 @@ const PageSectionWrapper = ({
   section, 
   children, 
   className, 
-  deckGap = 0, 
+  deckGap = 12, 
   showPlusButton = false, 
   onPlus, 
   isFirst = false,

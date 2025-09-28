@@ -297,7 +297,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
 
   return (
     <div
-      className={`self-stretch h-16 bg-neutral-200 flex flex-col justify-center w-full cursor-pointer ${className}`}
+      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-1 w-full cursor-pointer ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         setTimeout(() => {
@@ -308,81 +308,82 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       }}
       style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
     >
-      <div
-        ref={trackRef}
-        className={`Rail self-stretch flex-1 inline-flex items-center justify-end relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
-        style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+      {set_variant && (
+        <div className="SetOne self-stretch justify-center text-neutral-neutral-400 text-xs font-bold uppercase leading-3 tracking-wide">
+          {set_variant}
+        </div>
+      )}
+      <div className="Swipeswitch self-stretch bg-neutral-neutral-400 rounded-xl flex flex-col justify-center overflow-hidden">
+        <div className="Swipeswitch self-stretch bg-neutral-neutral-200 flex flex-col justify-start items-start">
+          <div
+            ref={trackRef}
+            className={`Rail self-stretch p-2 inline-flex justify-between items-center flex-wrap content-center relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
+            style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+          >
+          {/* Left spacer to align with draggable thumb */}
+          <div style={{ width: THUMB_WIDTH, height: 48 }} />
 
-      >
-        <motion.div
-          className="Thumb w-20 bg-white flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-          style={thumbStyle}
-          drag={!isVisuallyComplete && isDefault ? "x" : false}
-          dragElastic={0}
-          dragMomentum={false}
-          dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 80 }}
-          onDragStart={handleDragStart}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          animate={controls}
-          whileDrag={{ cursor: "grabbing" }}
-          transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
-        >
-          <div className="size-7 relative overflow-hidden flex items-center justify-center">
-            {isVisuallyComplete && (
-              <div className="Check relative flex items-center justify-center">
-                {isOptimistic ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+          {/* Right content (CardPill) */}
+          {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
+            <div className="Cardpill flex-1 h-12 min-w-0 flex justify-end items-center gap-5 pointer-events-none">
+              <div className="Frame1 flex justify-center items-baseline gap-0.5">
+                {set_type === 'timed' ? (
+                  <>
+                    <Clock className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                    <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">
+                      {duration >= 60 ? formatTime(duration) : `${duration}`}
+                    </div>
+                  </>
                 ) : (
-                  <Check className="w-5 h-5 text-white" />
+                  <>
+                    <Repeat2 className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                    <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">{typeof reps === 'number' ? reps : ''}</div>
+                  </>
                 )}
               </div>
-            )}
-          </div>
-        </motion.div>
-        
-        {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
-            {set_variant && (
-              <div className="text-right text-xs font-bold uppercase leading-3 tracking-wide text-neutral-500">
-                {set_variant}
+              <div className="Frame2 flex justify-center items-baseline gap-0.5">
+                <Weight className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">{weight_unit === 'body' ? 'BW' : (weight || 0)}</div>
               </div>
-            )}
-            <div className="inline-flex justify-end items-center gap-2">
-              {set_type === 'timed' && (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Clock className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">
-                    {duration >= 60 ? formatTime(duration) : `${duration}`}
-                  </div>
-                </div>
-              )}
-              {set_type !== 'timed' && typeof reps === 'number' && (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Repeat2 className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">{reps}</div>
-                </div>
-              )}
-              {weight_unit === 'body' ? (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">BW</div>
-                </div>
-              ) : (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">{weight || 0}</div>
+            </div>
+          )}
+
+            {/* Draggable Thumb */}
+            <motion.div
+            className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
+            style={thumbStyle}
+            drag={!isVisuallyComplete && isDefault ? "x" : false}
+            dragElastic={0}
+            dragMomentum={false}
+            dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 80 }}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            animate={controls}
+            whileDrag={{ cursor: "grabbing" }}
+            transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
+          >
+            <div className="size-7 relative overflow-hidden flex items-center justify-center">
+              {isVisuallyComplete && (
+                <div className="Check relative flex items-center justify-center">
+                  {isOptimistic ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Check className="w-5 h-5 text-white" />
+                  )}
                 </div>
               )}
             </div>
+            </motion.div>
+
+            {/* Optimistic update indicator */}
+            {isOptimistic && (
+              <div className="absolute top-1 right-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              </div>
+            )}
           </div>
-        )}
-        
-        {isOptimistic && (
-          <div className="absolute top-1 right-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

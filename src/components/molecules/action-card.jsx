@@ -16,8 +16,8 @@ const ActionCard = React.forwardRef(({
       {...props}
     >
       {variant === "primary" ? (
-        <div className="ActionCard w-full max-w-[500px] inline-flex justify-between items-center">
-          <div className="ClickableArea flex-1 pl-4 pr-1 bg-sky-500 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-between items-center">
+        <div className="ActionCard w-[500px] max-w-[500px] inline-flex justify-between items-center overflow-hidden">
+          <div className="ClickableArea flex-1 pl-3 pr-1 bg-sky-600 rounded-[50px] flex justify-between items-center">
             <div className="justify-start text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">{text}</div>
             <div data-property-1="left-border" data-show-text="false" className="p-2.5 flex justify-start items-center gap-2.5">
               <Plus className="w-6 h-6 text-white" />
