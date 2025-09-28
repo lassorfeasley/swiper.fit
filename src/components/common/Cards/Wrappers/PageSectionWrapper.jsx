@@ -49,6 +49,7 @@ const PageSectionWrapper = ({
       <div className={cn("w-full self-stretch px-[28px] pb-10 flex justify-center", className?.includes("flex-1") && "flex-1") }>
         <DeckWrapper 
           gap={deckGap}
+          useChildMargin={true}
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}

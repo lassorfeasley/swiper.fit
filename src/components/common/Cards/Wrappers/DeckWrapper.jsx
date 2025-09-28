@@ -24,6 +24,7 @@ const DeckWrapper = forwardRef(
       forceMinHeight = false, // Force minimum screen height
       paddingBottom, // custom bottom padding
       header = null,
+      useChildMargin = false,
       ...props
     },
     ref
@@ -163,6 +164,7 @@ const DeckWrapper = forwardRef(
             <div
               key={child.key || index}
               className={cn("w-full flex justify-center")}
+              style={useChildMargin ? { marginTop: index > 0 ? gap : 0 } : undefined}
             >
               {React.cloneElement(child, {
                 ...(() => {
