@@ -317,7 +317,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
 
   return (
     <div
-      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-1 w-full cursor-pointer ${className}`}
+      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         setTimeout(() => {
@@ -329,7 +329,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
       style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
     >
       {set_variant && (
-        <div className="SetOne self-stretch justify-center text-neutral-neutral-400 text-xs font-bold uppercase leading-3 tracking-wide">
+        <div className="SetOne self-stretch justify-center text-neutral-neutral-400 text-xs font-medium uppercase leading-3 tracking-wide">
           {set_variant}
         </div>
       )}
