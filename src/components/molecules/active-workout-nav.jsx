@@ -9,24 +9,27 @@ export default function ActiveWorkoutNav({ onEnd }) {
   const topOffset = isDelegated ? 'top-11' : 'top-0';
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
   return (
-    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch bg-white inline-flex flex-col justify-start items-start overflow-hidden z-50`}>
-      {/* Timer + End button row */}
-      <div className="self-stretch h-9 flex flex-col justify-center items-start">
-        <div className="MaxWidthWrapper self-stretch flex-1 pl-3 inline-flex justify-between items-center">
-          <div className="justify-center text-neutral-950 text-2xl font-bold leading-loose">{formattedTime}</div>
-          <div
-            role="button"
-            onClick={onEnd}
-            className="self-stretch px-4 py-2 bg-red-500 inline-flex justify-center items-center gap-2.5 cursor-pointer select-none"
-          >
-            <div className="justify-start text-white text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">End workout</div>
+    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch inline-flex flex-col justify-start items-start z-50 bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]`}>
+      {/* Timer + Action icon row (full-bleed) */}
+      <div className="self-stretch pt-5 px-5">
+        <div data-layer="Frame 57" className="Frame57 w-full inline-flex justify-between items-start">
+          <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
+            <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
           </div>
-        </div>
-      </div>
-      {/* Routine name bar */}
-      <div className="self-stretch px-3 py-2 bg-neutral-950 inline-flex justify-between items-center overflow-hidden">
-        <div className="MaxWidthWrapper w-full inline-flex justify-between items-center">
-          <div className="flex-1 justify-center text-white text-xs font-bold uppercase leading-3 tracking-wide">{activeWorkout?.routineName || ''}</div>
+          <button
+            type="button"
+            onClick={onEnd}
+            data-layer="Frame 58"
+            className="Frame58 h-12 flex justify-center items-start gap-2"
+          >
+            <div data-layer="action-icons" className="ActionIcons w-12 h-12 p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
+              <div data-svg-wrapper data-layer="lucide-icon" className="LucideIcon relative">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="#E7000B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>
