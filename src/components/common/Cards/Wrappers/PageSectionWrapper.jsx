@@ -20,7 +20,7 @@ const PageSectionWrapper = ({
   items = [],
   onReorder,
   deckVariant = "list",
-
+  backgroundClass = "bg-white",
   style,
   ...props 
 }) => {
@@ -40,7 +40,8 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white flex flex-col justify-start items-center",
+        "Workoutcardwrapper w-full flex flex-col justify-start items-center",
+        backgroundClass,
         className
       )}
       {...domProps}
