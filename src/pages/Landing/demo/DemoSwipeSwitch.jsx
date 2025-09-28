@@ -16,8 +16,8 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   // Constants
   const THUMB_WIDTH = 80;
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8;
-  const RAIL_RADIUS = '8px';
-  const THUMB_RADIUS = '8px';
+  const RAIL_RADIUS = '12px';
+  const THUMB_RADIUS = '12px';
   const DRAG_COMPLETE_THRESHOLD = 70;
 
   // Destructure set properties
@@ -129,48 +129,36 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       borderRadius: THUMB_RADIUS 
     }, tweenConfig);
 
-    // Step 2: Expand thumb to fill inner rail area
+    // Step 2: After slide animation completes, expand thumb directly to full rail width
     const slideDurationMs = tweenConfig.duration * 1000;
-    const expand1Delay = slideDurationMs + 100;
-    const expand1DurationMs = tweenConfig.duration * 1000;
-    
-    setTimeout(() => {
-      if (isMountedRef.current) {
-        controls.start({
-          x: 0,
-          width: getContentWidth(),
-          backgroundColor: "#22C55E",
-          borderRadius: RAIL_RADIUS
-        }, tweenConfig);
-      }
-    }, expand1Delay);
+    const expandDelay = slideDurationMs + 100;
+    const expandDurationMs = tweenConfig.duration * 1000;
 
-    // Step 3: Expand thumb to fill full rail and collapse padding
-    const collapseDelay = expand1Delay + expand1DurationMs + 50;
-    const collapseDurationMs = 500;
-    
     setTimeout(() => {
-      if (isMountedRef.current) {
-        setIsPaddingCollapsed(true);
+      if (!isMountedRef.current) return;
+      // First expand within the padded area
+      controls.start({
+        x: 0,
+        width: getContentWidth(),
+        backgroundColor: '#22C55E',
+        borderRadius: THUMB_RADIUS
+      }, tweenConfig).then(() => {
+        // Then expand to full rail dimensions (width and height together)
         controls.start({
-          x: 0,
-          left: 0,
-          width: '100%',
+          left: -RAIL_HORIZONTAL_PADDING_PER_SIDE,
+          width: `calc(100% + ${RAIL_HORIZONTAL_PADDING_PER_SIDE * 2}px)`,
           height: '100%',
           backgroundColor: '#22C55E',
-          borderRadius: 0
-        }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
-      }
-    }, collapseDelay);
+          borderRadius: THUMB_RADIUS
+        }, { type: 'tween', ease: 'easeInOut', duration: 0.4 }).then(() => {
+          setTimeout(() => {
+            setIsManualSwipe(false);
+            setIsAnimating(false);
+          }, 100);
+        });
+      });
+    }, expandDelay);
 
-    // Step 4: Reset flags after animation completes
-    const totalAnimationTime = collapseDelay + collapseDurationMs + 100;
-    setTimeout(() => {
-      if (isMountedRef.current) {
-        setIsManualSwipe(false);
-        setIsAnimating(false);
-      }
-    }, totalAnimationTime);
   }, [controls, tweenConfig, getContentWidth, isInitialized]);
 
   // Drag handlers
@@ -220,15 +208,12 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
 
   useEffect(() => {
     isMountedRef.current = true;
-    
-    // Set initial thumb position
     controls.set({ 
-      x: 0, 
-      width: THUMB_WIDTH, 
-      backgroundColor: "#FFFFFF", 
-      borderRadius: THUMB_RADIUS 
+      x: 0,
+      width: THUMB_WIDTH,
+      backgroundColor: "#FFFFFF",
+      borderRadius: THUMB_RADIUS
     });
-    
     return () => {
       isMountedRef.current = false;
     };
@@ -317,7 +302,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
         <div className="Swipeswitch self-stretch bg-neutral-neutral-200 flex flex-col justify-start items-start">
           <div
             ref={trackRef}
-            className={`Rail self-stretch p-2 inline-flex justify-between items-center flex-wrap content-center relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
+            className={"Rail self-stretch p-2 inline-flex justify-between items-center flex-nowrap relative overflow-hidden"}
             style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
           >
           {/* Left spacer to align with draggable thumb */}
@@ -325,7 +310,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
 
           {/* Right content (CardPill) */}
           {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
-            <div className="Cardpill flex-1 h-12 min-w-0 flex justify-end items-center gap-5 pointer-events-none">
+            <div className="Cardpill flex-1 h-12 min-w-0 flex justify-end items-center gap-5 pointer-events-none" style={{position: 'relative', zIndex: 1}}>
               <div className="Frame1 flex justify-center items-baseline gap-0.5">
                 {set_type === 'timed' ? (
                   <>
@@ -367,9 +352,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
                   {isOptimistic ? (
-                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    <Loader2 className="w-10 h-10 text-white animate-spin" />
                   ) : (
-                    <Check className="w-5 h-5 text-white" />
+                    <Check className="w-10 h-10 text-white" />
                   )}
                 </div>
               )}
