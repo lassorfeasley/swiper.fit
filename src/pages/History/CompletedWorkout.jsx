@@ -14,6 +14,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import WorkoutSummaryCard from "@/components/common/Cards/WorkoutSummaryCard";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
@@ -809,11 +810,11 @@ const CompletedWorkout = () => {
                   className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
                   style={{ paddingTop: 82, paddingBottom: 0, maxWidth: '500px', minWidth: '325px' }}
                 >
-                  {sectionExercises.map((exercise) => (
-                    <ExerciseCompletedCard
+                {sectionExercises.map((exercise) => (
+                    <WorkoutSummaryCard
                       key={exercise.id}
-                      exercise={exercise}
-                      setLog={exercise.setLog}
+                      exerciseName={exercise.exercise}
+                      sets={exercise.setLog}
                     />
                   ))}
                 </PageSectionWrapper>
