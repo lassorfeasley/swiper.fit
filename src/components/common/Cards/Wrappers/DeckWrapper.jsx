@@ -158,16 +158,23 @@ const DeckWrapper = forwardRef(
         )}
         {React.Children.map(children, (child, index) => {
           if (!React.isValidElement(child)) return child;
-          return React.cloneElement(child, {
-            ...(() => {
-              const { isFirstCard: _, style: childStyle, ...filteredProps } = child.props;
-              return {
-                ...filteredProps,
-                style: { ...(childStyle || {}), marginTop: index > 0 ? gap : 0 },
-              };
-            })(),
-            ...(typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}),
-          });
+          return (
+            <div
+              key={child.key || index}
+              className={cn("w-full flex justify-center")}
+            >
+              {React.cloneElement(child, {
+                ...(() => {
+                  const { isFirstCard: _, style: childStyle, ...filteredProps } = child.props;
+                  return {
+                    ...filteredProps,
+                    style: childStyle,
+                  };
+                })(),
+                ...(typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}),
+              })}
+            </div>
+          );
         })}
       </div>
     );
