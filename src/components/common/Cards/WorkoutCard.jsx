@@ -17,7 +17,7 @@ const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
     >
       <div className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">
         <div className="Frame5011 self-stretch inline-flex justify-start items-center gap-px">
-          <div className="flex-1 truncate text-neutral-900 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+          <div className="flex-1 truncate text-neutral-900 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
             {name}
           </div>
           <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3 whitespace-nowrap">
