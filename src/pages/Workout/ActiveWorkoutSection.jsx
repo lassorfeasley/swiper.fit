@@ -1432,11 +1432,7 @@ const ActiveWorkoutSection = ({
           backgroundClass="bg-transparent"
           style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
         >
-          <ActionCard 
-            variant="primary"
-            text="add exercise" 
-            onClick={handleAddExercise}
-          />
+          {/* Removed inline add exercise card; use header button instead */}
         </PageSectionWrapper>
 
         {/* Add Exercise Form */}
@@ -1485,7 +1481,7 @@ const ActiveWorkoutSection = ({
       <PageSectionWrapper
         key={section}
         section={section}
-        showPlusButton={false}
+        showPlusButton={true}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         deckGap={12}
@@ -1542,11 +1538,7 @@ const ActiveWorkoutSection = ({
             </CardWrapper>
           );
         })}
-        <ActionCard 
-          variant="primary"
-          text="add exercise" 
-          onClick={handleAddExercise}
-        />
+        {/* Removed inline add exercise card; use header button instead */}
       </PageSectionWrapper>
 
       {/* Add Exercise Form */}

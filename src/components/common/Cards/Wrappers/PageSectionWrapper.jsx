@@ -59,13 +59,14 @@ const PageSectionWrapper = ({
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
           header={
-            <div className="w-full max-w-[500px] flex items-center justify-between">
-              <div className="Section justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+            <div className="w-full max-w-[500px] pb-5 inline-flex justify-center items-center gap-2.5">
+              <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
                 {displayTitle}
               </div>
               {showPlusButton && (
-                <button onClick={onPlus} aria-label="Add" className="p-2.5 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M12 5V19" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <button onClick={onPlus} aria-label="Add exercise" className="h-8 px-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-start items-center gap-2.5">
+                  <span className="text-neutral-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Add exercise</span>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M12 5V19" stroke="#155DFC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               )}
             </div>
