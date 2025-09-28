@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Repeat2, Weight, Grip, Clock } from "lucide-react";
+import { Grip } from "lucide-react";
+import ExerciseCardBase from "@/components/common/Cards/ExerciseCardBase";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
@@ -90,101 +91,25 @@ const ExerciseCard = ({
     if (onEdit) onEdit(e);
   };
 
-  // Get set names from database or fallback to default
-  const getSetName = (index, config) => {
-    return config.set_variant || `Set ${index + 1}`;
-  };
-
-  // Format time for timed sets
-  const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
   const cardContent = (
-    <div
-      data-layer="exercise-card"
-      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex flex-col justify-start items-start overflow-hidden`}
-      onClick={handleCardClick}
-      style={{ 
-        cursor: reorderable ? "grab" : setsAreEditable && onCardClick ? "pointer" : "default",
-        ...(isDragging && { cursor: "grabbing" })
-      }}
-      {...domProps}
-    >
-      {/* Header */}
-      <div
-        data-layer="card-label"
-        className={`self-stretch pl-4 bg-neutral-neutral-200 inline-flex justify-start items-center gap-4${addTopBorder ? ' border-t border-neutral-neutral-300' : ''}`}
-      >
-        <div data-layer="exercise-name" className="flex-1 h-11 flex items-center justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-          {exerciseName}
-        </div>
-        {!hideGrip && (
-          <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
-            <button 
+    <div onClick={handleCardClick} {...domProps}>
+      <ExerciseCardBase
+        exerciseName={exerciseName}
+        sets={localSetConfigs}
+        addTopBorder={addTopBorder}
+        onSetClick={setsAreEditable ? (idx) => handleSetEdit(idx) : undefined}
+        rightHeader={
+          hideGrip ? null : (
+            <button
               onClick={handleMenuClick}
               className="size-6 relative overflow-hidden flex items-center justify-center"
               aria-label="Exercise options"
             >
               <Grip className="size-6 text-neutral-neutral-500" />
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Set rows */}
-      {localSetConfigs && localSetConfigs.length > 0 && (
-        <>
-          {localSetConfigs.map((config, idx) => {
-            const isLast = idx === localSetConfigs.length - 1;
-            const rowClasses = [
-              "self-stretch h-11 px-4 inline-flex justify-between items-center overflow-hidden cursor-pointer",
-              idx % 2 === 1 ? "bg-neutral-50" : ""
-            ].filter(Boolean).join(" ");
-            return (
-              <div 
-                key={idx}
-                data-layer="card-row" 
-                className={rowClasses}
-                onClick={setsAreEditable ? (e) => {
-                  e.stopPropagation();
-                  handleSetEdit(idx);
-                } : undefined}
-              >
-                <div data-layer="Set name" className="justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                  {getSetName(idx, config)}
-                </div>
-                <div data-layer="metrics" className="self-stretch min-w-12 flex justify-start items-center gap-px overflow-hidden">
-                  {/* First metric: Reps or Time */}
-                  <div data-layer="rep-type" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
-                    <div data-layer="rep-type-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
-                      {config.set_type === 'timed' ? (
-                        <Clock className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
-                      ) : (
-                        <Repeat2 className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
-                      )}
-                    </div>
-                    <div data-layer="rep-type-metric" className="text-center justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      {config.set_type === 'timed' ? formatTime(config.timed_set_duration || 0) : (config.reps || 0)}
-                    </div>
-                  </div>
-                  {/* Weight */}
-                  <div data-layer="rep-weight" className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
-                    <div data-layer="rep-weight-icon" className="size-4 relative overflow-hidden flex items-center justify-center">
-                      <Weight className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
-                    </div>
-                    <div data-layer="rep-weight-metric" className="text-center justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      {config.unit === 'body' ? 'BW' : (config.weight || 0)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </>
-      )}
+          )
+        }
+      />
     </div>
   );
 
