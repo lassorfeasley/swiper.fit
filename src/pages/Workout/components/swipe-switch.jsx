@@ -381,25 +381,25 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
           {/* Absolute overlay for text so it doesn't shift */}
           {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
             <div className="absolute inset-0 flex justify-end items-center pointer-events-none px-2" style={{ zIndex: 1 }}>
-              <div className="Cardpill h-12 flex items-center gap-5">
+              <div className="Cardpill h-12 flex items-center gap-4">
                 <div className="Frame1 flex justify-center items-baseline gap-0.5">
                   {set_type === 'timed' ? (
                     <>
                       <Clock className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">
+                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">
                         {duration >= 60 ? formatTime(duration) : `${duration}`}
                       </div>
                     </>
                   ) : (
                     <>
                       <Repeat2 className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">{typeof reps === 'number' ? reps : ''}</div>
+                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{typeof reps === 'number' ? reps : ''}</div>
                     </>
                   )}
                 </div>
                 <div className="Frame2 flex justify-center items-baseline gap-0.5">
                   <Weight className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                  <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-5xl font-black leading-[44px]">{weight_unit === 'body' ? 'BW' : (weight || 0)}</div>
+                  <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{weight_unit === 'body' ? 'BW' : (weight || 0)}</div>
                 </div>
               </div>
             </div>
