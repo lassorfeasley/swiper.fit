@@ -64,9 +64,10 @@ const PageSectionWrapper = ({
                 {displayTitle}
               </div>
               {showPlusButton && (
-                <button onClick={onPlus} aria-label="Add exercise" className="h-8 px-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-start items-center gap-2.5">
-                  <span className="text-neutral-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Add exercise</span>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M12 5V19" stroke="#155DFC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <button onClick={onPlus} aria-label="Add exercise" className="p-1">
+                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.41663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
               )}
             </div>
