@@ -39,6 +39,7 @@ const DeckWrapper = forwardRef(
     
     const style = {
       gap,
+      rowGap: gap,
       paddingTop,
       paddingBottom: paddingBottom !== undefined ? paddingBottom : 40,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
