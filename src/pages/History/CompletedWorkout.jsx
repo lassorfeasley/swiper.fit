@@ -808,7 +808,7 @@ const CompletedWorkout = () => {
                   deckGap={20}
                   isFirst={idx === 0}
                   className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-                  style={{ paddingTop: 82, paddingBottom: 0, maxWidth: '500px', minWidth: '325px' }}
+                  style={{ paddingTop: 40, paddingBottom: 0, maxWidth: '500px', minWidth: '325px' }}
                 >
                 {sectionExercises.map((exercise) => (
                     <WorkoutSummaryCard
