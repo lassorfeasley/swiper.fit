@@ -85,7 +85,7 @@ export default function AppLayout({
   const totalHeaderHeight = isDelegated ? (hideHeader ? 44 : baseHeaderHeight + 44) : baseHeaderHeight;
 
   return (
-    <div className="min-h-screen flex bg-white relative">
+    <div className="min-h-screen flex bg-stone-100 relative">
       {showSidebar && <SideBarNav />}
       <div className={showSidebar ? "flex flex-col flex-1 md:ml-64 overflow-y-auto min-h-0 relative z-[100]" : "flex flex-col flex-1 overflow-y-auto min-h-0"}>
         {isDelegated && <DelegateModeHeader />}
