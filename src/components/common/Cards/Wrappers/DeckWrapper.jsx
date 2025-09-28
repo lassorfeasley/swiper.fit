@@ -11,8 +11,8 @@ const DeckWrapper = forwardRef(
   (
     {
       children,
-      gap = 12, // spacing between items (px)
-      paddingX = 0, // horizontal padding (px)
+      gap = 20, // spacing between items (px) — align with Routine Builder
+      paddingX = 20, // horizontal padding (px)
       paddingTop = 40, // top padding (px)
       maxWidth = 500, // maximum width (px)
       minWidth = 0, // minimum width (px)
