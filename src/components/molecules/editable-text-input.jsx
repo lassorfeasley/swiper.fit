@@ -112,7 +112,7 @@ const EditableTextInput = ({
         </div>
         <div
           className={cn(
-            "absolute top-0 right-0 h-full w-12 flex justify-center items-center border-l border-neutral-200",
+            "absolute top-0 right-0 h-full w-12 flex justify-center items-center",
             onIconClick && "hover:bg-neutral-200 transition-colors cursor-pointer"
           )}
           onClick={handleIconClick}

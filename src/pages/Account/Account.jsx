@@ -141,9 +141,7 @@ const Account = () => {
 
   if (loading) {
     return (
-      <AppLayout title="Account" hideHeader>
-        <div className="p-6">Loading…</div>
-      </AppLayout>
+      <div className="p-6">Loading…</div>
     );
   }
 
@@ -152,234 +150,184 @@ const Account = () => {
   }
 
   return (
-    <AppLayout title="Account" hideHeader>
-      <div className="w-full flex flex-col min-h-screen">
+    <AppLayout title="Account" variant="glass">
+      <div className="w-full flex flex-col min-h-screen justify-start items-center">
         {/* Personal Information Section */}
-        <div className="self-stretch bg-white flex flex-col justify-center items-center">
-          <SectionWrapperLabel
-            isEditing={isEditingName}
-            onEdit={() => setIsEditingName(true)}
-            onCancel={() => {
-              setFirstName(profile.first_name);
-              setLastName(profile.last_name);
-              setDirtyName(false);
-              setIsEditingName(false);
-            }}
-            onSave={() => {
-              handleSaveName();
-              setIsEditingName(false);
-            }}
-            isSaveDisabled={!dirtyName}
-          >
-            Personal information
-          </SectionWrapperLabel>
-          <div className="self-stretch px-5 flex flex-col justify-start items-center flex-1">
-            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start flex-1">
-              <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-center items-center gap-4">
-                {/* First Name Field */}
-                <EditableTextInput
-                  label="First name"
-                  value={firstName}
-                  onChange={(value) => {
-                    setFirstName(value);
-                    setDirtyName(true);
-                  }}
-                  editing={isEditingName}
-                  onActivate={() => setIsEditingName(true)}
-                  className="w-full"
-                />
+        <div className="DeckWrapper w-full max-w-[500px] min-w-80 pt-16 pb-10 inline-flex flex-col justify-start items-start gap-3">
+          <div className="PersonalInformation w-[500px] h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Personal information</div>
+          <div className="CardWrapper w-full max-w-[800px] p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center gap-5">
+            {/* First Name Field */}
+            <EditableTextInput
+              label="First name"
+              value={firstName}
+              onChange={(value) => {
+                setFirstName(value);
+                setDirtyName(true);
+              }}
+              editing={isEditingName}
+              onActivate={() => setIsEditingName(true)}
+              className="w-full"
+            />
 
-                {/* Last Name Field */}
-                <EditableTextInput
-                  label="Last name"
-                  value={lastName}
-                  onChange={(value) => {
-                    setLastName(value);
-                    setDirtyName(true);
-                  }}
-                  editing={isEditingName}
-                  onActivate={() => setIsEditingName(true)}
-                  className="w-full"
-                />
+            {/* Last Name Field */}
+            <EditableTextInput
+              label="Last name"
+              value={lastName}
+              onChange={(value) => {
+                setLastName(value);
+                setDirtyName(true);
+              }}
+              editing={isEditingName}
+              onActivate={() => setIsEditingName(true)}
+              className="w-full"
+            />
 
-                {/* Action Buttons */}
-                {isEditingName && (
-                  <>
-                    <div 
-                      className="self-stretch h-12 px-4 py-2 bg-green-200 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
-                      onClick={() => {
-                        handleSaveName();
-                        setIsEditingName(false);
-                      }}
-                    >
-                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        Save changes
-                      </div>
-                    </div>
-                    <div 
-                      className="self-stretch h-12 px-4 py-2 bg-red-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
-                      onClick={() => {
-                        setFirstName(profile.first_name);
-                        setLastName(profile.last_name);
-                        setDirtyName(false);
-                        setIsEditingName(false);
-                      }}
-                    >
-                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        Discard changes
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            {/* Action Buttons */}
+            {isEditingName && (
+              <>
+                <div 
+                  className="self-stretch h-12 px-4 py-2 bg-green-200 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                  onClick={() => {
+                    handleSaveName();
+                    setIsEditingName(false);
+                  }}
+                >
+                  <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Save changes
+                  </div>
+                </div>
+                <div 
+                  className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-xl inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                  onClick={() => {
+                    setFirstName(profile.first_name);
+                    setLastName(profile.last_name);
+                    setDirtyName(false);
+                    setIsEditingName(false);
+                  }}
+                >
+                  <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Discard changes
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Login and Password Section */}
-        <div className="self-stretch bg-white flex flex-col justify-center items-center">
-          <SectionWrapperLabel
-            isEditing={isEditingLogin}
-            onEdit={() => setIsEditingLogin(true)}
-            onCancel={() => {
-              setEmail(user.email || "");
-              setDirtyEmail(false);
-              setNewPassword("");
-              setIsEditingLogin(false);
-            }}
-            onSave={() => {
-              handleSaveLoginSection();
-              setIsEditingLogin(false);
-            }}
-            isSaveDisabled={!dirtyEmail && !newPassword}
-          >
-            Login and password
-          </SectionWrapperLabel>
-          <div className="self-stretch px-5 flex flex-col justify-start items-center flex-1">
-            <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-center items-center gap-2.5 flex-1">
-              <div className="w-full max-w-[800px] p-5 border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
-                {/* Email Field */}
-                <EditableTextInput
-                  label="Email"
-                  value={email}
-                  onChange={(value) => {
-                    setEmail(value);
-                    setDirtyEmail(true);
-                  }}
-                  editing={isEditingLogin}
-                  onActivate={() => setIsEditingLogin(true)}
-                  className="w-full"
-                />
+        <div className="Frame63 w-full max-w-[500px] min-w-80 pt-5 pb-10 inline-flex flex-col justify-center items-center gap-3">
+          <div className="LoginAndPassword w-[500px] h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Login and password</div>
+          <div className="Frame56 w-full max-w-[800px] p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
+            {/* Email Field */}
+            <EditableTextInput
+              label="Email"
+              value={email}
+              onChange={(value) => {
+                setEmail(value);
+                setDirtyEmail(true);
+              }}
+              editing={isEditingLogin}
+              onActivate={() => setIsEditingLogin(true)}
+              className="w-full"
+            />
 
-                {/* Password Field */}
-                <EditableTextInput
-                  label="Password"
-                  value="●●●●●●●●●"
-                  onChange={(value) => {
-                    setNewPassword(value);
-                  }}
-                  editing={isEditingLogin}
-                  onActivate={() => setIsEditingLogin(true)}
-                  className="w-full"
-                  inputProps={{
-                    type: "password",
-                    placeholder: "Enter new password"
-                  }}
-                />
+            {/* Password Field */}
+            <EditableTextInput
+              label="Password"
+              value="●●●●●●●●●"
+              onChange={(value) => {
+                setNewPassword(value);
+              }}
+              editing={isEditingLogin}
+              onActivate={() => setIsEditingLogin(true)}
+              className="w-full"
+              inputProps={{
+                type: "password",
+                placeholder: "Enter new password"
+              }}
+            />
 
-                {/* Action Buttons for Login Section */}
-                {isEditingLogin && (
-                  <>
-                    <div 
-                      className="self-stretch h-12 px-4 py-2 bg-green-200 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
-                      onClick={() => {
-                        handleSaveLoginSection();
-                        setIsEditingLogin(false);
-                      }}
-                    >
-                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        Save changes
-                      </div>
-                    </div>
-                    <div 
-                      className="self-stretch h-12 px-4 py-2 bg-red-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
-                      onClick={() => {
-                        setEmail(user.email || "");
-                        setDirtyEmail(false);
-                        setNewPassword("");
-                        setIsEditingLogin(false);
-                      }}
-                    >
-                      <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        Discard changes
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            {/* Action Buttons for Login Section */}
+            {isEditingLogin && (
+              <>
+                <div 
+                  className="self-stretch h-12 px-4 py-2 bg-green-200 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                  onClick={() => {
+                    handleSaveLoginSection();
+                    setIsEditingLogin(false);
+                  }}
+                >
+                  <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Save changes
+                  </div>
+                </div>
+                <div 
+                  className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-xl inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                  onClick={() => {
+                    setEmail(user.email || "");
+                    setDirtyEmail(false);
+                    setNewPassword("");
+                    setIsEditingLogin(false);
+                  }}
+                >
+                  <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    Discard changes
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Account Section */}
-        <div className="self-stretch bg-white flex flex-col justify-center items-center flex-1">
-          <SectionWrapperLabel>
-            Account
-          </SectionWrapperLabel>
-          <div className="self-stretch flex flex-col justify-start items-center flex-1">
-            <div className="self-stretch flex flex-col justify-start items-center gap-2.5 flex-1">
-              <div className="w-full max-w-[500px] min-w-80 pt-10 pb-20 border-l border-r border-neutral-300 flex flex-col justify-start items-start gap-5 flex-1">
-                <div className="self-stretch p-5 bg-white border-t border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-neutral-600 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"
-                    onClick={handleLogout}
-                  >
-                    <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Log out
-                    </div>
-                  </div>
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-red-400 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-500"
-                    onClick={() => setDeleteConfirmOpen(true)}
-                  >
-                    <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Delete account
-                    </div>
-                  </div>
-                </div>
+        <div className="DeckWrapper w-full max-w-[500px] min-w-80 pt-5 pb-20 inline-flex flex-col justify-start items-start gap-3">
+          <div className="Account w-[500px] h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Account</div>
+          <div className="Frame62 self-stretch p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
+            <div 
+              className="Swiperbutton self-stretch h-12 px-4 py-2 bg-neutral-neutral-600 rounded-xl inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"
+              onClick={handleLogout}
+            >
+              <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                Log out
+              </div>
+            </div>
+            <div 
+              className="Swiperbutton self-stretch h-12 px-4 py-2 bg-red-400 rounded-xl inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-500"
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                Delete account
               </div>
             </div>
           </div>
         </div>
 
-
+        <SwiperDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteConfirmOpen(false)}
+          title="Confirm deletion"
+          description="Deleting your account is permanent. This action cannot be undone."
+          confirmText="Delete account"
+          cancelText="Cancel"
+          confirmVariant="destructive"
+          cancelVariant="outline"
+        >
+          <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
+            <p className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">
+              Please enter your password to permanently delete your account.
+            </p>
+            <TextInput
+              label="Password"
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              customPlaceholder="Enter your password"
+            />
+          </div>
+        </SwiperDialog>
       </div>
-
-      <SwiperDialog
-        open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteConfirmOpen(false)}
-        title="Confirm deletion"
-        description="Deleting your account is permanent. This action cannot be undone."
-        confirmText="Delete account"
-        cancelText="Cancel"
-        confirmVariant="destructive"
-        cancelVariant="outline"
-      >
-        <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
-          <p className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">
-            Please enter your password to permanently delete your account.
-          </p>
-          <TextInput
-            label="Password"
-            type="password"
-            value={deletePassword}
-            onChange={(e) => setDeletePassword(e.target.value)}
-            customPlaceholder="Enter your password"
-          />
-        </div>
-      </SwiperDialog>
     </AppLayout>
   );
 };

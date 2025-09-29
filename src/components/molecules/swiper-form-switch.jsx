@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
  *
  * Design specs:
  * - OFF: Container with justify-start, grey thumb (bg-neutral-700)
- * - ON: Container with justify-end, green thumb (bg-green-500)
+ * - ON: Container with justify-start, green thumb (bg-green-500) translated to the right
  */
 const SwiperFormSwitch = ({
   label,
@@ -34,8 +34,8 @@ const SwiperFormSwitch = ({
       const thumbWidth = thumbRef.current.offsetWidth;
       const padding = 8; // p-1 = 4px on each side
       const availableSpace = containerWidth - padding;
-      const distance = availableSpace - thumbWidth - 2; // Subtract 2px buffer to ensure it stays within bounds
-      setAnimationDistance(Math.max(0, distance)); // Ensure distance is never negative
+      const distance = availableSpace - thumbWidth;
+      setAnimationDistance(Math.max(0, distance - 1)); // Subtract 1px to keep thumb within rail
     }
   }, []);
 
@@ -48,7 +48,7 @@ const SwiperFormSwitch = ({
   return (
     <div
       className={cn(
-        "w-full h-12 inline-flex justify-end items-center gap-2.5",
+        "w-full h-full inline-flex justify-end items-center gap-2.5",
         className
       )}
     >
@@ -63,12 +63,12 @@ const SwiperFormSwitch = ({
       <div
         ref={containerRef}
         id={switchId}
-        className="w-14 h-8 p-1 bg-neutral-100 border border-neutral-300 inline-flex items-center gap-1 cursor-pointer relative overflow-hidden"
+        className={"w-14 h-8 p-1 bg-neutral-neutral-300 rounded-3xl inline-flex items-center gap-1 cursor-pointer relative overflow-hidden justify-start"}
         onClick={handleToggle}
       >
         <motion.div 
           ref={thumbRef}
-          className="w-6 self-stretch"
+          className="w-6 self-stretch rounded-3xl"
           animate={{
             backgroundColor: internalChecked ? "#22c55e" : "#374151", // green-500 : neutral-700
             x: internalChecked ? animationDistance : 0
