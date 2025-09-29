@@ -119,6 +119,8 @@ export default function AppLayout({
             <div className="flex-1 min-h-0">
               {children}
             </div>
+            {/* Spacer above footer */}
+            <div aria-hidden="true" style={{ height: 60 }} />
             <div className="mt-auto" style={{ marginTop: 'auto' }}>
               <Footer />
             </div>
