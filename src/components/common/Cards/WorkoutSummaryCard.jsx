@@ -10,7 +10,7 @@ const WorkoutSummaryCard = ({ exerciseName, sets, className = "", addTopBorder =
       exerciseName={exerciseName}
       sets={sets}
       addTopBorder={addTopBorder}
-      className={`Property1WorkoutSummary bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] ${className}`}
+      className={`Property1WorkoutSummary bg-white rounded-xl ${className}`}
       style={style}
       rightHeader={
         <div className="size-6 relative overflow-hidden flex items-center justify-center">

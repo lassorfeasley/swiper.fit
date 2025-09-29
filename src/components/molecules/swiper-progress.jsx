@@ -4,9 +4,9 @@ export default function SwiperProgress({ completedSets = 0, totalSets = 1 }) {
   const progress = totalSets > 0 ? Math.min(completedSets / totalSets, 1) : 0;
   return (
     <div className="fixed bottom-0 left-0 right-0 w-full z-40">
-      <div className="ProgressBar w-full px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] backdrop-blur-[1px] inline-flex justify-start items-start gap-6">
+      <div className="ProgressBar w-full px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-start items-start gap-6">
         <div className="Frame59 flex-1 flex justify-start items-end gap-5">
-          <div className="Frame56 flex-1 h-6 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-between items-center overflow-hidden">
+          <div className="Frame56 flex-1 h-6 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-between items-center overflow-hidden">
             <div 
               className="Rectangle1 self-stretch bg-green-600 transition-all duration-300 ease-in-out" 
               style={{ width: `${progress * 100}%` }}

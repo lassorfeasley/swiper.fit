@@ -737,7 +737,7 @@ const RoutineBuilder = () => {
         <div className={`fixed top-0 left-0 right-0 z-50 px-3 pt-4 pb-3 relative bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] before:content-[''] before:absolute before:-inset-3 before:pointer-events-none before:backdrop-blur-sm before:[mask-image:linear-gradient(to_top,rgba(0,0,0,1)_80%,rgba(0,0,0,0)_100%)] inline-flex justify-between items-center ${!isMobile && !isDelegated ? 'md:left-64' : ''}`}>
           <div className="flex justify-start items-center gap-3">
             <div 
-              className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-4 cursor-pointer"
+              className="h-14 px-3 bg-white/80 rounded-3xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-center items-center gap-4 cursor-pointer"
               onClick={handleBack}
             >
               <div className="relative">
@@ -748,7 +748,7 @@ const RoutineBuilder = () => {
             </div>
           </div>
           <div className="inline-flex flex-col justify-center items-end gap-2.5">
-            <div className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+            <div className="h-14 px-3 bg-white/80 rounded-3xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-4">
               <div 
                 className="relative cursor-pointer"
                 onClick={() => setEditProgramOpen(true)}
@@ -776,10 +776,10 @@ const RoutineBuilder = () => {
         </div>
         <div className="flex flex-col min-h-screen pt-20">
           {/* Routine Image Section */}
-          <div className="self-stretch pb-5 bg-white inline-flex flex-col justify-start items-center">
+          <div className="self-stretch pb-5 inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
               <div 
-                className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] overflow-hidden cursor-pointer"
+                className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
                 onClick={shareRoutine}
               >
                 <img 
@@ -833,6 +833,7 @@ const RoutineBuilder = () => {
               variant="primary"
               text="Add another exercise" 
               onClick={() => handleOpenAddExercise(section)}
+              className="outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
             />
           </PageSectionWrapper>
         ))}

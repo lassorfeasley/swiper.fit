@@ -12,7 +12,7 @@ import PropTypes from "prop-types";
 const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2"
+      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2"
       {...props}
     >
       <div className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">

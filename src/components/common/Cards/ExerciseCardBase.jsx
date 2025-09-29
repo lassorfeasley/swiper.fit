@@ -22,14 +22,14 @@ const ExerciseCardBase = ({
   return (
     <div
       data-layer="exercise-card-base"
-      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
+      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
       style={style}
       {...domProps}
     >
       {/* Header */}
       <div
         data-layer="card-label"
-        className={`self-stretch pl-4 bg-neutral-neutral-200 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
+        className={`self-stretch pl-4 bg-neutral-neutral-200 border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
       >
         <div className="flex-1 h-11 flex items-center justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
           {exerciseName}

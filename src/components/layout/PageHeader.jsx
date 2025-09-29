@@ -49,7 +49,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 self-stretch bg-white inline-flex flex-col justify-start items-start",
+          "fixed top-0 z-[200] self-stretch bg-white inline-flex flex-col justify-start items-start",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
           className
         )}
@@ -123,40 +123,29 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 w-full h-[82px] px-3 inline-flex justify-between items-center relative bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] before:content-[''] before:absolute before:-inset-3 before:pointer-events-none before:backdrop-blur-sm before:[mask-image:linear-gradient(to_top,rgba(0,0,0,1)_80%,rgba(0,0,0,0)_100%)]",
+          "fixed top-0 z-[200] w-full pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-center",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
           className
         )}
       >
-        {/* Left side - Back button and title */}
-        <div className="flex justify-start items-center gap-3">
-          {showBackButton && (
-            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center md:hidden">
-              <button
-                onClick={onBack}
-                aria-label="Back"
-                className="flex items-center justify-center"
-              >
-                <ArrowLeft className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-              </button>
-            </div>
-          )}
-          <div className="flex flex-col justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-5">
+        {/* Left side - Title only for glass variant */}
+        <div className="flex justify-start items-center gap-3 px-3">
+          <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
             {title}
           </div>
         </div>
 
         {/* Right side - Action buttons (render only if any are shown) */}
         {(showUpload || showDelete || showShare || showSettings || showSearch) && (
-          <div className="flex flex-col justify-center items-end gap-2.5">
-            <div className="h-[54px] px-3 pr-5 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
+          <div className="inline-flex flex-col justify-center items-end gap-2.5 px-3">
+            <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
               {showSearch && (
                 <button
                   onClick={onSearch}
                   aria-label="Search"
                   className="flex items-center justify-center"
                 >
-                  <Search className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Search className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
               {showShare && (
@@ -165,7 +154,7 @@ const PageHeader = forwardRef(({
                   aria-label="Share"
                   className="flex items-center justify-center"
                 >
-                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Upload className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
               {showSettings && (
@@ -174,7 +163,7 @@ const PageHeader = forwardRef(({
                   aria-label="Settings"
                   className="flex items-center justify-center"
                 >
-                  <Settings2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Settings2 className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
               {showUpload && (
@@ -183,7 +172,7 @@ const PageHeader = forwardRef(({
                   aria-label="Upload"
                   className="flex items-center justify-center"
                 >
-                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Upload className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
               {showDelete && (
@@ -192,7 +181,7 @@ const PageHeader = forwardRef(({
                   aria-label="Delete"
                   className="flex items-center justify-center"
                 >
-                  <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
+                  <Trash2 className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                 </button>
               )}
             </div>
@@ -208,10 +197,10 @@ const PageHeader = forwardRef(({
       data-show-plus-button={showPlusButton}
       className={cn(
         variant === 'dark-fixed'
-          ? "fixed top-0 z-50 self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
+          ? "fixed top-0 z-[200] self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
           : searchActive
-            ? "fixed top-0 z-50 self-stretch h-11 bg-white backdrop-blur-xs border-b border-neutral-300 inline-flex justify-between items-center"
-            : "fixed top-0 z-50 self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
+            ? "fixed top-0 z-[200] self-stretch h-11 bg-white backdrop-blur-xs border-b border-neutral-300 inline-flex justify-between items-center"
+            : "fixed top-0 z-[200] self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
         showSidebar
           ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
           : "left-0 w-full",
