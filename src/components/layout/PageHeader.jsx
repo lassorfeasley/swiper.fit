@@ -135,18 +135,29 @@ const PageHeader = forwardRef(({
           </div>
         </div>
 
-        {/* Right side - Plus icon */}
-        {showPlusButton && (
-          <button 
-            onClick={onAdd} 
-            aria-label="Add new routine" 
-            className="p-1"
-          >
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        )}
+        {/* Right side - Action buttons */}
+        <div className="flex items-center gap-2">
+          {showShare && (
+            <button 
+              onClick={onShare} 
+              aria-label="Share" 
+              className="p-1"
+            >
+              <Share2 className="w-6 h-6 text-neutral-700" />
+            </button>
+          )}
+          {showPlusButton && (
+            <button 
+              onClick={onAdd} 
+              aria-label="Add new routine" 
+              className="p-1"
+            >
+              <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
     );
   }

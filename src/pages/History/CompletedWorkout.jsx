@@ -666,7 +666,10 @@ const CompletedWorkout = () => {
   const shareWorkout = async () => {
     setSharing(true);
     try {
-      await ensurePublic();
+      // Only ensure public if user is logged in and owns the workout
+      if (!isPublicWorkoutView && isOwner) {
+        await ensurePublic();
+      }
 
       const url = `${window.location.origin}/history/public/workout/${workoutId}`;
       const title = workout?.workout_name || 'Completed Workout';
