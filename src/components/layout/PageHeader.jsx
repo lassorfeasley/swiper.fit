@@ -123,7 +123,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 w-full h-[82px] px-3 inline-flex justify-between items-center backdrop-blur-sm bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]",
+          "fixed top-0 z-50 w-full h-[82px] px-3 inline-flex justify-between items-center relative bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] before:content-[''] before:absolute before:-inset-3 before:pointer-events-none before:backdrop-blur-sm before:[mask-image:linear-gradient(to_top,rgba(0,0,0,1)_80%,rgba(0,0,0,0)_100%)]",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
           className
         )}
