@@ -123,69 +123,29 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-[200] w-full pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-center",
-          showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
+          "fixed top-0 z-[200] h-16 px-4 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-center",
+          showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
       >
-        {/* Left side - Title only for glass variant */}
-        <div className="flex justify-start items-center gap-3 px-3">
+        {/* Left side - Title */}
+        <div className="flex justify-start items-center gap-3">
           <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
             {title}
           </div>
         </div>
 
-        {/* Right side - Action buttons (render only if any are shown) */}
-        {(showUpload || showDelete || showShare || showSettings || showSearch) && (
-          <div className="inline-flex flex-col justify-center items-end gap-2.5 px-3">
-            <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
-              {showSearch && (
-                <button
-                  onClick={onSearch}
-                  aria-label="Search"
-                  className="flex items-center justify-center"
-                >
-                  <Search className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showShare && (
-                <button
-                  onClick={onShare}
-                  aria-label="Share"
-                  className="flex items-center justify-center"
-                >
-                  <Upload className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showSettings && (
-                <button
-                  onClick={onSettings}
-                  aria-label="Settings"
-                  className="flex items-center justify-center"
-                >
-                  <Settings2 className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showUpload && (
-                <button
-                  onClick={onUpload}
-                  aria-label="Upload"
-                  className="flex items-center justify-center"
-                >
-                  <Upload className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showDelete && (
-                <button
-                  onClick={onDelete}
-                  aria-label="Delete"
-                  className="flex items-center justify-center"
-                >
-                  <Trash2 className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-            </div>
-          </div>
+        {/* Right side - Plus icon */}
+        {showPlusButton && (
+          <button 
+            onClick={onAdd} 
+            aria-label="Add new routine" 
+            className="p-1"
+          >
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         )}
       </div>
     );

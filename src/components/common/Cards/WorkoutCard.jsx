@@ -12,19 +12,20 @@ import PropTypes from "prop-types";
 const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2"
+      data-layer="workout-card"
+      className="RoutineCard w-[500px] max-w-[500px] p-3 bg-white rounded-xl border border-neutral-300 inline-flex justify-center items-end gap-2"
       {...props}
     >
-      <div className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">
-        <div className="Frame5011 self-stretch inline-flex justify-start items-center gap-px">
-          <div className="flex-1 truncate text-neutral-900 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-            {name}
-          </div>
-          <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight whitespace-nowrap">
+      <div data-layer="Frame 5010" className="Frame5010 w-[476px] inline-flex flex-col justify-start items-start gap-3">
+        <div data-layer="Frame 5011" className="Frame5011 self-stretch flex flex-col justify-center items-start gap-1">
+          <div data-layer="Today" className="Today justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
             {relativeLabel}
           </div>
+          <div data-layer="Monday morning workout" className="MondayMorningWorkout self-stretch justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            {name}
+          </div>
         </div>
-        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight truncate">
+        <div data-layer="Biceps and chest" className="BicepsAndChest justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
           {subtitle}
         </div>
       </div>

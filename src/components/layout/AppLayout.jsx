@@ -66,7 +66,7 @@ export default function AppLayout({
   }, [headerProps]);
 
   const allowedHeaderProps = [
-    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare', 'showStartWorkout',
+    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onUpload', 'onDelete',
     'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText'
   ];
