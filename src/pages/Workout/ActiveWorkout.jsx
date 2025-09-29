@@ -358,10 +358,8 @@ const ActiveWorkoutContent = () => {
         onConfirm={() => setEndConfirmOpen(false)}
         onCancel={handleConfirmEnd}
         title="End workout?"
-        confirmText="Keep working out"
-        cancelText="End workout"
-        confirmVariant="outline"
-        cancelVariant="destructive"
+        confirmText="End workout"
+        cancelText="Keep working out"
       />
 
       {/* Persistent bottom nav for active workout */}
