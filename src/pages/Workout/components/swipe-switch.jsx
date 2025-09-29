@@ -366,13 +366,13 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
             whileDrag={{ cursor: "grabbing" }}
             transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
           >
-            <div className="size-7 relative overflow-hidden flex items-center justify-center">
+            <div className="size-10 relative flex items-center justify-center">
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
                   {isOptimistic ? (
-                    <Loader2 className="w-10 h-10 text-white animate-spin" />
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
                   ) : (
-                    <Check className="w-10 h-10 text-white" />
+                    <Check className="w-8 h-8 text-white" />
                   )}
                 </div>
               )}
