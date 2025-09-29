@@ -51,7 +51,7 @@ const SwiperDialog = ({
         <DialogOverlay onClick={() => onOpenChange?.(false)} />
         <DialogContent 
           className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0 ${contentClassName || ''}`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={() => onOpenChange?.(false)}
         >
           <DialogTitle className="sr-only">
             {title || 'Dialog'}
@@ -62,7 +62,6 @@ const SwiperDialog = ({
             minWidth={null}
 
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div 
               className="w-full max-w-[500px] bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-center overflow-hidden"
