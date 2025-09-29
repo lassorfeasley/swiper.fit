@@ -319,12 +319,16 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     <div
       className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
-        e.stopPropagation();
-        setTimeout(() => {
-          if (!dragMoved.current && !isDragging) {
-            onClick?.(e);
-          }
-        }, 10);
+        // Only intercept clicks to open the set editor when the set is editable.
+        // When a set is complete, let the click bubble up to focus the card.
+        if (status === 'default') {
+          e.stopPropagation();
+          setTimeout(() => {
+            if (!dragMoved.current && !isDragging) {
+              onClick?.(e);
+            }
+          }, 10);
+        }
       }}
       style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
     >
@@ -346,7 +350,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
           {/* Draggable Thumb */}
           <motion.div
             className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-            style={thumbStyle}
+            style={{ ...thumbStyle, pointerEvents: isVisuallyComplete ? 'none' : 'auto' }}
             drag={!isVisuallyComplete && isDefault ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
