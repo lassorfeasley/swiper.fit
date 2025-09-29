@@ -282,7 +282,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
 
   return (
     <div
-      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-1 w-full cursor-pointer ${className}`}
+      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         setTimeout(() => {
