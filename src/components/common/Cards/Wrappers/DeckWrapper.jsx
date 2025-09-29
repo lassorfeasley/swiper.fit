@@ -72,7 +72,7 @@ const DeckWrapper = forwardRef(
           {...domProps}
         >
           {header && (
-            <div className="w-full flex justify-center" style={{ marginBottom: gap }}>
+            <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
               {header}
             </div>
           )}
@@ -154,7 +154,7 @@ const DeckWrapper = forwardRef(
         {...domProps}
       >
         {header && (
-          <div className="w-full flex justify-center" style={{ marginBottom: gap }}>
+          <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
             {header}
           </div>
         )}

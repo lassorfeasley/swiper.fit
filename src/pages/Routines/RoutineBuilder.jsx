@@ -16,12 +16,11 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Play, Copy, Cog } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
 import { scrollToSection } from "@/lib/scroll";
-import { ActionCard } from "@/components/molecules/action-card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const RoutineBuilder = () => {
@@ -730,53 +729,22 @@ const RoutineBuilder = () => {
   return (
     <>
       <AppLayout
-        hideHeader={true}
+        hideHeader={false}
+        title={programName || "Build your routine"}
+        variant="glass"
+        showBackButton={true}
+        onBack={handleBack}
+        showShare={true}
+        onShare={shareRoutine}
+        showSettings={true}
+        onSettings={() => setEditProgramOpen(true)}
+        showDelete={true}
+        onDelete={() =>	setDeleteProgramConfirmOpen(true)}
         showSidebar={!isDelegated && !isMobile}
       >
-        {/* Custom Glass Header */}
-        <div className={`fixed top-0 left-0 right-0 z-50 px-3 pt-4 pb-3 relative bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] before:content-[''] before:absolute before:-inset-3 before:pointer-events-none before:backdrop-blur-sm before:[mask-image:linear-gradient(to_top,rgba(0,0,0,1)_80%,rgba(0,0,0,0)_100%)] inline-flex justify-between items-center ${!isMobile && !isDelegated ? 'md:left-64' : ''}`}>
-          <div className="flex justify-start items-center gap-3">
-            <div 
-              className="h-14 px-3 bg-white/80 rounded-3xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-center items-center gap-4 cursor-pointer"
-              onClick={handleBack}
-            >
-              <div className="relative">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15.9993 25.3332L6.66602 15.9998M6.66602 15.9998L15.9993 6.6665M6.66602 15.9998H25.3327" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-          <div className="inline-flex flex-col justify-center items-end gap-2.5">
-            <div className="h-14 px-3 bg-white/80 rounded-3xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-4">
-              <div 
-                className="relative cursor-pointer"
-                onClick={() => setEditProgramOpen(true)}
-              >
-                <Cog className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-              </div>
-              <div 
-                className="relative cursor-pointer"
-                onClick={shareRoutine}
-              >
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16.0007 2.6665V19.9998M16.0007 2.6665L21.334 7.99984M16.0007 2.6665L10.6673 7.99984M5.33398 15.9998V26.6665C5.33398 27.3737 5.61494 28.052 6.11503 28.5521C6.61513 29.0522 7.29341 29.3332 8.00065 29.3332H24.0006C24.7079 29.3332 25.3862 29.0522 25.8863 28.5521C26.3864 28.052 26.6673 27.3737 26.6673 26.6665V15.9998" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div 
-                className="relative cursor-pointer"
-                onClick={() => setDeleteProgramConfirmOpen(true)}
-              >
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.3333 14.6665V22.6665M18.6667 14.6665V22.6665M25.3333 7.99984V26.6665C25.3333 27.3737 25.0524 28.052 24.5523 28.5521C24.0522 29.0522 23.3739 29.3332 22.6667 29.3332H9.33333C8.62609 29.3332 7.94781 29.0522 7.44772 28.5521C6.94762 28.052 6.66667 27.3737 6.66667 26.6665V7.99984M4 7.99984H28M10.6667 7.99984V5.33317C10.6667 4.62593 10.9476 3.94765 11.4477 3.44755C11.9478 2.94746 12.6261 2.6665 13.3333 2.6665H18.6667C19.3739 2.6665 20.0522 2.94746 20.5523 3.44755C21.0524 3.94765 21.3333 4.62593 21.3333 5.33317V7.99984" stroke="#404040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
         <div className="flex flex-col min-h-screen pt-20">
           {/* Routine Image Section */}
-          <div className="self-stretch pb-5 inline-flex flex-col justify-start items-center">
+          <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
               <div 
                 className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
@@ -802,13 +770,17 @@ const RoutineBuilder = () => {
             key={section}
             section={section} 
             id={`section-${section}`} 
-            deckGap={20} 
+            deckGap={0} 
             deckVariant="cards"
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
-            className={index === exercisesBySection.length - 1 ? "flex-1" : ""}
-            style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
+            isFirst={section === "warmup"}
+            className={`${section === "warmup" ? "border-t-0" : ""} ${index === exercisesBySection.length - 1 ? "flex-1" : ""}`}
+            backgroundClass="bg-transparent"
+            showPlusButton={true}
+            onPlus={() => handleOpenAddExercise(section)}
+            style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
           >
             {secExercises.length === 0 && !loading ? (
               <div className="text-gray-400 text-center py-8">
@@ -816,25 +788,20 @@ const RoutineBuilder = () => {
               </div>
             ) : loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
-            ) : secExercises.map((ex) => (
-              <ExerciseCard
-                key={ex.id}
-                mode="default"
-                exerciseName={ex.name}
-                setConfigs={ex.setConfigs}
-                onEdit={() => setEditingExercise(ex)}
-                onSetConfigsChange={(newSetConfigs) =>
-                  handleSetConfigsChange(ex.exercise_id, newSetConfigs)
-                }
-                onCardClick={() => setEditingExercise(ex)}
-              />
+            ) : secExercises.map((ex, exIndex) => (
+              <div key={ex.id} className="w-full" style={{ marginBottom: exIndex < secExercises.length - 1 ? '12px' : '0px' }}>
+                <ExerciseCard
+                  mode="default"
+                  exerciseName={ex.name}
+                  setConfigs={ex.setConfigs}
+                  onEdit={() => setEditingExercise(ex)}
+                  onSetConfigsChange={(newSetConfigs) =>
+                    handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                  }
+                  onCardClick={() => setEditingExercise(ex)}
+                />
+              </div>
             ))}
-            <ActionCard 
-              variant="primary"
-              text="Add another exercise" 
-              onClick={() => handleOpenAddExercise(section)}
-              className="outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
-            />
           </PageSectionWrapper>
         ))}
         </div>

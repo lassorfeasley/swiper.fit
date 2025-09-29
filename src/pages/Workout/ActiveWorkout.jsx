@@ -326,7 +326,7 @@ const ActiveWorkoutContent = () => {
       noTopPadding={!isDelegated}
       showSidebar={false}
     >
-      <div ref={listRef} className="flex flex-col min-h-screen">
+      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent">
         {/* Spacer to clear fixed ActiveWorkoutNav */}
         <div className="h-[68px]" aria-hidden="true" />
         {/* Warmup Section */}

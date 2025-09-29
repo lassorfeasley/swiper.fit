@@ -798,28 +798,24 @@ const CompletedWorkout = () => {
             {/* Exercise List */}
             <div className="self-stretch flex flex-col justify-start items-center overflow-hidden">
               {exercisesBySection.length > 0 ? (
-                exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
-                  return (
-                    <div key={section} className="self-stretch pt-12 flex flex-col justify-start items-center">
-                      <div className="self-stretch flex flex-col justify-start items-center">
-                        <div className="w-full max-w-[500px] pb-3 inline-flex justify-center items-center gap-2.5">
-                          <div className="flex-1 justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose capitalize">
-                            {section}
-                          </div>
-                        </div>
-                        <div className="w-full max-w-[500px] flex flex-col justify-start items-center gap-3 overflow-hidden">
-                          {sectionExercises.map((exercise) => (
-                            <WorkoutSummaryCard
-                              key={exercise.id}
-                              exerciseName={exercise.exercise}
-                              sets={exercise.setLog}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+                  <PageSectionWrapper
+                    key={section}
+                    section={section}
+                    deckGap={12}
+                    backgroundClass="bg-transparent"
+                    showPlusButton={false}
+                    style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+                  >
+                    {sectionExercises.map((exercise) => (
+                      <WorkoutSummaryCard
+                        key={exercise.id}
+                        exerciseName={exercise.exercise}
+                        sets={exercise.setLog}
+                      />
+                    ))}
+                  </PageSectionWrapper>
+                ))
               ) : (
                 <div className="text-center py-10">
                   <p>No sets were logged for this workout.</p>
