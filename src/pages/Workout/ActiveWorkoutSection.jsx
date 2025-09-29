@@ -1425,7 +1425,8 @@ const ActiveWorkoutSection = ({
         <PageSectionWrapper
           key={section}
           section={section}
-          showPlusButton={false}
+          showPlusButton={true}
+          onPlus={handleAddExercise}
           isFirst={section === "warmup"}
           className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
           deckGap={12}
@@ -1482,6 +1483,7 @@ const ActiveWorkoutSection = ({
         key={section}
         section={section}
         showPlusButton={true}
+        onPlus={handleAddExercise}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         deckGap={12}
