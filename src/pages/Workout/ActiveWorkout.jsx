@@ -355,8 +355,8 @@ const ActiveWorkoutContent = () => {
       <SwiperDialog
         open={isEndConfirmOpen}
         onOpenChange={setEndConfirmOpen}
-        onConfirm={() => setEndConfirmOpen(false)}
-        onCancel={handleConfirmEnd}
+        onConfirm={handleConfirmEnd}
+        onCancel={() => setEndConfirmOpen(false)}
         title="End workout?"
         confirmText="End workout"
         cancelText="Keep working out"
