@@ -45,9 +45,7 @@ export default function Landing() {
   return (
     <DemoWorkoutProvider>
       {/* Mobile Layout - Only visible on mobile breakpoints */}
-      <div className="md:hidden w-full min-h-screen bg-white flex flex-col">
-        {/* Navigation */}
-        <LoggedOutNav showAuthButtons={true} />
+      <div className="md:hidden w-full min-h-screen bg-stone-100 flex flex-col pt-20">
 
         {/* Main Content - Flexible sections */}
         <div className="flex-1 flex flex-col min-h-0">
@@ -70,15 +68,13 @@ export default function Landing() {
           <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">Developed by Lassor</div>
           <div className="self-stretch flex flex-col justify-start items-start gap-1">
             <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">www.Lassor.com</div>
-            <div className="w-56 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Feasley@Lassor.com</div>
+            <div className="w-50 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Feasley@Lassor.com</div>
           </div>
         </div>
       </div>
 
       {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
-      <div className="hidden md:block w-full bg-white">
-        {/* Navigation */}
-        <LoggedOutNav showAuthButtons={true} />
+      <div className="hidden md:block w-full bg-stone-100 pt-20">
 
         {/* Main Content - at least viewport height minus navbar; footer flows below */}
         <div

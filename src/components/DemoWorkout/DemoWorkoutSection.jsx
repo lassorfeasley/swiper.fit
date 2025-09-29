@@ -79,14 +79,15 @@ export default function DemoWorkoutSection() {
         className="w-full demo-workout-container flex-1 h-full min-h-0 flex flex-col items-center justify-start overflow-y-visible px-0"
       >
         <DeckWrapper
-          gap={0}
+          gap={12}
           className="flex flex-1 justify-center items-start h-full"
+          paddingTop={40}
+          paddingBottom={0}
+          maxWidth={400}
+          minWidth={0}
+          useChildMargin={true}
           style={{ 
-            minHeight: '100vh',
-            paddingTop: 40,
-            paddingBottom: 0,
-            maxWidth: '400px',
-            minWidth: '0px'
+            minHeight: '100vh'
           }}
 
         >
@@ -120,10 +121,17 @@ export default function DemoWorkoutSection() {
               </CardWrapper>
             );
           })}
-          <ActionCard
-            text="add exercise"
+          <div 
+            className="w-full max-w-[500px] py-3 inline-flex justify-start items-center gap-2.5 cursor-pointer"
             onClick={handleOpenAddExercise}
-          />
+          >
+            <div className="flex-1 justify-start text-neutral-neutral-400 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Add exercise</div>
+            <div className="size-5">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2V18M2 10H18" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </DeckWrapper>
       </div>
 

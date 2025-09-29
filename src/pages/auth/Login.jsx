@@ -92,15 +92,13 @@ export default function Login() {
   }
 
   return (
-    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">
-      {/* Navigation */}
-      <LoggedOutNav showAuthButtons={false} />
+    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-stone-100 pt-20">
 
       {/* Main Content */}
       <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
         <DeckWrapper gap={0} className="flex-1">
           <CardWrapper>
-            <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+            <div className="self-stretch p-5 bg-white rounded-[12px] border border-neutral-300 flex flex-col justify-start items-start gap-5">
               <form onSubmit={handleLogin} className="w-full flex flex-col gap-5">
                 {/* Header row */}
                 <div className="self-stretch inline-flex justify-between items-center">

@@ -58,9 +58,7 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-white">
-      {/* Navigation */}
-      <LoggedOutNav showAuthButtons={false} />
+    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-stone-100 pt-20">
 
       {/* Main Content */}
       <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
