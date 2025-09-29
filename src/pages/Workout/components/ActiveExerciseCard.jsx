@@ -220,7 +220,7 @@ const ActiveExerciseCard = React.forwardRef(({
               style={{ transitionDuration: `${CARD_ANIMATION_DURATION_MS}ms` }}
             >
               <div className="overflow-hidden w-full">
-                <div className={`w-full flex flex-col justify-start gap-3`}>
+                <div className={`w-full flex flex-col justify-start gap-5`}>
                   {sets.map((set, index) => (
                     <SwipeSwitch
                       key={set.routine_set_id || set.tempId || set.id || `exercise-${exerciseId}-set-${index}`}
