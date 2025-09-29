@@ -48,9 +48,10 @@ const SwiperDialog = ({
   return (
     <Dialog open={controlledOpen} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay />
+        <DialogOverlay onClick={() => onOpenChange?.(false)} />
         <DialogContent 
           className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0 ${contentClassName || ''}`}
+          onClick={(e) => e.stopPropagation()}
         >
           <DialogTitle className="sr-only">
             {title || 'Dialog'}
