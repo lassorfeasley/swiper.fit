@@ -734,7 +734,7 @@ const RoutineBuilder = () => {
         showSidebar={!isDelegated && !isMobile}
       >
         {/* Custom Glass Header */}
-        <div className={`fixed top-0 left-0 right-0 z-50 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-center ${!isMobile && !isDelegated ? 'md:left-64' : ''}`}>
+        <div className={`fixed top-0 left-0 right-0 z-50 px-3 pt-4 pb-3 backdrop-blur-sm bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-center ${!isMobile && !isDelegated ? 'md:left-64' : ''}`}>
           <div className="flex justify-start items-center gap-3">
             <div 
               className="h-14 px-3 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-4 cursor-pointer"
