@@ -50,18 +50,20 @@ const SwiperDialog = ({
       <DialogPortal>
         <DialogOverlay onClick={() => onOpenChange?.(false)} />
         <DialogContent 
-          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0 ${contentClassName || ''}`}
+          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none ${contentClassName || ''}`}
           onClick={() => onOpenChange?.(false)}
+          tabIndex={-1}
         >
           <DialogTitle className="sr-only">
             {title || 'Dialog'}
           </DialogTitle>
           <DeckWrapper 
-            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0" 
+            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none" 
             maxWidth={null}
             minWidth={null}
 
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
+            tabIndex={-1}
           >
             <div 
               className="w-full max-w-[500px] bg-white rounded-xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-center overflow-hidden"
