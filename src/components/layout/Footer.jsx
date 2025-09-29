@@ -6,7 +6,7 @@ export default function Footer() {
   
   return (
     <div 
-      className="w-full h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-3"
+      className="w-full h-36 px-3 pt-3 pb-24 bg-stone-100 border-t border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-3"
       style={{
         // Safari-specific positioning fix
         ...(isSafari && {

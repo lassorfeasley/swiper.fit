@@ -20,7 +20,7 @@ const PageSectionWrapper = ({
   items = [],
   onReorder,
   deckVariant = "list",
-  backgroundClass = "bg-white",
+  backgroundClass = "bg-transparent",
   style,
   ...props 
 }) => {

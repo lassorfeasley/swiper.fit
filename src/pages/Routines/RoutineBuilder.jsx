@@ -866,7 +866,7 @@ const RoutineBuilder = () => {
         
         {/* Start Workout Button - Absolutely positioned at bottom */}
         {!isDelegated && (
-          <div className={`fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)] ${!isMobile && !isDelegated ? 'md:left-64' : ''}`} style={{ paddingBottom: '20px' }}>
+          <div className={`fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] ${!isMobile && !isDelegated ? 'md:left-64' : ''}`} style={{ paddingBottom: '20px' }}>
             <div 
               className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
               onClick={handleStartWorkout}
