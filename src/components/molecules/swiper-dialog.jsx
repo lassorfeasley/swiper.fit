@@ -48,69 +48,59 @@ const SwiperDialog = ({
   return (
     <Dialog open={controlledOpen} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay className="bg-white/65 backdrop-blur-[.1px] z-[9999]" />
+        <DialogOverlay onClick={() => onOpenChange?.(false)} />
         <DialogContent 
-          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0 ${contentClassName || ''}`}
+          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none ${contentClassName || ''}`}
+          onClick={() => onOpenChange?.(false)}
+          tabIndex={-1}
         >
           <DialogTitle className="sr-only">
             {title || 'Dialog'}
           </DialogTitle>
           <DeckWrapper 
-            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden focus:outline-none focus:border-none focus:ring-0" 
+            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none" 
             maxWidth={null}
             minWidth={null}
 
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
-            onClick={(e) => e.stopPropagation()}
+            tabIndex={-1}
           >
             <div 
-              className="w-full bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-center overflow-x-hidden focus:outline-none focus:border-none focus:ring-0"
+              className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {title && (
-                <div className="self-stretch h-12 px-3 bg-neutral-50 border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
-                  <div className="self-stretch inline-flex justify-center items-center gap-2.5">
-                    <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
-                  </div>
+              <div className="self-stretch h-11 pl-3 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
+                <div className="self-stretch inline-flex justify-center items-center gap-2.5">
+                  <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
                 </div>
-              )}
+              </div>
               {description && (
                 <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
                   <div className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">{description}</div>
                 </div>
               )}
-              <div className="self-stretch max-h-[500px] overflow-y-auto overflow-x-hidden">
+              <div className="self-stretch p-3 bg-stone-100 flex flex-col justify-start items-start gap-2.5 max-h-[500px] overflow-y-auto overflow-x-hidden">
                 {children}
                 {(confirmText || cancelText) && (
                   <div 
-                    className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
+                    className="self-stretch flex flex-col justify-start items-start gap-4"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {confirmText && (
-                      <SwiperButton 
-                        variant={confirmVariant}
-                        onClick={(e) => {
-                          console.log('Confirm button clicked!');
-                          e.stopPropagation();
-                          handleConfirm();
-                        }}
-                        className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
+                        className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
                       >
-                        {confirmText}
-                      </SwiperButton>
+                        <span className="text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">{confirmText}</span>
+                      </button>
                     )}
                     {cancelText && (
-                      <SwiperButton 
-                        variant={cancelVariant}
-                        onClick={(e) => {
-                          console.log('Cancel button clicked!');
-                          e.stopPropagation();
-                          handleCancel();
-                        }}
-                        className="self-stretch h-12 px-4 py-2 inline-flex justify-center items-center gap-2.5"
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
+                        className="self-stretch h-12 px-4 py-2 bg-neutral-neutral-100 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
                       >
-                        {cancelText}
-                      </SwiperButton>
+                        <span className="text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">{cancelText}</span>
+                      </button>
                     )}
                   </div>
                 )}

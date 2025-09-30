@@ -21,11 +21,9 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
       {/* Workouts list */}
       <div className="flex justify-center flex-1">
         <DeckWrapper
-          gap={0}
-          paddingTop={82}
+          gap={12}
           paddingBottom={80}
-          maxWidth={500}
-          minWidth={325}
+          maxWidth={null}
           className="mt-0"
         >
           {workouts.length === 0 ? (
@@ -64,7 +62,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
                         );
                       }
                     }}
-                    className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full"
+                    className="cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-ring w-full"
                   >
                     <WorkoutCard
                       name={w.workout_name || "Workout"}

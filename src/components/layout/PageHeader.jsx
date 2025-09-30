@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -21,6 +21,9 @@ const PageHeader = forwardRef(({
   showSidebar = false,
   showUpload = false,
   showDelete = false,
+  sharingSection,
+  sharingNavAbove = false,
+  sharingNavContent,
   onBack,
   onSearch,
   onSettings,
@@ -43,13 +46,14 @@ const PageHeader = forwardRef(({
     }
   }, [searchActive]);
 
+
   // Programs variant (routine builder) – two-row header
   if (variant === 'programs') {
     return (
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 self-stretch bg-white inline-flex flex-col justify-start items-start",
+          "fixed top-0 z-[200] self-stretch bg-white inline-flex flex-col justify-start items-start",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
           className
         )}
@@ -119,84 +123,116 @@ const PageHeader = forwardRef(({
 
   // Glass variant for iOS-style workout summary
   if (variant === 'glass') {
+    // When sharing nav is above, render a two-row fixed header stack
+    if (sharingNavAbove && sharingNavContent) {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "fixed top-0 z-[200] inline-flex flex-col",
+            showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
+            className
+          )}
+        >
+          {/* Sharing row (above) */}
+          <div className="self-stretch px-3 pt-3 bg-stone-100 inline-flex justify-start items-start gap-2.5">
+            {sharingNavContent}
+          </div>
+          {/* Title/action row with gradient like Active Workout */}
+          <div className="self-stretch px-4 pt-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-center">
+            {/* Left: Title and optional subtitle */}
+            <div className="flex justify-start items-center gap-3">
+              <div className="inline-flex flex-col justify-center items-start gap-0.5">
+                <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+                  {title}
+                </div>
+                {titleRightText && (
+                  <div className="justify-center text-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                    {titleRightText}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Right: Actions (hide pod when empty) */}
+            {(showShare || showDelete) && (
+              <div className="inline-flex flex-col justify-center items-end gap-2.5">
+                <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                  {showShare && (
+                    <button 
+                      onClick={onShare} 
+                      aria-label="Share" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                  {showDelete && (
+                    <button 
+                      onClick={onDelete} 
+                      aria-label="Delete" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-50 w-full h-[82px] px-3 inline-flex justify-between items-center bg-[linear-gradient(to_top,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]",
-          showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full",
+          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start",
+          showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
       >
-        {/* Left side - Back button and title */}
+        {/* Left side - Title and Subtitle */}
         <div className="flex justify-start items-center gap-3">
-          {showBackButton && (
-            <div className="h-[54px] px-3 bg-white/80 shadow-[0px_0px_8px_#D4D4D4] rounded-[27px] backdrop-blur-[1px] flex justify-center items-center md:hidden">
-              <button
-                onClick={onBack}
-                aria-label="Back"
-                className="flex items-center justify-center"
-              >
-                <ArrowLeft className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-              </button>
+          <div className="inline-flex flex-col justify-center items-start gap-0.5">
+            <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+              {title}
             </div>
-          )}
-          <div className="flex flex-col justify-center text-black text-lg font-medium font-['Be_Vietnam_Pro'] leading-5">
-            {title}
+            {titleRightText && (
+              <div className="justify-center text-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                {titleRightText}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right side - Action buttons (render only if any are shown) */}
-        {(showUpload || showDelete || showShare || showSettings || showSearch) && (
-          <div className="flex flex-col justify-center items-end gap-2.5">
-            <div className="h-[54px] px-3 pr-5 bg-white/80 shadow-[0px_0px_8px_#E5E5E5] rounded-[27px] backdrop-blur-[1px] inline-flex justify-center items-center gap-4">
-              {showSearch && (
-                <button
-                  onClick={onSearch}
-                  aria-label="Search"
-                  className="flex items-center justify-center"
-                >
-                  <Search className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showShare && (
-                <button
-                  onClick={onShare}
-                  aria-label="Share"
-                  className="flex items-center justify-center"
-                >
-                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showSettings && (
-                <button
-                  onClick={onSettings}
-                  aria-label="Settings"
-                  className="flex items-center justify-center"
-                >
-                  <Settings2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showUpload && (
-                <button
-                  onClick={onUpload}
-                  aria-label="Upload"
-                  className="flex items-center justify-center"
-                >
-                  <Upload className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
-              {showDelete && (
-                <button
-                  onClick={onDelete}
-                  aria-label="Delete"
-                  className="flex items-center justify-center"
-                >
-                  <Trash2 className="w-8 h-8 text-neutral-700" strokeWidth={2} />
-                </button>
-              )}
+        {/* Right side - Action buttons (hide pod when empty) */}
+        {sharingSection ? (
+          <div className="inline-flex flex-col justify-center items-end gap-2.5">{sharingSection}</div>
+        ) : (
+          (showShare || showDelete) && (
+            <div className="inline-flex flex-col justify-center items-end gap-2.5">
+              <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                {showShare && (
+                  <button 
+                    onClick={onShare} 
+                    aria-label="Share" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+                {showDelete && (
+                  <button 
+                    onClick={onDelete} 
+                    aria-label="Delete" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     );
@@ -208,10 +244,10 @@ const PageHeader = forwardRef(({
       data-show-plus-button={showPlusButton}
       className={cn(
         variant === 'dark-fixed'
-          ? "fixed top-0 z-50 self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
+          ? "fixed top-0 z-[200] self-stretch h-11 bg-neutral-700 border-b border-neutral-600 inline-flex justify-between items-center"
           : searchActive
-            ? "fixed top-0 z-50 self-stretch h-11 bg-white backdrop-blur-xs border-b border-neutral-300 inline-flex justify-between items-center"
-            : "fixed top-0 z-50 self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
+            ? "fixed top-0 z-[200] self-stretch h-11 bg-white backdrop-blur-xs border-b border-neutral-300 inline-flex justify-between items-center"
+            : "fixed top-0 z-[200] self-stretch h-11 bg-white border-b border-neutral-300 inline-flex justify-between items-center",
         showSidebar
           ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]"
           : "left-0 w-full",
@@ -251,7 +287,7 @@ const PageHeader = forwardRef(({
       {/* Action / Search area */}
       {searchActive ? (
         <div className="Pageactions inline-flex justify-start items-center">
-          <div className="w-96 h-11 max-w-96 min-w-64 inline-flex flex-col justify-center items-start gap-2">
+          <div className="w-96 h-11 max-w-96 inline-flex flex-col justify-center items-start gap-2">
             <div className="self-stretch pl-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5">
               <TextInput
                 ref={searchInputRef}
@@ -280,8 +316,9 @@ const PageHeader = forwardRef(({
           </button>
         </div>
       ) : (
-        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout) && (
+        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout || sharingSection) && (
           <div className="Pageactions inline-flex justify-start items-center">
+            {sharingSection}
             {showSearch && (
               <button
                 className={cn(
@@ -399,6 +436,9 @@ PageHeader.propTypes = {
   showSidebar: PropTypes.bool,
   showUpload: PropTypes.bool,
   showDelete: PropTypes.bool,
+  sharingSection: PropTypes.node,
+  sharingNavAbove: PropTypes.bool,
+  sharingNavContent: PropTypes.node,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,

@@ -27,6 +27,7 @@ import OGImageAdmin from "./pages/OGImageAdmin";
 import Sharing from "./pages/Sharing/Sharing";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
+import LoggedOutNav from "./components/layout/LoggedOutNav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
@@ -180,6 +181,9 @@ function AppContent() {
   
   return (
     <div className="min-h-screen relative overflow-auto">
+      {/* Persistent LoggedOutNav for unauthenticated routes */}
+      {!isAuthenticatedRoute && <LoggedOutNav showAuthButtons={true} />}
+      
       {/* Main Content */}
       <main className="min-h-screen">
         <Routes>

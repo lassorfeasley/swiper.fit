@@ -15,7 +15,7 @@ const SideBarNav = () => {
     <aside
       data-layer="Property 1=sidebar-desktop"
       className="hidden md:fixed md:inset-y-0 md:left-0 md:inline-flex md:flex-col md:w-64 z-[200] overflow-visible"
-      style={isDelegated ? { top: "var(--header-height)", height: "calc(100% - var(--header-height))" } : undefined}
+      style={undefined}
     >
       <div data-layer="sidebar-wrapper" className="ml-5 my-5 w-[calc(16rem-20px)] h-[calc(100%-40px)] bg-white rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex flex-col justify-start items-stretch overflow-hidden">
         <div data-layer="logo-wrapper" className="self-stretch px-4 pt-5 flex flex-col justify-center items-start gap-2.5">

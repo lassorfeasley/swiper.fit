@@ -1408,7 +1408,9 @@ const ActiveWorkoutSection = ({
         showPlusButton={false}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+        deckGap={12}
+        backgroundClass="bg-transparent"
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
       >
         <div className="text-center py-8 text-gray-500">
           Loading {section} exercises...
@@ -1423,15 +1425,15 @@ const ActiveWorkoutSection = ({
         <PageSectionWrapper
           key={section}
           section={section}
-          showPlusButton={false}
+          showPlusButton={true}
+          onPlus={handleAddExercise}
           isFirst={section === "warmup"}
           className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-          style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+          deckGap={12}
+          backgroundClass="bg-transparent"
+          style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
         >
-          <ActionCard 
-            text="add exercise" 
-            onClick={handleAddExercise}
-          />
+          {/* Removed inline add exercise card; use header button instead */}
         </PageSectionWrapper>
 
         {/* Add Exercise Form */}
@@ -1480,10 +1482,14 @@ const ActiveWorkoutSection = ({
       <PageSectionWrapper
         key={section}
         section={section}
-        showPlusButton={false}
+        showPlusButton={true}
+        onPlus={handleAddExercise}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+        deckGap={12}
+        backgroundClass="bg-transparent"
+        paddingX={0}
+        style={{ paddingBottom: 0, paddingTop: 40 }}
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);
@@ -1535,10 +1541,7 @@ const ActiveWorkoutSection = ({
             </CardWrapper>
           );
         })}
-        <ActionCard 
-          text="add exercise" 
-          onClick={handleAddExercise}
-        />
+        {/* Removed inline add exercise card; use header button instead */}
       </PageSectionWrapper>
 
       {/* Add Exercise Form */}

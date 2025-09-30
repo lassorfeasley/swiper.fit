@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import SectionWrapperLabel from "./SectionWrapperLabel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,14 +12,16 @@ const PageSectionWrapper = ({
   section, 
   children, 
   className, 
-  deckGap = 0, 
+  deckGap = 12, 
   showPlusButton = false, 
   onPlus, 
   isFirst = false,
   reorderable = false,
   items = [],
   onReorder,
-
+  deckVariant = "list",
+  backgroundClass = "bg-transparent",
+  paddingX = 20,
   style,
   ...props 
 }) => {
@@ -40,29 +41,41 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full bg-white flex flex-col justify-start items-center",
+        "Workoutcardwrapper w-full flex flex-col justify-start items-center",
+        backgroundClass,
         className
       )}
       {...domProps}
     >
-      {/* Header */}
-      <SectionWrapperLabel 
-        showPlusButton={showPlusButton} 
-        onPlus={onPlus}
-      >
-        {displayTitle}
-      </SectionWrapperLabel>
-
-      {/* Content with spacing around header & footer */}
-      <div className={cn("w-full self-stretch px-[28px] flex justify-center", className?.includes("flex-1") && "flex-1")}>
+      {/* Content with the section title rendered inside DeckWrapper header */}
+      <div className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }>
         <DeckWrapper 
-          gap={deckGap} 
+          gap={deckGap}
+          paddingX={paddingX}
+          useChildMargin={!reorderable}
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
+          variant={deckVariant}
+          paddingBottom={0}
+          maxWidth={null}
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
+          header={null}
         >
+          {/* Section title as first item in flow */}
+          <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: '12px' }}>
+            <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+              {displayTitle}
+            </div>
+            {showPlusButton && (
+              <button onClick={onPlus} aria-label="Add exercise" className="p-1">
+                <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
+          </div>
           {children}
         </DeckWrapper>
       </div>
@@ -81,6 +94,7 @@ PageSectionWrapper.propTypes = {
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
+  deckVariant: PropTypes.oneOf(["list", "cards"]),
 
 };
 

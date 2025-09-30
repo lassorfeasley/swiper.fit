@@ -24,16 +24,15 @@ const SwiperForm = ({
 }) => {
   const isMobile = useIsMobile();
   const { isDelegated } = useAccount();
-  const delegateOverlayStyle = isDelegated
-    ? { top: "var(--header-height)", height: "calc(100% - var(--header-height))" }
-    : undefined;
+  // Always cover the full viewport height, even when sharing/delegate nav is active
+  const delegateOverlayStyle = { top: 0, height: "100%" };
 
   return (
     <div>
       {isMobile ? (
         <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent
-            className={cn("p-0 max-h-[90dvh] z-[100]", className)}
+            className={cn("p-0 h-[100dvh]", className)}
             style={delegateOverlayStyle}
           >
             {leftAction && (
@@ -54,7 +53,7 @@ const SwiperForm = ({
         <SwiperSheet
           open={open}
           onOpenChange={onOpenChange}
-          className={cn("z-[100] p-0", className)}
+          className={cn("p-0", className)}
           style={delegateOverlayStyle}
           title={title}
           description={description}

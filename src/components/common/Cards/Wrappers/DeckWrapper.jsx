@@ -11,17 +11,20 @@ const DeckWrapper = forwardRef(
   (
     {
       children,
-      gap = 0, // spacing between items
-      paddingX = 0, // horizontal padding (px)
-      paddingTop = 40, // top padding (px)
+      gap = 12, // spacing between items (px)
+      paddingX = 20, // horizontal padding (px)
+      paddingTop, // top padding; if undefined, uses header-aware default
       maxWidth = 500, // maximum width (px)
       minWidth = 0, // minimum width (px)
       className,
+      variant = "list", // "list" shows deck borders and separators, "cards" centers standalone card components
       reorderable = false,
       items = [],
       onReorder,
       forceMinHeight = false, // Force minimum screen height
       paddingBottom, // custom bottom padding
+      header = null,
+      useChildMargin = false,
       ...props
     },
     ref
@@ -35,10 +38,16 @@ const DeckWrapper = forwardRef(
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
     
+    // Compute top padding – default to header height + 20px when a page header is present.
+    // Falls back to 20px when --header-height is unset.
+    const computedPaddingTop =
+      paddingTop !== undefined ? paddingTop : 'calc(var(--header-height, 0px) + 20px)';
+
     const style = {
       gap,
-      paddingTop,
-      paddingBottom: paddingBottom !== undefined ? paddingBottom : 80,
+      rowGap: gap,
+      paddingTop: computedPaddingTop,
+      paddingBottom: paddingBottom !== undefined ? paddingBottom : 40,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
       ...(paddingX !== undefined ? { paddingLeft: paddingX, paddingRight: paddingX } : {}),
@@ -46,7 +55,7 @@ const DeckWrapper = forwardRef(
     };
 
     const containerClasses = cn(
-      "card-container w-full flex flex-col items-center border-l border-r border-neutral-300",
+      "card-container w-full flex flex-col items-center",
       className
     );
 
@@ -67,6 +76,11 @@ const DeckWrapper = forwardRef(
           style={style}
           {...domProps}
         >
+          {header && (
+            <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
+              {header}
+            </div>
+          )}
           <Reorder.Group
             axis="y"
             values={items}
@@ -78,18 +92,20 @@ const DeckWrapper = forwardRef(
               <Reorder.Item
                 key={item.id}
                 value={item}
-                className={`w-full flex justify-center ${idx === 0 ? 'border-t border-neutral-300' : ''} border-b border-neutral-300`}
+                className={cn(
+                  "w-full flex justify-center"
+                )}
                 style={{ 
                   touchAction: "none",
-                  position: "relative"
+                  position: "relative",
+                  marginTop: idx > 0 ? gap : 0
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}
                 dragConstraints={containerRef}
                 dragElastic={0}
                 whileDrag={{ 
-                  zIndex: 9999,
-                  borderTop: "1px solid rgb(212 212 212)"
+                  zIndex: 9999
                 }}
               >
                 <div className="w-full">
@@ -120,6 +136,7 @@ const DeckWrapper = forwardRef(
               <div 
                 key={`additional-${index}`}
                 className="w-full flex justify-center"
+                style={{ marginTop: index === 0 ? gap : undefined }}
               >
                 {React.cloneElement(child, {
                   ...(() => {
@@ -141,25 +158,28 @@ const DeckWrapper = forwardRef(
         style={style}
         {...domProps}
       >
+        {header && (
+          <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
+            {header}
+          </div>
+        )}
         {React.Children.map(children, (child, index) => {
           if (!React.isValidElement(child)) return child;
-          
-          // Wrap each child in a div with appropriate borders
-          const isLastChild = index === React.Children.count(children) - 1;
-          const isFirstChild = index === 0;
           return (
-            <div 
+            <div
               key={child.key || index}
-              className={`w-full flex justify-center ${isFirstChild ? 'border-t border-neutral-300' : ''}`}
+              className={cn("w-full flex justify-center")}
+              style={useChildMargin ? { marginTop: index > 0 ? gap : 0 } : undefined}
             >
               {React.cloneElement(child, {
                 ...(() => {
-                  const { isFirstCard: _, ...filteredProps } = child.props;
-                  return filteredProps;
+                  const { isFirstCard: _, style: childStyle, ...filteredProps } = child.props;
+                  return {
+                    ...filteredProps,
+                    style: childStyle,
+                  };
                 })(),
-                ...(
-                  typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}
-                )
+                ...(typeof child.type !== 'string' ? { isFirstCard: index === 0 } : {}),
               })}
             </div>
           );
@@ -175,15 +195,18 @@ DeckWrapper.propTypes = {
   children: PropTypes.node.isRequired,
   gap: PropTypes.number,
   paddingX: PropTypes.number,
+  paddingTop: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   maxWidth: PropTypes.number,
   minWidth: PropTypes.number,
   className: PropTypes.string,
+  variant: PropTypes.oneOf(["list", "cards"]),
   reorderable: PropTypes.bool,
   items: PropTypes.array,
   onReorder: PropTypes.func,
   isFirstCard: PropTypes.bool,
   forceMinHeight: PropTypes.bool,
   paddingBottom: PropTypes.number,
+  header: PropTypes.node,
 };
 
 export default DeckWrapper; 

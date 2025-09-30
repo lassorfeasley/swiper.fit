@@ -67,7 +67,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
                         );
                       }
                     }}
-                    className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring w-full"
+                    className="cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-ring w-full"
                   >
                     <WorkoutCard
                       name={w.workout_name || "Workout"}

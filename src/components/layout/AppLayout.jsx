@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAccount } from "@/contexts/AccountContext";
-import DelegateModeHeader from "@/components/layout/DelegateModeHeader";
 import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/organisms/side-bar-nav";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
+import { cn } from "@/lib/utils";
+import { useLocation } from "react-router-dom";
 
 export default function AppLayout({
   children,
@@ -20,11 +21,13 @@ export default function AppLayout({
   enableScrollSnap = false,
   noTopPadding = false,
   hideHeader = false,
+  hideDelegateHeader = false,
   title,
   ...headerProps
 }) {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const location = useLocation();
 
   // Detect delegate mode
   const { isDelegated } = useAccount();
@@ -65,9 +68,9 @@ export default function AppLayout({
   }, [headerProps]);
 
   const allowedHeaderProps = [
-    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showShare', 'showStartWorkout',
+    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onUpload', 'onDelete',
-    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText'
+    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent'
   ];
 
   const filteredHeaderProps = Object.fromEntries(
@@ -78,17 +81,23 @@ export default function AppLayout({
   const showPlusButtonProp = restHeaderProps.showPlusButton ?? showAddProp;
 
   const variant = restHeaderProps.variant;
-  const reserveSpace = restHeaderProps.reserveSpace;
+  // Reserve space for the fixed header by default globally, except for the 'glass' variant
+  const reserveSpace = restHeaderProps.reserveSpace ?? (variant !== 'glass');
 
-  // Calculate header height - when delegated, we need space for the delegate header even if hideHeader is true
-  const baseHeaderHeight = hideHeader && !isDelegated ? 0 : headerHeight;
-  const totalHeaderHeight = isDelegated ? (hideHeader ? 44 : baseHeaderHeight + 44) : baseHeaderHeight;
+  // Calculate header height – old delegate banner removed, so no extra offset needed
+  const baseHeaderHeight = hideHeader ? 0 : headerHeight;
+  const totalHeaderHeight = baseHeaderHeight;
 
   return (
-    <div className="min-h-screen flex bg-white relative">
+    <div className="min-h-screen flex bg-stone-100 relative">
       {showSidebar && <SideBarNav />}
-      <div className={showSidebar ? "flex flex-col flex-1 md:ml-64 overflow-y-auto min-h-0 relative z-[100]" : "flex flex-col flex-1 overflow-y-auto min-h-0"}>
-        {isDelegated && <DelegateModeHeader />}
+      <div 
+        className={cn(
+          "flex flex-col flex-1 z-[100]",
+          showSidebar ? "md:ml-64" : ""
+        )}
+      >
+        {/* Old delegate banner removed */}
         {!hideHeader && (
           <PageHeader
             ref={headerRef}
@@ -100,30 +109,26 @@ export default function AppLayout({
             showDeleteOption={showDeleteOption}
             searchValue={searchValue}
             onSearchChange={onSearchChange}
-            className={isDelegated ? "fixed top-[var(--header-height)] left-0 right-0 transition-[top] ease-in-out" : undefined}
+            className={undefined}
           />
         )}
-        <main
-          data-scroll-snap-enabled={enableScrollSnap}
-          data-no-top-padding={noTopPadding}
-          style={{
-            "--mobile-nav-height": "80px",
-            paddingTop: reserveSpace ? `${totalHeaderHeight}px` : 0,
-            transition: 'padding-top 0.3s ease-in-out',
-            height: '100%',
-            ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
-          }}
-          className="flex flex-col flex-1 min-h-0 overflow-y-auto"
-        >
-          <div className="flex-1 min-h-0 flex flex-col" style={{ height: '100%' }}>
-            <div className="flex-1 min-h-0">
+        <div>
+          <main
+            data-scroll-snap-enabled={enableScrollSnap}
+            data-no-top-padding={noTopPadding}
+            style={{
+              "--mobile-nav-height": "80px",
+              ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
+            }}
+          >
+            <div className="pb-24 md:pb-0">
               {children}
             </div>
-            <div className="mt-auto" style={{ marginTop: 'auto' }}>
-              <Footer />
-            </div>
-          </div>
-        </main>
+            {/* Spacer above footer */}
+            <div aria-hidden="true" style={{ height: 60 }} />
+            <Footer />
+          </main>
+        </div>
       </div>
     </div>
   );
@@ -142,5 +147,6 @@ AppLayout.propTypes = {
   enableScrollSnap: PropTypes.bool,
   noTopPadding: PropTypes.bool,
   hideHeader: PropTypes.bool,
+  hideDelegateHeader: PropTypes.bool,
   title: PropTypes.string,
 };

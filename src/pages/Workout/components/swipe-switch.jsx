@@ -79,8 +79,8 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
   const THUMB_WIDTH = 80; // w-20
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // p-2 in Tailwind
-  const RAIL_RADIUS = '8px';
-  const THUMB_RADIUS = '8px';
+  const RAIL_RADIUS = '12px';
+  const THUMB_RADIUS = '12px';
   const DRAG_COMPLETE_THRESHOLD = 70;
   const getContentWidth = () => {
     if (!trackWidth || isNaN(trackWidth)) return THUMB_WIDTH;
@@ -139,44 +139,35 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
       borderRadius: THUMB_RADIUS 
     }, tweenConfig);
 
-    // Step 2: After slide animation completes, expand thumb to fill inner rail area
-    const slideDurationMs = tweenConfig.duration * 1000; // 350ms
-    const expand1Delay = slideDurationMs + 100; // Small delay after slide
-    const expand1DurationMs = tweenConfig.duration * 1000; // 350ms
+    // Step 2: After slide completes, expand to fill content area
+    const slideDurationMs = tweenConfig.duration * 1000;
+    const expandDelay = slideDurationMs + 50;
+    
     setTimeout(() => {
-      if (isMountedRef.current) {
+      if (!isMountedRef.current) return;
+      
+      // First expand within the padded area
+      controls.start({
+        x: 0,
+        width: getContentWidth(),
+        backgroundColor: '#22C55E',
+        borderRadius: THUMB_RADIUS
+      }, tweenConfig).then(() => {
+        // Then expand to full rail dimensions (width and height together)
         controls.start({
-            x: 0,
-            width: getContentWidth(),
-            backgroundColor: "#22C55E",
-            borderRadius: RAIL_RADIUS
-        }, tweenConfig);
-      }
-    }, expand1Delay);
-
-    // Step 3: After first expansion, expand thumb to fill full rail and collapse padding
-    const collapseDelay = expand1Delay + expand1DurationMs + 50; // Short delay
-    const collapseDurationMs = 500; // Must match rail's transition duration
-    setTimeout(() => {
-      if (isMountedRef.current) {
-        setIsPaddingCollapsed(true);
-        controls.start({
-          x: 0,
-          left: 0,
-          width: '100%',
+          left: -RAIL_HORIZONTAL_PADDING_PER_SIDE,
+          width: `calc(100% + ${RAIL_HORIZONTAL_PADDING_PER_SIDE * 2}px)`,
           height: '100%',
           backgroundColor: '#22C55E',
-          borderRadius: 0
-        }, { type: 'tween', ease: 'easeInOut', duration: collapseDurationMs / 1000 });
-      }
-    }, collapseDelay);
-
-    // Step 4: Reset manual swipe flag after animation completes
-    const totalAnimationTime = collapseDelay + collapseDurationMs + 100; // Small buffer
-    setTimeout(() => {
-      setIsManualSwipe(false);
-      setIsAnimating(false);
-    }, totalAnimationTime);
+          borderRadius: THUMB_RADIUS
+        }, { type: 'tween', ease: 'easeInOut', duration: 0.4 }).then(() => {
+          setTimeout(() => {
+            setIsManualSwipe(false);
+            setIsAnimating(false);
+          }, 100);
+        });
+      });
+    }, expandDelay);
   }, [controls, thumbTravel, tweenConfig, getContentWidth]);
 
   // Reset flags when status changes
@@ -254,10 +245,17 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   // Set mounted flag
   useEffect(() => {
     isMountedRef.current = true;
+    // Set initial thumb position
+    controls.set({ 
+      x: 0, 
+      width: THUMB_WIDTH, 
+      backgroundColor: "#FFFFFF", 
+      borderRadius: THUMB_RADIUS 
+    });
     return () => {
       isMountedRef.current = false;
     };
-  }, []);
+  }, [controls]);
 
   const handleDragEnd = (_, info) => {
     setIsDragging(false);
@@ -319,101 +317,106 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
 
   return (
     <div
-      className={`self-stretch h-16 bg-neutral-200 flex flex-col justify-center w-full cursor-pointer ${className}`}
+      className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
-        e.stopPropagation();
-        // Add a small delay to allow drag events to register first
-        setTimeout(() => {
-          // Only allow onClick if no drag movement was detected and not currently dragging
-          if (!dragMoved.current && !isDragging) {
-            onClick?.(e);
-          }
-        }, 10);
+        // Only intercept clicks to open the set editor when the set is editable.
+        // When a set is complete, let the click bubble up to focus the card.
+        if (status === 'default') {
+          e.stopPropagation();
+          setTimeout(() => {
+            if (!dragMoved.current && !isDragging) {
+              onClick?.(e);
+            }
+          }, 10);
+        }
       }}
       style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
     >
-      <div
-        ref={trackRef}
-        className={`Rail self-stretch flex-1 inline-flex items-center justify-end relative overflow-hidden transition-[padding-left,padding-right] duration-500 ease-in-out ${isPaddingCollapsed ? "pl-0 pr-0" : "pl-2 pr-2"}`}
-        style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
-      >
-        <motion.div
-          className="Thumb w-20 bg-white flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-          style={thumbStyle}
-          drag={!isVisuallyComplete && isDefault ? "x" : false}
-          dragElastic={0}
-          dragMomentum={false}
-          dragConstraints={{ left: 0, right: thumbTravel }}
-          onDragStart={() => { 
-            setIsDragging(true); 
-            dragMoved.current = false;
-            dragStartTime.current = Date.now();
-          }}
-          onDrag={(e, info) => {
-            // Use a higher threshold for drag detection to prevent accidental clicks
-            if (Math.abs(info.delta.x) > 5 || Math.abs(info.delta.y) > 5 || Math.abs(info.offset.x) > 10) {
-              dragMoved.current = true;
-            }
-          }}
-          onDragEnd={handleDragEnd}
-          animate={controls}
-          whileDrag={{ cursor: "grabbing" }}
-          transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
-        >
-          <div className="size-7 relative overflow-hidden flex items-center justify-center">
-            {isVisuallyComplete && (
-              <div className="Check relative flex items-center justify-center">
-                {isOptimistic ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
-                ) : (
-                  <Check className="w-5 h-5 text-white" />
-                )}
-              </div>
-            )}
-          </div>
-        </motion.div>
-        {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 h-12 inline-flex flex-col justify-center items-end gap-1 pointer-events-none">
-            {set_variant && (
-              <div className="text-right text-xs font-bold uppercase leading-3 tracking-wide text-neutral-500">
-                {set_variant}
-              </div>
-            )}
-            <div className="inline-flex justify-end items-center gap-2">
-              {set_type === 'timed' && (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Clock className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">
-                    {duration >= 60 ? formatTime(duration) : `${duration}`}
-                  </div>
-                </div>
-              )}
-              {set_type !== 'timed' && typeof reps === 'number' && (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Repeat2 className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">{reps}</div>
-                </div>
-              )}
-              {weight_unit === 'body' ? (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">BW</div>
-                </div>
-              ) : (
-                <div className="flex justify-center items-center gap-0.5">
-                  <Weight className="size-4 text-neutral-500" />
-                  <div className="text-center text-lg font-bold text-neutral-500">{weight || 0}</div>
+      {set_variant && (
+        <div className="SetOne self-stretch justify-center text-neutral-neutral-400 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+          {set_variant}
+        </div>
+      )}
+      <div className="Swipeswitch self-stretch bg-neutral-neutral-400 rounded-xl flex flex-col justify-center overflow-hidden">
+        <div className="Swipeswitch self-stretch bg-neutral-neutral-200 flex flex-col justify-start items-start">
+          <div
+            ref={trackRef}
+            className={"Rail self-stretch p-2 inline-flex justify-between items-center flex-nowrap relative overflow-hidden"}
+            style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+          >
+          {/* Left spacer to align with draggable thumb */}
+          <div style={{ width: THUMB_WIDTH, height: 48 }} />
+
+          {/* Draggable Thumb */}
+          <motion.div
+            className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
+            style={{ ...thumbStyle, pointerEvents: isVisuallyComplete ? 'none' : 'auto' }}
+            drag={!isVisuallyComplete && isDefault ? "x" : false}
+            dragElastic={0}
+            dragMomentum={false}
+            dragConstraints={{ left: 0, right: thumbTravel }}
+            onDragStart={() => { 
+              setIsDragging(true); 
+              dragMoved.current = false;
+              dragStartTime.current = Date.now();
+            }}
+            onDrag={(e, info) => {
+              if (Math.abs(info.delta.x) > 5 || Math.abs(info.delta.y) > 5 || Math.abs(info.offset.x) > 10) {
+                dragMoved.current = true;
+              }
+            }}
+            onDragEnd={handleDragEnd}
+            animate={controls}
+            whileDrag={{ cursor: "grabbing" }}
+            transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
+          >
+            <div className="size-10 relative flex items-center justify-center">
+              {isVisuallyComplete && (
+                <div className="Check relative flex items-center justify-center">
+                  {isOptimistic ? (
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  ) : (
+                    <Check className="w-8 h-8 text-white" />
+                  )}
                 </div>
               )}
             </div>
+          </motion.div>
+          {/* Absolute overlay for text so it doesn't shift */}
+          {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
+            <div className="absolute inset-0 flex justify-end items-center pointer-events-none px-2" style={{ zIndex: 1 }}>
+              <div className="Cardpill h-12 flex items-center gap-4">
+                <div className="Frame1 flex justify-center items-baseline gap-0.5">
+                  {set_type === 'timed' ? (
+                    <>
+                      <Clock className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">
+                        {duration >= 60 ? formatTime(duration) : `${duration}`}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Repeat2 className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{typeof reps === 'number' ? reps : ''}</div>
+                    </>
+                  )}
+                </div>
+                <div className="Frame2 flex justify-center items-baseline gap-0.5">
+                  <Weight className="size-4 text-neutral-neutral-500 relative -top-0.5" />
+                  <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{weight_unit === 'body' ? 'BW' : (weight || 0)}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+            {/* Optimistic update indicator */}
+            {isOptimistic && (
+              <div className="absolute top-1 right-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              </div>
+            )}
           </div>
-        )}
-        {/* Optimistic update indicator */}
-        {isOptimistic && (
-          <div className="absolute top-1 right-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

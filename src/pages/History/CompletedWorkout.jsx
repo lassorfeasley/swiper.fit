@@ -14,10 +14,11 @@ import { TextInput } from "@/components/molecules/text-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import WorkoutSummaryCard from "@/components/common/Cards/WorkoutSummaryCard";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
@@ -162,8 +163,42 @@ const CompletedWorkout = () => {
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   const ogAttemptedRef = useRef(false);
 
-  const { isDelegated } = useAccount();
+  const { isDelegated, actingUser, returnToSelf } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
+  // Helper to format delegate display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return email;
+  };
+
+  const headerSharingContent = isDelegated ? (
+    <>
+      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+        <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
+          <Blend className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex justify-center items-center gap-5">
+          <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+            {formatUserDisplay(actingUser)}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Exit delegate mode"
+        onClick={returnToSelf}
+        className="w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+    </>
+  ) : undefined;
 
   const openShareSettings = () => setShareDialogOpen(true);
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
@@ -665,7 +700,10 @@ const CompletedWorkout = () => {
   const shareWorkout = async () => {
     setSharing(true);
     try {
-      await ensurePublic();
+      // Only ensure public if user is logged in and owns the workout
+      if (!isPublicWorkoutView && isOwner) {
+        await ensurePublic();
+      }
 
       const url = `${window.location.origin}/history/public/workout/${workoutId}`;
       const title = workout?.workout_name || 'Completed Workout';
@@ -716,7 +754,11 @@ const CompletedWorkout = () => {
       <AppLayout
         hideHeader={false}
         title="Workout summary"
+        titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
         variant="glass"
+        hideDelegateHeader={true}
+        sharingNavAbove={isDelegated}
+        sharingNavContent={headerSharingContent}
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
         onBack={() => {
           if (isPublicWorkoutView && workout) {
@@ -755,75 +797,72 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          <div className="flex flex-col min-h-screen">
-            {/* Styled Image and Routine Label Section */}
-            <div className="self-stretch pt-[82px] pb-5 inline-flex flex-col justify-start items-center">
-              <div className="self-stretch px-3 md:px-0 flex flex-col justify-center items-center gap-5">
-                {/* Image Container */}
-                <div className="w-full max-w-[500px] rounded-[20px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] overflow-hidden cursor-pointer" onClick={openShareSettings} title="Share settings">
-                  <img
-                    className="w-full h-auto block" 
-                    src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
-                    alt="Workout social preview"
-                    draggable={false}
-                  />
-                </div>
-                
-                {/* Routine Label Container */}
-                {workout?.routine_id && (
-                  <div 
-                    className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
-                    onClick={handleOpenRoutine}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
-                    aria-label="Open routine"
-                  >
-                    <div className="p-2.5 flex justify-start items-center gap-2.5">
-                      <div className="relative">
-                        <Star className="w-6 h-6 text-neutral-600" strokeWidth={2} />
-                      </div>
-                    </div>
-                    <div className="flex justify-center items-center gap-5">
-                      <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                        {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
-                      </div>
+          <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+            {/* Image and Routine Label Section */}
+            <div className="self-stretch flex flex-col justify-center items-center gap-3">
+              {/* Image Container */}
+              <div className="w-full max-w-[500px] rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+                <img 
+                  className="w-full h-auto max-h-64" 
+                  src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
+                  alt="Workout social preview"
+                  draggable={false}
+                  onClick={shareWorkout}
+                  title="Share"
+                />
+              </div>
+              
+              {/* Routine Label Container */}
+              {workout?.routine_id && (
+                <div 
+                  className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                  onClick={handleOpenRoutine}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
+                  aria-label="Open routine"
+                >
+                  <div className="p-2.5 flex justify-start items-center gap-2.5">
+                    <div className="relative">
+                      <Star className="w-6 h-6 text-neutral-600" strokeWidth={2} />
                     </div>
                   </div>
-                )}
-              </div>
+                  <div className="flex justify-center items-center gap-5">
+                    <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                      {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Exercise List */}
-            {exercisesBySection.length > 0 ? (
-              exercisesBySection.map(({ section, exercises: sectionExercises }, idx) => {
-              // Simple approach: extend the last section
-              const isLastSection = idx === exercisesBySection.length - 1;
-              
-              return (
-                <PageSectionWrapper
-                  key={section}
-                  section={section}
-                  deckGap={0}
-                  isFirst={idx === 0}
-                  className={`${idx > 0 ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
-                  style={{ paddingTop: 40, paddingBottom: 80, maxWidth: '500px', minWidth: '325px' }}
-                >
-                  {sectionExercises.map((exercise) => (
-                    <ExerciseCompletedCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      setLog={exercise.setLog}
-                    />
-                  ))}
-                </PageSectionWrapper>
-              );
-            })
-          ) : (
-            <div className="text-center py-10">
-              <p>No sets were logged for this workout.</p>
+            <div className="self-stretch flex flex-col justify-start items-center overflow-hidden">
+              {exercisesBySection.length > 0 ? (
+                exercisesBySection.map(({ section, exercises: sectionExercises }) => (
+                  <PageSectionWrapper
+                    key={section}
+                    section={section}
+                    deckGap={12}
+                    backgroundClass="bg-transparent"
+                    showPlusButton={false}
+                    style={{ paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+                  >
+                    {sectionExercises.map((exercise) => (
+                      <WorkoutSummaryCard
+                        key={exercise.id}
+                        exerciseName={exercise.exercise}
+                        sets={exercise.setLog}
+                      />
+                    ))}
+                  </PageSectionWrapper>
+                ))
+              ) : (
+                <div className="text-center py-10">
+                  <p>No sets were logged for this workout.</p>
+                </div>
+              )}
             </div>
-          )}
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">

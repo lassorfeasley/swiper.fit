@@ -80,10 +80,15 @@ const ActiveWorkoutContent = () => {
         skipAutoRedirectRef.current = false;
         return;
       }
+      // Delegates should remain on the active workout route on refresh
+      if (isDelegated) {
+        console.log('[ActiveWorkout] Delegate detected – staying on active workout route after refresh');
+        return;
+      }
       console.log('[ActiveWorkout] Auto-redirecting to routines');
       navigate("/routines", { replace: true });
     }
-  }, [loading, isWorkoutActive, navigate, user?.id]);
+  }, [loading, isWorkoutActive, navigate, user?.id, isDelegated]);
 
   useEffect(() => {
     setNavBarVisible(false);
@@ -210,19 +215,16 @@ const ActiveWorkoutContent = () => {
     skipAutoRedirectRef.current = true;
     try {
       const saved = await contextEndWorkout();
-      if (saved && activeWorkout?.id) {
-        if (isDelegated) {
-          // For delegates, return to their own sharing page
-          returnToSelf();
-        } else {
-          navigate(`/history/${activeWorkout.id}`);
-        }
+      const wid = activeWorkout?.id;
+      if (saved && wid) {
+        // Workout had completed sets – go to summary
+        navigate(`/history/${wid}`, { replace: true });
       } else {
-        // No sets saved – redirect back to routines or sharing page
+        // No sets completed – route based on role
         if (isDelegated) {
-          returnToSelf();
+          navigate('/sharing', { replace: true });
         } else {
-          navigate("/routines");
+          navigate('/routines', { replace: true });
         }
       }
     } catch (error) {
@@ -311,7 +313,7 @@ const ActiveWorkoutContent = () => {
       showPlusButton={false}
       pageNameEditable={false}
       showBackButton={false}
-      title=""
+      title={activeWorkout?.routines?.routine_name || "Active Workout"}
       showAdd={false}
       showSettings={false}
       onSettings={undefined}
@@ -326,9 +328,9 @@ const ActiveWorkoutContent = () => {
       noTopPadding={!isDelegated}
       showSidebar={false}
     >
-      <div ref={listRef} className="flex flex-col min-h-screen">
+      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-8">
         {/* Spacer to clear fixed ActiveWorkoutNav */}
-        <div className="h-[68px]" aria-hidden="true" />
+        <div className="h-[80px]" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"
@@ -355,13 +357,11 @@ const ActiveWorkoutContent = () => {
       <SwiperDialog
         open={isEndConfirmOpen}
         onOpenChange={setEndConfirmOpen}
-        onConfirm={() => setEndConfirmOpen(false)}
-        onCancel={handleConfirmEnd}
+        onConfirm={handleConfirmEnd}
+        onCancel={() => setEndConfirmOpen(false)}
         title="End workout?"
-        confirmText="Keep working out"
-        cancelText="End workout"
-        confirmVariant="outline"
-        cancelVariant="destructive"
+        confirmText="End workout"
+        cancelText="Keep working out"
       />
 
       {/* Persistent bottom nav for active workout */}

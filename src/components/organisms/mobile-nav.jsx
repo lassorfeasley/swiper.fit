@@ -12,7 +12,7 @@ const MobileNav = () => {
 
   return (
     <nav
-      className="mobile-nav self-stretch inline-flex flex-col justify-end items-center fixed bottom-0 left-0 right-0 w-full md:hidden z-[100] overflow-visible pb-[env(safe-area-inset-bottom)] bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_10%,rgba(255,255,255,0.5)_40%,rgba(255,255,255,1)_80%,rgba(255,255,255,1)_100%)]"
+      className="mobile-nav self-stretch inline-flex flex-col justify-end items-center fixed bottom-0 left-0 right-0 w-full md:hidden z-[1000] overflow-visible pb-[env(safe-area-inset-bottom)] bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]"
     >
       {isWorkoutActive ? (
         <ActiveWorkoutNav />

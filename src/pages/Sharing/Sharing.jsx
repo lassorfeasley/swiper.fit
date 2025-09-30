@@ -262,10 +262,27 @@ export default function Sharing() {
 
       if (profileError) throw profileError;
 
+      // Fetch active workouts for all owners in a single query
+      let activeByOwner = {};
+      if (ownerIds && ownerIds.length > 0) {
+        const { data: activeWorkouts, error: activeErr } = await supabase
+          .from('workouts')
+          .select(`id, user_id, routine_id, is_active, completed_at, routines!fk_workouts__routines(routine_name)`) 
+          .in('user_id', ownerIds)
+          .eq('is_active', true);
+        if (!activeErr && Array.isArray(activeWorkouts)) {
+          activeByOwner = activeWorkouts.reduce((acc, w) => {
+            acc[w.user_id] = w;
+            return acc;
+          }, {});
+        }
+      }
+
       // Combine the data
       const combinedData = shares.map(share => ({
         ...share,
-        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null
+        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null,
+        activeWorkout: activeByOwner[share.owner_user_id] || null
       }));
       
       // Sort by profile name for consistent ordering
@@ -679,6 +696,7 @@ export default function Sharing() {
         .from("workouts")
         .select(`
           id,
+          user_id,
           routine_id,
           routines!fk_workouts__routines(routine_name)
         `)
@@ -914,129 +932,159 @@ export default function Sharing() {
   };
 
   return (
-    <AppLayout title="" hideHeader>
+    <AppLayout title="Sharing" variant="glass">
       <div className="w-full flex flex-col min-h-screen">
-        {/* Shared with me section */}
-        <PageSectionWrapper 
-          section="Shared with me"
-          style={{ paddingBottom: 80, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
-        >
-          {sharedWithMeQuery.data?.map((share) => (
-            <div key={share.id} className="w-full max-w-[500px] border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start">
-              <div className="self-stretch px-3 py-4 bg-neutral-50 border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
-                <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                  Manage {formatUserDisplay(share.profile)}'s account
-                </div>
-              </div>
-              <div 
-                className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                onClick={() => share.can_start_workouts && handleStartWorkout(share.profile)}
-                title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
-              >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_start_workouts ? 'text-neutral-700' : 'text-neutral-300'}`}>
-                  Start a workout
-                </div>
-                {share.can_start_workouts ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                ) : (
-                  <X className="w-4 h-4 text-neutral-300" />
-                )}
-              </div>
-              <div 
-                className={`self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300 inline-flex justify-end items-center gap-2.5 ${share.can_create_routines ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                onClick={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
-                title={!share.can_create_routines ? "Permission denied by account owner" : ""}
-              >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_create_routines ? 'text-neutral-700' : 'text-neutral-300'}`}>
-                  Create or edit routines
-                </div>
-                {share.can_create_routines ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                ) : (
-                  <X className="w-4 h-4 text-neutral-300" />
-                )}
-              </div>
-              <div 
-                className={`self-stretch h-[52px] px-3 inline-flex justify-end items-center gap-2.5 ${share.can_review_history ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                onClick={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
-                title={!share.can_review_history ? "Permission denied by account owner" : ""}
-              >
-                <div className={`flex-1 justify-center text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight ${share.can_review_history ? 'text-neutral-700' : 'text-neutral-300'}`}>
-                  Review {formatUserDisplay(share.profile)}'s history
-                </div>
-                {share.can_review_history ? (
-                  <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                ) : (
-                  <X className="w-4 h-4 text-neutral-300" />
-                )}
-              </div>
-            </div>
-          ))}
-          {sharedWithMeQuery.data?.length === 0 && (
-            <div className="text-neutral-neutral-400 text-sm font-medium">
-              No accounts have shared access with you yet.
-            </div>
-          )}
-        </PageSectionWrapper>
-
         {/* Shared by me section */}
-        <PageSectionWrapper 
-          section="Shared by me"
-          className="border-t-0 flex-1"
-          
-          style={{ paddingBottom: 80, paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
-        >
-          {ownerSharesQuery.data?.map((share) => (
-            <div key={share.id} className="w-full max-w-[500px] border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start">
-              <div className="self-stretch px-3 py-4 bg-neutral-50 border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
-                <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                  {formatUserDisplay(share.profile)}'s permissions
-                </div>
-              </div>
-              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
-                <SwiperFormSwitch
-                  label="Create routines"
-                  checked={share.can_create_routines}
-                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_create_routines', checked)}
-                />
-              </div>
-              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
-                <SwiperFormSwitch
-                  label="Start workouts"
-                  checked={share.can_start_workouts}
-                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_start_workouts', checked)}
-                />
-              </div>
-              <div className="self-stretch h-[52px] px-3">
-                <SwiperFormSwitch
-                  label="Review history"
-                  checked={share.can_review_history}
-                  onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_review_history', checked)}
-                />
-              </div>
-            </div>
-          ))}
-          
-          {/* Add new person section */}
-          <div className="w-full max-w-[500px] inline-flex flex-col justify-start items-start">
-            <div className="w-full pt-5 pb-20">
-              <div 
-                className="w-full pl-3 bg-neutral-100 border-t border-b border-neutral-neutral-300 flex justify-between items-center cursor-pointer"
+        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
+          <div className="w-full max-w-[500px] pt-20 pb-14 flex flex-col justify-start items-center gap-3">
+            <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
+              <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared by me</div>
+              <button 
                 onClick={() => setShowAddPersonDialog(true)}
+                className="p-1"
+                aria-label="Add new person"
               >
-                <div className="justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">share with new person</div>
-                <div 
-                  data-property-1="left-border" 
-                  className="p-2.5 border-l border-neutral-neutral-300 flex justify-start items-center gap-2.5"
-                >
-                  <Plus className="w-6 h-6 text-neutral-neutral-700" />
+                <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            {ownerSharesQuery.data?.map((share) => (
+              <div key={share.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                <div className="self-stretch h-14 px-3 py-4 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
+                  <div className="flex-1 justify-start text-neutral-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    {formatUserDisplay(share.profile)}'s permissions
+                  </div>
+                </div>
+                <div className="self-stretch h-14 p-3 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Start workouts"
+                    checked={share.can_start_workouts}
+                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_start_workouts', checked)}
+                  />
+                </div>
+                <div className="self-stretch h-14 p-3 bg-neutral-50 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Create and edit routines"
+                    checked={share.can_create_routines}
+                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_create_routines', checked)}
+                  />
+                </div>
+                <div className="self-stretch h-14 p-3 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Review history"
+                    checked={share.can_review_history}
+                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_review_history', checked)}
+                  />
                 </div>
               </div>
-            </div>
-          </div>
+            ))}
 
-          {/* Add person dialog */}
-          <SwiperDialog
+            {ownerSharesQuery.isSuccess && (!ownerSharesQuery.data || ownerSharesQuery.data.length === 0) && !showAddPerson && (
+              <div className="text-neutral-neutral-400 text-sm font-medium">
+                You haven't shared access with anyone yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Shared with me section */}
+        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
+          <div className="w-full max-w-[500px] pt-0 pb-14 flex flex-col justify-start items-center gap-3">
+            <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
+              <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared with me</div>
+            </div>
+            {sharedWithMeQuery.data?.map((share) => (
+              <div key={share.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                <div className="self-stretch h-14 px-3 py-4 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
+                  <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    Manage {formatUserDisplay(share.profile)}'s account
+                  </div>
+                </div>
+                <div className="self-stretch flex flex-col justify-center items-start">
+                  <div 
+                    className={`self-stretch h-14 p-3 bg-white inline-flex justify-center items-center ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => {
+                      if (!share.can_start_workouts) return;
+                      // If the owner already has an active workout, join it immediately
+                      if (share.activeWorkout) {
+                        switchToUser(share.profile);
+                        navigate('/workout/active');
+                        return;
+                      }
+                      // Otherwise open the routine selection dialog to start a workout
+                      handleStartWorkout(share.profile);
+                    }}
+                    title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
+                  >
+                    <div className="flex-1 flex justify-start items-center gap-5">
+                      <div className="flex-1 inline-flex flex-col justify-center items-start">
+                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_start_workouts ? 'text-neutral-300' : ''}`}>
+                          {share.activeWorkout ? 'Join active workout' : 'Start a workout'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="size-6 relative overflow-hidden">
+                      {share.can_start_workouts ? (
+                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
+                      ) : (
+                        <X className="w-4 h-4 text-neutral-300" />
+                      )}
+                    </div>
+                  </div>
+                  <div 
+                    className={`self-stretch h-14 p-3 bg-neutral-50 inline-flex justify-center items-center ${share.can_create_routines ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
+                    title={!share.can_create_routines ? "Permission denied by account owner" : ""}
+                  >
+                    <div className="flex-1 flex justify-start items-center gap-5">
+                      <div className="flex-1 inline-flex flex-col justify-center items-start">
+                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_create_routines ? 'text-neutral-300' : ''}`}>
+                          Create or edit routines
+                        </div>
+                      </div>
+                    </div>
+                    <div className="size-6 relative overflow-hidden">
+                      {share.can_create_routines ? (
+                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
+                      ) : (
+                        <X className="w-4 h-4 text-neutral-300" />
+                      )}
+                    </div>
+                  </div>
+                  <div 
+                    className={`self-stretch h-14 p-3 bg-white inline-flex justify-center items-center ${share.can_review_history ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
+                    title={!share.can_review_history ? "Permission denied by account owner" : ""}
+                  >
+                    <div className="flex-1 flex justify-start items-center gap-5">
+                      <div className="flex-1 inline-flex flex-col justify-center items-start">
+                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_review_history ? 'text-neutral-300' : ''}`}>
+                          Review {formatUserDisplay(share.profile)}'s history
+                        </div>
+                      </div>
+                    </div>
+                    <div className="size-6 relative overflow-hidden">
+                      {share.can_review_history ? (
+                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
+                      ) : (
+                        <X className="w-4 h-4 text-neutral-300" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {sharedWithMeQuery.data?.length === 0 && (
+              <div className="text-neutral-neutral-400 text-sm font-medium">
+                No accounts have shared access with you yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Add person dialog */}
+        <SwiperDialog
             open={showAddPersonDialog}
             onOpenChange={setShowAddPersonDialog}
             title="Add a manager"
@@ -1047,14 +1095,14 @@ export default function Sharing() {
             onConfirm={handleDialogSubmit}
             onCancel={handleDialogCancel}
           >
-            <div className="self-stretch p-3 border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-2.5">
-              <div data-focused="true" data-is-optional="false" data-property-1="default" data-show-field-name="true" data-show-icon="false" data-show-text-labels="true" className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+            <div className="self-stretch flex flex-col justify-start items-start gap-0">
+              <div data-focused="true" data-is-optional="false" data-property-1="default" data-show-field-name="true" data-show-icon="false" data-show-text-labels="true" className="self-stretch min-w-64 rounded-sm flex flex-col justify-center items-start gap-2">
                 <div className="self-stretch inline-flex justify-start items-start gap-2">
                   <div className="flex-1 flex justify-between items-start">
                     <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Email</div>
                   </div>
                 </div>
-                <div className="self-stretch h-11 pl-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
+                <div className="self-stretch h-11 pl-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
                   <input
                     type="email"
                     value={dialogEmail}
@@ -1065,27 +1113,29 @@ export default function Sharing() {
                 </div>
               </div>
             </div>
-            <div className="self-stretch border-b border-neutral-neutral-300 flex flex-col justify-start items-start">
-                             <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
-                 <SwiperFormSwitch
-                   label="Create routines"
-                   checked={dialogPermissions.can_create_routines}
-                   onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
-                 />
-               </div>
-              <div className="self-stretch h-[52px] px-3 border-b-[0.50px] border-neutral-neutral-300">
-                <SwiperFormSwitch
-                  label="Start workouts"
-                  checked={dialogPermissions.can_start_workouts}
-                  onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
-                />
-              </div>
-              <div className="self-stretch h-[52px] px-3">
-                <SwiperFormSwitch
-                  label="Review history"
-                  checked={dialogPermissions.can_review_history}
-                  onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
-                />
+            <div className="self-stretch flex flex-col justify-start items-start gap-0">
+                <div className="self-stretch rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                <div className="self-stretch h-14 p-3 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Create routines"
+                    checked={dialogPermissions.can_create_routines}
+                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
+                  />
+                </div>
+                <div className="self-stretch h-14 p-3 bg-neutral-50 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Start workouts"
+                    checked={dialogPermissions.can_start_workouts}
+                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
+                  />
+                </div>
+                <div className="self-stretch h-14 p-3 inline-flex items-center">
+                  <SwiperFormSwitch
+                    label="Review history"
+                    checked={dialogPermissions.can_review_history}
+                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
+                  />
+                </div>
               </div>
             </div>
           </SwiperDialog>
@@ -1094,7 +1144,7 @@ export default function Sharing() {
           <SwiperDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title={dialogMode === 'workout' ? "Select routine to start workout" : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
+            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
             confirmText=""
             cancelText=""
             onCancel={() => {
@@ -1104,104 +1154,99 @@ export default function Sharing() {
               setDialogMode('workout');
             }}
           >
-            <div className="self-stretch flex flex-col justify-start items-start">
-              {dialogMode === 'workout' && activeWorkout && (
-                <div 
-                  className="w-full p-3 bg-green-50 border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-green-100"
-                  onClick={handleJoinActiveWorkout}
-                >
-                  <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                    <div className="self-stretch flex flex-col justify-start items-start">
-                      <div className="w-[452px] justify-start text-green-800 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        {activeWorkout.routines?.routine_name || 'Active workout'}
-                      </div>
-                      <div className="text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                        Active workout in progress
-                      </div>
+            {dialogMode === 'workout' && activeWorkout && (
+              <div 
+                data-layer="Routine Card" 
+                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-green-50"
+                onClick={handleJoinActiveWorkout}
+              >
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-green-800 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      {activeWorkout.routines?.routine_name || 'Active workout'}
+                    </div>
+                    <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                      Active workout in progress
                     </div>
                   </div>
-                  <div className="text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    Join workout
+                </div>
+                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
+                  <div 
+                    data-layer="Frame 5012" 
+                    className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
+                  >
+                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Join</div>
                   </div>
                 </div>
-              )}
-              {clientRoutines
-                .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
-                .map((routine, index) => (
-                <div 
-                  key={routine.id}
-                  className={`w-full p-3 bg-white flex flex-col justify-start items-start gap-6 ${
-                    dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-50'
-                  } ${
-                    index < clientRoutines.filter(r => dialogMode === 'workout' ? (!activeWorkout || r.id !== activeWorkout.routine_id) : true).length - 1 ? 'border-b border-neutral-neutral-300' : ''
-                  }`}
-                  onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
-                >
-                  <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                    <div className="self-stretch flex flex-col justify-start items-start">
-                      <div className={`w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
-                      }`}>
-                        {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
-                      </div>
-                      <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                      }`}>
-                        {routine.lastCompletedText || 'Never completed'}
-                      </div>
+              </div>
+            )}
+            {clientRoutines
+              .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
+              .map((routine, index) => (
+              <div 
+                key={routine.id}
+                data-layer="Routine Card" 
+                className={`RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden ${
+                  dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-neutral-50'
+                }`}
+                onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
+              >
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className={`BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
+                    }`}>
+                      {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
+                    </div>
+                    <div data-layer="Completed 5 days ago" className={`Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
+                    }`}>
+                      {routine.lastCompletedText || 'Never completed'}
                     </div>
                   </div>
-                  <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                    dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                  }`}>
-                    {dialogMode === 'workout' ? 'Start workout' : 'Edit routine'}
+                </div>
+                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
+                  <div 
+                    data-layer="Frame 5012" 
+                    className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
+                      dialogMode === 'workout' && activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
+                    } ${dialogMode === 'workout' && activeWorkout ? '' : 'cursor-pointer'}`}
+                    onClick={dialogMode === 'workout' && activeWorkout ? undefined : (e) => {
+                      e.stopPropagation();
+                      dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine);
+                    }}
+                  >
+                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
+                    }`}>
+                      {dialogMode === 'workout' ? 'Start' : 'Edit'}
+                    </div>
                   </div>
                 </div>
-              ))}
-              {clientRoutines.length === 0 && (
-                <div className="w-full max-w-[500px] p-3 bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-6">
-                  <div className="text-center justify-center text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
+              </div>
+            ))}
+            {clientRoutines.length === 0 && (
+              <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight text-center">
+                      {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
+                    </div>
                   </div>
                 </div>
-              )}
-              {dialogMode === 'manage' && (
-                <div 
-                  className="w-full p-3 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-neutral-50"
-                  onClick={() => {
-                    if (selectedClient) {
-                      // Switch to the account owner's context
-                      switchToUser(selectedClient);
-                      
-                      // Navigate to routine builder to create a new routine
-                      navigate('/routines', { 
-                        state: { 
-                          managingForOwner: true, 
-                          ownerId: selectedClient.id,
-                          ownerName: formatUserDisplay(selectedClient)
-                        } 
-                      });
-                      setShowRoutineSelectionDialog(false);
-                      setSelectedClient(null);
-                      setClientRoutines([]);
-                      setActiveWorkout(null);
-                    }
-                  }}
-                >
-                  <div className="text-center justify-center text-neutral-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    Create new routine
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </SwiperDialog>
-
-          {ownerSharesQuery.isSuccess && (!ownerSharesQuery.data || ownerSharesQuery.data.length === 0) && !showAddPerson && (
-            <div className="text-neutral-neutral-400 text-sm font-medium">
-              You haven't shared access with anyone yet.
-            </div>
-          )}
-        </PageSectionWrapper>
       </div>
     </AppLayout>
   );

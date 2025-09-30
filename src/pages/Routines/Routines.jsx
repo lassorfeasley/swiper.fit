@@ -160,12 +160,18 @@ const RoutinesIndex = () => {
 
   return (
     <AppLayout
-      reserveSpace={false}
+      reserveSpace={true}
       variant="glass"
       title="Routines"
-      showAdd={false}
+      showPlusButton={true}
+      onAdd={() => {
+        setShowSheet(true);
+        setProgramName("");
+        setTimeout(() => {
+          if (inputRef.current) inputRef.current.focus();
+        }, 100);
+      }}
       showSearch={false}
-      showAddButton={false}
       showBackButton={false}
       search={false}
       pageContext="routines"
@@ -176,11 +182,10 @@ const RoutinesIndex = () => {
       <MainContentSection className="!p-0 flex-1 min-h-0 flex flex-col">
         <div className="flex justify-center flex-1">
           <DeckWrapper 
-            gap={0} 
+            gap={12} 
             paddingTop={82}
             paddingBottom={0}
-            maxWidth={500}
-            minWidth={325}
+            maxWidth={null}
             className="flex-1 mt-0 min-h-screen"
           >
           {loading ? (
@@ -194,21 +199,11 @@ const RoutinesIndex = () => {
                   id={program.id}
                   name={program.routine_name}
                   lastCompleted={program.lastCompleted}
-                  onStart={() => navigate(`/routines/${program.id}/configure`)}
+                  routineData={program}
                 />
               </CardWrapper>
             ))
           )}
-          <ActionCard 
-            text="create a new routine" 
-            onClick={() => {
-              setShowSheet(true);
-              setProgramName("");
-              setTimeout(() => {
-                if (inputRef.current) inputRef.current.focus();
-              }, 100);
-            }}
-          />
         </DeckWrapper>
         </div>
       </MainContentSection>

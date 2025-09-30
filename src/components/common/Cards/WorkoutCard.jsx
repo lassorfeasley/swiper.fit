@@ -12,18 +12,21 @@ import PropTypes from "prop-types";
 const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
-      className="w-full max-w-[500px] p-4 bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-2"
+      data-layer="workout-card"
+      className="RoutineCard w-full p-3 bg-white rounded-xl border border-neutral-300 inline-flex justify-center items-end gap-2"
       {...props}
     >
-      <div className="w-full text-slate-950 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight truncate">
-        {name}
-      </div>
-      <div className="w-full flex justify-between items-center gap-2">
-        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none truncate">
-          {subtitle}
+      <div data-layer="Frame 5010" className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">
+        <div data-layer="Frame 5011" className="Frame5011 self-stretch flex flex-col justify-center items-start gap-1">
+          <div data-layer="Today" className="Today justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            {relativeLabel}
+          </div>
+          <div data-layer="Monday morning workout" className="MondayMorningWorkout self-stretch justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+            {name}
+          </div>
         </div>
-        <div className="text-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none whitespace-nowrap">
-          {relativeLabel}
+        <div data-layer="Biceps and chest" className="BicepsAndChest justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+          {subtitle}
         </div>
       </div>
     </div>
