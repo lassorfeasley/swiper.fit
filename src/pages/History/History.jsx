@@ -278,7 +278,7 @@ const History = () => {
         {!loading && (
           <WorkoutHistoryList
             workouts={workouts}
-            viewingOwn={viewingOwn}
+            viewingOwn={viewingOwn || isDelegated}
           />
         )}
       </MainContentSection>

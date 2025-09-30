@@ -215,19 +215,16 @@ const ActiveWorkoutContent = () => {
     skipAutoRedirectRef.current = true;
     try {
       const saved = await contextEndWorkout();
-      if (saved && activeWorkout?.id) {
-        if (isDelegated) {
-          // For delegates, return to their own sharing page
-          returnToSelf();
-        } else {
-          navigate(`/history/${activeWorkout.id}`);
-        }
+      const wid = activeWorkout?.id;
+      if (saved && wid) {
+        // Workout had completed sets – go to summary
+        navigate(`/history/${wid}`, { replace: true });
       } else {
-        // No sets saved – redirect back to routines or sharing page
+        // No sets completed – route based on role
         if (isDelegated) {
-          returnToSelf();
+          navigate('/sharing', { replace: true });
         } else {
-          navigate("/routines");
+          navigate('/routines', { replace: true });
         }
       }
     } catch (error) {

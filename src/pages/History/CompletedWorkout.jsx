@@ -18,7 +18,7 @@ import WorkoutSummaryCard from "@/components/common/Cards/WorkoutSummaryCard";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
@@ -797,7 +797,7 @@ const CompletedWorkout = () => {
         {loading ? (
           <div className="p-6">Loading...</div>
         ) : workout ? (
-          <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: '72px' }}>
+          <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Image and Routine Label Section */}
             <div className="self-stretch flex flex-col justify-center items-center gap-3">
               {/* Image Container */}
@@ -846,7 +846,7 @@ const CompletedWorkout = () => {
                     deckGap={12}
                     backgroundClass="bg-transparent"
                     showPlusButton={false}
-                    style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+                    style={{ paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
                   >
                     {sectionExercises.map((exercise) => (
                       <WorkoutSummaryCard

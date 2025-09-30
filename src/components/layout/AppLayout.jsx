@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAccount } from "@/contexts/AccountContext";
-import DelegateModeHeader from "@/components/layout/DelegateModeHeader";
 import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
@@ -85,11 +84,9 @@ export default function AppLayout({
   // Reserve space for the fixed header by default globally, except for the 'glass' variant
   const reserveSpace = restHeaderProps.reserveSpace ?? (variant !== 'glass');
 
-  // Calculate header height - when delegated, we need space for the delegate header even if hideHeader is true
-  const baseHeaderHeight = hideHeader && !isDelegated ? 0 : headerHeight;
-  const totalHeaderHeight = isDelegated
-    ? (hideDelegateHeader ? baseHeaderHeight : (hideHeader ? 44 : baseHeaderHeight + 44))
-    : baseHeaderHeight;
+  // Calculate header height – old delegate banner removed, so no extra offset needed
+  const baseHeaderHeight = hideHeader ? 0 : headerHeight;
+  const totalHeaderHeight = baseHeaderHeight;
 
   return (
     <div className="min-h-screen flex bg-stone-100 relative">
@@ -100,8 +97,7 @@ export default function AppLayout({
           showSidebar ? "md:ml-64" : ""
         )}
       >
-        {/* Hide the old sharing nav on pages where the header includes a sharing section */}
-        {isDelegated && !hideDelegateHeader && location.pathname !== "/workout/active" && <DelegateModeHeader />}
+        {/* Old delegate banner removed */}
         {!hideHeader && (
           <PageHeader
             ref={headerRef}
@@ -113,7 +109,7 @@ export default function AppLayout({
             showDeleteOption={showDeleteOption}
             searchValue={searchValue}
             onSearchChange={onSearchChange}
-            className={isDelegated && !hideDelegateHeader ? "sticky top-11 left-0 right-0 transition-[top] ease-in-out" : undefined}
+            className={undefined}
           />
         )}
         <div>

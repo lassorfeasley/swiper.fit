@@ -262,10 +262,27 @@ export default function Sharing() {
 
       if (profileError) throw profileError;
 
+      // Fetch active workouts for all owners in a single query
+      let activeByOwner = {};
+      if (ownerIds && ownerIds.length > 0) {
+        const { data: activeWorkouts, error: activeErr } = await supabase
+          .from('workouts')
+          .select(`id, user_id, routine_id, is_active, completed_at, routines!fk_workouts__routines(routine_name)`) 
+          .in('user_id', ownerIds)
+          .eq('is_active', true);
+        if (!activeErr && Array.isArray(activeWorkouts)) {
+          activeByOwner = activeWorkouts.reduce((acc, w) => {
+            acc[w.user_id] = w;
+            return acc;
+          }, {});
+        }
+      }
+
       // Combine the data
       const combinedData = shares.map(share => ({
         ...share,
-        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null
+        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null,
+        activeWorkout: activeByOwner[share.owner_user_id] || null
       }));
       
       // Sort by profile name for consistent ordering
@@ -679,6 +696,7 @@ export default function Sharing() {
         .from("workouts")
         .select(`
           id,
+          user_id,
           routine_id,
           routines!fk_workouts__routines(routine_name)
         `)
@@ -986,13 +1004,23 @@ export default function Sharing() {
                 <div className="self-stretch flex flex-col justify-center items-start">
                   <div 
                     className={`self-stretch h-14 p-3 bg-white inline-flex justify-center items-center ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                    onClick={() => share.can_start_workouts && handleStartWorkout(share.profile)}
+                    onClick={() => {
+                      if (!share.can_start_workouts) return;
+                      // If the owner already has an active workout, join it immediately
+                      if (share.activeWorkout) {
+                        switchToUser(share.profile);
+                        navigate('/workout/active');
+                        return;
+                      }
+                      // Otherwise open the routine selection dialog to start a workout
+                      handleStartWorkout(share.profile);
+                    }}
                     title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
                   >
                     <div className="flex-1 flex justify-start items-center gap-5">
                       <div className="flex-1 inline-flex flex-col justify-center items-start">
                         <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_start_workouts ? 'text-neutral-300' : ''}`}>
-                          Start a workout
+                          {share.activeWorkout ? 'Join active workout' : 'Start a workout'}
                         </div>
                       </div>
                     </div>
