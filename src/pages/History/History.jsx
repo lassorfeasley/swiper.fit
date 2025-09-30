@@ -5,7 +5,7 @@ import { supabase } from "@/supabaseClient";
 import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
-import { Share2 } from "lucide-react";
+import { Share2, Blend, X } from "lucide-react";
 import { toast } from "sonner";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { SwiperButton } from "@/components/molecules/swiper-button";
@@ -24,7 +24,7 @@ const History = () => {
   const [shareAll, setShareAll] = useState(false);
   const [search, setSearch] = useState("");
   const user = useCurrentUser();
-  const { isDelegated, switchToUser } = useAccount();
+  const { isDelegated, switchToUser, actingUser, returnToSelf } = useAccount();
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +42,42 @@ const History = () => {
   // Determine whose history we're viewing and whether it's the owner
   const targetUserId = paramUserId || ownerId || user?.id;
   const viewingOwn = !!user && (!paramUserId || paramUserId === user.id) && !managingForOwner;
+
+  // Helper to format delegate display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return email;
+  };
+
+  // Build the sharing nav content for delegates
+  const headerSharingContent = isDelegated ? (
+    <>
+      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+        <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
+          <Blend className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex justify-center items-center gap-5">
+          <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+            {formatUserDisplay(actingUser)}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Exit delegate mode"
+        onClick={returnToSelf}
+        className="w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+    </>
+  ) : undefined;
 
   /* ------------------------------------------------------------------
     Handle delegation context when coming from sharing page
@@ -232,7 +268,9 @@ const History = () => {
       showBackButton={false}
       search={false}
       pageContext="history"
-      className="bg-gradient-to-l from-white/0 to-white backdrop-blur-[2px] px-3 pt-4 pb-3"
+      hideDelegateHeader={true}
+      sharingNavAbove={isDelegated}
+      sharingNavContent={headerSharingContent}
       data-component="AppHeader"
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">

@@ -80,10 +80,15 @@ const ActiveWorkoutContent = () => {
         skipAutoRedirectRef.current = false;
         return;
       }
+      // Delegates should remain on the active workout route on refresh
+      if (isDelegated) {
+        console.log('[ActiveWorkout] Delegate detected – staying on active workout route after refresh');
+        return;
+      }
       console.log('[ActiveWorkout] Auto-redirecting to routines');
       navigate("/routines", { replace: true });
     }
-  }, [loading, isWorkoutActive, navigate, user?.id]);
+  }, [loading, isWorkoutActive, navigate, user?.id, isDelegated]);
 
   useEffect(() => {
     setNavBarVisible(false);

@@ -13,7 +13,7 @@ const DeckWrapper = forwardRef(
       children,
       gap = 12, // spacing between items (px)
       paddingX = 20, // horizontal padding (px)
-      paddingTop = 40, // top padding (px)
+      paddingTop, // top padding; if undefined, uses header-aware default
       maxWidth = 500, // maximum width (px)
       minWidth = 0, // minimum width (px)
       className,
@@ -38,10 +38,15 @@ const DeckWrapper = forwardRef(
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
     
+    // Compute top padding – default to header height + 20px when a page header is present.
+    // Falls back to 20px when --header-height is unset.
+    const computedPaddingTop =
+      paddingTop !== undefined ? paddingTop : 'calc(var(--header-height, 0px) + 20px)';
+
     const style = {
       gap,
       rowGap: gap,
-      paddingTop,
+      paddingTop: computedPaddingTop,
       paddingBottom: paddingBottom !== undefined ? paddingBottom : 40,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
@@ -190,6 +195,7 @@ DeckWrapper.propTypes = {
   children: PropTypes.node.isRequired,
   gap: PropTypes.number,
   paddingX: PropTypes.number,
+  paddingTop: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   maxWidth: PropTypes.number,
   minWidth: PropTypes.number,
   className: PropTypes.string,

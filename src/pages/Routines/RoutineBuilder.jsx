@@ -16,7 +16,7 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Copy } from "lucide-react";
+import { Copy, Blend, X } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ const RoutineBuilder = () => {
   const location = useLocation();
   const { setPageName } = useContext(PageNameContext);
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
-  const { isDelegated } = useAccount();
+  const { isDelegated, actingUser, returnToSelf } = useAccount();
   const isMobile = useIsMobile();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +57,42 @@ const RoutineBuilder = () => {
   const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
   const reorderTimeoutRef = useRef(null);
   const [addExerciseSection, setAddExerciseSection] = useState(null);
+  // Helper to format delegate display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return email;
+  };
+
+  // Full sharing nav row content matching Active Workout style
+  const headerSharingContent = isDelegated ? (
+    <>
+      <div className="Frame73 max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+        <div className="Iconbutton w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
+          <Blend className="w-6 h-6 text-white" />
+        </div>
+        <div className="Frame71 flex justify-center items-center gap-5">
+          <div className="AccountOwnersName justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+            {formatUserDisplay(actingUser)}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Exit delegate mode"
+        onClick={returnToSelf}
+        className="ActionIcons w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+    </>
+  ) : undefined;
+
 
   useEffect(() => {
     setPageName("RoutineBuilder");
@@ -730,8 +766,11 @@ const RoutineBuilder = () => {
     <>
       <AppLayout
         hideHeader={false}
+        hideDelegateHeader={true}
         title={programName || "Build your routine"}
         variant="glass"
+        sharingNavAbove={isDelegated}
+        sharingNavContent={headerSharingContent}
         showBackButton={true}
         onBack={handleBack}
         showShare={true}
@@ -741,8 +780,9 @@ const RoutineBuilder = () => {
         showDelete={true}
         onDelete={() =>	setDeleteProgramConfirmOpen(true)}
         showSidebar={!isDelegated && !isMobile}
+        sharingSection={undefined}
       >
-        <div className="flex flex-col min-h-screen pt-20">
+        <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
           {/* Routine Image Section */}
           <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">

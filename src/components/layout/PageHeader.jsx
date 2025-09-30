@@ -21,6 +21,9 @@ const PageHeader = forwardRef(({
   showSidebar = false,
   showUpload = false,
   showDelete = false,
+  sharingSection,
+  sharingNavAbove = false,
+  sharingNavContent,
   onBack,
   onSearch,
   onSettings,
@@ -120,6 +123,65 @@ const PageHeader = forwardRef(({
 
   // Glass variant for iOS-style workout summary
   if (variant === 'glass') {
+    // When sharing nav is above, render a two-row fixed header stack
+    if (sharingNavAbove && sharingNavContent) {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "fixed top-0 z-[200] inline-flex flex-col",
+            showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
+            className
+          )}
+        >
+          {/* Sharing row (above) */}
+          <div className="self-stretch px-3 pt-3 bg-stone-100 inline-flex justify-start items-start gap-2.5">
+            {sharingNavContent}
+          </div>
+          {/* Title/action row with gradient like Active Workout */}
+          <div className="self-stretch px-4 pt-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-center">
+            {/* Left: Title and optional subtitle */}
+            <div className="flex justify-start items-center gap-3">
+              <div className="inline-flex flex-col justify-center items-start gap-0.5">
+                <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+                  {title}
+                </div>
+                {titleRightText && (
+                  <div className="justify-center text-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                    {titleRightText}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Right: Actions (hide pod when empty) */}
+            {(showShare || showDelete) && (
+              <div className="inline-flex flex-col justify-center items-end gap-2.5">
+                <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                  {showShare && (
+                    <button 
+                      onClick={onShare} 
+                      aria-label="Share" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                  {showDelete && (
+                    <button 
+                      onClick={onDelete} 
+                      aria-label="Delete" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         ref={ref}
@@ -143,29 +205,35 @@ const PageHeader = forwardRef(({
           </div>
         </div>
 
-        {/* Right side - Action buttons */}
-        <div className="inline-flex flex-col justify-center items-end gap-2.5">
-          <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
-            {showShare && (
-              <button 
-                onClick={onShare} 
-                aria-label="Share" 
-                className="size-6 flex items-center justify-center"
-              >
-                <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-              </button>
-            )}
-            {showDelete && (
-              <button 
-                onClick={onDelete} 
-                aria-label="Delete" 
-                className="size-6 flex items-center justify-center"
-              >
-                <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Right side - Action buttons (hide pod when empty) */}
+        {sharingSection ? (
+          <div className="inline-flex flex-col justify-center items-end gap-2.5">{sharingSection}</div>
+        ) : (
+          (showShare || showDelete) && (
+            <div className="inline-flex flex-col justify-center items-end gap-2.5">
+              <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                {showShare && (
+                  <button 
+                    onClick={onShare} 
+                    aria-label="Share" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+                {showDelete && (
+                  <button 
+                    onClick={onDelete} 
+                    aria-label="Delete" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        )}
       </div>
     );
   }
@@ -248,8 +316,9 @@ const PageHeader = forwardRef(({
           </button>
         </div>
       ) : (
-        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout) && (
+        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout || sharingSection) && (
           <div className="Pageactions inline-flex justify-start items-center">
+            {sharingSection}
             {showSearch && (
               <button
                 className={cn(
@@ -367,6 +436,9 @@ PageHeader.propTypes = {
   showSidebar: PropTypes.bool,
   showUpload: PropTypes.bool,
   showDelete: PropTypes.bool,
+  sharingSection: PropTypes.node,
+  sharingNavAbove: PropTypes.bool,
+  sharingNavContent: PropTypes.node,
   onBack: PropTypes.func,
   onSearch: PropTypes.func,
   onSettings: PropTypes.func,

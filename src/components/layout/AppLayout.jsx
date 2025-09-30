@@ -22,6 +22,7 @@ export default function AppLayout({
   enableScrollSnap = false,
   noTopPadding = false,
   hideHeader = false,
+  hideDelegateHeader = false,
   title,
   ...headerProps
 }) {
@@ -70,7 +71,7 @@ export default function AppLayout({
   const allowedHeaderProps = [
     'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onUpload', 'onDelete',
-    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText'
+    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent'
   ];
 
   const filteredHeaderProps = Object.fromEntries(
@@ -86,7 +87,9 @@ export default function AppLayout({
 
   // Calculate header height - when delegated, we need space for the delegate header even if hideHeader is true
   const baseHeaderHeight = hideHeader && !isDelegated ? 0 : headerHeight;
-  const totalHeaderHeight = isDelegated ? (hideHeader ? 44 : baseHeaderHeight + 44) : baseHeaderHeight;
+  const totalHeaderHeight = isDelegated
+    ? (hideDelegateHeader ? baseHeaderHeight : (hideHeader ? 44 : baseHeaderHeight + 44))
+    : baseHeaderHeight;
 
   return (
     <div className="min-h-screen flex bg-stone-100 relative">
@@ -97,8 +100,8 @@ export default function AppLayout({
           showSidebar ? "md:ml-64" : ""
         )}
       >
-        {/* Hide the old sharing nav on the delegate active workout page */}
-        {isDelegated && location.pathname !== "/workout/active" && <DelegateModeHeader />}
+        {/* Hide the old sharing nav on pages where the header includes a sharing section */}
+        {isDelegated && !hideDelegateHeader && location.pathname !== "/workout/active" && <DelegateModeHeader />}
         {!hideHeader && (
           <PageHeader
             ref={headerRef}
@@ -110,7 +113,7 @@ export default function AppLayout({
             showDeleteOption={showDeleteOption}
             searchValue={searchValue}
             onSearchChange={onSearchChange}
-            className={isDelegated ? "sticky top-[var(--header-height)] left-0 right-0 transition-[top] ease-in-out" : undefined}
+            className={isDelegated && !hideDelegateHeader ? "sticky top-11 left-0 right-0 transition-[top] ease-in-out" : undefined}
           />
         )}
         <div>
@@ -148,5 +151,6 @@ AppLayout.propTypes = {
   enableScrollSnap: PropTypes.bool,
   noTopPadding: PropTypes.bool,
   hideHeader: PropTypes.bool,
+  hideDelegateHeader: PropTypes.bool,
   title: PropTypes.string,
 };

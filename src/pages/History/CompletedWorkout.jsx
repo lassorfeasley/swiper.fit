@@ -163,8 +163,42 @@ const CompletedWorkout = () => {
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   const ogAttemptedRef = useRef(false);
 
-  const { isDelegated } = useAccount();
+  const { isDelegated, actingUser, returnToSelf } = useAccount();
   const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
+  // Helper to format delegate display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return email;
+  };
+
+  const headerSharingContent = isDelegated ? (
+    <>
+      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+        <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
+          <Blend className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex justify-center items-center gap-5">
+          <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+            {formatUserDisplay(actingUser)}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Exit delegate mode"
+        onClick={returnToSelf}
+        className="w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+    </>
+  ) : undefined;
 
   const openShareSettings = () => setShareDialogOpen(true);
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
@@ -722,6 +756,9 @@ const CompletedWorkout = () => {
         title="Workout summary"
         titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
         variant="glass"
+        hideDelegateHeader={true}
+        sharingNavAbove={isDelegated}
+        sharingNavContent={headerSharingContent}
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
         onBack={() => {
           if (isPublicWorkoutView && workout) {
