@@ -311,7 +311,7 @@ const ActiveWorkoutContent = () => {
       showPlusButton={false}
       pageNameEditable={false}
       showBackButton={false}
-      title=""
+      title={activeWorkout?.routines?.routine_name || "Active Workout"}
       showAdd={false}
       showSettings={false}
       onSettings={undefined}
@@ -326,9 +326,9 @@ const ActiveWorkoutContent = () => {
       noTopPadding={!isDelegated}
       showSidebar={false}
     >
-      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent">
+      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-10">
         {/* Spacer to clear fixed ActiveWorkoutNav */}
-        <div className="h-[68px]" aria-hidden="true" />
+        <div className="h-[80px]" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"

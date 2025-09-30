@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/organisms/side-bar-nav";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 import { cn } from "@/lib/utils";
+import { useLocation } from "react-router-dom";
 
 export default function AppLayout({
   children,
@@ -26,6 +27,7 @@ export default function AppLayout({
 }) {
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const location = useLocation();
 
   // Detect delegate mode
   const { isDelegated } = useAccount();
@@ -95,7 +97,8 @@ export default function AppLayout({
           showSidebar ? "md:ml-64" : ""
         )}
       >
-        {isDelegated && <DelegateModeHeader />}
+        {/* Hide the old sharing nav on the delegate active workout page */}
+        {isDelegated && location.pathname !== "/workout/active" && <DelegateModeHeader />}
         {!hideHeader && (
           <PageHeader
             ref={headerRef}

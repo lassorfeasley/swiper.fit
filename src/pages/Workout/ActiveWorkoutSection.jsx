@@ -1410,7 +1410,7 @@ const ActiveWorkoutSection = ({
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         deckGap={12}
         backgroundClass="bg-transparent"
-        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
       >
         <div className="text-center py-8 text-gray-500">
           Loading {section} exercises...
@@ -1431,7 +1431,7 @@ const ActiveWorkoutSection = ({
           className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
           deckGap={12}
           backgroundClass="bg-transparent"
-          style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+          style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
         >
           {/* Removed inline add exercise card; use header button instead */}
         </PageSectionWrapper>
@@ -1488,7 +1488,7 @@ const ActiveWorkoutSection = ({
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         deckGap={12}
         backgroundClass="bg-transparent"
-        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);

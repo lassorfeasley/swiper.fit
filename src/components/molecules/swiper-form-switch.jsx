@@ -55,7 +55,7 @@ const SwiperFormSwitch = ({
       {label && (
         <label
           htmlFor={switchId}
-          className="flex-1 text-slate-500 text-sm font-medium leading-none select-none"
+          className="flex-1 text-neutral-neutral-700 text-base font-medium leading-none select-none"
         >
           {label}
         </label>

@@ -43,6 +43,7 @@ const PageHeader = forwardRef(({
     }
   }, [searchActive]);
 
+
   // Programs variant (routine builder) – two-row header
   if (variant === 'programs') {
     return (

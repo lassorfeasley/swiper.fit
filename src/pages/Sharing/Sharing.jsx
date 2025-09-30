@@ -1116,7 +1116,7 @@ export default function Sharing() {
           <SwiperDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title={dialogMode === 'workout' ? "Select routine to start workout" : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
+            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
             confirmText=""
             cancelText=""
             onCancel={() => {
@@ -1126,96 +1126,98 @@ export default function Sharing() {
               setDialogMode('workout');
             }}
           >
-            <div className="self-stretch flex flex-col justify-start items-start">
-              {dialogMode === 'workout' && activeWorkout && (
-                <div 
-                  className="w-full p-3 bg-green-50 border-b border-neutral-neutral-300 inline-flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-green-100"
-                  onClick={handleJoinActiveWorkout}
-                >
-                  <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                    <div className="self-stretch flex flex-col justify-start items-start">
-                      <div className="w-[452px] justify-start text-green-800 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                        {activeWorkout.routines?.routine_name || 'Active workout'}
-                      </div>
-                      <div className="text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                        Active workout in progress
-                      </div>
+            {dialogMode === 'workout' && activeWorkout && (
+              <div 
+                data-layer="Routine Card" 
+                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-green-50"
+                onClick={handleJoinActiveWorkout}
+              >
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-green-800 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      {activeWorkout.routines?.routine_name || 'Active workout'}
+                    </div>
+                    <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                      Active workout in progress
                     </div>
                   </div>
-                  <div className="text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    Join workout
+                </div>
+                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
+                  <div 
+                    data-layer="Frame 5012" 
+                    className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
+                  >
+                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Join</div>
                   </div>
                 </div>
-              )}
-              {clientRoutines
-                .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
-                .map((routine, index) => (
-                <div 
-                  key={routine.id}
-                  className={`w-full p-3 bg-white flex flex-col justify-start items-start gap-6 ${
-                    dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-50'
-                  } ${
-                    index < clientRoutines.filter(r => dialogMode === 'workout' ? (!activeWorkout || r.id !== activeWorkout.routine_id) : true).length - 1 ? 'border-b border-neutral-neutral-300' : ''
-                  }`}
-                  onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
-                >
-                  <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                    <div className="self-stretch flex flex-col justify-start items-start">
-                      <div className={`w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
-                      }`}>
-                        {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
-                      </div>
-                      <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                        dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                      }`}>
-                        {routine.lastCompletedText || 'Never completed'}
-                      </div>
+              </div>
+            )}
+            {clientRoutines
+              .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
+              .map((routine, index) => (
+              <div 
+                key={routine.id}
+                data-layer="Routine Card" 
+                className={`RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden ${
+                  dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-neutral-50'
+                }`}
+                onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
+              >
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className={`BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
+                    }`}>
+                      {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
+                    </div>
+                    <div data-layer="Completed 5 days ago" className={`Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
+                    }`}>
+                      {routine.lastCompletedText || 'Never completed'}
                     </div>
                   </div>
-                  <div className={`text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                    dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                  }`}>
-                    {dialogMode === 'workout' ? 'Start workout' : 'Edit routine'}
+                </div>
+                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
+                  <div 
+                    data-layer="Frame 5012" 
+                    className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
+                      dialogMode === 'workout' && activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
+                    } ${dialogMode === 'workout' && activeWorkout ? '' : 'cursor-pointer'}`}
+                    onClick={dialogMode === 'workout' && activeWorkout ? undefined : (e) => {
+                      e.stopPropagation();
+                      dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine);
+                    }}
+                  >
+                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
+                    }`}>
+                      {dialogMode === 'workout' ? 'Start' : 'Edit'}
+                    </div>
                   </div>
                 </div>
-              ))}
-              {clientRoutines.length === 0 && (
-                <div className="w-full max-w-[500px] p-3 bg-white border-b border-neutral-neutral-300 flex flex-col justify-start items-start gap-6">
-                  <div className="text-center justify-center text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
+              </div>
+            ))}
+            {clientRoutines.length === 0 && (
+              <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight text-center">
+                      {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
+                    </div>
                   </div>
                 </div>
-              )}
-              {dialogMode === 'manage' && (
-                <div 
-                  className="w-full p-3 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-6 cursor-pointer hover:bg-neutral-50"
-                  onClick={() => {
-                    if (selectedClient) {
-                      // Switch to the account owner's context
-                      switchToUser(selectedClient);
-                      
-                      // Navigate to routine builder to create a new routine
-                      navigate('/routines', { 
-                        state: { 
-                          managingForOwner: true, 
-                          ownerId: selectedClient.id,
-                          ownerName: formatUserDisplay(selectedClient)
-                        } 
-                      });
-                      setShowRoutineSelectionDialog(false);
-                      setSelectedClient(null);
-                      setClientRoutines([]);
-                      setActiveWorkout(null);
-                    }
-                  }}
-                >
-                  <div className="text-center justify-center text-neutral-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-none">
-                    Create new routine
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </SwiperDialog>
       </div>
     </AppLayout>
