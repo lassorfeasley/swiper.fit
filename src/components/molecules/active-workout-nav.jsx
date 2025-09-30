@@ -48,8 +48,8 @@ export default function ActiveWorkoutNav({ onEnd }) {
               <Blend className="w-6 h-6 text-white" />
             </div>
             <div data-layer="Frame 71" className="Frame71 size- flex justify-center items-center gap-5">
-              <div data-layer="Managing [user]'s account" className="ManagingUserSAccount justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                Managing {formatUserDisplay(actingUser)}'s account
+              <div data-layer="[user]" className="ManagingUserSAccount justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                {formatUserDisplay(actingUser)}
               </div>
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function ActiveWorkoutNav({ onEnd }) {
       )}
 
       {/* Timer section - updated wrapper styles */}
-      <div data-layer="Frame 57" className="Frame57 self-stretch px-4 pt-5 bg-gradient-to-b from-stone-300/20 to-stone-300/0 inline-flex justify-between items-start">
+      <div data-layer="Frame 57" className="Frame57 self-stretch px-4 pt-5 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start">
         <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
           <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
         </div>

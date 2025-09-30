@@ -124,7 +124,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-start",
+          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-stone-100 inline-flex justify-between items-start",
           showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
