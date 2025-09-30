@@ -47,7 +47,7 @@ const PageSectionWrapper = ({
       {...domProps}
     >
       {/* Content with the section title rendered inside DeckWrapper header */}
-      <div className={cn("w-full self-stretch px-[28px] pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }>
+      <div className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }>
         <DeckWrapper 
           gap={deckGap}
           useChildMargin={!reorderable}

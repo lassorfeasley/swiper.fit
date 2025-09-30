@@ -7,6 +7,7 @@ import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Bookmark } from "lucide-react";
 
 export default function PublicRoutine() {
   const { routineId } = useParams();
@@ -28,6 +29,7 @@ export default function PublicRoutine() {
             routine_name,
             is_public,
             user_id,
+            og_image_url,
             routine_exercises!fk_routine_exercises__routines(
               id,
               exercise_order,
@@ -63,6 +65,8 @@ export default function PublicRoutine() {
             ownerName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           }
         }
+        console.log('Routine data:', data);
+        console.log('OG Image URL:', data.og_image_url);
         setRoutine({ ...data, owner_name: ownerName });
       } finally {
         setLoading(false);
@@ -168,27 +172,63 @@ export default function PublicRoutine() {
     }
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: routine?.routine_name || "Routine",
+        text: `Check out this routine shared by ${routine?.owner_name}`,
+        url: window.location.href
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
+    }
+  };
+
   return (
     <AppLayout
       hideHeader={false}
       showSidebar={false}
       title={routine?.routine_name || "Routine"}
       titleRightText={routine?.owner_name ? `Shared by ${routine.owner_name}` : undefined}
-      variant="programs"
-      showStartWorkout={true}
-      onStartWorkout={handleStart}
-      startCtaText={user ? "Save routine to my account" : "Create an account to save this routine"}
+      variant="glass"
+      showShare={true}
+      onShare={handleShare}
     >
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen pt-20">
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : !routine ? (
           <div className="text-gray-400 text-center py-8">Routine not available.</div>
         ) : (
-          <PageSectionWrapper
+          <>
+            {/* Routine Image Section */}
+            <div className="self-stretch inline-flex flex-col justify-start items-center">
+              <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
+                <div 
+                  className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
+                  onClick={handleShare}
+                >
+                  <img 
+                    className="w-full h-auto block" 
+                    src={routine?.og_image_url || `/api/generate-routine-og-image?routineId=${routineId}`} 
+                    alt={`${routine.routine_name} routine`}
+                    draggable={false}
+                    onError={(e) => {
+                      console.log('Image failed to load:', e.target.src);
+                      console.log('Falling back to default image');
+                      e.target.src = "/images/default-open-graph.png";
+                    }}
+                    onLoad={() => console.log('Image loaded successfully:', e.target.src)}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <PageSectionWrapper
             section="workout"
             id={`section-workout`}
-            deckGap={0}
+            deckGap={12}
             reorderable={false}
             items={(routine.routine_exercises || [])}
             className="flex-1"
@@ -214,8 +254,32 @@ export default function PublicRoutine() {
                   addTopBorder
                 />
               ))}
-          </PageSectionWrapper>
+            </PageSectionWrapper>
+          </>
         )}
+      </div>
+      
+      {/* Persistent Save Button - Absolutely positioned at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
+        <div 
+          className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+          onClick={handleStart}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStart?.(); } }}
+          aria-label={user ? "Save routine to my account" : "Create account to save routine"}
+        >
+          <div className="p-2.5 flex justify-start items-center gap-2.5">
+            <div className="relative">
+              <Bookmark className="w-6 h-6" stroke="white" strokeWidth="2" />
+            </div>
+          </div>
+          <div className="flex justify-center items-center gap-5">
+            <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+              {user ? "Save routine to my account" : "Create account to save routine"}
+            </div>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

@@ -720,6 +720,7 @@ const CompletedWorkout = () => {
       <AppLayout
         hideHeader={false}
         title="Workout summary"
+        titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
         variant="glass"
         showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
         onBack={() => {

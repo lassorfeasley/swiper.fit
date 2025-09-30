@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -123,15 +123,22 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-gradient-to-b from-white/0 to-stone-100 inline-flex justify-between items-start",
+          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-[linear-gradient(to_top,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] inline-flex justify-between items-start",
           showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
       >
-        {/* Left side - Title */}
+        {/* Left side - Title and Subtitle */}
         <div className="flex justify-start items-center gap-3">
-          <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
-            {title}
+          <div className="inline-flex flex-col justify-center items-start gap-0.5">
+            <div className="justify-center text-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">
+              {title}
+            </div>
+            {titleRightText && (
+              <div className="justify-center text-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+                {titleRightText}
+              </div>
+            )}
           </div>
         </div>
 
@@ -142,18 +149,18 @@ const PageHeader = forwardRef(({
               <button 
                 onClick={onShare} 
                 aria-label="Share" 
-                className="size-6 relative overflow-hidden"
+                className="size-6 flex items-center justify-center"
               >
-                <Upload className="w-5 h-[30px] absolute left-[2px] top-[-3px] text-neutral-700" strokeWidth={2} />
+                <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
               </button>
             )}
             {showDelete && (
               <button 
                 onClick={onDelete} 
                 aria-label="Delete" 
-                className="size-6 relative overflow-hidden"
+                className="size-6 flex items-center justify-center"
               >
-                <Trash2 className="w-5 h-[30px] absolute left-[1px] top-[-3px] text-neutral-700" strokeWidth={2} />
+                <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
               </button>
             )}
           </div>
