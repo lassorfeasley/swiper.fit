@@ -21,6 +21,7 @@ const PageSectionWrapper = ({
   onReorder,
   deckVariant = "list",
   backgroundClass = "bg-transparent",
+  paddingX = 20,
   style,
   ...props 
 }) => {
@@ -50,18 +51,20 @@ const PageSectionWrapper = ({
       <div className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }>
         <DeckWrapper 
           gap={deckGap}
+          paddingX={paddingX}
           useChildMargin={!reorderable}
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
           variant={deckVariant}
           paddingBottom={0}
+          maxWidth={null}
           className={className?.includes("flex-1") ? "flex-1" : ""}
           style={style}
           header={null}
         >
           {/* Section title as first item in flow */}
-          <div className="w-full max-w-[500px] inline-flex justify-center items-center gap-2.5" style={{ marginBottom: '12px' }}>
+          <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: '12px' }}>
             <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
               {displayTitle}
             </div>

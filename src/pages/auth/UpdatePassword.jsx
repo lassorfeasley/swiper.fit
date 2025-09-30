@@ -61,7 +61,7 @@ export default function UpdatePassword() {
     <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-stone-100 pt-20">
 
       {/* Main Content */}
-      <div className="self-stretch flex flex-col justify-center items-center flex-1 px-5">
+      <div className="self-stretch flex flex-col justify-center items-center flex-1">
         <DeckWrapper gap={0} className="flex-1">
           <CardWrapper>
             <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
@@ -95,7 +95,7 @@ export default function UpdatePassword() {
                 )}
 
                 {/* New Password field */}
-                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
                       <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
@@ -113,7 +113,7 @@ export default function UpdatePassword() {
                 </div>
 
                 {/* Confirm Password field */}
-                <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+                <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
                       <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">

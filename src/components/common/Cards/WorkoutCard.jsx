@@ -13,10 +13,10 @@ const WorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
       data-layer="workout-card"
-      className="RoutineCard w-[500px] max-w-[500px] p-3 bg-white rounded-xl border border-neutral-300 inline-flex justify-center items-end gap-2"
+      className="RoutineCard w-full p-3 bg-white rounded-xl border border-neutral-300 inline-flex justify-center items-end gap-2"
       {...props}
     >
-      <div data-layer="Frame 5010" className="Frame5010 w-[476px] inline-flex flex-col justify-start items-start gap-3">
+      <div data-layer="Frame 5010" className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">
         <div data-layer="Frame 5011" className="Frame5011 self-stretch flex flex-col justify-center items-start gap-1">
           <div data-layer="Today" className="Today justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
             {relativeLabel}

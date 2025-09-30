@@ -186,7 +186,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-stone-100 inline-flex justify-between items-start",
+          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start",
           showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
@@ -287,7 +287,7 @@ const PageHeader = forwardRef(({
       {/* Action / Search area */}
       {searchActive ? (
         <div className="Pageactions inline-flex justify-start items-center">
-          <div className="w-96 h-11 max-w-96 min-w-64 inline-flex flex-col justify-center items-start gap-2">
+          <div className="w-96 h-11 max-w-96 inline-flex flex-col justify-center items-start gap-2">
             <div className="self-stretch pl-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2.5">
               <TextInput
                 ref={searchInputRef}

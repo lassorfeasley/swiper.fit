@@ -1488,7 +1488,8 @@ const ActiveWorkoutSection = ({
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
         deckGap={12}
         backgroundClass="bg-transparent"
-        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px', paddingLeft: 40, paddingRight: 40 }}
+        paddingX={0}
+        style={{ paddingBottom: 0, paddingTop: 40 }}
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);

@@ -935,7 +935,7 @@ export default function Sharing() {
     <AppLayout title="Sharing" variant="glass">
       <div className="w-full flex flex-col min-h-screen">
         {/* Shared by me section */}
-        <div className="self-stretch inline-flex flex-col justify-start items-center">
+        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
           <div className="w-full max-w-[500px] pt-20 pb-14 flex flex-col justify-start items-center gap-3">
             <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
               <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared by me</div>
@@ -989,7 +989,7 @@ export default function Sharing() {
         </div>
 
         {/* Shared with me section */}
-        <div className="self-stretch inline-flex flex-col justify-start items-center">
+        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
           <div className="w-full max-w-[500px] pt-0 pb-14 flex flex-col justify-start items-center gap-3">
             <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
               <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared with me</div>

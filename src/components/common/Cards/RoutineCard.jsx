@@ -70,12 +70,12 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard }) => {
   return (
     <div
       data-layer="Routine Card"
-      className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer"
+      className="RoutineCard w-full p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
     >
       <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
         <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-          <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-gray-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+          <div data-layer="Biceps and chest" className="BicepsAndChest justify-start text-gray-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
             {name}
           </div>
           {lastCompleted && (
