@@ -83,7 +83,7 @@ export default function DemoWorkoutSection() {
           className="flex flex-1 justify-center items-start h-full"
           paddingTop={40}
           paddingBottom={0}
-          maxWidth={400}
+          maxWidth={500}
           minWidth={0}
           useChildMargin={true}
           style={{ 

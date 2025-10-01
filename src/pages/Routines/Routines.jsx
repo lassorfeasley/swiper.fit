@@ -185,7 +185,7 @@ const RoutinesIndex = () => {
             gap={12} 
             paddingTop={82}
             paddingBottom={0}
-            maxWidth={null}
+            maxWidth={500}
             className="flex-1 mt-0 min-h-screen"
           >
           {loading ? (

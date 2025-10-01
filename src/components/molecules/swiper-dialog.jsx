@@ -59,7 +59,7 @@ const SwiperDialog = ({
           </DialogTitle>
           <DeckWrapper 
             className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none" 
-            maxWidth={null}
+            maxWidth={500}
             minWidth={null}
 
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}

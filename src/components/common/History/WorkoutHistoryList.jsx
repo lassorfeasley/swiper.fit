@@ -23,7 +23,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
         <DeckWrapper
           gap={12}
           paddingBottom={80}
-          maxWidth={null}
+          maxWidth={500}
           className="mt-0"
         >
           {workouts.length === 0 ? (

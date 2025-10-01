@@ -15,7 +15,7 @@ import { toast } from "sonner";
  *  • routineData – full routine data object for starting workouts.
  *  • isFirstCard – whether this is the first card (unused).
  */
-const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard }) => {
+const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideStart, onCardClick, onStartClick, onSettingsClick }) => {
   const navigate = useNavigate();
   const { startWorkout } = useActiveWorkout();
 
@@ -61,6 +61,10 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard }) => {
 
   const handleSettingsClick = (e) => {
     e.stopPropagation(); // Prevent card click
+    if (onSettingsClick) {
+      onSettingsClick(e);
+      return;
+    }
     navigate(`/routines/${id}/configure`);
   };
 
@@ -71,7 +75,7 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard }) => {
     <div
       data-layer="Routine Card"
       className="RoutineCard w-full p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer"
-      onClick={handleCardClick}
+      onClick={onCardClick || handleCardClick}
     >
       <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
         <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
@@ -86,18 +90,20 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard }) => {
         </div>
       </div>
       <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-        <div 
-          data-layer="Frame 5012" 
-          className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
-          onClick={handleStartWorkout}
-        >
-          <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-            <Play className="w-4 h-4 text-white" />
+        {hideStart ? null : (
+          <div 
+            data-layer="Frame 5012" 
+            className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
+            onClick={onStartClick || handleStartWorkout}
+          >
+            <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+              <Play className="w-4 h-4 text-white" />
+            </div>
+            <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
+              Start
+            </div>
           </div>
-          <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-            Start
-          </div>
-        </div>
+        )}
         <div 
           data-layer="Frame 5013" 
           className="Frame5013 w-7 h-7 bg-gray-200 rounded-[50px] flex justify-center items-center gap-1 cursor-pointer"
@@ -118,6 +124,10 @@ RoutineCard.propTypes = {
   lastCompleted: PropTypes.string,
   routineData: PropTypes.object,
   isFirstCard: PropTypes.bool,
+  hideStart: PropTypes.bool,
+  onCardClick: PropTypes.func,
+  onStartClick: PropTypes.func,
+  onSettingsClick: PropTypes.func,
 };
 
 export default RoutineCard; 
