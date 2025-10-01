@@ -23,6 +23,7 @@ const PageSectionWrapper = ({
   backgroundClass = "bg-transparent",
   paddingX = 20,
   style,
+  applyPaddingOnParent = false,
   ...props 
 }) => {
   // Filter out isFirstCard from props to prevent React warning
@@ -48,19 +49,23 @@ const PageSectionWrapper = ({
       {...domProps}
     >
       {/* Content with the section title rendered inside DeckWrapper header */}
-      <div className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }>
+      <div
+        className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }
+        style={applyPaddingOnParent ? style : undefined}
+      >
         <DeckWrapper 
           gap={deckGap}
-          paddingX={paddingX}
+          paddingX={applyPaddingOnParent ? 0 : paddingX}
+          paddingTop={applyPaddingOnParent ? 0 : undefined}
+          paddingBottom={0}
           useChildMargin={!reorderable}
           reorderable={reorderable}
           items={items}
           onReorder={onReorder}
           variant={deckVariant}
-          paddingBottom={0}
           maxWidth={500}
-          className={className?.includes("flex-1") ? "flex-1" : ""}
-          style={style}
+          className=""
+          style={applyPaddingOnParent ? { maxWidth: '500px' } : style}
           header={null}
         >
           {/* Section title as first item in flow */}
