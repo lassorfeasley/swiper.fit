@@ -374,7 +374,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
           {/* Draggable Thumb */}
           <motion.div
             className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-            style={{ ...thumbStyle, pointerEvents: isVisuallyComplete ? 'none' : 'auto' }}
+            style={{ ...thumbStyle, pointerEvents: isVisuallyComplete ? 'none' : 'auto', overflow: 'visible' }}
             drag={!isVisuallyComplete && isDefault ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
@@ -394,11 +394,11 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
             whileDrag={{ cursor: "grabbing" }}
             transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
           >
-            <motion.div className="size-10 relative flex items-center justify-center"
+            <motion.div className="size-9 relative flex items-center justify-center"
               initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
               animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: 1 / (finalScaleX || 1), scaleY: 1 / (finalScaleY || 1) }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              style={{ transformOrigin: 'center' }}
+              style={{ transformOrigin: 'center', zIndex: 3 }}
             >
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
