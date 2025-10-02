@@ -39,6 +39,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const trackRef = useRef(null);
   const [thumbTravel, setThumbTravel] = useState(0);
   const [trackWidth, setTrackWidth] = useState(0);
+  const [trackHeight, setTrackHeight] = useState(0);
   const [swipedComplete, setSwipedComplete] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragMoved = useRef(false);
@@ -46,6 +47,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
   const [isManualSwipe, setIsManualSwipe] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isCheckVisible, setIsCheckVisible] = useState(false);
+  const [finalScaleX, setFinalScaleX] = useState(1);
+  const [finalScaleY, setFinalScaleY] = useState(1);
   const lastManualSwipeTime = useRef(0);
   const hasManualSwipedThisSession = useRef(false);
   // Flag to skip the very next automatic-complete animation if THIS window just swiped
@@ -98,7 +102,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     if (isDragging) return;
     if (trackRef.current) {
       const railClientWidth = trackRef.current.clientWidth;
+      const railClientHeight = trackRef.current.clientHeight;
       setTrackWidth(railClientWidth);
+      setTrackHeight(railClientHeight);
       const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
       const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
       const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
@@ -127,47 +133,60 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     
     // Set animating state to true
     setIsAnimating(true);
+    setIsCheckVisible(false);
     
     // Set swipedComplete immediately to trigger the animation
     setSwipedComplete(true);
     
-    // Step 1: Animate thumb smoothly to end position
+    // Step 1: Slide to end position
     controls.start({ 
       x: thumbTravel, 
       width: THUMB_WIDTH, 
       backgroundColor: "#22C55E", 
-      borderRadius: THUMB_RADIUS 
-    }, tweenConfig);
-
-    // Step 2: After slide completes, expand to fill content area
-    const slideDurationMs = tweenConfig.duration * 1000;
-    const expandDelay = slideDurationMs + 50;
-    
-    setTimeout(() => {
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
+    }, tweenConfig).then(() => {
       if (!isMountedRef.current) return;
       
-      // First expand within the padded area
+      // Step 2: Expand to full content width (within padding)
       controls.start({
         x: 0,
         width: getContentWidth(),
         backgroundColor: '#22C55E',
-        borderRadius: THUMB_RADIUS
+        borderRadius: THUMB_RADIUS,
+        scaleX: 1,
+        scaleY: 1,
       }, tweenConfig).then(() => {
-        // Then expand to full rail dimensions (width and height together)
+        if (!isMountedRef.current) return;
+        
+        // Step 3: Expand outward to cover all padding using transforms to avoid layout flicker
+        const contentWidth = getContentWidth();
+        const targetScaleX = contentWidth > 0 ? (trackWidth || 0) / contentWidth : 1;
+        const targetScaleY = (trackHeight || 0) / 48; // Fill rail height while icon is hidden
+        setFinalScaleX(targetScaleX || 1);
+        setFinalScaleY(targetScaleY || 1);
+
         controls.start({
-          left: -RAIL_HORIZONTAL_PADDING_PER_SIDE,
-          width: `calc(100% + ${RAIL_HORIZONTAL_PADDING_PER_SIDE * 2}px)`,
-          height: '100%',
+          x: 0,
+          width: contentWidth, // keep width constant and scale to fill padding
+          scaleX: targetScaleX,
+          scaleY: targetScaleY,
           backgroundColor: '#22C55E',
           borderRadius: THUMB_RADIUS
-        }, { type: 'tween', ease: 'easeInOut', duration: 0.4 }).then(() => {
+        }, { 
+          type: 'tween', 
+          ease: 'easeOut',
+          duration: 0.35
+        }).then(() => {
           setTimeout(() => {
             setIsManualSwipe(false);
             setIsAnimating(false);
+            setIsCheckVisible(true);
           }, 100);
         });
       });
-    }, expandDelay);
+    });
   }, [controls, thumbTravel, tweenConfig, getContentWidth]);
 
   // Reset flags when status changes
@@ -178,6 +197,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
       setSwipedComplete(false);
       setIsManualSwipe(false);
       setIsAnimating(false);
+      setIsCheckVisible(false);
+      setFinalScaleX(1);
+      setFinalScaleY(1);
       locallyManuallySwipedRef.current = false;
       hasManualSwipedThisSession.current = false;
       skipAutoCompleteOnce.current = false;
@@ -250,7 +272,9 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
       x: 0, 
       width: THUMB_WIDTH, 
       backgroundColor: "#FFFFFF", 
-      borderRadius: THUMB_RADIUS 
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
     });
     return () => {
       isMountedRef.current = false;
@@ -279,7 +303,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
     } else {
       // Incomplete: reset thumb
       if (isMountedRef.current) {
-        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS }, tweenConfig);
+        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig);
       }
     }
     
@@ -370,7 +394,12 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
             whileDrag={{ cursor: "grabbing" }}
             transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
           >
-            <div className="size-10 relative flex items-center justify-center">
+            <motion.div className="size-10 relative flex items-center justify-center"
+              initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
+              animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: 1 / (finalScaleX || 1), scaleY: 1 / (finalScaleY || 1) }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              style={{ transformOrigin: 'center' }}
+            >
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
                   {isOptimistic ? (
@@ -380,7 +409,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
           {/* Absolute overlay for text so it doesn't shift */}
           {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
