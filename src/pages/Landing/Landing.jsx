@@ -50,7 +50,7 @@ export default function Landing() {
         {/* Main Content - Flexible sections */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Text content section - Responsive height */}
-          <div className="w-full px-5 py-8 flex flex-col justify-center items-start gap-2.5">
+          <div className="w-full px-5 py-8 flex flex-col justify-center items-start gap-2.5 min-h-[380px]">
             <div className="w-full max-w-[400px] flex flex-col justify-start items-start gap-2">
               <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Log workouts effortlessly.</div>
               <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Enter your routine and start a workout. Never miss an exercise and monitor your progress with AI.</div>
