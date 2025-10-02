@@ -1252,7 +1252,7 @@ export default function Sharing() {
                     <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
                       dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
                     }`}>
-                      {dialogMode === 'workout' ? 'Start' : 'Edit'}
+                      Start
                     </div>
                   </div>
                 </div>
