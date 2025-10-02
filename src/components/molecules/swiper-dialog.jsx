@@ -31,6 +31,7 @@ const SwiperDialog = ({
   primaryAction,
   footer,
   hideFooter = false,
+  showHeaderDismiss = true,
   closeOnOverlayClick = true,
   closeOnConfirm = true,
   closeOnCancel = true,
@@ -87,7 +88,13 @@ const SwiperDialog = ({
               {title && (
                 <div className={`self-stretch h-11 px-3 ${tone === 'danger' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
                   <div id="swiper-dialog-title" className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">{title}</div>
-                  {headerRight}
+                  {headerRight ?? (showHeaderDismiss ? (
+                    <button
+                      onClick={() => onOpenChange?.(false)}
+                      className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+                      aria-label="Close dialog"
+                    />
+                  ) : null)}
                 </div>
               )}
               {description && (
@@ -96,10 +103,12 @@ const SwiperDialog = ({
                 </div>
               )}
               {primaryAction}
-              <div className={`self-stretch p-3 bg-white flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
-                   style={{ maxHeight: maxBodyHeight }}>
-                {children}
-              </div>
+              {React.Children.count(children) > 0 && (
+                <div className={`self-stretch p-3 bg-white flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
+                     style={{ maxHeight: maxBodyHeight }}>
+                  {children}
+                </div>
+              )}
               {!hideFooter && (
                 footer ? (
                   <div className={footerClassName}>{footer}</div>
