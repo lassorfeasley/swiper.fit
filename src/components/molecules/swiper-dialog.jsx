@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/atoms/dialog";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
-import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { SwiperButton } from './swiper-button';
 
 // Force hot reload - AlertDialogCancel and AlertDialogAction removed
@@ -23,88 +22,102 @@ const SwiperDialog = ({
   cancelText = "Cancel",
   confirmVariant = "default",
   cancelVariant = "outline",
-  className,
   contentClassName,
+  containerClassName,
   headerClassName,
+  bodyClassName,
   footerClassName,
-  titleClassName,
-  descriptionClassName,
+  headerRight,
+  primaryAction,
+  footer,
+  hideFooter = false,
+  closeOnOverlayClick = true,
+  closeOnConfirm = true,
+  closeOnCancel = true,
+  size = "md",
+  align = "center",
+  tone = "neutral",
+  maxBodyHeight = "60vh",
+  showCloseButton = false,
   children,
   ...props
 }) => {
   const controlledOpen = typeof open !== "undefined" ? open : isOpen;
 
+  const widthClass =
+    size === "sm" ? "max-w-[420px]" : size === "lg" ? "max-w-[640px]" : "max-w-[500px]";
+
   const handleConfirm = () => {
-    console.log('SwiperDialog handleConfirm called');
     onConfirm?.();
+    if (closeOnConfirm) onOpenChange?.(false);
   };
 
   const handleCancel = () => {
-    console.log('SwiperDialog handleCancel called');
     onCancel?.();
-    onOpenChange?.(false);
+    if (closeOnCancel) onOpenChange?.(false);
+  };
+
+  const handleBackdropClick = () => {
+    if (closeOnOverlayClick) onOpenChange?.(false);
   };
 
   return (
-    <Dialog open={controlledOpen} onOpenChange={onOpenChange}>
+    <Dialog open={controlledOpen} onOpenChange={onOpenChange} {...props}>
       <DialogPortal>
-        <DialogOverlay onClick={() => onOpenChange?.(false)} />
-        <DialogContent 
-          className={`w-full h-full inline-flex flex-col justify-center items-center shadow-none border-none bg-transparent p-0 [&>button]:hidden z-[10000] px-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none ${contentClassName || ''}`}
-          onClick={() => onOpenChange?.(false)}
+        <DialogOverlay onClick={handleBackdropClick} />
+        <DialogContent
+          className={`w-full h-full inline-flex ${align === 'top' ? 'items-start' : 'items-center'} justify-center shadow-none border-none bg-transparent p-0 ${showCloseButton ? '' : '[&>button]:hidden'} z-[10000] px-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none ${contentClassName || ''}`}
+          onClick={handleBackdropClick}
           tabIndex={-1}
         >
-          <DialogTitle className="sr-only">
-            {title || 'Dialog'}
-          </DialogTitle>
-          <DeckWrapper 
-            className="w-full h-screen flex flex-col justify-center items-center gap-2.5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none" 
+          <DialogTitle className="sr-only">{title || 'Dialog'}</DialogTitle>
+          <DeckWrapper
+            className="w-full h-screen flex flex-col justify-center items-center gap-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none"
             maxWidth={null}
             minWidth={null}
-
             style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
             tabIndex={-1}
           >
-            <div 
-              className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-center overflow-hidden"
+            <div
+              className={`w-full ${widthClass} bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-labelledby="swiper-dialog-title"
             >
-              <div className="self-stretch h-11 pl-3 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start">
-                <div className="self-stretch inline-flex justify-center items-center gap-2.5">
-                  <div className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">{title}</div>
-                </div>
-              </div>
-              {description && (
-                <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
-                  <div className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">{description}</div>
+              {title && (
+                <div className={`self-stretch h-11 px-3 ${tone === 'danger' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
+                  <div id="swiper-dialog-title" className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">{title}</div>
+                  {headerRight}
                 </div>
               )}
-              <div className="self-stretch p-3 bg-stone-100 flex flex-col justify-start items-start gap-2.5 max-h-[500px] overflow-y-auto overflow-x-hidden">
+              {description && (
+                <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
+                  <div className="text-neutral-neutral-700 text-base leading-tight">{description}</div>
+                </div>
+              )}
+              {primaryAction}
+              <div className={`self-stretch p-3 bg-stone-100 flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
+                   style={{ maxHeight: maxBodyHeight }}>
                 {children}
-                {(confirmText || cancelText) && (
-                  <div 
-                    className="self-stretch flex flex-col justify-start items-start gap-4"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+              </div>
+              {!hideFooter && (
+                footer ? (
+                  <div className={footerClassName}>{footer}</div>
+                ) : ((confirmText || cancelText) && (
+                  <div className={`self-stretch grid grid-cols-1 gap-3 p-3 mt-0 ${footerClassName || ''}`}>
                     {confirmText && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
-                        className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
-                      >
-                        <span className="text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">{confirmText}</span>
-                      </button>
+                      <SwiperButton onClick={handleConfirm} variant={confirmVariant}>
+                        {confirmText}
+                      </SwiperButton>
                     )}
                     {cancelText && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                        className="self-stretch h-12 px-4 py-2 bg-neutral-neutral-100 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5"
-                      >
-                        <span className="text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">{cancelText}</span>
-                      </button>
+                      <SwiperButton onClick={handleCancel} variant={cancelVariant}>
+                        {cancelText}
+                      </SwiperButton>
                     )}
                   </div>
-                )}
-              </div>
+                ))
+              )}
             </div>
           </DeckWrapper>
         </DialogContent>

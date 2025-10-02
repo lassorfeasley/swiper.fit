@@ -17,6 +17,7 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapperLabel";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
 
@@ -1144,9 +1145,17 @@ export default function Sharing() {
           <SwiperDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
-            confirmText=""
-            cancelText=""
+            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `${formatUserDisplay(selectedClient)}'s routines`}
+            hideFooter
+            containerClassName="bg-stone-100"
+            headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+            headerRight={
+              <button
+                onClick={() => setShowRoutineSelectionDialog(false)}
+                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-neutral-neutral-300"
+                aria-label="Close dialog"
+              />
+            }
             onCancel={() => {
               setShowRoutineSelectionDialog(false);
               setSelectedClient(null);
@@ -1154,6 +1163,24 @@ export default function Sharing() {
               setDialogMode('workout');
             }}
           >
+            {dialogMode !== 'workout' && (
+              <SwiperButton
+                variant="primary-action"
+                className="self-stretch w-full"
+              >
+                <span className="flex-1">Create new routine</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
+            )}
+
+            <DeckWrapper 
+              className="self-stretch w-full flex flex-col justify-center items-center gap-3 px-0"
+              maxWidth={null}
+              minWidth={null}
+              paddingX={0}
+              paddingTop={0}
+              paddingBottom={0}
+            >
             {dialogMode === 'workout' && activeWorkout && (
               <div 
                 data-layer="Routine Card" 
@@ -1176,9 +1203,7 @@ export default function Sharing() {
                     className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
                   >
                     <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                      <Play className="w-4 h-4 text-white" />
                     </div>
                     <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Join</div>
                   </div>
@@ -1222,9 +1247,7 @@ export default function Sharing() {
                     }}
                   >
                     <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                      <Play className="w-4 h-4 text-white" />
                     </div>
                     <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
                       dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
@@ -1246,6 +1269,7 @@ export default function Sharing() {
                 </div>
               </div>
             )}
+            </DeckWrapper>
           </SwiperDialog>
       </div>
     </AppLayout>
