@@ -108,7 +108,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
       const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
       const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
       const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
-      const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
+      const finalThumbTravel = Math.max(0, newThumbTravel);
       setThumbTravel(finalThumbTravel);
     }
   };
@@ -378,7 +378,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
             drag={!isVisuallyComplete && isDefault ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
-            dragConstraints={{ left: 0, right: thumbTravel }}
+            dragConstraints={{ left: 0, right: Math.max(0, thumbTravel) }}
             onDragStart={() => { 
               setIsDragging(true); 
               dragMoved.current = false;

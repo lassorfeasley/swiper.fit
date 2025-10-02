@@ -58,8 +58,7 @@ const PageSectionWrapper = ({
           onReorder={onReorder}
           variant={deckVariant}
           paddingBottom={0}
-          maxWidth={null}
-          className={className?.includes("flex-1") ? "flex-1" : ""}
+          maxWidth={500}
           style={style}
           header={null}
         >

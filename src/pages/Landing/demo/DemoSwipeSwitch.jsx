@@ -102,7 +102,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
       const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
       const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
-      const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
+      const finalThumbTravel = Math.max(0, newThumbTravel);
       
       thumbTravelRef.current = finalThumbTravel;
       dragConstraintsRef.current = { left: 0, right: finalThumbTravel };
@@ -366,7 +366,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
             drag={!isVisuallyComplete && isDefault ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
-            dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 80 }}
+            dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 0 }}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
             onDragEnd={handleDragEnd}
