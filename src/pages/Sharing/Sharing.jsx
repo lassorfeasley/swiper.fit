@@ -84,9 +84,10 @@ export default function Sharing() {
 
   // New handlers for delegate actions without switching context
   const handleCreateRoutinesForOwner = async (ownerProfile) => {
+    // Ensure dialog shows Manage view (primary create button visible)
+    setDialogMode('manage');
     console.log('[Sharing] Opening routine builder for owner:', ownerProfile.id);
     setSelectedClient(ownerProfile);
-    setDialogMode('manage');
     
     // Fetch routines for this specific owner
     try {
@@ -651,6 +652,8 @@ export default function Sharing() {
   };
 
   const handleStartWorkout = async (clientProfile) => {
+    // Ensure dialog shows the Start view (no primary create button)
+    setDialogMode('workout');
     setSelectedClient(clientProfile);
     
     // Fetch active routines for this specific client with workout completion data and exercises
