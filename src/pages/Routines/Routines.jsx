@@ -20,6 +20,7 @@ import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/molecules/action-card";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -201,6 +202,7 @@ const RoutinesIndex = () => {
                 }}
               >
                 <span className="flex-1">Create new routine</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
               </SwiperButton>
             </CardWrapper>
           {loading ? (
