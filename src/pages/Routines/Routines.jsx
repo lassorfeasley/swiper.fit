@@ -196,16 +196,15 @@ const RoutinesIndex = () => {
           ) : (
             <>
               {filteredRoutines.map((program) => (
-                <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
-                  <RoutineCard
-                    id={program.id}
-                    name={program.routine_name}
-                    lastCompleted={program.lastCompleted}
-                    routineData={program}
-                  />
-                </CardWrapper>
+                <RoutineCard
+                  key={program.id}
+                  id={program.id}
+                  name={program.routine_name}
+                  lastCompleted={program.lastCompleted}
+                  routineData={program}
+                />
               ))}
-              <CardWrapper gap={0} marginTop={0} marginBottom={0}>
+              <div className="w-full">
                 <SwiperButton 
                   variant="primary-action" 
                   className="self-stretch w-full"
@@ -220,7 +219,7 @@ const RoutinesIndex = () => {
                   <span className="flex-1">Create new routine</span>
                   <Plus className="w-6 h-6" strokeWidth={2} />
                 </SwiperButton>
-              </CardWrapper>
+              </div>
             </>
           )}
         </DeckWrapper>
