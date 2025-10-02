@@ -96,7 +96,7 @@ const SwiperDialog = ({
                 </div>
               )}
               {primaryAction}
-              <div className={`self-stretch p-3 bg-stone-100 flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
+              <div className={`self-stretch p-3 bg-white flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
                    style={{ maxHeight: maxBodyHeight }}>
                 {children}
               </div>
