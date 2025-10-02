@@ -4,7 +4,7 @@ import { Button } from "@/components/atoms/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Settings, History, MoveUpRight, X } from "lucide-react";
+import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { generateWorkoutName } from "@/lib/utils";
 import EditableTextInput from "@/components/molecules/editable-text-input";
@@ -1269,7 +1269,7 @@ export default function Sharing() {
                       }}
                     >
                       <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden flex items-center justify-center">
-                        <Settings className="w-5 h-5 text-neutral-500" />
+                        <Cog className="w-5 h-5 text-neutral-500" />
                       </div>
                     </div>
                   )}
