@@ -23,6 +23,7 @@ import RequireAuth from "@/lib/auth/RequireAuth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
 import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
+import DialogTest from "./pages/Sandbox/DialogTest";
 import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
 import Sharing from "./pages/Sharing/Sharing";
@@ -212,6 +213,7 @@ function AppContent() {
             <Route path="/og-test" element={<OGImageTest />} />
             <Route path="/og-image-admin" element={<OGImageAdmin />} />
             <Route path="/og-env" element={<OGEnv />} />
+            <Route path="/dialog-test" element={<DialogTest />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
 
           </Route>

@@ -4,7 +4,7 @@ import { Button } from "@/components/atoms/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Settings, History, MoveUpRight, X } from "lucide-react";
+import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { generateWorkoutName } from "@/lib/utils";
 import EditableTextInput from "@/components/molecules/editable-text-input";
@@ -17,9 +17,9 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapperLabel";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
-import RoutineCard from "@/components/common/Cards/RoutineCard";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
@@ -84,9 +84,10 @@ export default function Sharing() {
 
   // New handlers for delegate actions without switching context
   const handleCreateRoutinesForOwner = async (ownerProfile) => {
+    // Ensure dialog shows Manage view (primary create button visible)
+    setDialogMode('manage');
     console.log('[Sharing] Opening routine builder for owner:', ownerProfile.id);
     setSelectedClient(ownerProfile);
-    setDialogMode('manage');
     
     // Fetch routines for this specific owner
     try {
@@ -651,6 +652,8 @@ export default function Sharing() {
   };
 
   const handleStartWorkout = async (clientProfile) => {
+    // Ensure dialog shows the Start view (no primary create button)
+    setDialogMode('workout');
     setSelectedClient(clientProfile);
     
     // Fetch active routines for this specific client with workout completion data and exercises
@@ -795,32 +798,6 @@ export default function Sharing() {
       setSelectedClient(null);
       setClientRoutines([]);
       setActiveWorkout(null);
-    }
-  };
-
-  const handleCreateRoutineForSelectedClient = async () => {
-    try {
-      if (!selectedClient) return;
-      const { data: program, error } = await supabase
-        .from("routines")
-        .insert({ routine_name: "New routine", user_id: selectedClient.id, is_public: true })
-        .select()
-        .single();
-      if (error || !program) throw error || new Error("Failed to create routine");
-
-      // Switch to the account owner's context and navigate to builder
-      switchToUser(selectedClient);
-      navigate(`/routines/${program.id}/configure`, {
-        state: {
-          managingForOwner: true,
-          ownerId: selectedClient.id,
-          ownerName: formatUserDisplay(selectedClient)
-        }
-      });
-      setShowRoutineSelectionDialog(false);
-    } catch (e) {
-      console.error("Failed to create routine for owner:", e);
-      toast.error("Failed to create routine");
     }
   };
 
@@ -1171,9 +1148,17 @@ export default function Sharing() {
           <SwiperDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `Manage ${formatUserDisplay(selectedClient)}'s routines`}
-            confirmText=""
-            cancelText=""
+            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `${formatUserDisplay(selectedClient)}'s routines`}
+            hideFooter
+            containerClassName="bg-stone-100"
+            headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+            headerRight={
+              <button
+                onClick={() => setShowRoutineSelectionDialog(false)}
+                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-neutral-neutral-300"
+                aria-label="Close dialog"
+              />
+            }
             onCancel={() => {
               setShowRoutineSelectionDialog(false);
               setSelectedClient(null);
@@ -1181,20 +1166,24 @@ export default function Sharing() {
               setDialogMode('workout');
             }}
           >
-            {dialogMode === 'manage' && (
-              <div 
-                data-layer="Frame 60" 
-                className="Frame60 w-full max-w-[500px] pb-3 inline-flex justify-center items-center gap-2.5"
-                onClick={(e) => { e.stopPropagation?.(); handleCreateRoutineForSelectedClient(); }}
+            {dialogMode !== 'workout' && (
+              <SwiperButton
+                variant="primary-action"
+                className="self-stretch w-full"
               >
-                <div data-layer="Create new routine" className="CreateNewRoutine flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Create new routine</div>
-                <div className="p-1" aria-hidden>
-                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
+                <span className="flex-1">Create new routine</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
             )}
+
+            <DeckWrapper 
+              className="self-stretch w-full flex flex-col justify-center items-center gap-3 px-0"
+              maxWidth={null}
+              minWidth={null}
+              paddingX={0}
+              paddingTop={0}
+              paddingBottom={0}
+            >
             {dialogMode === 'workout' && activeWorkout && (
               <div 
                 data-layer="Routine Card" 
@@ -1217,9 +1206,7 @@ export default function Sharing() {
                     className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
                   >
                     <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                      <Play className="w-4 h-4 text-white" />
                     </div>
                     <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Join</div>
                   </div>
@@ -1228,74 +1215,67 @@ export default function Sharing() {
             )}
             {clientRoutines
               .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
-              .map((routine) => (
-                dialogMode === 'manage' ? (
-                  <div key={routine.id} className="w-full max-w-[500px]">
-                    <RoutineCard
-                      id={routine.id}
-                      name={routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
-                      lastCompleted={routine.lastCompletedText || 'Never completed'}
-                      routineData={routine}
-                      hideStart={true}
-                      onCardClick={(e) => {
-                        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                        handleRoutineManage(routine);
-                      }}
-                      onSettingsClick={(e) => {
-                        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                        handleRoutineManage(routine);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div 
-                    key={routine.id}
-                    data-layer="Routine Card" 
-                    className={`RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden ${
-                      dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-neutral-50'
-                    }`}
-                    onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => handleRoutineSelect(routine)}
-                  >
-                    <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
-                      <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                        <div data-layer="Biceps and chest" className={`BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                          dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
-                        }`}>
-                          {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
-                        </div>
-                        <div data-layer="Completed 5 days ago" className={`Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                          dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                        }`}>
-                          {routine.lastCompletedText || 'Never completed'}
-                        </div>
-                      </div>
+              .map((routine, index) => (
+              <div 
+                key={routine.id}
+                data-layer="Routine Card" 
+                className={`RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden ${
+                  dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-neutral-50'
+                }`}
+                onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
+              >
+                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
+                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
+                    <div data-layer="Biceps and chest" className={`BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
+                    }`}>
+                      {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
                     </div>
-                    <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-                      <div 
-                        data-layer="Frame 5012" 
-                        className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
-                          dialogMode === 'workout' && activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
-                        } ${dialogMode === 'workout' && activeWorkout ? '' : 'cursor-pointer'}`}
-                        onClick={dialogMode === 'workout' && activeWorkout ? undefined : (e) => {
-                          e.stopPropagation();
-                          handleRoutineSelect(routine);
-                        }}
-                      >
-                        <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                          </svg>
-                        </div>
-                        <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
-                          dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
-                        }`}>
-                          Start
-                        </div>
-                      </div>
+                    <div data-layer="Completed 5 days ago" className={`Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
+                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
+                    }`}>
+                      {routine.lastCompletedText || 'Never completed'}
                     </div>
                   </div>
-                )
-              ))}
+                </div>
+                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
+                  {dialogMode === 'workout' ? (
+                    <div 
+                      data-layer="Frame 5012" 
+                      className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
+                        activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
+                      } ${activeWorkout ? '' : 'cursor-pointer'}`}
+                      onClick={activeWorkout ? undefined : (e) => {
+                        e.stopPropagation();
+                        handleRoutineSelect(routine);
+                      }}
+                    >
+                      <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                        <Play className="w-4 h-4 text-white" />
+                      </div>
+                      <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
+                        activeWorkout ? 'text-neutral-500' : 'text-white'
+                      }`}>
+                        Start
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      data-layer="Frame 5013" 
+                      className="Frame5013 w-7 h-7 bg-neutral-200 rounded-[50px] flex justify-center items-center gap-1 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRoutineManage(routine);
+                      }}
+                    >
+                      <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden flex items-center justify-center">
+                        <Cog className="w-5 h-5 text-neutral-500" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
             {clientRoutines.length === 0 && (
               <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
                 <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
@@ -1307,6 +1287,7 @@ export default function Sharing() {
                 </div>
               </div>
             )}
+            </DeckWrapper>
           </SwiperDialog>
       </div>
     </AppLayout>

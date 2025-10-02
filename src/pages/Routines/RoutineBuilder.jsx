@@ -8,7 +8,6 @@ import { FormHeader } from "@/components/atoms/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
@@ -1027,10 +1026,10 @@ const RoutineBuilder = () => {
         cancelText="Delete"
         confirmVariant="outline"
         cancelVariant="destructive"
-        contentClassName="w-[1340px] h-[866px] inline-flex flex-col justify-center items-center"
-        headerClassName="w-full flex-1 max-w-[400px] border-l border-r border-neutral-neutral-300 flex flex-col justify-center items-center gap-2.5"
-        titleClassName="self-stretch h-12 px-3 bg-white border-t border-b border-neutral-neutral-300 flex flex-col justify-center items-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
-        footerClassName="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4"
+        contentClassName=""
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        footerClassName="self-stretch px-3 py-3"
+        showHeaderDismiss={true}
       />
 
     </>

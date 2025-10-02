@@ -20,6 +20,7 @@ import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/molecules/action-card";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -204,6 +205,22 @@ const RoutinesIndex = () => {
               </CardWrapper>
             ))
           )}
+            <CardWrapper gap={0} marginTop={0} marginBottom={0}>
+              <SwiperButton 
+                variant="primary-action" 
+                className="self-stretch w-full"
+                onClick={() => {
+                  setShowSheet(true);
+                  setProgramName("");
+                  setTimeout(() => {
+                    if (inputRef.current) inputRef.current.focus();
+                  }, 0);
+                }}
+              >
+                <span className="flex-1">Create new routine</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
+            </CardWrapper>
         </DeckWrapper>
         </div>
       </MainContentSection>
