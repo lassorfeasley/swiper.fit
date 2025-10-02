@@ -80,7 +80,7 @@ const SwiperDialog = ({
             tabIndex={-1}
           >
             <div
-              className={`w-full ${widthClass} bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
+              className={`w-full ${widthClass} bg-stone-100 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-labelledby="swiper-dialog-title"
@@ -104,7 +104,7 @@ const SwiperDialog = ({
               )}
               {primaryAction}
               {React.Children.count(children) > 0 && (
-                <div className={`self-stretch p-3 bg-white flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
+                <div className={`self-stretch p-3 bg-stone-100 flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
                      style={{ maxHeight: maxBodyHeight }}>
                   {children}
                 </div>
