@@ -154,9 +154,18 @@ const PageHeader = forwardRef(({
               </div>
             </div>
             {/* Right: Actions (hide pod when empty) */}
-            {(showShare || showDelete) && (
+            {(showShare || showDelete || showPlusButton) && (
               <div className="inline-flex flex-col justify-center items-end gap-2.5">
                 <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                  {showPlusButton && (
+                    <button 
+                      onClick={onAdd} 
+                      aria-label="Add" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
                   {showShare && (
                     <button 
                       onClick={onShare} 
@@ -209,9 +218,18 @@ const PageHeader = forwardRef(({
         {sharingSection ? (
           <div className="inline-flex flex-col justify-center items-end gap-2.5">{sharingSection}</div>
         ) : (
-          (showShare || showDelete) && (
+          (showShare || showDelete || showPlusButton) && (
             <div className="inline-flex flex-col justify-center items-end gap-2.5">
               <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+                {showPlusButton && (
+                  <button 
+                    onClick={onAdd} 
+                    aria-label="Add" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
                 {showShare && (
                   <button 
                     onClick={onShare} 
