@@ -1239,25 +1239,40 @@ export default function Sharing() {
                   </div>
                 </div>
                 <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-                  <div 
-                    data-layer="Frame 5012" 
-                    className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
-                      dialogMode === 'workout' && activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
-                    } ${dialogMode === 'workout' && activeWorkout ? '' : 'cursor-pointer'}`}
-                    onClick={dialogMode === 'workout' && activeWorkout ? undefined : (e) => {
-                      e.stopPropagation();
-                      dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine);
-                    }}
-                  >
-                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                      <Play className="w-4 h-4 text-white" />
+                  {dialogMode === 'workout' ? (
+                    <div 
+                      data-layer="Frame 5012" 
+                      className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
+                        activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
+                      } ${activeWorkout ? '' : 'cursor-pointer'}`}
+                      onClick={activeWorkout ? undefined : (e) => {
+                        e.stopPropagation();
+                        handleRoutineSelect(routine);
+                      }}
+                    >
+                      <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
+                        <Play className="w-4 h-4 text-white" />
+                      </div>
+                      <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
+                        activeWorkout ? 'text-neutral-500' : 'text-white'
+                      }`}>
+                        Start
+                      </div>
                     </div>
-                    <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
-                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-500' : 'text-white'
-                    }`}>
-                      Start
+                  ) : (
+                    <div 
+                      data-layer="Frame 5013" 
+                      className="Frame5013 w-7 h-7 bg-neutral-200 rounded-[50px] flex justify-center items-center gap-1 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRoutineManage(routine);
+                      }}
+                    >
+                      <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden flex items-center justify-center">
+                        <Settings className="w-5 h-5 text-neutral-500" />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             ))}
