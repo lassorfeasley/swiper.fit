@@ -45,6 +45,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   
   // Add stability tracking like the real component
   const [trackWidth, setTrackWidth] = useState(0);
+  const [trackHeight, setTrackHeight] = useState(0);
   
   // Stable drag constraints using refs
   const dragConstraintsRef = useRef({ left: 0, right: 0 });
@@ -56,6 +57,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   const [isPaddingCollapsed, setIsPaddingCollapsed] = useState(false);
   const [isManualSwipe, setIsManualSwipe] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isCheckVisible, setIsCheckVisible] = useState(false);
+  const [finalScaleX, setFinalScaleX] = useState(1);
+  const [finalScaleY, setFinalScaleY] = useState(1);
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Drag tracking refs
@@ -92,11 +96,13 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
     if (isDragging) return;
     if (trackRef.current) {
       const railClientWidth = trackRef.current.clientWidth;
+      const railClientHeight = trackRef.current.clientHeight;
       setTrackWidth(railClientWidth);
+      setTrackHeight(railClientHeight);
       const railTotalHorizontalPadding = RAIL_HORIZONTAL_PADDING_PER_SIDE * 2;
       const railContentAreaWidth = railClientWidth - railTotalHorizontalPadding;
       const newThumbTravel = railContentAreaWidth - THUMB_WIDTH;
-      const finalThumbTravel = Math.max(THUMB_WIDTH, newThumbTravel);
+      const finalThumbTravel = Math.max(0, newThumbTravel);
       
       thumbTravelRef.current = finalThumbTravel;
       dragConstraintsRef.current = { left: 0, right: finalThumbTravel };
@@ -118,46 +124,59 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
     
     setIsAnimating(true);
     setSwipedComplete(true);
+    setIsCheckVisible(false);
     
     const currentThumbTravel = thumbTravelRef.current;
     
-    // Step 1: Animate thumb to end position
+    // Step 1: Slide to end position
     controls.start({ 
       x: currentThumbTravel, 
       width: THUMB_WIDTH, 
       backgroundColor: "#22C55E", 
-      borderRadius: THUMB_RADIUS 
-    }, tweenConfig);
-
-    // Step 2: After slide animation completes, expand thumb directly to full rail width
-    const slideDurationMs = tweenConfig.duration * 1000;
-    const expandDelay = slideDurationMs + 100;
-    const expandDurationMs = tweenConfig.duration * 1000;
-
-    setTimeout(() => {
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
+    }, tweenConfig).then(() => {
       if (!isMountedRef.current) return;
-      // First expand within the padded area
+      
+      // Step 2: Expand to full content width (within padding)
       controls.start({
         x: 0,
         width: getContentWidth(),
         backgroundColor: '#22C55E',
-        borderRadius: THUMB_RADIUS
+        borderRadius: THUMB_RADIUS,
+        scaleX: 1,
+        scaleY: 1,
       }, tweenConfig).then(() => {
-        // Then expand to full rail dimensions (width and height together)
+        if (!isMountedRef.current) return;
+        
+        // Step 3: Expand outward to cover all padding using transforms to avoid layout jump
+        const contentWidth = getContentWidth();
+        const targetScaleX = contentWidth > 0 ? (trackWidth || 0) / contentWidth : 1;
+        const targetScaleY = (trackHeight || 0) / 48; // Fill rail height while icon is hidden
+        setFinalScaleX(targetScaleX || 1);
+        setFinalScaleY(targetScaleY || 1);
+
         controls.start({
-          left: -RAIL_HORIZONTAL_PADDING_PER_SIDE,
-          width: `calc(100% + ${RAIL_HORIZONTAL_PADDING_PER_SIDE * 2}px)`,
-          height: '100%',
+          x: 0,
+          width: contentWidth,
+          scaleX: targetScaleX,
+          scaleY: targetScaleY,
           backgroundColor: '#22C55E',
           borderRadius: THUMB_RADIUS
-        }, { type: 'tween', ease: 'easeInOut', duration: 0.4 }).then(() => {
+        }, { 
+          type: 'tween', 
+          ease: 'easeOut',
+          duration: 0.35
+        }).then(() => {
           setTimeout(() => {
             setIsManualSwipe(false);
             setIsAnimating(false);
+            setIsCheckVisible(true);
           }, 100);
         });
       });
-    }, expandDelay);
+    });
 
   }, [controls, tweenConfig, getContentWidth, isInitialized]);
 
@@ -191,7 +210,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
           x: 0, 
           width: THUMB_WIDTH, 
           backgroundColor: "#FFFFFF", 
-          borderRadius: THUMB_RADIUS 
+          borderRadius: THUMB_RADIUS,
+          scaleX: 1,
+          scaleY: 1,
         }, tweenConfig);
       }
     }
@@ -212,7 +233,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       x: 0,
       width: THUMB_WIDTH,
       backgroundColor: "#FFFFFF",
-      borderRadius: THUMB_RADIUS
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
     });
     return () => {
       isMountedRef.current = false;
@@ -234,6 +257,9 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
       setSwipedComplete(false);
       setIsManualSwipe(false);
       setIsAnimating(false);
+      setIsCheckVisible(false);
+      setFinalScaleX(1);
+      setFinalScaleY(1);
       locallyManuallySwipedRef.current = false;
       hasManualSwipedThisSession.current = false;
       skipAutoCompleteOnce.current = false;
@@ -336,11 +362,11 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
             {/* Draggable Thumb */}
             <motion.div
             className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-            style={thumbStyle}
+            style={{ ...thumbStyle, overflow: 'visible' }}
             drag={!isVisuallyComplete && isDefault ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
-            dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 80 }}
+            dragConstraints={dragConstraintsRef.current.right > 0 ? dragConstraintsRef.current : { left: 0, right: 0 }}
             onDragStart={handleDragStart}
             onDrag={handleDrag}
             onDragEnd={handleDragEnd}
@@ -348,7 +374,12 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
             whileDrag={{ cursor: "grabbing" }}
             transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
           >
-            <div className="size-7 relative overflow-hidden flex items-center justify-center">
+            <motion.div className="size-6 relative flex items-center justify-center"
+              initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
+              animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: 1 / (finalScaleX || 1), scaleY: 1 / (finalScaleY || 1) }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              style={{ transformOrigin: 'center', zIndex: 3 }}
+            >
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
                   {isOptimistic ? (
@@ -358,7 +389,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
             </motion.div>
 
             {/* Optimistic update indicator */}

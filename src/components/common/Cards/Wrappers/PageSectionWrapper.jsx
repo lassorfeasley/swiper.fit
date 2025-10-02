@@ -64,7 +64,6 @@ const PageSectionWrapper = ({
           onReorder={onReorder}
           variant={deckVariant}
           maxWidth={500}
-          className=""
           style={applyPaddingOnParent ? { maxWidth: '500px' } : style}
           header={null}
         >

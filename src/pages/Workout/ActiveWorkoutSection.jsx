@@ -1491,8 +1491,12 @@ const ActiveWorkoutSection = ({
         deckGap={12}
         backgroundClass="bg-transparent"
         paddingX={0}
+<<<<<<< HEAD
         applyPaddingOnParent={true}
         style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 32, paddingRight: 32 }}
+=======
+        style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+>>>>>>> staging
       >
         {exercises.map((ex, index) => {
           const isFocused = isExerciseFocused(ex.exercise_id);
