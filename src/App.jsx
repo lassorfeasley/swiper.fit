@@ -22,6 +22,7 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import RequireAuth from "@/lib/auth/RequireAuth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
+import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
 import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
 import Sharing from "./pages/Sharing/Sharing";
@@ -207,6 +208,7 @@ function AppContent() {
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/demo" element={<DemoPage />} />
+            <Route path="/swipe-test" element={<SwipeSwitchTest />} />
             <Route path="/og-test" element={<OGImageTest />} />
             <Route path="/og-image-admin" element={<OGImageAdmin />} />
             <Route path="/og-env" element={<OGEnv />} />
