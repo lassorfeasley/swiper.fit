@@ -194,34 +194,33 @@ const RoutinesIndex = () => {
           ) : filteredRoutines.length === 0 ? (
             <div className="text-gray-400 text-center py-8">No routines found.</div>
           ) : (
-            <>
-              {filteredRoutines.map((program) => (
+            filteredRoutines.map((program) => (
+              <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>
                 <RoutineCard
-                  key={program.id}
                   id={program.id}
                   name={program.routine_name}
                   lastCompleted={program.lastCompleted}
                   routineData={program}
                 />
-              ))}
-              <div className="w-full">
-                <SwiperButton 
-                  variant="primary-action" 
-                  className="self-stretch w-full"
-                  onClick={() => {
-                    setShowSheet(true);
-                    setProgramName("");
-                    setTimeout(() => {
-                      if (inputRef.current) inputRef.current.focus();
-                    }, 0);
-                  }}
-                >
-                  <span className="flex-1">Create new routine</span>
-                  <Plus className="w-6 h-6" strokeWidth={2} />
-                </SwiperButton>
-              </div>
-            </>
+              </CardWrapper>
+            ))
           )}
+            <CardWrapper gap={0} marginTop={0} marginBottom={0}>
+              <SwiperButton 
+                variant="primary-action" 
+                className="self-stretch w-full"
+                onClick={() => {
+                  setShowSheet(true);
+                  setProgramName("");
+                  setTimeout(() => {
+                    if (inputRef.current) inputRef.current.focus();
+                  }, 0);
+                }}
+              >
+                <span className="flex-1">Create new routine</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
+            </CardWrapper>
         </DeckWrapper>
         </div>
       </MainContentSection>
