@@ -188,6 +188,21 @@ const RoutinesIndex = () => {
             maxWidth={500}
             className="flex-1 mt-0 min-h-screen"
           >
+            <CardWrapper gap={0} marginTop={0} marginBottom={0}>
+              <SwiperButton 
+                variant="primary-action" 
+                className="self-stretch w-full"
+                onClick={() => {
+                  setShowSheet(true);
+                  setProgramName("");
+                  setTimeout(() => {
+                    if (inputRef.current) inputRef.current.focus();
+                  }, 0);
+                }}
+              >
+                <span className="flex-1">Create new routine</span>
+              </SwiperButton>
+            </CardWrapper>
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (
