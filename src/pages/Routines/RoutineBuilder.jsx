@@ -8,7 +8,7 @@ import { FormHeader } from "@/components/atoms/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";

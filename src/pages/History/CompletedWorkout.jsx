@@ -6,7 +6,7 @@ import { supabase } from "@/supabaseClient";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentUser } from "@/contexts/AccountContext";
-import SwiperAlertDialog from "@/components/molecules/swiper-alert-dialog";
+// SwiperAlertDialog removed – consolidated to SwiperDialog
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
