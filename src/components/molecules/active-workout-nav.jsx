@@ -66,6 +66,16 @@ export default function ActiveWorkoutNav({ onEnd }) {
         </div>
       )}
 
+      {/* Active workout name and routine */}
+      <div data-layer="active-workout-name-and-routine" className="ActiveWorkoutNameAndRoutine self-stretch flex flex-col justify-center items-start px-4 pb-3">
+        <div data-layer="workout-name" className="self-stretch justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+          {activeWorkout?.workoutName || ""}
+        </div>
+        <div data-layer="routine-name" className="self-stretch justify-center text-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+          {activeWorkout?.routineName || ""}
+        </div>
+      </div>
+
       {/* Timer section - updated wrapper styles */}
       <div data-layer="Frame 57" className="Frame57 self-stretch px-4 pt-5 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start">
         <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
@@ -83,6 +93,8 @@ export default function ActiveWorkoutNav({ onEnd }) {
           </div>
         </div>
       </div>
+
+      
     </div>
   );
 }
