@@ -811,7 +811,6 @@ const RoutineBuilder = () => {
             id={`section-${section}`} 
             deckGap={12} 
             deckVariant="cards"
-            paddingX={28}
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
@@ -820,7 +819,8 @@ const RoutineBuilder = () => {
             backgroundClass="bg-transparent"
             showPlusButton={false}
             onPlus={() => handleOpenAddExercise(section)}
-            style={{ paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+            applyPaddingOnParent={true}
+            style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
           >
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
