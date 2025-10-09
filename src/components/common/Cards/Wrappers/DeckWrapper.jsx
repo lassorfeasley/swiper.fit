@@ -97,8 +97,7 @@ const DeckWrapper = forwardRef(
                 )}
                 style={{ 
                   touchAction: "none",
-                  position: "relative",
-                  marginTop: idx > 0 ? gap : 0
+                  position: "relative"
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}

@@ -781,7 +781,7 @@ const RoutineBuilder = () => {
         showSidebar={!isDelegated && !isMobile}
         sharingSection={undefined}
       >
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
           {/* Routine Image Section */}
           <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
@@ -825,7 +825,7 @@ const RoutineBuilder = () => {
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
             ) : secExercises.map((ex, exIndex) => (
-              <div key={ex.id} className="w-full" style={{ marginBottom: exIndex < secExercises.length - 1 ? '12px' : '0px' }}>
+              <div key={ex.id} className="w-full">
                 <ExerciseCard
                   mode="default"
                   exerciseName={ex.name}
