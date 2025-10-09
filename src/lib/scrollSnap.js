@@ -80,7 +80,9 @@ export const getScrollSnapCSSVars = (configKey) => {
 export const ANIMATION_DURATIONS = {
   CARD_ANIMATION_DURATION_MS: 500, // Matches ActiveExerciseCard.jsx
   SCROLL_DELAY_MS: 550, // Card animation + buffer
-  FOCUS_TRANSITION_MS: 200
+  FOCUS_TRANSITION_MS: 200,
+  // Total time for SwipeSwitch completion animation (3 x 0.35s tweens + ~0.1s buffer)
+  SWIPE_COMPLETE_ANIMATION_MS: 1150
 };
 
 /**

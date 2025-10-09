@@ -45,7 +45,8 @@ const ActiveWorkoutContent = () => {
     handleSectionComplete: navigationHandleSectionComplete,
     isWorkoutComplete,
     getProgressStats,
-    sectionExercises
+    sectionExercises,
+    loadedSections
   } = useWorkoutNavigation();
 
   // Remove user activity tracking - simplified approach
@@ -134,30 +135,30 @@ const ActiveWorkoutContent = () => {
         isRestoringFocusRef.current = true;
         setFocusedExerciseId(activeWorkout.lastExerciseId, null);
       } else {
-        // Fallback: If no lastExerciseId, focus the first exercise of the first section
-        const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
-        
-        if (hasExercises) {
-          const sections = ['warmup', 'training', 'cooldown'];
-          let firstExercise = null;
-          
-          for (const section of sections) {
-            const exercises = sectionExercises[section] || [];
-            if (exercises.length > 0) {
-              firstExercise = exercises[0];
-              console.log(`[ActiveWorkout] Timer-based restoration defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
-              isRestoringFocusRef.current = true;
-              setFocusedExerciseId(firstExercise.exercise_id, section);
-              break;
-            }
+        // Fallback: If no lastExerciseId, prefer warmup once loaded. Only fall through to
+        // training/cooldown after we know warmup is loaded (and empty).
+        const order = ['warmup', 'training', 'cooldown'];
+        for (const section of order) {
+          // If warmup isn't loaded yet, wait instead of jumping ahead.
+          if (!loadedSections[section]) {
+            return; // wait for this section to load
           }
+          const exercises = sectionExercises[section] || [];
+          if (exercises.length > 0) {
+            const firstExercise = exercises[0];
+            console.log(`[ActiveWorkout] Initial focus defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
+            isRestoringFocusRef.current = true;
+            setFocusedExerciseId(firstExercise.exercise_id, section);
+            break;
+          }
+          // if loaded and empty, continue to next section
         }
       }
       // No else clause needed - all workouts now have lastExerciseId set
     }, 300); // Reduced from 1500ms to 300ms
     
     return () => clearTimeout(timer);
-  }, [activeWorkout?.id, setFocusedExerciseId]);
+  }, [activeWorkout?.id, setFocusedExerciseId, loadedSections, sectionExercises]);
 
   // Reactive trigger: Restore focus as soon as sections have loaded exercises
   useEffect(() => {
@@ -185,26 +186,23 @@ const ActiveWorkoutContent = () => {
   // Fallback rule: If no exercise is focused, focus the first exercise of the first section
   useEffect(() => {
     if (!focusedExercise && !isRestoringFocusRef.current) {
-      // Check if any sections have loaded exercises
-      const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
-      
-      if (hasExercises) {
-        // Find the first exercise of the first section with exercises
-        const sections = ['warmup', 'training', 'cooldown'];
-        let firstExercise = null;
-        
-        for (const section of sections) {
-          const exercises = sectionExercises[section] || [];
-          if (exercises.length > 0) {
-            firstExercise = exercises[0];
-            console.log(`[ActiveWorkout] No exercise focused, defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
-            setFocusedExerciseId(firstExercise.exercise_id, section);
-            break;
-          }
+      // Prefer warmup once it has loaded. Do not skip ahead unless warmup loaded and is empty.
+      const order = ['warmup', 'training', 'cooldown'];
+      for (const section of order) {
+        if (!loadedSections[section]) {
+          return; // wait for this section (especially warmup) to load
         }
+        const exercises = sectionExercises[section] || [];
+        if (exercises.length > 0) {
+          const firstExercise = exercises[0];
+          console.log(`[ActiveWorkout] Defaulting initial focus to first exercise of ${section}:`, firstExercise.exercise_id);
+          setFocusedExerciseId(firstExercise.exercise_id, section);
+          break;
+        }
+        // if loaded and empty, continue
       }
     }
-  }, [sectionExercises, focusedExercise, setFocusedExerciseId]);
+  }, [sectionExercises, loadedSections, focusedExercise, setFocusedExerciseId]);
 
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);

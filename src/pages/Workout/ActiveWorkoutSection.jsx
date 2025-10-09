@@ -531,41 +531,34 @@ const ActiveWorkoutSection = ({
 
       // Refresh exercises to get updated data
       const updatedExercises = await fetchExercises();
-      
+
+      // Helper to determine if an exercise is complete based on its set statuses
+      const isExerciseCompleteLocal = (ex) => (ex.setConfigs || []).every((s) => s.status === 'complete');
+
       // Check if all sets in this exercise are now complete
-      const currentExercise = updatedExercises.find(ex => ex.exercise_id === exerciseId);
-      if (currentExercise) {
-        const allSetsComplete = currentExercise.setConfigs.every(set => set.status === 'complete');
-        if (allSetsComplete) {
-          // console.log(`[${section}] All sets complete for exercise ${exerciseId}, auto-focusing next exercise`);
-          
-          // Find the next incomplete exercise in this section
-          const currentIndex = updatedExercises.findIndex(ex => ex.exercise_id === exerciseId);
-          
-          // Look for next incomplete exercise after current position
-          for (let i = currentIndex + 1; i < updatedExercises.length; i++) {
-            const ex = updatedExercises[i];
-            if (!globalCompletedExercises.has(ex.exercise_id)) {
-              // console.log(`[${section}] Auto-focusing next exercise: ${ex.name} (${ex.exercise_id})`);
-              changeFocus(ex.exercise_id);
-              return;
-            }
+      const currentExercise = updatedExercises.find((ex) => ex.exercise_id === exerciseId);
+      if (currentExercise && isExerciseCompleteLocal(currentExercise)) {
+        // Prefer the next incomplete exercise lower in the list; if none, search upwards.
+        const currentIndex = updatedExercises.findIndex((ex) => ex.exercise_id === exerciseId);
+
+        for (let i = currentIndex + 1; i < updatedExercises.length; i++) {
+          const ex = updatedExercises[i];
+          if (!isExerciseCompleteLocal(ex)) {
+            changeFocus(ex.exercise_id);
+            return;
           }
-          
-          // If no next exercise found, look for previous incomplete exercise
-          for (let i = currentIndex - 1; i >= 0; i--) {
-            const ex = updatedExercises[i];
-            if (!globalCompletedExercises.has(ex.exercise_id)) {
-              // console.log(`[${section}] Auto-focusing previous exercise: ${ex.name} (${ex.exercise_id})`);
-              changeFocus(ex.exercise_id);
-              return;
-            }
-          }
-          
-          // If no incomplete exercises found in this section, trigger section complete
-          // console.log(`[${section}] All exercises in section complete, triggering section complete`);
-          onSectionComplete?.(section);
         }
+
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          const ex = updatedExercises[i];
+          if (!isExerciseCompleteLocal(ex)) {
+            changeFocus(ex.exercise_id);
+            return;
+          }
+        }
+
+        // If no incomplete exercises found in this section, trigger section complete
+        onSectionComplete?.(section);
       }
     } catch (error) {
       console.error("Failed to save set:", error);
@@ -613,51 +606,35 @@ const ActiveWorkoutSection = ({
 
   // Handle exercise completion
   const handleExerciseComplete = useCallback((exerciseId) => {
-    // console.log(`[${section}] Exercise completed:`, exerciseId);
-    
     // Mark as completed in global context
     markExerciseComplete(exerciseId);
-    
-    // Store the last completed exercise for this section
-    setLastCompletedExerciseId(exerciseId);
-    
-    // Check if all exercises in this section are complete
-    const allExercisesInSection = exercises.filter(
-      (ex) => !globalCompletedExercises.has(ex.exercise_id)
-    );
-    
-    if (allExercisesInSection.length === 0) {
-      // All exercises in this section are complete
-      // console.log(`[${section}] All exercises complete, triggering section complete`);
-      onSectionComplete?.(section);
-    } else if (lastCompletedExerciseId) {
-      // Find the next incomplete exercise after the last completed one
-      const lastCompletedIndex = exercises.findIndex(
-        (ex) => ex.exercise_id === lastCompletedExerciseId
-      );
-      
-      // Look for next incomplete exercise
-      for (let i = lastCompletedIndex + 1; i < exercises.length; i++) {
+
+    // Keep a local completed set that includes the just-completed exercise immediately
+    const completedNow = new Set(globalCompletedExercises);
+    completedNow.add(exerciseId);
+
+    // Prefer next incomplete lower in the list; if none, go upward; if none, section is complete
+    const currentIndex = exercises.findIndex((ex) => ex.exercise_id === exerciseId);
+    if (currentIndex !== -1) {
+      for (let i = currentIndex + 1; i < exercises.length; i++) {
         const ex = exercises[i];
-        if (!globalCompletedExercises.has(ex.exercise_id)) {
+        if (!completedNow.has(ex.exercise_id)) {
           changeFocus(ex.exercise_id);
           return;
         }
       }
-      
-      // If no next exercise found, look for previous incomplete exercise
-      for (let i = lastCompletedIndex - 1; i >= 0; i--) {
+      for (let i = currentIndex - 1; i >= 0; i--) {
         const ex = exercises[i];
-        if (!globalCompletedExercises.has(ex.exercise_id)) {
+        if (!completedNow.has(ex.exercise_id)) {
           changeFocus(ex.exercise_id);
           return;
         }
       }
-      
-      // Clear the last completed exercise ID
-      setLastCompletedExerciseId(null);
     }
-  }, [globalCompletedExercises, exercises, lastCompletedExerciseId, section, onSectionComplete, changeFocus, markExerciseComplete]);
+
+    // No incomplete exercises left in this section
+    onSectionComplete?.(section);
+  }, [globalCompletedExercises, exercises, section, onSectionComplete, changeFocus, markExerciseComplete]);
 
   // Handle set press (open edit modal)
   const handleSetPress = (exerciseId, setConfig, index) => {
