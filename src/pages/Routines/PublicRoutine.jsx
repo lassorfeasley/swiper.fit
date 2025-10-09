@@ -278,7 +278,7 @@ export default function PublicRoutine() {
           </div>
           <div className="flex justify-center items-center gap-5">
             <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-              {user ? "Save routine to my account" : "Create account to save routine"}
+              {user ? "Save routine to my account" : "Login or create account to save"}
             </div>
           </div>
         </div>

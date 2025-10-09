@@ -252,7 +252,7 @@ export default function CreateAccount() {
                   </div>
                   <div 
                     className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
-                    onClick={() => navigate("/login")}
+                    onClick={() => navigate(importRoutineId ? `/login?importRoutineId=${importRoutineId}` : "/login")}
                   >
                     Log in
                   </div>

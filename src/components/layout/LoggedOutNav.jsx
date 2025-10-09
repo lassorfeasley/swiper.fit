@@ -55,7 +55,7 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
       </div>
 
       {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
-      <div className="hidden md:flex fixed top-0 left-0 right-0 z-50 w-full max-w-[1643px] h-20 px-5 pt-5 bg-gradient-to-b from-stone-100 to-stone-100/0 justify-between items-start logged-out-nav">
+      <div className="hidden md:flex fixed top-0 left-0 right-0 z-50 w-full h-20 px-5 pt-5 bg-gradient-to-b from-stone-100 to-stone-100/0 justify-between items-start logged-out-nav">
         <button 
           onClick={(e) => {
             e.preventDefault();
