@@ -195,7 +195,7 @@ export default function PublicRoutine() {
       showShare={true}
       onShare={handleShare}
     >
-      <div className="flex flex-col min-h-screen pt-20">
+      <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
         {loading ? (
           <div className="text-gray-400 text-center py-8">Loading...</div>
         ) : !routine ? (
@@ -226,14 +226,16 @@ export default function PublicRoutine() {
             </div>
             
             <PageSectionWrapper
-            section="workout"
-            id={`section-workout`}
-            deckGap={12}
-            reorderable={false}
-            items={(routine.routine_exercises || [])}
-            className="flex-1"
-            style={{ paddingTop: 40, maxWidth: '500px', minWidth: '325px' }}
-          >
+              section="workout"
+              id={`section-workout`}
+              deckGap={12}
+              deckVariant="cards"
+              reorderable={false}
+              items={(routine.routine_exercises || [])}
+              className="flex-1"
+              applyPaddingOnParent={true}
+              style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+            >
             {(routine.routine_exercises || [])
               .sort((a,b) => (a.exercise_order||0) - (b.exercise_order||0))
               .map((re) => (
