@@ -15,7 +15,7 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Copy, Blend, X } from "lucide-react";
+import { Copy, Blend, X, Plus } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
@@ -817,15 +817,11 @@ const RoutineBuilder = () => {
             isFirst={section === "warmup"}
             className={`${section === "warmup" ? "border-t-0" : ""} ${index === exercisesBySection.length - 1 ? "flex-1" : ""}`}
             backgroundClass="bg-transparent"
-            showPlusButton={true}
+            showPlusButton={false}
             onPlus={() => handleOpenAddExercise(section)}
             style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
           >
-            {secExercises.length === 0 && !loading ? (
-              <div className="text-gray-400 text-center py-8">
-                No exercises found. Try adding one!
-              </div>
-            ) : loading ? (
+          {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
             ) : secExercises.map((ex, exIndex) => (
               <div key={ex.id} className="w-full" style={{ marginBottom: exIndex < secExercises.length - 1 ? '12px' : '0px' }}>
@@ -841,6 +837,17 @@ const RoutineBuilder = () => {
                 />
               </div>
             ))}
+            {/* Single persistent add button as last item */}
+            <CardWrapper gap={0} marginTop={12} marginBottom={0}>
+              <SwiperButton 
+                variant="primary-action" 
+                className="self-stretch w-full"
+                onClick={() => handleOpenAddExercise(section)}
+              >
+                <span className="flex-1">Add an exercise</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
+            </CardWrapper>
           </PageSectionWrapper>
         ))}
         </div>

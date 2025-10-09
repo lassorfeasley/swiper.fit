@@ -11,6 +11,8 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import { ActionCard } from "@/components/molecules/action-card";
+import { SwiperButton } from "@/components/molecules/swiper-button";
+import { Plus } from "lucide-react";
 
 const ActiveWorkoutSection = ({
   section,
@@ -1461,7 +1463,7 @@ const ActiveWorkoutSection = ({
       <PageSectionWrapper
         key={section}
         section={section}
-        showPlusButton={true}
+        showPlusButton={false}
         onPlus={handleAddExercise}
         isFirst={section === "warmup"}
         className={`${section === "warmup" ? "border-t-0" : ""} ${isLastSection ? "flex-1" : ""}`}
@@ -1521,7 +1523,17 @@ const ActiveWorkoutSection = ({
             </CardWrapper>
           );
         })}
-        {/* Removed inline add exercise card; use header button instead */}
+        {/* Persistent add button as last item in section */}
+        <CardWrapper>
+          <SwiperButton 
+            variant="primary-action" 
+            className="self-stretch w-full"
+            onClick={handleAddExercise}
+          >
+            <span className="flex-1">Add an exercise</span>
+            <Plus className="w-6 h-6" strokeWidth={2} />
+          </SwiperButton>
+        </CardWrapper>
       </PageSectionWrapper>
 
       {/* Add Exercise Form */}
