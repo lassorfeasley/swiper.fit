@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/atoms/button";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/atoms/alert";
@@ -25,6 +25,8 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const importRoutineId = new URLSearchParams(location.search).get('importRoutineId');
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const loginMutation = useMutation({
@@ -36,12 +38,19 @@ export default function Login() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setEmailError(false);
       setPasswordError(false);
       setErrorMessage("");
       toast.success("Logged in successfully");
-      
+      try {
+        if (importRoutineId) {
+          // After login, navigate to public routine page to trigger clone flow in builder route
+          navigate(`/routines/${importRoutineId}/configure`, { replace: true, state: { fromPublicImport: true } });
+          return;
+        }
+      } catch (_) {}
+
       // Wait for workout context to load, then redirect appropriately
       const checkWorkoutAndRedirect = () => {
         if (!workoutLoading) {
@@ -55,7 +64,7 @@ export default function Login() {
           setTimeout(checkWorkoutAndRedirect, 100);
         }
       };
-      
+
       checkWorkoutAndRedirect();
     },
     onError: (error) => {
@@ -107,7 +116,7 @@ export default function Login() {
                   </div>
                   <div 
                     className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
-                    onClick={() => navigate("/create-account")}
+                    onClick={() => navigate(importRoutineId ? `/create-account?importRoutineId=${importRoutineId}` : "/create-account")}
                   >
                     Sign up
                   </div>
@@ -125,8 +134,16 @@ export default function Login() {
                   <TextInput
                     type="email"
                     id="login-email"
+                    name="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDownCapture={(e) => { /* ensure no parent prevents typing */ }}
+                    readOnly={false}
                     disabled={loginMutation.isPending}
                     error={emailError}
                   />
@@ -157,8 +174,15 @@ export default function Login() {
                   <TextInput
                     type="password"
                     id="login-password"
+                    name="password"
+                    autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDownCapture={(e) => { /* ensure no parent prevents typing */ }}
+                    readOnly={false}
                     disabled={loginMutation.isPending}
                     error={passwordError}
                   />

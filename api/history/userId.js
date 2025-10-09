@@ -124,7 +124,9 @@ function generateHTML({ title, description, url, ownerName, userId }) {
     <meta property="twitter:image" content="https://www.swiper.fit/api/generate-user-history-og-image?userId=${userId}" />
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/images/swiper-fav-icon.png" />
+    <link rel="shortcut icon" type="image/png" href="/images/swiper-fav-icon.png" />
+    <link rel="apple-touch-icon" href="/images/swiper-fav-icon.png" />
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
