@@ -329,13 +329,11 @@ const ActiveWorkoutContent = () => {
       enableScrollSnap={false}
     >
       {/* Active workout nav: label scrolls, controls stick */}
-      <ActiveWorkoutNav
-        completedSets={completedSets}
-        totalSets={totalSets}
-        onEnd={handleEndWorkout}
-      />
+      <ActiveWorkoutNav onEnd={handleEndWorkout} />
 
-      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-8">
+      <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-0">
+        {/* Spacer to clear fixed ActiveWorkoutNav */}
+        <div className="h-[80px]" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"

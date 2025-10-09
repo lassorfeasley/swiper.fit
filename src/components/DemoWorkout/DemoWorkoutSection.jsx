@@ -7,6 +7,8 @@ import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
 import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
 import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
 import { ActionCard } from '@/components/molecules/action-card';
+import { SwiperButton } from '@/components/molecules/swiper-button';
+import { Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function DemoWorkoutSection() {
@@ -83,7 +85,7 @@ export default function DemoWorkoutSection() {
           className="flex flex-1 justify-center items-start h-full"
           paddingTop={40}
           paddingBottom={0}
-          maxWidth={400}
+          maxWidth={500}
           minWidth={0}
           useChildMargin={true}
           style={{ 
@@ -121,16 +123,15 @@ export default function DemoWorkoutSection() {
               </CardWrapper>
             );
           })}
-          <div 
-            className="w-full max-w-[500px] py-3 inline-flex justify-start items-center gap-2.5 cursor-pointer"
-            onClick={handleOpenAddExercise}
-          >
-            <div className="flex-1 justify-start text-neutral-neutral-400 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Add exercise</div>
-            <div className="size-5">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 2V18M2 10H18" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+          <div className="w-full">
+            <SwiperButton 
+              variant="primary-action" 
+              className="self-stretch w-full"
+              onClick={handleOpenAddExercise}
+            >
+              <span className="flex-1">Add exercise</span>
+              <Plus className="w-6 h-6" strokeWidth={2} />
+            </SwiperButton>
           </div>
         </DeckWrapper>
       </div>
