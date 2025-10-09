@@ -38,6 +38,24 @@ body {
   }
 }
 
+/* Stuck state styling for sticky subnav (shadow removed per design) */
+
+/* Ensure sticky isn’t blocked by containment */
+#sticky-subnav { contain: none !important; }
+
+/* Ensure sticky works in Safari/iOS even when data-no-transform is set */
+#sticky-subnav {
+  position: -webkit-sticky;
+}
+
+/* Fallback: if sticky is blocked by overflow ancestors, switch to fixed at top */
+#sticky-subnav.force-fixed {
+  position: fixed !important;
+  top: var(--header-height, 0px) !important;
+  left: 0;
+  right: 0;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -324,13 +324,18 @@ const ActiveWorkoutContent = () => {
       searchValue={search}
       onSearchChange={setSearch}
       pageContext="workout"
-      enableScrollSnap={true}
       noTopPadding={!isDelegated}
       showSidebar={false}
+      enableScrollSnap={false}
     >
+      {/* Active workout nav: label scrolls, controls stick */}
+      <ActiveWorkoutNav
+        completedSets={completedSets}
+        totalSets={totalSets}
+        onEnd={handleEndWorkout}
+      />
+
       <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-8">
-        {/* Spacer to clear fixed ActiveWorkoutNav */}
-        <div className="h-[80px]" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"
@@ -362,13 +367,6 @@ const ActiveWorkoutContent = () => {
         title="End workout?"
         confirmText="End workout"
         cancelText="Keep working out"
-      />
-
-      {/* Persistent bottom nav for active workout */}
-      <ActiveWorkoutNav
-        completedSets={completedSets}
-        totalSets={totalSets}
-        onEnd={handleEndWorkout}
       />
 
       {/* Bottom progress bar */}
