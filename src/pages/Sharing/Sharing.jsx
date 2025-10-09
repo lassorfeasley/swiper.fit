@@ -17,9 +17,11 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionWrapperLabel from "@/components/common/Cards/Wrappers/SectionWrapperLabel";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import SwiperForm from "@/components/molecules/swiper-form";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
+import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
@@ -52,6 +54,11 @@ export default function Sharing() {
   const [dialogMode, setDialogMode] = useState('workout'); // 'workout' or 'manage'
   const subscriptionRef = useRef(null);
   const retryTimeoutRef = useRef(null);
+
+  // Create routine sheet state
+  const [showCreateRoutineSheet, setShowCreateRoutineSheet] = useState(false);
+  const [newRoutineName, setNewRoutineName] = useState("");
+  const createNameInputRef = useRef(null);
 
   // Helper function to format user display name
   const formatUserDisplay = (profile) => {
@@ -801,6 +808,64 @@ export default function Sharing() {
     }
   };
 
+  const handleCreateRoutineForOwner = () => {
+    // Close the selection dialog so the sheet is the only overlay
+    setShowRoutineSelectionDialog(false);
+
+    // Open the naming sheet; insert will happen on confirm
+    setNewRoutineName("");
+    setShowCreateRoutineSheet(true);
+    setTimeout(() => {
+      if (createNameInputRef.current) createNameInputRef.current.focus();
+    }, 100);
+  };
+
+  const handleConfirmCreateRoutineForOwner = async () => {
+    if (!selectedClient) return;
+    const name = (newRoutineName || "").trim().slice(0, MAX_ROUTINE_NAME_LEN);
+    if (!name) return;
+    try {
+      const { data: routine, error } = await supabase
+        .from("routines")
+        .insert({
+          routine_name: name,
+          user_id: selectedClient.id,
+          is_public: true,
+          is_archived: false,
+        })
+        .select()
+        .single();
+      if (error || !routine) throw error || new Error("Failed to create routine");
+
+      try {
+        postSlackEvent("routine.created", {
+          routine_id: routine.id,
+          user_id: selectedClient.id,
+          routine_name: routine.routine_name || name,
+          created_by_delegate: user?.id,
+        });
+      } catch (_) {}
+
+      // Switch context to owner so the builder opens in their account
+      switchToUser(selectedClient);
+      navigate(`/routines/${routine.id}/configure`, {
+        state: {
+          managingForOwner: true,
+          ownerId: selectedClient.id,
+          ownerName: formatUserDisplay(selectedClient),
+        },
+      });
+
+      setShowCreateRoutineSheet(false);
+      setShowRoutineSelectionDialog(false);
+      setSelectedClient(null);
+      setClientRoutines([]);
+    } catch (e) {
+      console.error("Error creating routine for owner:", e);
+      toast.error(e?.message || "Failed to create routine. Please try again.");
+    }
+  };
+
   const handleRoutineSelect = async (routine) => {
     try {
       console.log('[Sharing] Starting workout for client:', selectedClient.id);
@@ -1170,6 +1235,7 @@ export default function Sharing() {
               <SwiperButton
                 variant="primary-action"
                 className="self-stretch w-full"
+                onClick={handleCreateRoutineForOwner}
               >
                 <span className="flex-1">Create new routine</span>
                 <Plus className="w-6 h-6" strokeWidth={2} />
@@ -1289,6 +1355,44 @@ export default function Sharing() {
             )}
             </DeckWrapper>
           </SwiperDialog>
+
+          {/* Create routine name sheet (appears over Sharing) */}
+          <SwiperForm
+            open={showCreateRoutineSheet}
+            onOpenChange={setShowCreateRoutineSheet}
+            title=""
+            description={`Create a new workout routine for ${formatUserDisplay(selectedClient)}`}
+            leftAction={() => {
+              setShowCreateRoutineSheet(false);
+              // Reopen routine selection dialog to keep the user's context
+              setTimeout(() => setShowRoutineSelectionDialog(true), 0);
+            }}
+            rightAction={handleConfirmCreateRoutineForOwner}
+            rightEnabled={(newRoutineName || "").trim().length > 0}
+            rightText="Create"
+            leftText="Cancel"
+          >
+            <SwiperForm.Section bordered={false}>
+              <div className="w-full flex flex-col">
+                <div className="w-full flex justify-between items-center mb-2">
+                  <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
+                  <div
+                    className={`${(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+                    aria-live="polite"
+                  >
+                    {(newRoutineName || '').length} of {MAX_ROUTINE_NAME_LEN} characters
+                  </div>
+                </div>
+                <TextInput
+                  value={newRoutineName}
+                  onChange={(e) => setNewRoutineName(e.target.value)}
+                  ref={createNameInputRef}
+                  maxLength={MAX_ROUTINE_NAME_LEN}
+                  error={(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN}
+                />
+              </div>
+            </SwiperForm.Section>
+          </SwiperForm>
       </div>
     </AppLayout>
   );
