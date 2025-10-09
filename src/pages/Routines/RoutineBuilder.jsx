@@ -56,6 +56,9 @@ const RoutineBuilder = () => {
   const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
   const reorderTimeoutRef = useRef(null);
   const [addExerciseSection, setAddExerciseSection] = useState(null);
+  const ogGenTimerRef = useRef(null);
+  const ogLastSigRef = useRef("");
+  const ogLastRunRef = useRef(0);
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
     if (!profile) return "Unknown User";
@@ -173,35 +176,6 @@ const RoutineBuilder = () => {
       }));
       setExercises(items);
       
-      // Generate OG image if it doesn't exist
-      if (!programData?.og_image_url) {
-        try {
-          console.log('No OG image found, generating one...');
-          
-          // Calculate routine metrics
-          const exerciseCount = items.length;
-          const setCount = items.reduce((total, ex) => total + (ex.setConfigs?.length || 0), 0);
-          
-          // Import the generation function
-          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
-          
-          const routineData = {
-            routineName: programData.routine_name,
-            ownerName: '', // We'll need to get this from user context
-            exerciseCount,
-            setCount
-          };
-          
-          const imageUrl = await generateAndUploadRoutineOGImage(programId, routineData);
-          
-          // Update the program state with the new image URL
-          setProgram(prev => ({ ...prev, og_image_url: imageUrl }));
-          console.log('Generated OG image:', imageUrl);
-        } catch (error) {
-          console.error('Failed to generate OG image:', error);
-        }
-      }
-      
       // Automatically open add exercise form when no exercises exist
       if (items.length === 0) {
         setShowAddExercise(true);
@@ -215,6 +189,70 @@ const RoutineBuilder = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programId]);
+
+  // Reset OG image generation refs when routine changes to avoid cross-routine bleed
+  useEffect(() => {
+    ogLastSigRef.current = "";
+    ogLastRunRef.current = 0;
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+      ogGenTimerRef.current = null;
+    }
+  }, [programId]);
+
+  // Debounced + throttled routine OG image regeneration on material changes
+  useEffect(() => {
+    if (!programId) return;
+
+    const exerciseCount = exercises.length;
+    const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+    const name = (programName || '').trim();
+    const sig = `${name}|${exerciseCount}|${setCount}`;
+
+    if (sig === ogLastSigRef.current) return;
+
+    const now = Date.now();
+    const tooSoon = now - ogLastRunRef.current < 60000; // throttle: 60s minimum between uploads
+
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+    }
+
+    ogGenTimerRef.current = setTimeout(() => {
+      if (tooSoon) return;
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const run = async () => {
+        try {
+          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+          const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+            routineName: name || 'Routine',
+            ownerName: '',
+            exerciseCount,
+            setCount,
+          });
+          setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+        } catch (e) {
+          console.warn('[OG] routine image refresh failed', e);
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        // @ts-ignore
+        requestIdleCallback(run, { timeout: 2000 });
+      } else {
+        setTimeout(run, 0);
+      }
+    }, 2500); // debounce: 2.5s inactivity
+
+    return () => {
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+    };
+  }, [programId, programName, exercises]);
 
   const handleEditSet = (index, setConfig) => {
     setEditingSet(setConfig);
@@ -747,6 +785,34 @@ const RoutineBuilder = () => {
       .update({ routine_name: newTitle })
       .eq("id", programId);
     setEditProgramOpen(false);
+
+    // Immediately refresh OG image for fast rename propagation
+    try {
+      // Compute current metrics from state
+      const exerciseCount = exercises.length;
+      const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+
+      // Update generation fingerprints to avoid duplicate effect runs
+      const name = (newTitle || '').trim();
+      const sig = `${name}|${exerciseCount}|${setCount}`;
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+      const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+        routineName: name || 'Routine',
+        ownerName: '',
+        exerciseCount,
+        setCount,
+      });
+      setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+    } catch (e) {
+      console.warn('[OG] immediate rename image refresh failed', e);
+    }
   };
 
   const handleDeleteProgram = () => {
