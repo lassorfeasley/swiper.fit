@@ -41,6 +41,15 @@ const PageSectionWrapper = ({
     return section.charAt(0).toUpperCase() + section.slice(1);
   })();
 
+  // When applying padding on the parent, only propagate padding (not max-width) to the parent wrapper
+  const parentPaddingStyle = applyPaddingOnParent
+    ? {
+        paddingLeft: style?.paddingLeft,
+        paddingRight: style?.paddingRight,
+        paddingBottom: style?.paddingBottom,
+      }
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -48,13 +57,15 @@ const PageSectionWrapper = ({
         backgroundClass,
         className
       )}
-      style={{ ...(incomingStyle || {}), marginBottom: className?.includes("flex-1") ? 0 : 40 }}
+      style={applyPaddingOnParent 
+        ? { marginBottom: className?.includes("flex-1") ? 0 : 40 }
+        : { ...(incomingStyle || {}), marginBottom: className?.includes("flex-1") ? 0 : 40 }}
       {...restDomProps}
     >
       {/* Content with the section title rendered inside DeckWrapper header */}
       <div
-        className={cn("w-full self-stretch pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }
-        style={applyPaddingOnParent ? style : undefined}
+        className={cn("w-full pb-0 flex justify-center", className?.includes("flex-1") && "flex-1") }
+        style={parentPaddingStyle}
       >
         <DeckWrapper 
           gap={deckGap}
@@ -67,22 +78,22 @@ const PageSectionWrapper = ({
           onReorder={onReorder}
           variant={deckVariant}
           maxWidth={500}
-          style={applyPaddingOnParent ? { maxWidth: '500px' } : style}
-          header={null}
-        >
-          {/* Section title as first item in flow */}
-          <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: 0 }}>
-            <div className="flex flex-1 items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
-              {displayTitle}
+          style={applyPaddingOnParent ? { maxWidth: style?.maxWidth || 500, minWidth: style?.minWidth } : style}
+          header={(
+            <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: 0 }}>
+              <div className="flex flex-1 items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+                {displayTitle}
+              </div>
+              {showPlusButton && (
+                <button onClick={onPlus} aria-label="Add exercise" className="p-1">
+                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
             </div>
-            {showPlusButton && (
-              <button onClick={onPlus} aria-label="Add exercise" className="p-1">
-                <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
-          </div>
+          )}
+        >
           {children}
         </DeckWrapper>
       </div>
