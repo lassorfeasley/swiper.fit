@@ -17,16 +17,22 @@ export const useAutoScroll = ({
   elementPrefix = '',
   viewportPosition = 0.2,
   scrollBehavior = 'smooth',
-  debounceMs = 100,
-  maxRetries = 10,
+  debounceMs = 60,
+  maxRetries = 8,
   recenterOnIdleMs = 5000,
-  recenterThresholdPx = 24
+  recenterThresholdPx = 40,
+  preferNativeScrollIntoView = true
 }) => {
   const timeoutRef = useRef(null);
   const lastFocusedIdRef = useRef(null);
   const retryCountRef = useRef(0);
   const idleTimeoutRef = useRef(null);
   const suppressRecenterUntilRef = useRef(0);
+
+  // Helper: wait for layout & paint with a double-RAF
+  const afterNextPaint = (cb) => {
+    requestAnimationFrame(() => requestAnimationFrame(cb));
+  };
 
   useEffect(() => {
     if (!focusedId) return;
@@ -53,7 +59,7 @@ export const useAutoScroll = ({
       
       if (element) {
         // Element found - scroll to it
-        performScroll(element, focusedId, viewportPosition, scrollBehavior);
+        performScroll(element, focusedId, viewportPosition, scrollBehavior, preferNativeScrollIntoView);
         lastFocusedIdRef.current = focusedId;
         retryCountRef.current = 0; // Reset retry count on success
       } else {
@@ -67,7 +73,7 @@ export const useAutoScroll = ({
         
         if (alternativeElement) {
           console.log(`[useAutoScroll] Found alternative element for ${focusedId}`);
-          performScroll(alternativeElement, focusedId, viewportPosition, scrollBehavior);
+          performScroll(alternativeElement, focusedId, viewportPosition, scrollBehavior, preferNativeScrollIntoView);
           lastFocusedIdRef.current = focusedId;
           retryCountRef.current = 0; // Reset retry count on success
         } else {
@@ -75,7 +81,7 @@ export const useAutoScroll = ({
           const firstExerciseElement = document.querySelector('[id^="exercise-"]');
           if (firstExerciseElement) {
             console.log(`[useAutoScroll] Scrolling to first available exercise as fallback`);
-            performScroll(firstExerciseElement, focusedId, viewportPosition, scrollBehavior);
+            performScroll(firstExerciseElement, focusedId, viewportPosition, scrollBehavior, preferNativeScrollIntoView);
             lastFocusedIdRef.current = focusedId;
             retryCountRef.current = 0; // Reset retry count on success
           } else {
@@ -103,36 +109,28 @@ export const useAutoScroll = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [focusedId, elementPrefix, viewportPosition, scrollBehavior, debounceMs, maxRetries]);
+  }, [focusedId, elementPrefix, viewportPosition, scrollBehavior, debounceMs, maxRetries, preferNativeScrollIntoView]);
 
   // Helper function to perform the actual scroll
-  const performScroll = (element, focusedId, viewportPosition, scrollBehavior) => {
-    // Add a small delay to ensure DOM has updated with new stacking positions
-    setTimeout(() => {
-      // Calculate position to place element at specified viewport position
+  const performScroll = (element, focusedId, viewportPosition, scrollBehavior, preferNative) => {
+    afterNextPaint(() => {
+      if (preferNative && typeof element.scrollIntoView === 'function') {
+        element.scrollIntoView({ block: 'start', behavior: scrollBehavior });
+        suppressRecenterUntilRef.current = Date.now() + 600;
+        return;
+      }
+
+      // Fallback: compute offset manually
       const viewportHeight = window.innerHeight;
       const targetPosition = viewportHeight * viewportPosition;
-      
-      // Get the element's position relative to the viewport
       const elementRect = element.getBoundingClientRect();
       const elementTop = elementRect.top;
-      
-      // Calculate how much to scroll to position the element at target position
       const scrollOffset = elementTop - targetPosition;
-      
-      // Only scroll if the offset is significant (more than 10px)
       if (Math.abs(scrollOffset) > 10) {
-        console.log(`[useAutoScroll] Scrolling to exercise ${focusedId}, offset: ${scrollOffset}px`);
-        window.scrollBy({
-          top: scrollOffset,
-          behavior: scrollBehavior
-        });
-        // Suppress idle recenter reaction to our own programmatic scroll
+        window.scrollBy({ top: scrollOffset, behavior: scrollBehavior });
         suppressRecenterUntilRef.current = Date.now() + 600;
-      } else {
-        console.log(`[useAutoScroll] Skipping scroll for exercise ${focusedId} - offset too small: ${scrollOffset}px`);
       }
-    }, 50);
+    });
   };
 
   // === Idle recenter on user inactivity ===
@@ -153,13 +151,20 @@ export const useAutoScroll = ({
                         document.querySelector(`[data-id="${focusedId}"]`);
         if (!element) return;
 
-        const viewportHeight = window.innerHeight;
-        const targetPosition = viewportHeight * viewportPosition;
-        const { top: elementTop } = element.getBoundingClientRect();
-        const delta = elementTop - targetPosition;
-        if (Math.abs(delta) >= recenterThresholdPx) {
-          console.log(`[useAutoScroll] Idle recentering exercise ${focusedId} (delta ${Math.round(delta)}px)`);
-          performScroll(element, focusedId, viewportPosition, 'smooth');
+        // If using native scrolling, rely on CSS scroll-margin-top alignment
+        if (preferNativeScrollIntoView && typeof element.scrollIntoView === 'function') {
+          const { top } = element.getBoundingClientRect();
+          if (Math.abs(top) >= recenterThresholdPx) {
+            element.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          }
+        } else {
+          const viewportHeight = window.innerHeight;
+          const targetPosition = viewportHeight * viewportPosition;
+          const { top: elementTop } = element.getBoundingClientRect();
+          const delta = elementTop - targetPosition;
+          if (Math.abs(delta) >= recenterThresholdPx) {
+            performScroll(element, focusedId, viewportPosition, 'smooth', preferNativeScrollIntoView);
+          }
         }
       }, recenterOnIdleMs);
     };
@@ -187,7 +192,7 @@ export const useAutoScroll = ({
       window.removeEventListener('pointerdown', onAnyInteraction);
       window.removeEventListener('keydown', onAnyInteraction);
     };
-  }, [focusedId, elementPrefix, viewportPosition, recenterOnIdleMs, recenterThresholdPx]);
+  }, [focusedId, elementPrefix, viewportPosition, recenterOnIdleMs, recenterThresholdPx, preferNativeScrollIntoView]);
 };
 
 /**
@@ -201,8 +206,10 @@ export const useAutoScroll = ({
 export const useWorkoutAutoScroll = ({
   focusedExercise,
   viewportPosition = 0.2,
-  debounceMs = 150,
-  maxRetries = 15
+  debounceMs = 60,
+  maxRetries = 8,
+  recenterOnIdleMs = 0,
+  recenterThresholdPx = 40
 }) => {
   useAutoScroll({
     focusedId: focusedExercise?.exercise_id,
@@ -210,6 +217,9 @@ export const useWorkoutAutoScroll = ({
     viewportPosition,
     scrollBehavior: 'smooth',
     debounceMs,
-    maxRetries
+    maxRetries,
+    recenterOnIdleMs,
+    recenterThresholdPx,
+    preferNativeScrollIntoView: true
   });
 };

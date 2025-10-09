@@ -53,6 +53,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
   const pendingFocusTimeoutRef = useRef(null);
   // Block focus changes while a swipe completion animation is running
   const isSwipeAnimationRunningRef = useRef(false);
+  const queuedFocusRef = useRef(null);
   
   // Flag to prevent auto-focus when restoring from database
   const [isRestoringFocus, setIsRestoringFocus] = useState(false);
@@ -83,7 +84,8 @@ export const WorkoutNavigationProvider = ({ children }) => {
   // Set the focused exercise; when switching between different cards, defer until collapse completes
   const setFocusedExerciseId = useCallback((exerciseId, section) => {
     if (isSwipeAnimationRunningRef.current) {
-      // Defer focus changes until animation finishes
+      // Defer and queue the most recent focus request until animation finishes
+      queuedFocusRef.current = exerciseId ? { exerciseId, section } : null;
       return;
     }
     if (!exerciseId) {
@@ -242,7 +244,15 @@ export const WorkoutNavigationProvider = ({ children }) => {
     markExerciseIncomplete,
     setFocusedExerciseId,
     // Control flags for swipe animation to serialize transitions
-    setSwipeAnimationRunning: (running) => { isSwipeAnimationRunningRef.current = running; },
+    setSwipeAnimationRunning: (running) => {
+      isSwipeAnimationRunningRef.current = running;
+      if (!running && queuedFocusRef.current) {
+        const { exerciseId, section } = queuedFocusRef.current;
+        queuedFocusRef.current = null;
+        // Apply the queued focus now that animations are done
+        setFocusedExerciseId(exerciseId, section);
+      }
+    },
     handleSectionComplete,
     
     // Computed values

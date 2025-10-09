@@ -152,11 +152,19 @@ const ActiveExerciseCard = React.forwardRef(({
         // Defer card transition until after the swipe-switch visual completion finishes.
         // We rely on SwipeSwitch's onVisualComplete callback (wired below) to call this.
         // As a safety fallback in case the animation callback doesn't fire, also set a timeout.
-        const fallback = setTimeout(() => onExerciseComplete?.(exerciseId), ANIMATION_DURATIONS.SWIPE_COMPLETE_ANIMATION_MS);
+        const fallback = setTimeout(() => {
+          // Apply the extra post-complete delay even in fallback
+          setTimeout(() => {
+            onExerciseComplete?.(exerciseId);
+            setSwipeAnimationRunning(false);
+          }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
+        }, ANIMATION_DURATIONS.SWIPE_COMPLETE_ANIMATION_MS);
         pendingOpenNextRef.current = () => {
           clearTimeout(fallback);
-          onExerciseComplete?.(exerciseId);
-          setSwipeAnimationRunning(false);
+          setTimeout(() => {
+            onExerciseComplete?.(exerciseId);
+            setSwipeAnimationRunning(false);
+          }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
         };
       }
     },

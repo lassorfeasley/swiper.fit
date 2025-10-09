@@ -37,6 +37,7 @@ const ActiveWorkoutContent = () => {
     endWorkout: contextEndWorkout,
     updateLastExercise,
     lastExerciseIdChangeTrigger,
+    elapsedTime,
   } = useActiveWorkout();
 
   const {
@@ -107,6 +108,7 @@ const ActiveWorkoutContent = () => {
   });
   // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
   const isRestoringFocusRef = useRef(false);
+  const didWarmupOverrideRef = useRef(false);
   
   // Reset restoration flag when workout changes
   useEffect(() => {
@@ -127,41 +129,49 @@ const ActiveWorkoutContent = () => {
     // Prevent multiple restoration attempts
     if (isRestoringFocusRef.current) return;
 
-    // Reduced delay to allow sections to load their exercises
+    // Fresh workout: wait for warmup to load, then prefer warmup explicitly and persist it
+    const isFreshWorkout = (elapsedTime ?? 0) < 120;
+    if (isFreshWorkout && !didWarmupOverrideRef.current) {
+      if (!loadedSections?.warmup) return; // wait until we know if warmup exists
+      const warm = sectionExercises?.warmup || [];
+      if (warm.length > 0) {
+        const firstWarm = warm[0];
+        isRestoringFocusRef.current = true;
+        didWarmupOverrideRef.current = true;
+        setFocusedExerciseId(firstWarm.exercise_id, 'warmup');
+        try { if (firstWarm.id) updateLastExercise(firstWarm.id); } catch (_) {}
+        return;
+      }
+      // If no warmup, fall through to training/cooldown order
+    }
+
+    // Standard restore flow
     const timer = setTimeout(() => {
       if (activeWorkout?.lastExerciseId) {
-        // No database query needed - exercise_id is already loaded in ActiveWorkoutContext
-        console.log('[ActiveWorkout] Timer-based restoration setting focus to:', activeWorkout.lastExerciseId);
         isRestoringFocusRef.current = true;
         setFocusedExerciseId(activeWorkout.lastExerciseId, null);
       } else {
-        // Fallback: If no lastExerciseId, prefer warmup once loaded. Only fall through to
-        // training/cooldown after we know warmup is loaded (and empty).
         const order = ['warmup', 'training', 'cooldown'];
         for (const section of order) {
-          // If warmup isn't loaded yet, wait instead of jumping ahead.
-          if (!loadedSections[section]) {
-            return; // wait for this section to load
-          }
+          if (!loadedSections[section]) return;
           const exercises = sectionExercises[section] || [];
           if (exercises.length > 0) {
             const firstExercise = exercises[0];
-            console.log(`[ActiveWorkout] Initial focus defaulting to first exercise of ${section}:`, firstExercise.exercise_id);
             isRestoringFocusRef.current = true;
             setFocusedExerciseId(firstExercise.exercise_id, section);
             break;
           }
-          // if loaded and empty, continue to next section
         }
       }
-      // No else clause needed - all workouts now have lastExerciseId set
-    }, 300); // Reduced from 1500ms to 300ms
-    
+    }, 200);
+
     return () => clearTimeout(timer);
-  }, [activeWorkout?.id, setFocusedExerciseId, loadedSections, sectionExercises]);
+  }, [activeWorkout?.id, elapsedTime, loadedSections?.warmup, loadedSections?.training, loadedSections?.cooldown, sectionExercises, setFocusedExerciseId, updateLastExercise]);
 
   // Reactive trigger: Restore focus as soon as sections have loaded exercises
   useEffect(() => {
+    // If we’ve enforced warmup-first, don’t revert to lastExerciseId
+    if (didWarmupOverrideRef.current) return;
     if (!activeWorkout?.lastExerciseId || isRestoringFocusRef.current) return;
     
     // Check if any sections have loaded exercises
