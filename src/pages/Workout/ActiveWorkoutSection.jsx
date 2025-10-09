@@ -703,7 +703,7 @@ const ActiveWorkoutSection = ({
       let exerciseId;
       const { data: existingExercise, error: searchError } = await supabase
         .from("exercises")
-        .select("id")
+        .select("id, section")
         .eq("name", exerciseName)
         .maybeSingle();
 
@@ -711,10 +711,18 @@ const ActiveWorkoutSection = ({
 
       if (existingExercise) {
         exerciseId = existingExercise.id;
+        // Keep canonical exercise section in sync with user's selection
+        const desiredSection = exerciseSection || "training";
+        if (existingExercise.section !== desiredSection) {
+          await supabase
+            .from("exercises")
+            .update({ section: desiredSection })
+            .eq("id", exerciseId);
+        }
       } else {
         const { data: newExercise, error: createError } = await supabase
           .from("exercises")
-          .insert({ name: exerciseName })
+          .insert({ name: exerciseName, section: exerciseSection || "training" })
           .select("id")
           .single();
 
@@ -736,7 +744,8 @@ const ActiveWorkoutSection = ({
             exercise_id: exerciseId,
             exercise_order: nextOrder,
             snapshot_name: exerciseName.trim(),
-            section_override: section, // Force this exercise into the section
+            // Honor the drawer's chosen section; fall back to the current section tab
+            section_override: exerciseSection || section,
           })
           .select("id")
           .single();
@@ -808,7 +817,7 @@ const ActiveWorkoutSection = ({
       let exerciseId;
       const { data: existingExercise, error: searchError } = await supabase
         .from("exercises")
-        .select("id")
+        .select("id, section")
         .eq("name", exerciseName)
         .maybeSingle();
 
@@ -897,7 +906,7 @@ const ActiveWorkoutSection = ({
             exercise_id: exerciseId,
             exercise_order: nextWorkoutOrder,
             snapshot_name: exerciseName.trim(),
-            section_override: exerciseSection, // Use the form section, not current section
+            section_override: exerciseSection || section, // Use the form section or current tab
           })
           .select("id")
           .single();

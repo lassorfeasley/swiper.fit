@@ -481,7 +481,7 @@ const RoutineBuilder = () => {
     try {
       let { data: existing } = await supabase
         .from("exercises")
-        .select("id")
+        .select("id, section")
         .eq("name", exerciseData.name)
         .maybeSingle();
       let exercise_id = existing?.id;
@@ -493,6 +493,15 @@ const RoutineBuilder = () => {
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
+      } else {
+        // Ensure the exercise's canonical section matches the user's selection from the sheet
+        const desiredSection = exerciseData.section || "training";
+        if (existing.section !== desiredSection) {
+          await supabase
+            .from("exercises")
+            .update({ section: desiredSection })
+            .eq("id", exercise_id);
+        }
       }
       // Check if this exercise is already in the routine
       const { data: existingRoutineExercise } = await supabase
@@ -548,6 +557,11 @@ const RoutineBuilder = () => {
       }
       setShowAddExercise(false);
       await refreshExercises();
+      // After adding, scroll the selected (possibly changed) section into view for user feedback
+      if (exerciseData.section) {
+        const scrollKey = exerciseData.section === 'training' ? 'workout' : exerciseData.section;
+        setTimeout(() => scrollSectionIntoView(scrollKey), 0);
+      }
     } catch (err) {
       alert(err.message || "Failed to add exercise");
     }
