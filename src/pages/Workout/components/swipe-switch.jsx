@@ -14,7 +14,7 @@ function debounce(fn, delay) {
   };
 }
 
-export default function SwipeSwitch({ set, onComplete, onClick, className = "", demo = false }) {
+export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick, className = "", demo = false }) {
   const {
     status = "locked",
     reps,
@@ -78,6 +78,7 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   const [timer, setTimer] = useState(duration);
   const timerInterval = useRef(null);
   const onCompleteRef = useRef(onComplete);
+  const onVisualCompleteRef = useRef(onVisualComplete);
 
   // Use a smooth, non-bouncy tween for all transitions
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
@@ -183,6 +184,8 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
             setIsManualSwipe(false);
             setIsAnimating(false);
             setIsCheckVisible(true);
+            // Notify parent that the visual completion animation has finished
+            onVisualCompleteRef.current?.();
           }, 100);
         });
       });
@@ -263,6 +266,10 @@ export default function SwipeSwitch({ set, onComplete, onClick, className = "", 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  useEffect(() => {
+    onVisualCompleteRef.current = onVisualComplete;
+  }, [onVisualComplete]);
 
   // Set mounted flag
   useEffect(() => {

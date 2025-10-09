@@ -77,20 +77,37 @@ const RoutinesIndex = () => {
         );
         
         // Get the most recent completed workout
-        const completedWorkouts = (program.workouts || []).filter(w => w.completed_at);
-        const lastCompletedWorkout = completedWorkouts.length > 0 
-          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
-          : null;
-        
-        // Format the completion date
+        const completedWorkouts = (program.workouts || []).filter((w) => w.completed_at);
+        const lastCompletedWorkout =
+          completedWorkouts.length > 0
+            ? completedWorkouts.sort(
+                (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
+              )[0]
+            : null;
+
+        // Format the completion date (date-only compare; includes today/yesterday)
         let lastCompletedText = null;
         if (lastCompletedWorkout) {
           const completedDate = new Date(lastCompletedWorkout.completed_at);
           const now = new Date();
-          const diffTime = Math.abs(now - completedDate);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays === 1) {
+
+          const completedDateOnly = new Date(
+            completedDate.getFullYear(),
+            completedDate.getMonth(),
+            completedDate.getDate()
+          );
+          const nowDateOnly = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
+
+          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays === 0) {
+            lastCompletedText = "Completed today";
+          } else if (diffDays === 1) {
             lastCompletedText = "Completed yesterday";
           } else if (diffDays < 7) {
             lastCompletedText = `Completed ${diffDays} days ago`;

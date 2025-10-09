@@ -6,6 +6,13 @@ import './index.css'
 
 console.log('main.jsx executing...')
 
+// Disable browser's automatic scroll restoration across history entries for SPA
+try {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual'
+  }
+} catch (_) {}
+
 // Plain vanilla React rendering
 try {
   const root = document.getElementById('root')

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, memo, useRef } from "react";
 import PropTypes from "prop-types";
 import NumericInput from "@/components/molecules/numeric-input";
+import DurationInput from "@/components/molecules/duration-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import ToggleInput from "@/components/molecules/toggle-input";
 import { TextInput } from "@/components/molecules/text-input";
@@ -91,12 +92,9 @@ const FormContent = ({
                 className="self-stretch h-12"
               />
             ) : (
-              <NumericInput
+              <DurationInput
                 value={timed_set_duration}
                 onChange={durationOnChange}
-                onBlur={showSetNameField ? syncWithParent : undefined}
-                unitLabel="Seconds"
-                step={5}
                 className="self-stretch h-12"
               />
             )}

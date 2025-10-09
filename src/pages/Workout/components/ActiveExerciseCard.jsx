@@ -27,6 +27,8 @@ import React, {
   useCallback,
 } from "react";
 import SwipeSwitch from "./swipe-switch";
+import { ANIMATION_DURATIONS } from "@/lib/scrollSnap";
+import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import PropTypes from "prop-types";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { Check } from "lucide-react";
@@ -57,6 +59,7 @@ const ActiveExerciseCard = React.forwardRef(({
   isCompleted = false,
   demo = false,
 }, ref) => {
+  const { setSwipeAnimationRunning } = useWorkoutNavigation();
 
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
@@ -144,11 +147,32 @@ const ActiveExerciseCard = React.forwardRef(({
       });
 
       if (allSetsNowComplete) {
-        onExerciseComplete?.(exerciseId);
+        // Tell navigation to block focus changes while swipe animation runs
+        setSwipeAnimationRunning(true);
+        // Defer card transition until after the swipe-switch visual completion finishes.
+        // We rely on SwipeSwitch's onVisualComplete callback (wired below) to call this.
+        // As a safety fallback in case the animation callback doesn't fire, also set a timeout.
+        const fallback = setTimeout(() => {
+          // Apply the extra post-complete delay even in fallback
+          setTimeout(() => {
+            onExerciseComplete?.(exerciseId);
+            setSwipeAnimationRunning(false);
+          }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
+        }, ANIMATION_DURATIONS.SWIPE_COMPLETE_ANIMATION_MS);
+        pendingOpenNextRef.current = () => {
+          clearTimeout(fallback);
+          setTimeout(() => {
+            onExerciseComplete?.(exerciseId);
+            setSwipeAnimationRunning(false);
+          }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
+        };
       }
     },
-    [exerciseId, onSetComplete, sets, onExerciseComplete]
+    [exerciseId, onSetComplete, sets, onExerciseComplete, setSwipeAnimationRunning]
   );
+
+  // Ref that holds a pending opener to the next card, fired when the visual completes
+  const pendingOpenNextRef = useRef(null);
 
   const cardStatus = allComplete ? "complete" : "default";
 
@@ -226,6 +250,14 @@ const ActiveExerciseCard = React.forwardRef(({
                       key={set.routine_set_id || set.tempId || set.id || `exercise-${exerciseId}-set-${index}`}
                       set={set}
                       onComplete={() => handleSetComplete(index)}
+                      onVisualComplete={() => {
+                        // If this was the last incomplete set, and we scheduled a transition, execute it now
+                        if (pendingOpenNextRef.current) {
+                          const fn = pendingOpenNextRef.current;
+                          pendingOpenNextRef.current = null;
+                          fn();
+                        }
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onSetPress) {

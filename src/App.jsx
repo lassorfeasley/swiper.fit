@@ -47,6 +47,14 @@ function AppContent() {
   const { isDelegated } = useAccount();
   const navigate = useNavigate();
   const { navBarVisible } = useNavBarVisibility();
+  // Force scroll to top on route changes (prevents residual scroll from previous pages)
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    } catch (_) {
+      window.scrollTo(0, 0)
+    }
+  }, [location.pathname])
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
     /^\/routines\/[^/]+(\/edit|\/configure)?$/.test(location.pathname) ||

@@ -15,7 +15,7 @@ import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Copy, Blend, X } from "lucide-react";
+import { Copy, Blend, X, Plus } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
@@ -56,6 +56,9 @@ const RoutineBuilder = () => {
   const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
   const reorderTimeoutRef = useRef(null);
   const [addExerciseSection, setAddExerciseSection] = useState(null);
+  const ogGenTimerRef = useRef(null);
+  const ogLastSigRef = useRef("");
+  const ogLastRunRef = useRef(0);
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
     if (!profile) return "Unknown User";
@@ -173,35 +176,6 @@ const RoutineBuilder = () => {
       }));
       setExercises(items);
       
-      // Generate OG image if it doesn't exist
-      if (!programData?.og_image_url) {
-        try {
-          console.log('No OG image found, generating one...');
-          
-          // Calculate routine metrics
-          const exerciseCount = items.length;
-          const setCount = items.reduce((total, ex) => total + (ex.setConfigs?.length || 0), 0);
-          
-          // Import the generation function
-          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
-          
-          const routineData = {
-            routineName: programData.routine_name,
-            ownerName: '', // We'll need to get this from user context
-            exerciseCount,
-            setCount
-          };
-          
-          const imageUrl = await generateAndUploadRoutineOGImage(programId, routineData);
-          
-          // Update the program state with the new image URL
-          setProgram(prev => ({ ...prev, og_image_url: imageUrl }));
-          console.log('Generated OG image:', imageUrl);
-        } catch (error) {
-          console.error('Failed to generate OG image:', error);
-        }
-      }
-      
       // Automatically open add exercise form when no exercises exist
       if (items.length === 0) {
         setShowAddExercise(true);
@@ -215,6 +189,70 @@ const RoutineBuilder = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programId]);
+
+  // Reset OG image generation refs when routine changes to avoid cross-routine bleed
+  useEffect(() => {
+    ogLastSigRef.current = "";
+    ogLastRunRef.current = 0;
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+      ogGenTimerRef.current = null;
+    }
+  }, [programId]);
+
+  // Debounced + throttled routine OG image regeneration on material changes
+  useEffect(() => {
+    if (!programId) return;
+
+    const exerciseCount = exercises.length;
+    const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+    const name = (programName || '').trim();
+    const sig = `${name}|${exerciseCount}|${setCount}`;
+
+    if (sig === ogLastSigRef.current) return;
+
+    const now = Date.now();
+    const tooSoon = now - ogLastRunRef.current < 60000; // throttle: 60s minimum between uploads
+
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+    }
+
+    ogGenTimerRef.current = setTimeout(() => {
+      if (tooSoon) return;
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const run = async () => {
+        try {
+          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+          const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+            routineName: name || 'Routine',
+            ownerName: '',
+            exerciseCount,
+            setCount,
+          });
+          setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+        } catch (e) {
+          console.warn('[OG] routine image refresh failed', e);
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        // @ts-ignore
+        requestIdleCallback(run, { timeout: 2000 });
+      } else {
+        setTimeout(run, 0);
+      }
+    }, 2500); // debounce: 2.5s inactivity
+
+    return () => {
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+    };
+  }, [programId, programName, exercises]);
 
   const handleEditSet = (index, setConfig) => {
     setEditingSet(setConfig);
@@ -481,7 +519,7 @@ const RoutineBuilder = () => {
     try {
       let { data: existing } = await supabase
         .from("exercises")
-        .select("id")
+        .select("id, section")
         .eq("name", exerciseData.name)
         .maybeSingle();
       let exercise_id = existing?.id;
@@ -493,6 +531,15 @@ const RoutineBuilder = () => {
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
+      } else {
+        // Ensure the exercise's canonical section matches the user's selection from the sheet
+        const desiredSection = exerciseData.section || "training";
+        if (existing.section !== desiredSection) {
+          await supabase
+            .from("exercises")
+            .update({ section: desiredSection })
+            .eq("id", exercise_id);
+        }
       }
       // Check if this exercise is already in the routine
       const { data: existingRoutineExercise } = await supabase
@@ -548,6 +595,11 @@ const RoutineBuilder = () => {
       }
       setShowAddExercise(false);
       await refreshExercises();
+      // After adding, scroll the selected (possibly changed) section into view for user feedback
+      if (exerciseData.section) {
+        const scrollKey = exerciseData.section === 'training' ? 'workout' : exerciseData.section;
+        setTimeout(() => scrollSectionIntoView(scrollKey), 0);
+      }
     } catch (err) {
       alert(err.message || "Failed to add exercise");
     }
@@ -733,6 +785,34 @@ const RoutineBuilder = () => {
       .update({ routine_name: newTitle })
       .eq("id", programId);
     setEditProgramOpen(false);
+
+    // Immediately refresh OG image for fast rename propagation
+    try {
+      // Compute current metrics from state
+      const exerciseCount = exercises.length;
+      const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+
+      // Update generation fingerprints to avoid duplicate effect runs
+      const name = (newTitle || '').trim();
+      const sig = `${name}|${exerciseCount}|${setCount}`;
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+      const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+        routineName: name || 'Routine',
+        ownerName: '',
+        exerciseCount,
+        setCount,
+      });
+      setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+    } catch (e) {
+      console.warn('[OG] immediate rename image refresh failed', e);
+    }
   };
 
   const handleDeleteProgram = () => {
@@ -809,7 +889,7 @@ const RoutineBuilder = () => {
             key={section}
             section={section} 
             id={`section-${section}`} 
-            deckGap={0} 
+            deckGap={12} 
             deckVariant="cards"
             reorderable={true}
             items={secExercises}
@@ -817,18 +897,15 @@ const RoutineBuilder = () => {
             isFirst={section === "warmup"}
             className={`${section === "warmup" ? "border-t-0" : ""} ${index === exercisesBySection.length - 1 ? "flex-1" : ""}`}
             backgroundClass="bg-transparent"
-            showPlusButton={true}
+            showPlusButton={false}
             onPlus={() => handleOpenAddExercise(section)}
-            style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+            applyPaddingOnParent={true}
+            style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
           >
-            {secExercises.length === 0 && !loading ? (
-              <div className="text-gray-400 text-center py-8">
-                No exercises found. Try adding one!
-              </div>
-            ) : loading ? (
+          {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
             ) : secExercises.map((ex, exIndex) => (
-              <div key={ex.id} className="w-full" style={{ marginBottom: exIndex < secExercises.length - 1 ? '12px' : '0px' }}>
+              <div key={ex.id} className="w-full">
                 <ExerciseCard
                   mode="default"
                   exerciseName={ex.name}
@@ -841,6 +918,17 @@ const RoutineBuilder = () => {
                 />
               </div>
             ))}
+            {/* Single persistent add button as last item */}
+            <CardWrapper gap={0} marginTop={12} marginBottom={0}>
+              <SwiperButton 
+                variant="primary-action" 
+                className="self-stretch w-full"
+                onClick={() => handleOpenAddExercise(section)}
+              >
+                <span className="flex-1">Add an exercise</span>
+                <Plus className="w-6 h-6" strokeWidth={2} />
+              </SwiperButton>
+            </CardWrapper>
           </PageSectionWrapper>
         ))}
         </div>

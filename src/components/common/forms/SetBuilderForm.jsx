@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ToggleInput from "@/components/molecules/toggle-input";
 import NumericInput from "@/components/molecules/numeric-input";
+import DurationInput from "@/components/molecules/duration-input";
 
 const setTypeOptions = [
   { label: "Reps", value: "reps" },
@@ -47,22 +48,22 @@ export default function SetBuilderForm({ initialDefaults = { set_type: 'reps', r
           />
         </div>
         <div className="w-full self-stretch flex flex-col justify-start items-start gap-1">
-          <NumericInput
-            value={
-              defaults.set_type === "reps"
-                ? defaults.reps
-                : defaults.timed_set_duration
-            }
-            onChange={(val) =>
-              defaults.set_type === "reps"
-                ? handleDefaultChange("reps", val)
-                : handleDefaultChange("timed_set_duration", val)
-            }
-            min={0}
-            max={999}
-            unitLabel={defaults.set_type === "reps" ? "reps" : "seconds"}
-            readOnly={disabled}
-          />
+          {defaults.set_type === "reps" ? (
+            <NumericInput
+              value={defaults.reps}
+              onChange={(val) => handleDefaultChange("reps", val)}
+              min={0}
+              max={999}
+              unitLabel="reps"
+              readOnly={disabled}
+            />
+          ) : (
+            <DurationInput
+              value={defaults.timed_set_duration}
+              onChange={(val) => handleDefaultChange("timed_set_duration", val)}
+              className="self-stretch h-12"
+            />
+          )}
         </div>
         <div className="w-full self-stretch flex flex-col justify-start items-center gap-1">
           <div className="w-full self-stretch justify-start text-slate-600 text-label">

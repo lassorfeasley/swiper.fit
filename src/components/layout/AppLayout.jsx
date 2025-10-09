@@ -48,15 +48,13 @@ export default function AppLayout({
 
   useEffect(() => {
     function updateHeaderHeight() {
-      if (headerRef.current) {
-        const h = headerRef.current.offsetHeight;
-        setHeaderHeight(h);
-        document.documentElement.style.setProperty("--header-height", `${h}px`);
-      }
+      const h = hideHeader ? 0 : (headerRef.current ? headerRef.current.offsetHeight : 0);
+      setHeaderHeight(h);
+      document.documentElement.style.setProperty("--header-height", `${h}px`);
     }
     updateHeaderHeight();
     let ro;
-    if (typeof ResizeObserver !== "undefined") {
+    if (!hideHeader && typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(updateHeaderHeight);
       if (headerRef.current) ro.observe(headerRef.current);
     }
@@ -65,7 +63,7 @@ export default function AppLayout({
       window.removeEventListener("resize", updateHeaderHeight);
       if (ro) ro.disconnect();
     };
-  }, [headerProps]);
+  }, [hideHeader, headerProps]);
 
   const allowedHeaderProps = [
     'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout',

@@ -28,7 +28,7 @@ const SectionWrapperLabel = ({
       {...props}
     >
       <div className="w-full max-w-[500px] flex items-center justify-between">
-        <div data-layer="section" className="Section justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+        <div data-layer="section" className="Section flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
           {children}
         </div>
         {showPlusButton && (

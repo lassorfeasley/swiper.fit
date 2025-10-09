@@ -2,7 +2,7 @@
 
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { ArrowLeft, Search, Settings2, Plus, Share, Share2, X, Play, PenLine, Blend, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Settings2, Plus, Share, Share2, X, Play, PenLine, Blend, Upload, Trash2, Cog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextInput } from "@/components/molecules/text-input";
 
@@ -154,7 +154,7 @@ const PageHeader = forwardRef(({
               </div>
             </div>
             {/* Right: Actions (hide pod when empty) */}
-            {(showShare || showDelete || showPlusButton) && (
+            {(showShare || showDelete || showPlusButton || showSettings) && (
               <div className="inline-flex flex-col justify-center items-end gap-2.5">
                 <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
                   {showPlusButton && (
@@ -164,6 +164,15 @@ const PageHeader = forwardRef(({
                       className="size-6 flex items-center justify-center"
                     >
                       <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                  {showSettings && (
+                    <button 
+                      onClick={onSettings} 
+                      aria-label="Settings" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
                     </button>
                   )}
                   {showShare && (
@@ -218,7 +227,7 @@ const PageHeader = forwardRef(({
         {sharingSection ? (
           <div className="inline-flex flex-col justify-center items-end gap-2.5">{sharingSection}</div>
         ) : (
-          (showShare || showDelete || showPlusButton) && (
+          (showShare || showDelete || showPlusButton || showSettings) && (
             <div className="inline-flex flex-col justify-center items-end gap-2.5">
               <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
                 {showPlusButton && (
@@ -228,6 +237,15 @@ const PageHeader = forwardRef(({
                     className="size-6 flex items-center justify-center"
                   >
                     <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+                {showSettings && (
+                  <button 
+                    onClick={onSettings} 
+                    aria-label="Settings" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
                   </button>
                 )}
                 {showShare && (

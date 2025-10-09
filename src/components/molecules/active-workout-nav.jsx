@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { formatSecondsHHMMSS } from "@/lib/utils";
@@ -7,8 +7,6 @@ import { Blend, X, Square } from "lucide-react";
 export default function ActiveWorkoutNav({ onEnd }) {
   const { activeWorkout, elapsedTime } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
-  // This nav now sits at the very top; we hide the old banner above
-  const topOffset = 'top-0';
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
 
   // Helper function to format user display name
@@ -38,9 +36,61 @@ export default function ActiveWorkoutNav({ onEnd }) {
     return email;
   };
 
+  useEffect(() => {
+    const sub = document.getElementById("sticky-subnav");
+    const sent = document.getElementById("sticky-subnav-sentinel");
+    if (!sub || !sent) return;
+
+    let blocked = false;
+
+    // DEBUG: warn if any ancestor blocks position: sticky
+    const debugSticky = (el) => {
+      if (!el) return;
+      try {
+        const cs = getComputedStyle(el);
+        // eslint-disable-next-line no-console
+        console.log('[StickySubNav]', { position: cs.position, top: cs.top, zIndex: cs.zIndex });
+      } catch (_) {}
+      let p = el.parentElement;
+      while (p) {
+        const cs = getComputedStyle(p);
+        const ov = cs.overflow;
+        const ovY = cs.overflowY;
+        const hasOverflow = ["hidden", "auto", "scroll", "clip"].includes(ov) || ["hidden", "auto", "scroll", "clip"].includes(ovY);
+        if (hasOverflow) {
+          // eslint-disable-next-line no-console
+          console.warn("[Sticky blocked by ancestor]", p, { overflow: ov, overflowY: ovY });
+          blocked = true;
+        }
+        p = p.parentElement;
+      }
+    };
+    debugSticky(sub);
+
+    const io = new IntersectionObserver(([e]) => {
+      const isStuck = !e.isIntersecting;
+      sub.classList.toggle("is-stuck", isStuck);
+      // Only force fixed positioning when actually stuck and sticky is blocked by overflow ancestors
+      sub.classList.toggle("force-fixed", isStuck && blocked);
+    });
+    io.observe(sent);
+
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div data-layer="ActiveWorkoutNav" className={`fixed ${topOffset} left-0 right-0 w-full self-stretch inline-flex flex-col justify-start items-start overflow-hidden z-50 bg-transparent`}>
-      {/* Sharing navigation section - updated styling */}
+    <>
+      {/* PrimaryNavScrollable - scrolls away */}
+      <div data-layer="active-workout-name-and-routine" className="ActiveWorkoutNameAndRoutine self-stretch flex flex-col justify-center items-start px-4 pt-5 pb-0 bg-stone-100">
+        <div data-layer="workout-name" className="self-stretch justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-[24px]">
+          {activeWorkout?.workoutName || ""}
+        </div>
+        <div data-layer="routine-name" className="self-stretch justify-center text-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+          {activeWorkout?.routineName || ""}
+        </div>
+      </div>
+
+      {/* Delegate banner (part of PrimaryNavScrollable) */}
       {isDelegated && (
         <div data-layer="Frame 84" className="Frame84 self-stretch px-3 pt-3 bg-stone-100 inline-flex justify-start items-start gap-2.5">
           <div data-layer="Frame 73" className="Frame73 inline-flex pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] items-center">
@@ -66,24 +116,33 @@ export default function ActiveWorkoutNav({ onEnd }) {
         </div>
       )}
 
-      {/* Timer section - updated wrapper styles */}
-      <div data-layer="Frame 57" className="Frame57 self-stretch px-4 pt-5 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start">
-        <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
-          <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
-        </div>
-        <div data-layer="Frame 58" className="Frame58 size-10 flex justify-center items-start gap-2">
-          <div data-layer="action-icons" data-show-icon-one="false" data-show-icon-three="true" data-show-icon-two="false" className="ActionIcons size-10 p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
-            <button
-              type="button"
-              onClick={onEnd}
-              className="w-full h-full flex justify-center items-center"
-            >
-              <Square className="w-6 h-6" stroke="#E7000B" strokeWidth={2} fill="none" />
-            </button>
+      {/* 0-height sentinel just above StickySubNav */}
+      <div id="sticky-subnav-sentinel" aria-hidden="true" className="h-0" />
+
+      {/* StickySubNav - sticks to viewport top */}
+      <div
+        id="sticky-subnav"
+        data-no-transform
+        className="sticky [top:var(--header-height,0px)] left-0 right-0 w-full z-[120] flex items-center border-b border-transparent transition-[box-shadow,border-color] duration-150 bg-transparent"
+      >
+        <div data-layer="Frame 57" className="Frame57 w-full h-full px-4 pt-5 pb-0 inline-flex justify-between items-center bg-gradient-to-b from-stone-100 to-stone-100/0">
+          <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
+            <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
+          </div>
+          <div data-layer="Frame 58" className="Frame58 size-10 flex justify-center items-center gap-2">
+            <div data-layer="action-icons" data-show-icon-one="false" data-show-icon-three="true" data-show-icon-two="false" className="ActionIcons size-10 p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
+              <button
+                type="button"
+                onClick={onEnd}
+                className="w-full h-full flex justify-center items-center"
+              >
+                <Square className="w-6 h-6" stroke="#E7000B" strokeWidth={2} fill="none" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -456,7 +456,7 @@ export function ActiveWorkoutProvider({ children }) {
     };
 
     // Snapshot initial exercises for this workout
-    let firstWorkoutExerciseId = null;
+    let firstWorkoutExerciseId = null; // this is a workout_exercises.id
     let insertedExercises = null;
     try {
       const snapshotPayload = program.routine_exercises.map((progEx, idx) => ({
@@ -473,31 +473,66 @@ export function ActiveWorkoutProvider({ children }) {
         console.error("Error snapshotting exercises:", snapshotError);
       } else if (exercisesData && exercisesData.length > 0) {
         insertedExercises = exercisesData;
-        // Find the first exercise by section priority (warmup -> training -> cooldown) then by exercise_order
-        const sectionPriority = { warmup: 1, training: 2, cooldown: 3 };
-        const firstExercise = insertedExercises.reduce((first, current) => {
-          // Get the section for each exercise from the original program data
-          const currentSection = program.routine_exercises.find(ex => ex.exercise_id === current.exercise_id)?.exercises?.section || "training";
-          const firstSection = program.routine_exercises.find(ex => ex.exercise_id === first.exercise_id)?.exercises?.section || "training";
-          
-          const currentPriority = sectionPriority[currentSection] || 2;
-          const firstPriority = sectionPriority[firstSection] || 2;
-          
-          // If sections are different, prioritize by section order
-          if (currentPriority !== firstPriority) {
-            return currentPriority < firstPriority ? current : first;
+        
+        // Build a quick lookup from exercise_id -> workout_exercises.id
+        const exerciseIdToWorkoutExerciseId = new Map(insertedExercises.map(we => [we.exercise_id, we.id]));
+
+        // Helper to pick the first by a target section, then exercise_order
+        const pickFirstBySection = (targetSection) => {
+          const candidates = (program.routine_exercises || [])
+            .filter(ex => {
+              const sec = String(ex.exercises?.section || 'training').toLowerCase();
+              return sec === String(targetSection).toLowerCase();
+            })
+            .sort((a, b) => (a.exercise_order || 0) - (b.exercise_order || 0));
+          for (const ex of candidates) {
+            const weId = exerciseIdToWorkoutExerciseId.get(ex.exercise_id);
+            if (weId) return { workoutExerciseId: weId, exerciseId: ex.exercise_id };
           }
-          
-          // If sections are the same, prioritize by exercise_order
-          return current.exercise_order < first.exercise_order ? current : first;
-        });
-        firstWorkoutExerciseId = firstExercise.id;        
-        // Update the workout to set the first exercise as last_workout_exercise_id
+          return null;
+        };
+
+        // Prefer warmup if present; else fall back to training; else cooldown; else the first inserted
+        const warmupFirst = pickFirstBySection('warmup');
+        const trainingFirst = pickFirstBySection('training') || pickFirstBySection('workout');
+        const cooldownFirst = pickFirstBySection('cooldown');
+        const fallbackFirst = insertedExercises
+          .slice()
+          .sort((a, b) => (a.exercise_order || 0) - (b.exercise_order || 0))[0];
+
+        let chosenWorkoutExerciseId = null;
+        if (warmupFirst) chosenWorkoutExerciseId = warmupFirst.workoutExerciseId;
+        else if (trainingFirst) chosenWorkoutExerciseId = trainingFirst.workoutExerciseId;
+        else if (cooldownFirst) chosenWorkoutExerciseId = cooldownFirst.workoutExerciseId;
+        else if (fallbackFirst) chosenWorkoutExerciseId = fallbackFirst.id;
+
+        firstWorkoutExerciseId = chosenWorkoutExerciseId;
+        
+        // Re-check sections from DB join to avoid any mismatch from program payload
+        try {
+          const { data: insertedWithSections, error: joinErr } = await supabase
+            .from('workout_exercises')
+            .select('id, exercise_id, exercise_order, exercises ( section )')
+            .eq('workout_id', workout.id)
+            .order('exercise_order', { ascending: true });
+          if (!joinErr && Array.isArray(insertedWithSections) && insertedWithSections.length > 0) {
+            const pick = (sec) => insertedWithSections.find(we => String(we.exercises?.section || 'training').toLowerCase() === sec);
+            const warm = pick('warmup');
+            const train = pick('training') || pick('workout');
+            const cool = pick('cooldown');
+            const fallback = insertedWithSections[0];
+            const chosen = warm || train || cool || fallback;
+            if (chosen?.id) firstWorkoutExerciseId = chosen.id;
+          }
+        } catch (e) {
+          console.warn('[ActiveWorkout] Section join check failed, falling back to computed firstWorkoutExerciseId');
+        }
+
+        // Update the workout to set the chosen exercise as last_workout_exercise_id
         const { error: updateError } = await supabase
           .from('workouts')
           .update({ last_workout_exercise_id: firstWorkoutExerciseId })
           .eq('id', workout.id);
-        
         if (updateError) {
           console.error("Error setting first exercise as last_workout_exercise_id:", updateError);
         } else {
@@ -511,10 +546,9 @@ export function ActiveWorkoutProvider({ children }) {
     // Update workoutData with the first exercise's exercise_id
     const updatedWorkoutData = {
       ...workoutData,
-      lastExerciseId: firstWorkoutExerciseId && insertedExercises ? 
-        program.routine_exercises.find(ex => ex.exercise_id === 
-          (insertedExercises.find(we => we.id === firstWorkoutExerciseId)?.exercise_id)
-        )?.exercise_id : null
+      lastExerciseId: (firstWorkoutExerciseId && insertedExercises)
+        ? (insertedExercises.find(we => we.id === firstWorkoutExerciseId)?.exercise_id || null)
+        : null
     };
 
     // Only update context state after snapshot insert is done

@@ -77,7 +77,7 @@ const DeckWrapper = forwardRef(
           {...domProps}
         >
           {header && (
-            <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
+            <div className="w-full flex justify-center" style={{ marginBottom: gap }}>
               {header}
             </div>
           )}
@@ -97,8 +97,7 @@ const DeckWrapper = forwardRef(
                 )}
                 style={{ 
                   touchAction: "none",
-                  position: "relative",
-                  marginTop: idx > 0 ? gap : 0
+                  position: "relative"
                 }}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={() => setDragging(false)}
@@ -108,7 +107,7 @@ const DeckWrapper = forwardRef(
                   zIndex: 9999
                 }}
               >
-                <div className="w-full">
+                <div className="w-full flex justify-center">
                   {React.Children.toArray(children)[idx] && 
                     (() => {
                       const childEl = React.Children.toArray(children)[idx];
@@ -159,7 +158,7 @@ const DeckWrapper = forwardRef(
         {...domProps}
       >
         {header && (
-          <div className="w-full flex justify-center" style={{ marginBottom: 0 }}>
+          <div className="w-full flex justify-center" style={{ marginBottom: gap }}>
             {header}
           </div>
         )}
