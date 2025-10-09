@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
 import ToggleInput from "@/components/molecules/toggle-input";
 import NumericInput from "@/components/molecules/numeric-input";
+import DurationInput from "@/components/molecules/duration-input";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
@@ -260,21 +261,23 @@ const AddNewExerciseForm = React.forwardRef(
                   disabled={disabled}
                 />
 
-                <NumericInput
-                  label={defaults.set_type === "timed" ? "Duration" : "Reps"}
-                  value={defaults.set_type === "timed" ? defaults.timed_set_duration : defaults.reps}
-                  onChange={(value) => {
-                    if (defaults.set_type === "timed") {
-                      updateDefault("timed_set_duration", value);
-                    } else {
-                      updateDefault("reps", value);
-                    }
-                  }}
-                  min={1}
-                  max={999}
-                  unitLabel={defaults.set_type === "timed" ? "Seconds" : "Reps"}
-                  disabled={disabled}
-                />
+                {defaults.set_type === "timed" ? (
+                  <DurationInput
+                    value={defaults.timed_set_duration}
+                    onChange={(value) => updateDefault("timed_set_duration", value)}
+                    className="self-stretch h-12"
+                  />
+                ) : (
+                  <NumericInput
+                    label="Reps"
+                    value={defaults.reps}
+                    onChange={(value) => updateDefault("reps", value)}
+                    min={1}
+                    max={999}
+                    unitLabel="Reps"
+                    disabled={disabled}
+                  />
+                )}
               </div>
 
               {/* Default weight */}

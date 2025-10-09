@@ -781,7 +781,7 @@ const RoutineBuilder = () => {
         showSidebar={!isDelegated && !isMobile}
         sharingSection={undefined}
       >
-        <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+        <div className="flex flex-col min-h-screen">
           {/* Routine Image Section */}
           <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
@@ -809,8 +809,9 @@ const RoutineBuilder = () => {
             key={section}
             section={section} 
             id={`section-${section}`} 
-            deckGap={0} 
+            deckGap={12} 
             deckVariant="cards"
+            paddingX={28}
             reorderable={true}
             items={secExercises}
             onReorder={handleReorderExercises(section)}
@@ -819,7 +820,7 @@ const RoutineBuilder = () => {
             backgroundClass="bg-transparent"
             showPlusButton={false}
             onPlus={() => handleOpenAddExercise(section)}
-            style={{ paddingBottom: 0, paddingTop: 40, maxWidth: '500px', minWidth: '0px' }}
+            style={{ paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
           >
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
