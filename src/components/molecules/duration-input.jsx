@@ -49,7 +49,7 @@ export default function DurationInput({
   id,
   readOnly = false,
   incrementing = true,
-  unitLabel = "Duration (mm:ss)",
+  unitLabel,
   placeholder = "mm:ss",
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -133,9 +133,6 @@ export default function DurationInput({
             aria-label={unitLabel}
             className={inputCls}
           />
-          {unitLabel && (
-            <div className="text-center text-slate-500 text-label">{unitLabel}</div>
-          )}
         </div>
         {incrementing && (
           <button
