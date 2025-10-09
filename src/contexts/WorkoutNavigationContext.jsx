@@ -37,6 +37,12 @@ export const WorkoutNavigationProvider = ({ children }) => {
     training: [],
     cooldown: []
   });
+  // Track which sections have finished their initial load
+  const [loadedSections, setLoadedSections] = useState({
+    warmup: false,
+    training: false,
+    cooldown: false
+  });
   
   // Store completed exercises across all sections
   const [completedExercises, setCompletedExercises] = useState(new Set());
@@ -55,6 +61,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
       ...prev,
       [section]: exercises
     }));
+    setLoadedSections(prev => ({ ...prev, [section]: true }));
   }, []);
 
   // Mark an exercise as completed
@@ -218,6 +225,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
   const value = {
     // State
     sectionExercises,
+    loadedSections,
     completedExercises,
     focusedExercise,
     isRestoringFocus,

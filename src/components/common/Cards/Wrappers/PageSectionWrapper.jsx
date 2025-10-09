@@ -28,6 +28,8 @@ const PageSectionWrapper = ({
 }) => {
   // Filter out isFirstCard from props to prevent React warning
   const { isFirstCard, ...domProps } = props;
+  // Separate style from domProps so we can control outer margin without interference
+  const { style: incomingStyle, ...restDomProps } = domProps;
   // Map raw section key to display name
   const displayTitle = (() => {
     if (!section) return "";
@@ -46,7 +48,8 @@ const PageSectionWrapper = ({
         backgroundClass,
         className
       )}
-      {...domProps}
+      style={{ ...(incomingStyle || {}), marginBottom: className?.includes("flex-1") ? 0 : 40 }}
+      {...restDomProps}
     >
       {/* Content with the section title rendered inside DeckWrapper header */}
       <div
@@ -68,8 +71,8 @@ const PageSectionWrapper = ({
           header={null}
         >
           {/* Section title as first item in flow */}
-          <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: '12px' }}>
-            <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+          <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: 0 }}>
+            <div className="flex flex-1 items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
               {displayTitle}
             </div>
             {showPlusButton && (
