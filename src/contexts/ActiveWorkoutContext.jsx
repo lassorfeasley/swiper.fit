@@ -66,6 +66,13 @@ export function ActiveWorkoutProvider({ children }) {
     console.log('[ActiveWorkout] User ID in effect:', user?.id);
   }, [user]);
   
+  console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
+  console.log('[ActiveWorkout] Full user object:', user);
+  
+
+  
+
+  
   // Track sets that were manually completed in this session (to prevent animations)
   const [manuallyCompletedSets, setManuallyCompletedSets] = useState(new Set());
   
@@ -316,8 +323,6 @@ export function ActiveWorkoutProvider({ children }) {
       return;
     }
     console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
-    
-    // Use the newer Supabase v2.5+ syntax for real-time subscriptions with RLS
     const globalChan = supabase
       .channel(`realtime:public:workouts:user_id=eq.${user.id}`)
       .on('postgres_changes', {
