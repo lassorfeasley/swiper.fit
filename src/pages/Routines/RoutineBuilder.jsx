@@ -280,6 +280,17 @@ const RoutineBuilder = () => {
 
   const handleSetDelete = () => {
     if (editingExercise && editingSetIndex !== null) {
+      // If deleting the last remaining set for this exercise, prompt to delete the exercise instead
+      const currentLen = Array.isArray(editingExercise.setConfigs)
+        ? editingExercise.setConfigs.length
+        : 0;
+      if (currentLen <= 1) {
+        setIsEditSetFormOpen(false);
+        setEditingSet(null);
+        setEditingSetIndex(null);
+        setDeleteExerciseConfirmOpen(true);
+        return;
+      }
       const newSetConfigs = [...(editingExercise.setConfigs || [])];
       newSetConfigs.splice(editingSetIndex, 1);
       
@@ -474,7 +485,9 @@ const RoutineBuilder = () => {
   const handleStartWorkout = () => {
     // Create a routine object with exercises data to pass to startWorkout
     // Convert our exercises format to the format expected by ActiveWorkout
-    const routine_exercises = exercises.map((ex) => ({
+    const routine_exercises = exercises
+      .filter((ex) => (ex.setConfigs?.length || 0) > 0)
+      .map((ex) => ({
       id: ex.id,
       exercise_id: ex.exercise_id,
       exercises: {
@@ -610,27 +623,8 @@ const RoutineBuilder = () => {
         .from("exercises")
         .update({ name: exerciseData.name, section: exerciseData.section })
         .eq("id", editingExercise.exercise_id);
-      await supabase
-        .from("routine_sets")
-        .delete()
-        .eq("routine_exercise_id", editingExercise.id);
-      const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
-        routine_exercise_id: editingExercise.id,
-        set_order: idx + 1,
-        reps: Number(cfg.reps),
-        weight: Number(cfg.weight),
-        weight_unit: cfg.unit,
-        set_variant: cfg.set_variant || `Set ${idx + 1}`,
-        set_type: cfg.set_type,
-        timed_set_duration: cfg.timed_set_duration,
-      }));
-      if (setRows.length > 0) {
-        const { error: setError } = await supabase
-          .from("routine_sets")
-          .insert(setRows);
-        if (setError)
-          throw new Error("Failed to update set details: " + setError.message);
-      }
+      // Safely persist set changes using the shared updater that respects the DB trigger
+      await handleSetConfigsChange(editingExercise.exercise_id, exerciseData.setConfigs || []);
       setEditingExercise(null);
       await refreshExercises();
     } catch (err) {
@@ -647,7 +641,7 @@ const RoutineBuilder = () => {
     try {
       if (!editingExercise) return;
 
-      // Delete the program exercise and its associated sets
+      // Delete the routine exercise directly (trigger prevents zero-set state otherwise)
       const { error: deleteError } = await supabase
         .from("routine_exercises")
         .delete()
@@ -755,24 +749,81 @@ const RoutineBuilder = () => {
     );
     if (!programExercise) return;
     const program_exercise_id = programExercise.id;
-    // Delete old sets
-    await supabase
+    
+    // If no sets remain, delete all existing routine_sets; DB trigger will auto-delete exercise
+    if (!newSetConfigs || newSetConfigs.length === 0) {
+      await supabase
+        .from("routine_sets")
+        .delete()
+        .eq("routine_exercise_id", program_exercise_id);
+      await refreshExercises();
+      return;
+    }
+
+    // Update existing sets without ever hitting zero remaining rows
+    // 1) Load current sets ordered by set_order
+    const { data: currentSets, error: currentErr } = await supabase
       .from("routine_sets")
-      .delete()
-      .eq("routine_exercise_id", program_exercise_id);
-    // Insert new sets
-    const setRows = (newSetConfigs || []).map((cfg, idx) => ({
-      routine_exercise_id: program_exercise_id,
-      set_order: idx + 1,
-      reps: Number(cfg.reps),
-      weight: Number(cfg.weight),
-      weight_unit: cfg.unit,
-      set_variant: cfg.set_variant || `Set ${idx + 1}`,
-      set_type: cfg.set_type,
-      timed_set_duration: cfg.timed_set_duration,
-    }));
-    if (setRows.length > 0) {
-      await supabase.from("routine_sets").insert(setRows);
+      .select("id")
+      .eq("routine_exercise_id", program_exercise_id)
+      .order("set_order", { ascending: true });
+    if (currentErr) {
+      console.error("Failed to load current routine sets:", currentErr);
+      return;
+    }
+
+    const curIds = (currentSets || []).map((s) => s.id);
+    const curCount = curIds.length;
+    const nextCount = newSetConfigs.length;
+    const minCount = Math.min(curCount, nextCount);
+
+    // 2) Update rows for the overlapping range
+    for (let i = 0; i < minCount; i++) {
+      const cfg = newSetConfigs[i];
+      const id = curIds[i];
+      const payload = {
+        set_order: i + 1,
+        reps: Number(cfg.reps),
+        weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
+        set_variant: cfg.set_variant || `Set ${i + 1}`,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      await supabase.from("routine_sets").update(payload).eq("id", id);
+    }
+
+    // 3) If there are extra current rows beyond nextCount, delete only those extras (leaves >=1 row)
+    if (curCount > nextCount) {
+      const toDelete = curIds.slice(nextCount); // keep first `nextCount` rows
+      if (toDelete.length > 0) {
+        await supabase
+          .from("routine_sets")
+          .delete()
+          .in("id", toDelete);
+      }
+    }
+
+    // 4) If new configs exceed current count, insert the additional rows
+    if (nextCount > curCount) {
+      const rowsToInsert = [];
+      for (let i = curCount; i < nextCount; i++) {
+        const cfg = newSetConfigs[i];
+        rowsToInsert.push({
+          routine_exercise_id: program_exercise_id,
+          set_order: i + 1,
+          reps: Number(cfg.reps),
+          weight: Number(cfg.weight),
+          weight_unit: cfg.unit,
+          set_variant: cfg.set_variant || `Set ${i + 1}`,
+          set_type: cfg.set_type,
+          timed_set_duration: cfg.timed_set_duration,
+        });
+      }
+      if (rowsToInsert.length > 0) {
+        await supabase.from("routine_sets").insert(rowsToInsert);
+      }
     }
   };
 

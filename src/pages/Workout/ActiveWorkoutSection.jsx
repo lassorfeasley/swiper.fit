@@ -1340,25 +1340,15 @@ const ActiveWorkoutSection = ({
         }
 
         if ((count || 0) <= 1) {
-          // Last set: delete the routine exercise to avoid zero-set configuration
-          const { error: delSetsErr } = await supabase
+          // Last set: delete the routine_set; DB trigger will remove the parent exercise
+          const { error: routineSetError } = await supabase
             .from("routine_sets")
             .delete()
-            .eq("routine_exercise_id", routineExerciseId);
-          if (delSetsErr) {
-            console.error("Failed to delete routine sets:", delSetsErr);
-            throw delSetsErr;
+            .eq("id", routineSetId);
+          if (routineSetError) {
+            console.error("Failed to delete routine set:", routineSetError);
+            throw routineSetError;
           }
-
-          const { error: delExErr } = await supabase
-            .from("routine_exercises")
-            .delete()
-            .eq("id", routineExerciseId);
-          if (delExErr) {
-            console.error("Failed to delete routine exercise:", delExErr);
-            throw delExErr;
-          }
-
           toast.success("Removed exercise from routine");
         } else {
           // Normal case: delete just this routine_set
@@ -1834,7 +1824,7 @@ const ActiveWorkoutSection = ({
         onOpenChange={setConfirmDeleteExerciseOpen}
         onConfirm={() => setConfirmDeleteExerciseOpen(false)}
         onCancel={async () => {
-          // Proceed with deleting the exercise by clearing all sets for today
+          // Proceed with deleting the exercise from today's workout
           try {
             const exerciseId = editingSet?.exerciseId;
             if (!exerciseId) {
@@ -1842,33 +1832,19 @@ const ActiveWorkoutSection = ({
               return;
             }
 
-            // Delete all saved sets for this exercise in today's workout
+            // 1) Delete all saved sets for this exercise in today's workout
             await supabase
               .from("sets")
               .delete()
               .eq("workout_id", activeWorkout.id)
               .eq("exercise_id", exerciseId);
 
-            // For template sets, create hidden overrides so none render today
-            const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
-            const templateSets = (exercise?.setConfigs || []).filter(sc => sc.routine_set_id);
-            if (templateSets.length > 0) {
-              const hiddenRows = templateSets.map(ts => ({
-                workout_id: activeWorkout.id,
-                exercise_id: exerciseId,
-                routine_set_id: ts.routine_set_id,
-                reps: ts.reps,
-                weight: ts.weight,
-                weight_unit: ts.unit || ts.weight_unit || "lbs",
-                set_type: ts.set_type,
-                set_variant: ts.set_variant,
-                timed_set_duration: ts.timed_set_duration,
-                status: "hidden",
-              }));
-              if (hiddenRows.length > 0) {
-                await supabase.from("sets").insert(hiddenRows);
-              }
-            }
+            // 2) Remove the workout_exercises row so this card disappears entirely
+            await supabase
+              .from("workout_exercises")
+              .delete()
+              .eq("workout_id", activeWorkout.id)
+              .eq("exercise_id", exerciseId);
 
             // Refresh UI
             await fetchExercises();
