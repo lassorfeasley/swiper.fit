@@ -92,11 +92,20 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     return Math.max(THUMB_WIDTH, trackWidth - RAIL_HORIZONTAL_PADDING_PER_SIDE * 2);
   };
 
-  // Helper to display mm:ss for durations >= 60s (used in pill on the right)
+  // Helper to display mm:ss when hours are zero, otherwise HH:MM:SS
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
+    const total = Math.max(0, Math.floor(secs || 0));
+    const hNum = Math.floor(total / 3600);
+    const mNum = Math.floor((total % 3600) / 60);
+    const m = mNum.toString().padStart(2, "0");
+    const s = (total % 60).toString().padStart(2, "0");
+    if (hNum > 0) {
+      const h = String(hNum).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+    // No hours: show ":SS" when minutes are 0; otherwise show M:SS without leading zero
+    if (mNum === 0) return `:${s}`;
+    return `${mNum}:${s}`;
   };
 
   const updateThumbTravel = () => {
@@ -427,7 +436,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
                     <>
                       <Clock className="size-4 text-neutral-neutral-500 relative -top-0.5" />
                       <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">
-                        {duration >= 60 ? formatTime(duration) : `${duration}`}
+                        {formatTime(duration)}
                       </div>
                     </>
                   ) : (
