@@ -2,10 +2,11 @@ import React, { useEffect } from "react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { formatSecondsHHMMSS } from "@/lib/utils";
-import { Blend, X, Square } from "lucide-react";
+import { Blend, X, Square, Pause, Play } from "lucide-react";
+import ActionPill from "./action-pill";
 
 export default function ActiveWorkoutNav({ onEnd }) {
-  const { activeWorkout, elapsedTime } = useActiveWorkout();
+  const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
 
@@ -81,7 +82,7 @@ export default function ActiveWorkoutNav({ onEnd }) {
   return (
     <>
       {/* PrimaryNavScrollable - scrolls away */}
-      <div data-layer="active-workout-name-and-routine" className="ActiveWorkoutNameAndRoutine self-stretch flex flex-col justify-center items-start px-4 pt-5 pb-0 bg-stone-100">
+      <div data-layer="active-workout-name-and-routine" className="ActiveWorkoutNameAndRoutine self-stretch flex flex-col justify-center items-start px-4 md:px-8 pt-5 pb-0 bg-stone-100">
         <div data-layer="workout-name" className="self-stretch justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-[24px]">
           {activeWorkout?.workoutName || ""}
         </div>
@@ -125,19 +126,41 @@ export default function ActiveWorkoutNav({ onEnd }) {
         data-no-transform
         className="sticky [top:var(--header-height,0px)] left-0 right-0 w-full z-[120] flex items-center border-b border-transparent transition-[box-shadow,border-color] duration-150 bg-transparent"
       >
-        <div data-layer="Frame 57" className="Frame57 w-full h-full px-4 pt-5 pb-0 inline-flex justify-between items-center bg-gradient-to-b from-stone-100 to-stone-100/0">
-          <div data-layer="Frame 56" className="Frame56 h-10 px-2.5 py-2 bg-white rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2.5">
-            <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
-          </div>
-          <div data-layer="Frame 58" className="Frame58 size-10 flex justify-center items-center gap-2">
-            <div data-layer="action-icons" data-show-icon-one="false" data-show-icon-three="true" data-show-icon-two="false" className="ActionIcons size-10 p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
-              <button
-                type="button"
-                onClick={onEnd}
-                className="w-full h-full flex justify-center items-center"
-              >
-                <Square className="w-6 h-6" stroke="#E7000B" strokeWidth={2} fill="none" />
-              </button>
+        <div data-layer="Frame 57" className="Frame57 w-full h-full px-4 md:px-8 pt-5 pb-0 inline-flex justify-between items-center bg-gradient-to-b from-stone-100 to-stone-100/0">
+          <div data-layer="Property 1=Default" className={`Property1Default w-full p-2 ${isPaused ? 'bg-orange-600' : 'bg-white/70'} rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-center transition-colors duration-300 ease-in-out`}>
+            <div data-layer="clock-wrapper" className="ClockWrapper h-10 px-3 bg-neutral-neutral-100 rounded-3xl flex justify-center items-center gap-2.5">
+              <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
+            </div>
+            <div className="inline-flex items-center gap-2">
+              {isPaused ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Resume workout"
+                    onClick={resumeWorkout}
+                    className="ActionPill size-10 bg-green-600 rounded-[20px] flex justify-center items-center"
+                  >
+                    <Play className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="End workout"
+                    onClick={onEnd}
+                    className="ActionPill size-10 bg-neutral-900 rounded-[20px] flex justify-center items-center"
+                  >
+                    <Square className="w-6 h-6 text-white" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="Pause workout"
+                  onClick={pauseWorkout}
+                  className="ActionPill size-10 bg-orange-600 rounded-[20px] flex justify-center items-center"
+                >
+                  <Pause className="w-6 h-6 text-white" />
+                </button>
+              )}
             </div>
           </div>
         </div>

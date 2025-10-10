@@ -21,7 +21,7 @@ const ActiveWorkoutSection = ({
   onUpdateLastExercise,
   isLastSection = false,
 }) => {
-  const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted } = useActiveWorkout();
+  const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted, isPaused } = useActiveWorkout();
   const { isDelegated } = useAccount();
   const {
     updateSectionExercises,
@@ -462,6 +462,10 @@ const ActiveWorkoutSection = ({
 
   // Handle set completion
   const handleSetComplete = useCallback(async (exerciseId, setConfig) => {
+    if (isPaused) {
+      toast.info('Resume your workout to complete sets');
+      return;
+    }
     try {
       // Get current user for account_id - always use the authenticated user's ID, not the acting user
       const { data: { user } } = await supabase.auth.getUser();
@@ -567,7 +571,7 @@ const ActiveWorkoutSection = ({
       console.error("Failed to save set:", error);
       toast.error(`Failed to save set. Please try again.`);
     }
-  }, [activeWorkout?.id, globalCompletedExercises, section, changeFocus, onSectionComplete, fetchExercises, markSetManuallyCompleted]);
+  }, [activeWorkout?.id, globalCompletedExercises, section, changeFocus, onSectionComplete, fetchExercises, markSetManuallyCompleted, isPaused]);
 
   // Handle set data changes (inline editing)
   const handleSetDataChange = async (
@@ -1424,7 +1428,16 @@ const ActiveWorkoutSection = ({
           applyPaddingOnParent={true}
           style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 32, paddingRight: 32 }}
         >
-          {/* Removed inline add exercise card; use header button instead */}
+          <CardWrapper>
+            <SwiperButton 
+              variant="primary-action" 
+              className="self-stretch w-full"
+              onClick={handleAddExercise}
+            >
+              <span className="flex-1">Add an exercise</span>
+              <Plus className="w-6 h-6" strokeWidth={2} />
+            </SwiperButton>
+          </CardWrapper>
         </PageSectionWrapper>
 
         {/* Add Exercise Form */}

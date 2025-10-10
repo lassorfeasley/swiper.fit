@@ -16,10 +16,11 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import WorkoutSummaryCard from "@/components/common/Cards/WorkoutSummaryCard";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import { toast } from "sonner";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2 } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
 
 import { useAccount } from "@/contexts/AccountContext";
@@ -149,11 +150,13 @@ const CompletedWorkout = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isResumeConfirmOpen, setResumeConfirmOpen] = useState(false);
   const [isEditWorkoutOpen, setEditWorkoutOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
   const { user } = useAuth();
   const currentUser = useCurrentUser(); // Use delegation-aware user context
   const location = useLocation();
+  const { reactivateWorkout } = useActiveWorkout();
   // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
   const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
 
@@ -697,6 +700,47 @@ const CompletedWorkout = () => {
     navigate(target);
   };
 
+  const handleResumeWorkout = async () => {
+    try {
+      if (!workoutId) return;
+      const ok = await reactivateWorkout(workoutId);
+      if (ok) navigate("/workout/active", { replace: true });
+    } catch (_) {}
+  };
+
+  // Build custom header action pod with Resume + Share + Delete
+  const headerActions = (
+    <div className="inline-flex flex-col justify-center items-end gap-2.5">
+      <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+        {isOwner && (
+          <button
+            onClick={() => setResumeConfirmOpen(true)}
+            aria-label="Resume workout"
+            className="size-6 flex items-center justify-center"
+          >
+            <Play className="w-6 h-6 text-neutral-700" strokeWidth={2} />
+          </button>
+        )}
+        <button
+          onClick={handleShare}
+          aria-label="Share"
+          className="size-6 flex items-center justify-center"
+        >
+          <ShareIcon className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+        </button>
+        {(isOwner || isDelegated) && (
+          <button
+            onClick={handleDeleteWorkout}
+            aria-label="Delete"
+            className="size-6 flex items-center justify-center"
+          >
+            <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   // Unified share handler: share link only (no image). Mobile uses Web Share API;
   // desktop falls back to copying the URL.
   const shareWorkout = async () => {
@@ -778,17 +822,18 @@ const CompletedWorkout = () => {
             navigate('/history');
           }
         }}
-        showShare={true}
+        showShare={false}
         onShare={shareWorkout}
         showUpload={false}
         onUpload={() => {
           // TODO: Implement upload functionality
           console.log('Upload clicked');
         }}
-        showDelete={isOwner || isDelegated}
+        showDelete={false}
         onDelete={handleDeleteWorkout}
         showSettings={false}
         onSettings={() => setEditWorkoutOpen(true)}
+        sharingSection={headerActions}
         search={true}
         searchValue={search}
         onSearchChange={setSearch}
@@ -801,7 +846,7 @@ const CompletedWorkout = () => {
         ) : workout ? (
           <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Image and Routine Label Section */}
-            <div className="self-stretch flex flex-col justify-center items-center gap-3">
+            <div className="self-stretch flex flex-col justify-center items-center gap-3 mb-10">
               {/* Image Container */}
               <div className="w-full max-w-[500px] rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-center items-center overflow-hidden">
                 <img 
@@ -889,6 +934,15 @@ const CompletedWorkout = () => {
           cancelText="Cancel"
           confirmVariant="destructive"
           cancelVariant="outline"
+        />
+        <SwiperDialog
+          open={isResumeConfirmOpen}
+          onOpenChange={setResumeConfirmOpen}
+          onConfirm={() => { setResumeConfirmOpen(false); handleResumeWorkout(); }}
+          onCancel={() => setResumeConfirmOpen(false)}
+          title="Resume workout?"
+          confirmText="Resume"
+          cancelText="Cancel"
         />
         <SwiperForm
           open={isEditWorkoutOpen}

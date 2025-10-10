@@ -159,7 +159,8 @@ export function ActiveWorkoutProvider({ children }) {
           programId: workout.routine_id,
           workoutName: workout.workout_name || 'Workout',
           routineName: workout.routines?.routine_name || '',
-          startTime: workout.created_at,
+          accumulatedSeconds: Number(workout.active_seconds_accumulated || 0),
+          runningSince: workout.running_since || null,
           lastExerciseId: lastExerciseId,
         };
         
@@ -171,9 +172,11 @@ export function ActiveWorkoutProvider({ children }) {
         setActiveWorkout(workoutData);
         
         // Compute elapsed time
-        const elapsed = workout.created_at
-          ? Math.floor((new Date() - new Date(workout.created_at)) / 1000)
+        const base = Number(workout.active_seconds_accumulated || 0);
+        const bonus = workout.running_since
+          ? Math.floor((Date.now() - new Date(workout.running_since).getTime()) / 1000)
           : 0;
+        const elapsed = base + bonus;
         setElapsedTime(elapsed);
         setIsWorkoutActive(true);
         
@@ -191,21 +194,26 @@ export function ActiveWorkoutProvider({ children }) {
 
   }, [user?.id]);
 
-  // Timer effect: derive strictly from workout startTime (created_at)
+  // Timer effect: accumulated + (now - runningSince when running)
   useEffect(() => {
     let timer;
-    if (isWorkoutActive && activeWorkout?.startTime) {
-      const update = () => {
-        const start = new Date(activeWorkout.startTime).getTime();
-        setElapsedTime(Math.floor((Date.now() - start) / 1000));
-      };
+    const update = () => {
+      const base = Number(activeWorkout?.accumulatedSeconds || 0);
+      const runBonus = activeWorkout?.runningSince
+        ? Math.floor((Date.now() - new Date(activeWorkout.runningSince).getTime()) / 1000)
+        : 0;
+      setElapsedTime(base + runBonus);
+    };
+    if (isWorkoutActive) {
       update();
       timer = setInterval(update, 1000);
+    } else {
+      setElapsedTime(0);
     }
     return () => {
       clearInterval(timer);
     };
-  }, [isWorkoutActive, activeWorkout?.startTime]);
+  }, [isWorkoutActive, activeWorkout?.accumulatedSeconds, activeWorkout?.runningSince]);
 
   // Real-time subscriptions for workout status changes only
   useEffect(() => {
@@ -245,6 +253,14 @@ export function ActiveWorkoutProvider({ children }) {
           
           // Handle workout completion
           setIsWorkoutActive(w.is_active);
+          // Sync timer fields across devices
+          if (typeof w.active_seconds_accumulated === 'number' || 'running_since' in w) {
+            setActiveWorkout(prev => prev ? {
+              ...prev,
+              accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
+              runningSince: w.running_since || null
+            } : prev);
+          }
           if (!w.is_active) {
             console.log('[Real-time] Workout ended remotely, clearing state...');
             console.log('[Real-time] Workout ID:', activeWorkout?.id);
@@ -301,7 +317,6 @@ export function ActiveWorkoutProvider({ children }) {
           setIsWorkoutActive(false);
           setActiveWorkout(null);
           setElapsedTime(0);
-          setIsPaused(false);
           navigate('/routines');
         }
       })
@@ -341,7 +356,7 @@ export function ActiveWorkoutProvider({ children }) {
             // Fetch full workout record with routine join
             const { data: workoutRec, error: fetchErr } = await supabase
               .from('workouts')
-              .select('id, routine_id, workout_name, created_at, last_workout_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
+              .select('id, routine_id, workout_name, created_at, active_seconds_accumulated, running_since, last_workout_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
               .eq('id', w.id)
               .maybeSingle();
             if (fetchErr || !workoutRec) {
@@ -354,15 +369,15 @@ export function ActiveWorkoutProvider({ children }) {
               programId: workoutRec.routine_id,
               workoutName: workoutRec.workout_name,
               routineName: workoutRec.routines?.routine_name || '',
-              startTime: workoutRec.created_at,
+              accumulatedSeconds: Number(workoutRec.active_seconds_accumulated || 0),
+              runningSince: workoutRec.running_since || new Date().toISOString(),
               lastExerciseId: workoutRec.last_workout_exercise_id || null,
             };
             setActiveWorkout(workoutData);
             setIsWorkoutActive(true);
             // Compute elapsed time from start
-            const elapsed = workoutRec.created_at
-              ? Math.floor((new Date() - new Date(workoutRec.created_at)) / 1000)
-              : 0;
+            const elapsed = Number(workoutRec.active_seconds_accumulated || 0) +
+              (workoutRec.running_since ? Math.floor((Date.now() - new Date(workoutRec.running_since).getTime()) / 1000) : 0);
             setElapsedTime(elapsed);
             // Navigate into the record page
             navigate('/workout/active');
@@ -421,6 +436,8 @@ export function ActiveWorkoutProvider({ children }) {
           workout_name: workoutName,
           is_active: true,
           is_public: true,
+          active_seconds_accumulated: 0,
+          running_since: new Date().toISOString(),
         })
         .select()
         .single();
@@ -437,7 +454,7 @@ export function ActiveWorkoutProvider({ children }) {
     } catch (e) {
       if (e.code === '23505') {
         console.warn('Active workout already exists; fetching existing record');
-        const { data: existing, error: fetchErr } = await supabase
+            const { data: existing, error: fetchErr } = await supabase
           .from('workouts')
           .select('*')
           .eq('user_id', user.id)
@@ -456,7 +473,8 @@ export function ActiveWorkoutProvider({ children }) {
       programId: program.id,
       workoutName,
       routineName: program.routine_name || '',
-      startTime: workout.created_at,
+      accumulatedSeconds: 0,
+      runningSince: new Date().toISOString(),
       lastExerciseId: null,
     };
 
@@ -810,6 +828,127 @@ export function ActiveWorkoutProvider({ children }) {
     setElapsedTime(0);
   }, []);
 
+  // Pause/Resume/Reactivate helpers
+  const pauseWorkout = useCallback(async () => {
+    if (!activeWorkout?.id || !activeWorkout?.runningSince) return;
+    try {
+      // Prefer RPC if available
+      const { error: rpcErr } = await supabase.rpc('pause_workout', { p_workout_id: activeWorkout.id });
+      if (rpcErr && !String(rpcErr?.message || '').toLowerCase().includes('function does not exist')) {
+        console.warn('[pauseWorkout] RPC error, falling back to client calc:', rpcErr);
+      }
+      if (rpcErr) {
+        // Fallback: client computes delta and writes row
+        const delta = Math.floor((Date.now() - new Date(activeWorkout.runningSince).getTime()) / 1000);
+        const newAccum = (activeWorkout.accumulatedSeconds || 0) + Math.max(delta, 0);
+        const { error } = await supabase
+          .from('workouts')
+          .update({ active_seconds_accumulated: newAccum, running_since: null })
+          .eq('id', activeWorkout.id);
+        if (error) throw error;
+        setActiveWorkout(prev => prev ? { ...prev, accumulatedSeconds: newAccum, runningSince: null } : prev);
+        return;
+      }
+      // Optimistic local update; realtime will also sync
+      const delta = Math.floor((Date.now() - new Date(activeWorkout.runningSince).getTime()) / 1000);
+      const newAccum = (activeWorkout.accumulatedSeconds || 0) + Math.max(delta, 0);
+      setActiveWorkout(prev => prev ? { ...prev, accumulatedSeconds: newAccum, runningSince: null } : prev);
+    } catch (e) {
+      console.error('[pauseWorkout] failed:', e);
+    }
+  }, [activeWorkout]);
+
+  const resumeWorkout = useCallback(async () => {
+    if (!activeWorkout?.id || activeWorkout?.runningSince) return;
+    try {
+      const { error: rpcErr } = await supabase.rpc('resume_workout', { p_workout_id: activeWorkout.id });
+      if (rpcErr && !String(rpcErr?.message || '').toLowerCase().includes('function does not exist')) {
+        console.warn('[resumeWorkout] RPC error, falling back to direct update:', rpcErr);
+      }
+      if (rpcErr) {
+        const nowIso = new Date().toISOString();
+        const { error } = await supabase
+          .from('workouts')
+          .update({ running_since: nowIso })
+          .eq('id', activeWorkout.id);
+        if (error) throw error;
+        setActiveWorkout(prev => prev ? { ...prev, runningSince: nowIso } : prev);
+        return;
+      }
+      // Optimistic local update; realtime will also sync
+      const nowIso = new Date().toISOString();
+      setActiveWorkout(prev => prev ? { ...prev, runningSince: nowIso } : prev);
+    } catch (e) {
+      console.error('[resumeWorkout] failed:', e);
+    }
+  }, [activeWorkout]);
+
+  const reactivateWorkout = useCallback(async (workoutId) => {
+    if (!workoutId) return false;
+    try {
+      const { error: rpcErr } = await supabase.rpc('reactivate_workout', { p_workout_id: workoutId });
+      if (rpcErr && !String(rpcErr?.message || '').toLowerCase().includes('function does not exist')) {
+        console.warn('[reactivateWorkout] RPC error, falling back to client flow:', rpcErr);
+      }
+      if (rpcErr) {
+        // Deactivate others
+        await supabase
+          .from('workouts')
+          .update({ is_active: false })
+          .eq('user_id', user?.id)
+          .eq('is_active', true)
+          .neq('id', workoutId);
+        // Reactivate target
+        const nowIso = new Date().toISOString();
+        const { error } = await supabase
+          .from('workouts')
+          .update({ is_active: true, completed_at: null, running_since: nowIso })
+          .eq('id', workoutId)
+          .eq('user_id', user?.id);
+        if (error) throw error;
+      }
+
+      // Fetch the reactivated workout and populate context immediately so navigation won't bounce
+      const { data: workoutRec, error: fetchErr } = await supabase
+        .from('workouts')
+        .select('id, routine_id, workout_name, active_seconds_accumulated, running_since, last_workout_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
+        .eq('id', workoutId)
+        .maybeSingle();
+      if (!fetchErr && workoutRec) {
+        let lastExerciseId = null;
+        try {
+          if (workoutRec.last_workout_exercise_id) {
+            const { data: we } = await supabase
+              .from('workout_exercises')
+              .select('exercise_id')
+              .eq('id', workoutRec.last_workout_exercise_id)
+              .maybeSingle();
+            lastExerciseId = we?.exercise_id || null;
+          }
+        } catch (_) {}
+
+        const workoutData = {
+          id: workoutRec.id,
+          programId: workoutRec.routine_id,
+          workoutName: workoutRec.workout_name,
+          routineName: workoutRec.routines?.routine_name || '',
+          accumulatedSeconds: Number(workoutRec.active_seconds_accumulated || 0),
+          runningSince: workoutRec.running_since || new Date().toISOString(),
+          lastExerciseId,
+        };
+        setActiveWorkout(workoutData);
+        setIsWorkoutActive(true);
+        const elapsed = Number(workoutRec.active_seconds_accumulated || 0) +
+          (workoutRec.running_since ? Math.floor((Date.now() - new Date(workoutRec.running_since).getTime()) / 1000) : 0);
+        setElapsedTime(elapsed);
+      }
+      return true;
+    } catch (e) {
+      console.error('[reactivateWorkout] failed:', e);
+      return false;
+    }
+  }, [user?.id]);
+
   return (
     <ActiveWorkoutContext.Provider 
       value={{ 
@@ -825,7 +964,11 @@ export function ActiveWorkoutProvider({ children }) {
         isSetManuallyCompleted,
         markSetToasted,
         isSetToasted,
-        clearWorkoutState
+        clearWorkoutState,
+        pauseWorkout,
+        resumeWorkout,
+        reactivateWorkout,
+        isPaused: isWorkoutActive && !activeWorkout?.runningSince
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 import { motion, useAnimation } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
-import { Check, Repeat2, Weight, Clock, Loader2 } from "lucide-react";
+import { Check, Repeat2, Weight, Clock, Loader2, Lock } from "lucide-react";
 import React from "react";
 import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext";
 import { supabase } from "../../../supabaseClient";
@@ -60,7 +60,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
   const isMountedRef = useRef(false);
   
   // Get the manually completed tracking from context
-  const { markSetManuallyCompleted, isSetManuallyCompleted } = useActiveWorkout();
+  const { markSetManuallyCompleted, isSetManuallyCompleted, isPaused } = useActiveWorkout();
 
   // Get authenticated user ID for comparison - always use the actual authenticated user, not the acting user
   const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
@@ -298,6 +298,14 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
   }, [controls]);
 
   const handleDragEnd = (_, info) => {
+    // Block interactions when paused – immediately reset thumb
+    if (isPaused) {
+      setIsDragging(false);
+      if (isMountedRef.current) {
+        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig);
+      }
+      return;
+    }
     setIsDragging(false);
     const travelNeeded = thumbTravel * 0.6;
     if (status === "default" && info.offset.x >= travelNeeded) {
@@ -359,8 +367,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     <div
       className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
-        // Only intercept clicks to open the set editor when the set is editable.
-        // When a set is complete, let the click bubble up to focus the card.
+        // Allow opening the editor even while paused; we only block swipe completion
         if (status === 'default') {
           e.stopPropagation();
           setTimeout(() => {
@@ -390,8 +397,8 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           {/* Draggable Thumb */}
           <motion.div
             className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
-            style={{ ...thumbStyle, pointerEvents: isVisuallyComplete ? 'none' : 'auto', overflow: 'visible' }}
-            drag={!isVisuallyComplete && isDefault ? "x" : false}
+            style={{ ...thumbStyle, pointerEvents: (isVisuallyComplete || isPaused) ? 'none' : 'auto', overflow: 'visible' }}
+            drag={!isVisuallyComplete && isDefault && !isPaused ? "x" : false}
             dragElastic={0}
             dragMomentum={false}
             dragConstraints={{ left: 0, right: Math.max(0, thumbTravel) }}
@@ -426,6 +433,12 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
                 </div>
               )}
             </motion.div>
+            {/* Lock icon overlay when paused and not complete */}
+            {isPaused && !isVisuallyComplete && (
+              <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 3 }}>
+                <Lock className="w-5 h-5 text-neutral-400" />
+              </div>
+            )}
           </motion.div>
           {/* Absolute overlay for text so it doesn't shift */}
           {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
