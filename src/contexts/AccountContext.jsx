@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useActiveWorkout } from "./ActiveWorkoutContext";
 
 // Context to expose account-switching helpers
 const AccountContext = createContext(null);

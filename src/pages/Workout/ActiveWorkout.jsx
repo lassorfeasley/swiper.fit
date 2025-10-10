@@ -340,8 +340,8 @@ const ActiveWorkoutContent = () => {
       <ActiveWorkoutNav onEnd={handleEndWorkout} />
 
       <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-0">
-        {/* Spacer to clear sticky subheader – removed */}
-        <div className="h-0" aria-hidden="true" />
+        {/* Spacer to clear sticky subheader */}
+        <div className="h-5" aria-hidden="true" />
         {/* Warmup Section */}
         <ActiveWorkoutSection
           section="warmup"

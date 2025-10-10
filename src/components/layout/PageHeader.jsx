@@ -135,11 +135,11 @@ const PageHeader = forwardRef(({
           )}
         >
           {/* Sharing row (above) */}
-          <div className="self-stretch px-3 pt-3 bg-stone-100 inline-flex justify-start items-start gap-2.5">
+          <div className="self-stretch px-5 pt-5 bg-stone-100 inline-flex justify-start items-start gap-2.5">
             {sharingNavContent}
           </div>
           {/* Title/action row with gradient like Active Workout */}
-          <div className="self-stretch px-4 pt-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-center">
+          <div className="self-stretch px-5 pt-5 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-center">
             {/* Left: Title and optional subtitle */}
             <div className="flex justify-start items-center gap-3">
               <div className="inline-flex flex-col justify-center items-start gap-0.5">
@@ -204,7 +204,7 @@ const PageHeader = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          "fixed top-0 z-[200] h-14 px-3 pt-4 pb-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start",
+          "fixed top-0 z-[200] h-14 px-5 pt-5 pb-3 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-start",
           showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0",
           className
         )}
