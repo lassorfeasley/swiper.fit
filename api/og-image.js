@@ -29,7 +29,8 @@ export default async function handler(req, res) {
 
     // Fallback to a static default site-wide image
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
-    return res.redirect(302, '/images/default-open-graph.png');
+    const host = `https://${req.headers.host}`;
+    return res.redirect(302, `${host}/images/default-open-graph.png`);
 
   } catch (error) {
     console.error('Error in OG image handler:', error);
