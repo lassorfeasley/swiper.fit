@@ -93,7 +93,13 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
   };
   
   const removeLastSet = () =>
-    setSets((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
+    setSets((prev) => {
+      // Keep at least one set in the collection
+      if (prev.length <= 1) {
+        return prev;
+      }
+      return prev.slice(0, -1);
+    });
 
   return {
     defaults,

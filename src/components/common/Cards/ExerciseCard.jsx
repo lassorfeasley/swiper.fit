@@ -6,6 +6,7 @@ import SetEditForm from "@/components/common/forms/SetEditForm";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import SwiperForm from "@/components/molecules/swiper-form";
 import { motion, useMotionValue } from "framer-motion";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 
 const ExerciseCard = ({
   exerciseName,
@@ -35,6 +36,7 @@ const ExerciseCard = ({
   const [currentFormValues, setCurrentFormValues] = useState(editFormValues);
   const [formDirty, setFormDirty] = useState(false);
   const [localSetConfigs, setLocalSetConfigs] = useState(setConfigs);
+  const [confirmDeleteExerciseOpen, setConfirmDeleteExerciseOpen] = useState(false);
 
   // Sets are editable whenever an onSetConfigsChange handler is provided
   const setsAreEditable = onSetConfigsChange !== undefined;
@@ -71,6 +73,11 @@ const ExerciseCard = ({
   const handleSetDelete = () => {
     if (editSetIndex === null) return;
     setLocalSetConfigs((prev) => {
+      // If this is the last remaining set, confirm that we will delete the exercise instead
+      if (prev.length <= 1) {
+        setConfirmDeleteExerciseOpen(true);
+        return prev;
+      }
       const updated = prev.filter((_, i) => i !== editSetIndex);
       if (onSetConfigsChange) {
         onSetConfigsChange(updated);
@@ -155,6 +162,32 @@ const ExerciseCard = ({
           />
         </SwiperForm>
       )}
+
+      {/* Confirm deleting last set => delete exercise */}
+      <SwiperDialog
+        open={confirmDeleteExerciseOpen}
+        onOpenChange={setConfirmDeleteExerciseOpen}
+        onConfirm={() => setConfirmDeleteExerciseOpen(false)}
+        onCancel={() => {
+          // Proceed with deleting the exercise by clearing all sets
+          if (onSetConfigsChange) {
+            onSetConfigsChange([]); // RoutineBuilder will remove the exercise
+          }
+          setConfirmDeleteExerciseOpen(false);
+          setEditSheetOpen(false);
+          setEditSetIndex(null);
+        }}
+        title="Delete exercise?"
+        confirmText="Cancel"
+        cancelText="Delete exercise"
+        confirmVariant="outline"
+        cancelVariant="destructive"
+        contentClassName=""
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        footerClassName="self-stretch px-3 py-3"
+      >
+        Deleting this set will remove the exercise from your routine.
+      </SwiperDialog>
     </div>
   );
 };

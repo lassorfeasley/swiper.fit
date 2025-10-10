@@ -14,6 +14,7 @@ import { MAX_SET_NAME_LEN, MAX_ROUTINE_NAME_LEN, MAX_WORKOUT_NAME_LEN } from "@/
 import { ActionCard } from "@/components/molecules/action-card";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { Plus } from "lucide-react";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
 
 const ActiveWorkoutSection = ({
   section,
@@ -54,6 +55,7 @@ const ActiveWorkoutSection = ({
   const [formDirty, setFormDirty] = useState(false);
   const [addingSetToExercise, setAddingSetToExercise] = useState(null);
   const [removingSetFromExercise, setRemovingSetFromExercise] = useState(null);
+  const [confirmDeleteExerciseOpen, setConfirmDeleteExerciseOpen] = useState(false);
 
   // Form refs
   const addExerciseFormRef = useRef(null);
@@ -270,12 +272,15 @@ const ActiveWorkoutSection = ({
         };
       });
 
-      setExercises(processedExercises);
+      // Hide exercises that have no visible sets (safety against zero-set configs)
+      const nonEmptyExercises = processedExercises.filter((ex) => (ex.setConfigs?.length || 0) > 0);
+
+      setExercises(nonEmptyExercises);
       // Update global context with exercises for this section
-      updateSectionExercises(section, processedExercises);
+      updateSectionExercises(section, nonEmptyExercises);
       setLoading(false);
       setFirstLoad(false);
-      return processedExercises; // Return the processed exercises for the next step
+      return nonEmptyExercises; // Return the processed exercises for the next step
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error("Failed to load exercises");
@@ -1238,18 +1243,76 @@ const ActiveWorkoutSection = ({
     }
 
     try {
-      // If setUpdateType is "future" and we have a routine_set_id, delete from routine template
-      if (setUpdateType === "future" && isTemplateSet) {
-        const { error: routineSetError } = await supabase
-          .from("routine_sets")
-          .delete()
-          .eq("id", editingSet.setConfig.routine_set_id);
+      // If this deletion would result in zero visible sets, confirm exercise deletion instead
+      const exerciseIdForEdit = editingSet?.exerciseId;
+      const exerciseForEdit = exercises.find(ex => ex.exercise_id === exerciseIdForEdit);
+      const visibleSetCount = exerciseForEdit?.setConfigs?.length || 0;
+      if (visibleSetCount <= 1) {
+        setConfirmDeleteExerciseOpen(true);
+        return;
+      }
 
-        if (routineSetError) {
-          console.error("Failed to delete from routine template:", routineSetError);
-          toast.error("Failed to delete from routine template. Set deleted from today's workout only.");
+      // If setUpdateType is "future" and we have a routine_set_id, handle routine template deletion
+      if (setUpdateType === "future" && isTemplateSet) {
+        const routineSetId = editingSet.setConfig.routine_set_id;
+
+        // Look up routine_exercise_id for this routine_set
+        const { data: rsRow, error: rsFetchErr } = await supabase
+          .from("routine_sets")
+          .select("id, routine_exercise_id")
+          .eq("id", routineSetId)
+          .single();
+        if (rsFetchErr) {
+          console.error("Failed to lookup routine_set:", rsFetchErr);
+          throw rsFetchErr;
+        }
+
+        const routineExerciseId = rsRow.routine_exercise_id;
+
+        // Count how many routine_sets remain for this exercise
+        const { count, error: cntErr } = await supabase
+          .from("routine_sets")
+          .select("id", { count: "exact", head: true })
+          .eq("routine_exercise_id", routineExerciseId);
+        if (cntErr) {
+          console.error("Failed to count routine sets:", cntErr);
+          throw cntErr;
+        }
+
+        if ((count || 0) <= 1) {
+          // Last set: delete the routine exercise to avoid zero-set configuration
+          const { error: delSetsErr } = await supabase
+            .from("routine_sets")
+            .delete()
+            .eq("routine_exercise_id", routineExerciseId);
+          if (delSetsErr) {
+            console.error("Failed to delete routine sets:", delSetsErr);
+            throw delSetsErr;
+          }
+
+          const { error: delExErr } = await supabase
+            .from("routine_exercises")
+            .delete()
+            .eq("id", routineExerciseId);
+          if (delExErr) {
+            console.error("Failed to delete routine exercise:", delExErr);
+            throw delExErr;
+          }
+
+          toast.success("Removed exercise from routine");
         } else {
-          toast.success("Set deleted from routine template");
+          // Normal case: delete just this routine_set
+          const { error: routineSetError } = await supabase
+            .from("routine_sets")
+            .delete()
+            .eq("id", routineSetId);
+
+          if (routineSetError) {
+            console.error("Failed to delete from routine template:", routineSetError);
+            toast.error("Failed to delete from routine template. Set deleted from today's workout only.");
+          } else {
+            toast.success("Set deleted from routine template");
+          }
         }
       }
 
@@ -1358,7 +1421,16 @@ const ActiveWorkoutSection = ({
       
       // Find the exercise to get its current sets
       const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
-      if (!exercise || exercise.setConfigs.length === 0) return;
+      if (!exercise) return;
+
+      // Prevent deleting the last remaining set for an exercise
+      if ((exercise.setConfigs?.length || 0) <= 1) {
+        // If this is the last remaining set, confirm that we will delete the exercise instead
+        setConfirmDeleteExerciseOpen(true);
+        return;
+      }
+
+      if (exercise.setConfigs.length === 0) return;
 
       // Get the last set (highest set number)
       const lastSet = exercise.setConfigs[exercise.setConfigs.length - 1];
@@ -1679,6 +1751,70 @@ const ActiveWorkoutSection = ({
           />
         </div>
       </SwiperForm>
+
+      {/* Confirm deleting last set => delete exercise */}
+      <SwiperDialog
+        open={confirmDeleteExerciseOpen}
+        onOpenChange={setConfirmDeleteExerciseOpen}
+        onConfirm={() => setConfirmDeleteExerciseOpen(false)}
+        onCancel={async () => {
+          // Proceed with deleting the exercise by clearing all sets for today
+          try {
+            const exerciseId = editingSet?.exerciseId;
+            if (!exerciseId) {
+              setConfirmDeleteExerciseOpen(false);
+              return;
+            }
+
+            // Delete all saved sets for this exercise in today's workout
+            await supabase
+              .from("sets")
+              .delete()
+              .eq("workout_id", activeWorkout.id)
+              .eq("exercise_id", exerciseId);
+
+            // For template sets, create hidden overrides so none render today
+            const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
+            const templateSets = (exercise?.setConfigs || []).filter(sc => sc.routine_set_id);
+            if (templateSets.length > 0) {
+              const hiddenRows = templateSets.map(ts => ({
+                workout_id: activeWorkout.id,
+                exercise_id: exerciseId,
+                routine_set_id: ts.routine_set_id,
+                reps: ts.reps,
+                weight: ts.weight,
+                weight_unit: ts.unit || ts.weight_unit || "lbs",
+                set_type: ts.set_type,
+                set_variant: ts.set_variant,
+                timed_set_duration: ts.timed_set_duration,
+                status: "hidden",
+              }));
+              if (hiddenRows.length > 0) {
+                await supabase.from("sets").insert(hiddenRows);
+              }
+            }
+
+            // Refresh UI
+            await fetchExercises();
+            setConfirmDeleteExerciseOpen(false);
+            setEditSheetOpen(false);
+          } catch (e) {
+            console.error("Failed to delete exercise for today:", e);
+            toast.error("Failed to delete exercise for today");
+            setConfirmDeleteExerciseOpen(false);
+          }
+        }}
+        title="Delete exercise?"
+        confirmText="Cancel"
+        cancelText="Delete exercise"
+        confirmVariant="outline"
+        cancelVariant="destructive"
+        contentClassName=""
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        footerClassName="self-stretch px-3 py-3"
+      >
+        Deleting this set will remove the exercise from today’s workout.
+      </SwiperDialog>
     </>
   );
 };
