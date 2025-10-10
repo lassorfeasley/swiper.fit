@@ -60,7 +60,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
   const isMountedRef = useRef(false);
   
   // Get the manually completed tracking from context
-  const { markSetManuallyCompleted, isSetManuallyCompleted, isPaused } = useActiveWorkout();
+  const { markSetManuallyCompleted, unmarkSetManuallyCompleted, isSetManuallyCompleted, isPaused } = useActiveWorkout();
 
   // Get authenticated user ID for comparison - always use the actual authenticated user, not the acting user
   const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
@@ -201,11 +201,84 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     });
   }, [controls, thumbTravel, tweenConfig, getContentWidth]);
 
-  // Reset flags when status changes
+  // Helper function for reverse animation when undoing a completed set
+  const triggerReverseAnimation = useCallback(() => {
+    if (!isMountedRef.current) return;
+
+    setIsAnimating(true);
+    setIsCheckVisible(false);
+
+    // Ensure travel values are up to date
+    updateThumbTravel();
+
+    const contentWidth = getContentWidth();
+
+    // Step 1: dissolve check (done by setIsCheckVisible(false)) and re-add margins by
+    // shrinking scale from full padding coverage back to content width
+    controls.start({
+      x: 0,
+      width: contentWidth,
+      backgroundColor: '#22C55E',
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
+    }, { type: 'tween', ease: 'easeOut', duration: 0.25 }).then(() => {
+      if (!isMountedRef.current) return;
+
+      // Step 2: shrink thumb while staying on the right side
+      controls.start({
+        x: thumbTravel,
+        width: THUMB_WIDTH,
+        backgroundColor: '#22C55E',
+        borderRadius: THUMB_RADIUS,
+        scaleX: 1,
+        scaleY: 1,
+      }, tweenConfig).then(() => {
+        if (!isMountedRef.current) return;
+
+        // Step 3: swipe thumb back to the left and return to white
+        controls.start({
+          x: 0,
+          width: THUMB_WIDTH,
+          backgroundColor: '#FFFFFF',
+          borderRadius: THUMB_RADIUS,
+          scaleX: 1,
+          scaleY: 1,
+        }, tweenConfig).then(() => {
+          if (!isMountedRef.current) return;
+          setSwipedComplete(false);
+          setIsManualSwipe(false);
+          setIsAnimating(false);
+          setIsCheckVisible(false);
+          setFinalScaleX(1);
+          setFinalScaleY(1);
+          locallyManuallySwipedRef.current = false;
+          hasManualSwipedThisSession.current = false;
+          skipAutoCompleteOnce.current = false;
+          // Clear manual completion cache so future completions animate
+          unmarkSetManuallyCompleted?.(uniqueSetId);
+        });
+      });
+    });
+  }, [controls, tweenConfig, getContentWidth, unmarkSetManuallyCompleted, uniqueSetId]);
+
+  // Reset/transition handling when status changes (including reverse animation on undo)
+  const prevStatusRef = useRef(status);
   useLayoutEffect(() => {
-    // We only clear `swipedComplete` and manual-swipe flags if the set becomes editable again (status === 'default').
-    // When status moves to 'complete' we keep the flags so the originating window remembers it already animated.
-    if (status === "default") {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+
+    // Reset drag detection every status change
+    dragMoved.current = false;
+
+    // If we transitioned from complete -> default, play reverse animation
+    if (prev === 'complete' && status === 'default') {
+      triggerReverseAnimation();
+      return;
+    }
+
+    // Normal reset when entering default state without needing reverse animation
+    if (status === 'default') {
       setSwipedComplete(false);
       setIsManualSwipe(false);
       setIsAnimating(false);
@@ -216,17 +289,14 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
       hasManualSwipedThisSession.current = false;
       skipAutoCompleteOnce.current = false;
     }
-    // Reset drag detection every status change
-    dragMoved.current = false;
-    
-    // Update thumb travel when status changes to ensure we have the correct values for animation
+
+    // Update thumb travel when status becomes complete to prepare for potential animations
     if (status === 'complete') {
-      // Use a small delay to ensure the component is fully rendered
       setTimeout(() => {
         updateThumbTravel();
       }, 10);
     }
-  }, [status]);
+  }, [status, triggerReverseAnimation]);
 
   // Handle automatic completion with animation
   useLayoutEffect(() => {
@@ -367,8 +437,8 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     <div
       className={`Swipeswitch self-stretch inline-flex flex-col items-start gap-2 w-full cursor-pointer ${className}`}
       onClick={(e) => {
-        // Allow opening the editor even while paused; we only block swipe completion
-        if (status === 'default') {
+        // Allow tapping to open editor for default sets, and undo dialog for completed sets
+        if (status === 'default' || status === 'complete') {
           e.stopPropagation();
           setTimeout(() => {
             if (!dragMoved.current && !isDragging) {

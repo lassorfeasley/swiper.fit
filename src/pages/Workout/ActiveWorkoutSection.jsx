@@ -56,6 +56,8 @@ const ActiveWorkoutSection = ({
   const [addingSetToExercise, setAddingSetToExercise] = useState(null);
   const [removingSetFromExercise, setRemovingSetFromExercise] = useState(null);
   const [confirmDeleteExerciseOpen, setConfirmDeleteExerciseOpen] = useState(false);
+  const [confirmUndoSetOpen, setConfirmUndoSetOpen] = useState(false);
+  const undoTargetRef = useRef(null);
 
   // Form refs
   const addExerciseFormRef = useRef(null);
@@ -650,6 +652,12 @@ const ActiveWorkoutSection = ({
 
   // Handle set press (open edit modal)
   const handleSetPress = (exerciseId, setConfig, index) => {
+    // If completed set is tapped, open undo dialog instead of editor
+    if (setConfig?.status === 'complete') {
+      undoTargetRef.current = { exerciseId, setConfig };
+      setConfirmUndoSetOpen(true);
+      return;
+    }
     setEditingSet({ exerciseId, setConfig, index });
     setEditSheetOpen(true);
     const initialValues = {
@@ -660,6 +668,58 @@ const ActiveWorkoutSection = ({
     };
     setCurrentFormValues(initialValues);
   };
+
+  // Handle marking a set incomplete
+  const handleSetMarkIncomplete = useCallback(async () => {
+    try {
+      const target = undoTargetRef.current;
+      if (!target?.setConfig) {
+        setConfirmUndoSetOpen(false);
+        return;
+      }
+      const { setConfig } = target;
+      if (!activeWorkout?.id) return;
+
+      if (setConfig.id && !String(setConfig.id).startsWith('temp-')) {
+        // Update existing set back to default
+        const { error } = await supabase
+          .from('sets')
+          .update({ status: 'default', account_id: null })
+          .eq('id', setConfig.id);
+        if (error) throw error;
+      } else if (setConfig.routine_set_id) {
+        // If completion was created as a saved row (INSERT) for template set, delete that row to revert
+        // Try to find a saved set row matching this routine_set_id
+        const { data: rows, error: findErr } = await supabase
+          .from('sets')
+          .select('id')
+          .eq('workout_id', activeWorkout.id)
+          .eq('exercise_id', target.exerciseId)
+          .eq('routine_set_id', setConfig.routine_set_id)
+          .eq('status', 'complete')
+          .limit(1);
+        if (findErr) throw findErr;
+        if (rows && rows.length > 0) {
+          const { error: delErr } = await supabase
+            .from('sets')
+            .delete()
+            .eq('id', rows[0].id);
+          if (delErr) throw delErr;
+        }
+      }
+
+      toast.success('Set marked incomplete');
+      setConfirmUndoSetOpen(false);
+      undoTargetRef.current = null;
+
+      // Refresh UI
+      await fetchExercises();
+    } catch (error) {
+      console.error('Failed to mark set incomplete:', error);
+      toast.error('Failed to mark set incomplete');
+      setConfirmUndoSetOpen(false);
+    }
+  }, [activeWorkout?.id, fetchExercises]);
 
   // Handle exercise edit
   const handleEditExercise = (exercise) => {
@@ -1751,6 +1811,22 @@ const ActiveWorkoutSection = ({
           />
         </div>
       </SwiperForm>
+
+      {/* Confirm undo completed set */}
+      <SwiperDialog
+        open={confirmUndoSetOpen}
+        onOpenChange={setConfirmUndoSetOpen}
+        onConfirm={handleSetMarkIncomplete}
+        onCancel={() => setConfirmUndoSetOpen(false)}
+        title="Mark set incomplete?"
+        confirmText="Mark incomplete"
+        cancelText="Cancel"
+        confirmVariant="default"
+        cancelVariant="outline"
+        contentClassName=""
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        footerClassName="self-stretch px-3 py-3"
+      />
 
       {/* Confirm deleting last set => delete exercise */}
       <SwiperDialog
