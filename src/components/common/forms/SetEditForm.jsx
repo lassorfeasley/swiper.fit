@@ -7,6 +7,7 @@ import ToggleInput from "@/components/molecules/toggle-input";
 import { TextInput } from "@/components/molecules/text-input";
 import FormSectionWrapper from "./wrappers/FormSectionWrapper";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { MAX_SET_NAME_LEN } from "@/lib/constants";
 
 const setTypeOptions = [
   { label: "Reps", value: "reps" },
@@ -18,6 +19,8 @@ const unitOptions = [
   { label: "kg", value: "kg" },
   { label: "body", value: "body" },
 ];
+
+// Use shared constant for set name length
 
 const FormContent = ({
   formValues,
@@ -59,12 +62,22 @@ const FormContent = ({
     <div className="w-full bg-stone-50 inline-flex flex-col justify-start items-center">
       {showSetNameField && (
         <div className="self-stretch p-4 border-b border-neutral-300 flex flex-col justify-center items-start">
+          <div className="w-full flex justify-between items-center mb-2">
+            <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Set name</div>
+            <div
+              className={`${(set_variant || '').length >= MAX_SET_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+              aria-live="polite"
+            >
+              {(set_variant || '').length} of {MAX_SET_NAME_LEN} characters
+            </div>
+          </div>
           <TextInput
-            label="Set name"
             value={set_variant || ""}
             onChange={(e) => handleLocalChange("set_variant", e.target.value)}
             onBlur={syncWithParent}
             customPlaceholder=""
+            maxLength={MAX_SET_NAME_LEN}
+            error={(set_variant || '').length >= MAX_SET_NAME_LEN}
           />
         </div>
       )}

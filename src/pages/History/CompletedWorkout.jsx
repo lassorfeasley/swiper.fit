@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentUser } from "@/contexts/AccountContext";
 // SwiperAlertDialog removed – consolidated to SwiperDialog
 import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import SwiperForm from "@/components/molecules/swiper-form";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/molecules/text-input";
@@ -541,14 +542,15 @@ const CompletedWorkout = () => {
 
   const handleSaveWorkoutName = async () => {
     try {
+      const nameClamped = (workoutName || '').slice(0, MAX_WORKOUT_NAME_LEN);
       const { error } = await supabase
         .from("workouts")
-        .update({ workout_name: workoutName })
+        .update({ workout_name: nameClamped })
         .eq("id", workoutId)
         .eq("user_id", currentUser.id);
 
       if (error) throw error;
-      setWorkout((prev) => ({ ...prev, workout_name: workoutName }));
+      setWorkout((prev) => ({ ...prev, workout_name: nameClamped }));
       setEditWorkoutOpen(false);
     } catch (err) {
       toast.error("Failed to update workout name: " + err.message);
@@ -904,7 +906,9 @@ const CompletedWorkout = () => {
               label="Workout name"
               value={workoutName}
               onChange={(e) => setWorkoutName(e.target.value)}
+              maxLength={MAX_WORKOUT_NAME_LEN}
             />
+            <div className="text-xs text-slate-500">{workoutName.length} of {MAX_WORKOUT_NAME_LEN} characters</div>
           </SwiperForm.Section>
 
           <SwiperForm.Section bordered={false}>

@@ -96,7 +96,7 @@ const DeckWrapper = forwardRef(
                   "w-full flex justify-center"
                 )}
                 style={{ 
-                  touchAction: "none",
+                  touchAction: "pan-y",
                   position: "relative"
                 }}
                 onDragStart={() => setDragging(true)}

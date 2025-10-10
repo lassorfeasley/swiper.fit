@@ -41,9 +41,17 @@ const SetBadge = ({
   timed_set_duration,
 }) => {
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
+    const total = Math.max(0, Math.floor(secs || 0));
+    const hNum = Math.floor(total / 3600);
+    const mNum = Math.floor((total % 3600) / 60);
+    const s = (total % 60).toString().padStart(2, "0");
+    if (hNum > 0) {
+      const h = String(hNum).padStart(2, "0");
+      const m = String(mNum).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+    if (mNum === 0) return `:${s}`;
+    return `${mNum}:${s}`;
   };
 
   const handleClick = (e) => {

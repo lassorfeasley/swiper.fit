@@ -119,7 +119,7 @@ const ExerciseCard = ({
         <motion.div
           className="w-full"
           style={{ 
-            touchAction: "none"
+            touchAction: "pan-y"
           }}
         >
           {cardContent}

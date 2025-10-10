@@ -10,6 +10,7 @@ import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
+import { MAX_SET_NAME_LEN, MAX_ROUTINE_NAME_LEN, MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import { ActionCard } from "@/components/molecules/action-card";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { Plus } from "lucide-react";
@@ -469,7 +470,7 @@ const ActiveWorkoutSection = ({
       const payload = {
         workout_id: activeWorkout.id,
         exercise_id: exerciseId,
-        set_variant: setConfig.set_variant,
+        set_variant: (setConfig.set_variant || '').slice(0, MAX_SET_NAME_LEN),
         status: 'complete',
         account_id: user?.id // Always use the authenticated user's ID (manager's ID when delegating)
       };
@@ -1154,7 +1155,7 @@ const ActiveWorkoutSection = ({
         weight: values.weight || 0,
         weight_unit: values.unit || "lbs",
         set_type: values.set_type || "reps",
-        set_variant: values.set_variant || "",
+        set_variant: (values.set_variant || "").slice(0, MAX_SET_NAME_LEN),
         timed_set_duration: values.timed_set_duration || 30,
         status: setConfig.status || "default",
       };
@@ -1166,7 +1167,7 @@ const ActiveWorkoutSection = ({
           weight: values.weight || 0,
           weight_unit: values.unit || "lbs",
           set_type: values.set_type || "reps",
-          set_variant: values.set_variant || "",
+          set_variant: (values.set_variant || "").slice(0, MAX_SET_NAME_LEN),
           timed_set_duration: values.timed_set_duration || 30,
         };
 

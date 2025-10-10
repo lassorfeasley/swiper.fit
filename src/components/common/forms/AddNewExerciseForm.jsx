@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
+import { MAX_EXERCISE_NAME_LEN } from "@/lib/constants";
 import ToggleInput from "@/components/molecules/toggle-input";
 import NumericInput from "@/components/molecules/numeric-input";
 import DurationInput from "@/components/molecules/duration-input";
@@ -194,13 +195,25 @@ const AddNewExerciseForm = React.forwardRef(
       <div className="w-full bg-stone-50 inline-flex flex-col justify-start items-center overflow-hidden">
         {/* Exercise name & section & sets */}
         <FormSectionWrapper className="p-5" bordered={!(hideSetDefaults && !showAddToProgramToggle)}>
-          <TextInput
-            label="Exercise name"
-            value={exerciseName}
-            onChange={(e) => setExerciseName(e.target.value)}
-            customPlaceholder=""
-            disabled={disabled}
-          />
+          <div className="w-full flex flex-col">
+            <div className="w-full flex justify-between items-center mb-2">
+              <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Exercise name</div>
+              <div
+                className={`${(exerciseName || '').length >= MAX_EXERCISE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+                aria-live="polite"
+              >
+                {(exerciseName || '').length} of {MAX_EXERCISE_NAME_LEN} characters
+              </div>
+            </div>
+            <TextInput
+              value={exerciseName}
+              onChange={(e) => setExerciseName(e.target.value)}
+              customPlaceholder=""
+              disabled={disabled}
+              maxLength={MAX_EXERCISE_NAME_LEN}
+              error={(exerciseName || '').length >= MAX_EXERCISE_NAME_LEN}
+            />
+          </div>
           
           {showSectionToggle && (
             <ToggleInput

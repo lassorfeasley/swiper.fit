@@ -419,9 +419,7 @@ body[data-env="development"] [data-component]:hover::after {
   [data-radix-dialog-content] {
     max-width: 100vw !important;
     overflow-x: hidden !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
+    /* Keep intended component borders/shadows visible on iOS */
   }
   
   /* Ensure dialog content doesn't overflow */
@@ -430,59 +428,23 @@ body[data-env="development"] [data-component]:hover::after {
     box-sizing: border-box !important;
   }
   
-  /* Remove unwanted borders and focus outlines from dialogs */
-  [data-radix-dialog-content] {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-  }
+  /* Do not strip borders/shadows from dialog content so card edges remain visible */
   
-  /* Remove focus outlines from dialog content */
+  /* Allow components to manage their own focus styles within dialogs */
   [data-radix-dialog-content]:focus,
   [data-radix-dialog-content]:focus-visible {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
+    outline: none;
   }
   
-  /* Remove any default browser focus styles from dialog elements */
+  /* Preserve focus styles inside dialogs for accessibility */
   [data-radix-dialog-content] *:focus,
   [data-radix-dialog-content] *:focus-visible {
-    outline: none !important;
-    border: none !important;
+    outline: auto;
   }
   
-  /* Prevent borders during all animation states */
-  [data-radix-dialog-content][data-state="open"],
-  [data-radix-dialog-content][data-state="closed"],
-  [data-radix-dialog-content][data-state="open"] *,
-  [data-radix-dialog-content][data-state="closed"] * {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-  }
+  /* Do not strip borders/shadows during animation states */
   
-  /* Remove borders during all transition phases */
-  [data-radix-dialog-content].animate-in,
-  [data-radix-dialog-content].animate-out,
-  [data-radix-dialog-content].fade-in-0,
-  [data-radix-dialog-content].fade-out-0,
-  [data-radix-dialog-content].zoom-in-95,
-  [data-radix-dialog-content].zoom-out-95,
-  [data-radix-dialog-content].slide-in-from-left-1\/2,
-  [data-radix-dialog-content].slide-out-to-left-1\/2,
-  [data-radix-dialog-content].slide-in-from-top-\[48\%\],
-  [data-radix-dialog-content].slide-out-to-top-\[48\%\] {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-  }
+  /* Keep transitions but retain component visuals */
   
-  /* Immediate border removal for any dialog content */
-  [data-radix-dialog-content],
-  [data-radix-dialog-content] * {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-  }
+  /* Remove the global nuking of borders/shadows to restore visuals */
 }

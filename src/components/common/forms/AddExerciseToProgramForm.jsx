@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { TextInput } from "@/components/molecules/text-input";
+import { MAX_EXERCISE_NAME_LEN } from "@/lib/constants";
 import NumericInput from "@/components/molecules/numeric-input";
 import {
   SwiperAccordion,
@@ -105,11 +106,24 @@ const AddExerciseToProgramForm = ({
         {formPrompt}
       </div>
       <div className="Frame13 self-stretch flex flex-col justify-start items-start gap-3">
-        <TextInput
-          value={exerciseName}
-          onChange={(e) => setExerciseName(e.target.value)}
-          customPlaceholder="Exercise name"
-        />
+        <div className="w-full flex flex-col">
+          <div className="w-full flex justify-between items-center mb-2">
+            <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Exercise name</div>
+            <div
+              className={`${(exerciseName || '').length >= MAX_EXERCISE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+              aria-live="polite"
+            >
+              {(exerciseName || '').length} of {MAX_EXERCISE_NAME_LEN} characters
+            </div>
+          </div>
+          <TextInput
+            value={exerciseName}
+            onChange={(e) => setExerciseName(e.target.value)}
+            customPlaceholder=""
+            maxLength={MAX_EXERCISE_NAME_LEN}
+            error={(exerciseName || '').length >= MAX_EXERCISE_NAME_LEN}
+          />
+        </div>
         <div className="NumericField self-stretch h-20 flex flex-col justify-start items-start gap-1">
           <div className="FieldLabel justify-start text-slate-600 text-label">
             Sets

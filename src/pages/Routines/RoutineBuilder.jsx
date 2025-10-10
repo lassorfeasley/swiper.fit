@@ -14,6 +14,7 @@ import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
 import SectionNav from "@/components/molecules/section-nav";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
+import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { Copy, Blend, X, Plus } from "lucide-react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
@@ -176,10 +177,7 @@ const RoutineBuilder = () => {
       }));
       setExercises(items);
       
-      // Automatically open add exercise form when no exercises exist
-      if (items.length === 0) {
-        setShowAddExercise(true);
-      }
+      // Do not auto-open add exercise sheet; UI now indicates next step clearly
       setLoading(false);
     }
     fetchProgramAndExercises();
@@ -779,10 +777,11 @@ const RoutineBuilder = () => {
   };
 
   const handleTitleChange = async (newTitle) => {
-    setProgramName(newTitle);
+    const nameClamped = (newTitle || '').slice(0, MAX_ROUTINE_NAME_LEN);
+    setProgramName(nameClamped);
     await supabase
       .from("routines")
-      .update({ routine_name: newTitle })
+      .update({ routine_name: nameClamped })
       .eq("id", programId);
     setEditProgramOpen(false);
 
@@ -1054,11 +1053,23 @@ const RoutineBuilder = () => {
         rightText="Save"
       >
         <SwiperForm.Section>
-          <TextInput
-            label="Routine name"
-            value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
-          />
+          <div className="w-full flex flex-col">
+            <div className="w-full flex justify-between items-center mb-2">
+              <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Routine name</div>
+              <div
+                className={`${(programName || '').length >= MAX_ROUTINE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+                aria-live="polite"
+              >
+                {(programName || '').length} of {MAX_ROUTINE_NAME_LEN} characters
+              </div>
+            </div>
+            <TextInput
+              value={programName}
+              onChange={(e) => setProgramName(e.target.value)}
+              maxLength={MAX_ROUTINE_NAME_LEN}
+              error={(programName || '').length >= MAX_ROUTINE_NAME_LEN}
+            />
+          </div>
         </SwiperForm.Section>
         <SwiperForm.Section bordered={false}>
           <SwiperButton

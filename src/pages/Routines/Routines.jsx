@@ -21,6 +21,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/molecules/action-card";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -141,7 +142,7 @@ const RoutinesIndex = () => {
       // 1. Insert program
       const { data: program, error: programError } = await supabase
         .from("routines")
-        .insert({ routine_name: programName, user_id: user.id, is_public: true })
+        .insert({ routine_name: programName.slice(0, MAX_ROUTINE_NAME_LEN), user_id: user.id, is_public: true })
         .select()
         .single();
       if (programError || !program) throw new Error("Failed to create program");
@@ -254,12 +255,24 @@ const RoutinesIndex = () => {
         leftText="Cancel"
       >
         <SwiperForm.Section bordered={false}>
-          <TextInput
-            label="Name routine"
-            value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
-            ref={inputRef}
-          />
+          <div className="w-full flex flex-col">
+            <div className="w-full flex justify-between items-center mb-2">
+              <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
+              <div
+                className={`${(programName || '').length >= MAX_ROUTINE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+                aria-live="polite"
+              >
+                {(programName || '').length} of {MAX_ROUTINE_NAME_LEN} characters
+              </div>
+            </div>
+            <TextInput
+              value={programName}
+              onChange={(e) => setProgramName(e.target.value)}
+              ref={inputRef}
+              maxLength={MAX_ROUTINE_NAME_LEN}
+              error={(programName || '').length >= MAX_ROUTINE_NAME_LEN}
+            />
+          </div>
         </SwiperForm.Section>
       </SwiperForm>
 
