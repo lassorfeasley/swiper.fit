@@ -401,7 +401,7 @@ export default function PublicRoutine() {
             variant="outline"
             onClick={() => navigate(`/login?importRoutineId=${routineId}`)}
           >
-            Login & add
+            Login
           </SwiperButton>
         </div>
       </SwiperDialog>
