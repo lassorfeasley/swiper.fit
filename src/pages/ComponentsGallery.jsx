@@ -25,6 +25,7 @@ import { ActionCard } from "@/components/molecules/action-card";
 import ActionPill from "@/components/molecules/action-pill";
 import StaticCard from "@/components/organisms/static-card";
 import { Play } from "lucide-react";
+import SwiperCombobox from "@/components/molecules/swiper-combobox";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -243,6 +244,30 @@ export default function ComponentsGallery() {
           <ErrorBoundary>
             <SwiperSheet open={openSheet} onOpenChange={setOpenSheet} title="Sheet" description="Demo" />
           </ErrorBoundary>
+        </section>
+      )
+    },
+    {
+      key: 'combobox',
+      label: 'Combobox',
+      render: () => (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-neutral-700">Combobox</h2>
+          <div className="space-y-3">
+            <SwiperCombobox
+              items={[
+                { value: 'next.js', label: 'Next.js' },
+                { value: 'sveltekit', label: 'SvelteKit' },
+                { value: 'nuxt.js', label: 'Nuxt.js' },
+                { value: 'remix', label: 'Remix' },
+                { value: 'astro', label: 'Astro' },
+              ]}
+              placeholder="Filter workouts"
+              filterPlaceholder="Search routines"
+              width={240}
+              className=""
+            />
+          </div>
         </section>
       )
     },

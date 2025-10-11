@@ -700,6 +700,12 @@ const CompletedWorkout = () => {
     navigate(target);
   };
 
+  const handleViewRoutineHistory = () => {
+    const routineName = workout?.routines?.routine_name;
+    if (!routineName || !isOwner || isPublicWorkoutView) return;
+    navigate('/history', { state: { filterRoutine: routineName } });
+  };
+
   const handleResumeWorkout = async () => {
     try {
       if (!workoutId) return;
@@ -877,6 +883,29 @@ const CompletedWorkout = () => {
                   <div className="flex justify-center items-center gap-5">
                     <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
                       {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* View routine history - private view only */}
+              {isOwner && !isPublicWorkoutView && workout?.routines?.routine_name && (
+                <div
+                  className="w-full h-11 max-w-[500px] pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                  onClick={handleViewRoutineHistory}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleViewRoutineHistory(); } }}
+                  aria-label="View routine history"
+                >
+                  <div className="p-2.5 flex justify-start items-center gap-2.5">
+                    <div className="relative">
+                      <Repeat2 className="w-5 h-5 text-neutral-600" strokeWidth={2} />
+                    </div>
+                  </div>
+                  <div className="flex justify-center items-center gap-5">
+                    <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                      View workouts for this routine
                     </div>
                   </div>
                 </div>

@@ -914,7 +914,7 @@ const RoutineBuilder = () => {
         <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
           {/* Routine Image Section */}
           <div className="self-stretch inline-flex flex-col justify-start items-center">
-            <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
+            <div className="self-stretch px-5 inline-flex justify-center items-center gap-3">
               <div 
                 className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
                 onClick={shareRoutine}
@@ -930,6 +930,32 @@ const RoutineBuilder = () => {
                   }}
                   onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
                 />
+              </div>
+            </div>
+
+            {/* View routine history CTA (matches action card/button style) */}
+            <div className="self-stretch px-5 mt-3 inline-flex justify-center items-center">
+              <div
+                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/history', { state: { filterRoutine: programName } }); } }}
+                aria-label="View routine history"
+              >
+                <div className="p-2.5 flex justify-start items-center gap-2.5">
+                  <div className="relative">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13 5H18V10" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M6 18L18 6" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex justify-center items-center gap-5">
+                  <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    View workouts for this routine
+                  </div>
+                </div>
               </div>
             </div>
           </div>
