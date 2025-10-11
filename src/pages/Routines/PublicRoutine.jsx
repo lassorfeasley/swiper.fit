@@ -8,6 +8,8 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Bookmark } from "lucide-react";
+import SwiperDialog from "@/components/molecules/swiper-dialog";
+import { SwiperButton } from "@/components/molecules/swiper-button";
 
 export default function PublicRoutine() {
   const { routineId } = useParams();
@@ -17,6 +19,8 @@ export default function PublicRoutine() {
 
   const [loading, setLoading] = useState(true);
   const [routine, setRoutine] = useState(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function fetchRoutine() {
@@ -50,7 +54,7 @@ export default function PublicRoutine() {
           .eq("is_public", true)
           .single();
         if (error || !data) {
-          navigate("/login", { replace: true });
+          setRoutine(null);
           return;
         }
         // Fetch owner profile
@@ -185,6 +189,74 @@ export default function PublicRoutine() {
     }
   };
 
+  const openAddDialog = () => {
+    if (!routine) return;
+    // Logged out: send to create-account with import param
+    if (!user) {
+      navigate(`/create-account?importRoutineId=${routineId}`);
+      return;
+    }
+    setAddDialogOpen(true);
+  };
+
+  const handleAddToAccount = async () => {
+    if (!routine || !user) return;
+    setSaving(true);
+    try {
+      const newId = await cloneRoutineForCurrentUser();
+      toast.success('Routine saved to your account');
+      navigate(`/routines/${newId}/configure`, { state: { fromPublicImport: true } });
+    } catch (e) {
+      toast.error(e?.message || 'Failed to save routine');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
+  const handleAddAndStart = async () => {
+    if (!routine || !user) return;
+    setSaving(true);
+    try {
+      // 1) Save a copy to the user’s account
+      const newId = await cloneRoutineForCurrentUser();
+
+      // 2) Build a program payload for startWorkout using the newly saved routine id
+      const program = {
+        id: newId,
+        routine_name: routine.routine_name,
+        routine_exercises: (routine.routine_exercises || []).map((re, idx) => ({
+          exercise_id: re.exercises.id,
+          exercise_order: re.exercise_order || idx + 1,
+          exercises: {
+            name: re.exercises.name,
+            section: re.exercises.section
+          },
+          routine_sets: (re.routine_sets || []).map((rs, i) => ({
+            id: rs.id,
+            reps: rs.reps,
+            weight: rs.weight,
+            weight_unit: rs.weight_unit,
+            set_order: rs.set_order || i + 1,
+            set_variant: rs.set_variant,
+            set_type: rs.set_type,
+            timed_set_duration: rs.timed_set_duration
+          }))
+        }))
+      };
+
+      // 3) Start a workout from the saved routine
+      await startWorkout(program);
+      navigate('/workout/active');
+    } catch (e) {
+      console.error('[PublicRoutine] Add & start error:', e);
+      toast.error(e?.message || 'Failed to start workout');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
   return (
     <AppLayout
       hideHeader={false}
@@ -261,15 +333,16 @@ export default function PublicRoutine() {
         )}
       </div>
       
-      {/* Persistent Save Button - Absolutely positioned at bottom */}
+      {/* Persistent Save Button - Absolutely positioned at bottom */
+      }
       <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
         <div 
           className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
-          onClick={handleStart}
+          onClick={openAddDialog}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStart?.(); } }}
-          aria-label={user ? "Save routine to my account" : "Create account to save routine"}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog?.(); } }}
+          aria-label={user ? "Save to my account" : "Create account to save routine"}
         >
           <div className="p-2.5 flex justify-start items-center gap-2.5">
             <div className="relative">
@@ -278,11 +351,36 @@ export default function PublicRoutine() {
           </div>
           <div className="flex justify-center items-center gap-5">
             <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-              {user ? "Save routine to my account" : "Login or create account to save"}
+              {user ? "Save to my account" : "Login or create account to save"}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add/Save Dialog */}
+      <SwiperDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        title="Add routine to my account?"
+        hideFooter
+      >
+        <div className="grid grid-cols-1 gap-3">
+          <SwiperButton
+            variant="outline"
+            onClick={handleAddAndStart}
+            disabled={saving}
+          >
+            Add & start workout
+          </SwiperButton>
+          <SwiperButton
+            variant="outline"
+            onClick={handleAddToAccount}
+            disabled={saving}
+          >
+            Add to my account
+          </SwiperButton>
+        </div>
+      </SwiperDialog>
     </AppLayout>
   );
 }
