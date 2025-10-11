@@ -86,7 +86,8 @@ function AppContent() {
     '/login',                    // Authentication pages
     '/create-account',
     '/reset-password',
-    '/update-password'
+    '/update-password',
+    '/og-env'                    // Allow OG Env while workout is active for testing
   ];
   
   // Check if current path is allowed
@@ -111,19 +112,19 @@ function AppContent() {
 
   // Debug logging for workout redirect logic
   useEffect(() => {
-    console.log('[App] Workout redirect state:', {
+      console.log('[App] Workout redirect state:', {
       isWorkoutActive,
       workoutLoading,
       isAllowedPath,
       shouldRedirect,
       currentPath: location.pathname,
       isDelegated,
-      allowedPaths: ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password']
+      allowedPaths: ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password', '/og-env']
     });
     
     // Additional debugging for path matching
     if (isWorkoutActive) {
-      const pathChecks = ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].map(allowed => {
+      const pathChecks = ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password', '/og-env'].map(allowed => {
         const isMatch = allowed === '/' ? location.pathname === '/' : 
                        location.pathname === allowed || location.pathname.startsWith(allowed + '/');
         return { allowed, isMatch };
