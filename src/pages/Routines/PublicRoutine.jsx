@@ -342,7 +342,7 @@ export default function PublicRoutine() {
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog?.(); } }}
-          aria-label={user ? "Save to my account" : "Create account to save routine"}
+          aria-label={user ? "Add routine to my account" : "Create account to save routine"}
         >
           <div className="p-2.5 flex justify-start items-center gap-2.5">
             <div className="relative">
@@ -351,7 +351,7 @@ export default function PublicRoutine() {
           </div>
           <div className="flex justify-center items-center gap-5">
             <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-              {user ? "Save to my account" : "Login or create account to save"}
+              {user ? "Add routine to my account" : "Login or create account to save"}
             </div>
           </div>
         </div>
