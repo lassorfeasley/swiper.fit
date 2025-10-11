@@ -1216,7 +1216,7 @@ export default function Sharing() {
             title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `${formatUserDisplay(selectedClient)}'s routines`}
             hideFooter
             containerClassName="bg-stone-100"
-            headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+            headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-b border-neutral-neutral-300 inline-flex justify-start items-center"
             headerRight={
               <button
                 onClick={() => setShowRoutineSelectionDialog(false)}

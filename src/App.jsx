@@ -33,6 +33,7 @@ import LoggedOutNav from "./components/layout/LoggedOutNav";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
+import ComponentsGallery from "./pages/ComponentsGallery";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
@@ -223,6 +224,9 @@ function AppContent() {
             <Route path="/og-env" element={<OGEnv />} />
             <Route path="/dialog-test" element={<DialogTest />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
+            {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
+              <Route path="/components" element={<ComponentsGallery />} />
+            )}
 
           </Route>
 
