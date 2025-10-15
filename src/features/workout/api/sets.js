@@ -5,10 +5,19 @@ export async function fetchRoutineTemplateSets(routineId) {
     .from('routine_exercises')
     .select(`
       exercise_id,
-      routine_sets(id, set_order, reps, weight, weight_unit, set_variant, set_type, timed_set_duration)
+      routine_sets!fk_routine_sets__routine_exercises(
+        id,
+        set_order,
+        reps,
+        weight,
+        weight_unit,
+        set_variant,
+        set_type,
+        timed_set_duration
+      )
     `)
     .eq('routine_id', routineId)
-    .order('set_order', { foreignTable: 'routine_sets', ascending: true });
+    .order('set_order', { foreignTable: 'routine_sets!fk_routine_sets__routine_exercises', ascending: true });
   if (error) throw error;
   return data || [];
 }
