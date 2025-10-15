@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from '../server/supabase.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = getSupabaseServerClient();
 
 export default async function handler(req, res) {
   const workoutId = req.query.workoutId || '6385499d-a9f2-4161-b6bb-1b90256d605c';

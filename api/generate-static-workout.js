@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from '../server/supabase.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = getSupabaseServerClient();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -253,7 +250,7 @@ function generateHTML({ title, description, url, workoutName, ownerName, exercis
     <script>
       // Only redirect if this is a real user (not a crawler)
       if (navigator.userAgent && !navigator.userAgent.includes('bot') && !navigator.userAgent.includes('Bot')) {
-        window.location.href = '/history/public/workout/${workoutName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}?redirect=${encodeURIComponent(window.location.pathname)}';
+        window.location.href = '/history/public/workout/${workoutName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}?redirect=' + encodeURIComponent(window.location.pathname);
       }
     </script>
   </head>

@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from './server/supabase.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = getSupabaseServerClient();
 
 async function generateOGImage(workoutId) {
   try {
@@ -42,16 +39,6 @@ async function generateOGImage(workoutId) {
       day: 'numeric', 
       year: 'numeric' 
     });
-
-    // Generate OG image using Vercel's ImageResponse (simplified version)
-    const ogImageData = {
-      workoutName: workout.workout_name || 'Completed Workout',
-      routineName: workout.routines?.routine_name || 'Workout',
-      date: date,
-      duration: duration,
-      exerciseCount: exerciseCount,
-      setCount: setCount
-    };
 
     // Generate OG image using the proper API endpoint
     const response = await fetch(`https://www.swiper.fit/api/generate-og-image?workoutId=${workoutId}`);

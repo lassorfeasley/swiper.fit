@@ -2,12 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 
 export const TEMPLATE_VERSION = String(process.env.OG_TEMPLATE_VERSION || '2');
 
-const DEFAULT_SUPABASE_URL = 'https://tdevpmxmvrgouozsgplu.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0';
-
 export function createSupabaseServerClient() {
-  const url = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || DEFAULT_SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  }
   return createClient(url, key);
 }
 
