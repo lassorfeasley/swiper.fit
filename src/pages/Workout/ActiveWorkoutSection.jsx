@@ -9,6 +9,8 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
+import { fetchWorkoutExercises } from "@/features/workout/api/workoutExercises";
+import { fetchRoutineTemplateSets, fetchSavedSets } from "@/features/workout/api/sets";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import { MAX_SET_NAME_LEN, MAX_ROUTINE_NAME_LEN, MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import { ActionCard } from "@/components/molecules/action-card";
@@ -63,35 +65,15 @@ const ActiveWorkoutSection = ({
   const addExerciseFormRef = useRef(null);
   const editExerciseFormRef = useRef(null);
 
-  // Fetch exercises for this section
+  // Fetch exercises for this section (via feature services)
   const fetchExercises = useCallback(async () => {
     if (!activeWorkout?.id) return;
 
     if (firstLoad) setLoading(true);
 
     try {
-      // Fetch workout exercises for this section
-      const { data: workoutExercises, error: workoutError } = await supabase
-        .from("workout_exercises")
-        .select(`
-          id,
-          exercise_id,
-          exercise_order,
-          snapshot_name,
-          name_override,
-          section_override,
-          exercises!workout_exercises_exercise_id_fkey(
-            name,
-            section
-          )
-        `)
-        .eq("workout_id", activeWorkout.id)
-        .order("exercise_order", { ascending: true });
-
-      if (workoutError) {
-        console.error("Error fetching workout exercises:", workoutError);
-        return;
-      }
+      // Fetch core data via services
+      const workoutExercises = await fetchWorkoutExercises(activeWorkout.id);
 
       // Filter by section_override if present, otherwise by exercises.section
       const filteredExercises = (workoutExercises || []).filter(we => {
@@ -100,38 +82,11 @@ const ActiveWorkoutSection = ({
         return sec === section;
       });
 
-      // Fetch template sets for each exercise
-      const { data: templateSets, error: templateError } = await supabase
-        .from("routine_exercises")
-        .select(`
-          exercise_id,
-          routine_sets!fk_routine_sets__routine_exercises(
-            id,
-            set_order,
-            reps,
-            weight,
-            weight_unit,
-            set_variant,
-            set_type,
-            timed_set_duration
-          )
-        `)
-        .eq("routine_id", activeWorkout.programId)
-        .order("set_order", { foreignTable: "routine_sets", ascending: true });
-
-      if (templateError) {
-        console.error("Error fetching template sets:", templateError);
-      }
+      // Fetch template sets for routine
+      const templateSets = await fetchRoutineTemplateSets(activeWorkout.programId);
 
       // Fetch saved sets for this workout
-      const { data: savedSets, error: savedError } = await supabase
-        .from("sets")
-        .select("*")
-        .eq("workout_id", activeWorkout.id);
-
-      if (savedError) {
-        console.error("Error fetching saved sets:", savedError);
-      }
+      const savedSets = await fetchSavedSets(activeWorkout.id);
 
               // Group template sets by exercise_id
         const templateSetsMap = {};
@@ -145,6 +100,8 @@ const ActiveWorkoutSection = ({
           set_variant: rs.set_variant,
           set_type: rs.set_type,
           timed_set_duration: rs.timed_set_duration,
+          weight_unit: rs.weight_unit,
+          set_order: rs.set_order,
         }));
       });
 
