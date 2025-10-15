@@ -9,6 +9,9 @@ import SwiperForm from "@/components/molecules/swiper-form";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import SetEditForm from "@/components/common/forms/SetEditForm";
 import { supabase } from "@/supabaseClient";
+import { fetchWorkoutExercises } from "@/features/workout/api/workoutExercises";
+import { fetchRoutineTemplateSets, fetchSavedSets } from "@/features/workout/api/sets";
+import { useRealtimeSets } from "@/features/workout/hooks/useRealtimeSets";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import { MAX_SET_NAME_LEN, MAX_ROUTINE_NAME_LEN, MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import { ActionCard } from "@/components/molecules/action-card";
@@ -63,35 +66,15 @@ const ActiveWorkoutSection = ({
   const addExerciseFormRef = useRef(null);
   const editExerciseFormRef = useRef(null);
 
-  // Fetch exercises for this section
+  // Fetch exercises for this section (via feature services)
   const fetchExercises = useCallback(async () => {
     if (!activeWorkout?.id) return;
 
     if (firstLoad) setLoading(true);
 
     try {
-      // Fetch workout exercises for this section
-      const { data: workoutExercises, error: workoutError } = await supabase
-        .from("workout_exercises")
-        .select(`
-          id,
-          exercise_id,
-          exercise_order,
-          snapshot_name,
-          name_override,
-          section_override,
-          exercises!workout_exercises_exercise_id_fkey(
-            name,
-            section
-          )
-        `)
-        .eq("workout_id", activeWorkout.id)
-        .order("exercise_order", { ascending: true });
-
-      if (workoutError) {
-        console.error("Error fetching workout exercises:", workoutError);
-        return;
-      }
+      // Fetch core data via services
+      const workoutExercises = await fetchWorkoutExercises(activeWorkout.id);
 
       // Filter by section_override if present, otherwise by exercises.section
       const filteredExercises = (workoutExercises || []).filter(we => {
@@ -100,38 +83,11 @@ const ActiveWorkoutSection = ({
         return sec === section;
       });
 
-      // Fetch template sets for each exercise
-      const { data: templateSets, error: templateError } = await supabase
-        .from("routine_exercises")
-        .select(`
-          exercise_id,
-          routine_sets!fk_routine_sets__routine_exercises(
-            id,
-            set_order,
-            reps,
-            weight,
-            weight_unit,
-            set_variant,
-            set_type,
-            timed_set_duration
-          )
-        `)
-        .eq("routine_id", activeWorkout.programId)
-        .order("set_order", { foreignTable: "routine_sets", ascending: true });
-
-      if (templateError) {
-        console.error("Error fetching template sets:", templateError);
-      }
+      // Fetch template sets for routine
+      const templateSets = await fetchRoutineTemplateSets(activeWorkout.programId);
 
       // Fetch saved sets for this workout
-      const { data: savedSets, error: savedError } = await supabase
-        .from("sets")
-        .select("*")
-        .eq("workout_id", activeWorkout.id);
-
-      if (savedError) {
-        console.error("Error fetching saved sets:", savedError);
-      }
+      const savedSets = await fetchSavedSets(activeWorkout.id);
 
               // Group template sets by exercise_id
         const templateSetsMap = {};
@@ -145,6 +101,8 @@ const ActiveWorkoutSection = ({
           set_variant: rs.set_variant,
           set_type: rs.set_type,
           timed_set_duration: rs.timed_set_duration,
+          weight_unit: rs.weight_unit,
+          set_order: rs.set_order,
         }));
       });
 
@@ -296,108 +254,20 @@ const ActiveWorkoutSection = ({
     fetchExercises();
   }, [fetchExercises, markSetManuallyCompleted]);
 
-  // Real-time subscription for sets in this section
-  useEffect(() => {
-    if (!activeWorkout?.id) return;
-
-    // We'll check exercise membership dynamically inside the callback
-    // to avoid recreating the subscription when exercises change
-
-    const setsChan = supabase
-      .channel(`sets-section-${section}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'sets', 
-        filter: `workout_id=eq.${activeWorkout.id}` 
-      }, async ({ eventType, new: row, old }) => {
-        console.log('[Real-time] Set change received:', { eventType, row, old });
-        
-        // Check if this set belongs to an exercise in this section FIRST
-        const currentExerciseIds = exercises.map(ex => ex.exercise_id);
-        if (!currentExerciseIds.includes(row.exercise_id)) return;
-        
-        // Handle different event types
-        if (eventType === "DELETE") {
-          console.log('[Real-time] Set deleted:', old);
-          // For DELETE events, refresh exercises to get updated data
-          fetchExercises();
-          return;
-        }
-        
-        // Only process if the set belongs to an exercise in this section
-        // Check if this is a remote set completion (either INSERT or UPDATE)
-        if ((eventType === "UPDATE" && row.status === "complete" && old?.status !== "complete") ||
-            (eventType === "INSERT" && row.status === "complete")) {
-          console.log('[Real-time] Remote set completion detected:', row);
-          
-          // Get current user to compare with the set's account_id
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          // Note: We don't mark sets as manually completed here anymore
-          // This was causing issues where DB updates from other clients
-          // were being marked as manually completed, preventing animations
-          // Manual completion tracking is now handled only in the swipe-switch component
-          
-          // Show toast for ALL set completions (both local and remote) for debugging
-          // Check if we've already shown a toast for this set globally
-          if (isSetToasted(row.id)) {
-            console.log('[Real-time] Skipping toast - already shown for set:', row.id);
-            return;
-          }
-          
-          // Determine who completed the set based on account_id comparison
-          const wasCompletedByCurrentUser = row.account_id === user?.id;
-          const completedByUserType = wasCompletedByCurrentUser ? (isDelegated ? 'Manager' : 'Client') : (isDelegated ? 'Client' : 'Manager');
-          
-          console.log('[Real-time] Set completed by:', completedByUserType, 'account_id:', row.account_id, 'user_id:', user?.id, 'isDelegated:', isDelegated, 'wasCompletedByCurrentUser:', wasCompletedByCurrentUser);
-          
-          // Mark this set as toasted globally to prevent duplicates across sections
-          markSetToasted(row.id);
-        }
-
-        // Refresh exercises to get updated data for all other events (INSERT, UPDATE)
-        fetchExercises();
-      })
-      .subscribe();
-
-    return () => {
-      void setsChan.unsubscribe();
-    };
-  }, [activeWorkout?.id, section, fetchExercises, markSetToasted, isSetToasted]);
-
-
-
-  // Real-time subscription for workout exercises in this section
-  useEffect(() => {
-    if (!activeWorkout?.id) return;
-
-    const exercisesChan = supabase
-      .channel(`workout-exercises-section-${section}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'workout_exercises', 
-        filter: `workout_id=eq.${activeWorkout.id}` 
-      }, ({ eventType, new: row, old }) => {
-        // Handle new exercise additions, updates, and deletions
-        if (eventType === "INSERT" || eventType === "UPDATE" || eventType === "DELETE") {
-          // Refresh exercises to get updated data
-          fetchExercises();
-          
-          // Log new exercise additions
-          if (eventType === "INSERT") {
-            const swiperType = isDelegated ? 'Manager' : 'Client';
-            console.log('[Real-time] Exercise added by:', swiperType);
-          }
-        }
-      })
-      .subscribe();
-
-    return () => {
-      void exercisesChan.unsubscribe();
-    };
-  }, [activeWorkout?.id, section, fetchExercises, isDelegated]);
+  // Real-time subscriptions via hook
+  useRealtimeSets({
+    workoutId: activeWorkout?.id,
+    section,
+    getCurrentExerciseIds: () => exercises.map(ex => ex.exercise_id),
+    fetchExercises,
+    getUserId: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.id || null;
+    },
+    isDelegated,
+    isSetToasted,
+    markSetToasted,
+  });
 
   // Memoized initial values for SetEditForm
   const setEditFormInitialValues = React.useMemo(() => {
