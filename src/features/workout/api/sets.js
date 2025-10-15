@@ -17,7 +17,7 @@ export async function fetchRoutineTemplateSets(routineId) {
       )
     `)
     .eq('routine_id', routineId)
-    .order('set_order', { foreignTable: 'routine_sets!fk_routine_sets__routine_exercises', ascending: true });
+    .order('set_order', { foreignTable: 'routine_sets', ascending: true });
   if (error) throw error;
   return data || [];
 }
