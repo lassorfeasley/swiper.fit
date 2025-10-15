@@ -800,6 +800,15 @@ export function ActiveWorkoutProvider({ children }) {
     setManuallyCompletedSets(prev => new Set([...prev, setId]));
   }, []);
 
+  // Unmark a set as manually completed (used when undoing a set)
+  const unmarkSetManuallyCompleted = useCallback((setId) => {
+    setManuallyCompletedSets(prev => {
+      const next = new Set(prev);
+      next.delete(setId);
+      return next;
+    });
+  }, []);
+
   // Check if a set was manually completed
   const isSetManuallyCompleted = useCallback((setId) => {
     return manuallyCompletedSets.has(setId);
@@ -961,6 +970,7 @@ export function ActiveWorkoutProvider({ children }) {
         loading,
         lastExerciseIdChangeTrigger,
         markSetManuallyCompleted,
+        unmarkSetManuallyCompleted,
         isSetManuallyCompleted,
         markSetToasted,
         isSetToasted,

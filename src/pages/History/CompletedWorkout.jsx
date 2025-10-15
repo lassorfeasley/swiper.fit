@@ -700,6 +700,12 @@ const CompletedWorkout = () => {
     navigate(target);
   };
 
+  const handleViewRoutineHistory = () => {
+    const routineName = workout?.routines?.routine_name;
+    if (!routineName || !isOwner || isPublicWorkoutView) return;
+    navigate('/history', { state: { filterRoutine: routineName } });
+  };
+
   const handleResumeWorkout = async () => {
     try {
       if (!workoutId) return;
@@ -881,6 +887,8 @@ const CompletedWorkout = () => {
                   </div>
                 </div>
               )}
+
+              {/* Private-only route to history removed per request; button now exists on routine builder only */}
             </div>
 
             {/* Exercise List */}

@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/atoms/dialog";
-import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import { SwiperButton } from './swiper-button';
 
 // Force hot reload - AlertDialogCancel and AlertDialogAction removed
@@ -67,26 +66,19 @@ const SwiperDialog = ({
       <DialogPortal>
         <DialogOverlay onClick={handleBackdropClick} />
         <DialogContent
-          className={`w-full h-full inline-flex ${align === 'top' ? 'items-start' : 'items-center'} justify-center shadow-none border-none bg-transparent p-0 ${showCloseButton ? '' : '[&>button]:hidden'} z-[10000] px-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none ${contentClassName || ''}`}
+          className={`w-full ${widthClass} shadow-none border border-neutral-neutral-300 bg-stone-100 p-0 rounded-xl overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
           onClick={handleBackdropClick}
           tabIndex={-1}
         >
           <DialogTitle className="sr-only">{title || 'Dialog'}</DialogTitle>
-          <DeckWrapper
-            className="w-full h-screen flex flex-col justify-center items-center gap-5 overflow-x-hidden outline-none ring-0 focus:outline-none focus:border-none focus:ring-0 focus-visible:outline-none"
-            maxWidth={null}
-            minWidth={null}
-            style={{ paddingTop: 0, paddingBottom: 0, height: '100vh' }}
-            tabIndex={-1}
+          <div
+            className={`w-full flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="swiper-dialog-title"
           >
-            <div
-              className={`w-full ${widthClass} bg-stone-100 rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-labelledby="swiper-dialog-title"
-            >
               {title && (
-                <div className={`self-stretch h-11 px-3 ${tone === 'danger' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
+                <div className={`self-stretch h-11 px-3 ${tone === 'danger' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
                   <div id="swiper-dialog-title" className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">{title}</div>
                   {headerRight ?? (showHeaderDismiss ? (
                     <button
@@ -127,8 +119,7 @@ const SwiperDialog = ({
                   </div>
                 ))
               )}
-            </div>
-          </DeckWrapper>
+          </div>
         </DialogContent>
       </DialogPortal>
     </Dialog>

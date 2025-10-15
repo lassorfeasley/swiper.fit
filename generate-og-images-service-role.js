@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from './server/supabase.js';
 
-// Use service role key to bypass RLS (replace with your actual service role key)
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'YOUR_SERVICE_ROLE_KEY_HERE' // Replace with actual service role key from Supabase dashboard
-);
+// Use service role key via env to bypass RLS
+const supabase = getSupabaseServerClient();
 
 async function generateOGImage(workoutId) {
   try {
@@ -43,16 +40,6 @@ async function generateOGImage(workoutId) {
       day: 'numeric', 
       year: 'numeric' 
     });
-
-    // Generate OG image using Vercel's ImageResponse (simplified version)
-    const ogImageData = {
-      workoutName: workout.workout_name || 'Completed Workout',
-      routineName: workout.routines?.routine_name || 'Workout',
-      date: date,
-      duration: duration,
-      exerciseCount: exerciseCount,
-      setCount: setCount
-    };
 
     // Generate OG image using the proper API endpoint
     const response = await fetch(`https://www.swiper.fit/api/generate-og-image?workoutId=${workoutId}`);

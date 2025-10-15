@@ -52,12 +52,9 @@ export default async function handler(req, res) {
 }
 
 // --- Helpers ---
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from '../../server/supabase.js';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = getSupabaseServerClient();
 
 async function buildFriendlyPayload(event, context, data) {
   const env = context.env || process.env.VERCEL_ENV || 'production';

@@ -1,11 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerClient } from '../../server/supabase.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const supabase = createClient(
-  'https://tdevpmxmvrgouozsgplu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZXZwbXhtdnJnb3VvenNncGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2ODc0MTksImV4cCI6MjA2MzI2MzQxOX0.XjatUG82rA1rQDIvAfvlJ815xJaAjj2GZJG7mfrdxl0'
-);
+const supabase = getSupabaseServerClient();
 
 export default async function handler(req, res) {
   const workoutId = req.query.id || '3de533f8-7d05-47a9-ac1d-159268b509a4'; // fallback for testing

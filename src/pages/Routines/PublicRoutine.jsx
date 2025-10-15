@@ -21,6 +21,7 @@ export default function PublicRoutine() {
   const [routine, setRoutine] = useState(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchRoutine() {
@@ -193,7 +194,7 @@ export default function PublicRoutine() {
     if (!routine) return;
     // Logged out: send to create-account with import param
     if (!user) {
-      navigate(`/create-account?importRoutineId=${routineId}`);
+      setAuthDialogOpen(true);
       return;
     }
     setAddDialogOpen(true);
@@ -342,7 +343,7 @@ export default function PublicRoutine() {
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog?.(); } }}
-          aria-label={user ? "Save to my account" : "Create account to save routine"}
+          aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
         >
           <div className="p-2.5 flex justify-start items-center gap-2.5">
             <div className="relative">
@@ -351,7 +352,7 @@ export default function PublicRoutine() {
           </div>
           <div className="flex justify-center items-center gap-5">
             <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-              {user ? "Save to my account" : "Login or create account to save"}
+              {user ? "Add routine to my account" : "Create account or login to add routine"}
             </div>
           </div>
         </div>
@@ -378,6 +379,29 @@ export default function PublicRoutine() {
             disabled={saving}
           >
             Add to my account
+          </SwiperButton>
+        </div>
+      </SwiperDialog>
+
+      {/* Auth Dialog for logged-out users */}
+      <SwiperDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        title="Have an account?"
+        hideFooter
+      >
+        <div className="grid grid-cols-1 gap-3">
+          <SwiperButton
+            variant="outline"
+            onClick={() => navigate(`/create-account?importRoutineId=${routineId}`)}
+          >
+            Create account
+          </SwiperButton>
+          <SwiperButton
+            variant="outline"
+            onClick={() => navigate(`/login?importRoutineId=${routineId}`)}
+          >
+            Login
           </SwiperButton>
         </div>
       </SwiperDialog>

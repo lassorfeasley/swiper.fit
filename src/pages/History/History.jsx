@@ -17,6 +17,7 @@ import { TextInput } from "@/components/molecules/text-input";
 import { Copy } from "lucide-react";
 import WorkoutHistoryList from "@/components/common/History/WorkoutHistoryList";
 import MainContentSection from "@/components/layout/MainContentSection";
+import SwiperCombobox from "@/components/molecules/swiper-combobox";
 import WorkoutCard from "@/components/common/Cards/WorkoutCard";
 
 const History = () => {
@@ -240,6 +241,15 @@ const History = () => {
     fetchData();
   }, [targetUserId]);
 
+  // Initialize routine filter from navigation state when arriving from a workout
+  useEffect(() => {
+    const desired = location.state?.filterRoutine;
+    if (desired && typeof desired === 'string') {
+      setSelectedRoutine(desired);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.filterRoutine]);
+
   /* ------------------------------------------------------------------
     Fetch owner name for public view
   ------------------------------------------------------------------*/
@@ -258,6 +268,12 @@ const History = () => {
     })();
   }, [viewingOwn, targetUserId]);
 
+  // Build routine options from loaded workouts (distinct routine names)
+  const routineOptions = Array.from(new Set((workouts || []).map(w => w?.routines?.routine_name).filter(Boolean)))
+    .map(name => ({ value: name, label: name }));
+
+  const [selectedRoutine, setSelectedRoutine] = useState("");
+
   return (
     <AppLayout
       reserveSpace={false}
@@ -271,13 +287,23 @@ const History = () => {
       hideDelegateHeader={true}
       sharingNavAbove={isDelegated}
       sharingNavContent={headerSharingContent}
+      sharingSection={(
+        <SwiperCombobox
+          items={routineOptions}
+          value={selectedRoutine}
+          onChange={setSelectedRoutine}
+          placeholder="Filter by routine"
+          filterPlaceholder="Search routines"
+          width={240}
+        />
+      )}
       data-component="AppHeader"
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">
         {/* Workout History List */}
         {!loading && (
           <WorkoutHistoryList
-            workouts={workouts}
+            workouts={selectedRoutine ? workouts.filter(w => w?.routines?.routine_name === selectedRoutine) : workouts}
             viewingOwn={viewingOwn || isDelegated}
           />
         )}
