@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/atoms/button';
+import { postEmailEvent } from '@/lib/emailEvents';
 
 export default function EmailTest() {
   const [sending, setSending] = useState(false);
@@ -11,21 +12,9 @@ export default function EmailTest() {
     try {
       setSending(true);
       setResult('');
-      const isLocal = typeof window !== 'undefined' && window.location.origin.includes('localhost');
-      const base = isLocal ? 'https://www.swiper.fit' : '';
-      const resp = await fetch(`${base}/api/email/notify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: defaultTo,
-          event: 'account.created',
-          data: { user_name: 'Lassor', email: defaultTo },
-          context: { env: (import.meta?.env?.MODE) || 'production' },
-        }),
-      });
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || 'Failed');
-      setResult(`Sent ✔ id=${json?.id || 'n/a'}`);
+      // Try beacon; it won't expose response, so optimistically show sent state
+      postEmailEvent('account.created', defaultTo, { user_name: 'Lassor', email: defaultTo });
+      setResult('Requested send ✔');
     } catch (e) {
       setResult(`Error: ${e.message}`);
     } finally {
