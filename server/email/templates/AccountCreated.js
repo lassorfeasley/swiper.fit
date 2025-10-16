@@ -9,44 +9,36 @@ export default function AccountCreated({ name }) {
   const baseUrl = process.env.EMAIL_WEB_BASE_URL || 'https://www.swiper.fit';
   const routinesUrl = `${baseUrl}/routines`;
 
-  const buttonStyle = {
-    display: 'inline-block',
-    backgroundColor: '#111827',
-    color: '#ffffff',
-    textDecoration: 'none',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    fontSize: 14,
-    lineHeight: 1.4,
-  };
-
-  const linkStyle = {
-    color: '#111827',
-    textDecoration: 'underline',
-  };
+  const titleStyle = { color: '#000000', fontSize: 24, fontWeight: 700, fontFamily: 'Arial, sans-serif', margin: '0 0 8px 0' };
+  const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: 0 };
+  const ctaStyle  = { color: '#065F46', fontSize: 14, fontWeight: 700, fontFamily: 'Arial, sans-serif', textDecoration: 'none' };
+  const logoWrap  = { marginBottom: 16 };
 
   return React.createElement(
     DefaultLayout,
     {
-      title: 'Welcome to Swiper',
+      title: '',
       preheader: 'It\u2019s time to create an exercise routine and start a workout.',
+      hideTitle: true,
     },
-    React.createElement('p', { style: { fontSize: 14, lineHeight: 1.6 } }, `Hi ${name || 'there'},`),
-    React.createElement(
-      'p',
-      { style: { fontSize: 14, lineHeight: 1.6 } },
-      'Your account is ready. Create a routine to get started, then jump into your first workout.'
+    // Logo checkmark
+    React.createElement('div', { style: logoWrap },
+      React.createElement('svg', { width: 50, height: 39, viewBox: '0 0 50 39', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+        React.createElement('path', { d: 'M50 6.04677L17.2911 38.5927L0 22.8205L5.6506 16.5208L17.0402 26.9098L44.0862 0L50 6.04677Z', fill: '#22C55E' })
+      )
     ),
-    React.createElement(
-      'p',
-      { style: { margin: '16px 0 8px' } },
-      React.createElement('a', { href: routinesUrl, style: buttonStyle }, 'Create a routine\u2192')
+    // Heading
+    React.createElement('div', { style: titleStyle }, 'You created a Swiper account.'),
+    // Body
+    React.createElement('div', { style: { ...bodyStyle, marginTop: 4 } },
+      'Swiper is the effortless way to log workouts at the gym.',
+      React.createElement('br'),
+      React.createElement('br'),
+      'It\u2019s time to create an exercise routine and start a workout.'
     ),
-    React.createElement(
-      'p',
-      { style: { fontSize: 12, lineHeight: 1.6, color: '#6b7280', marginTop: 16 } },
-      'Having trouble with the button? ',
-      React.createElement('a', { href: routinesUrl, style: linkStyle }, routinesUrl)
+    // CTA link (text style per design)
+    React.createElement('div', { style: { marginTop: 16 } },
+      React.createElement('a', { href: routinesUrl, style: ctaStyle }, 'Create a routine \u2192')
     )
   );
 }
