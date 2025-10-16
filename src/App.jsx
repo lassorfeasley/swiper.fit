@@ -34,6 +34,7 @@ import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
 import ComponentsGallery from "./pages/ComponentsGallery";
+import EmailTest from "./pages/EmailTest";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
@@ -227,6 +228,9 @@ function AppContent() {
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
               <Route path="/components" element={<ComponentsGallery />} />
+            )}
+            {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
+              <Route path="/email-test" element={<EmailTest />} />
             )}
 
           </Route>
