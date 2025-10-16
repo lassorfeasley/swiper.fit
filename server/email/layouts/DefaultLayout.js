@@ -1,7 +1,7 @@
 import React from 'react';
 import { Html, Head, Preview, Body, Container, Section } from '@react-email/components';
 
-export default function DefaultLayout({ title = 'Notification', preheader = '', children, footer }) {
+export default function DefaultLayout({ title = 'Notification', preheader = '', children, footer, hideTitle = false }) {
   return React.createElement(
     Html,
     null,
@@ -16,7 +16,7 @@ export default function DefaultLayout({ title = 'Notification', preheader = '', 
         React.createElement(
           Section,
           { style: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20 } },
-          React.createElement('h1', { style: { fontSize: 18, margin: '0 0 8px 0', color: '#111827' } }, title),
+          !hideTitle && title ? React.createElement('h1', { style: { fontSize: 18, margin: '0 0 8px 0', color: '#111827' } }, title) : null,
           children,
           footer ? React.createElement('div', null, footer) : null
         )
