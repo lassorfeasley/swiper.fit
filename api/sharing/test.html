@@ -93,6 +93,17 @@
         <h1>🧪 Sharing API Test Suite</h1>
         
         <div class="test-section">
+            <h3>📋 Instructions</h3>
+            <p><strong>Before running tests:</strong></p>
+            <ol>
+                <li>Make sure you're logged into the main app at <code>localhost:3000</code></li>
+                <li>Keep that tab open (it maintains your authentication session)</li>
+                <li>Run the "Basic API Connection Test" first</li>
+                <li>If authentication fails, log in to the main app and try again</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
             <h3>1. Basic API Connection Test</h3>
             <p>Test if the API functions are loaded and working.</p>
             <button onclick="runBasicTest()">Run Basic Test</button>
@@ -138,7 +149,7 @@
     </div>
 
     <script type="module">
-        // Import the test functions
+        // Import the test functions and Supabase client
         import { 
             createTrainerInvite,
             createClientInvite,
@@ -154,6 +165,12 @@
             canManageAccount,
             getAllSharingRelationships
         } from './index.js';
+        
+        // Import Supabase client
+        import { supabase } from '../../src/supabaseClient.js';
+        
+        // Make Supabase available globally
+        window.supabase = supabase;
 
         // Test data
         const TEST_DATA = {
@@ -188,11 +205,39 @@
                 console.log('✅ API loaded successfully');
                 console.log('Available functions:', Object.keys(window.sharingAPI));
                 
-                // Test a simple function that doesn't require real data
-                const count = await window.sharingAPI.getPendingRequestCount('test-user-id');
+                // Check if we have a valid session
+                const { data: { session }, error: sessionError } = await window.supabase.auth.getSession();
+                
+                if (sessionError) {
+                    console.warn('⚠️ Session error:', sessionError.message);
+                    return { 
+                        success: false, 
+                        error: `Authentication error: ${sessionError.message}. Please log in to the main app first.`,
+                        needsAuth: true
+                    };
+                }
+                
+                if (!session) {
+                    console.warn('⚠️ No active session found');
+                    return { 
+                        success: false, 
+                        error: 'No active session found. Please log in to the main app first.',
+                        needsAuth: true
+                    };
+                }
+                
+                console.log('✅ Valid session found for user:', session.user.email);
+                
+                // Test a simple function with the actual user ID
+                const count = await window.sharingAPI.getPendingRequestCount(session.user.id);
                 console.log('✅ API call successful, pending count:', count);
                 
-                return { success: true, api: window.sharingAPI };
+                return { 
+                    success: true, 
+                    api: window.sharingAPI,
+                    userId: session.user.id,
+                    userEmail: session.user.email
+                };
             } catch (error) {
                 console.error('❌ API test failed:', error);
                 return { success: false, error: error.message };
@@ -351,11 +396,19 @@
             const result = await window.testAPI();
             
             if (result.success) {
-                showStatus('basic-status', '✅ Basic test passed! API is working.', 'success');
+                showStatus('basic-status', `✅ Basic test passed! Logged in as: ${result.userEmail}`, 'success');
                 showOutput('basic-output', JSON.stringify(result, null, 2));
+                
+                // Auto-fill the user ID field
+                document.getElementById('userId').value = result.userId;
             } else {
-                showStatus('basic-status', `❌ Basic test failed: ${result.error}`, 'error');
-                showOutput('basic-output', result.error);
+                if (result.needsAuth) {
+                    showStatus('basic-status', `❌ Authentication required: ${result.error}`, 'error');
+                    showOutput('basic-output', `To fix this:\n1. Open the main app (localhost:3000)\n2. Log in with your account\n3. Come back to this test page\n4. Run the test again`);
+                } else {
+                    showStatus('basic-status', `❌ Basic test failed: ${result.error}`, 'error');
+                    showOutput('basic-output', result.error);
+                }
             }
         };
 
