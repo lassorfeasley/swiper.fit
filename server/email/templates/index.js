@@ -1,4 +1,4 @@
-import AccountCreated, { subject as subjectAccountCreated } from './AccountCreated.jsx';
+import AccountCreated, { subject as subjectAccountCreated } from './AccountCreated.js';
 
 export const EmailTemplates = {
   'account.created': {
