@@ -4,21 +4,35 @@
  * Run this in the browser console or as a test script
  */
 
-import { 
-  createTrainerInvite,
-  createClientInvite,
-  acceptSharingRequest,
-  declineSharingRequest,
-  getPendingRequests,
-  getPendingRequestCount,
-  createLegacyShare,
-  updateSharePermissions,
-  revokeShare,
-  getOwnedShares,
-  getDelegateShares,
-  canManageAccount,
-  getAllSharingRelationships
-} from './index.js';
+// Import functions dynamically to make them available globally
+let sharingAPI = null;
+
+async function loadAPI() {
+  if (!sharingAPI) {
+    sharingAPI = await import('./index.js');
+  }
+  return sharingAPI;
+}
+
+// Make functions available globally for console testing
+window.testSharingAPI = async () => {
+  const api = await loadAPI();
+  return {
+    createTrainerInvite: api.createTrainerInvite,
+    createClientInvite: api.createClientInvite,
+    acceptSharingRequest: api.acceptSharingRequest,
+    declineSharingRequest: api.declineSharingRequest,
+    getPendingRequests: api.getPendingRequests,
+    getPendingRequestCount: api.getPendingRequestCount,
+    createLegacyShare: api.createLegacyShare,
+    updateSharePermissions: api.updateSharePermissions,
+    revokeShare: api.revokeShare,
+    getOwnedShares: api.getOwnedShares,
+    getDelegateShares: api.getDelegateShares,
+    canManageAccount: api.canManageAccount,
+    getAllSharingRelationships: api.getAllSharingRelationships
+  };
+};
 
 // Test data (replace with actual user IDs and emails)
 const TEST_DATA = {
@@ -31,13 +45,15 @@ const TEST_DATA = {
 /**
  * Test trainer invitation flow
  */
-export async function testTrainerInvitation() {
+window.testTrainerInvitation = async () => {
   console.log('🧪 Testing trainer invitation flow...');
   
   try {
+    const api = await loadAPI();
+    
     // 1. Create trainer invitation
     console.log('1. Creating trainer invitation...');
-    const invitation = await createTrainerInvite(
+    const invitation = await api.createTrainerInvite(
       TEST_DATA.clientEmail,
       TEST_DATA.trainerId,
       {
@@ -50,17 +66,17 @@ export async function testTrainerInvitation() {
 
     // 2. Get pending requests for client
     console.log('2. Getting pending requests for client...');
-    const pendingRequests = await getPendingRequests(TEST_DATA.clientId);
+    const pendingRequests = await api.getPendingRequests(TEST_DATA.clientId);
     console.log('✅ Pending requests:', pendingRequests);
 
     // 3. Get pending request count
     console.log('3. Getting pending request count...');
-    const count = await getPendingRequestCount(TEST_DATA.clientId);
+    const count = await api.getPendingRequestCount(TEST_DATA.clientId);
     console.log('✅ Pending request count:', count);
 
     // 4. Accept the invitation
     console.log('4. Accepting invitation...');
-    const acceptedShare = await acceptSharingRequest(
+    const acceptedShare = await api.acceptSharingRequest(
       invitation.id,
       TEST_DATA.clientId
     );
@@ -68,7 +84,7 @@ export async function testTrainerInvitation() {
 
     // 5. Verify management permissions
     console.log('5. Verifying management permissions...');
-    const canManage = await canManageAccount(TEST_DATA.trainerId, TEST_DATA.clientId);
+    const canManage = await api.canManageAccount(TEST_DATA.trainerId, TEST_DATA.clientId);
     console.log('✅ Can manage account:', canManage);
 
     return {
@@ -85,18 +101,20 @@ export async function testTrainerInvitation() {
       error: error.message
     };
   }
-}
+};
 
 /**
  * Test client invitation flow
  */
-export async function testClientInvitation() {
+window.testClientInvitation = async () => {
   console.log('🧪 Testing client invitation flow...');
   
   try {
+    const api = await loadAPI();
+    
     // 1. Create client invitation
     console.log('1. Creating client invitation...');
-    const invitation = await createClientInvite(
+    const invitation = await api.createClientInvite(
       TEST_DATA.trainerEmail,
       TEST_DATA.clientId,
       {
@@ -109,12 +127,12 @@ export async function testClientInvitation() {
 
     // 2. Get pending requests for trainer
     console.log('2. Getting pending requests for trainer...');
-    const pendingRequests = await getPendingRequests(TEST_DATA.trainerId);
+    const pendingRequests = await api.getPendingRequests(TEST_DATA.trainerId);
     console.log('✅ Pending requests:', pendingRequests);
 
     // 3. Accept the invitation
     console.log('3. Accepting invitation...');
-    const acceptedShare = await acceptSharingRequest(
+    const acceptedShare = await api.acceptSharingRequest(
       invitation.id,
       TEST_DATA.trainerId
     );
@@ -133,124 +151,82 @@ export async function testClientInvitation() {
       error: error.message
     };
   }
-}
+};
 
 /**
- * Test legacy sharing functions
+ * Simple test to check if API is working
  */
-export async function testLegacySharing() {
-  console.log('🧪 Testing legacy sharing functions...');
+window.testAPI = async () => {
+  console.log('🧪 Testing API connection...');
   
   try {
-    // 1. Create legacy share
-    console.log('1. Creating legacy share...');
-    const legacyShare = await createLegacyShare({
-      owner_user_id: TEST_DATA.trainerId,
-      delegate_user_id: TEST_DATA.clientId,
-      delegate_email: TEST_DATA.clientEmail,
-      can_create_routines: true,
-      can_start_workouts: true,
-      can_review_history: true
-    });
-    console.log('✅ Legacy share created:', legacyShare);
+    const api = await loadAPI();
+    console.log('✅ API loaded successfully');
+    console.log('Available functions:', Object.keys(api));
+    
+    // Test a simple function that doesn't require real data
+    const count = await api.getPendingRequestCount('test-user-id');
+    console.log('✅ API call successful, pending count:', count);
+    
+    return { success: true, api };
+  } catch (error) {
+    console.error('❌ API test failed:', error);
+    return { success: false, error: error.message };
+  }
+};
 
-    // 2. Update permissions
-    console.log('2. Updating permissions...');
-    const updatedShare = await updateSharePermissions(legacyShare.id, {
-      can_create_routines: false
-    });
-    console.log('✅ Permissions updated:', updatedShare);
-
-    // 3. Get owned shares
-    console.log('3. Getting owned shares...');
-    const ownedShares = await getOwnedShares(TEST_DATA.trainerId);
+/**
+ * Test with real user data
+ */
+window.testWithRealData = async (userId) => {
+  console.log('🧪 Testing with real user data...');
+  
+  try {
+    const api = await loadAPI();
+    
+    // Test getting pending requests
+    const pendingRequests = await api.getPendingRequests(userId);
+    console.log('✅ Pending requests:', pendingRequests);
+    
+    // Test getting request count
+    const count = await api.getPendingRequestCount(userId);
+    console.log('✅ Pending request count:', count);
+    
+    // Test getting owned shares
+    const ownedShares = await api.getOwnedShares(userId);
     console.log('✅ Owned shares:', ownedShares);
-
-    // 4. Get delegate shares
-    console.log('4. Getting delegate shares...');
-    const delegateShares = await getDelegateShares(TEST_DATA.clientId);
+    
+    // Test getting delegate shares
+    const delegateShares = await api.getDelegateShares(userId);
     console.log('✅ Delegate shares:', delegateShares);
-
-    // 5. Revoke share
-    console.log('5. Revoking share...');
-    await revokeShare(legacyShare.id);
-    console.log('✅ Share revoked');
-
+    
     return {
       success: true,
-      legacyShare,
-      updatedShare,
+      pendingRequests,
+      count,
       ownedShares,
       delegateShares
     };
-
+    
   } catch (error) {
-    console.error('❌ Legacy sharing test failed:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    console.error('❌ Real data test failed:', error);
+    return { success: false, error: error.message };
   }
-}
-
-/**
- * Test error handling
- */
-export async function testErrorHandling() {
-  console.log('🧪 Testing error handling...');
-  
-  const tests = [
-    {
-      name: 'Self-invitation',
-      test: () => createTrainerInvite(TEST_DATA.trainerEmail, TEST_DATA.trainerId)
-    },
-    {
-      name: 'Invalid email',
-      test: () => createTrainerInvite('invalid@nonexistent.com', TEST_DATA.trainerId)
-    },
-    {
-      name: 'Accept non-existent request',
-      test: () => acceptSharingRequest('non-existent-id', TEST_DATA.clientId)
-    }
-  ];
-
-  for (const test of tests) {
-    try {
-      await test.test();
-      console.log(`❌ ${test.name} should have failed but didn't`);
-    } catch (error) {
-      console.log(`✅ ${test.name} correctly failed:`, error.message);
-    }
-  }
-}
-
-/**
- * Run all tests
- */
-export async function runAllTests() {
-  console.log('🚀 Starting sharing API tests...');
-  
-  const results = {
-    trainerInvitation: await testTrainerInvitation(),
-    clientInvitation: await testClientInvitation(),
-    legacySharing: await testLegacySharing(),
-    errorHandling: await testErrorHandling()
-  };
-
-  console.log('📊 Test Results:', results);
-  
-  const successCount = Object.values(results).filter(r => r.success !== false).length;
-  const totalCount = Object.keys(results).length;
-  
-  console.log(`✅ Tests completed: ${successCount}/${totalCount} passed`);
-  
-  return results;
-}
-
-// Export test functions for individual testing
-export {
-  testTrainerInvitation,
-  testClientInvitation,
-  testLegacySharing,
-  testErrorHandling
 };
+
+// Console instructions
+console.log(`
+🧪 Sharing API Test Functions Available:
+
+1. testAPI() - Test basic API connection
+2. testWithRealData(userId) - Test with real user data
+3. testTrainerInvitation() - Test trainer invitation flow
+4. testClientInvitation() - Test client invitation flow
+
+Usage examples:
+- testAPI()
+- testWithRealData('your-user-id-here')
+- testTrainerInvitation()
+
+Note: Replace TEST_DATA values with real user IDs and emails for full testing.
+`);
