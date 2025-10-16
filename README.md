@@ -1,12 +1,23 @@
-# React + Vite
+# Swiper
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Email (Resend) setup
 
-Currently, two official plugins are available:
+Environment variables (set in Vercel project settings and/or local `.env`):
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```
+RESEND_API_KEY=...        # from Resend dashboard
+EMAIL_FROM="Swiper <no-reply@swiper.fit>"  # or your verified sender
+INTERNAL_API_SECRET=...   # optional: to secure server-to-server calls
+```
 
-## Expanding the ESLint configuration
+Endpoint:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `POST /api/email/notify` accepts either:
+  - `{ to, subject, html }` to send a raw email, or
+  - `{ to, event, data, context }` to build a formatted email for known events.
+
+Client helper (optional): `postEmailEvent(event, to, data)` in `src/lib/emailEvents.js` mirrors the Slack event helper.
+
+Notes:
+- Do not hardcode API keys in source. Configure `RESEND_API_KEY` in environment.
+- Verify your sending domain in Resend before production sends.
