@@ -7,7 +7,8 @@ export function subject() {
 
 export default function AccountCreated({ name }) {
   const baseUrl = process.env.EMAIL_WEB_BASE_URL || 'https://www.swiper.fit';
-  const routinesUrl = `${baseUrl}/routines`;
+  const redirectPath = encodeURIComponent('/routines');
+  const routinesUrl = `${baseUrl}/login?redirect=${redirectPath}`;
 
   const titleStyle = { color: '#000000', fontSize: 24, fontWeight: 700, fontFamily: 'Arial, sans-serif', margin: '0 0 8px 0' };
   const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: 0 };
