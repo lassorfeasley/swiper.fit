@@ -18,6 +18,7 @@ import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { postSlackEvent } from "@/lib/slackEvents";
+import { postEmailEvent } from "@/lib/emailEvents";
 import { toast } from "sonner";
 
 export default function CreateAccount() {
@@ -179,6 +180,11 @@ export default function CreateAccount() {
         if (uid) {
           postSlackEvent('account.created', {
             account_id: uid,
+            user_id: uid,
+            email,
+          });
+          // Send Account Created email
+          postEmailEvent('account.created', email, {
             user_id: uid,
             email,
           });
