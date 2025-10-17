@@ -233,7 +233,7 @@ const RoutinesIndex = () => {
                     if (inputRef.current) inputRef.current.focus();
                   }, 0);
                 }}
-                variant="primary"
+                fillColor="bg-neutral-200"
                 className="self-stretch w-full"
               />
             </CardWrapper>

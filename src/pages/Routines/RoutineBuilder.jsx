@@ -1000,7 +1000,7 @@ const RoutineBuilder = () => {
               <ActionCard
                 text="Add an exercise"
                 onClick={() => handleOpenAddExercise(section)}
-                variant="primary"
+                fillColor="bg-neutral-200"
                 className="self-stretch w-full"
               />
             </CardWrapper>
