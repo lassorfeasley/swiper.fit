@@ -5,7 +5,7 @@ import SwiperFormSwitch from "./swiper-form-switch";
 import ActionPill from "./action-pill";
 
 const ManagePermissionsCard = ({
-  variant = "trainer", // "trainer" or "client"
+  variant = "trainer", // "trainer" (account manager) or "client" (account owner)
   name = "John Smith",
   permissions = {
     can_create_routines: true,
@@ -63,7 +63,7 @@ const ManagePermissionsCard = ({
         <div className={`TrainerPermissions self-stretch ${variant === 'client' ? 'border-t border-neutral-neutral-300' : 'outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300'} flex flex-col justify-start items-start overflow-hidden`}>
           {variant === "trainer" ? (
             <>
-              {/* Trainer Permissions - Switches */}
+              {/* Trainer (Account Manager) Permissions - Switches */}
               <div className="self-stretch bg-white">
                 <SwiperFormSwitch
                   label="Create and edit routines"
@@ -88,7 +88,7 @@ const ManagePermissionsCard = ({
             </>
           ) : (
             <>
-              {/* Client Permissions - Action Pills */}
+              {/* Client (Account Owner) Actions - Action Pills */}
               <div 
                 className="InputWrapper self-stretch h-14 p-3 bg-white inline-flex justify-center items-center cursor-pointer"
                 onClick={() => permissions.can_start_workouts && onStartWorkout()}

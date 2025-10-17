@@ -11,7 +11,6 @@ import AppLayout from "@/components/layout/AppLayout";
 import { generateWorkoutName } from "@/lib/utils";
 import EditableTextInput from "@/components/molecules/editable-text-input";
 import { useAccount } from "@/contexts/AccountContext";
-import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useNavigate, Navigate } from "react-router-dom";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
@@ -31,7 +30,6 @@ import ManagePermissionsCard from "@/components/molecules/manage-permissions-car
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
   const { isDelegated, switchToUser } = useAccount();
-  const { startWorkout } = useActiveWorkout();
   const navigate = useNavigate();
 
   // Redirect handled in render below to avoid hook order issues
@@ -45,7 +43,7 @@ export default function Sharing() {
   // Form state for dialog
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false);
   const [dialogEmail, setDialogEmail] = useState("");
-  const [dialogInviteType, setDialogInviteType] = useState('trainer'); // 'trainer' or 'client'
+  const [dialogInviteType, setDialogInviteType] = useState('trainer'); // 'trainer' (account manager) or 'client' (account owner)
   const [dialogPermissions, setDialogPermissions] = useState({
     can_create_routines: true,
     can_start_workouts: true,
@@ -100,14 +98,14 @@ export default function Sharing() {
 
 
 
-  // New handlers for delegate actions without switching context
-  const handleCreateRoutinesForOwner = async (ownerProfile) => {
+  // New handlers for account manager actions without switching context
+  const handleCreateRoutinesForClient = async (clientProfile) => {
     // Ensure dialog shows Manage view (primary create button visible)
     setDialogMode('manage');
-    console.log('[Sharing] Opening routine builder for owner:', ownerProfile.id);
-    setSelectedClient(ownerProfile);
+    console.log('[Sharing] Opening routine builder for client (account owner):', clientProfile.id);
+    setSelectedClient(clientProfile);
     
-    // Fetch routines for this specific owner
+    // Fetch routines for this specific client (account owner)
     try {
       const { data: routines, error } = await supabase
         .from("routines")
@@ -137,7 +135,7 @@ export default function Sharing() {
             )
           )
         `)
-        .eq("user_id", ownerProfile.id)
+        .eq("user_id", clientProfile.id)
         .eq("is_archived", false)
         .order("created_at", { ascending: false });
 
@@ -188,7 +186,7 @@ export default function Sharing() {
         };
       });
 
-      console.log("Fetched routines for owner:", ownerProfile.id);
+      console.log("Fetched routines for client (account owner):", clientProfile.id);
       console.log("Routine data structure:", routinesWithCompletion);
       console.log("Number of routines found:", routinesWithCompletion?.length || 0);
       
@@ -199,14 +197,14 @@ export default function Sharing() {
     }
   };
 
-  const handleReviewHistoryForOwner = async (ownerProfile) => {
-    console.log('[Sharing] Opening history for owner:', ownerProfile.id);
-    // Navigate to history page with owner context
+  const handleReviewHistoryForClient = async (clientProfile) => {
+    console.log('[Sharing] Opening history for client (account owner):', clientProfile.id);
+    // Navigate to history page with client context
     navigate('/history', { 
       state: { 
-        managingForOwner: true, 
-        ownerId: ownerProfile.id,
-        ownerName: formatUserDisplay(ownerProfile)
+        managingForClient: true, 
+        clientId: clientProfile.id,
+        clientName: formatUserDisplay(clientProfile)
       } 
     });
   };
@@ -214,27 +212,28 @@ export default function Sharing() {
   // -------------------------------
   // Queries
   // -------------------------------
-  const ownerSharesQuery = useQuery({
+  const trainerSharesQuery = useQuery({
     queryKey: ["shares_owned_by_me", user?.id],
     queryFn: async () => {
-      console.log('[Sharing] Fetching owned by me data for user:', user.id);
-      // Get accounts I've shared my account with (I am the owner)
+      console.log('[Sharing] Fetching trainers (account managers) for user:', user.id);
+      // Get trainers who can manage my account (I am the client/account owner)
       const { data: shares, error } = await supabase
         .from("account_shares")
         .select("id, owner_user_id, delegate_user_id, delegate_email, created_at, can_create_routines, can_start_workouts, can_review_history")
         .eq("owner_user_id", user.id)
+        .eq("status", "active") // Only get active (accepted) shares
         .is("revoked_at", null); // Only get non-revoked shares
 
       if (error) throw error;
       
       if (!shares || shares.length === 0) return [];
 
-      // Fetch profile data for the people I've shared with
-      const delegateIds = shares.map(share => share.delegate_user_id).filter(Boolean);
+      // Fetch profile data for the trainers (account managers) who can manage my account
+      const trainerIds = shares.map(share => share.delegate_user_id).filter(Boolean);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, email")
-        .in("id", delegateIds);
+        .in("id", trainerIds);
 
       if (profileError) throw profileError;
 
@@ -258,40 +257,41 @@ export default function Sharing() {
     enabled: !!user?.id,
   });
 
-  const sharedWithMeQuery = useQuery({
+  const clientSharesQuery = useQuery({
     queryKey: ["shares_shared_with_me", user?.id],
     queryFn: async () => {
-      console.log('[Sharing] Fetching shared with me data for user:', user.id);
-      // Get accounts that have shared their account with me (I am the delegate)
+      console.log('[Sharing] Fetching clients (account owners) for user:', user.id);
+      // Get clients whose accounts I can manage (I am the trainer/account manager)
       const { data: shares, error } = await supabase
         .from("account_shares")
         .select("id, owner_user_id, created_at, can_create_routines, can_start_workouts, can_review_history")
         .eq("delegate_user_id", user.id)
+        .eq("status", "active") // Only get active (accepted) shares
         .is("revoked_at", null); // Only get non-revoked shares
 
       if (error) throw error;
       
       if (!shares || shares.length === 0) return [];
 
-      // Fetch profile data for the people who shared with me
-      const ownerIds = shares.map(share => share.owner_user_id);
+      // Fetch profile data for the clients (account owners) whose accounts I can manage
+      const clientIds = shares.map(share => share.owner_user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, email")
-        .in("id", ownerIds);
+        .in("id", clientIds);
 
       if (profileError) throw profileError;
 
-      // Fetch active workouts for all owners in a single query
-      let activeByOwner = {};
-      if (ownerIds && ownerIds.length > 0) {
+      // Fetch active workouts for all clients in a single query
+      let activeByClient = {};
+      if (clientIds && clientIds.length > 0) {
         const { data: activeWorkouts, error: activeErr } = await supabase
           .from('workouts')
           .select(`id, user_id, routine_id, is_active, completed_at, routines!fk_workouts__routines(routine_name)`) 
-          .in('user_id', ownerIds)
+          .in('user_id', clientIds)
           .eq('is_active', true);
         if (!activeErr && Array.isArray(activeWorkouts)) {
-          activeByOwner = activeWorkouts.reduce((acc, w) => {
+          activeByClient = activeWorkouts.reduce((acc, w) => {
             acc[w.user_id] = w;
             return acc;
           }, {});
@@ -302,7 +302,7 @@ export default function Sharing() {
       const combinedData = shares.map(share => ({
         ...share,
         profile: profiles?.find(profile => profile.id === share.owner_user_id) || null,
-        activeWorkout: activeByOwner[share.owner_user_id] || null
+        activeWorkout: activeByClient[share.owner_user_id] || null
       }));
       
       // Sort by profile name for consistent ordering
@@ -722,7 +722,7 @@ export default function Sharing() {
     setDialogMode('workout');
     setSelectedClient(clientProfile);
     
-    // Fetch active routines for this specific client with workout completion data and exercises
+    // Fetch active routines for this specific client (account owner) with workout completion data and exercises
     try {
       const { data: routines, error } = await supabase
         .from("routines")
@@ -820,7 +820,7 @@ export default function Sharing() {
         };
       });
 
-      console.log("Fetched active routines for client:", clientProfile.id);
+      console.log("Fetched active routines for client (account owner):", clientProfile.id);
       console.log("Routine data structure:", routinesWithCompletion);
       console.log("Number of routines found:", routinesWithCompletion?.length || 0);
       console.log("Active workout:", activeWorkoutData);
@@ -835,7 +835,7 @@ export default function Sharing() {
 
   const handleJoinActiveWorkout = () => {
     if (activeWorkout && selectedClient) {
-      // Switch to the account owner's context so we can see their active workout
+      // Switch to the client's (account owner) context so we can see their active workout
       switchToUser(selectedClient);
       
       // Navigate to active workout page
@@ -849,15 +849,15 @@ export default function Sharing() {
 
   const handleRoutineManage = (routine) => {
     if (selectedClient) {
-      // Switch to the account owner's context
+      // Switch to the client's (account owner) context
       switchToUser(selectedClient);
       
       // Navigate to routine builder with the specific routine
       navigate(`/routines/${routine.id}/configure`, { 
         state: { 
-          managingForOwner: true, 
-          ownerId: selectedClient.id,
-          ownerName: formatUserDisplay(selectedClient)
+          managingForClient: true, 
+          clientId: selectedClient.id,
+          clientName: formatUserDisplay(selectedClient)
         } 
       });
       setShowRoutineSelectionDialog(false);
@@ -867,7 +867,7 @@ export default function Sharing() {
     }
   };
 
-  const handleCreateRoutineForOwner = () => {
+  const handleCreateRoutineForClient = () => {
     // Close the selection dialog so the sheet is the only overlay
     setShowRoutineSelectionDialog(false);
 
@@ -879,7 +879,7 @@ export default function Sharing() {
     }, 100);
   };
 
-  const handleConfirmCreateRoutineForOwner = async () => {
+  const handleConfirmCreateRoutineForClient = async () => {
     if (!selectedClient) return;
     const name = (newRoutineName || "").trim().slice(0, MAX_ROUTINE_NAME_LEN);
     if (!name) return;
@@ -901,17 +901,17 @@ export default function Sharing() {
           routine_id: routine.id,
           user_id: selectedClient.id,
           routine_name: routine.routine_name || name,
-          created_by_delegate: user?.id,
+          created_by_trainer: user?.id,
         });
       } catch (_) {}
 
-      // Switch context to owner so the builder opens in their account
+      // Switch context to client (account owner) so the builder opens in their account
       switchToUser(selectedClient);
       navigate(`/routines/${routine.id}/configure`, {
         state: {
-          managingForOwner: true,
-          ownerId: selectedClient.id,
-          ownerName: formatUserDisplay(selectedClient),
+          managingForClient: true,
+          clientId: selectedClient.id,
+          clientName: formatUserDisplay(selectedClient),
         },
       });
 
@@ -920,7 +920,7 @@ export default function Sharing() {
       setSelectedClient(null);
       setClientRoutines([]);
     } catch (e) {
-      console.error("Error creating routine for owner:", e);
+      console.error("Error creating routine for client:", e);
       toast.error(e?.message || "Failed to create routine. Please try again.");
     }
   };
@@ -1071,7 +1071,7 @@ export default function Sharing() {
                 pendingRequestsQuery.isLoading ||
                 outgoingRequestsQuery.isLoading) && (
                 <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
-                  <div className="w-full max-w-[500px] pt-20 pb-14 flex flex-col justify-start items-center gap-3">
+                  <div className="w-full max-w-[500px] pb-14 flex flex-col justify-start items-center gap-3">
                     <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
                       <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Requests</div>
                     </div>
@@ -1084,79 +1084,90 @@ export default function Sharing() {
                     )}
                     {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
                       pendingRequestsQuery.data.map((request) => (
-                        <div key={request.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                          <div className="self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
-                            <div className="flex-1 flex justify-start items-center gap-3">
+                        <div key={request.id} className="SharedWithMeCard w-[500px] max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                          <div className="CardHeader self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
+                            <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                               <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
                                 {request.request_type === 'trainer_invite'
-                                  ? `${formatUserDisplay(request.profiles)} wants to be your trainer`
-                                  : `${formatUserDisplay(request.profiles)} wants to be your client`
+                                  ? `${formatUserDisplay(request.profiles)} wants you to be their trainer`
+                                  : `${formatUserDisplay(request.profiles)} wants you to be their client`
                                 }
                               </div>
                             </div>
-                            <div className="h-10 min-w-10 py-3 bg-neutral-neutral-100 rounded-[20px] flex justify-center items-center gap-1">
-                              <div className="w-6 h-6 relative overflow-hidden">
-                                <AlertCircle className="w-5 h-5 text-neutral-neutral-700" />
-                              </div>
-                            </div>
+                            <ActionPill
+                              onClick={() => {}}
+                              Icon={AlertCircle}
+                              showText={false}
+                              color="neutral"
+                              iconColor="neutral"
+                              fill={false}
+                            />
                           </div>
-                          <div className="self-stretch p-3 flex flex-col justify-start items-start gap-4">
-                            <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
-                            <div className="self-stretch bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                              <div className="self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
-                                <div className="flex-1 flex justify-start items-center gap-5">
-                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
-                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Start a workout</div>
+                          <div className="Frame79 self-stretch p-3 flex flex-col justify-start items-start gap-4">
+                            <div className="YourPermissions self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
+                            <div className="PermissionRows self-stretch bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                              <div className="InputWrapper self-stretch h-14 p-3 inline-flex justify-center items-center">
+                                <div className="Frame75 flex-1 flex justify-start items-center gap-5">
+                                  <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Start workouts</div>
                                   </div>
                                 </div>
-                                <div className="w-6 h-6 relative overflow-hidden">
+                                <div className="LucideIcon relative">
                                   {request.can_start_workouts && (
-                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
                                   )}
                                 </div>
                               </div>
-                              <div className="self-stretch h-14 p-3 bg-neutral-Neutral-50 inline-flex justify-center items-center">
-                                <div className="flex-1 flex justify-start items-center gap-5">
-                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
-                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
+                              <div className="InputWrapper self-stretch h-14 p-3 bg-neutral-Neutral-50 inline-flex justify-center items-center">
+                                <div className="Frame75 flex-1 flex justify-start items-center gap-5">
+                                  <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
                                   </div>
                                 </div>
-                                <div className="w-6 h-6 relative overflow-hidden">
+                                <div className="LucideIcon relative">
                                   {request.can_create_routines && (
-                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
                                   )}
                                 </div>
                               </div>
-                              <div className="self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
-                                <div className="flex-1 flex justify-start items-center gap-5">
-                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
-                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
+                              <div className="InputWrapper self-stretch h-14 p-3 inline-flex justify-center items-center">
+                                <div className="Frame75 flex-1 flex justify-start items-center gap-5">
+                                  <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
                                   </div>
                                 </div>
-                                <div className="w-6 h-6 relative overflow-hidden">
+                                <div className="LucideIcon relative">
                                   {request.can_review_history && (
-                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            <div className="self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
-                              <button
+                            <div className="Frame80 self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
+                              <SwiperButton
                                 onClick={() => handleAcceptRequest(request.id)}
                                 disabled={acceptRequestMutation.isPending}
+                                variant="default"
                                 className="flex-1 h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl flex justify-center items-center gap-2.5"
                               >
-                                <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Accept</div>
-                              </button>
-                              <button
+                                <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Accept</div>
+                              </SwiperButton>
+                              <SwiperButton
                                 onClick={() => handleDeclineRequest(request.id)}
                                 disabled={declineRequestMutation.isPending}
+                                variant="destructive"
                                 className="flex-1 h-12 min-w-44 px-4 py-2 bg-red-red-400 rounded-xl flex justify-center items-center gap-2.5"
                               >
-                                <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Decline</div>
-                              </button>
+                                <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Decline</div>
+                              </SwiperButton>
                             </div>
-                            <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+                            <div className="ThisInvitationWillExpireIn14Days self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
                               This invitation will expire in {Math.ceil((new Date(request.expires_at) - new Date()) / (1000 * 60 * 60 * 24))} days.
                             </div>
                           </div>
@@ -1207,14 +1218,14 @@ export default function Sharing() {
                 </div>
               )}
 
-        {/* Trainers section */}
+        {/* Trainers (Account Managers) section */}
         <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
           <div className="pb-20 inline-flex flex-col justify-start items-center">
             <div className="flex flex-col justify-start items-start gap-3">
               <div className="w-[500px] h-14 max-w-[500px] py-3 inline-flex justify-center items-center gap-2.5">
                 <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Trainers</div>
               </div>
-              {ownerSharesQuery.data?.map((share) => (
+              {trainerSharesQuery.data?.map((share) => (
                 <ManagePermissionsCard
                   key={share.id}
                   variant="trainer"
@@ -1247,14 +1258,14 @@ export default function Sharing() {
           </div>
         </div>
 
-        {/* Clients section */}
+        {/* Clients (Account Owners) section */}
         <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
           <div className="pb-20 inline-flex flex-col justify-start items-center">
             <div className="flex flex-col justify-start items-start gap-3">
               <div className="w-[500px] h-14 max-w-[500px] inline-flex justify-center items-center gap-2.5">
                 <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Clients</div>
               </div>
-              {sharedWithMeQuery.data?.map((share) => (
+              {clientSharesQuery.data?.map((share) => (
                 <ManagePermissionsCard
                   key={share.id}
                   variant="client"
@@ -1274,8 +1285,8 @@ export default function Sharing() {
                     }
                     handleStartWorkout(share.profile);
                   }}
-                  onCreateRoutines={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
-                  onReviewHistory={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
+                  onCreateRoutines={() => share.can_create_routines && handleCreateRoutinesForClient(share.profile)}
+                  onReviewHistory={() => share.can_review_history && handleReviewHistoryForClient(share.profile)}
                 />
               ))}
               <ActionCard
@@ -1402,7 +1413,7 @@ export default function Sharing() {
               <SwiperButton
                 variant="primary-action"
                 className="self-stretch w-full"
-                onClick={handleCreateRoutineForOwner}
+                onClick={handleCreateRoutineForClient}
               >
                 <span className="flex-1">Create new routine</span>
                 <Plus className="w-6 h-6" strokeWidth={2} />
@@ -1534,7 +1545,7 @@ export default function Sharing() {
               // Reopen routine selection dialog to keep the user's context
               setTimeout(() => setShowRoutineSelectionDialog(true), 0);
             }}
-            rightAction={handleConfirmCreateRoutineForOwner}
+            rightAction={handleConfirmCreateRoutineForClient}
             rightEnabled={(newRoutineName || "").trim().length > 0}
             rightText="Create"
             leftText="Cancel"
