@@ -635,7 +635,7 @@ export async function getPendingRequests(userId) {
         can_create_routines,
         can_start_workouts,
         can_review_history,
-        profiles!account_shares_owner_user_id_fkey (
+        profiles!owner_user_id (
           id,
           first_name,
           last_name,
