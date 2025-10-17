@@ -24,6 +24,8 @@ export default function EmailTest() {
   const sendAccountCreated = () => sendEmail('account.created', { user_name: 'Lassor', email: defaultTo });
   const sendTrainerInvitation = () => sendEmail('trainer.invitation', { inviter_name: 'John Smith' });
   const sendClientInvitation = () => sendEmail('client.invitation', { inviter_name: 'John Smith' });
+  const sendJoinTrainerInvitation = () => sendEmail('join.trainer-invitation', { inviter_name: 'John Smith', email: defaultTo });
+  const sendJoinClientInvitation = () => sendEmail('join.client-invitation', { inviter_name: 'John Smith', email: defaultTo });
 
   return (
     <AppLayout>
@@ -51,6 +53,20 @@ export default function EmailTest() {
               {sending ? 'Sending…' : 'Send Client Invitation'}
             </Button>
             <span className="text-sm text-neutral-500">Email when someone invites you as their client</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button onClick={sendJoinTrainerInvitation} disabled={sending}>
+              {sending ? 'Sending…' : 'Send Join Trainer Invitation'}
+            </Button>
+            <span className="text-sm text-neutral-500">Email when non-member is invited to be a trainer</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button onClick={sendJoinClientInvitation} disabled={sending}>
+              {sending ? 'Sending…' : 'Send Join Client Invitation'}
+            </Button>
+            <span className="text-sm text-neutral-500">Email when non-member is invited to be a client</span>
           </div>
         </div>
         

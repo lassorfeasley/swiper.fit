@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/atoms/button";
@@ -19,6 +19,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { postEmailEvent } from "@/lib/emailEvents";
+import { linkPendingInvitations } from "../../../api/sharing";
 import { toast } from "sonner";
 
 export default function CreateAccount() {
@@ -32,6 +33,15 @@ export default function CreateAccount() {
   const location = useLocation();
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
   const importRoutineId = new URLSearchParams(location.search).get('importRoutineId');
+
+  // Handle email pre-population from invitation links
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const emailParam = urlParams.get("email");
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [location.search]);
 
   const cloneRoutineForCurrentUser = async (sourceRoutineId) => {
     try {
@@ -188,6 +198,17 @@ export default function CreateAccount() {
             user_id: uid,
             email,
           });
+
+          // Link any pending invitations for this email
+          try {
+            const linkedCount = await linkPendingInvitations(uid, email);
+            if (linkedCount > 0) {
+              toast.success(`You have ${linkedCount} pending invitation${linkedCount > 1 ? 's' : ''}! Check the Trainers page to accept them.`);
+            }
+          } catch (inviteError) {
+            console.error('Failed to link pending invitations:', inviteError);
+            // Don't throw - account creation was successful
+          }
         }
       } catch (_) {}
 
@@ -318,7 +339,7 @@ export default function CreateAccount() {
                     id="create-account-email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={signupMutation.isPending}
+                    disabled={signupMutation.isPending || (new URLSearchParams(location.search).get("email") !== null)}
                     error={!!errorMessage}
                   />
                 </div>

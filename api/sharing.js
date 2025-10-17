@@ -33,7 +33,70 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
     }
 
     if (!profiles?.length) {
-      throw new Error("No user found with that email address");
+      // Non-member invitation - create invitation with null delegate_user_id
+      console.log(`[createTrainerInvite] No user found, creating non-member invitation for: ${clientEmail}`);
+      
+      const invitationData = {
+        owner_user_id: trainerId, // Trainer (account manager) is the owner
+        delegate_user_id: null, // No user ID yet - they need to sign up
+        delegate_email: clientEmail.trim().toLowerCase(),
+        status: 'pending',
+        request_type: 'trainer_invite',
+        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+        can_create_routines: permissions.can_create_routines || false,
+        can_start_workouts: permissions.can_start_workouts || false,
+        can_review_history: permissions.can_review_history || false,
+      };
+
+      const { data, error } = await supabase
+        .from("account_shares")
+        .insert(invitationData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Failed to create non-member trainer invitation:", error);
+        throw new Error("Failed to create invitation");
+      }
+
+      console.log("Non-member trainer invitation created successfully:", data);
+      
+      // Send join invitation email to non-member
+      try {
+        // Get the trainer's profile for the email
+        const { data: trainerProfile } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, email")
+          .eq("id", trainerId)
+          .single();
+        
+        const trainerName = trainerProfile ? 
+          `${trainerProfile.first_name || ''} ${trainerProfile.last_name || ''}`.trim() || trainerProfile.email :
+          'Someone';
+        
+        await postEmailEvent('join.trainer-invitation', clientEmail, {
+          inviter_name: trainerName,
+          inviter_email: trainerProfile?.email || '',
+          email: clientEmail,
+          permissions: {
+            can_create_routines: permissions.can_create_routines || false,
+            can_start_workouts: permissions.can_start_workouts || false,
+            can_review_history: permissions.can_review_history || false,
+          },
+          expires_in_days: 14,
+        });
+        
+        console.log("Non-member trainer invitation email sent successfully");
+      } catch (emailError) {
+        console.error("Failed to send non-member trainer invitation email:", emailError);
+        // Don't throw - invitation was created successfully, email is secondary
+      }
+      
+      return {
+        ...data,
+        clientProfile: null, // No profile yet
+        isNonMember: true
+      };
     }
 
     const clientProfile = profiles[0];
@@ -93,7 +156,7 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
       delegate_email: clientEmail.trim().toLowerCase(),
       status: 'pending',
       request_type: 'trainer_invite',
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
       can_create_routines: permissions.can_create_routines || false,
       can_start_workouts: permissions.can_start_workouts || false,
       can_review_history: permissions.can_review_history || false,
@@ -176,7 +239,70 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
     }
 
     if (!profiles?.length) {
-      throw new Error("No user found with that email address");
+      // Non-member invitation - create invitation with null delegate_user_id
+      console.log(`[createClientInvite] No user found, creating non-member invitation for: ${trainerEmail}`);
+      
+      const invitationData = {
+        owner_user_id: clientId, // Client (account owner) is the owner
+        delegate_user_id: null, // No user ID yet - they need to sign up
+        delegate_email: trainerEmail.trim().toLowerCase(),
+        status: 'pending',
+        request_type: 'client_invite',
+        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+        can_create_routines: permissions.can_create_routines || false,
+        can_start_workouts: permissions.can_start_workouts || false,
+        can_review_history: permissions.can_review_history || false,
+      };
+
+      const { data, error } = await supabase
+        .from("account_shares")
+        .insert(invitationData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Failed to create non-member client invitation:", error);
+        throw new Error("Failed to create invitation");
+      }
+
+      console.log("Non-member client invitation created successfully:", data);
+      
+      // Send join invitation email to non-member
+      try {
+        // Get the client's profile for the email
+        const { data: clientProfile } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, email")
+          .eq("id", clientId)
+          .single();
+        
+        const clientName = clientProfile ? 
+          `${clientProfile.first_name || ''} ${clientProfile.last_name || ''}`.trim() || clientProfile.email :
+          'Someone';
+        
+        await postEmailEvent('join.client-invitation', trainerEmail, {
+          inviter_name: clientName,
+          inviter_email: clientProfile?.email || '',
+          email: trainerEmail,
+          permissions: {
+            can_create_routines: permissions.can_create_routines || false,
+            can_start_workouts: permissions.can_start_workouts || false,
+            can_review_history: permissions.can_review_history || false,
+          },
+          expires_in_days: 14,
+        });
+        
+        console.log("Non-member client invitation email sent successfully");
+      } catch (emailError) {
+        console.error("Failed to send non-member client invitation email:", emailError);
+        // Don't throw - invitation was created successfully, email is secondary
+      }
+      
+      return {
+        ...data,
+        trainerProfile: null, // No profile yet
+        isNonMember: true
+      };
     }
 
     const trainerProfile = profiles[0];
@@ -236,7 +362,7 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
       delegate_email: trainerEmail.trim().toLowerCase(),
       status: 'pending',
       request_type: 'client_invite',
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
       can_create_routines: permissions.can_create_routines || false,
       can_start_workouts: permissions.can_start_workouts || false,
       can_review_history: permissions.can_review_history || false,
@@ -808,9 +934,68 @@ export async function getAllSharingRelationships(userId) {
       delegateShares,
       pendingRequests
     };
-
   } catch (error) {
     console.error("Error fetching all sharing relationships:", error);
+    throw error;
+  }
+}
+
+/**
+ * Links pending invitations to a newly created user account
+ * @param {string} userId - ID of the newly created user
+ * @param {string} email - Email address of the user
+ * @returns {Promise<number>} Count of linked invitations
+ */
+export async function linkPendingInvitations(userId, email) {
+  try {
+    console.log(`[linkPendingInvitations] Linking invitations for user ${userId} with email ${email}`);
+    
+    // Find all pending invitations for this email where delegate_user_id is null
+    const { data: pendingInvitations, error: fetchError } = await supabase
+      .from("account_shares")
+      .select("id, owner_user_id, request_type, expires_at")
+      .eq("delegate_email", email.trim().toLowerCase())
+      .is("delegate_user_id", null)
+      .eq("status", "pending");
+
+    if (fetchError) {
+      console.error("Failed to fetch pending invitations:", fetchError);
+      throw new Error("Failed to fetch pending invitations");
+    }
+
+    if (!pendingInvitations || pendingInvitations.length === 0) {
+      console.log("No pending invitations found for this email");
+      return 0;
+    }
+
+    // Filter out expired invitations
+    const now = new Date();
+    const validInvitations = pendingInvitations.filter(invitation => 
+      new Date(invitation.expires_at) > now
+    );
+
+    if (validInvitations.length === 0) {
+      console.log("All pending invitations have expired");
+      return 0;
+    }
+
+    // Update all valid invitations to link them to the new user
+    const { data: updatedInvitations, error: updateError } = await supabase
+      .from("account_shares")
+      .update({ delegate_user_id: userId })
+      .in("id", validInvitations.map(inv => inv.id))
+      .select();
+
+    if (updateError) {
+      console.error("Failed to link pending invitations:", updateError);
+      throw new Error("Failed to link pending invitations");
+    }
+
+    console.log(`Successfully linked ${updatedInvitations.length} pending invitations`);
+    return updatedInvitations.length;
+
+  } catch (error) {
+    console.error("Error linking pending invitations:", error);
     throw error;
   }
 }
