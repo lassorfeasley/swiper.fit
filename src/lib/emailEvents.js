@@ -10,20 +10,23 @@ export function postEmailEvent(event, to, data = {}, contextExtras = {}) {
     };
     const url = `${base}/api/email/notify`;
     const payload = JSON.stringify({ event, to, data, context });
-    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-      try {
-        const blob = new Blob([payload], { type: 'application/json' });
-        const ok = navigator.sendBeacon(url, blob);
-        if (ok) return;
-      } catch (_) {}
-    }
-    fetch(url, {
+    
+    // Return a Promise that resolves when the email is sent
+    return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
       keepalive: true,
-    }).catch(() => {});
-  } catch (_) {}
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`Email API error: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    });
+  } catch (error) {
+    console.error('postEmailEvent error:', error);
+    throw error;
+  }
 }
 
 
