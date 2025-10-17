@@ -606,6 +606,21 @@ export async function declineSharingRequest(requestId, userId) {
  */
 export async function getPendingRequests(userId) {
   try {
+    // Get the user's email to find non-member invitations
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    if (profileError) {
+      console.error("Failed to get user profile:", profileError);
+      throw new Error("Failed to get user profile");
+    }
+
+    const userEmail = userProfile?.email;
+
+    // Query for both member and non-member invitations
     const { data: requests, error } = await supabase
       .from("account_shares")
       .select(`
@@ -619,9 +634,15 @@ export async function getPendingRequests(userId) {
         expires_at,
         can_create_routines,
         can_start_workouts,
-        can_review_history
+        can_review_history,
+        profiles!account_shares_owner_user_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email
+        )
       `)
-      .eq("delegate_user_id", userId)
+      .or(`delegate_user_id.eq.${userId},and(delegate_user_id.is.null,delegate_email.eq.${userEmail})`)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
