@@ -52,6 +52,11 @@ export default function Sharing() {
     can_review_history: true
   });
 
+  // Delete share dialog state
+  const [showDeleteShareDialog, setShowDeleteShareDialog] = useState(false);
+  const [shareToDeleteId, setShareToDeleteId] = useState(null);
+  const [shareToDeleteName, setShareToDeleteName] = useState("");
+
   // Routine selection dialog state
   const [showRoutineSelectionDialog, setShowRoutineSelectionDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -637,10 +642,10 @@ export default function Sharing() {
     }
   };
 
-  const handleRemoveShare = (shareId) => {
-    if (confirm("Are you sure you want to remove access for this user?")) {
-      deleteShareMutation.mutate(shareId);
-    }
+  const handleRemoveShare = (shareId, displayName) => {
+    setShareToDeleteId(shareId);
+    setShareToDeleteName(displayName || "this user");
+    setShowDeleteShareDialog(true);
   };
 
   const handleAcceptRequest = (requestId) => {
@@ -1226,7 +1231,7 @@ export default function Sharing() {
                       }
                     });
                   }}
-                  onRemove={() => handleRemoveShare(share.id)}
+                  onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
                 />
               ))}
               <ActionCard
@@ -1259,7 +1264,7 @@ export default function Sharing() {
                     can_start_workouts: share.can_start_workouts,
                     can_review_history: share.can_review_history
                   }}
-                  onRemove={() => handleRemoveShare(share.id)}
+                  onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
                   onStartWorkout={() => {
                     if (!share.can_start_workouts) return;
                     if (share.activeWorkout) {
@@ -1556,6 +1561,28 @@ export default function Sharing() {
             </SwiperForm.Section>
           </SwiperForm>
         </div>
+        {/* Delete Share Confirmation Dialog */}
+        <SwiperDialog
+          open={showDeleteShareDialog}
+          onOpenChange={setShowDeleteShareDialog}
+          title="Disconnect trainer"
+          description={`${shareToDeleteName} will no longer be a trainer on your account.`}
+          confirmText="Remove access"
+          cancelText="Cancel"
+          confirmVariant="destructive"
+          cancelVariant="outline"
+          onConfirm={() => {
+            if (shareToDeleteId) {
+              deleteShareMutation.mutate(shareToDeleteId);
+            }
+            setShowDeleteShareDialog(false);
+            setShareToDeleteId(null);
+          }}
+          onCancel={() => {
+            setShowDeleteShareDialog(false);
+            setShareToDeleteId(null);
+          }}
+        />
       </MainContentSection>
     </AppLayout>
   );
