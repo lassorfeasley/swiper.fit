@@ -1,4 +1,5 @@
 import { supabase } from '@/supabaseClient';
+import { postEmailEvent } from '@/lib/emailEvents';
 
 /**
  * Creates a trainer invitation - when a trainer (account manager) wants to manage a client's (account owner) account
@@ -101,6 +102,37 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
     }
 
     console.log("Trainer invitation created successfully:", data);
+    
+    // Send email notification to the client
+    try {
+      // Get the trainer's profile for the email
+      const { data: trainerProfile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("id", trainerId)
+        .single();
+      
+      const trainerName = trainerProfile ? 
+        `${trainerProfile.first_name || ''} ${trainerProfile.last_name || ''}`.trim() || trainerProfile.email :
+        'Someone';
+      
+      await postEmailEvent('trainer.invitation', clientEmail, {
+        inviter_name: trainerName,
+        inviter_email: trainerProfile?.email || '',
+        permissions: {
+          can_create_routines: permissions.can_create_routines || false,
+          can_start_workouts: permissions.can_start_workouts || false,
+          can_review_history: permissions.can_review_history || false,
+        },
+        expires_in_days: 7,
+      });
+      
+      console.log("Trainer invitation email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send trainer invitation email:", emailError);
+      // Don't throw - invitation was created successfully, email is secondary
+    }
+    
     return {
       ...data,
       clientProfile
@@ -218,6 +250,37 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
     }
 
     console.log("Client invitation created successfully:", data);
+    
+    // Send email notification to the trainer
+    try {
+      // Get the client's profile for the email
+      const { data: clientProfile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("id", clientId)
+        .single();
+      
+      const clientName = clientProfile ? 
+        `${clientProfile.first_name || ''} ${clientProfile.last_name || ''}`.trim() || clientProfile.email :
+        'Someone';
+      
+      await postEmailEvent('client.invitation', trainerEmail, {
+        inviter_name: clientName,
+        inviter_email: clientProfile?.email || '',
+        permissions: {
+          can_create_routines: permissions.can_create_routines || false,
+          can_start_workouts: permissions.can_start_workouts || false,
+          can_review_history: permissions.can_review_history || false,
+        },
+        expires_in_days: 7,
+      });
+      
+      console.log("Client invitation email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send client invitation email:", emailError);
+      // Don't throw - invitation was created successfully, email is secondary
+    }
+    
     return {
       ...data,
       trainerProfile
