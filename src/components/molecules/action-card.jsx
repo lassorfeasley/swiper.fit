@@ -3,37 +3,33 @@ import { Plus } from "lucide-react";
 
 const ActionCard = React.forwardRef(({ 
   className, 
-  text = "create a new routine",
+  text = "Add exercise",
   onClick,
   variant = "default", // "default" or "primary"
+  fillColor,
+  textColor,
   ...props 
 }, ref) => {
+  // Determine colors based on props or variant
+  const backgroundColor = fillColor || (variant === "primary" ? "bg-sky-600" : "bg-white");
+  const textColorClass = textColor || (variant === "primary" ? "text-white" : "text-neutral-neutral-700");
+  const iconColorClass = textColor || (variant === "primary" ? "text-white" : "text-neutral-neutral-700");
+
   return (
     <div 
       ref={ref} 
-      className={`${className} !border-b-0 w-full cursor-pointer hover:cursor-pointer`} 
+      className={`ActionCard w-[500px] h-14 max-w-[500px] rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer ${className}`} 
       onClick={onClick} 
       {...props}
     >
-      {variant === "primary" ? (
-        <div className="ActionCard w-full max-w-[500px] inline-flex justify-between items-center overflow-hidden">
-          <div className="ClickableArea flex-1 pl-3 pr-1 bg-sky-600 rounded-[50px] flex justify-between items-center">
-            <div className="justify-start text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">{text}</div>
-            <div data-property-1="left-border" data-show-text="false" className="p-2.5 flex justify-start items-center gap-2.5">
-              <Plus className="w-6 h-6 text-white" />
-            </div>
+      <div className={`ClickableArea flex-1 self-stretch pl-3 pr-1 ${backgroundColor} rounded-lg flex justify-between items-center cursor-pointer`}>
+        <div className={`justify-start ${textColorClass} text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide`}>{text}</div>
+        <div data-property-1="left-border" data-show-text="false" className="Iconbutton p-2.5 flex justify-start items-center gap-2.5">
+          <div data-layer="lucide-icon" data-icon="plus" className="LucideIcon w-6 h-6 relative overflow-hidden">
+            <Plus className={`w-6 h-6 ${iconColorClass}`} strokeWidth={2} />
           </div>
         </div>
-      ) : (
-        <div className="w-full pt-5 pb-20">
-          <div className="w-full pl-3 bg-neutral-100 border-t border-b border-neutral-neutral-300 flex justify-between items-center">
-            <div className="justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">{text}</div>
-            <div data-property-1="left-border" className="p-2.5 border-l border-neutral-neutral-300 flex justify-start items-center gap-2.5">
-              <Plus className="w-6 h-6 text-neutral-neutral-700" />
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 });

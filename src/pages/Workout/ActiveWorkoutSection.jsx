@@ -1421,14 +1421,12 @@ const ActiveWorkoutSection = ({
           style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 32, paddingRight: 32 }}
         >
           <CardWrapper>
-            <SwiperButton 
-              variant="primary-action" 
-              className="self-stretch w-full"
+            <ActionCard
+              text="Add an exercise"
               onClick={handleAddExercise}
-            >
-              <span className="flex-1">Add an exercise</span>
-              <Plus className="w-6 h-6" strokeWidth={2} />
-            </SwiperButton>
+              variant="primary"
+              className="self-stretch w-full"
+            />
           </CardWrapper>
         </PageSectionWrapper>
 
@@ -1540,14 +1538,12 @@ const ActiveWorkoutSection = ({
         })}
         {/* Persistent add button as last item in section */}
         <CardWrapper>
-          <SwiperButton 
-            variant="primary-action" 
-            className="self-stretch w-full"
+          <ActionCard
+            text="Add an exercise"
             onClick={handleAddExercise}
-          >
-            <span className="flex-1">Add an exercise</span>
-            <Plus className="w-6 h-6" strokeWidth={2} />
-          </SwiperButton>
+            variant="primary"
+            className="self-stretch w-full"
+          />
         </CardWrapper>
       </PageSectionWrapper>
 

@@ -53,6 +53,11 @@
   background-color: #fafafa;
 }
 
+/* Alias used throughout the app for legibility stripes */
+.bg-neutral-Neutral-50 {
+  background-color: #fafafa;
+}
+
 .bg-neutral-neutral-100 {
   background-color: #f5f5f5;
 }

@@ -58,7 +58,7 @@ export const AccountProvider = ({ children }) => {
     localStorage.removeItem("actingUserId");
     // Force a page reload to clear all contexts and ensure clean state
     // This prevents the delegate from remaining in the client's workout context
-    window.location.href = "/sharing";
+    window.location.href = "/trainers";
   };
 
   // The user the app should act as for queries

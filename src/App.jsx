@@ -161,7 +161,7 @@ function AppContent() {
   // Additional safety checks: immediately redirect if on restricted pages with active workout
   useEffect(() => {
     if (!workoutLoading && isWorkoutActive) {
-      const restrictedPaths = ['/routines', '/history', '/sharing', '/account', '/dashboard'];
+      const restrictedPaths = ['/routines', '/history', '/trainers', '/account', '/dashboard'];
       const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
       
       // Delegates should NEVER be redirected - they can access all pages freely
@@ -215,7 +215,7 @@ function AppContent() {
               element={<RoutineBuilder />}
             />
             <Route path="/history" element={<History />} />
-            <Route path="/sharing" element={<Sharing />} />
+            <Route path="/trainers" element={<Sharing />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />

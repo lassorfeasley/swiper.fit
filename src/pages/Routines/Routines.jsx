@@ -224,9 +224,8 @@ const RoutinesIndex = () => {
             ))
           )}
             <CardWrapper gap={0} marginTop={0} marginBottom={0}>
-              <SwiperButton 
-                variant="primary-action" 
-                className="self-stretch w-full"
+              <ActionCard
+                text="Create new routine"
                 onClick={() => {
                   setShowSheet(true);
                   setProgramName("");
@@ -234,10 +233,9 @@ const RoutinesIndex = () => {
                     if (inputRef.current) inputRef.current.focus();
                   }, 0);
                 }}
-              >
-                <span className="flex-1">Create new routine</span>
-                <Plus className="w-6 h-6" strokeWidth={2} />
-              </SwiperButton>
+                variant="primary"
+                className="self-stretch w-full"
+              />
             </CardWrapper>
         </DeckWrapper>
         </div>

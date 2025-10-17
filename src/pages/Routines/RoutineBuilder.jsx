@@ -16,12 +16,13 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import { TextInput } from "@/components/molecules/text-input";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import SetEditForm from "@/components/common/forms/SetEditForm";
-import { Copy, Blend, X, Plus } from "lucide-react";
+import { ActionCard } from "@/components/molecules/action-card";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "sonner";
 import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Copy, Blend, X } from "lucide-react";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -996,14 +997,12 @@ const RoutineBuilder = () => {
             ))}
             {/* Single persistent add button as last item */}
             <CardWrapper gap={0} marginTop={12} marginBottom={0}>
-              <SwiperButton 
-                variant="primary-action" 
-                className="self-stretch w-full"
+              <ActionCard
+                text="Add an exercise"
                 onClick={() => handleOpenAddExercise(section)}
-              >
-                <span className="flex-1">Add an exercise</span>
-                <Plus className="w-6 h-6" strokeWidth={2} />
-              </SwiperButton>
+                variant="primary"
+                className="self-stretch w-full"
+              />
             </CardWrapper>
           </PageSectionWrapper>
         ))}

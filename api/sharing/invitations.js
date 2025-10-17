@@ -305,13 +305,7 @@ export async function getPendingRequests(userId) {
         expires_at,
         can_create_routines,
         can_start_workouts,
-        can_review_history,
-        profiles!account_shares_owner_user_id_fkey(
-          id,
-          first_name,
-          last_name,
-          email
-        )
+        can_review_history
       `)
       .eq("delegate_user_id", userId)
       .eq("status", "pending")
@@ -322,32 +316,26 @@ export async function getPendingRequests(userId) {
       throw new Error("Failed to fetch pending requests");
     }
 
-    // Filter out expired requests
-    const now = new Date();
-    const validRequests = requests.filter(request => 
-      new Date(request.expires_at) > now
+    // Fetch profile data separately for each request
+    const requestsWithProfiles = await Promise.all(
+      requests.map(async (request) => {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, email")
+          .eq("id", request.owner_user_id)
+          .single();
+        
+        return {
+          ...request,
+          profiles: profile
+        };
+      })
     );
 
-    // Auto-expire old requests
-    if (requests.length !== validRequests.length) {
-      const expiredIds = requests
-        .filter(request => new Date(request.expires_at) <= now)
-        .map(request => request.id);
-
-      if (expiredIds.length > 0) {
-        await supabase
-          .from("account_shares")
-          .update({ status: 'declined' })
-          .in("id", expiredIds);
-      }
-    }
-
-    console.log("Pending requests fetched successfully:", validRequests);
-    return validRequests;
-
+    return requestsWithProfiles;
   } catch (error) {
-    console.error("Error fetching pending requests:", error);
-    throw error;
+    console.error("Failed to fetch pending requests:", error);
+    throw new Error("Failed to fetch pending requests");
   }
 }
 

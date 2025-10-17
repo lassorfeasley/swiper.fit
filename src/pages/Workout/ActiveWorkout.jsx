@@ -230,7 +230,7 @@ const ActiveWorkoutContent = () => {
       } else {
         // No sets completed – route based on role
         if (isDelegated) {
-          navigate('/sharing', { replace: true });
+          navigate('/trainers', { replace: true });
         } else {
           navigate('/routines', { replace: true });
         }

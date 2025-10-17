@@ -4,7 +4,9 @@ import { Button } from "@/components/atoms/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X } from "lucide-react";
+import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
+import ActionPill from "../../components/molecules/action-pill";
+import { ActionCard } from "@/components/molecules/action-card";
 import AppLayout from "@/components/layout/AppLayout";
 import { generateWorkoutName } from "@/lib/utils";
 import EditableTextInput from "@/components/molecules/editable-text-input";
@@ -22,6 +24,9 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
+import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "../../../api/sharing/invitations";
+import MainContentSection from "@/components/layout/MainContentSection";
+import ManagePermissionsCard from "@/components/molecules/manage-permissions-card";
 
 export default function Sharing() {
   const { user } = useAuth(); // still need auth user for queries where they own shares
@@ -40,6 +45,7 @@ export default function Sharing() {
   // Form state for dialog
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false);
   const [dialogEmail, setDialogEmail] = useState("");
+  const [dialogInviteType, setDialogInviteType] = useState('trainer'); // 'trainer' or 'client'
   const [dialogPermissions, setDialogPermissions] = useState({
     can_create_routines: true,
     can_start_workouts: true,
@@ -304,6 +310,73 @@ export default function Sharing() {
     enabled: !!user?.id,
   });
 
+  // Query for pending requests (incoming requests for this user)
+  const pendingRequestsQuery = useQuery({
+    queryKey: ["pending_requests", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      console.log('[Sharing] Fetching pending requests for user:', user.id);
+      return await getPendingRequests(user.id);
+    },
+    enabled: !!user?.id,
+  });
+
+  // Query for outgoing requests (requests this user has sent)
+  const outgoingRequestsQuery = useQuery({
+    queryKey: ["outgoing_requests", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      console.log('[Sharing] Fetching outgoing requests for user:', user.id);
+      
+      const { data: requests, error } = await supabase
+        .from("account_shares")
+        .select(`
+          id,
+          owner_user_id,
+          delegate_user_id,
+          delegate_email,
+          request_type,
+          status,
+          created_at,
+          expires_at,
+          can_create_routines,
+          can_start_workouts,
+          can_review_history
+        `)
+        .eq("owner_user_id", user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Failed to fetch outgoing requests:", error);
+        throw new Error("Failed to fetch outgoing requests");
+      }
+
+      // Fetch profile data separately for each request
+      const requestsWithProfiles = await Promise.all(
+        requests.map(async (request) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, email")
+            .eq("id", request.delegate_user_id)
+            .single();
+          
+          return {
+            ...request,
+            profiles: profile
+          };
+        })
+      );
+
+      // Filter out expired requests
+      const now = new Date();
+      return requestsWithProfiles.filter(request => 
+        new Date(request.expires_at) > now
+      );
+    },
+    enabled: !!user?.id,
+  });
+
   // Temporarily disabled real-time subscription due to WebSocket connection issues
   // useEffect(() => {
   //   if (!user?.id) return;
@@ -418,6 +491,39 @@ export default function Sharing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["shares_owned_by_me"]);
+    },
+  });
+
+  // Mutations for handling requests
+  const acceptRequestMutation = useMutation({
+    mutationFn: async (requestId) => {
+      return await acceptSharingRequest(requestId, user.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["pending_requests"]);
+      queryClient.invalidateQueries(["outgoing_requests"]);
+      queryClient.invalidateQueries(["shares_shared_with_me"]);
+      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      toast.success("Request accepted successfully");
+    },
+    onError: (error) => {
+      console.error("Error accepting request:", error);
+      toast.error(error.message || "Failed to accept request");
+    },
+  });
+
+  const declineRequestMutation = useMutation({
+    mutationFn: async (requestId) => {
+      return await declineSharingRequest(requestId, user.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["pending_requests"]);
+      queryClient.invalidateQueries(["outgoing_requests"]);
+      toast.success("Request declined");
+    },
+    onError: (error) => {
+      console.error("Error declining request:", error);
+      toast.error(error.message || "Failed to decline request");
     },
   });
 
@@ -537,105 +643,53 @@ export default function Sharing() {
     }
   };
 
+  const handleAcceptRequest = (requestId) => {
+    acceptRequestMutation.mutate(requestId);
+  };
+
+  const handleDeclineRequest = (requestId) => {
+    if (confirm("Are you sure you want to decline this request?")) {
+      declineRequestMutation.mutate(requestId);
+    }
+  };
+
   const handleDialogSubmit = async () => {
     if (!dialogEmail.trim()) return;
 
     try {
-      console.log("Dialog form submitted with email:", dialogEmail);
+      console.log("Dialog form submitted with email:", dialogEmail, "invite type:", dialogInviteType);
       
-      // Look up the user by email
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", dialogEmail.trim().toLowerCase())
-        .limit(1);
-
-      if (profileError) {
-        console.error("Profile lookup error:", profileError);
-        throw profileError;
-      }
-
-      console.log("Profile lookup result:", profiles);
-
-      if (!profiles?.length) {
-        console.log("No user found with email:", dialogEmail);
-        alert("No user found with that email address.");
-        return;
-      }
-
-      const targetUserId = profiles[0].id;
-      console.log("Target user ID:", targetUserId);
-
-      // Check if user is trying to share with themselves
-      if (targetUserId === user.id) {
-        console.log("User trying to share with themselves");
-        alert("You cannot share access with yourself.");
-        return;
-      }
-
-      // Check if already shared (I am the owner, they are the delegate) - check ALL shares, not just non-revoked ones
-      const { data: existingShares } = await supabase
-        .from("account_shares")
-        .select("id, revoked_at")
-        .eq("owner_user_id", user.id)
-        .eq("delegate_user_id", targetUserId)
-        .limit(1);
-
-      console.log("Existing shares check:", existingShares);
-
-      if (existingShares?.length > 0) {
-        const existingShare = existingShares[0];
-        if (existingShare.revoked_at) {
-          console.log("Found revoked share, reactivating it");
-          // Reactivate the revoked share instead of creating a new one
-          await updateSharePermissionsMutation.mutateAsync({
-            shareId: existingShare.id,
-            permissions: { 
-              revoked_at: null,
-              ...dialogPermissions
-            }
-          });
-          console.log("Revoked share reactivated successfully");
-        } else {
-          console.log("Active share already exists");
-          alert("Access already shared with this user.");
-          return;
-        }
+      if (dialogInviteType === 'trainer') {
+        // Creating a trainer invitation (I want to manage their account)
+        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        toast.success("Trainer invitation sent successfully");
       } else {
-        console.log("Creating share with data:", {
-          owner_user_id: user.id,
-          delegate_user_id: targetUserId,
-          delegate_email: dialogEmail.trim().toLowerCase(),
-          ...dialogPermissions
-        });
-
-        // Create the share with the selected permissions
-        await createShareMutation.mutateAsync({
-          owner_user_id: user.id,
-          delegate_user_id: targetUserId,
-          delegate_email: dialogEmail.trim().toLowerCase(),
-          ...dialogPermissions
-        });
-        
-        console.log("Share created successfully");
+        // Creating a client invitation (I want them to manage my account)
+        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        toast.success("Client invitation sent successfully");
       }
 
       // Reset form and close dialog
       setDialogEmail("");
+      setDialogInviteType('trainer');
       setDialogPermissions({
         can_create_routines: true,
         can_start_workouts: true,
         can_review_history: true
       });
       setShowAddPersonDialog(false);
+      
+      // Refresh queries
+      queryClient.invalidateQueries(["outgoing_requests"]);
     } catch (error) {
-      console.error("Error sharing access:", error);
-      alert("Failed to share access. Please try again.");
+      console.error("Error creating invitation:", error);
+      toast.error(error.message || "Failed to send invitation. Please try again.");
     }
   };
 
   const handleDialogCancel = () => {
     setDialogEmail("");
+    setDialogInviteType('trainer');
     setDialogPermissions({
       can_create_routines: true,
       can_start_workouts: true,
@@ -1001,213 +1055,321 @@ export default function Sharing() {
   };
 
   return (
-    <AppLayout title="Sharing" variant="glass">
-      <div className="w-full flex flex-col min-h-screen">
-        {/* Shared by me section */}
-        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
-          <div className="w-full max-w-[500px] pt-20 pb-14 flex flex-col justify-start items-center gap-3">
-            <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
-              <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared by me</div>
-              <button 
-                onClick={() => setShowAddPersonDialog(true)}
-                className="p-1"
-                aria-label="Add new person"
-              >
-                <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-            {ownerSharesQuery.data?.map((share) => (
-              <div key={share.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                <div className="self-stretch h-14 px-3 py-4 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
-                  <div className="flex-1 justify-start text-neutral-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                    {formatUserDisplay(share.profile)}'s permissions
+    <AppLayout title="Trainers" variant="glass">
+      <MainContentSection className="!p-0 flex-1 min-h-0">
+        <div className="w-full flex flex-col min-h-screen pt-20">
+              {/* Requests section - only show if there are requests or errors */}
+              {((pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0) ||
+                (outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0) ||
+                pendingRequestsQuery.isError ||
+                outgoingRequestsQuery.isError ||
+                pendingRequestsQuery.isLoading ||
+                outgoingRequestsQuery.isLoading) && (
+                <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
+                  <div className="w-full max-w-[500px] pt-20 pb-14 flex flex-col justify-start items-center gap-3">
+                    <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
+                      <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Requests</div>
+                    </div>
+
+                    {/* Incoming requests */}
+                    {pendingRequestsQuery.isLoading && (
+                      <div className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                        <div className="text-neutral-neutral-400 text-sm font-medium">Loading incoming requests...</div>
+                      </div>
+                    )}
+                    {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
+                      pendingRequestsQuery.data.map((request) => (
+                        <div key={request.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                          <div className="self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
+                            <div className="flex-1 flex justify-start items-center gap-3">
+                              <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                                {request.request_type === 'trainer_invite'
+                                  ? `${formatUserDisplay(request.profiles)} wants to be your trainer`
+                                  : `${formatUserDisplay(request.profiles)} wants to be your client`
+                                }
+                              </div>
+                            </div>
+                            <div className="h-10 min-w-10 py-3 bg-neutral-neutral-100 rounded-[20px] flex justify-center items-center gap-1">
+                              <div className="w-6 h-6 relative overflow-hidden">
+                                <AlertCircle className="w-5 h-5 text-neutral-neutral-700" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="self-stretch p-3 flex flex-col justify-start items-start gap-4">
+                            <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
+                            <div className="self-stretch bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                              <div className="self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
+                                <div className="flex-1 flex justify-start items-center gap-5">
+                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Start a workout</div>
+                                  </div>
+                                </div>
+                                <div className="w-6 h-6 relative overflow-hidden">
+                                  {request.can_start_workouts && (
+                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="self-stretch h-14 p-3 bg-neutral-Neutral-50 inline-flex justify-center items-center">
+                                <div className="flex-1 flex justify-start items-center gap-5">
+                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
+                                  </div>
+                                </div>
+                                <div className="w-6 h-6 relative overflow-hidden">
+                                  {request.can_create_routines && (
+                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
+                                <div className="flex-1 flex justify-start items-center gap-5">
+                                  <div className="flex-1 inline-flex flex-col justify-center items-start">
+                                    <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
+                                  </div>
+                                </div>
+                                <div className="w-6 h-6 relative overflow-hidden">
+                                  {request.can_review_history && (
+                                    <div className="w-4 h-2.5 left-[4px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-green-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
+                              <button
+                                onClick={() => handleAcceptRequest(request.id)}
+                                disabled={acceptRequestMutation.isPending}
+                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl flex justify-center items-center gap-2.5"
+                              >
+                                <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Accept</div>
+                              </button>
+                              <button
+                                onClick={() => handleDeclineRequest(request.id)}
+                                disabled={declineRequestMutation.isPending}
+                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-red-red-400 rounded-xl flex justify-center items-center gap-2.5"
+                              >
+                                <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Decline</div>
+                              </button>
+                            </div>
+                            <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+                              This invitation will expire in {Math.ceil((new Date(request.expires_at) - new Date()) / (1000 * 60 * 60 * 24))} days.
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    {/* Outgoing requests */}
+                    {outgoingRequestsQuery.isLoading && (
+                      <div className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                        <div className="text-neutral-neutral-400 text-sm font-medium">Loading outgoing requests...</div>
+                      </div>
+                    )}
+                    {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
+                      outgoingRequestsQuery.data.map((request) => (
+                        <div key={request.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                          <div className="self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
+                            <div className="flex-1 flex justify-start items-center gap-3">
+                              <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                                {request.request_type === 'trainer_invite'
+                                  ? `Waiting for ${formatUserDisplay(request.profiles)} to accept your trainer invitation`
+                                  : `Waiting for ${formatUserDisplay(request.profiles)} to accept your client invitation`
+                                }
+                              </div>
+                            </div>
+                            <div className="h-10 min-w-10 py-3 bg-neutral-neutral-100 rounded-[20px] flex justify-center items-center gap-1">
+                              <div className="w-6 h-6 relative overflow-hidden">
+                                <AlertCircle className="w-5 h-5 text-neutral-neutral-700" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    {/* Error states */}
+                    {pendingRequestsQuery.isError && (
+                      <div className="w-full max-w-[500px] bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                        <div className="text-red-600 text-sm font-medium">Failed to load incoming requests. Please try again.</div>
+                      </div>
+                    )}
+                    {outgoingRequestsQuery.isError && (
+                      <div className="w-full max-w-[500px] bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                        <div className="text-red-600 text-sm font-medium">Failed to load outgoing requests. Please try again.</div>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="self-stretch h-14 p-3 inline-flex items-center">
-                  <SwiperFormSwitch
-                    label="Start workouts"
-                    checked={share.can_start_workouts}
-                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_start_workouts', checked)}
-                  />
-                </div>
-                <div className="self-stretch h-14 p-3 bg-neutral-50 inline-flex items-center">
-                  <SwiperFormSwitch
-                    label="Create and edit routines"
-                    checked={share.can_create_routines}
-                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_create_routines', checked)}
-                  />
-                </div>
-                <div className="self-stretch h-14 p-3 inline-flex items-center">
-                  <SwiperFormSwitch
-                    label="Review history"
-                    checked={share.can_review_history}
-                    onCheckedChange={(checked) => handlePermissionToggle(share.id, 'can_review_history', checked)}
-                  />
-                </div>
-              </div>
-            ))}
+              )}
 
-            {ownerSharesQuery.isSuccess && (!ownerSharesQuery.data || ownerSharesQuery.data.length === 0) && !showAddPerson && (
-              <div className="text-neutral-neutral-400 text-sm font-medium">
-                You haven't shared access with anyone yet.
+        {/* Trainers section */}
+        <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
+          <div className="pb-20 inline-flex flex-col justify-start items-center">
+            <div className="flex flex-col justify-start items-start gap-3">
+              <div className="w-[500px] h-14 max-w-[500px] py-3 inline-flex justify-center items-center gap-2.5">
+                <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Trainers</div>
               </div>
-            )}
+              {ownerSharesQuery.data?.map((share) => (
+                <ManagePermissionsCard
+                  key={share.id}
+                  variant="trainer"
+                  name={share.profile}
+                  permissions={{
+                    can_create_routines: share.can_create_routines,
+                    can_start_workouts: share.can_start_workouts,
+                    can_review_history: share.can_review_history
+                  }}
+                  onPermissionChange={(newPermissions) => {
+                    Object.keys(newPermissions).forEach(permission => {
+                      if (newPermissions[permission] !== share[permission]) {
+                        handlePermissionToggle(share.id, permission, newPermissions[permission]);
+                      }
+                    });
+                  }}
+                  onRemove={() => handleRemoveShare(share.id)}
+                />
+              ))}
+              <ActionCard
+                text="Invite A Trainer"
+                onClick={() => {
+                  setDialogInviteType('trainer');
+                  setShowAddPersonDialog(true);
+                }}
+                variant="default"
+                className="w-[500px] h-14 max-w-[500px] rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Shared with me section */}
-        <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
-          <div className="w-full max-w-[500px] pt-0 pb-14 flex flex-col justify-start items-center gap-3">
-            <div className="w-full max-w-[500px] pb-0 inline-flex justify-center items-center gap-2.5">
-              <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Shared with me</div>
+        {/* Clients section */}
+        <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
+          <div className="pb-20 inline-flex flex-col justify-start items-center">
+            <div className="flex flex-col justify-start items-start gap-3">
+              <div className="w-[500px] h-14 max-w-[500px] inline-flex justify-center items-center gap-2.5">
+                <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Clients</div>
+              </div>
+              {sharedWithMeQuery.data?.map((share) => (
+                <ManagePermissionsCard
+                  key={share.id}
+                  variant="client"
+                  name={share.profile}
+                  permissions={{
+                    can_create_routines: share.can_create_routines,
+                    can_start_workouts: share.can_start_workouts,
+                    can_review_history: share.can_review_history
+                  }}
+                  onRemove={() => handleRemoveShare(share.id)}
+                  onStartWorkout={() => {
+                    if (!share.can_start_workouts) return;
+                    if (share.activeWorkout) {
+                      switchToUser(share.profile);
+                      navigate('/workout/active');
+                      return;
+                    }
+                    handleStartWorkout(share.profile);
+                  }}
+                  onCreateRoutines={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
+                  onReviewHistory={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
+                />
+              ))}
+              <ActionCard
+                text="Invite A Client"
+                onClick={() => {
+                  setDialogInviteType('client');
+                  setShowAddPersonDialog(true);
+                }}
+                variant="default"
+                className="w-[500px] h-14 max-w-[500px] rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
+              />
             </div>
-            {sharedWithMeQuery.data?.map((share) => (
-              <div key={share.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                <div className="self-stretch h-14 px-3 py-4 bg-neutral-neutral-200 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-2.5">
-                  <div className="text-center justify-start text-slate-slate-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                    Manage {formatUserDisplay(share.profile)}'s account
-                  </div>
-                </div>
-                <div className="self-stretch flex flex-col justify-center items-start">
-                  <div 
-                    className={`self-stretch h-14 p-3 bg-white inline-flex justify-center items-center ${share.can_start_workouts ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                    onClick={() => {
-                      if (!share.can_start_workouts) return;
-                      // If the owner already has an active workout, join it immediately
-                      if (share.activeWorkout) {
-                        switchToUser(share.profile);
-                        navigate('/workout/active');
-                        return;
-                      }
-                      // Otherwise open the routine selection dialog to start a workout
-                      handleStartWorkout(share.profile);
-                    }}
-                    title={!share.can_start_workouts ? "Permission denied by account owner" : ""}
-                  >
-                    <div className="flex-1 flex justify-start items-center gap-5">
-                      <div className="flex-1 inline-flex flex-col justify-center items-start">
-                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_start_workouts ? 'text-neutral-300' : ''}`}>
-                          {share.activeWorkout ? 'Join active workout' : 'Start a workout'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="size-6 relative overflow-hidden">
-                      {share.can_start_workouts ? (
-                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                      ) : (
-                        <X className="w-4 h-4 text-neutral-300" />
-                      )}
-                    </div>
-                  </div>
-                  <div 
-                    className={`self-stretch h-14 p-3 bg-neutral-50 inline-flex justify-center items-center ${share.can_create_routines ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                    onClick={() => share.can_create_routines && handleCreateRoutinesForOwner(share.profile)}
-                    title={!share.can_create_routines ? "Permission denied by account owner" : ""}
-                  >
-                    <div className="flex-1 flex justify-start items-center gap-5">
-                      <div className="flex-1 inline-flex flex-col justify-center items-start">
-                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_create_routines ? 'text-neutral-300' : ''}`}>
-                          Create or edit routines
-                        </div>
-                      </div>
-                    </div>
-                    <div className="size-6 relative overflow-hidden">
-                      {share.can_create_routines ? (
-                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                      ) : (
-                        <X className="w-4 h-4 text-neutral-300" />
-                      )}
-                    </div>
-                  </div>
-                  <div 
-                    className={`self-stretch h-14 p-3 bg-white inline-flex justify-center items-center ${share.can_review_history ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                    onClick={() => share.can_review_history && handleReviewHistoryForOwner(share.profile)}
-                    title={!share.can_review_history ? "Permission denied by account owner" : ""}
-                  >
-                    <div className="flex-1 flex justify-start items-center gap-5">
-                      <div className="flex-1 inline-flex flex-col justify-center items-start">
-                        <div className={`self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${!share.can_review_history ? 'text-neutral-300' : ''}`}>
-                          Review {formatUserDisplay(share.profile)}'s history
-                        </div>
-                      </div>
-                    </div>
-                    <div className="size-6 relative overflow-hidden">
-                      {share.can_review_history ? (
-                        <MoveUpRight className="w-4 h-4 text-neutral-700" />
-                      ) : (
-                        <X className="w-4 h-4 text-neutral-300" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {sharedWithMeQuery.data?.length === 0 && (
-              <div className="text-neutral-neutral-400 text-sm font-medium">
-                No accounts have shared access with you yet.
-              </div>
-            )}
           </div>
         </div>
 
         {/* Add person dialog */}
         <SwiperDialog
-            open={showAddPersonDialog}
-            onOpenChange={setShowAddPersonDialog}
-            title="Add a manager"
-            confirmText="Share Access"
-            cancelText="Cancel"
-            confirmVariant="outline"
-            cancelVariant="destructive"
-            onConfirm={handleDialogSubmit}
-            onCancel={handleDialogCancel}
-          >
-            <div className="self-stretch flex flex-col justify-start items-start gap-0">
-              <div data-focused="true" data-is-optional="false" data-property-1="default" data-show-field-name="true" data-show-icon="false" data-show-text-labels="true" className="self-stretch min-w-64 rounded-sm flex flex-col justify-center items-start gap-2">
-                <div className="self-stretch inline-flex justify-start items-start gap-2">
-                  <div className="flex-1 flex justify-between items-start">
-                    <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Email</div>
+          open={showAddPersonDialog}
+          onOpenChange={setShowAddPersonDialog}
+          title={dialogInviteType === 'trainer' ? "Invite a trainer" : "Invite a client"}
+          confirmText={dialogInviteType === 'trainer' ? "Invite trainer" : "Invite client"}
+          cancelText="Cancel"
+          confirmVariant="outline"
+          cancelVariant="destructive"
+          onConfirm={handleDialogSubmit}
+          onCancel={handleDialogCancel}
+          containerClassName="bg-stone-100"
+        >
+          <div className="self-stretch flex flex-col justify-start items-start gap-0">
+            <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
+              <div className="self-stretch inline-flex justify-start items-start gap-2">
+                <div className="flex-1 flex justify-between items-start">
+                  <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+                    {dialogInviteType === 'trainer' ? "Trainer's email" : "Client's email"}
                   </div>
                 </div>
-                <div className="self-stretch h-11 pl-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
-                  <input
-                    type="email"
-                    value={dialogEmail}
-                    onChange={(e) => setDialogEmail(e.target.value)}
-                    placeholder="Enter email address"
-                    className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight bg-transparent border-none outline-none"
-                  />
-                </div>
+              </div>
+              <div className="self-stretch h-11 pl-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
+                <input
+                  type="email"
+                  value={dialogEmail}
+                  onChange={(e) => setDialogEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight bg-transparent border-none outline-none"
+                />
               </div>
             </div>
-            <div className="self-stretch flex flex-col justify-start items-start gap-0">
-                <div className="self-stretch rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                <div className="self-stretch h-14 p-3 inline-flex items-center">
+          </div>
+          <div className="self-stretch flex flex-col justify-start items-start gap-0">
+            <div className="self-stretch rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+              {dialogInviteType === 'client' ? (
+                <div className="self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
                   <SwiperFormSwitch
-                    label="Create routines"
+                    label="Create or edit routines"
                     checked={dialogPermissions.can_create_routines}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
+                    className="bg-white"
                   />
-                </div>
-                <div className="self-stretch h-14 p-3 bg-neutral-50 inline-flex items-center">
                   <SwiperFormSwitch
-                    label="Start workouts"
+                    label="Start a workout"
                     checked={dialogPermissions.can_start_workouts}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
+                    className="bg-neutral-Neutral-50"
                   />
-                </div>
-                <div className="self-stretch h-14 p-3 inline-flex items-center">
                   <SwiperFormSwitch
                     label="Review history"
                     checked={dialogPermissions.can_review_history}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
+                    className="bg-white"
                   />
                 </div>
-              </div>
+              ) : (
+                <>
+                  <SwiperFormSwitch
+                    label="Create or edit routines"
+                    checked={dialogPermissions.can_create_routines}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
+                    className="bg-white"
+                  />
+                  <SwiperFormSwitch
+                    label="Start a workout"
+                    checked={dialogPermissions.can_start_workouts}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
+                    className="bg-neutral-Neutral-50"
+                  />
+                  <SwiperFormSwitch
+                    label="Review history"
+                    checked={dialogPermissions.can_review_history}
+                    onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
+                    className="bg-white"
+                  />
+                </>
+              )}
             </div>
-          </SwiperDialog>
+          </div>
+          <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+            This invitation will expire in {dialogInviteType === 'client' ? '14' : '7'} days.
+          </div>
+        </SwiperDialog>
 
           {/* Routine selection dialog */}
           <SwiperDialog
@@ -1393,7 +1555,8 @@ export default function Sharing() {
               </div>
             </SwiperForm.Section>
           </SwiperForm>
-      </div>
+        </div>
+      </MainContentSection>
     </AppLayout>
   );
 } 
