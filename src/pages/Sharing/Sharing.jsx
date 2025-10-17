@@ -1059,6 +1059,28 @@ export default function Sharing() {
     }
   };
 
+  // Delete a pending invitation (for non-member invitations)
+  const handleDeleteInvitation = async (requestId) => {
+    try {
+      const { error } = await supabase
+        .from("account_shares")
+        .delete()
+        .eq("id", requestId);
+
+      if (error) {
+        console.error("Failed to delete invitation:", error);
+        toast.error("Failed to delete invitation");
+        return;
+      }
+
+      toast.success("Invitation deleted");
+      queryClient.invalidateQueries(["pendingRequests", user.id]);
+    } catch (error) {
+      console.error("Error deleting invitation:", error);
+      toast.error("Failed to delete invitation");
+    }
+  };
+
   return (
     <AppLayout title="Trainers" variant="glass">
       <MainContentSection className="!p-0 flex-1 min-h-0">
@@ -1095,8 +1117,8 @@ export default function Sharing() {
                               </div>
                             </div>
                             <ActionPill
-                              onClick={() => {}}
-                              Icon={AlertCircle}
+                              onClick={() => handleDeleteInvitation(request.id)}
+                              Icon={Trash2}
                               showText={false}
                               color="neutral"
                               iconColor="neutral"
