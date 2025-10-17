@@ -149,7 +149,7 @@ export default function OGImageTest() {
             </a>
             
             <a
-              href={`https://www.swiper.fit/api/og-image?workoutId=${workoutId}`}
+              href={`https://www.swiper.fit/api/og-images?type=workout&workoutId=${workoutId}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

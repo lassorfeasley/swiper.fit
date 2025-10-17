@@ -284,7 +284,7 @@ export default function PublicRoutine() {
                 >
                   <img 
                     className="w-full h-auto block" 
-                    src={routine?.og_image_url || `/api/generate-routine-og-image?routineId=${routineId}`} 
+                    src={routine?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
                     alt={`${routine.routine_name} routine`}
                     draggable={false}
                     onError={(e) => {

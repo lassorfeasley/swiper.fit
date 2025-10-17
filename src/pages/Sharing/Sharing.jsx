@@ -23,7 +23,7 @@ import { SwiperButton } from "@/components/molecules/swiper-button";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "../../../api/sharing/invitations";
+import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "../../../api/sharing";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/components/molecules/manage-permissions-card";
 

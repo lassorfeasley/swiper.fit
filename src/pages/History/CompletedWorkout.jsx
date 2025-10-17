@@ -857,7 +857,7 @@ const CompletedWorkout = () => {
               <div className="w-full max-w-[500px] rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-center items-center overflow-hidden">
                 <img 
                   className="w-full h-auto max-h-64" 
-                  src={workout?.og_image_url || `/api/og-image?workoutId=${workoutId}`}
+                  src={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
                   alt="Workout social preview"
                   draggable={false}
                   onClick={shareWorkout}

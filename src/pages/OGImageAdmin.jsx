@@ -68,7 +68,7 @@ export default function OGImageAdmin() {
   const originBase = typeof window !== 'undefined' ? window.location.origin : '';
   const apiBase = originBase.includes('localhost') ? 'https://www.swiper.fit' : originBase;
   const previewSrc = previewWorkoutId
-    ? `${apiBase}/api/og-image?workoutId=${encodeURIComponent(previewWorkoutId)}&t=${refreshKey}`
+    ? `${apiBase}/api/og-images?type=workout&workoutId=${encodeURIComponent(previewWorkoutId)}&t=${refreshKey}`
     : '';
 
   // Load workouts on component mount
@@ -438,7 +438,7 @@ export default function OGImageAdmin() {
           </button>
           {previewWorkoutId && (
             <a
-              href={`${apiBase}/api/og-image?workoutId=${encodeURIComponent(previewWorkoutId)}`}
+              href={`${apiBase}/api/og-images?type=workout&workoutId=${encodeURIComponent(previewWorkoutId)}`}
               target="_blank"
               rel="noreferrer"
               style={{ padding: '8px 12px', borderRadius: 6, background: '#28a745', color: '#fff', textDecoration: 'none' }}
@@ -505,7 +505,7 @@ export default function OGImageAdmin() {
             OG Environment
           </a>
           <a
-            href="https://www.swiper.fit/api/og-image?workoutId=6385499d-a9f2-4161-b6bb-1b90256d605c"
+            href="https://www.swiper.fit/api/og-images?type=workout&workoutId=6385499d-a9f2-4161-b6bb-1b90256d605c"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -795,7 +795,7 @@ export default function OGImageAdmin() {
                       View Image
                     </a>
                     <a
-                      href={`/api/og-image?workoutId=${workout.id}`}
+                      href={`/api/og-images?type=workout&workoutId=${workout.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ 
