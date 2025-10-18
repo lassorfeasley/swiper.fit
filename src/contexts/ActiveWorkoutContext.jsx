@@ -18,6 +18,8 @@ export function ActiveWorkoutProvider({ children }) {
   const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState(0);
   const [isFinishing, setIsFinishing] = useState(false);
   const isFinishingRef = useRef(false);
+  // Guard window to avoid transient pause right after start
+  const startGuardUntilRef = useRef(0);
   
   // Fire-and-forget Slack event
   const postSlackEvent = useCallback((event, data) => {
@@ -160,7 +162,8 @@ export function ActiveWorkoutProvider({ children }) {
           workoutName: workout.workout_name || 'Workout',
           routineName: workout.routines?.routine_name || '',
           accumulatedSeconds: Number(workout.active_seconds_accumulated || 0),
-          runningSince: workout.running_since || null,
+          // If record is active but running_since is null (edge cases during delegation), treat as started now
+          runningSince: workout.running_since || (workout.is_active ? new Date().toISOString() : null),
           lastExerciseId: lastExerciseId,
         };
         
@@ -173,8 +176,9 @@ export function ActiveWorkoutProvider({ children }) {
         
         // Compute elapsed time
         const base = Number(workout.active_seconds_accumulated || 0);
-        const bonus = workout.running_since
-          ? Math.floor((Date.now() - new Date(workout.running_since).getTime()) / 1000)
+        const effectiveRunningSince = workout.running_since || (workout.is_active ? new Date().toISOString() : null);
+        const bonus = effectiveRunningSince
+          ? Math.floor((Date.now() - new Date(effectiveRunningSince).getTime()) / 1000)
           : 0;
         const elapsed = base + bonus;
         setElapsedTime(elapsed);
@@ -238,6 +242,9 @@ export function ActiveWorkoutProvider({ children }) {
         } catch (_) {}
       }
 
+      const inStartGuard = Date.now() < startGuardUntilRef.current;
+      const effectiveRunningSince = w.running_since || (inStartGuard && w.is_active ? new Date().toISOString() : null);
+
       setActiveWorkout(prev => prev ? {
         ...prev,
         id: w.id,
@@ -245,7 +252,7 @@ export function ActiveWorkoutProvider({ children }) {
         workoutName: w.workout_name,
         routineName: w.routines?.routine_name || '',
         accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
-        runningSince: w.running_since || null,
+        runningSince: effectiveRunningSince,
         lastExerciseId
       } : {
         id: w.id,
@@ -253,12 +260,12 @@ export function ActiveWorkoutProvider({ children }) {
         workoutName: w.workout_name,
         routineName: w.routines?.routine_name || '',
         accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
-        runningSince: w.running_since || null,
+        runningSince: effectiveRunningSince,
         lastExerciseId
       });
 
       const base = Number(w.active_seconds_accumulated || 0);
-      const bonus = w.running_since ? Math.floor((Date.now() - new Date(w.running_since).getTime()) / 1000) : 0;
+      const bonus = effectiveRunningSince ? Math.floor((Date.now() - new Date(effectiveRunningSince).getTime()) / 1000) : 0;
       setElapsedTime(base + bonus);
       if (typeof w.is_active === 'boolean') setIsWorkoutActive(w.is_active);
     } catch (_) {}
@@ -284,6 +291,12 @@ export function ActiveWorkoutProvider({ children }) {
         console.log('[Real-time] Workout change:', eventType, w, old);
         
         if (eventType === 'UPDATE') {
+          const inStartGuard = Date.now() < startGuardUntilRef.current;
+          if (inStartGuard && w?.is_active && !w?.running_since) {
+            // Skip transient pause during initial start guard
+            await refreshActiveWorkout(activeWorkout.id);
+            return;
+          }
           // Sync last exercise across clients, but only if it's different and not during restoration
           if (w.last_workout_exercise_id && w.last_workout_exercise_id !== activeWorkout?.lastExerciseId) {
             // Convert the new workout_exercise_id to exercise_id
@@ -495,6 +508,8 @@ export function ActiveWorkoutProvider({ children }) {
         .single();
       if (insertErr) throw insertErr;
       workout = inserted;
+      // Open a brief guard window to ignore any stale pause events right after start
+      startGuardUntilRef.current = Date.now() + 4000;
       console.log('[ActiveWorkout] Workout created successfully:', workout);
       // Notify Slack (non-blocking)
       postSlackEvent('workout.started', {
