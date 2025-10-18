@@ -1130,13 +1130,13 @@ export default function Sharing() {
 
                     {/* Incoming requests */}
                     {pendingRequestsQuery.isLoading && (
-                      <div className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
                         <div className="text-neutral-neutral-400 text-sm font-medium">Loading incoming requests...</div>
                       </div>
                     )}
                     {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
                       pendingRequestsQuery.data.map((request) => (
-                        <div key={request.id} className="SharedWithMeCard w-[500px] max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                        <div key={request.id} className="SharedWithMeCard w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
                           <div className="CardHeader self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
                             <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                               <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
@@ -1229,13 +1229,13 @@ export default function Sharing() {
 
                     {/* Outgoing requests */}
                     {outgoingRequestsQuery.isLoading && (
-                      <div className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
                         <div className="text-neutral-neutral-400 text-sm font-medium">Loading outgoing requests...</div>
                       </div>
                     )}
                     {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
                       outgoingRequestsQuery.data.map((request) => (
-                        <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                        <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
                           <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
                             <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
                               <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
