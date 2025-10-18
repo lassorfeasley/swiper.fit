@@ -1261,15 +1261,16 @@ export default function Sharing() {
 
                     {/* Error states */}
                     {pendingRequestsQuery.isError && (
-                      <div className="w-full max-w-[500px] bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
                         <div className="text-red-600 text-sm font-medium">Failed to load incoming requests. Please try again.</div>
                       </div>
                     )}
                     {outgoingRequestsQuery.isError && (
-                      <div className="w-full max-w-[500px] bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
                         <div className="text-red-600 text-sm font-medium">Failed to load outgoing requests. Please try again.</div>
                       </div>
                     )}
+                    </DeckWrapper>
                   </div>
                 </div>
               )}
