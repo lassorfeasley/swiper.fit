@@ -207,7 +207,7 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
           can_start_workouts: permissions.can_start_workouts || false,
           can_review_history: permissions.can_review_history || false,
         },
-        expires_in_days: 7,
+        expires_in_days: 14,
       });
       
       console.log("Trainer invitation email sent successfully");
@@ -429,7 +429,7 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
           can_start_workouts: permissions.can_start_workouts || false,
           can_review_history: permissions.can_review_history || false,
         },
-        expires_in_days: 7,
+        expires_in_days: 14,
       });
       
       console.log("Client invitation email sent successfully");

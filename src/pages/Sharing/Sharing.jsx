@@ -1330,6 +1330,7 @@ export default function Sharing() {
                     can_start_workouts: share.can_start_workouts,
                     can_review_history: share.can_review_history
                   }}
+                  activeWorkout={share.activeWorkout}
                   onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
                   onStartWorkout={() => {
                     if (!share.can_start_workouts) return;
@@ -1438,7 +1439,7 @@ export default function Sharing() {
             </div>
           </div>
           <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
-            This invitation will expire in {dialogInviteType === 'client' ? '14' : '7'} days.
+            This invitation will expire in {dialogInviteType === 'client' ? '14' : '14'} days.
           </div>
         </SwiperDialog>
 

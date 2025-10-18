@@ -17,6 +17,7 @@ const ManagePermissionsCard = ({
   onStartWorkout = () => {},
   onCreateRoutines = () => {},
   onReviewHistory = () => {},
+  activeWorkout = null, // Add activeWorkout prop
   className = ""
 }) => {
   const handlePermissionChange = (permission, value) => {
@@ -96,7 +97,7 @@ const ManagePermissionsCard = ({
                 <div className="Frame75 flex-1 flex justify-start items-center gap-5">
                   <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
                     <div className="self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Start a workout
+                      {activeWorkout ? 'Join active workout' : 'Start a workout'}
                     </div>
                   </div>
                 </div>
@@ -155,6 +156,7 @@ ManagePermissionsCard.propTypes = {
   onStartWorkout: PropTypes.func,
   onCreateRoutines: PropTypes.func,
   onReviewHistory: PropTypes.func,
+  activeWorkout: PropTypes.object,
   className: PropTypes.string
 };
 

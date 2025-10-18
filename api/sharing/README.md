@@ -16,7 +16,7 @@ The `account_shares` table has been extended with new columns:
 - `status`: 'pending', 'active', 'declined', 'revoked'
 - `request_type`: 'legacy', 'trainer_invite', 'client_invite'
 - `responded_at`: Timestamp when invitation was accepted/declined
-- `expires_at`: Expiration date for pending invitations (7 days)
+- `expires_at`: Expiration date for pending invitations (14 days)
 
 ## API Functions
 
@@ -243,5 +243,5 @@ const handleAcceptRequest = async (requestId) => {
 
 - Existing shares automatically get `status: 'active'` and `request_type: 'legacy'`
 - The `revoked_at` column is still supported for backward compatibility
-- New invitations expire after 7 days if not responded to
+- New invitations expire after 14 days if not responded to
 - Expired invitations are automatically marked as 'declined'
