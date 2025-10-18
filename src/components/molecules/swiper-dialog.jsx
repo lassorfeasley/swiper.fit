@@ -47,6 +47,14 @@ const SwiperDialog = ({
   const widthClass =
     size === "sm" ? "max-w-[420px]" : size === "lg" ? "max-w-[640px]" : "max-w-[500px]";
 
+  // Keep existing max width but also ensure 20px horizontal padding on mobile
+  const mobileSafeWidthClass =
+    size === "sm"
+      ? "max-w-[min(100vw-40px,420px)]"
+      : size === "lg"
+      ? "max-w-[min(100vw-40px,640px)]"
+      : "max-w-[min(100vw-40px,500px)]";
+
   const handleConfirm = () => {
     onConfirm?.();
     if (closeOnConfirm) onOpenChange?.(false);
@@ -66,7 +74,7 @@ const SwiperDialog = ({
       <DialogPortal>
         <DialogOverlay onClick={handleBackdropClick} />
         <DialogContent
-          className={`w-full ${widthClass} shadow-none border border-neutral-neutral-300 bg-stone-100 p-0 rounded-xl overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
+          className={`w-full ${widthClass} ${mobileSafeWidthClass} shadow-none border border-neutral-neutral-300 bg-stone-100 p-0 rounded-xl overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
           onClick={handleBackdropClick}
           tabIndex={-1}
         >

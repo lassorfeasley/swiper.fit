@@ -422,6 +422,25 @@ body[data-env="development"] [data-component]:hover::after {
     /* Keep intended component borders/shadows visible on iOS */
   }
   
+  /* Mobile dialog spacing - 20px padding from viewport edges */
+  @media (max-width: 768px) {
+    [data-radix-dialog-overlay] {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    
+    /* Override fixed positioning for mobile to respect overlay padding */
+    [data-radix-dialog-content] {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 20px auto !important;
+    }
+  }
+  
   /* Ensure dialog content doesn't overflow */
   [data-radix-dialog-content] * {
     max-width: 100% !important;
