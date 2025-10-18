@@ -55,6 +55,10 @@ export default function Sharing() {
   const [shareToDeleteId, setShareToDeleteId] = useState(null);
   const [shareToDeleteName, setShareToDeleteName] = useState("");
 
+  // Delete invitation dialog state
+  const [showDeleteInvitationDialog, setShowDeleteInvitationDialog] = useState(false);
+  const [invitationToDeleteId, setInvitationToDeleteId] = useState(null);
+
   // Routine selection dialog state
   const [showRoutineSelectionDialog, setShowRoutineSelectionDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -357,18 +361,32 @@ export default function Sharing() {
         throw new Error("Failed to fetch outgoing requests");
       }
 
-      // Fetch profile data separately for each request
+      // Fetch profile data separately for each request, falling back to delegate_email when user hasn't signed up yet
       const requestsWithProfiles = await Promise.all(
         requests.map(async (request) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, email")
-            .eq("id", request.delegate_user_id)
-            .single();
-          
+          let profile = null;
+          // Prefer lookup by user id when present
+          if (request.delegate_user_id) {
+            const { data: fetchedProfile } = await supabase
+              .from("profiles")
+              .select("id, first_name, last_name, email")
+              .eq("id", request.delegate_user_id)
+              .maybeSingle();
+            profile = fetchedProfile || null;
+          }
+          // If we still don't have a profile but we know the email, try email lookup
+          if (!profile && request.delegate_email) {
+            const { data: fetchedByEmail } = await supabase
+              .from("profiles")
+              .select("id, first_name, last_name, email")
+              .eq("email", request.delegate_email.toLowerCase())
+              .maybeSingle();
+            profile = fetchedByEmail || null;
+          }
           return {
             ...request,
-            profiles: profile
+            // If no profile (non-member invite), include the invitee email for display
+            profiles: profile || (request.delegate_email ? { email: request.delegate_email } : null),
           };
         })
       );
@@ -1059,13 +1077,20 @@ export default function Sharing() {
     }
   };
 
-  // Delete a pending invitation (for non-member invitations)
-  const handleDeleteInvitation = async (requestId) => {
+  // Open delete invitation confirmation dialog
+  const handleDeleteInvitation = (requestId) => {
+    setInvitationToDeleteId(requestId);
+    setShowDeleteInvitationDialog(true);
+  };
+
+  // Perform delete after confirmation
+  const performDeleteInvitation = async () => {
+    if (!invitationToDeleteId) return;
     try {
       const { error } = await supabase
         .from("account_shares")
         .delete()
-        .eq("id", requestId);
+        .eq("id", invitationToDeleteId);
 
       if (error) {
         console.error("Failed to delete invitation:", error);
@@ -1074,10 +1099,14 @@ export default function Sharing() {
       }
 
       toast.success("Invitation deleted");
-      queryClient.invalidateQueries(["pendingRequests", user.id]);
+      queryClient.invalidateQueries(["pending_requests", user.id]);
+      queryClient.invalidateQueries(["outgoing_requests", user.id]);
     } catch (error) {
       console.error("Error deleting invitation:", error);
       toast.error("Failed to delete invitation");
+    } finally {
+      setShowDeleteInvitationDialog(false);
+      setInvitationToDeleteId(null);
     }
   };
 
@@ -1205,20 +1234,24 @@ export default function Sharing() {
                     )}
                     {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
                       outgoingRequestsQuery.data.map((request) => (
-                        <div key={request.id} className="w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                          <div className="self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
-                            <div className="flex-1 flex justify-start items-center gap-3">
-                              <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                                {request.request_type === 'trainer_invite'
-                                  ? `Waiting for ${formatUserDisplay(request.profiles)} to accept your trainer invitation`
-                                  : `Waiting for ${formatUserDisplay(request.profiles)} to accept your client invitation`
-                                }
+                        <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                          <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
+                            <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
+                              <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
+                                <div data-layer="example@account.com was invited to be your trainer" className="ExampleAccountComWasInvitedToBeYourTrainer justify-center">
+                                  <span className="text-neutral-neutral-700 text-sm font-bold font-['Be_Vietnam_Pro'] leading-tight">{formatUserDisplay(request.profiles)} </span>
+                                  <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">{request.request_type === 'trainer_invite' ? 'was invited to be your trainer' : 'was invited to be your client'}</span>
+                                </div>
+                                <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
                               </div>
-                            </div>
-                            <div className="h-10 min-w-10 py-3 bg-neutral-neutral-100 rounded-[20px] flex justify-center items-center gap-1">
-                              <div className="w-6 h-6 relative overflow-hidden">
-                                <AlertCircle className="w-5 h-5 text-neutral-neutral-700" />
-                              </div>
+                              <button
+                                type="button"
+                                aria-label="Delete invitation"
+                                onClick={() => handleDeleteInvitation(request.id)}
+                                className="LucideIcon w-8 h-8 relative overflow-hidden flex items-center justify-center"
+                              >
+                                <Trash2 className="w-6 h-7 text-neutral-neutral-700" />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -1595,6 +1628,21 @@ export default function Sharing() {
           </SwiperForm>
         </div>
         {/* Delete Share Confirmation Dialog */}
+        <SwiperDialog
+          open={showDeleteInvitationDialog}
+          onOpenChange={setShowDeleteInvitationDialog}
+          title="Delete request?"
+          confirmText="Yes"
+          cancelText="No"
+          confirmVariant="destructive"
+          cancelVariant="outline"
+          onConfirm={performDeleteInvitation}
+          onCancel={() => {
+            setShowDeleteInvitationDialog(false);
+            setInvitationToDeleteId(null);
+          }}
+        />
+        
         <SwiperDialog
           open={showDeleteShareDialog}
           onOpenChange={setShowDeleteShareDialog}

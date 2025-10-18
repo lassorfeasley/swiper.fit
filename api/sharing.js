@@ -36,6 +36,19 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
       // Non-member invitation - create invitation with null delegate_user_id
       console.log(`[createTrainerInvite] No user found, creating non-member invitation for: ${clientEmail}`);
       
+      // Prevent duplicate pending non-member invites to the same email
+      const { count: pendingDupCount } = await supabase
+        .from("account_shares")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", trainerId)
+        .is("delegate_user_id", null)
+        .eq("delegate_email", clientEmail.trim().toLowerCase())
+        .eq("request_type", "trainer_invite")
+        .eq("status", "pending");
+      if ((pendingDupCount || 0) > 0) {
+        throw new Error("A pending invitation already exists for this email");
+      }
+      
       const invitationData = {
         owner_user_id: trainerId, // Trainer (account manager) is the owner
         delegate_user_id: null, // No user ID yet - they need to sign up
@@ -120,6 +133,7 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
       .select("id, status, revoked_at, request_type")
       .eq("owner_user_id", trainerId)
       .eq("delegate_user_id", clientId)
+      .in("status", ["pending", "active"]) 
       .limit(1);
 
     console.log(`[createTrainerInvite] Existing shares check result:`, { existingShares, existingError });
@@ -143,9 +157,6 @@ export async function createTrainerInvite(clientEmail, trainerId, permissions = 
           // Different direction (client → trainer), allow bidirectional relationship
           console.log("Different direction relationship exists, allowing bidirectional");
         }
-      } else if (existingShare.status === 'declined') {
-        // Allow creating a new invitation after a declined one
-        console.log("Previous invitation was declined, creating new one");
       }
     }
 
@@ -242,6 +253,19 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
       // Non-member invitation - create invitation with null delegate_user_id
       console.log(`[createClientInvite] No user found, creating non-member invitation for: ${trainerEmail}`);
       
+      // Prevent duplicate pending non-member invites to the same email
+      const { count: pendingDupCount } = await supabase
+        .from("account_shares")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", clientId)
+        .is("delegate_user_id", null)
+        .eq("delegate_email", trainerEmail.trim().toLowerCase())
+        .eq("request_type", "client_invite")
+        .eq("status", "pending");
+      if ((pendingDupCount || 0) > 0) {
+        throw new Error("A pending invitation already exists for this email");
+      }
+      
       const invitationData = {
         owner_user_id: clientId, // Client (account owner) is the owner
         delegate_user_id: null, // No user ID yet - they need to sign up
@@ -326,6 +350,7 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
       .select("id, status, revoked_at, request_type")
       .eq("owner_user_id", clientId)
       .eq("delegate_user_id", trainerId)
+      .in("status", ["pending", "active"]) 
       .limit(1);
 
     console.log(`[createClientInvite] Existing shares check result:`, { existingShares, existingError });
@@ -349,9 +374,6 @@ export async function createClientInvite(trainerEmail, clientId, permissions = {
           // Different direction (trainer → client), allow bidirectional relationship
           console.log("Different direction relationship exists, allowing bidirectional");
         }
-      } else if (existingShare.status === 'declined') {
-        // Allow creating a new invitation after a declined one
-        console.log("Previous invitation was declined, creating new one");
       }
     }
 
@@ -634,13 +656,7 @@ export async function getPendingRequests(userId) {
         expires_at,
         can_create_routines,
         can_start_workouts,
-        can_review_history,
-        profiles!owner_user_id (
-          id,
-          first_name,
-          last_name,
-          email
-        )
+        can_review_history
       `)
       .or(`delegate_user_id.eq.${userId},and(delegate_user_id.is.null,delegate_email.eq.${userEmail})`)
       .eq("status", "pending")
