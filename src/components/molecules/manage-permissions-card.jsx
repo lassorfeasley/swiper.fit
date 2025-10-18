@@ -41,7 +41,7 @@ const ManagePermissionsCard = ({
   const displayName = typeof name === 'string' ? name : formatUserDisplay(name);
 
   return (
-    <div className={`w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}>
+    <div className={`w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}>
       {/* Card Header */}
       <div className="CardHeader self-stretch p-3 inline-flex justify-between items-center">
         <div className="Frame84 flex-1 flex justify-start items-center gap-3">
