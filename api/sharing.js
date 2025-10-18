@@ -13,6 +13,8 @@ async function postEmailEvent(event, to, data = {}, contextExtras = {}) {
     const url = `${base}/api/email/notify`;
     const payload = JSON.stringify({ event, to, data, context });
     
+    console.log(`[postEmailEvent] Sending email: ${event} to ${to}`);
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -20,12 +22,16 @@ async function postEmailEvent(event, to, data = {}, contextExtras = {}) {
     });
     
     if (!response.ok) {
-      throw new Error(`Email API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`[postEmailEvent] Email API error: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Email API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
-    return await response.json();
+    const result = await response.json();
+    console.log(`[postEmailEvent] Email sent successfully: ${event} to ${to}`, result);
+    return result;
   } catch (error) {
-    console.error('postEmailEvent error:', error);
+    console.error(`[postEmailEvent] Failed to send email: ${event} to ${to}`, error);
     throw error;
   }
 }

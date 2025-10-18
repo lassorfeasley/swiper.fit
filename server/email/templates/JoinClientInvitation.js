@@ -10,7 +10,7 @@ export default function JoinClientInvitation({ inviterName = 'John Smith', email
   const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: '0 0 16px 0' };
   const ctaStyle = { color: '#166534', fontSize: 14, fontWeight: 700, fontFamily: 'Arial, sans-serif', textDecoration: 'none' };
   const logoWrap = { marginBottom: 16 };
-  const iconStyle = { width: 48, height: 40, backgroundColor: '#22C55E', marginBottom: 16 };
+  const iconStyle = { width: 48, height: 40, marginBottom: 16 };
 
   const signupUrl = `https://www.swiper.fit/create-account?email=${encodeURIComponent(email)}&fromInvite=client`;
 
