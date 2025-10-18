@@ -25,10 +25,10 @@ export default function ClientInvitation({ inviterName = 'John Smith' }) {
       )
     ),
     // Heading
-    React.createElement('div', { style: titleStyle }, `${inviterName} wants you to be his client on Swiper`),
+    React.createElement('div', { style: titleStyle }, `${inviterName} wants you to be their client on Swiper`),
     // Body
     React.createElement('div', { style: { ...bodyStyle, marginTop: 4 } },
-      'Login to accept or decline John\'s request.'
+      `Login to accept or decline ${inviterName}\'s request.`
     ),
     // CTA link
     React.createElement('div', { style: { marginTop: 16 } },

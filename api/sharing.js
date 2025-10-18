@@ -1,40 +1,5 @@
 import { supabase } from '@/supabaseClient';
-
-// Helper function to send email events via HTTP request
-async function postEmailEvent(event, to, data = {}, contextExtras = {}) {
-  try {
-    const isLocal = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
-    const base = isLocal ? 'https://www.swiper.fit' : 'https://www.swiper.fit';
-    const context = {
-      env: process.env.NODE_ENV || 'production',
-      source: 'server',
-      ...contextExtras,
-    };
-    const url = `${base}/api/email/notify`;
-    const payload = JSON.stringify({ event, to, data, context });
-    
-    console.log(`[postEmailEvent] Sending email: ${event} to ${to}`);
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[postEmailEvent] Email API error: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`Email API error: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log(`[postEmailEvent] Email sent successfully: ${event} to ${to}`, result);
-    return result;
-  } catch (error) {
-    console.error(`[postEmailEvent] Failed to send email: ${event} to ${to}`, error);
-    throw error;
-  }
-}
+import { postEmailEvent } from '@/lib/emailEvents';
 
 /**
  * Consolidated Sharing API

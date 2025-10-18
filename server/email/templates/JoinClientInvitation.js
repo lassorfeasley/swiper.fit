@@ -34,7 +34,7 @@ export default function JoinClientInvitation({ inviterName = 'John Smith', email
       'Swiper fit is the effortless way to log workouts and track progress at the gym.',
       React.createElement('br'),
       React.createElement('br'),
-      'Create an account today to respond to John\'s request.'
+      `Create an account today to respond to ${inviterName}\'s request.`
     ),
     // CTA link
     React.createElement('div', { style: { marginTop: 16 } },
