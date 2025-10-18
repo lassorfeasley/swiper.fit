@@ -295,6 +295,7 @@ const History = () => {
           placeholder="Filter by routine"
           filterPlaceholder="Search routines"
           width={240}
+          useRelativePositioning={true}
         />
       )}
       data-component="AppHeader"

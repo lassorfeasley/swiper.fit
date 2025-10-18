@@ -30,8 +30,10 @@ export default function SwiperCombobox({
   emptyText = "No results",
   filterPlaceholder = "Search…",
   width = 240,
+  useRelativePositioning = false, // New prop to control positioning
 }) {
   const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const selectedLabel = useMemo(() => {
     return items.find((i) => i.value === value)?.label || "";
@@ -45,6 +47,93 @@ export default function SwiperCombobox({
     );
   }, [items, query]);
 
+  // If using relative positioning, render a custom dropdown instead of using DropdownMenu
+  if (useRelativePositioning) {
+    return (
+      <div className={cn("Combobox w-full inline-flex flex-col justify-start items-center gap-2 relative", className)}>
+        <div
+          role="combobox"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "Dropdown self-stretch h-11 px-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
+            triggerClassName
+          )}
+          style={{ width, maxWidth: width }}
+        >
+          <div className="DropdownText flex-1 justify-start text-neutral-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight truncate">
+            {selectedLabel || placeholder}
+          </div>
+          <div className="LucideIcon w-6 h-6 relative overflow-hidden">
+            <ChevronsUpDown className="w-4 h-4 text-neutral-neutral-700 absolute left-[4px] top-[4px]" />
+          </div>
+        </div>
+        
+        {isOpen && (
+          <div
+            className={cn("SearchBox self-stretch rounded-lg bg-white shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] p-0 absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden", contentClassName)}
+            style={{ width, maxWidth: width, border: "1px solid rgba(212, 212, 212, 1)" }}
+          >
+            <div className="SearchArea self-stretch h-11 px-0 border-b border-neutral-neutral-300 inline-flex items-center bg-white">
+              <div className="w-full px-2 inline-flex justify-start items-center gap-2">
+                <div className="LucideIcon w-4 h-4 relative overflow-hidden">
+                  <Search className="w-3 h-3 absolute left-[2px] top-[2px] text-neutral-neutral-500" strokeWidth={2} />
+                </div>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={filterPlaceholder}
+                  className="flex-1 bg-transparent border-none outline-none text-neutral-neutral-600 placeholder:text-neutral-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight"
+                />
+              </div>
+            </div>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-neutral-400 bg-white">{emptyText}</div>
+            ) : (
+              <div className="SelectionArea self-stretch px-1 pt-1 flex flex-col justify-start items-start max-h-64 overflow-auto bg-white">
+                {filtered.map((item) => {
+                  const selected = value === item.value;
+                  return (
+                    <div
+                      key={item.value}
+                      onClick={() => {
+                        onChange?.(item.value);
+                        setIsOpen(false);
+                        setQuery("");
+                      }}
+                      className={cn(
+                        "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full cursor-pointer",
+                        selected ? "bg-neutral-neutral-100" : "bg-white hover:bg-neutral-neutral-100"
+                      )}
+                    >
+                      <div className="flex-1 justify-start text-neutral-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight truncate">
+                        {item.label || item.value}
+                      </div>
+                      <Check className={cn("ml-2 text-neutral-neutral-600", selected ? "opacity-100" : "opacity-0")}/>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Click outside to close */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => {
+              setIsOpen(false);
+              setQuery("");
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Original DropdownMenu implementation
   return (
     <div className={cn("Combobox w-full inline-flex flex-col justify-start items-center gap-2", className)}>
       <DropdownMenu>
@@ -128,6 +217,7 @@ SwiperCombobox.propTypes = {
   emptyText: PropTypes.string,
   filterPlaceholder: PropTypes.string,
   width: PropTypes.number,
+  useRelativePositioning: PropTypes.bool,
 };
 
 
