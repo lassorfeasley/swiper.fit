@@ -215,6 +215,64 @@ export function ActiveWorkoutProvider({ children }) {
     };
   }, [isWorkoutActive, activeWorkout?.accumulatedSeconds, activeWorkout?.runningSince]);
 
+  // Reconcile from DB to correct any missed realtime updates
+  const refreshActiveWorkout = useCallback(async (workoutId) => {
+    if (!workoutId) return;
+    try {
+      const { data: w, error } = await supabase
+        .from('workouts')
+        .select('id, routine_id, workout_name, is_active, active_seconds_accumulated, running_since, last_workout_exercise_id, routines!workouts_routine_id_fkey(routine_name)')
+        .eq('id', workoutId)
+        .maybeSingle();
+      if (error || !w) return;
+
+      let lastExerciseId = null;
+      if (w.last_workout_exercise_id) {
+        try {
+          const { data: we } = await supabase
+            .from('workout_exercises')
+            .select('exercise_id')
+            .eq('id', w.last_workout_exercise_id)
+            .maybeSingle();
+          lastExerciseId = we?.exercise_id || null;
+        } catch (_) {}
+      }
+
+      setActiveWorkout(prev => prev ? {
+        ...prev,
+        id: w.id,
+        programId: w.routine_id,
+        workoutName: w.workout_name,
+        routineName: w.routines?.routine_name || '',
+        accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
+        runningSince: w.running_since || null,
+        lastExerciseId
+      } : {
+        id: w.id,
+        programId: w.routine_id,
+        workoutName: w.workout_name,
+        routineName: w.routines?.routine_name || '',
+        accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
+        runningSince: w.running_since || null,
+        lastExerciseId
+      });
+
+      const base = Number(w.active_seconds_accumulated || 0);
+      const bonus = w.running_since ? Math.floor((Date.now() - new Date(w.running_since).getTime()) / 1000) : 0;
+      setElapsedTime(base + bonus);
+      if (typeof w.is_active === 'boolean') setIsWorkoutActive(w.is_active);
+    } catch (_) {}
+  }, []);
+
+  // Periodic reconcile to heal any missed realtime events
+  useEffect(() => {
+    if (!isWorkoutActive || !activeWorkout?.id) return;
+    const t = setInterval(() => {
+      void refreshActiveWorkout(activeWorkout.id);
+    }, 30000);
+    return () => clearInterval(t);
+  }, [isWorkoutActive, activeWorkout?.id, refreshActiveWorkout]);
+
   // Real-time subscriptions for workout status changes only
   useEffect(() => {
     if (!activeWorkout?.id || !user?.id) return;
@@ -251,16 +309,10 @@ export function ActiveWorkoutProvider({ children }) {
             setLastExerciseIdChangeTrigger(prev => prev + 1);
           }
           
+          // Reconcile from DB to ensure consistency (handles missed/out-of-order events)
+          await refreshActiveWorkout(activeWorkout.id);
           // Handle workout completion
           setIsWorkoutActive(w.is_active);
-          // Sync timer fields across devices
-          if (typeof w.active_seconds_accumulated === 'number' || 'running_since' in w) {
-            setActiveWorkout(prev => prev ? {
-              ...prev,
-              accumulatedSeconds: Number(w.active_seconds_accumulated || 0),
-              runningSince: w.running_since || null
-            } : prev);
-          }
           if (!w.is_active) {
             console.log('[Real-time] Workout ended remotely, clearing state...');
             console.log('[Real-time] Workout ID:', activeWorkout?.id);
@@ -326,7 +378,7 @@ export function ActiveWorkoutProvider({ children }) {
       void workoutChan.unsubscribe();
       void userWorkoutChan.unsubscribe();
     };
-  }, [activeWorkout?.id, user?.id, navigate]);
+  }, [activeWorkout?.id, user?.id, navigate, refreshActiveWorkout]);
 
   // Auto-navigate into any new active workout for this user (delegate or delegator), and initialize context
   useEffect(() => {
@@ -856,16 +908,36 @@ export function ActiveWorkoutProvider({ children }) {
           .eq('id', activeWorkout.id);
         if (error) throw error;
         setActiveWorkout(prev => prev ? { ...prev, accumulatedSeconds: newAccum, runningSince: null } : prev);
+        await refreshActiveWorkout(activeWorkout.id);
         return;
       }
       // Optimistic local update; realtime will also sync
       const delta = Math.floor((Date.now() - new Date(activeWorkout.runningSince).getTime()) / 1000);
       const newAccum = (activeWorkout.accumulatedSeconds || 0) + Math.max(delta, 0);
       setActiveWorkout(prev => prev ? { ...prev, accumulatedSeconds: newAccum, runningSince: null } : prev);
+      // If RPC was a no-op (e.g., lacks delegate support), attempt DB fallback after quick verification
+      setTimeout(async () => {
+        try {
+          const { data: w } = await supabase
+            .from('workouts')
+            .select('active_seconds_accumulated, running_since')
+            .eq('id', activeWorkout.id)
+            .maybeSingle();
+          if (w && w.running_since) {
+            const calcDelta = Math.floor((Date.now() - new Date(activeWorkout.runningSince).getTime()) / 1000);
+            const calcAccum = (activeWorkout.accumulatedSeconds || 0) + Math.max(calcDelta, 0);
+            await supabase
+              .from('workouts')
+              .update({ active_seconds_accumulated: calcAccum, running_since: null })
+              .eq('id', activeWorkout.id);
+          }
+        } catch (_) {}
+        void refreshActiveWorkout(activeWorkout.id);
+      }, 150);
     } catch (e) {
       console.error('[pauseWorkout] failed:', e);
     }
-  }, [activeWorkout]);
+  }, [activeWorkout, refreshActiveWorkout]);
 
   const resumeWorkout = useCallback(async () => {
     if (!activeWorkout?.id || activeWorkout?.runningSince) return;
@@ -882,15 +954,34 @@ export function ActiveWorkoutProvider({ children }) {
           .eq('id', activeWorkout.id);
         if (error) throw error;
         setActiveWorkout(prev => prev ? { ...prev, runningSince: nowIso } : prev);
+        await refreshActiveWorkout(activeWorkout.id);
         return;
       }
       // Optimistic local update; realtime will also sync
       const nowIso = new Date().toISOString();
       setActiveWorkout(prev => prev ? { ...prev, runningSince: nowIso } : prev);
+      // If RPC was a no-op (e.g., lacks delegate support), verify and fallback to direct update
+      setTimeout(async () => {
+        try {
+          const { data: w } = await supabase
+            .from('workouts')
+            .select('running_since')
+            .eq('id', activeWorkout.id)
+            .maybeSingle();
+          if (w && !w.running_since) {
+            const now = new Date().toISOString();
+            await supabase
+              .from('workouts')
+              .update({ running_since: now })
+              .eq('id', activeWorkout.id);
+          }
+        } catch (_) {}
+        void refreshActiveWorkout(activeWorkout.id);
+      }, 150);
     } catch (e) {
       console.error('[resumeWorkout] failed:', e);
     }
-  }, [activeWorkout]);
+  }, [activeWorkout, refreshActiveWorkout]);
 
   const reactivateWorkout = useCallback(async (workoutId) => {
     if (!workoutId) return false;
