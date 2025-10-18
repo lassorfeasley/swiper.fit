@@ -2,7 +2,7 @@ import React from 'react';
 import DefaultLayout from '../layouts/DefaultLayout.js';
 
 export function subject({ inviterName }) {
-  return `Join Swiper - ${inviterName} wants you to be their trainer`;
+  return `Join Swiper to become ${inviterName}'s trainer`;
 }
 
 export default function JoinTrainerInvitation({ inviterName = 'John Smith', email = '' }) {
