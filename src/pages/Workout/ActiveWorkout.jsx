@@ -60,7 +60,7 @@ const ActiveWorkoutContent = () => {
   const skipAutoRedirectRef = useRef(false);
 
   
-  const { isDelegated, returnToSelf } = useAccount();
+  const { isDelegated, returnToSelf, loading: accountLoading } = useAccount();
   const { user } = useAuth();
   
   
@@ -69,8 +69,8 @@ const ActiveWorkoutContent = () => {
   const listRef = useRef(null);
 
   useEffect(() => {
-    // Only redirect after loading has finished
-    if (loading) return;
+    // Only redirect after both contexts finish loading (workout + delegation)
+    if (loading || accountLoading) return;
     if (!isWorkoutActive) {
       console.log('[ActiveWorkout] Workout not active, checking auto-redirect...');
       console.log('[ActiveWorkout] skipAutoRedirectRef.current:', skipAutoRedirectRef.current);
@@ -90,7 +90,7 @@ const ActiveWorkoutContent = () => {
       console.log('[ActiveWorkout] Auto-redirecting to routines');
       navigate("/routines", { replace: true });
     }
-  }, [loading, isWorkoutActive, navigate, user?.id, isDelegated]);
+  }, [loading, accountLoading, isWorkoutActive, navigate, user?.id, isDelegated]);
 
   useEffect(() => {
     setNavBarVisible(false);
@@ -104,7 +104,9 @@ const ActiveWorkoutContent = () => {
   // Use the dedicated autoscroll hook
   useWorkoutAutoScroll({
     focusedExercise,
-    viewportPosition: 0.2
+    viewportPosition: 0.2,
+    recenterOnIdleMs: 5000,
+    recenterThresholdPx: 40
   });
   // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
   const isRestoringFocusRef = useRef(false);
