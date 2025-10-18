@@ -13,8 +13,8 @@ const WorkoutSummaryCard = ({ exerciseName, sets, className = "", addTopBorder =
       className={`Property1WorkoutSummary bg-white rounded-xl ${className}`}
       style={style}
       rightHeader={
-        <div className="size-6 relative overflow-hidden flex items-center justify-center">
-          <Check className="size-6 text-green-600" strokeWidth={4} />
+        <div className="size-8 flex items-center justify-center">
+          <Check className="w-6 h-6 text-green-500" />
         </div>
       }
     />

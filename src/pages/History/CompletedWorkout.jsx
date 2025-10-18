@@ -91,8 +91,8 @@ const ExerciseCompletedCard = ({ exercise, setLog }) => {
             {exercise.exercise}
           </div>
           <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
-            <div className="size-6 relative overflow-hidden flex items-center justify-center">
-              <Check className="size-6 text-green-500" />
+            <div className="size-8 flex items-center justify-center">
+              <Check className="w-6 h-6 text-green-500" />
             </div>
           </div>
         </div>

@@ -315,6 +315,7 @@ const ActiveWorkoutContent = () => {
   const progressStats = getProgressStats();
   const totalSets = progressStats.total;
   const completedSets = progressStats.completed;
+  const progress = totalSets > 0 ? completedSets / totalSets : 0;
 
   return (
     <AppLayout
@@ -339,7 +340,7 @@ const ActiveWorkoutContent = () => {
       enableScrollSnap={false}
     >
       {/* Active workout nav: label scrolls, controls stick */}
-      <ActiveWorkoutNav onEnd={handleEndWorkout} />
+      <ActiveWorkoutNav onEnd={handleEndWorkout} progress={progress} />
 
       <div ref={listRef} className="flex flex-col min-h-screen bg-transparent px-0">
         {/* Spacer to clear sticky subheader */}
@@ -377,8 +378,8 @@ const ActiveWorkoutContent = () => {
         cancelText="Keep working out"
       />
 
-      {/* Bottom progress bar */}
-      <SwiperProgress completedSets={completedSets} totalSets={totalSets} />
+      {/* Bottom progress bar is now redundant; header shows progress */}
+      {/* <SwiperProgress completedSets={completedSets} totalSets={totalSets} /> */}
 
       
     </AppLayout>

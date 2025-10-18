@@ -487,14 +487,19 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
             whileDrag={{ cursor: "grabbing" }}
             transition={{ ...tweenConfig, backgroundColor: { ...tweenConfig } }}
           >
-            <motion.div className="size-9 relative flex items-center justify-center"
+            <motion.div className="relative flex items-center justify-center"
               initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
-              animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: 1 / (finalScaleX || 1), scaleY: 1 / (finalScaleY || 1) }}
+              animate={{
+                opacity: isCheckVisible ? 1 : 0,
+                // Inversely scale to counter parent scale during/after expansion
+                scaleX: 1 / (finalScaleX || 1),
+                scaleY: 1 / (finalScaleY || 1),
+              }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               style={{ transformOrigin: 'center', zIndex: 3 }}
             >
               {isVisuallyComplete && (
-                <div className="Check relative flex items-center justify-center">
+                <div className="Check relative flex items-center justify-center" style={{ width: 32, height: 32 }}>
                   {isOptimistic ? (
                     <Loader2 className="w-8 h-8 text-white animate-spin" />
                   ) : (

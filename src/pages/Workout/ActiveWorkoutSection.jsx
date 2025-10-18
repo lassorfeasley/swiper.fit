@@ -604,12 +604,7 @@ const ActiveWorkoutSection = ({
 
   // Simplified handle focus function
   const handleFocus = (exerciseId) => {
-    // Safety check: Never focus on a completed exercise
-    if (globalCompletedExercises.has(exerciseId)) {
-      // console.log(`[${section}] Attempted to focus on completed exercise via handleFocus:`, exerciseId);
-      return;
-    }
-    
+    // Allow focusing any exercise, including completed ones
     changeFocus(exerciseId);
   };
 
@@ -969,76 +964,101 @@ const ActiveWorkoutSection = ({
       }
 
       // Handle set changes for current workout
-      const currentSets = editingExercise.setConfigs || [];
-      const newSets = newSetConfigs || [];
-
-      // Find sets to add (new sets without IDs)
-      const setsToAdd = newSets.filter((newSet) => {
-        if (newSet.id) return false; // Already saved
-
-        // If this set already exists in currentSets (matched by routine_set_id or key fields), skip
-        const existsInCurrent = currentSets.some((cs) => {
-          if (cs.id) return false;
-
-          // Match by routine_set_id if present on both
-          if (newSet.routine_set_id && cs.routine_set_id) {
-            return newSet.routine_set_id === cs.routine_set_id;
-          }
-
-          // Otherwise compare the core fields
-          return (
-            newSet.reps === cs.reps &&
-            newSet.weight === cs.weight &&
-            newSet.weight_unit === cs.weight_unit &&
-            newSet.set_variant === cs.set_variant &&
-            newSet.set_type === cs.set_type &&
-            newSet.timed_set_duration === cs.timed_set_duration
-          );
-        });
-
-        return !existsInCurrent;
+      const currentSets = (editingExercise.setConfigs || []).slice().sort((a, b) => {
+        const aOrder = a.set_order ?? 0;
+        const bOrder = b.set_order ?? 0;
+        return aOrder - bOrder;
       });
-      
-      // Find sets to remove (current sets not in new sets)
-      const setsToRemove = currentSets.filter(currentSet => 
-        !newSets.some(newSet => newSet.id === currentSet.id)
-      );
+      const newSets = (newSetConfigs || []).slice();
 
-      // Find sets to update (sets with IDs that have changes)
-      const setsToUpdate = newSets.filter(newSet => {
-        if (!newSet.id) return false; // Skip new sets
-        const currentSet = currentSets.find(cs => cs.id === newSet.id);
-        if (!currentSet) return false;
-        
-        // Check if any field changed
-        return (
+      const currentCount = currentSets.length;
+      const newCount = newSets.length;
+      const minCount = Math.min(currentCount, newCount);
+
+      // Determine sets to update (by ID) in the overlapping range
+      const setsToUpdate = [];
+      for (let i = 0; i < minCount; i++) {
+        const newSet = newSets[i];
+        if (!newSet?.id) continue; // Only update persisted rows
+        const currentSet = currentSets.find((cs) => cs.id === newSet.id);
+        if (!currentSet) continue;
+        if (
           newSet.reps !== currentSet.reps ||
           newSet.weight !== currentSet.weight ||
           newSet.weight_unit !== currentSet.weight_unit ||
           newSet.set_variant !== currentSet.set_variant ||
           newSet.set_type !== currentSet.set_type ||
           newSet.timed_set_duration !== currentSet.timed_set_duration
-        );
-      });
+        ) {
+          setsToUpdate.push(newSet);
+        }
+      }
 
-      // Remove sets
-      for (const set of setsToRemove) {
+      // LIFO removals: remove the last N current sets by set_order
+      const numToRemove = Math.max(0, currentCount - newCount);
+      const setsToRemove = numToRemove > 0 ? currentSets.slice(-numToRemove) : [];
+
+      // Remove sets (LIFO: delete highest set_order first)
+      const setsToRemoveInLifo = [...setsToRemove].sort((a, b) => {
+        const aOrder = a.set_order ?? 0;
+        const bOrder = b.set_order ?? 0;
+        return bOrder - aOrder;
+      });
+      for (const set of setsToRemoveInLifo) {
         if (set.id) {
+          // Delete saved sets directly
           await supabase
             .from("sets")
             .delete()
             .eq("id", set.id);
+        } else if (set.routine_set_id) {
+          // For template sets, create a hidden set to override the template
+          const hiddenSetData = {
+            workout_id: activeWorkout.id,
+            exercise_id: exercise_id,
+            routine_set_id: set.routine_set_id,
+            reps: set.reps,
+            weight: set.weight,
+            weight_unit: set.weight_unit,
+            set_type: set.set_type,
+            set_variant: set.set_variant,
+            timed_set_duration: set.timed_set_duration,
+            status: "hidden", // Mark as hidden to exclude from display
+          };
+
+          console.log("Creating hidden set for exercise ID:", exercise_id);
+          console.log("Hidden set data:", hiddenSetData);
+          const { error } = await supabase
+            .from("sets")
+            .insert(hiddenSetData);
+
+          if (error) {
+            console.error("Error creating hidden set:", error);
+            throw error;
+          }
         }
       }
 
-      // Add new sets
+      // Add new sets appended after the last existing set
+      // Determine the current max set_order among existing sets
+      const currentMaxOrder = (currentSets || []).reduce((max, s) => {
+        const order = s.set_order ?? 0;
+        return order > max ? order : max;
+      }, 0);
+
+      let nextOrder = currentMaxOrder;
+      // Only add the extra sets beyond the current count, in the order shown in the form
+      const numToAdd = Math.max(0, newCount - currentCount);
+      const setsToAdd = numToAdd > 0 ? newSets.slice(-numToAdd) : [];
       for (const set of setsToAdd) {
+        nextOrder += 1;
         await supabase
           .from("sets")
           .insert({
             workout_id: activeWorkout.id,
             exercise_id: exercise_id,
-            set_order: set.set_order || 1, // Add proper set_order for database consistency
+            // Always append after the last existing set
+            set_order: nextOrder,
             reps: set.reps,
             weight: set.weight,
             weight_unit: set.weight_unit,

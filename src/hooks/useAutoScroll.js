@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react';
  * @param {number} options.maxRetries - Maximum number of retry attempts (default 10)
  * @param {number} options.recenterOnIdleMs - If set, after this many ms of no interaction, recenter focused element (default 5000)
  * @param {number} options.recenterThresholdPx - How far off-target before we recenter (default 24px)
+ * @param {Function} options.onScrolled - Optional callback invoked after a scroll occurs
  */
 export const useAutoScroll = ({
   focusedId,
@@ -21,7 +22,8 @@ export const useAutoScroll = ({
   maxRetries = 8,
   recenterOnIdleMs = 5000,
   recenterThresholdPx = 40,
-  preferNativeScrollIntoView = true
+  preferNativeScrollIntoView = true,
+  onScrolled,
 }) => {
   const timeoutRef = useRef(null);
   const lastFocusedIdRef = useRef(null);
@@ -117,6 +119,7 @@ export const useAutoScroll = ({
       if (preferNative && typeof element.scrollIntoView === 'function') {
         element.scrollIntoView({ block: 'start', behavior: scrollBehavior });
         suppressRecenterUntilRef.current = Date.now() + 600;
+        try { onScrolled && onScrolled(); } catch (_) {}
         return;
       }
 
@@ -129,6 +132,7 @@ export const useAutoScroll = ({
       if (Math.abs(scrollOffset) > 10) {
         window.scrollBy({ top: scrollOffset, behavior: scrollBehavior });
         suppressRecenterUntilRef.current = Date.now() + 600;
+        try { onScrolled && onScrolled(); } catch (_) {}
       }
     });
   };
@@ -211,10 +215,41 @@ export const useWorkoutAutoScroll = ({
   recenterOnIdleMs = 0,
   recenterThresholdPx = 40
 }) => {
+  // First scroll after a page refresh should be instant to avoid visible jumpy animations
+  const didInitialScrollRef = useRef(false);
+  const hasPageRefreshedRef = useRef(true); // Track if this is a page refresh
+
+  useEffect(() => {
+    if (!focusedExercise?.exercise_id) return;
+    
+    const id = `exercise-${focusedExercise.exercise_id}`;
+
+    // If this is the first focused exercise after page load, do immediate scroll
+    if (hasPageRefreshedRef.current && !didInitialScrollRef.current) {
+      // Fast retry loop: check every 50ms up to ~3s for the element to exist
+      let attempts = 0;
+      const maxAttempts = 60; // 60 * 50ms = 3000ms
+      const intervalId = setInterval(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ block: 'start', behavior: 'auto' });
+          didInitialScrollRef.current = true;
+          hasPageRefreshedRef.current = false; // Mark that we've done the initial scroll
+          clearInterval(intervalId);
+        } else if (++attempts >= maxAttempts) {
+          clearInterval(intervalId);
+        }
+      }, 50);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [focusedExercise?.exercise_id]);
+
   useAutoScroll({
     focusedId: focusedExercise?.exercise_id,
     elementPrefix: 'exercise-',
     viewportPosition,
+    // After the initial instant scroll, fall back to smooth behavior
     scrollBehavior: 'smooth',
     debounceMs,
     maxRetries,

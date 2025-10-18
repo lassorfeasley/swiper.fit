@@ -60,6 +60,8 @@ const AddNewExerciseForm = React.forwardRef(
       : undefined;
 
     // Initialize useSetConfig with the correct number of sets
+    // When editing, use the length of initialSetConfigs, otherwise use initialSets
+    const effectiveInitialSets = initialSetConfigs.length > 0 ? initialSetConfigs.length : initialSets;
     const {
       defaults,
       sets,
@@ -68,7 +70,7 @@ const AddNewExerciseForm = React.forwardRef(
       getSetMerged,
       addSet,
       removeLastSet,
-    } = useSetConfig(initialSets, initialDefaults);
+    } = useSetConfig(effectiveInitialSets, initialDefaults);
 
     // Wrapper to keep single-set exercises in sync with defaults
     const updateDefault = (field, value) => {
@@ -232,6 +234,11 @@ const AddNewExerciseForm = React.forwardRef(
             label="Sets"
             value={setsCount}
             onChange={(value) => {
+              // Prevent setting to 0 sets - minimum is 1
+              if (value < 1) {
+                return;
+              }
+              
               const currentCount = sets.length;
               if (value > currentCount) {
                 // Add sets

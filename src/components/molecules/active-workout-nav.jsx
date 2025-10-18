@@ -5,7 +5,7 @@ import { formatSecondsHHMMSS } from "@/lib/utils";
 import { Blend, X, Square, Pause, Play } from "lucide-react";
 import ActionPill from "./action-pill";
 
-export default function ActiveWorkoutNav({ onEnd }) {
+export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
   const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
@@ -127,11 +127,27 @@ export default function ActiveWorkoutNav({ onEnd }) {
         className="sticky [top:var(--header-height,0px)] left-0 right-0 w-full z-[120] flex items-center border-b border-transparent transition-[box-shadow,border-color] duration-150 bg-transparent"
       >
         <div data-layer="Frame 57" className="Frame57 w-full h-full px-4 md:px-8 pt-5 pb-0 inline-flex justify-between items-center bg-gradient-to-b from-stone-100 to-stone-100/0">
-          <div data-layer="Property 1=Default" className={`Property1Default w-full p-2 ${isPaused ? 'bg-orange-600' : 'bg-white/70'} rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-between items-center transition-colors duration-300 ease-in-out`}>
-            <div data-layer="clock-wrapper" className="ClockWrapper h-10 px-3 bg-neutral-neutral-100 rounded-3xl flex justify-center items-center gap-2.5">
-              <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
-            </div>
-            <div className="inline-flex items-center gap-2">
+          <div
+            data-layer="Property 1=Default"
+            className={`Property1Default w-full p-2 ${isPaused ? 'bg-orange-500' : 'bg-white/70'} rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] relative overflow-hidden transition-colors duration-300 ease-in-out`}
+          >
+            {/* Progress fill layer */}
+            <div
+              aria-hidden
+              className={`absolute inset-0 ${isPaused ? 'bg-orange-600' : 'bg-green-600'} transition-colors duration-300 ease-in-out`}
+              style={{
+                transform: `scaleX(${Math.min(Math.max(progress, 0), 1)})`,
+                transformOrigin: 'left',
+                transition: 'transform 400ms ease'
+              }}
+            />
+
+            {/* Foreground content */}
+            <div className="relative z-10 w-full inline-flex justify-between items-center">
+              <div data-layer="clock-wrapper" className="ClockWrapper h-10 px-3 bg-neutral-neutral-100 rounded-3xl flex justify-center items-center gap-2.5">
+                <div data-layer="timer" className="Timer justify-center text-neutral-950 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">{formattedTime}</div>
+              </div>
+              <div className="inline-flex items-center gap-2">
               {isPaused ? (
                 <>
                   <button
@@ -161,6 +177,7 @@ export default function ActiveWorkoutNav({ onEnd }) {
                   <Pause className="w-6 h-6 text-white" />
                 </button>
               )}
+              </div>
             </div>
           </div>
         </div>
