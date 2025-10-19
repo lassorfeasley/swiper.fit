@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Train from "./pages/Train/Train";
 import Home from "./pages/Home/Home";
 import Landing from "./pages/Landing/Landing";
 import Routines from "./pages/Routines/Routines";
@@ -26,7 +27,6 @@ import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
 import DialogTest from "./pages/Sandbox/DialogTest";
 import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
-import Sharing from "./pages/Sharing/Sharing";
 import MobileNav from "./components/organisms/mobile-nav";
 import SideBarNav from "./components/organisms/side-bar-nav";
 import LoggedOutNav from "./components/layout/LoggedOutNav";
@@ -209,13 +209,13 @@ function AppContent() {
           {/* Protected routes wrapper */}
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<Home />} />
+            <Route path="/train" element={<Train />} />
             <Route path="/routines" element={<Routines />} />
             <Route
               path="/routines/:programId/configure"
               element={<RoutineBuilder />}
             />
             <Route path="/history" element={<History />} />
-            <Route path="/trainers" element={<Sharing />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />

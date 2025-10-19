@@ -278,7 +278,7 @@ const History = () => {
     <AppLayout
       reserveSpace={false}
       variant="glass"
-      title="History"
+      title="Analysis"
       showSidebar={!paramUserId && !isDelegated}
       showShare={false}
       showBackButton={false}

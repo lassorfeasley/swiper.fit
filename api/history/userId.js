@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>History Not Public - SwiperFit</title>
+            <title>Analysis Not Public - SwiperFit</title>
             <meta name="description" content="This user's workout history is not public." />
           </head>
           <body>
@@ -61,8 +61,8 @@ export default async function handler(req, res) {
     // Build OG metadata
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/history/public/${userId}`;
-    const title = `${ownerName}'s Workout History`;
-    const description = `${ownerName} is sharing their workout history on SwiperFit. View recent workouts and stats.`;
+    const title = `${ownerName}'s Workout Analysis`;
+    const description = `${ownerName} is sharing their workout analysis on SwiperFit. View recent workouts and stats.`;
 
     const html = generateHTML({
       title: title || 'Log workouts effortlessly with Swiper.fit',
@@ -162,12 +162,12 @@ function generateHTML({ title, description, url, ownerName, userId }) {
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="title">${ownerName}'s Workout History</h1>
-        <p class="subtitle">Public history on SwiperFit</p>
+        <h1 class="title">${ownerName}'s Workout Analysis</h1>
+        <p class="subtitle">Public analysis on SwiperFit</p>
       </div>
       <div class="cta">
         <a href="/app/history/public/${userId}" class="button">Open in App</a>
-        <p class="redirect-note">Click to view full workout history</p>
+        <p class="redirect-note">Click to view full workout analysis</p>
       </div>
       <div class="branding">
         <p>Powered by SwiperFit</p>
