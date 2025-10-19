@@ -35,6 +35,8 @@ export default function PublicRoutine() {
             is_public,
             user_id,
             og_image_url,
+            created_by,
+            shared_by,
             routine_exercises!fk_routine_exercises__routines(
               id,
               exercise_order,
@@ -72,6 +74,7 @@ export default function PublicRoutine() {
         }
         console.log('Routine data:', data);
         console.log('OG Image URL:', data.og_image_url);
+        console.log('Routine attribution - created_by:', data.created_by, 'shared_by:', data.shared_by);
         setRoutine({ ...data, owner_name: ownerName });
       } finally {
         setLoading(false);
@@ -89,27 +92,46 @@ export default function PublicRoutine() {
 
   const cloneRoutineForCurrentUser = async () => {
     // Try RPC first (if function exists)
+    console.log('[PublicRoutine] Attempting RPC clone_routine for routine:', routine.id);
     try {
       const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
         source_routine_id: routine.id,
-        new_name: `${routine.routine_name} | Shared by ${routine.owner_name || 'User'}`,
+        new_name: routine.routine_name,
       });
-      if (!rpcError && newId) return newId;
-    } catch (_) {}
+      if (!rpcError && newId) {
+        console.log('[PublicRoutine] RPC clone_routine succeeded, new routine ID:', newId);
+        return newId;
+      }
+    } catch (e) {
+      console.log('[PublicRoutine] RPC clone_routine failed, falling back to manual clone:', e);
+    }
 
     // Fallback manual clone
+    console.log('[PublicRoutine] Starting manual clone with attribution:');
+    console.log('  Source routine created_by:', routine.created_by);
+    console.log('  Source routine shared_by:', routine.shared_by);
+    console.log('  Source routine user_id:', routine.user_id);
+    console.log('  New routine will have created_by:', routine.created_by || routine.user_id);
+    console.log('  New routine will have shared_by:', routine.user_id);
+    
     // 1) Create routine copy
     const { data: newRoutine, error: routineErr } = await supabase
       .from('routines')
       .insert({
-        routine_name: `${routine.routine_name} | Shared by ${routine.owner_name || 'User'}`,
+        routine_name: routine.routine_name,
         user_id: user.id,
         is_archived: false,
         is_public: false,
+        created_by: routine.created_by || routine.user_id,
+        shared_by: routine.user_id,
       })
       .select('id')
       .single();
     if (routineErr || !newRoutine) throw routineErr || new Error('Failed to create routine');
+
+    console.log('[PublicRoutine] Successfully created cloned routine:', newRoutine.id);
+    console.log('  New routine created_by:', routine.created_by || routine.user_id);
+    console.log('  New routine shared_by:', routine.user_id);
 
     const newRoutineId = newRoutine.id;
 

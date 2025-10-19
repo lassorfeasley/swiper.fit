@@ -142,7 +142,13 @@ const RoutinesIndex = () => {
       // 1. Insert program
       const { data: program, error: programError } = await supabase
         .from("routines")
-        .insert({ routine_name: programName.slice(0, MAX_ROUTINE_NAME_LEN), user_id: user.id, is_public: true })
+        .insert({ 
+          routine_name: programName.slice(0, MAX_ROUTINE_NAME_LEN), 
+          user_id: user.id, 
+          is_public: true,
+          created_by: user.id,
+          shared_by: user.id
+        })
         .select()
         .single();
       if (programError || !program) throw new Error("Failed to create program");

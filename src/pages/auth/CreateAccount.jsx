@@ -44,6 +44,7 @@ export default function CreateAccount() {
   }, [location.search]);
 
   const cloneRoutineForCurrentUser = async (sourceRoutineId) => {
+    console.log('[CreateAccount] Attempting RPC clone_routine for routine:', sourceRoutineId);
     try {
       // Lookup owner name for attribution used in RPC new_name
       let ownerName;
@@ -67,12 +68,18 @@ export default function CreateAccount() {
 
       const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
         source_routine_id: sourceRoutineId,
-        new_name: ownerName ? `| Shared by ${ownerName}` : null,
+        new_name: null, // Will use original routine name
       });
-      if (!rpcError && newId) return newId;
-    } catch (_) {}
+      if (!rpcError && newId) {
+        console.log('[CreateAccount] RPC clone_routine succeeded, new routine ID:', newId);
+        return newId;
+      }
+    } catch (e) {
+      console.log('[CreateAccount] RPC clone_routine failed, falling back to manual clone:', e);
+    }
 
     // Fallback manual clone
+    console.log('[CreateAccount] Starting manual clone with attribution:');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth?.user?.id;
     if (!uid) throw new Error('Not authenticated');
@@ -82,6 +89,9 @@ export default function CreateAccount() {
       .select(`
         id,
         routine_name,
+        user_id,
+        created_by,
+        shared_by,
         routine_exercises!fk_routine_exercises__routines(
           id,
           exercise_order,
@@ -96,12 +106,30 @@ export default function CreateAccount() {
       .single();
     if (srcErr || !src) throw new Error('Shared routine not available');
 
+    console.log('  Source routine created_by:', src.created_by);
+    console.log('  Source routine shared_by:', src.shared_by);
+    console.log('  Source routine user_id:', src.user_id);
+    console.log('  New routine will have created_by:', src.created_by || src.user_id);
+    console.log('  New routine will have shared_by:', src.user_id);
+
     const { data: newRoutine, error: newErr } = await supabase
       .from('routines')
-      .insert({ routine_name: ownerName ? `${src.routine_name} | Shared by ${ownerName}` : src.routine_name, user_id: uid, is_archived: false, is_public: false })
+      .insert({ 
+        routine_name: src.routine_name, 
+        user_id: uid, 
+        is_archived: false, 
+        is_public: false,
+        created_by: src.created_by || src.user_id,
+        shared_by: src.user_id
+      })
       .select('id')
       .single();
     if (newErr || !newRoutine) throw newErr || new Error('Failed to create routine');
+    
+    console.log('[CreateAccount] Successfully created cloned routine:', newRoutine.id);
+    console.log('  New routine created_by:', src.created_by || src.user_id);
+    console.log('  New routine shared_by:', src.user_id);
+    
     const newRoutineId = newRoutine.id;
 
     const exercisesPayload = (src.routine_exercises || [])

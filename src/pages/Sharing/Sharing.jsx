@@ -909,6 +909,8 @@ export default function Sharing() {
           user_id: selectedClient.id,
           is_public: true,
           is_archived: false,
+          created_by: user.id,
+          shared_by: selectedClient.id,
         })
         .select()
         .single();

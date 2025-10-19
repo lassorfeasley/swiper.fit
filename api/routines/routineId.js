@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     // Fetch routine and visibility
     const { data: routine, error: routineError } = await supabase
       .from('routines')
-      .select(`id, routine_name, is_public, user_id`)
+      .select(`id, routine_name, is_public, user_id, created_by, shared_by`)
       .eq('id', routineId)
       .single();
 
@@ -72,16 +72,16 @@ export default async function handler(req, res) {
       routineSets = rsResp.data || [];
     }
 
-    // Owner name
-    let ownerName = 'User';
-    if (routine.user_id) {
+    // Owner name - only show "SHARED BY" if shared_by is different from created_by
+    let ownerName = '';
+    if (routine.shared_by && routine.shared_by !== routine.created_by) {
       const { data: owner } = await supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', routine.user_id)
+        .eq('id', routine.shared_by)
         .single();
       if (owner) {
-        ownerName = `${owner.first_name || ''} ${owner.last_name || ''}`.trim() || 'User';
+        ownerName = `${owner.first_name || ''} ${owner.last_name || ''}`.trim();
       }
     }
 
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/routines/public/${routineId}`;
     // Headline and subtitle for OG cards and visible header
-    const title = `${ownerName} shared an exercise routine on Swiper.Fit`;
+    const title = ownerName ? `${ownerName} shared an exercise routine on Swiper.Fit` : 'Exercise routine on Swiper.Fit';
     const description = `Swiper.Fit is the effortless way to log workouts`;
 
     const html = generateHTML({

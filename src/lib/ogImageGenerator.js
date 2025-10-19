@@ -132,8 +132,10 @@ export function generateRoutineOGImagePNG(routineData) {
       drawTextWithLetterSpacing(ctx, 'CLICK TO COPY', 60, 60, 0);
       ctx.textAlign = 'right';
       const owner = (routineData?.ownerName || '').trim();
-      const rightLabel = `SHARED BY ${owner ? owner.toUpperCase() : ''}`.trim();
-      drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 0);
+      const rightLabel = owner ? `SHARED BY ${owner.toUpperCase()}` : '';
+      if (rightLabel) {
+        drawTextWithLetterSpacing(ctx, rightLabel, 1140, 60, 0);
+      }
       ctx.textAlign = 'left';
 
       // Big routine title (always suffix " routine" unless already present)
