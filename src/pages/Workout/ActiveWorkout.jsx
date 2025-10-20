@@ -131,9 +131,9 @@ const ActiveWorkoutContent = () => {
     // Prevent multiple restoration attempts
     if (isRestoringFocusRef.current) return;
 
-    // Fresh workout: wait for warmup to load, then prefer warmup explicitly and persist it
+    // Fresh workout: only prefer warmup if there's no lastExerciseId (truly new workout)
     const isFreshWorkout = (elapsedTime ?? 0) < 120;
-    if (isFreshWorkout && !didWarmupOverrideRef.current) {
+    if (isFreshWorkout && !didWarmupOverrideRef.current && !activeWorkout?.lastExerciseId) {
       if (!loadedSections?.warmup) return; // wait until we know if warmup exists
       const warm = sectionExercises?.warmup || [];
       if (warm.length > 0) {

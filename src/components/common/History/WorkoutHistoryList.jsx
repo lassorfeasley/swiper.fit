@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import WorkoutCard from "@/components/common/Cards/WorkoutCard";
+import CompletedWorkoutCard from "@/components/common/Cards/CompletedWorkoutCard";
 import DeckWrapper from "@/components/common/Cards/Wrappers/DeckWrapper";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 
@@ -64,7 +64,7 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
                     }}
                     className="cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-ring w-full"
                   >
-                    <WorkoutCard
+                    <CompletedWorkoutCard
                       name={w.workout_name || "Workout"}
                       subtitle={
                         w.routines?.routine_name || w.muscle_group || "Workout"

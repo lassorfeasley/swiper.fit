@@ -1251,9 +1251,10 @@ const Account = () => {
           </div>
 
           {/* Personal Information Section */}
-          <div className="DeckWrapper w-full max-w-[500px] min-w-80 pt-5 pb-10 inline-flex flex-col justify-start items-start gap-3 px-5">
-            <div className="PersonalInformation w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Personal information</div>
-            <div className="CardWrapper w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center gap-5">
+          <div className="w-full flex justify-center px-5">
+            <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
+              <div className="PersonalInformation w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Personal information</div>
+              <div className="CardWrapper w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center gap-5">
               {/* First Name Field */}
               <EditableTextInput
                 label="First name"
@@ -1309,13 +1310,15 @@ const Account = () => {
                   </div>
                 </>
               )}
+              </div>
             </div>
           </div>
 
           {/* Login and Password Section */}
-          <div className="Frame63 w-full max-w-[500px] min-w-80 pt-5 pb-10 inline-flex flex-col justify-start items-start gap-3 px-5">
-            <div className="LoginAndPassword w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Login and password</div>
-            <div className="Frame56 w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
+          <div className="w-full flex justify-center px-5">
+            <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
+              <div className="LoginAndPassword w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Login and password</div>
+              <div className="Frame56 w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
               {/* Email Field */}
               <EditableTextInput
                 label="Email"
@@ -1374,13 +1377,15 @@ const Account = () => {
                   </div>
                 </>
               )}
+              </div>
             </div>
           </div>
 
           {/* Account Section */}
-          <div className="DeckWrapper w-full max-w-[500px] min-w-80 pt-5 pb-20 inline-flex flex-col justify-start items-start gap-3 px-5">
-            <div className="Account w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Account</div>
-            <div className="Frame62 self-stretch w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
+          <div className="w-full flex justify-center px-5">
+            <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
+              <div className="Account w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Account</div>
+              <div className="Frame62 self-stretch w-full p-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-5">
               <div 
                 className="Swiperbutton self-stretch h-12 px-4 py-2 bg-neutral-neutral-600 rounded-xl inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"
                 onClick={handleLogout}
@@ -1396,6 +1401,8 @@ const Account = () => {
                 <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
                   Delete account
                 </div>
+              </div>
+              </div>
               </div>
             </div>
           </div>
@@ -1732,7 +1739,6 @@ const Account = () => {
               />
             </div>
           </SwiperDialog>
-        </div>
       </MainContentSection>
     </AppLayout>
   );

@@ -18,7 +18,7 @@ import { Copy } from "lucide-react";
 import WorkoutHistoryList from "@/components/common/History/WorkoutHistoryList";
 import MainContentSection from "@/components/layout/MainContentSection";
 import SwiperCombobox from "@/components/molecules/swiper-combobox";
-import WorkoutCard from "@/components/common/Cards/WorkoutCard";
+import CompletedWorkoutCard from "@/components/common/Cards/CompletedWorkoutCard";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
