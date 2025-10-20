@@ -66,8 +66,8 @@ export default function AppLayout({
   }, [hideHeader, headerProps]);
 
   const allowedHeaderProps = [
-    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout',
-    'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onUpload', 'onDelete',
+    'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout', 'showStartWorkoutIcon',
+    'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onStartWorkoutIcon', 'onUpload', 'onDelete',
     'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent'
   ];
 

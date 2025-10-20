@@ -905,6 +905,8 @@ const RoutineBuilder = () => {
         onBack={handleBack}
         showShare={true}
         onShare={shareRoutine}
+        showStartWorkoutIcon={!isDelegated}
+        onStartWorkoutIcon={handleStartWorkout}
         showSettings={true}
         onSettings={() => setEditProgramOpen(true)}
         showDelete={true}
@@ -1066,30 +1068,6 @@ const RoutineBuilder = () => {
           </div>
         </SwiperForm>
         
-        {/* Start Workout Button - Absolutely positioned at bottom */}
-        {!isDelegated && (
-          <div className={`fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)] ${!isMobile && !isDelegated ? 'md:left-64' : ''}`} style={{ paddingBottom: '20px' }}>
-            <div 
-              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
-              onClick={handleStartWorkout}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStartWorkout?.(); } }}
-              aria-label="Start workout"
-            >
-              <div className="p-2.5 flex justify-start items-center gap-2.5">
-                <div className="relative">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 3L20 12L5 21V3Z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-              <div className="flex justify-center items-center gap-5">
-                <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">Start workout</div>
-              </div>
-            </div>
-          </div>
-        )}
       </AppLayout>
 
       {/* Share Routine Sheet */}

@@ -91,15 +91,14 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
         </div>
       </div>
       <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-        <ActionPill
-          label="Edit routine"
-          Icon={Cog}
-          onClick={handleSettingsClick}
-          color="neutral"
-          iconColor="neutral"
-          showText={true}
-          className="[&_.Text]:!text-neutral-700"
-        />
+            <ActionPill
+              label="Edit routine"
+              Icon={Cog}
+              onClick={handleSettingsClick}
+              color="neutral"
+              iconColor="neutral"
+              showText={true}
+            />
       </div>
     </div>
   );

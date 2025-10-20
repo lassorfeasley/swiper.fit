@@ -17,6 +17,7 @@ const PageHeader = forwardRef(({
   showPlusButton = false,
   showShare = false,
   showStartWorkout = false,
+  showStartWorkoutIcon = false,
   startCtaText,
   showSidebar = false,
   showUpload = false,
@@ -30,6 +31,7 @@ const PageHeader = forwardRef(({
   onAdd,
   onShare,
   onStartWorkout,
+  onStartWorkoutIcon,
   onUpload,
   onDelete,
   searchValue = "",
@@ -154,9 +156,9 @@ const PageHeader = forwardRef(({
               </div>
             </div>
             {/* Right: Actions and optional custom section */}
-            {(showShare || showDelete || showPlusButton || showSettings || sharingSection) && (
+            {(showShare || showDelete || showPlusButton || showSettings || showStartWorkoutIcon || sharingSection) && (
               <div className="inline-flex flex-row justify-center items-center gap-2.5">
-                {(showShare || showDelete || showPlusButton || showSettings) && (
+                {(showShare || showDelete || showPlusButton || showSettings || showStartWorkoutIcon) && (
                   <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
                   {showPlusButton && (
                     <button 
@@ -167,15 +169,6 @@ const PageHeader = forwardRef(({
                       <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                     </button>
                   )}
-                  {showSettings && (
-                    <button 
-                      onClick={onSettings} 
-                      aria-label="Settings" 
-                      className="size-6 flex items-center justify-center"
-                    >
-                      <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-                    </button>
-                  )}
                   {showShare && (
                     <button 
                       onClick={onShare} 
@@ -183,6 +176,24 @@ const PageHeader = forwardRef(({
                       className="size-6 flex items-center justify-center"
                     >
                       <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                  {showStartWorkoutIcon && (
+                    <button 
+                      onClick={onStartWorkoutIcon} 
+                      aria-label="Start Workout" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Play className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                    </button>
+                  )}
+                  {showSettings && (
+                    <button 
+                      onClick={onSettings} 
+                      aria-label="Settings" 
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
                     </button>
                   )}
                   {showDelete && (
@@ -232,7 +243,7 @@ const PageHeader = forwardRef(({
         {sharingSection ? (
           <div className="inline-flex flex-col justify-center items-end gap-2.5">{sharingSection}</div>
         ) : (
-          (showShare || showDelete || showPlusButton || showSettings) && (
+          (showShare || showDelete || showPlusButton || showSettings || showStartWorkoutIcon) && (
             <div className="inline-flex flex-col justify-center items-end gap-2.5">
               <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
                 {showPlusButton && (
@@ -244,15 +255,6 @@ const PageHeader = forwardRef(({
                     <Plus className="w-6 h-6 text-neutral-700" strokeWidth={2} />
                   </button>
                 )}
-                {showSettings && (
-                  <button 
-                    onClick={onSettings} 
-                    aria-label="Settings" 
-                    className="size-6 flex items-center justify-center"
-                  >
-                    <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-                  </button>
-                )}
                 {showShare && (
                   <button 
                     onClick={onShare} 
@@ -260,6 +262,24 @@ const PageHeader = forwardRef(({
                     className="size-6 flex items-center justify-center"
                   >
                     <Share className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+                {showStartWorkoutIcon && (
+                  <button 
+                    onClick={onStartWorkoutIcon} 
+                    aria-label="Start Workout" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Play className="w-5 h-5 text-neutral-700" strokeWidth={2} />
+                  </button>
+                )}
+                {showSettings && (
+                  <button 
+                    onClick={onSettings} 
+                    aria-label="Settings" 
+                    className="size-6 flex items-center justify-center"
+                  >
+                    <Cog className="w-5 h-5 text-neutral-700" strokeWidth={2} />
                   </button>
                 )}
                 {showDelete && (
@@ -357,7 +377,7 @@ const PageHeader = forwardRef(({
           </button>
         </div>
       ) : (
-        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout || sharingSection) && (
+        (showSearch || showSettings || showPlusButton || showShare || showStartWorkout || showStartWorkoutIcon || sharingSection) && (
           <div className="Pageactions inline-flex justify-start items-center">
             {sharingSection}
             {showSearch && (
@@ -391,6 +411,25 @@ const PageHeader = forwardRef(({
                 aria-label="Share"
               >
                 <Share2
+                  className={cn(
+                    "w-6 h-6",
+                    variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
+                  )}
+                />
+              </button>
+            )}
+            {showStartWorkoutIcon && (
+              <button
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center",
+                  variant === 'dark-fixed'
+                    ? "border-l border-neutral-600"
+                    : "border-l border-neutral-300"
+                )}
+                onClick={onStartWorkoutIcon}
+                aria-label="Start Workout"
+              >
+                <Play
                   className={cn(
                     "w-6 h-6",
                     variant === 'dark-fixed' ? "text-white" : "text-neutral-700"
