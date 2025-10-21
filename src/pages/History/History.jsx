@@ -35,14 +35,17 @@ const History = () => {
 
   const [hasSwitchedContext, setHasSwitchedContext] = useState(false);
 
-  // Check if we're managing history for an owner (from sharing page)
+  // Check if we're managing history for an owner (from sharing page) or client (from account page)
   const managingForOwner = location.state?.managingForOwner;
+  const managingForClient = location.state?.managingForClient;
   const ownerId = location.state?.ownerId;
+  const clientId = location.state?.clientId;
   const ownerNameFromState = location.state?.ownerName;
+  const clientNameFromState = location.state?.clientName;
 
   // Determine whose history we're viewing and whether it's the owner
-  const targetUserId = paramUserId || ownerId || user?.id;
-  const viewingOwn = !!user && (!paramUserId || paramUserId === user.id) && !managingForOwner;
+  const targetUserId = paramUserId || ownerId || clientId || user?.id;
+  const viewingOwn = !!user && (!paramUserId || paramUserId === user.id) && !managingForOwner && !managingForClient;
 
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
@@ -56,8 +59,9 @@ const History = () => {
     return email;
   };
 
-  // Build the sharing nav content for delegates
-  const headerSharingContent = isDelegated ? (
+  // Build the sharing nav content for delegates and sharing mode
+  const isInSharingMode = isDelegated || managingForOwner || managingForClient;
+  const headerSharingContent = isInSharingMode ? (
     <>
       <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
         <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
@@ -65,7 +69,7 @@ const History = () => {
         </div>
         <div className="flex justify-center items-center gap-5">
           <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-            {formatUserDisplay(actingUser)}
+            {isDelegated ? formatUserDisplay(actingUser) : (ownerNameFromState || clientNameFromState || 'User')}
           </div>
         </div>
       </div>
@@ -81,22 +85,24 @@ const History = () => {
   ) : undefined;
 
   /* ------------------------------------------------------------------
-    Handle delegation context when coming from sharing page
+    Handle delegation context when coming from sharing page or account page
   ------------------------------------------------------------------*/
   useEffect(() => {
-    if (managingForOwner && ownerId && switchToUser && !hasSwitchedContext) {
-      console.log('[History] Switching to owner context for history:', ownerId);
-      // Create a mock profile object for the owner
-      const ownerProfile = {
-        id: ownerId,
-        first_name: ownerNameFromState?.split(' ')[0] || '',
-        last_name: ownerNameFromState?.split(' ').slice(1).join(' ') || '',
+    if ((managingForOwner || managingForClient) && (ownerId || clientId) && switchToUser && !hasSwitchedContext) {
+      const targetId = ownerId || clientId;
+      const targetName = ownerNameFromState || clientNameFromState;
+      console.log('[History] Switching to context for history:', targetId);
+      // Create a mock profile object for the target user
+      const targetProfile = {
+        id: targetId,
+        first_name: targetName?.split(' ')[0] || '',
+        last_name: targetName?.split(' ').slice(1).join(' ') || '',
         email: ''
       };
-      switchToUser(ownerProfile);
+      switchToUser(targetProfile);
       setHasSwitchedContext(true);
     }
-  }, [managingForOwner, ownerId, ownerNameFromState, switchToUser, hasSwitchedContext]);
+  }, [managingForOwner, managingForClient, ownerId, clientId, ownerNameFromState, clientNameFromState, switchToUser, hasSwitchedContext]);
 
   /* ------------------------------------------------------------------
     Fetch the user's global share preference when Auth state changes
@@ -322,13 +328,13 @@ const History = () => {
       reserveSpace={false}
       variant="glass"
       title="Analysis"
-      showSidebar={!paramUserId && !isDelegated}
+      showSidebar={!paramUserId && !isDelegated && !managingForOwner && !managingForClient}
       showShare={false}
       showBackButton={false}
       search={false}
       pageContext="history"
       hideDelegateHeader={true}
-      sharingNavAbove={isDelegated}
+      sharingNavAbove={isInSharingMode}
       sharingNavContent={headerSharingContent}
       sharingSection={(
         <SwiperCombobox
