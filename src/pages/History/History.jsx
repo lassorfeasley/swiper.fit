@@ -217,6 +217,49 @@ const History = () => {
         setLoading(false);
         return;
       }
+
+      // If viewing own history or already delegated (permission already checked), proceed
+      if (viewingOwn || isDelegated) {
+        const { data: workoutsData, error } = await supabase
+          .from("workouts")
+          .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching workouts:", error);
+          setWorkouts([]);
+          setLoading(false);
+          return;
+        }
+
+        const processed = (workoutsData || []).map((w) => ({
+          ...w,
+          exerciseCount: new Set(w.sets?.map((s) => s.exercise_id) || []).size,
+        }));
+        setWorkouts(processed);
+        setLoading(false);
+        return;
+      }
+
+      // For viewing someone else's history, check can_review_history permission
+      const { data: shareData, error: shareError } = await supabase
+        .from("account_shares")
+        .select("can_review_history")
+        .eq("owner_user_id", targetUserId)
+        .eq("delegate_user_id", user?.id)
+        .eq("revoked_at", null)
+        .single();
+
+      if (shareError || !shareData?.can_review_history) {
+        console.error("No permission to review history for user:", targetUserId);
+        toast.error("You don't have permission to view this user's workout history");
+        setWorkouts([]);
+        setLoading(false);
+        return;
+      }
+
+      // Permission granted, fetch workouts
       const { data: workoutsData, error } = await supabase
         .from("workouts")
         .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
@@ -239,7 +282,7 @@ const History = () => {
     };
 
     fetchData();
-  }, [targetUserId]);
+  }, [targetUserId, viewingOwn, isDelegated, user?.id]);
 
   // Initialize routine filter from navigation state when arriving from a workout
   useEffect(() => {
