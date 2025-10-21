@@ -56,9 +56,8 @@ export const AccountProvider = ({ children }) => {
     console.log('[AccountContext] Current auth user:', authUser?.id);
     setActingUser(null);
     localStorage.removeItem("actingUserId");
-    // Force a page reload to clear all contexts and ensure clean state
-    // This prevents the delegate from remaining in the client's workout context
-    window.location.href = "/trainers";
+    // Navigate to account settings page since trainers page no longer exists
+    navigate("/account");
   };
 
   // The user the app should act as for queries
