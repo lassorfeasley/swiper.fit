@@ -151,7 +151,7 @@ const Train = () => {
   if (loading) {
     return (
       <AppLayout
-        reserveSpace={false}
+        reserveSpace={true}
         variant="glass"
         title="Train"
         showSidebar={true}
@@ -173,7 +173,7 @@ const Train = () => {
   if (!user) {
     return (
       <AppLayout
-        reserveSpace={false}
+        reserveSpace={true}
         variant="glass"
         title="Train"
         showSidebar={true}
@@ -194,7 +194,7 @@ const Train = () => {
 
   return (
     <AppLayout
-      reserveSpace={false}
+      reserveSpace={true}
       variant="glass"
       title="Train"
       showSidebar={true}
