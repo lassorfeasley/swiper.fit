@@ -203,8 +203,15 @@ const Train = () => {
       search={false}
       pageContext="train"
     >
-      <MainContentSection className="!p-0 flex-1 min-h-0 flex justify-center">
-        <DeckWrapper variant="cards">
+      <MainContentSection className="!p-0 flex-1 min-h-0 flex flex-col">
+        <div className="flex justify-center flex-1">
+          <DeckWrapper 
+            gap={12} 
+            paddingTop={82}
+            paddingBottom={0}
+            maxWidth={500}
+            className="flex-1 mt-0 min-h-screen"
+          >
           {routines.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
               <h1 className="text-2xl font-bold text-neutral-700 mb-4">No Routines Yet</h1>
@@ -221,7 +228,8 @@ const Train = () => {
               />
             ))
           )}
-        </DeckWrapper>
+          </DeckWrapper>
+        </div>
       </MainContentSection>
     </AppLayout>
   );
