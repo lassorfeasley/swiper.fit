@@ -19,8 +19,8 @@ export default function Landing() {
         // If there's an active workout, redirect to it immediately
         navigate("/workout/active", { replace: true });
       } else {
-        // Otherwise, redirect to routines page
-        navigate("/routines", { replace: true });
+        // Otherwise, redirect to train page
+        navigate("/train", { replace: true });
       }
     }
   }, [session, isWorkoutActive, workoutLoading, navigate]);

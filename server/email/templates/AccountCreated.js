@@ -7,8 +7,8 @@ export function subject() {
 
 export default function AccountCreated({ name }) {
   const baseUrl = process.env.EMAIL_WEB_BASE_URL || 'https://www.swiper.fit';
-  const redirectPath = encodeURIComponent('/routines');
-  const routinesUrl = `${baseUrl}/login?redirect=${redirectPath}`;
+  const redirectPath = encodeURIComponent('/train');
+  const loginUrl = `${baseUrl}/login?redirect=${redirectPath}`;
 
   const titleStyle = { color: '#000000', fontSize: 24, fontWeight: 700, fontFamily: 'Arial, sans-serif', margin: '0 0 8px 0' };
   const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: 0 };
@@ -39,7 +39,7 @@ export default function AccountCreated({ name }) {
     ),
     // CTA link (text style per design)
     React.createElement('div', { style: { marginTop: 16 } },
-      React.createElement('a', { href: routinesUrl, style: ctaStyle }, 'Create a routine \u2192')
+      React.createElement('a', { href: loginUrl, style: ctaStyle }, 'Start training \u2192')
     )
   );
 }

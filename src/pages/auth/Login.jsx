@@ -57,7 +57,7 @@ export default function Login() {
           if (isWorkoutActive) {
             navigate("/workout/active");
           } else {
-            navigate("/routines");
+            navigate("/train");
           }
         } else {
           // If still loading, check again in a moment

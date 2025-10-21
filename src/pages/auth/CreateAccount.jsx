@@ -258,7 +258,7 @@ export default function CreateAccount() {
           if (isWorkoutActive) {
             navigate("/workout/active");
           } else {
-            navigate("/routines");
+            navigate("/train");
           }
         } else {
           setTimeout(checkWorkoutAndRedirect, 100);
