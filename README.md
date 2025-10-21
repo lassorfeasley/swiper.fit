@@ -21,3 +21,4 @@ Client helper (optional): `postEmailEvent(event, to, data)` in `src/lib/emailEve
 Notes:
 - Do not hardcode API keys in source. Configure `RESEND_API_KEY` in environment.
 - Verify your sending domain in Resend before production sends.
+# Trigger deployment after Vercel outage
