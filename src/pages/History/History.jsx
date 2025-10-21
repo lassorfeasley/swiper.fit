@@ -224,8 +224,8 @@ const History = () => {
         return;
       }
 
-      // If viewing own history or already delegated (permission already checked), proceed
-      if (viewingOwn || isDelegated) {
+      // If viewing own history, already delegated, or in sharing mode (permission already checked), proceed
+      if (viewingOwn || isDelegated || managingForOwner || managingForClient) {
         const { data: workoutsData, error } = await supabase
           .from("workouts")
           .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
