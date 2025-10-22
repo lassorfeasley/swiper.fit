@@ -565,3 +565,46 @@ export async function getAllSharingRelationships(userId) {
   }
 }
 
+// Links pending invitations (created with a null delegate_user_id) to a user after signup
+export async function linkPendingInvitations(userId, email) {
+  try {
+    const { data: pendingInvitations, error: fetchError } = await supabase
+      .from("account_shares")
+      .select("id, owner_user_id, request_type, expires_at")
+      .eq("delegate_email", email.trim().toLowerCase())
+      .is("delegate_user_id", null)
+      .eq("status", "pending");
+
+    if (fetchError) {
+      console.error("Failed to fetch pending invitations:", fetchError);
+      throw new Error("Failed to fetch pending invitations");
+    }
+
+    if (!pendingInvitations || pendingInvitations.length === 0) {
+      return 0;
+    }
+
+    const now = new Date();
+    const validInvitations = pendingInvitations.filter((inv) => new Date(inv.expires_at) > now);
+    if (validInvitations.length === 0) {
+      return 0;
+    }
+
+    const { data: updatedInvitations, error: updateError } = await supabase
+      .from("account_shares")
+      .update({ delegate_user_id: userId })
+      .in("id", validInvitations.map((inv) => inv.id))
+      .select();
+
+    if (updateError) {
+      console.error("Failed to link pending invitations:", updateError);
+      throw new Error("Failed to link pending invitations");
+    }
+
+    return (updatedInvitations || []).length;
+  } catch (error) {
+    console.error("Error linking pending invitations:", error);
+    throw error;
+  }
+}
+
