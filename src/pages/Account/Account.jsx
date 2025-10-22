@@ -22,7 +22,7 @@ import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWr
 import SwiperForm from "@/components/molecules/swiper-form";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "../../../api/sharing";
+import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/components/molecules/manage-permissions-card";
 import { generateWorkoutName } from "@/lib/utils";

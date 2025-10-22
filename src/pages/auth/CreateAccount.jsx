@@ -19,7 +19,7 @@ import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { postEmailEvent } from "@/lib/emailEvents";
-import { linkPendingInvitations } from "../../../api/sharing";
+import { linkPendingInvitations } from "@/lib/sharingApi";
 import { toast } from "sonner";
 
 export default function CreateAccount() {
