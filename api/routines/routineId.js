@@ -2,7 +2,7 @@ import { getSupabaseServerClient } from '../../server/supabase.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const supabase = getSupabaseServerClient();
+// Delay creating the Supabase client until needed (bot path)
 
 export default async function handler(req, res) {
   const routineId = req.query.id;
@@ -27,6 +27,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const supabase = getSupabaseServerClient();
     // Fetch routine and visibility
     const { data: routine, error: routineError } = await supabase
       .from('routines')

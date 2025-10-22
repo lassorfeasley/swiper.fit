@@ -2,7 +2,7 @@ import { getSupabaseServerClient } from '../../server/supabase.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const supabase = getSupabaseServerClient();
+// Delay creating the Supabase client until we actually need it (bot/crawler path)
 
 export default async function handler(req, res) {
   const workoutId = req.query.id || '3de533f8-7d05-47a9-ac1d-159268b509a4'; // fallback for testing
@@ -28,6 +28,7 @@ export default async function handler(req, res) {
 
   // Bot/crawler - serve static HTML
   try {
+    const supabase = getSupabaseServerClient();
     // Fetch workout data (same as generate-static-workout.js)
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
