@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, x-internal-secret" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    { "source": "/app/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
+    { "source": "/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
+    { "source": "/app/history/public/workout/(.*)", "destination": "/api/workout/workoutId?id=$1" },
+    { "source": "/app/history/public/(.*)", "destination": "/api/history/userId?id=$1" },
+    { "source": "/history/public/workout/(.*)", "destination": "/api/workout/workoutId?id=$1" },
+    { "source": "/history/public/(.*)", "destination": "/api/history/userId?id=$1" },
+    { "source": "/app/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
+    { "source": "/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+} 
