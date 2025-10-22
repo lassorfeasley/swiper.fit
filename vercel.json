@@ -10,11 +10,6 @@
       ]
     }
   ],
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     { "source": "/app/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
     { "source": "/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
