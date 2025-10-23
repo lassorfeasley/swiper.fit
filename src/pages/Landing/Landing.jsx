@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { DemoWorkoutProvider } from "@/contexts/DemoWorkoutContext";
 import DemoWorkoutSection from "@/components/DemoWorkout/DemoWorkoutSection";
 import { MoveUpRight } from "lucide-react";
-import { LoggedOutNav } from "@/features/auth";
+import LoggedOutNav from "@/features/auth/components/LoggedOutNav";
 
 export default function Landing() {
   const navigate = useNavigate();

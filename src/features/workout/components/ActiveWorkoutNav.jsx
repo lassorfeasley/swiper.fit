@@ -3,7 +3,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { formatSecondsHHMMSS } from "@/lib/utils";
 import { Blend, X, Square, Pause, Play } from "lucide-react";
-import { ActionPill } from "@/components/shared/ActionPill";
+import ActionPill from "@/components/shared/ActionPill";
 
 export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
   const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout } = useActiveWorkout();

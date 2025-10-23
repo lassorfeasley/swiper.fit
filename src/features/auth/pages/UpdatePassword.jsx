@@ -12,7 +12,7 @@ import {
   SwiperCard,
   SwiperCardContent,
 } from "@/components/shared/SwiperCard";
-import { LoggedOutNav } from "../components/LoggedOutNav";
+import LoggedOutNav from "../components/LoggedOutNav";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 
