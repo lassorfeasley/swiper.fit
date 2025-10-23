@@ -478,3 +478,47 @@ export function isAccepted(share: AccountShare): boolean {
 export function isRejected(share: AccountShare): boolean {
   return share.status === 'rejected';
 }
+
+// ============================================================================
+// ACCOUNT LINKING FUNCTIONS
+// ============================================================================
+
+export async function linkPendingInvitations(userId: string, email: string): Promise<number> {
+  try {
+    // Find all pending invitations for this email
+    const { data: pendingInvitations, error: fetchError } = await supabase
+      .from("account_shares")
+      .select("*")
+      .eq("delegate_email", email)
+      .eq("status", "pending");
+
+    if (fetchError) {
+      console.error("Error fetching pending invitations:", fetchError);
+      return 0;
+    }
+
+    if (!pendingInvitations || pendingInvitations.length === 0) {
+      return 0;
+    }
+
+    // Update all pending invitations to link them to the new user
+    const { error: updateError } = await supabase
+      .from("account_shares")
+      .update({ 
+        delegate_user_id: userId,
+        status: "accepted"
+      })
+      .eq("delegate_email", email)
+      .eq("status", "pending");
+
+    if (updateError) {
+      console.error("Error linking pending invitations:", updateError);
+      return 0;
+    }
+
+    return pendingInvitations.length;
+  } catch (error) {
+    console.error("linkPendingInvitations error:", error);
+    return 0;
+  }
+}

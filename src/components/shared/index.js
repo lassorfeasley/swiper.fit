@@ -18,14 +18,14 @@ export { default as ToggleInput } from './inputs/ToggleInput.jsx';
 export { default as SearchField } from './inputs/SearchField.jsx';
 
 // UI Components
-export { default as SwiperButton } from './SwiperButton.jsx';
+export { default as SwiperButton } from './SwiperButton.tsx';
 export { default as SwiperCard } from './SwiperCard.jsx';
 export { default as SwiperDialog } from './SwiperDialog.jsx';
 export { default as SwiperSheet } from './SwiperSheet.jsx';
 export { default as SwiperForm } from './SwiperForm.jsx';
 export { default as SwiperFormSwitch } from './SwiperFormSwitch.jsx';
 export { default as SwiperCombobox } from './SwiperCombobox.jsx';
-export { default as ActionCard } from './ActionCard.jsx';
-export { default as ActionPill } from './ActionPill.jsx';
+export { default as ActionCard } from './ActionCard.tsx';
+export { default as ActionPill } from './ActionPill.tsx';
 export { default as SectionNav } from './SectionNav.jsx';
-export { default as SetBadge } from './SetBadge.jsx';
+export { default as SetBadge } from './SetBadge.tsx';
