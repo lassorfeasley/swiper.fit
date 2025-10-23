@@ -1,14 +1,11 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Train from "./pages/Train/Train";
+import { Train } from "@/features/workout";
 import Home from "./pages/Home/Home";
 import Landing from "./pages/Landing/Landing";
-import Routines from "./pages/Routines/Routines";
-import PublicRoutine from "./pages/Routines/PublicRoutine";
-import History from "./pages/History/History";
-import ActiveWorkout from "./pages/Workout/ActiveWorkout";
-import CompletedWorkout from "./pages/History/CompletedWorkout";
-import RoutineBuilder from "./pages/Routines/RoutineBuilder";
+import { Routines, PublicRoutine, RoutineBuilder } from "@/features/routines";
+import { History, CompletedWorkout } from "@/features/history";
+import { ActiveWorkout } from "@/features/workout";
 import "./App.css";
 import {
   NavBarVisibilityProvider,
@@ -16,20 +13,16 @@ import {
 } from "@/contexts/NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
-import Login from "./pages/auth/Login";
-import CreateAccount from "./pages/auth/CreateAccount";
-import PasswordReset from "./pages/auth/PasswordReset";
-import UpdatePassword from "./pages/auth/UpdatePassword";
-import RequireAuth from "@/lib/auth/RequireAuth";
+import { Login, CreateAccount, PasswordReset, UpdatePassword, RequireAuth } from "@/features/auth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import DemoPage from "./pages/Sandbox/DemoPage";
 import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
 import DialogTest from "./pages/Sandbox/DialogTest";
 import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
-import MobileNav from "./components/organisms/mobile-nav";
-import SideBarNav from "./components/organisms/side-bar-nav";
-import LoggedOutNav from "./components/layout/LoggedOutNav";
+// import MobileNav from "./components/layout/MobileNav";
+// import SideBarNav from "./components/layout/SideBarNav";
+import { LoggedOutNav } from "@/features/auth";
 import Account from "./pages/Account/Account";
 import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
@@ -251,7 +244,7 @@ function AppContent() {
       </main>
 
       {/* Show normal navigation only when no workout is active and not delegated */}
-      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
+      {/* {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />} */}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
 
       {/* Global toast notifications */}

@@ -1,13 +1,13 @@
 import React, { useRef } from 'react';
 import DemoActiveExerciseCard from '@/pages/Landing/demo/DemoActiveExerciseCard';
 import { useDemoWorkout } from '@/contexts/DemoWorkoutContext';
-import SetEditForm from '@/components/common/forms/SetEditForm';
-import SwiperForm from '@/components/molecules/swiper-form';
-import AddNewExerciseForm from '@/components/common/forms/AddNewExerciseForm';
-import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
-import CardWrapper from '@/components/common/Cards/Wrappers/CardWrapper';
-import { ActionCard } from '@/components/molecules/action-card';
-import { SwiperButton } from '@/components/molecules/swiper-button';
+import { SetEditForm } from '@/features/routines';
+import SwiperForm from '@/components/shared/SwiperForm';
+import { AddNewExerciseForm } from '@/features/routines';
+import DeckWrapper from '@/components/shared/cards/wrappers/DeckWrapper';
+import CardWrapper from '@/components/shared/cards/wrappers/CardWrapper';
+import { ActionCard } from '@/components/shared/ActionCard';
+import { SwiperButton } from '@/components/shared/SwiperButton';
 import { Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 

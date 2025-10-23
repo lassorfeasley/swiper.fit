@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { ArrowLeft, Search, Settings2, Plus, Share, Share2, X, Play, PenLine, Blend, Upload, Trash2, Cog } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TextInput } from "@/components/molecules/text-input";
+import { TextInput } from "@/components/shared/inputs/TextInput";
 
 const PageHeader = forwardRef(({ 
   reserveSpace = false,

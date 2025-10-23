@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TextInput } from "@/components/molecules/text-input";
+import { TextInput } from "@/components/shared/inputs/TextInput";
 import { Eye } from "lucide-react";
 
 export default function DemoPage() {

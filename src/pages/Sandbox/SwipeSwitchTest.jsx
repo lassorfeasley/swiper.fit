@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
-import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
+import DeckWrapper from '@/components/shared/cards/wrappers/DeckWrapper';
+import { SwipeSwitch } from '@/features/workout';
 import { Button } from '@/components/shadcn/button';
 
 export default function SwipeSwitchTest() {

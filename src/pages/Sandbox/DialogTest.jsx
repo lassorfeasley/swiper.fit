@@ -11,8 +11,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/shadcn/dialog";
-import SwiperDialog from "@/components/molecules/swiper-dialog";
-import { SwiperButton } from "@/components/molecules/swiper-button";
+import SwiperDialog from "@/components/shared/SwiperDialog";
+import { SwiperButton } from "@/components/shared/SwiperButton";
 import { Square, Plus } from "lucide-react";
 
 export default function DialogTest() {

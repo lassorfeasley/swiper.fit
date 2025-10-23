@@ -7,25 +7,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/shadcn/dropdown-menu";
 import { Switch as AtomSwitch } from "@/components/shadcn/switch";
 import { Switch as UiSwitch } from "@/components/shadcn/switch";
-import { SwiperButton } from "@/components/molecules/swiper-button";
-import { SwiperCard, SwiperCardContent, SwiperCardDescription, SwiperCardFooter, SwiperCardHeader, SwiperCardTitle } from "@/components/molecules/swiper-card";
-import SwiperFormSwitch from "@/components/molecules/swiper-form-switch";
-import SwiperDialog from "@/components/molecules/swiper-dialog";
-import { SwiperSheet } from "@/components/molecules/swiper-sheet";
-import SwiperForm, { SwiperFormSection } from "@/components/molecules/swiper-form";
-import SwiperProgress from "@/components/molecules/swiper-progress";
-import DurationInput from "@/components/molecules/duration-input";
-import NumericInput from "@/components/molecules/numeric-input";
-import EditableTextInput from "@/components/molecules/editable-text-input";
-import SearchField from "@/components/molecules/search-field";
-import ToggleInput from "@/components/molecules/toggle-input";
-import SectionNav from "@/components/molecules/section-nav";
-import SetBadge from "@/components/molecules/SetBadge";
-import { ActionCard } from "@/components/molecules/action-card";
-import ActionPill from "@/components/molecules/action-pill";
-import StaticCard from "@/components/organisms/static-card";
+import { SwiperButton } from "@/components/shared/SwiperButton";
+import { SwiperCard, SwiperCardContent, SwiperCardDescription, SwiperCardFooter, SwiperCardHeader, SwiperCardTitle } from "@/components/shared/SwiperCard";
+import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
+import SwiperDialog from "@/components/shared/SwiperDialog";
+import { SwiperSheet } from "@/components/shared/SwiperSheet";
+import SwiperForm, { SwiperFormSection } from "@/components/shared/SwiperForm";
+import SwiperProgress from "@/features/workout/components/SwiperProgress";
+import DurationInput from "@/components/shared/inputs/DurationInput";
+import NumericInput from "@/components/shared/inputs/NumericInput";
+import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
+import SearchField from "@/components/shared/inputs/SearchField";
+import ToggleInput from "@/components/shared/inputs/ToggleInput";
+import SectionNav from "@/components/shared/SectionNav";
+import SetBadge from "@/components/shared/SetBadge";
+import { ActionCard } from "@/components/shared/ActionCard";
+import ActionPill from "@/components/shared/ActionPill";
+// import StaticCard from "@/components/organisms/static-card";
 import { Play } from "lucide-react";
-import SwiperCombobox from "@/components/molecules/swiper-combobox";
+import SwiperCombobox from "@/components/shared/SwiperCombobox";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -311,7 +311,7 @@ export default function ComponentsGallery() {
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-neutral-700">Static Card (Organism)</h2>
           <div className="space-y-3">
-            <StaticCard id={1} name="Upper Body Strength" labels={["Push", "Pull"]} count={6} duration="45m" onClick={() => {}} />
+            {/* <StaticCard id={1} name="Upper Body Strength" labels={["Push", "Pull"]} count={6} duration="45m" onClick={() => {}} /> */}
           </div>
         </section>
       )

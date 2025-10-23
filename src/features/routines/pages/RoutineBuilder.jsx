@@ -1,0 +1,1192 @@
+import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/supabaseClient";
+import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
+import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
+import { PageNameContext } from "@/App";
+import { FormHeader } from "@/components/shadcn/sheet";
+import AddNewExerciseForm from "../components/AddNewExerciseForm";
+import ExerciseCard from "@/components/shared/cards/ExerciseCard";
+import AppLayout from "@/components/layout/AppLayout";
+import SwiperDialog from "@/components/shared/SwiperDialog";
+import SwiperForm from "@/components/shared/SwiperForm";
+import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
+import SectionNav from "@/components/shared/SectionNav";
+import { SwiperButton } from "@/components/shared/SwiperButton";
+import { TextInput } from "@/components/shared/inputs/TextInput";
+import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
+import SetEditForm from "../components/SetEditForm";
+import { ActionCard } from "@/components/shared/ActionCard";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { useAccount } from "@/contexts/AccountContext";
+import { toast } from "sonner";
+import { scrollToSection } from "@/lib/scroll";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Copy, Blend, X } from "lucide-react";
+
+const RoutineBuilder = () => {
+  const { programId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setPageName } = useContext(PageNameContext);
+  const { isWorkoutActive, startWorkout } = useActiveWorkout();
+  const { isDelegated, actingUser, returnToSelf } = useAccount();
+  const isMobile = useIsMobile();
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [programName, setProgramName] = useState("");
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [editingExercise, setEditingExercise] = useState(null);
+  const [search, setSearch] = useState("");
+  const [isDeleteProgramConfirmOpen, setDeleteProgramConfirmOpen] =
+    useState(false);
+  const [isEditProgramOpen, setEditProgramOpen] = useState(false);
+  const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
+    useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isPublic, setIsPublic] = useState(true); // All routines are now public
+  const [sharing, setSharing] = useState(false);
+  const [program, setProgram] = useState(null);
+
+  const isUnmounted = useRef(false);
+  const [dirty, setDirty] = useState(false);
+  const formRef = useRef(null);
+  const [sectionFilter, setSectionFilter] = useState("workout");
+  const [editingSet, setEditingSet] = useState(null);
+  const [editingSetIndex, setEditingSetIndex] = useState(null);
+  const [isEditSetFormOpen, setIsEditSetFormOpen] = useState(false);
+  const [editingSetFormDirty, setEditingSetFormDirty] = useState(false);
+  const reorderTimeoutRef = useRef(null);
+  const [addExerciseSection, setAddExerciseSection] = useState(null);
+  const ogGenTimerRef = useRef(null);
+  const ogLastSigRef = useRef("");
+  const ogLastRunRef = useRef(0);
+  // Helper to format delegate display name
+  const formatUserDisplay = (profile) => {
+    if (!profile) return "Unknown User";
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    const email = profile.email || "";
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return email;
+  };
+
+  // Full sharing nav row content matching Active Workout style
+  const headerSharingContent = isDelegated ? (
+    <>
+      <div className="Frame73 max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+        <div className="Iconbutton w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
+          <Blend className="w-6 h-6 text-white" />
+        </div>
+        <div className="Frame71 flex justify-center items-center gap-5">
+          <div className="AccountOwnersName justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+            {formatUserDisplay(actingUser)}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Exit delegate mode"
+        onClick={returnToSelf}
+        className="ActionIcons w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+    </>
+  ) : undefined;
+
+
+  useEffect(() => {
+    setPageName("RoutineBuilder");
+  }, [setPageName]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (reorderTimeoutRef.current) {
+        clearTimeout(reorderTimeoutRef.current);
+      }
+    };
+  }, []);
+
+
+  useEffect(() => {
+    async function fetchProgramAndExercises() {
+      setLoading(true);
+      const { data: programData } = await supabase
+        .from("routines")
+        .select("routine_name, is_public, og_image_url")
+        .eq("id", programId)
+        .single();
+      setProgramName(programData?.routine_name || "");
+      setIsPublic(true); // All routines are now public
+      setProgram(programData);
+      console.log('Program data:', programData);
+      console.log('OG Image URL:', programData?.og_image_url);
+
+
+      const { data: progExs, error } = await supabase
+        .from("routine_exercises")
+        .select(
+          `id,
+           exercise_id,
+           exercise_order,
+           exercises!fk_routine_exercises__exercises(
+             name,
+             section
+           ),
+           routine_sets!fk_routine_sets__routine_exercises(
+             id,
+             reps,
+             weight,
+             weight_unit,
+             set_order,
+             set_variant,
+             set_type,
+             timed_set_duration
+           )`
+        )
+        .eq("routine_id", programId)
+        .order("exercise_order", { ascending: true });
+      if (error) {
+        setExercises([]);
+        setLoading(false);
+        return;
+      }
+      const items = (progExs || []).map((pe) => ({
+        id: pe.id,
+        exercise_id: pe.exercise_id,
+        name: pe.exercises?.name || "[Exercise name]",
+        section: pe.exercises?.section || "training",
+        sets: pe.routine_sets?.length || 0,
+        order: pe.exercise_order || 0,
+        setConfigs: (pe.routine_sets || [])
+          .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
+          .map((set) => {
+            const unit = set.weight_unit || 'lbs';
+            return {
+              reps: set.reps,
+              weight: set.weight,
+              unit,
+              set_variant: set.set_variant || `Set ${set.set_order}`,
+              set_type: set.set_type,
+              timed_set_duration: set.timed_set_duration,
+            };
+          }),
+      }));
+      setExercises(items);
+      
+      // Do not auto-open add exercise sheet; UI now indicates next step clearly
+      setLoading(false);
+    }
+    fetchProgramAndExercises();
+    return () => {
+      isUnmounted.current = true;
+      saveOrder();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programId]);
+
+  // Reset OG image generation refs when routine changes to avoid cross-routine bleed
+  useEffect(() => {
+    ogLastSigRef.current = "";
+    ogLastRunRef.current = 0;
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+      ogGenTimerRef.current = null;
+    }
+  }, [programId]);
+
+  // Debounced + throttled routine OG image regeneration on material changes
+  useEffect(() => {
+    if (!programId) return;
+
+    const exerciseCount = exercises.length;
+    const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+    const name = (programName || '').trim();
+    const sig = `${name}|${exerciseCount}|${setCount}`;
+
+    if (sig === ogLastSigRef.current) return;
+
+    const now = Date.now();
+    const tooSoon = now - ogLastRunRef.current < 60000; // throttle: 60s minimum between uploads
+
+    if (ogGenTimerRef.current) {
+      clearTimeout(ogGenTimerRef.current);
+    }
+
+    ogGenTimerRef.current = setTimeout(() => {
+      if (tooSoon) return;
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const run = async () => {
+        try {
+          const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+          const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+            routineName: name || 'Routine',
+            ownerName: '',
+            exerciseCount,
+            setCount,
+          });
+          setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+        } catch (e) {
+          console.warn('[OG] routine image refresh failed', e);
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        // @ts-ignore
+        requestIdleCallback(run, { timeout: 2000 });
+      } else {
+        setTimeout(run, 0);
+      }
+    }, 2500); // debounce: 2.5s inactivity
+
+    return () => {
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+    };
+  }, [programId, programName, exercises]);
+
+  const handleEditSet = (index, setConfig) => {
+    setEditingSet(setConfig);
+    setEditingSetIndex(index);
+    setIsEditSetFormOpen(true);
+  };
+
+  const handleSetEditFormSave = (values) => {
+    if (editingExercise) {
+      const newSetConfigs = [...editingExercise.setConfigs];
+      newSetConfigs[editingSetIndex] = values;
+      setEditingExercise({
+        ...editingExercise,
+        setConfigs: newSetConfigs,
+      });
+    }
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
+  const handleSetEditFormClose = () => {
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
+  const handleSetDelete = () => {
+    if (editingExercise && editingSetIndex !== null) {
+      // If deleting the last remaining set for this exercise, prompt to delete the exercise instead
+      const currentLen = Array.isArray(editingExercise.setConfigs)
+        ? editingExercise.setConfigs.length
+        : 0;
+      if (currentLen <= 1) {
+        setIsEditSetFormOpen(false);
+        setEditingSet(null);
+        setEditingSetIndex(null);
+        setDeleteExerciseConfirmOpen(true);
+        return;
+      }
+      const newSetConfigs = [...(editingExercise.setConfigs || [])];
+      newSetConfigs.splice(editingSetIndex, 1);
+      
+      // Update the editing exercise
+      const updatedExercise = {
+        ...editingExercise,
+        setConfigs: newSetConfigs,
+      };
+      setEditingExercise(updatedExercise);
+      
+      // Also update the main exercises list
+      setExercises((prev) =>
+        prev.map((ex) =>
+          ex.id === editingExercise.id
+            ? { ...ex, setConfigs: newSetConfigs }
+            : ex
+        )
+      );
+      
+      // Save to database
+      handleSetConfigsChange(editingExercise.exercise_id, newSetConfigs);
+    }
+    setIsEditSetFormOpen(false);
+    setEditingSet(null);
+    setEditingSetIndex(null);
+  };
+
+  const saveOrder = async () => {
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i];
+      await supabase
+        .from("routine_exercises")
+        .update({ exercise_order: i + 1 })
+        .eq("id", ex.id);
+    }
+  };
+
+  // Handler for reordering exercises within a section
+  // Debounced database update function
+  const updateExerciseOrderInDatabase = useCallback(async (exercisesToUpdate) => {
+    try {
+      // First, set all exercises to temporary negative order values to avoid constraint conflicts
+      for (const ex of exercisesToUpdate) {
+        const { error } = await supabase
+          .from("routine_exercises")
+          .update({ exercise_order: -ex.order }) // Use negative values as temporary
+          .eq("id", ex.id);
+        
+        if (error) {
+          console.error(`Failed to update exercise ${ex.id} to temporary order:`, error);
+          return; // Stop if we can't set temporary values
+        }
+      }
+      
+      // Then, set the final positive order values
+      for (const ex of exercisesToUpdate) {
+        const { error } = await supabase
+          .from("routine_exercises")
+          .update({ exercise_order: ex.order })
+          .eq("id", ex.id);
+        
+        if (error) {
+          console.error(`Failed to update exercise ${ex.id} to final order:`, error);
+          // Continue with other updates even if one fails
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save exercise order:", error);
+      // Could add toast notification here
+    }
+  }, []);
+
+  const handleReorderExercises = (section) => (newOrder) => {
+    const target = section === "workout" ? "training" : section;
+    
+    // Update local state first for immediate UI feedback
+    setExercises(prev => {
+      // Get exercises from other sections
+      const otherSectionExercises = prev.filter(ex => ex.section !== target);
+      
+      // Update order numbers for the reordered section
+      const reorderedWithNewOrder = newOrder.map((ex, index) => ({
+        ...ex,
+        order: index + 1 // Simple 1-based ordering within section
+      }));
+      
+      // Combine all exercises and sort by section priority then order
+      const allExercises = [...otherSectionExercises, ...reorderedWithNewOrder];
+      
+      return allExercises;
+    });
+
+    // Clear any existing timeout
+    if (reorderTimeoutRef.current) {
+      clearTimeout(reorderTimeoutRef.current);
+    }
+
+    // Debounce the database update - only save after user stops dragging for 300ms
+    reorderTimeoutRef.current = setTimeout(() => {
+      const exercisesToUpdate = newOrder.map((ex, index) => ({
+        id: ex.id,
+        order: index + 1
+      }));
+      updateExerciseOrderInDatabase(exercisesToUpdate);
+    }, 300);
+  };
+
+  const handleBack = () => {
+    saveOrder();
+    if (location.state && location.state.fromPublicImport) {
+      navigate('/routines');
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleOpenAddExercise = (section) => {
+    setAddExerciseSection(section);
+    setShowAddExercise(true);
+  };
+  
+  const openShareDialog = () => {
+    setShareDialogOpen(true);
+  };
+
+
+  const handleCopyLink = async () => {
+    try {
+      const shareUrl = `${window.location.origin}/routines/public/${programId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied");
+    } catch (e) {
+      console.error("Failed to copy share link", e);
+      toast.error("Failed to copy link");
+    }
+  };
+
+
+  const shareRoutine = async () => {
+    setSharing(true);
+    try {
+      // Ensure routine is public
+      if (!isPublic) {
+        await supabase
+          .from("routines")
+          .update({ is_public: true })
+          .eq("id", programId);
+        setIsPublic(true);
+      }
+
+      const url = `${window.location.origin}/routines/public/${programId}`;
+      const title = programName || 'Routine';
+      const text = title;
+
+      // Prefer native share whenever available
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+        } catch (shareErr) {
+          // Swallow user cancellations or share errors
+        } finally {
+          setSharing(false);
+        }
+        return;
+      }
+
+      // Desktop/unsupported fallback: copy URL only
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied');
+      } catch (copyErr) {
+        try {
+          // Legacy execCommand fallback
+          const tmp = document.createElement('input');
+          tmp.style.position = 'fixed';
+          tmp.style.opacity = '0';
+          tmp.value = url;
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          document.body.removeChild(tmp);
+          toast.success('Link copied');
+        } catch {
+          toast.message('Share this link:', { description: url });
+        }
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleStartWorkout = () => {
+    // Create a routine object with exercises data to pass to startWorkout
+    // Convert our exercises format to the format expected by ActiveWorkout
+    const routine_exercises = exercises
+      .filter((ex) => (ex.setConfigs?.length || 0) > 0)
+      .map((ex) => ({
+      id: ex.id,
+      exercise_id: ex.exercise_id,
+      exercises: {
+        name: ex.name,
+        section: ex.section
+      },
+      routine_sets: ex.setConfigs.map((config, index) => ({
+        id: `${ex.id}-set-${index}`, // Generate a unique ID for each set
+        reps: config.reps,
+        weight: config.weight,
+        weight_unit: config.unit,
+        set_order: index + 1,
+        set_variant: config.set_variant,
+        set_type: config.set_type,
+        timed_set_duration: config.timed_set_duration,
+      }))
+    }));
+
+    const routine = {
+      id: programId,
+      routine_name: programName,
+      routine_exercises: routine_exercises,
+    };
+    
+    console.log('[RoutineBuilder] handleStartWorkout invoked for routine:', routine);
+    
+    // Users should never be able to access this page with an active workout due to redirect logic
+    // If they somehow do, just start the workout (this will end the current one)
+    startWorkout(routine)
+      .then(() => navigate("/workout/active"))
+      .catch((error) => {
+        console.error('[RoutineBuilder] startWorkout error for routine', routine, error);
+        toast.error('Failed to start workout: ' + error.message);
+      });
+  };
+
+
+
+  const handleAddExercise = async (exerciseData) => {
+    try {
+      let { data: existing } = await supabase
+        .from("exercises")
+        .select("id, section")
+        .eq("name", exerciseData.name)
+        .maybeSingle();
+      let exercise_id = existing?.id;
+      if (!exercise_id) {
+        const { data: newEx, error: insertError } = await supabase
+          .from("exercises")
+          .insert([{ name: exerciseData.name, section: exerciseData.section || "training" }])
+          .select("id")
+          .single();
+        if (insertError || !newEx) throw new Error("Failed to create exercise");
+        exercise_id = newEx.id;
+      } else {
+        // Ensure the exercise's canonical section matches the user's selection from the sheet
+        const desiredSection = exerciseData.section || "training";
+        if (existing.section !== desiredSection) {
+          await supabase
+            .from("exercises")
+            .update({ section: desiredSection })
+            .eq("id", exercise_id);
+        }
+      }
+      // Check if this exercise is already in the routine
+      const { data: existingRoutineExercise } = await supabase
+        .from("routine_exercises")
+        .select("id")
+        .eq("routine_id", programId)
+        .eq("exercise_id", exercise_id)
+        .maybeSingle();
+
+      if (existingRoutineExercise) {
+        throw new Error("This exercise is already in the routine");
+      }
+
+      // Get the next available exercise_order to avoid conflicts
+      const { data: maxOrderResult } = await supabase
+        .from("routine_exercises")
+        .select("exercise_order")
+        .eq("routine_id", programId)
+        .order("exercise_order", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextOrder = (maxOrderResult?.exercise_order || 0) + 1;
+
+      const { data: progEx, error: progExError } = await supabase
+        .from("routine_exercises")
+        .insert({
+          routine_id: programId,
+          exercise_id,
+          exercise_order: nextOrder,
+        })
+        .select("id")
+        .single();
+      if (progExError || !progEx)
+        throw new Error("Failed to link exercise to program");
+      const program_exercise_id = progEx.id;
+      const setRows = (exerciseData.setConfigs || []).map((cfg, idx) => ({
+        routine_exercise_id: program_exercise_id,
+        set_order: idx + 1,
+        reps: Number(cfg.reps),
+        weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
+        set_variant: cfg.set_variant || `Set ${idx + 1}`,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
+      }));
+      if (setRows.length > 0) {
+        const { error: setError } = await supabase
+          .from("routine_sets")
+          .insert(setRows);
+        if (setError)
+          throw new Error("Failed to save set details: " + setError.message);
+      }
+      setShowAddExercise(false);
+      await refreshExercises();
+      // After adding, scroll the selected (possibly changed) section into view for user feedback
+      if (exerciseData.section) {
+        const scrollKey = exerciseData.section === 'training' ? 'workout' : exerciseData.section;
+        setTimeout(() => scrollSectionIntoView(scrollKey), 0);
+      }
+    } catch (err) {
+      alert(err.message || "Failed to add exercise");
+    }
+  };
+
+  const handleEditExercise = async (exerciseData) => {
+    try {
+      if (!editingExercise) return;
+      await supabase
+        .from("exercises")
+        .update({ name: exerciseData.name, section: exerciseData.section })
+        .eq("id", editingExercise.exercise_id);
+      // Safely persist set changes using the shared updater that respects the DB trigger
+      await handleSetConfigsChange(editingExercise.exercise_id, exerciseData.setConfigs || []);
+      setEditingExercise(null);
+      await refreshExercises();
+    } catch (err) {
+      alert(err.message || "Failed to update exercise");
+    }
+  };
+
+  const handleDeleteExercise = () => {
+    if (!editingExercise) return;
+    setDeleteExerciseConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteExercise = async () => {
+    try {
+      if (!editingExercise) return;
+
+      // Delete the routine exercise directly (trigger prevents zero-set state otherwise)
+      const { error: deleteError } = await supabase
+        .from("routine_exercises")
+        .delete()
+        .eq("id", editingExercise.id);
+
+      if (deleteError) throw deleteError;
+
+      setEditingExercise(null);
+      await refreshExercises();
+    } catch (err) {
+      if (err.code === '23503') {
+        alert('Cannot delete this exercise because it is used by other routines or has logged sets.');
+      } else {
+        alert(err.message || 'Failed to delete exercise');
+      }
+    } finally {
+      setDeleteExerciseConfirmOpen(false);
+    }
+  };
+
+  const refreshExercises = async () => {
+    const { data: progExs } = await supabase
+      .from("routine_exercises")
+      .select(
+        `id,
+         exercise_id,
+         exercise_order,
+         exercises!fk_routine_exercises__exercises(
+           name,
+           section
+         ),
+         routine_sets!fk_routine_sets__routine_exercises(
+           id,
+           reps,
+           weight,
+           weight_unit,
+           set_order,
+           set_variant,
+           set_type,
+           timed_set_duration
+         )`
+      )
+      .eq("routine_id", programId)
+      .order("exercise_order", { ascending: true });
+    const items = (progExs || []).map((pe) => ({
+      id: pe.id,
+      exercise_id: pe.exercise_id,
+      name: pe.exercises?.name || "[Exercise name]",
+      section: pe.exercises?.section || "training",
+      sets: pe.routine_sets?.length || 0,
+      order: pe.exercise_order || 0,
+      setConfigs: (pe.routine_sets || [])
+        .sort((a, b) => (a.set_order || 0) - (b.set_order || 0))
+        .map((set) => {
+          const unit = set.weight_unit || 'lbs';
+          return {
+            reps: set.reps,
+            weight: set.weight,
+            unit,
+            set_variant: set.set_variant || `Set ${set.set_order}`,
+            set_type: set.set_type,
+            timed_set_duration: set.timed_set_duration,
+          };
+        }),
+    }));
+    setExercises(items);
+  };
+
+  const searchFiltered = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const SECTION_KEYS = ["warmup", "workout", "cooldown"];
+
+  const exercisesBySection = SECTION_KEYS.map((key) => {
+    const target = key === "workout" ? "training" : key;
+    const items = searchFiltered
+      .filter((ex) => ex.section === target)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    return { section: key, exercises: items };
+  });
+
+  const scrollSectionIntoView = (key) => {
+    scrollToSection(`section-${key}`);
+  };
+
+  const handleModalClose = () => {
+    setShowAddExercise(false);
+    setEditingExercise(null);
+    setAddExerciseSection(null);
+  };
+
+  // Handler to update setConfigs for an exercise and persist to Supabase
+  const handleSetConfigsChange = async (exerciseId, newSetConfigs) => {
+    setExercises((prev) =>
+      prev.map((ex) =>
+        ex.exercise_id === exerciseId
+          ? { ...ex, setConfigs: newSetConfigs }
+          : ex
+      )
+    );
+    // Find the program_exercise_id for this exercise
+    const programExercise = exercises.find(
+      (ex) => ex.exercise_id === exerciseId
+    );
+    if (!programExercise) return;
+    const program_exercise_id = programExercise.id;
+    
+    // If no sets remain, delete all existing routine_sets; DB trigger will auto-delete exercise
+    if (!newSetConfigs || newSetConfigs.length === 0) {
+      await supabase
+        .from("routine_sets")
+        .delete()
+        .eq("routine_exercise_id", program_exercise_id);
+      await refreshExercises();
+      return;
+    }
+
+    // Update existing sets without ever hitting zero remaining rows
+    // 1) Load current sets ordered by set_order
+    const { data: currentSets, error: currentErr } = await supabase
+      .from("routine_sets")
+      .select("id")
+      .eq("routine_exercise_id", program_exercise_id)
+      .order("set_order", { ascending: true });
+    if (currentErr) {
+      console.error("Failed to load current routine sets:", currentErr);
+      return;
+    }
+
+    const curIds = (currentSets || []).map((s) => s.id);
+    const curCount = curIds.length;
+    const nextCount = newSetConfigs.length;
+    const minCount = Math.min(curCount, nextCount);
+
+    // 2) Update rows for the overlapping range
+    for (let i = 0; i < minCount; i++) {
+      const cfg = newSetConfigs[i];
+      const id = curIds[i];
+      const payload = {
+        set_order: i + 1,
+        reps: Number(cfg.reps),
+        weight: Number(cfg.weight),
+        weight_unit: cfg.unit,
+        set_variant: cfg.set_variant || `Set ${i + 1}`,
+        set_type: cfg.set_type,
+        timed_set_duration: cfg.timed_set_duration,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      await supabase.from("routine_sets").update(payload).eq("id", id);
+    }
+
+    // 3) If there are extra current rows beyond nextCount, delete only those extras (leaves >=1 row)
+    if (curCount > nextCount) {
+      const toDelete = curIds.slice(nextCount); // keep first `nextCount` rows
+      if (toDelete.length > 0) {
+        await supabase
+          .from("routine_sets")
+          .delete()
+          .in("id", toDelete);
+      }
+    }
+
+    // 4) If new configs exceed current count, insert the additional rows
+    if (nextCount > curCount) {
+      const rowsToInsert = [];
+      for (let i = curCount; i < nextCount; i++) {
+        const cfg = newSetConfigs[i];
+        rowsToInsert.push({
+          routine_exercise_id: program_exercise_id,
+          set_order: i + 1,
+          reps: Number(cfg.reps),
+          weight: Number(cfg.weight),
+          weight_unit: cfg.unit,
+          set_variant: cfg.set_variant || `Set ${i + 1}`,
+          set_type: cfg.set_type,
+          timed_set_duration: cfg.timed_set_duration,
+        });
+      }
+      if (rowsToInsert.length > 0) {
+        await supabase.from("routine_sets").insert(rowsToInsert);
+      }
+    }
+  };
+
+  const handleTitleChange = async (newTitle) => {
+    const nameClamped = (newTitle || '').slice(0, MAX_ROUTINE_NAME_LEN);
+    setProgramName(nameClamped);
+    await supabase
+      .from("routines")
+      .update({ routine_name: nameClamped })
+      .eq("id", programId);
+    setEditProgramOpen(false);
+
+    // Immediately refresh OG image for fast rename propagation
+    try {
+      // Compute current metrics from state
+      const exerciseCount = exercises.length;
+      const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
+
+      // Update generation fingerprints to avoid duplicate effect runs
+      const name = (newTitle || '').trim();
+      const sig = `${name}|${exerciseCount}|${setCount}`;
+      if (ogGenTimerRef.current) {
+        clearTimeout(ogGenTimerRef.current);
+        ogGenTimerRef.current = null;
+      }
+      ogLastSigRef.current = sig;
+      ogLastRunRef.current = Date.now();
+
+      const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
+      const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+        routineName: name || 'Routine',
+        ownerName: '',
+        exerciseCount,
+        setCount,
+      });
+      setProgram(prev => (prev ? { ...prev, og_image_url: imageUrl } : prev));
+    } catch (e) {
+      console.warn('[OG] immediate rename image refresh failed', e);
+    }
+  };
+
+  const handleDeleteProgram = () => {
+    setDeleteProgramConfirmOpen(true);
+    setEditProgramOpen(false);
+  };
+
+  const handleConfirmDeleteProgram = async () => {
+    try {
+      const { error } = await supabase
+        .from("routines")
+        .update({ is_archived: true })
+        .eq("id", programId);
+
+      if (error) throw error;
+
+      navigate("/routines");
+    } catch (err) {
+      if (err.code === '23503') {
+        alert('Cannot delete this routine because it has associated workouts.');
+      } else {
+        alert('Failed to delete routine: ' + err.message);
+      }
+    }
+  };
+
+
+
+  return (
+    <>
+      <AppLayout
+        hideHeader={false}
+        hideDelegateHeader={true}
+        title={programName || "Build your routine"}
+        variant="glass"
+        sharingNavAbove={isDelegated}
+        sharingNavContent={headerSharingContent}
+        showBackButton={true}
+        onBack={handleBack}
+        showShare={true}
+        onShare={shareRoutine}
+        showStartWorkoutIcon={!isDelegated}
+        onStartWorkoutIcon={handleStartWorkout}
+        showSettings={true}
+        onSettings={() => setEditProgramOpen(true)}
+        showDelete={true}
+        onDelete={() =>	setDeleteProgramConfirmOpen(true)}
+        showSidebar={!isDelegated && !isMobile}
+        sharingSection={undefined}
+      >
+        <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+          {/* Routine Image Section */}
+          <div className="self-stretch inline-flex flex-col justify-start items-center">
+            <div className="self-stretch px-5 inline-flex justify-center items-center gap-3">
+              <div 
+                className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
+                onClick={shareRoutine}
+              >
+                <img 
+                  className="w-full h-auto block" 
+                  src={program?.og_image_url || "https://placehold.co/500x262"} 
+                  alt={`${programName} routine`}
+                  draggable={false}
+                  onError={(e) => {
+                    console.log('Image failed to load:', program?.og_image_url);
+                    e.target.src = "https://placehold.co/500x262";
+                  }}
+                  onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
+                />
+              </div>
+            </div>
+
+            {/* View routine history CTA (matches action card/button style) */}
+            <div className="self-stretch px-5 mt-3 inline-flex justify-center items-center">
+              <div
+                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/history', { state: { filterRoutine: programName } }); } }}
+                aria-label="View routine history"
+              >
+                <div className="p-2.5 flex justify-start items-center gap-2.5">
+                  <div className="relative">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13 5H18V10" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M6 18L18 6" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex justify-center items-center gap-5">
+                  <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    View workouts for this routine
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {exercisesBySection.map(({ section, exercises: secExercises }, index) => (
+          <PageSectionWrapper
+            key={section}
+            section={section} 
+            id={`section-${section}`} 
+            deckGap={12} 
+            deckVariant="cards"
+            reorderable={true}
+            items={secExercises}
+            onReorder={handleReorderExercises(section)}
+            isFirst={section === "warmup"}
+            className={`${section === "warmup" ? "border-t-0" : ""} ${index === exercisesBySection.length - 1 ? "flex-1" : ""}`}
+            backgroundClass="bg-transparent"
+            showPlusButton={false}
+            onPlus={() => handleOpenAddExercise(section)}
+            applyPaddingOnParent={true}
+            style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+          >
+          {loading ? (
+              <div className="text-gray-400 text-center py-8">Loading...</div>
+            ) : secExercises.map((ex, exIndex) => (
+              <div key={ex.id} className="w-full">
+                <ExerciseCard
+                  mode="default"
+                  exerciseName={ex.name}
+                  setConfigs={ex.setConfigs}
+                  onEdit={() => setEditingExercise(ex)}
+                  onSetConfigsChange={(newSetConfigs) =>
+                    handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                  }
+                  onCardClick={() => setEditingExercise(ex)}
+                />
+              </div>
+            ))}
+            {/* Single persistent add button as last item */}
+            <CardWrapper gap={0} marginTop={12} marginBottom={0}>
+              <ActionCard
+                text="Add an exercise"
+                onClick={() => handleOpenAddExercise(section)}
+                fillColor="bg-neutral-200"
+                className="self-stretch w-full"
+              />
+            </CardWrapper>
+          </PageSectionWrapper>
+        ))}
+        </div>
+        <SwiperForm
+          open={showAddExercise || !!editingExercise}
+          onOpenChange={(open) => {
+            handleModalClose();
+          }}
+          title={showAddExercise ? "Exercise" : "Edit"}
+          description={
+            showAddExercise 
+              ? "Add a new exercise to your routine with name, section, and sets" 
+              : "Edit exercise details including name, section, and sets"
+          }
+          leftAction={handleModalClose}
+          rightAction={() => formRef.current.requestSubmit()}
+          rightEnabled={dirty}
+          className="add-exercise-drawer"
+        >
+          <div className="flex flex-col h-full overflow-y-scroll md:overflow-y-auto">
+            <div className="overflow-y-scroll md:overflow-auto h-[650px] md:h-full">
+              <AddNewExerciseForm
+                ref={formRef}
+                key={editingExercise ? editingExercise.id : "add-new"}
+                formPrompt={
+                  showAddExercise ? "Add a new exercise" : "Edit exercise"
+                }
+                onActionIconClick={
+                  showAddExercise ? handleAddExercise : handleEditExercise
+                }
+                onDelete={editingExercise ? handleDeleteExercise : undefined}
+                initialName={editingExercise?.name}
+                initialSection={
+                  showAddExercise
+                    ? addExerciseSection === "workout" || addExerciseSection === "training"
+                      ? "training"
+                      : addExerciseSection
+                    : editingExercise?.section
+                }
+                initialSets={editingExercise?.setConfigs?.length}
+                initialSetConfigs={editingExercise?.setConfigs}
+                onDirtyChange={setDirty}
+                hideActionButtons
+                showAddToProgramToggle={false}
+                hideSetDefaults={!!editingExercise}
+                onEditSet={handleEditSet}
+              />
+              {editingExercise && (
+                <div className="flex flex-col gap-3 py-4 px-4">
+                  <SwiperButton
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDeleteExercise}
+                  >
+                    Delete exercise
+                  </SwiperButton>
+                </div>
+              )}
+            </div>
+          </div>
+        </SwiperForm>
+        
+      </AppLayout>
+
+      {/* Share Routine Sheet */}
+      <SwiperForm
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        title="Share"
+        leftAction={() => setShareDialogOpen(false)}
+        leftText="Close"
+      >
+        <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+          <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
+            Publish your routine <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
+          </p>
+        </SwiperForm.Section>
+
+        <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+          <TextInput
+            label="Click to copy"
+            value={`${window.location.origin}/routines/public/${programId}`}
+            readOnly
+            onFocus={(e) => e.target.select()}
+            onClick={handleCopyLink}
+            icon={<Copy />}
+          />
+        </SwiperForm.Section>
+      </SwiperForm>
+
+      <SwiperForm
+        open={isEditProgramOpen}
+        onOpenChange={setEditProgramOpen}
+        title="Edit"
+        description="Edit routine name and manage program settings"
+        leftAction={() => setEditProgramOpen(false)}
+        leftText="Cancel"
+        rightAction={() => handleTitleChange(programName)}
+        rightText="Save"
+      >
+        <SwiperForm.Section>
+          <div className="w-full flex flex-col">
+            <div className="w-full flex justify-between items-center mb-2">
+              <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Routine name</div>
+              <div
+                className={`${(programName || '').length >= MAX_ROUTINE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
+                aria-live="polite"
+              >
+                {(programName || '').length} of {MAX_ROUTINE_NAME_LEN} characters
+              </div>
+            </div>
+            <TextInput
+              value={programName}
+              onChange={(e) => setProgramName(e.target.value)}
+              maxLength={MAX_ROUTINE_NAME_LEN}
+              error={(programName || '').length >= MAX_ROUTINE_NAME_LEN}
+            />
+          </div>
+        </SwiperForm.Section>
+        <SwiperForm.Section bordered={false}>
+          <SwiperButton
+            variant="destructive"
+            onClick={handleDeleteProgram}
+            className="w-full"
+          >
+            Delete program
+          </SwiperButton>
+        </SwiperForm.Section>
+      </SwiperForm>
+
+      <SwiperForm
+        open={isEditSetFormOpen}
+        onOpenChange={setIsEditSetFormOpen}
+        title="Edit"
+        description="Edit set configuration including type, reps, weight, and unit"
+        leftAction={handleSetEditFormClose}
+        rightAction={() => handleSetEditFormSave(editingSet)}
+        rightEnabled={editingSetFormDirty}
+        rightText="Save"
+        leftText="Cancel"
+        padding={0}
+      >
+        <SetEditForm
+          hideInternalHeader
+          hideActionButtons
+          hideToggle={true}
+          onDirtyChange={setEditingSetFormDirty}
+          onValuesChange={setEditingSet}
+          onDelete={handleSetDelete}
+          initialValues={editingSet}
+        />
+      </SwiperForm>
+
+      <SwiperDialog
+        open={isDeleteProgramConfirmOpen}
+        onOpenChange={setDeleteProgramConfirmOpen}
+        onConfirm={handleConfirmDeleteProgram}
+        title="Delete routine?"
+        confirmText="Delete forever"
+        cancelText="Cancel"
+        confirmVariant="destructive"
+        cancelVariant="outline"
+      />
+      <SwiperDialog
+        open={isDeleteExerciseConfirmOpen}
+        onOpenChange={setDeleteExerciseConfirmOpen}
+        onConfirm={() => setDeleteExerciseConfirmOpen(false)}
+        onCancel={handleConfirmDeleteExercise}
+        title="Delete Exercise"
+        confirmText="Cancel"
+        cancelText="Delete"
+        confirmVariant="outline"
+        cancelVariant="destructive"
+        contentClassName=""
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        footerClassName="self-stretch px-3 py-3"
+        showHeaderDismiss={true}
+      />
+
+    </>
+  );
+};
+
+export default RoutineBuilder;

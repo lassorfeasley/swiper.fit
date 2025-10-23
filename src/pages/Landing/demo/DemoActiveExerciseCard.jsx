@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import DemoSwipeSwitch from "./DemoSwipeSwitch";
 import PropTypes from "prop-types";
-import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
+import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
