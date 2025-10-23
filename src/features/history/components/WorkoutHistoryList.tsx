@@ -4,6 +4,11 @@ import CompletedWorkoutCard from "./CompletedWorkoutCard";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 
+interface WorkoutHistoryListProps {
+  workouts?: any[];
+  viewingOwn?: boolean;
+}
+
 /**
  * WorkoutHistoryList
  * -------------------
@@ -13,7 +18,7 @@ import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
  * - workouts: Array of workout objects containing at least `created_at` and `workout_name`.
  * - viewingOwn: Boolean indicating whether the user is viewing their own workouts.
  */
-const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
+const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }: WorkoutHistoryListProps) => {
   const navigate = useNavigate();
 
   return (
@@ -34,12 +39,12 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
               const todayMidnight = new Date();
               todayMidnight.setHours(0, 0, 0, 0);
               const diffDays = Math.floor(
-                (todayMidnight -
+                (todayMidnight.getTime() -
                   new Date(
                     workoutDate.getFullYear(),
                     workoutDate.getMonth(),
                     workoutDate.getDate()
-                  )) /
+                  ).getTime()) /
                   86400000
               );
               const relativeLabel = diffDays === 0 ? "Today" : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;

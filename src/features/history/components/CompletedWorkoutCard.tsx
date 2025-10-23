@@ -1,5 +1,11 @@
 import React from "react";
-import PropTypes from "prop-types";
+
+interface CompletedWorkoutCardProps {
+  name: string;
+  subtitle?: string;
+  relativeLabel?: string;
+  [key: string]: any; // For ...props
+}
 
 /**
  * CompletedWorkoutCard – card representation of a completed or logged workout.
@@ -9,7 +15,7 @@ import PropTypes from "prop-types";
  *  • subtitle – secondary info (e.g., muscle group or program name).
  *  • relativeLabel – relative date (e.g., "Today", "2 days ago").
  */
-const CompletedWorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
+const CompletedWorkoutCard = ({ name, subtitle, relativeLabel, ...props }: CompletedWorkoutCardProps) => {
   return (
     <div
       data-layer="workout-card"
@@ -31,12 +37,6 @@ const CompletedWorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
       </div>
     </div>
   );
-};
-
-CompletedWorkoutCard.propTypes = {
-  name: PropTypes.string.isRequired,
-  subtitle: PropTypes.string,
-  relativeLabel: PropTypes.string,
 };
 
 export default CompletedWorkoutCard;
