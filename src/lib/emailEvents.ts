@@ -1,5 +1,10 @@
 // Client helper to post email events to server endpoint
-export function postEmailEvent(event, to, data = {}, contextExtras = {}) {
+export function postEmailEvent(
+  event: string, 
+  to: string, 
+  data: Record<string, any> = {}, 
+  contextExtras: Record<string, any> = {}
+): Promise<any> {
   try {
     const isLocal = typeof window !== 'undefined' && window.location.origin.includes('localhost');
     const base = isLocal ? 'https://www.swiper.fit' : '';
@@ -28,5 +33,3 @@ export function postEmailEvent(event, to, data = {}, contextExtras = {}) {
     throw error;
   }
 }
-
-

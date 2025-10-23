@@ -1,15 +1,15 @@
-import { clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
 /**
  * Generates a workout name based on the current day and time of day
- * @returns {string} A workout name like "Monday Morning Workout" or "Tuesday Evening Workout"
+ * @returns A workout name like "Monday Morning Workout" or "Tuesday Evening Workout"
  */
-export const generateWorkoutName = () => {
+export const generateWorkoutName = (): string => {
   const now = new Date();
   const day = now.toLocaleDateString("en-US", { weekday: "long" });
 
@@ -17,7 +17,7 @@ export const generateWorkoutName = () => {
   const hour = now.getHours();
 
   // Determine time of day
-  let timeOfDay;
+  let timeOfDay: string;
   if (hour >= 5 && hour < 12) {
     timeOfDay = "Morning";
   } else if (hour >= 12 && hour < 17) {
@@ -32,7 +32,7 @@ export const generateWorkoutName = () => {
 };
 
 // Format elapsed time as 'M:SS' or 'H:MM:SS'
-export const formatSeconds = (totalSeconds) => {
+export const formatSeconds = (totalSeconds: number): string => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
@@ -48,7 +48,7 @@ export const formatSeconds = (totalSeconds) => {
 };
 
 // Always format as HH:MM:SS with leading zeros
-export const formatSecondsHHMMSS = (totalSeconds) => {
+export const formatSecondsHHMMSS = (totalSeconds: number): string => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.max(0, totalSeconds % 60);

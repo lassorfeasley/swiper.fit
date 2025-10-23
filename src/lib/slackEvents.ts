@@ -1,4 +1,8 @@
-export function postSlackEvent(event, data, contextExtras = {}) {
+export function postSlackEvent(
+  event: string, 
+  data: Record<string, any>, 
+  contextExtras: Record<string, any> = {}
+): void {
   try {
     const isLocal = typeof window !== 'undefined' && window.location.origin.includes('localhost');
     const base = isLocal ? 'https://www.swiper.fit' : '';
@@ -31,5 +35,3 @@ export function postSlackEvent(event, data, contextExtras = {}) {
     }).catch(() => {});
   } catch (_) {}
 }
-
-
