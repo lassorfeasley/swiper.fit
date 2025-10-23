@@ -74,7 +74,7 @@ const SetBadge = ({
   };
 
   const renderSegments = () => {
-    const segments: Array<{ icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; value: string | number }> = [];
+    const segments: Array<{ icon: React.ComponentType<any>; value: string | number }> = [];
     if (set_type === 'timed') {
         segments.push({ icon: Clock, value: formatTime(timed_set_duration || 0) });
     } else {

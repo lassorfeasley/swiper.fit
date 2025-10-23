@@ -26,18 +26,24 @@ const toggleGroupVariants = cva(
   }
 )
 
-export interface ToggleGroupProps
-  extends React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root>,
-    VariantProps<typeof toggleGroupVariants> {
+interface ToggleGroupProps {
   className?: string;
+  variant?: "default" | "outline";
+  size?: "default" | "sm" | "lg";
+  type: "single" | "multiple";
+  value?: string | string[];
+  onValueChange?: (value: string | string[]) => void;
+  children?: React.ReactNode;
+  [key: string]: any;
 }
 
 const ToggleGroup = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
   ToggleGroupProps
->(({ className, variant, size, ...props }, ref) => (
+>(({ className, variant, size, type, ...props }, ref) => (
   <ToggleGroupPrimitive.Root
     ref={ref}
+    type={type}
     className={cn(toggleGroupVariants({ variant, size, className }))}
     {...props} />
 ))

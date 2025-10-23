@@ -126,8 +126,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, []);
 
   // State for tracking manually completed sets and toast notifications
-  const [manuallyCompletedSets, setManuallyCompletedSets] = useState<Set<string>>(new Set<string>());
-  const [toastedSets, setToastedSets] = useState<Set<string>>(new Set<string>());
+  const [manuallyCompletedSets, setManuallyCompletedSets] = useState(() => new Set<string>());
+  const [toastedSets, setToastedSets] = useState(() => new Set<string>());
 
   // Check for active workout on mount
   useEffect(() => {
@@ -516,8 +516,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       setActiveWorkout(null);
       setIsWorkoutActive(false);
       setElapsedTime(0);
-      setManuallyCompletedSets(new Set());
-      setToastedSets(new Set());
+      setManuallyCompletedSets(() => new Set<string>());
+      setToastedSets(() => new Set<string>());
 
       toast.success('Workout completed!');
       
@@ -578,8 +578,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     setActiveWorkout(null);
     setIsWorkoutActive(false);
     setElapsedTime(0);
-    setManuallyCompletedSets(new Set());
-    setToastedSets(new Set());
+    setManuallyCompletedSets(() => new Set<string>());
+    setToastedSets(() => new Set<string>());
   }, []);
 
   const pauseWorkout = useCallback(async () => {

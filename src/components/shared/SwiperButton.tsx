@@ -18,17 +18,21 @@ const swiperButtonVariants = cva("text-base font-medium font-['Be_Vietnam_Pro'] 
   },
 });
 
-export interface SwiperButtonProps
-  extends React.ComponentPropsWithoutRef<typeof Button>,
-    VariantProps<typeof swiperButtonVariants> {}
+export interface SwiperButtonProps extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'variant'> {
+  variant?: "default" | "destructive" | "outline" | "primary-action";
+}
 
 const SwiperButton = React.forwardRef<
   React.ElementRef<typeof Button>,
   SwiperButtonProps
 >(({ className, variant, ...props }, ref) => {
+  // Map SwiperButton variants to Button variants
+  const buttonVariant = variant === "primary-action" ? "default" : variant;
+  
   return (
     <Button
       ref={ref}
+      variant={buttonVariant}
       className={cn(swiperButtonVariants({ variant, className }))}
       {...props}
     />

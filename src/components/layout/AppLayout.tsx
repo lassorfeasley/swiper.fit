@@ -118,7 +118,7 @@ export default function AppLayout({
   );
 
   const { showAdd: showAddProp, ...restHeaderProps } = filteredHeaderProps;
-  const showPlusButtonProp = restHeaderProps.showPlusButton ?? showAddProp;
+  const showPlusButtonProp = Boolean(restHeaderProps.showPlusButton ?? showAddProp);
 
   const variant = restHeaderProps.variant;
   // Reserve space for the fixed header by default globally, except for the 'glass' variant

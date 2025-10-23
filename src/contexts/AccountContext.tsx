@@ -120,7 +120,7 @@ export const useAccount = (): AccountContextType => {
 };
 
 // Convenience hook – mirrors previous usage where components expected `user`
-export const useCurrentUser = (): User | null => {
+export const useCurrentUser = (): User | Profile | null => {
   const { currentUser } = useAccount();
   return currentUser;
 };

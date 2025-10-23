@@ -22,7 +22,7 @@ import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWr
 import SwiperForm from "@/components/shared/SwiperForm";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
+import { getPendingInvitations, acceptInvitation, rejectInvitation, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 import { generateWorkoutName } from "@/lib/utils";
@@ -288,7 +288,7 @@ const Account = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       console.log('[Account] Fetching pending requests for user:', user.id);
-      return await getPendingRequests(user.id);
+      return await getPendingInvitations(user.id);
     },
     enabled: !!user?.id,
   });
@@ -433,7 +433,7 @@ const Account = () => {
 
   const acceptRequestMutation = useMutation({
     mutationFn: async (requestId) => {
-      return await acceptSharingRequest(requestId, user.id);
+      return await acceptInvitation(requestId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["pending_requests"]);
@@ -450,7 +450,7 @@ const Account = () => {
 
   const declineRequestMutation = useMutation({
     mutationFn: async (requestId) => {
-      return await declineSharingRequest(requestId, user.id);
+      return await rejectInvitation(requestId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["pending_requests"]);
