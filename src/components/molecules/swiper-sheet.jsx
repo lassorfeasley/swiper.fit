@@ -5,7 +5,7 @@ import {
   FormHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/atoms/sheet";
+} from "@/components/shadcn/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 

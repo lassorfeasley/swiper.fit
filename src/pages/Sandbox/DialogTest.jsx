@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import { Button } from "@/components/atoms/button";
+import { Button } from "@/components/shadcn/button";
 import {
   Dialog,
   DialogTrigger,
@@ -10,7 +10,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/atoms/dialog";
+} from "@/components/shadcn/dialog";
 import SwiperDialog from "@/components/molecules/swiper-dialog";
 import { SwiperButton } from "@/components/molecules/swiper-button";
 import { Square, Plus } from "lucide-react";

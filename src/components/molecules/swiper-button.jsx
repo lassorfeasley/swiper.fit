@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button } from "@/components/atoms/button";
+import { Button } from "@/components/shadcn/button";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 

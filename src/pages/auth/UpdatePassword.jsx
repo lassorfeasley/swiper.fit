@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
-import { Alert } from "@/components/atoms/alert";
-import { Button } from "@/components/atoms/button";
-import { Card, CardContent } from "@/components/atoms/card";
-import { AlertDescription } from "@/components/atoms/alert";
+import { Alert } from "@/components/shadcn/alert";
+import { Button } from "@/components/shadcn/button";
+import { Card, CardContent } from "@/components/shadcn/card";
+import { AlertDescription } from "@/components/shadcn/alert";
 import { AlertCircle, CheckCircle2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -131,14 +131,12 @@ export default function UpdatePassword() {
                 </div>
 
                 {/* Update Password button */}
-                <button
+                <Button
                   type="submit"
-                  className="self-stretch h-12 px-4 py-2 bg-neutral-600 hover:bg-neutral-700 disabled:bg-neutral-400 inline-flex justify-center items-center gap-2.5 transition-colors"
+                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl text-white"
                 >
-                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                    Update Password
-                  </div>
-                </button>
+                  Update Password
+                </Button>
               </form>
             </div>
           </CardWrapper>

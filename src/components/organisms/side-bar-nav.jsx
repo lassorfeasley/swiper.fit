@@ -1,4 +1,4 @@
-import { SidebarFooter } from "@/components/atoms/sidebar";
+import { SidebarFooter } from "@/components/shadcn/sidebar";
 import React from "react";
 import { Link } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";

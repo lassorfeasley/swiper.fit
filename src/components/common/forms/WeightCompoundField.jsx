@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import NumericInput from "@/components/molecules/numeric-input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/atoms/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/shadcn/toggle-group";
 
 const WeightCompoundField = ({
   label = "Weight",

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { ChevronDown, Check, Search } from "lucide-react";
-import { Button as UiButton } from "@/components/ui/button";
+import { Button as UiButton } from "@/components/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/shadcn/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 /**

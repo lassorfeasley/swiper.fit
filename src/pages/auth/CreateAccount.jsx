@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/atoms/button";
+import { Button } from "@/components/shadcn/button";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/atoms/alert";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { AlertCircle } from "lucide-react";
 import {
   SwiperCard,
@@ -399,22 +399,15 @@ export default function CreateAccount() {
                 )}
 
                 {/* Create Account Button */}
-                <div 
-                  className={`self-stretch h-12 px-4 py-2 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5 ${
-                    signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()
-                      ? 'bg-neutral-300 cursor-not-allowed'
-                      : 'bg-green-200 hover:bg-green-300 cursor-pointer'
-                  }`}
+                <Button
+                  disabled={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()}
                   onClick={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() ? undefined : handleSignup}
+                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl text-white"
                 >
-                  <div className={`justify-start text-base font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                    signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()
-                      ? 'text-neutral-500'
-                      : 'text-neutral-neutral-600'
-                  }`}>
+                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
                     {signupMutation.isPending ? "Creating Account..." : "Create Account"}
                   </div>
-                </div>
+                </Button>
               </form>
             </div>
           </CardWrapper>

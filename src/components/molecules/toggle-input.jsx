@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/atoms/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/shadcn/toggle-group";
 import { cn } from "@/lib/utils";
 
 const ToggleInput = ({

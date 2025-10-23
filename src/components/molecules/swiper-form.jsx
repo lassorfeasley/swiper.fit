@@ -1,8 +1,8 @@
 import React from "react";
-import { Drawer, DrawerContent } from "@/components/atoms/drawer";
+import { Drawer, DrawerContent } from "@/components/shadcn/drawer";
 import { SwiperSheet } from "@/components/molecules/swiper-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FormHeader } from "../atoms/sheet";
+import { FormHeader } from "../shadcn/sheet";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import FormSectionWrapper from "@/components/common/forms/wrappers/FormSectionWrapper";

@@ -5,7 +5,7 @@ import {
   DialogOverlay,
   DialogContent,
   DialogTitle,
-} from "@/components/atoms/dialog";
+} from "@/components/shadcn/dialog";
 import { SwiperButton } from './swiper-button';
 
 // Force hot reload - AlertDialogCancel and AlertDialogAction removed

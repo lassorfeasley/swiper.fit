@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import { Button } from '@/components/atoms/button';
+import { Button } from '@/components/shadcn/button';
 import { postEmailEvent } from '@/lib/emailEvents';
 
 export default function EmailTest() {

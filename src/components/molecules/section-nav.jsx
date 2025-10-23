@@ -1,5 +1,5 @@
 import React from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/atoms/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/shadcn/toggle-group";
 
 /**
  * SectionNav – 3-way navigation (Warm-up / Workout / Cool-down)

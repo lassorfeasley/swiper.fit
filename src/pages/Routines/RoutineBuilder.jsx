@@ -4,7 +4,7 @@ import { supabase } from "@/supabaseClient";
 import CardWrapper from "@/components/common/Cards/Wrappers/CardWrapper";
 import PageSectionWrapper from "@/components/common/Cards/Wrappers/PageSectionWrapper";
 import { PageNameContext } from "@/App";
-import { FormHeader } from "@/components/atoms/sheet";
+import { FormHeader } from "@/components/shadcn/sheet";
 import AddNewExerciseForm from "@/components/common/forms/AddNewExerciseForm";
 import ExerciseCard from "@/components/common/Cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";

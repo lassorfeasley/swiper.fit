@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DeckWrapper from '@/components/common/Cards/Wrappers/DeckWrapper';
 import SwipeSwitch from '@/pages/Workout/components/swipe-switch';
-import { Button } from '@/components/atoms/button';
+import { Button } from '@/components/shadcn/button';
 
 export default function SwipeSwitchTest() {
   const [testSets, setTestSets] = useState([

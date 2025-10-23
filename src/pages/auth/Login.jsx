@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/atoms/button";
+import { Button } from "@/components/shadcn/button";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/atoms/alert";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { AlertCircle } from "lucide-react";
 import {
   SwiperCard,
@@ -194,15 +194,13 @@ export default function Login() {
                 </div>
 
                 {/* Login button */}
-                <button
+                <Button
                   type="submit"
                   disabled={loginMutation.isPending}
-                  className="self-stretch h-12 px-4 py-2 bg-neutral-600 hover:bg-neutral-700 disabled:bg-neutral-400 border-b border-neutral-300 inline-flex justify-center items-center gap-2.5 transition-colors"
+                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl text-white"
                 >
-                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                    {loginMutation.isPending ? "Logging in..." : "Login"}
-                  </div>
-                </button>
+                  {loginMutation.isPending ? "Logging in..." : "Login"}
+                </Button>
               </form>
             </div>
           </CardWrapper>

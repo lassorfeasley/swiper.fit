@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { TextInput } from "@/components/molecules/text-input";
-import { Button } from "@/components/atoms/button";
+import { Button } from "@/components/shadcn/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
