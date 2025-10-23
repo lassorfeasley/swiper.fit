@@ -2,7 +2,7 @@ import React from "react";
 import { useAccount } from "@/contexts/AccountContext";
 import { X } from "lucide-react";
 
-export default function DelegationBanner() {
+export default function DelegationBanner(): React.JSX.Element | null {
   const { isDelegated, actingUser, returnToSelf } = useAccount();
 
   if (!isDelegated || !actingUser) return null;

@@ -1,8 +1,24 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Trash2, ArrowRight } from "lucide-react";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import ActionPill from "@/components/shared/ActionPill";
+
+interface ManagePermissionsCardProps {
+  variant?: "trainer" | "client";
+  name?: string | object;
+  permissions?: {
+    can_create_routines: boolean;
+    can_start_workouts: boolean;
+    can_review_history: boolean;
+  };
+  onPermissionChange?: (permission: string, value: boolean) => void;
+  onRemove?: () => void;
+  onStartWorkout?: () => void;
+  onCreateRoutines?: () => void;
+  onReviewHistory?: () => void;
+  activeWorkout?: any;
+  className?: string;
+}
 
 const ManagePermissionsCard = ({
   variant = "trainer", // "trainer" (account manager) or "client" (account owner)
@@ -19,12 +35,9 @@ const ManagePermissionsCard = ({
   onReviewHistory = () => {},
   activeWorkout = null, // Add activeWorkout prop
   className = ""
-}) => {
-  const handlePermissionChange = (permission, value) => {
-    onPermissionChange({
-      ...permissions,
-      [permission]: value
-    });
+}: ManagePermissionsCardProps) => {
+  const handlePermissionChange = (permission: string, value: boolean) => {
+    onPermissionChange(permission, value);
   };
 
   const formatUserDisplay = (profile) => {
@@ -141,23 +154,6 @@ const ManagePermissionsCard = ({
       </div>
     </div>
   );
-};
-
-ManagePermissionsCard.propTypes = {
-  variant: PropTypes.oneOf(["trainer", "client"]),
-  name: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  permissions: PropTypes.shape({
-    can_create_routines: PropTypes.bool,
-    can_start_workouts: PropTypes.bool,
-    can_review_history: PropTypes.bool
-  }),
-  onPermissionChange: PropTypes.func,
-  onRemove: PropTypes.func,
-  onStartWorkout: PropTypes.func,
-  onCreateRoutines: PropTypes.func,
-  onReviewHistory: PropTypes.func,
-  activeWorkout: PropTypes.object,
-  className: PropTypes.string
 };
 
 export default ManagePermissionsCard;
