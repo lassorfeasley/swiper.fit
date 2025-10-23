@@ -19,7 +19,7 @@ import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ActiveWorkoutSection from "./ActiveWorkoutSection";
 import { WorkoutNavigationProvider, useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
-import { useWorkoutAutoScroll } from "@/hooks/useAutoScroll";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 const DEBUG_LOG = false; // set to true to enable verbose logging
 
@@ -102,7 +102,7 @@ const ActiveWorkoutContent = () => {
   }, [setPageName]);
 
   // Use the dedicated autoscroll hook
-  useWorkoutAutoScroll({
+  useAutoScroll({
     focusedExercise,
     viewportPosition: 0.2,
     recenterOnIdleMs: 5000,
