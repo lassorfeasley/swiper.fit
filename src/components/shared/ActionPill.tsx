@@ -1,6 +1,26 @@
 import React from "react";
 
-export default function ActionPill({ label = "Pause", onClick, Icon, className = "", showText = true, color = "orange", iconColor = "white", fill = true }) {
+export interface ActionPillProps {
+  label?: string;
+  onClick?: () => void;
+  Icon?: React.ComponentType<{ className?: string }>;
+  className?: string;
+  showText?: boolean;
+  color?: 'orange' | 'neutral' | 'red' | 'green' | 'blue';
+  iconColor?: 'white' | 'black' | 'neutral' | 'red' | 'green' | 'blue';
+  fill?: boolean;
+}
+
+export default function ActionPill({ 
+  label = "Pause", 
+  onClick, 
+  Icon, 
+  className = "", 
+  showText = true, 
+  color = "orange", 
+  iconColor = "white", 
+  fill = true 
+}: ActionPillProps) {
   const colorClasses = {
     orange: "bg-orange-600",
     neutral: "bg-neutral-200",
@@ -19,7 +39,7 @@ export default function ActionPill({ label = "Pause", onClick, Icon, className =
   };
 
   // Determine text color based on background color for proper contrast
-  const getTextColor = (color) => {
+  const getTextColor = (color: string): string => {
     const lightColors = ['neutral'];
     return lightColors.includes(color) ? 'text-neutral-700' : 'text-white';
   };
@@ -48,5 +68,3 @@ export default function ActionPill({ label = "Pause", onClick, Icon, className =
     </button>
   );
 }
-
-

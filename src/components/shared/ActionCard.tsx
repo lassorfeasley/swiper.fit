@@ -1,7 +1,15 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
 
-const ActionCard = React.forwardRef(({ 
+export interface ActionCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  text?: string;
+  onClick?: () => void;
+  variant?: "default" | "primary";
+  fillColor?: string;
+  textColor?: string;
+}
+
+const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({ 
   className, 
   text = "Add exercise",
   onClick,
@@ -36,4 +44,4 @@ const ActionCard = React.forwardRef(({
 
 ActionCard.displayName = "ActionCard";
 
-export { ActionCard }; 
+export { ActionCard };

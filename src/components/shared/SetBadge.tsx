@@ -1,8 +1,14 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Clock, Repeat2, Weight } from "lucide-react";
 
-const SetBadgeSegment = ({ icon, value, isFirst, isLast }) => {
+interface SetBadgeSegmentProps {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  value: string | number | null;
+  isFirst: boolean;
+  isLast: boolean;
+}
+
+const SetBadgeSegment = ({ icon, value, isFirst, isLast }: SetBadgeSegmentProps) => {
   const IconComponent = icon;
   const borderRadius = isFirst && isLast ? 'rounded-sm' : isFirst ? 'rounded-l-sm' : isLast ? 'rounded-r-sm' : '';
   const borderClass = !isFirst ? 'border-l border-neutral-300' : '';
@@ -19,12 +25,20 @@ const SetBadgeSegment = ({ icon, value, isFirst, isLast }) => {
   );
 };
 
-SetBadgeSegment.propTypes = {
-    icon: PropTypes.elementType.isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    isFirst: PropTypes.bool,
-    isLast: PropTypes.bool,
-};
+interface SetBadgeProps {
+  variant?: "sets" | "exercises";
+  reps?: number;
+  weight?: number;
+  unit?: "kg" | "lbs" | "body";
+  label?: string;
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  style?: React.CSSProperties;
+  editable?: boolean;
+  onEdit?: (e: React.MouseEvent) => void;
+  set_type?: "reps" | "timed";
+  timed_set_duration?: number;
+}
 
 const SetBadge = ({
   variant = "sets",
@@ -39,8 +53,8 @@ const SetBadge = ({
   onEdit,
   set_type = "reps",
   timed_set_duration,
-}) => {
-  const formatTime = (secs) => {
+}: SetBadgeProps) => {
+  const formatTime = (secs: number): string => {
     const total = Math.max(0, Math.floor(secs || 0));
     const hNum = Math.floor(total / 3600);
     const mNum = Math.floor((total % 3600) / 60);
@@ -54,17 +68,17 @@ const SetBadge = ({
     return `${mNum}:${s}`;
   };
 
-  const handleClick = (e) => {
+  const handleClick = (e: React.MouseEvent) => {
     if (editable && onEdit) onEdit(e);
     else if (onClick) onClick(e);
   };
 
   const renderSegments = () => {
-    const segments = [];
+    const segments: Array<{ icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; value: string | number }> = [];
     if (set_type === 'timed') {
         segments.push({ icon: Clock, value: formatTime(timed_set_duration || 0) });
     } else {
-        segments.push({ icon: Repeat2, value: reps });
+        segments.push({ icon: Repeat2, value: reps || 0 });
     }
 
     // Always show weight segment: BW for bodyweight, weight value (including 0) for others
@@ -121,21 +135,6 @@ const SetBadge = ({
       {renderSegments()}
     </div>
   );
-};
-
-SetBadge.propTypes = {
-  variant: PropTypes.oneOf(["sets", "exercises"]),
-  reps: PropTypes.number,
-  weight: PropTypes.number,
-  unit: PropTypes.oneOf(["kg", "lbs", "body"]),
-  label: PropTypes.string,
-  className: PropTypes.string,
-  onClick: PropTypes.func,
-  style: PropTypes.object,
-  editable: PropTypes.bool,
-  onEdit: PropTypes.func,
-  set_type: PropTypes.string,
-  timed_set_duration: PropTypes.number,
 };
 
 export default SetBadge;

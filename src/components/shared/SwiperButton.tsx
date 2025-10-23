@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button } from "@/components/shadcn/button";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const swiperButtonVariants = cva("text-base font-medium font-['Be_Vietnam_Pro'] leading-tight h-12 rounded-xl border border-neutral-300 px-4 py-2 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0", {
@@ -18,17 +18,22 @@ const swiperButtonVariants = cva("text-base font-medium font-['Be_Vietnam_Pro'] 
   },
 });
 
-const SwiperButton = React.forwardRef(
-  ({ className, variant, ...props }, ref) => {
-    return (
-      <Button
-        ref={ref}
-        className={cn(swiperButtonVariants({ variant, className }))}
-        {...props}
-      />
-    );
-  }
-);
+export interface SwiperButtonProps
+  extends React.ComponentPropsWithoutRef<typeof Button>,
+    VariantProps<typeof swiperButtonVariants> {}
+
+const SwiperButton = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  SwiperButtonProps
+>(({ className, variant, ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      className={cn(swiperButtonVariants({ variant, className }))}
+      {...props}
+    />
+  );
+});
 
 SwiperButton.displayName = "SwiperButton";
 
