@@ -1,8 +1,20 @@
 import React, { useRef, useEffect, useState } from "react";
-import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import ActionPill from "./ActionPill";
+
+interface SwiperFormSwitchProps {
+  label?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  className?: string;
+  id?: string;
+  variant?: "switch" | "action-pill";
+  Icon?: React.ComponentType<any>;
+  actionPillColor?: "orange" | "neutral" | "red" | "green" | "blue";
+  actionPillIconColor?: "neutral" | "red" | "green" | "blue" | "white" | "black";
+  actionPillFill?: boolean;
+}
 
 /**
  * A labeled switch component styled for use inside Swiper forms.
@@ -11,7 +23,7 @@ import ActionPill from "./ActionPill";
  * - OFF: Container with justify-start, grey thumb (bg-neutral-700)
  * - ON: Container with justify-start, green thumb (bg-green-500) translated to the right
  */
-const SwiperFormSwitch = ({
+const SwiperFormSwitch: React.FC<SwiperFormSwitchProps> = ({
   label,
   checked,
   onCheckedChange,
@@ -98,19 +110,6 @@ const SwiperFormSwitch = ({
       )}
     </div>
   );
-};
-
-SwiperFormSwitch.propTypes = {
-  label: PropTypes.string,
-  checked: PropTypes.bool,
-  onCheckedChange: PropTypes.func,
-  className: PropTypes.string,
-  id: PropTypes.string,
-  variant: PropTypes.oneOf(["switch", "action-pill"]),
-  Icon: PropTypes.elementType,
-  actionPillColor: PropTypes.string,
-  actionPillIconColor: PropTypes.string,
-  actionPillFill: PropTypes.bool,
 };
 
 export default SwiperFormSwitch; 

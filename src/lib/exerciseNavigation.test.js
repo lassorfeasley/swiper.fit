@@ -10,7 +10,7 @@ import {
   getPreviousSection,
   getNextExerciseAfterSectionComplete,
   areAllExercisesComplete
-} from './exerciseNavigation.js';
+} from './exerciseNavigation.ts';
 
 // Mock exercise data
 const mockExercises = [

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import PropTypes from "prop-types";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { Button as UiButton } from "@/components/shadcn/button";
 import {
@@ -11,6 +10,16 @@ import {
   DropdownMenuLabel,
 } from "@/components/shadcn/dropdown-menu";
 import { cn } from "@/lib/utils";
+
+interface SwiperComboboxProps {
+  options: Array<{ value: string; label: string; disabled?: boolean }>;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  placeholder?: string;
+  searchable?: boolean;
+  className?: string;
+  disabled?: boolean;
+}
 
 /**
  * SwiperCombobox
@@ -31,6 +40,15 @@ export default function SwiperCombobox({
   filterPlaceholder = "Search…",
   width = 240,
   useRelativePositioning = false, // New prop to control positioning
+}: SwiperComboboxProps & {
+  items?: Array<{ value: string; label: string; disabled?: boolean }>;
+  onChange?: (value: string) => void;
+  triggerClassName?: string;
+  contentClassName?: string;
+  emptyText?: string;
+  filterPlaceholder?: string;
+  width?: number;
+  useRelativePositioning?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -203,21 +221,5 @@ export default function SwiperCombobox({
     </div>
   );
 }
-
-SwiperCombobox.propTypes = {
-  items: PropTypes.arrayOf(
-    PropTypes.shape({ value: PropTypes.string.isRequired, label: PropTypes.string })
-  ),
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  placeholder: PropTypes.string,
-  className: PropTypes.string,
-  triggerClassName: PropTypes.string,
-  contentClassName: PropTypes.string,
-  emptyText: PropTypes.string,
-  filterPlaceholder: PropTypes.string,
-  width: PropTypes.number,
-  useRelativePositioning: PropTypes.bool,
-};
 
 

@@ -138,9 +138,9 @@ export const useWorkoutAutoFocus = ({
   isRestoringFocus
 }: WorkoutAutoFocusOptions) => {
   
-  const handleSectionComplete = useCallback((section: string): void => {
+  const handleSectionComplete = useCallback((section: string): any => {
     if (isRestoringFocus) {
-      return; // Don't auto-focus during restoration
+      return null; // Don't auto-focus during restoration
     }
     
     const exercises = sectionExercises[section] || [];
@@ -151,6 +151,7 @@ export const useWorkoutAutoFocus = ({
     if (incompleteExercises.length > 0) {
       // Focus on the first incomplete exercise in this section
       setFocusedExercise(incompleteExercises[0]);
+      return incompleteExercises[0];
     } else {
       // All exercises in this section are complete, look for next section
       const sections = ['warmup', 'training', 'cooldown'];
@@ -165,12 +166,13 @@ export const useWorkoutAutoFocus = ({
         
         if (nextIncompleteExercises.length > 0) {
           setFocusedExercise(nextIncompleteExercises[0]);
-          return;
+          return nextIncompleteExercises[0];
         }
       }
       
       // No more incomplete exercises found
       setFocusedExercise(null);
+      return null;
     }
   }, [sectionExercises, completedExercises, setFocusedExercise, isRestoringFocus]);
 

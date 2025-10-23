@@ -6,7 +6,7 @@ import { useAccount } from "@/contexts/AccountContext";
  * DelegateModeHeader – dark full-bleed bar shown at top when acting as a delegate.
  * Exposes ref so AppLayout can measure its height via ResizeObserver.
  */
-const DelegateModeHeader = forwardRef(function DelegateModeHeader(_, ref) {
+const DelegateModeHeader = forwardRef<HTMLElement, {}>(function DelegateModeHeader(_, ref) {
   const { actingUser, returnToSelf } = useAccount();
   const displayName = actingUser?.first_name
     ? `${actingUser.first_name}'s account`

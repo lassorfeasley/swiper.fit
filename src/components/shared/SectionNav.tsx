@@ -1,14 +1,19 @@
 import React from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/shadcn/toggle-group";
 
+interface SectionNavProps {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
 /**
  * SectionNav – 3-way navigation (Warm-up / Workout / Cool-down)
  * Appears directly beneath the PageHeader, spans full width, and
  * collapses nicely on mobile. Behaves like tabs using Radix ToggleGroup
  * (type="single") so that exactly one section is always selected.
  */
-const SectionNav = React.forwardRef(({ value = "warmup", onChange }, ref) => {
-  const handleValueChange = (val) => {
+const SectionNav = React.forwardRef<HTMLDivElement, SectionNavProps>(({ value = "warmup", onChange }, ref) => {
+  const handleValueChange = (val: string) => {
     if (!val) return; // ignore unselect (keep current)
     onChange?.(val);
   };

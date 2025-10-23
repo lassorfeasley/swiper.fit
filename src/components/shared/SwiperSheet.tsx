@@ -9,7 +9,17 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-const SwiperSheet = ({
+interface SwiperSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+const SwiperSheet: React.FC<SwiperSheetProps> = ({
   open,
   onOpenChange,
   children,

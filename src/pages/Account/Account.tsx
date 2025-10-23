@@ -20,6 +20,7 @@ import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
 import SwiperForm from "@/components/shared/SwiperForm";
+import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import { getPendingInvitations, acceptInvitation, rejectInvitation, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
@@ -379,7 +380,7 @@ const Account = () => {
     },
     onSuccess: () => {
       console.log("Mutation onSuccess called");
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
       setEmail("");
       setShowAddPerson(false);
       try {
@@ -402,7 +403,8 @@ const Account = () => {
   });
 
   const updateSharePermissionsMutation = useMutation({
-    mutationFn: async ({ shareId, permissions }) => {
+    mutationFn: async (params: { shareId: string; permissions: any }) => {
+      const { shareId, permissions } = params;
       const { data, error } = await supabase
         .from("account_shares")
         .update(permissions)
@@ -413,7 +415,7 @@ const Account = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
     },
   });
 
@@ -427,19 +429,19 @@ const Account = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
     },
   });
 
   const acceptRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
+    mutationFn: async (requestId: string) => {
       return await acceptInvitation(requestId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["pending_requests"]);
-      queryClient.invalidateQueries(["outgoing_requests"]);
-      queryClient.invalidateQueries(["shares_shared_with_me"]);
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["shares_shared_with_me"] });
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
       toast.success("Request accepted successfully");
     },
     onError: (error) => {
@@ -449,12 +451,12 @@ const Account = () => {
   });
 
   const declineRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
+    mutationFn: async (requestId: string) => {
       return await rejectInvitation(requestId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["pending_requests"]);
-      queryClient.invalidateQueries(["outgoing_requests"]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
       toast.success("Request declined");
     },
     onError: (error) => {
@@ -510,7 +512,7 @@ const Account = () => {
       const routinesWithCompletion = (routines || []).map((routine) => {
         const completedWorkouts = (routine.workouts || []).filter(w => w.completed_at);
         const lastCompletedWorkout = completedWorkouts.length > 0 
-          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())[0]
           : null;
         
         let lastCompletedText = null;
@@ -521,7 +523,7 @@ const Account = () => {
           const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
           const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           
-          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+            const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays === 0) {
@@ -628,7 +630,7 @@ const Account = () => {
       const routinesWithCompletion = (routines || []).map((routine) => {
         const completedWorkouts = (routine.workouts || []).filter(w => w.completed_at);
         const lastCompletedWorkout = completedWorkouts.length > 0 
-          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())[0]
           : null;
         
         let lastCompletedText = null;
@@ -639,7 +641,7 @@ const Account = () => {
           const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
           const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           
-          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+            const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays === 0) {
@@ -923,7 +925,7 @@ const Account = () => {
       });
       setShowAddPersonDialog(false);
       
-      queryClient.invalidateQueries(["outgoing_requests"]);
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
     } catch (error) {
       console.error("Error creating invitation:", error);
       toast.error(error.message || "Failed to send invitation. Please try again.");
@@ -948,14 +950,14 @@ const Account = () => {
     }));
   };
 
-  const handlePermissionToggle = (shareId, permission, value) => {
+  const handlePermissionToggle = (shareId: string, permission: string, value: any) => {
     updateSharePermissionsMutation.mutate({
       shareId,
       permissions: { [permission]: value }
     });
   };
 
-  const handleDeleteInvitation = (requestId) => {
+  const handleDeleteInvitation = (requestId: string) => {
     setInvitationToDeleteId(requestId);
     setShowDeleteInvitationDialog(true);
   };
@@ -975,8 +977,8 @@ const Account = () => {
       }
 
       toast.success("Invitation deleted");
-      queryClient.invalidateQueries(["pending_requests", user.id]);
-      queryClient.invalidateQueries(["outgoing_requests", user.id]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests", user.id] });
     } catch (error) {
       console.error("Error deleting invitation:", error);
       toast.error("Failed to delete invitation");
@@ -1027,8 +1029,8 @@ const Account = () => {
                           <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                             <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
                               {request.request_type === 'trainer_invite'
-                                ? `${formatUserDisplay(request.profiles)} wants you to be their trainer`
-                                : `${formatUserDisplay(request.profiles)} wants you to be their client`
+                                ? `${formatUserDisplay((request as any).profiles)} wants you to be their trainer`
+                                : `${formatUserDisplay((request as any).profiles)} wants you to be their client`
                               }
                             </div>
                           </div>
@@ -1106,7 +1108,7 @@ const Account = () => {
                             </SwiperButton>
                           </div>
                           <div className="ThisInvitationWillExpireIn14Days self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
-                            This invitation will expire in {Math.ceil((new Date(request.expires_at) - new Date()) / (1000 * 60 * 60 * 24))} days.
+                            This invitation will expire in {Math.ceil((new Date(request.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days.
                           </div>
                         </div>
                       </div>
@@ -1654,7 +1656,7 @@ const Account = () => {
             rightText="Create"
             leftText="Cancel"
           >
-            <SwiperForm.Section bordered={false}>
+            <FormSectionWrapper bordered={false}>
               <div className="w-full flex flex-col">
                 <div className="w-full flex justify-between items-center mb-2">
                   <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
@@ -1673,7 +1675,7 @@ const Account = () => {
                   error={(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN}
                 />
               </div>
-            </SwiperForm.Section>
+            </FormSectionWrapper>
           </SwiperForm>
 
           {/* Delete Share Confirmation Dialog */}

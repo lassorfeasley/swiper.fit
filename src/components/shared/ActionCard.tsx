@@ -7,6 +7,7 @@ export interface ActionCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "primary";
   fillColor?: string;
   textColor?: string;
+  isFirstCard?: boolean;
 }
 
 const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({ 
@@ -16,6 +17,7 @@ const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({
   variant = "default", // "default" or "primary"
   fillColor,
   textColor,
+  isFirstCard, // Extract isFirstCard to prevent DOM warning
   ...props 
 }, ref) => {
   // Determine colors based on props or variant

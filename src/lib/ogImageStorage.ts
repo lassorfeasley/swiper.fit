@@ -5,11 +5,8 @@ const TEMPLATE_VERSION = '2';
 
 /**
  * Upload a PNG image to Supabase Storage
- * @param {string} workoutId - The workout ID
- * @param {string} pngDataUrl - Base64 PNG data URL
- * @returns {Promise<string>} - The public URL of the uploaded image
  */
-export async function uploadOGImage(workoutId, pngDataUrl) {
+export async function uploadOGImage(workoutId: string, pngDataUrl: string): Promise<string> {
   try {
     // Convert data URL to blob
     const response = await fetch(pngDataUrl);
@@ -36,7 +33,7 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
       .from('og-images')
       .getPublicUrl(fileName);
     
-    return publicData?.publicUrl;
+    return publicData?.publicUrl || '';
   } catch (error) {
     console.error('Error in uploadOGImage:', error);
     throw error;
@@ -45,10 +42,8 @@ export async function uploadOGImage(workoutId, pngDataUrl) {
 
 /**
  * Update workout with OG image URL
- * @param {string} workoutId - The workout ID
- * @param {string} imageUrl - The URL of the uploaded image
  */
-export async function updateWorkoutOGImage(workoutId, imageUrl) {
+export async function updateWorkoutOGImage(workoutId: string, imageUrl: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('workouts')
@@ -67,11 +62,8 @@ export async function updateWorkoutOGImage(workoutId, imageUrl) {
 
 /**
  * Upload a routine OG image to Supabase Storage
- * @param {string} routineId - The routine ID
- * @param {string} pngDataUrl - Base64 PNG data URL
- * @returns {Promise<string>} - The public URL of the uploaded image
  */
-export async function uploadRoutineOGImage(routineId, pngDataUrl) {
+export async function uploadRoutineOGImage(routineId: string, pngDataUrl: string): Promise<string> {
   try {
     const response = await fetch(pngDataUrl);
     const blob = await response.blob();
@@ -89,7 +81,7 @@ export async function uploadRoutineOGImage(routineId, pngDataUrl) {
     const { data: publicData } = await supabase.storage
       .from('og-images')
       .getPublicUrl(fileName);
-    return publicData?.publicUrl;
+    return publicData?.publicUrl || '';
   } catch (error) {
     console.error('Error in uploadRoutineOGImage:', error);
     throw error;
@@ -98,10 +90,8 @@ export async function uploadRoutineOGImage(routineId, pngDataUrl) {
 
 /**
  * Update routine with OG image URL
- * @param {string} routineId - The routine ID
- * @param {string} imageUrl - The URL of the uploaded image
  */
-export async function updateRoutineOGImage(routineId, imageUrl) {
+export async function updateRoutineOGImage(routineId: string, imageUrl: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('routines')

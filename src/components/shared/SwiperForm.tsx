@@ -3,12 +3,26 @@ import { Drawer, DrawerContent } from "@/components/shadcn/drawer";
 import { SwiperSheet } from "@/components/shared/SwiperSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FormHeader } from "../shadcn/sheet";
-import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { useAccount } from "@/contexts/AccountContext";
 
-const SwiperForm = ({
+interface SwiperFormProps {
+  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title?: string;
+  description?: string;
+  leftAction?: () => void;
+  rightAction?: () => void;
+  rightEnabled?: boolean;
+  leftText?: string;
+  rightText?: string;
+  padding?: 0 | 4;
+  className?: string;
+}
+
+const SwiperForm: React.FC<SwiperFormProps> = ({
   children,
   open,
   onOpenChange,
@@ -76,14 +90,14 @@ const SwiperForm = ({
   );
 };
 
-SwiperForm.propTypes = {
-  padding: PropTypes.oneOf([0, 4]),
-  className: PropTypes.string,
-  description: PropTypes.string,
-};
-
 // Convenient section wrapper for form content
-const SwiperFormSection = ({ children, bordered = true, className }) => {
+interface SwiperFormSectionProps {
+  children: React.ReactNode;
+  bordered?: boolean;
+  className?: string;
+}
+
+const SwiperFormSection: React.FC<SwiperFormSectionProps> = ({ children, bordered = true, className }) => {
   return (
     <FormSectionWrapper
       className={cn(
@@ -98,14 +112,8 @@ const SwiperFormSection = ({ children, bordered = true, className }) => {
   );
 };
 
-SwiperFormSection.propTypes = {
-  children: PropTypes.node.isRequired,
-  bordered: PropTypes.bool,
-  className: PropTypes.string,
-};
-
 // Attach as a static property so callers can do <SwiperForm.Section>
-SwiperForm.Section = SwiperFormSection;
+(SwiperForm as any).Section = SwiperFormSection;
 
 export { SwiperFormSection };
 

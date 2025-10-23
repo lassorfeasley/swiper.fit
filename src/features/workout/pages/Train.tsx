@@ -80,7 +80,7 @@ const Train = () => {
           // Get the most recent completed workout for display
           const completedWorkouts = (routine.workouts || []).filter((w) => w.completed_at);
           const lastCompletedWorkout = completedWorkouts.length > 0
-            ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+            ? completedWorkouts.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())[0]
             : null;
 
           // Format the completion date
@@ -100,7 +100,7 @@ const Train = () => {
               now.getDate()
             );
 
-            const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+            const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {
@@ -132,7 +132,7 @@ const Train = () => {
             return b.recentCompletions - a.recentCompletions;
           }
           // Then by creation date (most recent first)
-          return new Date(b.created_at) - new Date(a.created_at);
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
 
         setRoutines(sortedRoutines);

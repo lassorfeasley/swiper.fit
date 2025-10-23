@@ -4,7 +4,7 @@ import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
+import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 
 // Type definitions for workout data structures
 interface Set {
@@ -16,15 +16,25 @@ interface Set {
   reps?: number;
   timed_set_duration?: number;
   weight?: number;
-  order_index: number;
+  weight_unit?: string;
+  set_variant?: string;
+  set_order?: number;
+  created_at: string;
+  logged_at: string;
+  routine_set_id?: string;
+  user_id: string;
+  account_id: string;
+  workout_exercise_id?: string;
 }
 
 interface WorkoutExercise {
   id: string;
   workout_id: string;
   exercise_id: string;
-  exercise_name: string;
-  order_index: number;
+  exercise_order: number;
+  snapshot_name: string;
+  name_override?: string;
+  section_override?: string;
   sets: Set[];
 }
 
@@ -33,10 +43,14 @@ interface Workout {
   user_id: string;
   routine_id?: string;
   routine_name?: string;
-  name: string;
+  workout_name: string;
   started_at: string;
-  ended_at?: string;
   is_active: boolean;
+  is_paused?: boolean;
+  is_public?: boolean;
+  last_workout_exercise_id?: string;
+  og_image_url?: string;
+  active_seconds_accumulated?: number;
   exercises: WorkoutExercise[];
 }
 
@@ -54,7 +68,7 @@ interface ActiveWorkoutContextType {
   isPaused: boolean;
   isFinishing: boolean;
   startWorkout: (program: Program) => Promise<void>;
-  endWorkout: () => Promise<void>;
+  endWorkout: () => Promise<boolean>;
   pauseWorkout: () => Promise<void>;
   resumeWorkout: () => Promise<void>;
   reactivateWorkout: (workoutId: string) => Promise<void>;
@@ -139,21 +153,43 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       console.log('[ActiveWorkout] Checking for active workout for user:', user.id);
       
       try {
-        const { data: workouts, error } = await supabase
+        // Try to fetch either active or paused (new schema) workouts
+        let workouts: any[] | null = null;
+        let error: any = null;
+
+        const attempt = await supabase
           .from('workouts')
           .select(`
             *,
-            exercises:workout_exercises(
-              *,
-              sets:sets(
-                *
-              )
+            sets!sets_workout_id_fkey(
+              *
             )
           `)
           .eq('user_id', user.id)
-          .eq('is_active', true)
-          .order('started_at', { ascending: false })
+          .or('is_active.eq.true,is_paused.eq.true')
+          .order('created_at', { ascending: false })
           .limit(1);
+
+        if (attempt.error && String(attempt.error.message || '').includes('is_paused')) {
+          // Fallback for legacy schema without is_paused
+          const fallback = await supabase
+            .from('workouts')
+            .select(`
+              *,
+              sets!sets_workout_id_fkey(
+                *
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          workouts = fallback.data as any[] | null;
+          error = fallback.error;
+        } else {
+          workouts = attempt.data as any[] | null;
+          error = attempt.error;
+        }
 
         if (error) {
           console.error('[ActiveWorkout] Error fetching active workout:', error);
@@ -165,35 +201,42 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           const workout = workouts[0];
           console.log('[ActiveWorkout] Found active workout:', workout.id);
           
-          // Sort exercises by order_index
-          if (workout.exercises) {
-            workout.exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => a.order_index - b.order_index);
-            
-            // Sort sets within each exercise by order_index
-            workout.exercises.forEach((exercise: WorkoutExercise) => {
-              if (exercise.sets) {
-                exercise.sets.sort((a: Set, b: Set) => a.order_index - b.order_index);
+          // Sort sets by set_order or created_at
+          if (workout.sets) {
+            workout.sets.sort((a: Set, b: Set) => {
+              if (a.set_order !== null && b.set_order !== null) {
+                return a.set_order - b.set_order;
               }
+              return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             });
           }
           
-          setActiveWorkout(workout);
-          setIsWorkoutActive(true);
+          // Map sets to exercises for compatibility (since the UI expects exercises)
+          const processedWorkout = {
+            ...workout,
+            exercises: workout.sets ? [{
+              id: 'workout-sets',
+              exercise_name: 'Workout Sets',
+              order_index: 0,
+              sets: workout.sets
+            }] : []
+          };
           
-          // Calculate elapsed time
-          const startTime = new Date(workout.started_at).getTime();
-          const now = Date.now();
-          const elapsed = Math.floor((now - startTime) / 1000);
-          setElapsedTime(elapsed);
+          setActiveWorkout(processedWorkout);
+          setIsWorkoutActive(Boolean(workout.is_active || (workout as any).is_paused));
           
-          // Start timer if workout is not paused
-          if (!workout.is_active) {
-            const timer = setInterval(() => {
-              setElapsedTime(prev => prev + 1);
-            }, 1000);
-            
-            return () => clearInterval(timer);
+          // Calculate elapsed time based on workout state
+          let elapsed = 0;
+          if (workout.is_active && workout.running_since) {
+            // Workout is active - calculate from running_since
+            const startTime = new Date(workout.running_since).getTime();
+            const now = Date.now();
+            elapsed = Math.floor((now - startTime) / 1000);
+          } else {
+            // Workout is paused - use accumulated time
+            elapsed = workout.active_seconds_accumulated || 0;
           }
+          setElapsedTime(elapsed);
         } else {
           console.log('[ActiveWorkout] No active workout found');
           setActiveWorkout(null);
@@ -208,6 +251,19 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
     checkForActiveWorkout();
   }, [user]);
+
+  // Timer effect - only runs when workout is active and not paused
+  useEffect(() => {
+    if (!activeWorkout || !activeWorkout.is_active) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeWorkout?.is_active]);
 
   // Real-time subscription for workout updates
   useEffect(() => {
@@ -229,13 +285,31 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           const updatedWorkout = payload.new as Workout;
           setActiveWorkout(prev => prev ? { ...prev, ...updatedWorkout } : null);
           
-          if (typeof updatedWorkout.is_active === 'boolean') {
-            setIsWorkoutActive(updatedWorkout.is_active);
+          const hasPausedField = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
+          const paused = hasPausedField ? Boolean((updatedWorkout as any).is_paused) : false;
+          if (hasPausedField) {
+            // New schema: active if either active or paused
+            setIsWorkoutActive(Boolean(updatedWorkout.is_active || paused));
+          } else {
+            // Legacy schema (no is_paused): do NOT flip off during pause updates; only
+            // allow turning off when we know we're finishing (handled below)
+            if (updatedWorkout.is_active === true) setIsWorkoutActive(true);
           }
           
+          // Only navigate to history if the workout truly ended, not merely paused
           if (updatedWorkout.is_active === false) {
-            console.log('[ActiveWorkout] Workout ended via real-time update');
-            navigate('/history');
+            const hasPausedField2 = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
+            const isPausedNow = hasPausedField2 ? Boolean((updatedWorkout as any).is_paused) : false;
+
+            if (!isPausedNow) {
+              if (hasPausedField2) {
+                console.log('[ActiveWorkout] Workout ended via real-time update');
+                navigate('/history');
+              } else if (isFinishingRef.current) {
+                console.log('[ActiveWorkout] Workout ended (legacy schema, finishing flag)');
+                navigate('/history');
+              }
+            }
           }
         }
       })
@@ -262,7 +336,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 // If it's a new set, add it
                 if (payload.eventType === 'INSERT') {
                   updatedSets.push(updatedSet);
-                  updatedSets.sort((a, b) => a.order_index - b.order_index);
+                  updatedSets.sort((a, b) => (a.set_order || 0) - (b.set_order || 0));
                 }
                 
                 return { ...exercise, sets: updatedSets };
@@ -303,7 +377,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           *,
           workout_exercises!workout_exercises_workout_id_fkey(
             *,
-            sets!sets_workout_exercise_id_fkey(
+            sets!fk_sets_workout_exercise_id(
               *
             )
           )
@@ -319,10 +393,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       if (workout) {
         // Sort exercises and sets
         if (workout.workout_exercises) {
-          workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => a.order_index - b.order_index);
+          workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => a.exercise_order - b.exercise_order);
           workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
             if (exercise.sets) {
-              exercise.sets.sort((a: Set, b: Set) => a.order_index - b.order_index);
+              exercise.sets.sort((a: Set, b: Set) => a.set_order - b.set_order);
             }
           });
         }
@@ -334,7 +408,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         };
         
         setActiveWorkout(processedWorkout);
-        setIsWorkoutActive(workout.is_active);
+        setIsWorkoutActive(Boolean(workout.is_active || (workout as any).is_paused));
       }
     } catch (error) {
       console.error('[ActiveWorkout] Error in refreshActiveWorkout:', error);
@@ -350,16 +424,43 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     console.log('[ActiveWorkout] Starting workout for program:', program.id);
     
     try {
+      // First, check if there's already an active workout and clean it up
+      const { data: existingWorkouts, error: existingError } = await supabase
+        .from('workouts')
+        .select('id, workout_name')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (existingError) {
+        console.error('[ActiveWorkout] Error checking for existing workouts:', existingError);
+      } else if (existingWorkouts && existingWorkouts.length > 0) {
+        console.log('[ActiveWorkout] Found existing active workout(s), cleaning up:', existingWorkouts);
+        
+        // Mark existing active workouts as inactive
+        const { error: cleanupError } = await supabase
+          .from('workouts')
+          .update({ is_active: false })
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+
+        if (cleanupError) {
+          console.error('[ActiveWorkout] Error cleaning up existing workouts:', cleanupError);
+          toast.error('Failed to clean up existing workout');
+          return;
+        }
+        
+        toast.info('Cleaned up existing workout');
+      }
+
       // Create workout
-      const workoutName = generateWorkoutName(program.name);
+      const routineName = (program as any)?.name || (program as any)?.routine_name || 'Workout';
+      const workoutName = generateWorkoutName(routineName);
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert({
           user_id: user.id,
           routine_id: program.id,
-          routine_name: program.name,
-          name: workoutName,
-          started_at: new Date().toISOString(),
+          workout_name: workoutName,
           is_active: true
         })
         .select()
@@ -374,11 +475,29 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       console.log('[ActiveWorkout] Created workout:', workout.id);
 
       // Create workout exercises and sets
-      const exercisesToInsert = program.exercises.map((exercise: any, index: number) => ({
+      const rawExercises: any[] = (program as any).exercises || (program as any).routine_exercises || [];
+      if (!rawExercises || !Array.isArray(rawExercises)) {
+        console.error('[ActiveWorkout] Program exercises is undefined or not an array:', program);
+        toast.error('Invalid program data - no exercises found');
+        return;
+      }
+
+      // Normalize incoming exercises to a common shape
+      console.log('[ActiveWorkout] Raw exercises from program:', rawExercises.length);
+      const normalizedExercises = rawExercises.map((ex: any, index: number) => {
+        const exerciseId = ex.exercise_id ?? ex.id; // routine_exercises.exercise_id or exercises.id
+        const name = ex.name ?? ex.snapshot_name ?? ex.exercises?.name ?? 'Exercise';
+        const sets = ex.sets ?? ex.routine_sets ?? [];
+        console.log(`[ActiveWorkout] Normalizing exercise ${index}: ${exerciseId} (${name}) with ${sets.length} sets`);
+        return { index, exercise_id: exerciseId, name, sets };
+      });
+      console.log('[ActiveWorkout] Normalized exercises:', normalizedExercises.length);
+
+      const exercisesToInsert = normalizedExercises.map((exercise: any) => ({
         workout_id: workout.id,
-        exercise_id: exercise.id,
-        exercise_name: exercise.name,
-        order_index: index
+        exercise_id: exercise.exercise_id,
+        exercise_order: exercise.index,
+        snapshot_name: exercise.name
       }));
 
       const { data: workoutExercises, error: exercisesError } = await supabase
@@ -392,25 +511,36 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         return;
       }
 
-      // Create sets for each exercise
+      // Create sets for each exercise (supports both routine_sets and pre-expanded sets)
       const setsToInsert: any[] = [];
-      workoutExercises.forEach((workoutExercise: any) => {
-        const exercise = program.exercises.find((e: any) => e.id === workoutExercise.exercise_id);
-        if (exercise && exercise.sets) {
-          exercise.sets.forEach((set: any, setIndex: number) => {
+      console.log('[ActiveWorkout] Creating sets for normalized exercises:', normalizedExercises.length);
+      normalizedExercises.forEach((normalized: any, exerciseIndex: number) => {
+        console.log(`[ActiveWorkout] Processing exercise ${exerciseIndex}:`, normalized.exercise_id, 'with', normalized.sets?.length || 0, 'sets');
+        const workoutExercise = workoutExercises.find((we: any) => we.exercise_id === normalized.exercise_id);
+        if (workoutExercise) {
+          const sets = normalized.sets || [];
+          sets.forEach((set: any, i: number) => {
+            console.log(`[ActiveWorkout] Creating set ${i + 1} for exercise ${normalized.exercise_id}`);
             setsToInsert.push({
               workout_id: workout.id,
-              exercise_id: workoutExercise.id,
-              status: 'pending',
+              // Link to both the canonical exercise and the workout_exercises row
+              exercise_id: normalized.exercise_id,
+              workout_exercise_id: workoutExercise.id,
+              status: 'default',
               set_type: set.set_type || 'reps',
-              reps: set.reps,
-              timed_set_duration: set.timed_set_duration,
-              weight: set.weight,
-              order_index: setIndex
+              reps: typeof set.reps === 'number' ? set.reps : null,
+              timed_set_duration: typeof set.timed_set_duration === 'number' ? set.timed_set_duration : null,
+              weight: typeof set.weight === 'number' ? set.weight : 0,
+              weight_unit: set.weight_unit,
+              set_order: (typeof set.set_order === 'number' ? set.set_order : i + 1),
+              user_id: user.id,
             });
           });
+        } else {
+          console.warn(`[ActiveWorkout] No workout exercise found for exercise_id: ${normalized.exercise_id}`);
         }
       });
+      console.log('[ActiveWorkout] Total sets to insert:', setsToInsert.length);
 
       if (setsToInsert.length > 0) {
         const { error: setsError } = await supabase
@@ -434,7 +564,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       postSlackEvent('workout_started', {
         user_id: user.id,
         workout_id: workout.id,
-        routine_name: program.name
+        routine_name: routineName
       });
 
       toast.success('Workout started!');
@@ -488,8 +618,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       const { error: updateError } = await supabase
         .from('workouts')
         .update({
-          is_active: false,
-          ended_at: new Date().toISOString()
+          is_active: false
         })
         .eq('id', activeWorkout.id);
 
@@ -499,15 +628,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         return;
       }
 
-      // Generate and upload OG image
-      const workoutData = await gatherWorkoutDataForOG(activeWorkout.id);
-      if (workoutData) {
-        try {
-          await generateAndUploadOGImage(workoutData);
-        } catch (ogError) {
-          console.warn('[ActiveWorkout] Failed to generate OG image:', ogError);
-        }
-      }
+      // Generate and upload OG image (fire-and-forget, don't block navigation)
+      gatherWorkoutDataForOG(activeWorkout.id)
+        .then(async (workoutData) => {
+          if (workoutData) {
+            try { await generateAndUploadOGImage(activeWorkout.id, workoutData); } catch (_) {}
+          }
+        })
+        .catch(() => {});
 
       // Post Slack event
       postSlackEvent('workout_completed', {
@@ -518,6 +646,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       // Clear workout state
       setActiveWorkout(null);
+      // Ending a workout should disable the active-workout redirect logic
       setIsWorkoutActive(false);
       setElapsedTime(0);
       setManuallyCompletedSets(() => new Set<string>());
@@ -525,12 +654,27 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       toast.success('Workout completed!');
       
-      // Navigate to history
-      navigate('/history');
+      // Check if any sets were completed by querying the database
+      const { data: completedSets, error: setsError } = await supabase
+        .from('sets')
+        .select('id')
+        .eq('workout_id', activeWorkout.id)
+        .eq('status', 'complete');
+
+      if (setsError) {
+        console.error('[ActiveWorkout] Error checking completed sets:', setsError);
+        // If we can't check, assume there were sets to be safe
+        return true;
+      }
+
+      const hadAnySets = completedSets && completedSets.length > 0;
+      console.log(`[ActiveWorkout] Workout ended with ${completedSets?.length || 0} completed sets`);
       
+      return hadAnySets;
     } catch (error) {
       console.error('[ActiveWorkout] Error ending workout:', error);
       toast.error('Failed to end workout');
+      return false;
     } finally {
       isFinishingRef.current = false;
       setIsFinishing(false);
@@ -543,7 +687,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     try {
       const { error } = await supabase
         .from('workouts')
-        .update({ last_exercise_id: workoutExerciseId })
+        .update({ last_workout_exercise_id: workoutExerciseId })
         .eq('id', activeWorkout.id);
 
       if (error) {
@@ -587,30 +731,163 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, []);
 
   const pauseWorkout = useCallback(async () => {
-    console.log('[ActiveWorkout] Pause functionality not implemented');
-    toast.info('Pause functionality not available');
-  }, []);
+    if (!activeWorkout) return;
+    
+    console.log('[ActiveWorkout] Pausing workout:', activeWorkout.id);
+    
+    try {
+      // First try to set both flags (new schema)
+      const firstAttempt = await supabase
+        .from('workouts')
+        .update({ 
+          is_active: false,
+          is_paused: true
+        })
+        .eq('id', activeWorkout.id);
+
+      if (firstAttempt.error) {
+        // If server doesn't know about is_paused, fall back to legacy schema
+        const msg = String(firstAttempt.error.message || '');
+        if (msg.includes('is_paused')) {
+          const fallback = await supabase
+            .from('workouts')
+            .update({ is_active: false })
+            .eq('id', activeWorkout.id);
+          if (fallback.error) {
+            console.error('[ActiveWorkout] Error pausing workout (fallback failed):', fallback.error);
+            toast.error('Failed to pause workout');
+            return;
+          }
+        } else {
+          console.error('[ActiveWorkout] Error pausing workout:', firstAttempt.error);
+          toast.error('Failed to pause workout');
+          return;
+        }
+      }
+
+      // Update local state regardless of schema
+      setActiveWorkout(prev => prev ? {
+        ...prev,
+        is_active: false,
+        // Only set is_paused locally if the field exists on the object
+        ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: true } : {})
+      } : null);
+      
+      setIsWorkoutActive(true);
+      toast.success('Workout paused');
+      
+    } catch (error) {
+      console.error('[ActiveWorkout] Error pausing workout:', error);
+      toast.error('Failed to pause workout');
+    }
+  }, [activeWorkout]);
 
   const resumeWorkout = useCallback(async () => {
-    console.log('[ActiveWorkout] Resume functionality not implemented');
-    toast.info('Resume functionality not available');
-  }, []);
+    if (!activeWorkout) return;
+    
+    console.log('[ActiveWorkout] Resuming workout:', activeWorkout.id);
+    
+    try {
+      // Try new schema first
+      const firstAttempt = await supabase
+        .from('workouts')
+        .update({ 
+          is_active: true,
+          is_paused: false
+        })
+        .eq('id', activeWorkout.id);
+
+      if (firstAttempt.error) {
+        const msg = String(firstAttempt.error.message || '');
+        if (msg.includes('is_paused')) {
+          const fallback = await supabase
+            .from('workouts')
+            .update({ is_active: true })
+            .eq('id', activeWorkout.id);
+          if (fallback.error) {
+            console.error('[ActiveWorkout] Error resuming workout (fallback failed):', fallback.error);
+            toast.error('Failed to resume workout');
+            return;
+          }
+        } else {
+          console.error('[ActiveWorkout] Error resuming workout:', firstAttempt.error);
+          toast.error('Failed to resume workout');
+          return;
+        }
+      }
+
+      // Update local state regardless of schema
+      setActiveWorkout(prev => prev ? {
+        ...prev,
+        is_active: true,
+        ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: false } : {})
+      } : null);
+      
+      setIsWorkoutActive(true);
+      toast.success('Workout resumed');
+      
+    } catch (error) {
+      console.error('[ActiveWorkout] Error resuming workout:', error);
+      toast.error('Failed to resume workout');
+    }
+  }, [activeWorkout]);
 
   const reactivateWorkout = useCallback(async (workoutId: string) => {
     console.log('[ActiveWorkout] Reactivating workout:', workoutId);
 
     try {
-      const { error } = await supabase
+      // First, check if there's already an active workout and clean it up
+      const { data: existingWorkouts, error: existingError } = await supabase
+        .from('workouts')
+        .select('id, workout_name')
+        .eq('user_id', user?.id)
+        .eq('is_active', true);
+
+      if (existingError) {
+        console.error('[ActiveWorkout] Error checking for existing workouts:', existingError);
+      } else if (existingWorkouts && existingWorkouts.length > 0) {
+        console.log('[ActiveWorkout] Found existing active workout(s), cleaning up:', existingWorkouts);
+        
+        // Mark existing active workouts as inactive
+        const { error: cleanupError } = await supabase
+          .from('workouts')
+          .update({ is_active: false })
+          .eq('user_id', user?.id)
+          .eq('is_active', true);
+
+        if (cleanupError) {
+          console.error('[ActiveWorkout] Error cleaning up existing workouts:', cleanupError);
+          toast.error('Failed to clean up existing workout');
+          return;
+        }
+      }
+
+      // Try new schema first, then fall back
+      const firstAttempt = await supabase
         .from('workouts')
         .update({ 
-          is_active: true
+          is_active: true,
+          is_paused: false
         })
         .eq('id', workoutId);
 
-      if (error) {
-        console.error('[ActiveWorkout] Error reactivating workout:', error);
-        toast.error('Failed to reactivate workout');
-        return;
+      if (firstAttempt.error) {
+        const msg = String(firstAttempt.error.message || '');
+        if (msg.includes('is_paused')) {
+          const fallback = await supabase
+            .from('workouts')
+            .update({ is_active: true })
+            .eq('id', workoutId);
+          if (fallback.error) {
+            console.error('[ActiveWorkout] Error reactivating workout (fallback failed):', fallback.error);
+            toast.error('Failed to reactivate workout');
+            return;
+          }
+        } else {
+          console.error('[ActiveWorkout] Error reactivating workout:', firstAttempt.error);
+          toast.error('Failed to reactivate workout');
+          return;
+        }
       }
 
       await refreshActiveWorkout(workoutId);
@@ -620,14 +897,18 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       console.error('[ActiveWorkout] Error reactivating workout:', error);
       toast.error('Failed to reactivate workout');
     }
-  }, [refreshActiveWorkout, navigate]);
+  }, [refreshActiveWorkout, navigate, user]);
 
   const value: ActiveWorkoutContextType = {
     activeWorkout,
     isWorkoutActive,
     elapsedTime,
     loading,
-    isPaused: false,
+    isPaused: activeWorkout
+      ? (typeof (activeWorkout as any).is_paused === 'boolean'
+          ? Boolean((activeWorkout as any).is_paused)
+          : !activeWorkout.is_active)
+      : false,
     isFinishing,
     startWorkout,
     endWorkout,

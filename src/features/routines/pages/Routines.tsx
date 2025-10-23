@@ -14,6 +14,7 @@ import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import RoutineCard from "../components/RoutineCard";
 import SwiperForm from "@/components/shared/SwiperForm";
+import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import MainContentSection from "@/components/layout/MainContentSection";
@@ -82,7 +83,7 @@ const RoutinesIndex = () => {
         const lastCompletedWorkout =
           completedWorkouts.length > 0
             ? completedWorkouts.sort(
-                (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
+                (a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
               )[0]
             : null;
 
@@ -103,7 +104,7 @@ const RoutinesIndex = () => {
             now.getDate()
           );
 
-          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+          const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
           if (diffDays === 0) {
@@ -125,7 +126,7 @@ const RoutinesIndex = () => {
           ...program,
           setCount,
           exerciseNames: (program.routine_exercises || [])
-            .map((pe) => pe.exercises?.name)
+            .map((pe) => (pe.exercises as any)?.name)
             .filter(Boolean),
           lastCompleted: lastCompletedText,
         };
@@ -258,7 +259,7 @@ const RoutinesIndex = () => {
         rightText="Create"
         leftText="Cancel"
       >
-        <SwiperForm.Section bordered={false}>
+        <FormSectionWrapper bordered={false}>
           <div className="w-full flex flex-col">
             <div className="w-full flex justify-between items-center mb-2">
               <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
@@ -277,7 +278,7 @@ const RoutinesIndex = () => {
               error={(programName || '').length >= MAX_ROUTINE_NAME_LEN}
             />
           </div>
-        </SwiperForm.Section>
+        </FormSectionWrapper>
       </SwiperForm>
 
     </AppLayout>

@@ -21,7 +21,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import { toast } from "sonner";
 import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2 } from "lucide-react";
-import { generateAndUploadOGImage } from '@/lib/ogImageGenerator';
+import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 
 import { useAccount } from "@/contexts/AccountContext";
 
@@ -35,14 +35,14 @@ const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shar
     leftText="Close"
   >
     {/* Description section */}
-    <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+    <FormSectionWrapper bordered={true} className="flex flex-col gap-5">
       <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
         Publish your workout <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
       </p>
-    </SwiperForm.Section>
+            </FormSectionWrapper>
 
     {/* Controls section */}
-    <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+    <FormSectionWrapper bordered={false} className="flex flex-col gap-5">
       <SwiperFormSwitch
         label="Public link"
         checked={isPublic}
@@ -59,7 +59,7 @@ const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shar
           icon={<Copy />}
         />
       )}
-    </SwiperForm.Section>
+            </FormSectionWrapper>
   </SwiperForm>
 );
 
@@ -268,7 +268,7 @@ const CompletedWorkout = () => {
             ...set,
             weight: set.weight,
             unit,
-            set_variant: set.set_variant ?? set.name ?? '',
+            set_variant: set.set_variant ?? '',
           };
         });
       
@@ -303,8 +303,8 @@ const CompletedWorkout = () => {
         // Build mapping from snapshot rows
         (snapData || []).forEach((row) => {
           // Prefer name_override, then snapshot_name, then the current exercises.name value
-          const displayName = row.name_override || row.snapshot_name || (row.exercises || {}).name;
-          const sec = (row.exercises || {}).section || "training";
+          const displayName = row.name_override || row.snapshot_name || '';
+          const sec = "training";
           if (displayName) {
             exercisesObj[row.exercise_id] = { name: displayName, section: sec };
           }
@@ -466,11 +466,11 @@ const CompletedWorkout = () => {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name", "last_name")
+        .select("first_name, last_name")
         .eq("id", workout.user_id)
         .single();
       if (data) {
-        const name = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+        const name = `${data.first_name || ""} ${(data as any).last_name || ""}`.trim();
         setOwnerName(name || "User");
       }
     })();
@@ -505,7 +505,7 @@ const CompletedWorkout = () => {
 
   // Filter out exercises that have no valid sets
   const exercisesWithSets = Object.entries(setsByExercise).filter(
-    ([_, sets]) => sets.length > 0
+    ([_, sets]) => (sets as any[]).length > 0
   );
 
   // Filter exercises based on search
@@ -709,8 +709,8 @@ const CompletedWorkout = () => {
   const handleResumeWorkout = async () => {
     try {
       if (!workoutId) return;
-      const ok = await reactivateWorkout(workoutId);
-      if (ok) navigate("/workout/active", { replace: true });
+      await reactivateWorkout(workoutId);
+      navigate("/workout/active", { replace: true });
     } catch (_) {}
   };
 
@@ -963,7 +963,7 @@ const CompletedWorkout = () => {
           leftText="Cancel"
           rightText="Save"
         >
-          <SwiperForm.Section>
+            <FormSectionWrapper>
             <TextInput
               label="Workout name"
               value={workoutName}
@@ -971,9 +971,9 @@ const CompletedWorkout = () => {
               maxLength={MAX_WORKOUT_NAME_LEN}
             />
             <div className="text-xs text-slate-500">{workoutName.length} of {MAX_WORKOUT_NAME_LEN} characters</div>
-          </SwiperForm.Section>
+            </FormSectionWrapper>
 
-          <SwiperForm.Section bordered={false}>
+          <FormSectionWrapper bordered={false}>
             <SwiperButton
               variant="destructive"
               onClick={handleDeleteWorkout}
@@ -981,7 +981,7 @@ const CompletedWorkout = () => {
             >
               Delete workout
             </SwiperButton>
-          </SwiperForm.Section>
+            </FormSectionWrapper>
         </SwiperForm>
 
       </AppLayout>

@@ -9,7 +9,42 @@ import {
 import { SwiperButton } from './SwiperButton';
 
 // Force hot reload - AlertDialogCancel and AlertDialogAction removed
-const SwiperDialog = ({
+interface SwiperDialogProps {
+  open?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
+  title?: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  variant?: "default" | "destructive";
+  className?: string;
+  confirmVariant?: "default" | "destructive" | "outline" | "primary-action";
+  cancelVariant?: "default" | "destructive" | "outline" | "primary-action";
+  contentClassName?: string;
+  containerClassName?: string;
+  headerClassName?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
+  headerRight?: React.ReactNode;
+  primaryAction?: React.ReactNode;
+  footer?: React.ReactNode;
+  hideFooter?: boolean;
+  showHeaderDismiss?: boolean;
+  closeOnOverlayClick?: boolean;
+  closeOnConfirm?: boolean;
+  closeOnCancel?: boolean;
+  size?: "sm" | "md" | "lg";
+  align?: "left" | "center" | "right";
+  tone?: "neutral" | "warning" | "error";
+  maxBodyHeight?: string;
+  showCloseButton?: boolean;
+}
+
+const SwiperDialog: React.FC<SwiperDialogProps> = ({
   open,
   isOpen,
   onOpenChange,
@@ -86,7 +121,7 @@ const SwiperDialog = ({
             aria-labelledby="swiper-dialog-title"
           >
               {title && (
-                <div className={`self-stretch h-11 px-3 ${tone === 'danger' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
+                <div className={`self-stretch h-11 px-3 ${tone === 'error' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
                   <div id="swiper-dialog-title" className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">{title}</div>
                   {headerRight ?? (showHeaderDismiss ? (
                     <button

@@ -5,16 +5,40 @@
 /**
  * Section order for navigation
  */
-export const SECTION_ORDER = ['warmup', 'training', 'cooldown'];
+export const SECTION_ORDER = ['warmup', 'training', 'cooldown'] as const;
+
+export type SectionName = typeof SECTION_ORDER[number];
+
+/**
+ * Exercise interface for navigation
+ */
+export interface Exercise {
+  exercise_id: string;
+  [key: string]: any; // Allow additional properties
+}
+
+/**
+ * Exercise with section information
+ */
+export interface ExerciseWithSection extends Exercise {
+  section: SectionName;
+}
+
+/**
+ * Section exercises mapping
+ */
+export interface SectionExercises {
+  [key: string]: Exercise[];
+}
 
 /**
  * Find the next incomplete exercise across all sections
- * @param {Array} allExercises - Array of all exercises from all sections
- * @param {string} currentExerciseId - ID of the currently completed exercise
- * @param {Set} completedExercises - Set of completed exercise IDs
- * @returns {Object|null} Next exercise to focus on, or null if none found
  */
-export const findNextIncompleteExercise = (allExercises, currentExerciseId, completedExercises) => {
+export const findNextIncompleteExercise = (
+  allExercises: Exercise[],
+  currentExerciseId: string,
+  completedExercises: Set<string>
+): Exercise | null => {
   if (!allExercises || allExercises.length === 0) return null;
   
   const currentIndex = allExercises.findIndex(ex => ex.exercise_id === currentExerciseId);
@@ -40,11 +64,11 @@ export const findNextIncompleteExercise = (allExercises, currentExerciseId, comp
 
 /**
  * Find the first incomplete exercise in a specific section
- * @param {Array} exercises - Array of exercises in the section
- * @param {Set} completedExercises - Set of completed exercise IDs
- * @returns {Object|null} First incomplete exercise, or null if all complete
  */
-export const findFirstIncompleteInSection = (exercises, completedExercises) => {
+export const findFirstIncompleteInSection = (
+  exercises: Exercise[],
+  completedExercises: Set<string>
+): Exercise | null => {
   if (!exercises || exercises.length === 0) return null;
   
   for (const exercise of exercises) {
@@ -58,11 +82,11 @@ export const findFirstIncompleteInSection = (exercises, completedExercises) => {
 
 /**
  * Find the last incomplete exercise in a specific section
- * @param {Array} exercises - Array of exercises in the section
- * @param {Set} completedExercises - Set of completed exercise IDs
- * @returns {Object|null} Last incomplete exercise, or null if all complete
  */
-export const findLastIncompleteInSection = (exercises, completedExercises) => {
+export const findLastIncompleteInSection = (
+  exercises: Exercise[],
+  completedExercises: Set<string>
+): Exercise | null => {
   if (!exercises || exercises.length === 0) return null;
   
   for (let i = exercises.length - 1; i >= 0; i--) {
@@ -77,10 +101,8 @@ export const findLastIncompleteInSection = (exercises, completedExercises) => {
 
 /**
  * Get the next section in order
- * @param {string} currentSection - Current section name
- * @returns {string|null} Next section name, or null if at the end
  */
-export const getNextSection = (currentSection) => {
+export const getNextSection = (currentSection: SectionName): SectionName | null => {
   const currentIndex = SECTION_ORDER.indexOf(currentSection);
   if (currentIndex === -1 || currentIndex === SECTION_ORDER.length - 1) {
     return null;
@@ -90,10 +112,8 @@ export const getNextSection = (currentSection) => {
 
 /**
  * Get the previous section in order
- * @param {string} currentSection - Current section name
- * @returns {string|null} Previous section name, or null if at the beginning
  */
-export const getPreviousSection = (currentSection) => {
+export const getPreviousSection = (currentSection: SectionName): SectionName | null => {
   const currentIndex = SECTION_ORDER.indexOf(currentSection);
   if (currentIndex <= 0) {
     return null;
@@ -103,12 +123,12 @@ export const getPreviousSection = (currentSection) => {
 
 /**
  * Smart navigation logic for when a section is completed
- * @param {string} completedSection - The section that was just completed
- * @param {Object} sectionExercises - Object with exercises for each section
- * @param {Set} completedExercises - Set of all completed exercise IDs
- * @returns {Object|null} Exercise to focus on next, or null if workout should end
  */
-export const getNextExerciseAfterSectionComplete = (completedSection, sectionExercises, completedExercises) => {
+export const getNextExerciseAfterSectionComplete = (
+  completedSection: SectionName,
+  sectionExercises: SectionExercises,
+  completedExercises: Set<string>
+): ExerciseWithSection | null => {
   // First, try to find the first incomplete exercise in the next section
   const nextSection = getNextSection(completedSection);
   if (nextSection && sectionExercises[nextSection]) {
@@ -149,11 +169,11 @@ export const getNextExerciseAfterSectionComplete = (completedSection, sectionExe
 
 /**
  * Check if all exercises across all sections are complete
- * @param {Object} sectionExercises - Object with exercises for each section
- * @param {Set} completedExercises - Set of all completed exercise IDs
- * @returns {boolean} True if all exercises are complete
  */
-export const areAllExercisesComplete = (sectionExercises, completedExercises) => {
+export const areAllExercisesComplete = (
+  sectionExercises: SectionExercises,
+  completedExercises: Set<string>
+): boolean => {
   for (const sectionName of SECTION_ORDER) {
     if (sectionExercises[sectionName]) {
       for (const exercise of sectionExercises[sectionName]) {
@@ -164,4 +184,4 @@ export const areAllExercisesComplete = (sectionExercises, completedExercises) =>
     }
   }
   return true;
-}; 
+};

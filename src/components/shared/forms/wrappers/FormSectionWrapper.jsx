@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 
 const FormSectionWrapper = ({ children, className = "", bordered = true }) => {
@@ -14,12 +13,6 @@ const FormSectionWrapper = ({ children, className = "", bordered = true }) => {
       {children}
     </div>
   );
-};
-
-FormSectionWrapper.propTypes = {
-  children: PropTypes.node.isRequired,
-  className: PropTypes.string,
-  bordered: PropTypes.bool,
 };
 
 export default FormSectionWrapper; 

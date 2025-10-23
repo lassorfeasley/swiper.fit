@@ -7,6 +7,7 @@ interface NavItem {
   label: string;
   icon: ReactElement;
   showSubtext: boolean;
+  subtext?: string;
   disabled?: boolean;
 }
 

@@ -84,14 +84,16 @@ const ActiveWorkoutSection = ({
       });
 
       // Fetch template sets for routine
-      const templateSets = await fetchRoutineTemplateSets(activeWorkout.programId);
+      const templateSets = await fetchRoutineTemplateSets(activeWorkout.routine_id);
 
       // Fetch saved sets for this workout
       const savedSets = await fetchSavedSets(activeWorkout.id);
 
-              // Group template sets by exercise_id
-        const templateSetsMap = {};
-        (templateSets || []).forEach((re) => {
+      // Group template sets by exercise_id
+      const templateSetsMap = {};
+      console.log('[ActiveWorkoutSection] Raw template sets:', templateSets);
+      (templateSets || []).forEach((re) => {
+        console.log(`[ActiveWorkoutSection] Processing routine exercise ${re.exercise_id} with ${re.routine_sets?.length || 0} sets`);
         templateSetsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
           id: null,
           routine_set_id: rs.id,
@@ -105,6 +107,7 @@ const ActiveWorkoutSection = ({
           set_order: rs.set_order,
         }));
       });
+      console.log('[ActiveWorkoutSection] Template sets map:', templateSetsMap);
 
               // Group saved sets by exercise_id (include hidden so we can match them to templates)
         const savedSetsMap = {};
@@ -117,22 +120,45 @@ const ActiveWorkoutSection = ({
 
               // Build exercise objects with merged set configs
         const processedExercises = filteredExercises.map((we) => {
-          console.log(`Processing exercise ID: ${we.exercise_id}`);
-          const templateConfigs = templateSetsMap[we.exercise_id] || [];
-          const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
+        console.log(`Processing exercise ID: ${we.exercise_id}`);
+        const templateConfigs = templateSetsMap[we.exercise_id] || [];
+        const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
+
+        // Debug: Log the actual structure of saved sets to understand why matching fails
+        console.log("Template configs for this exercise:", templateConfigs);
+        console.log("Saved sets for this exercise:", savedSetsForExercise);
+        console.log("Template routine_set_ids:", templateConfigs.map(t => t.routine_set_id));
+        console.log("Saved routine_set_ids:", savedSetsForExercise.map(s => s.routine_set_id));
 
         // Merge template sets with saved sets
         const mergedSetConfigs = [];
 
         // Start with template sets in their original order
-        console.log("Template configs for this exercise:", templateConfigs);
-        console.log("Saved sets for this exercise:", savedSetsForExercise);
-        templateConfigs.forEach((template) => {
+        console.log(`Processing ${templateConfigs.length} template configs`);
+        
+        // If no template configs, create a default set to prevent empty exercises
+        if (templateConfigs.length === 0) {
+          console.log(`No template configs found for exercise ${we.exercise_id}, creating default set`);
+          mergedSetConfigs.push({
+            id: null,
+            routine_set_id: null,
+            reps: 10,
+            weight: 0,
+            unit: "lbs",
+            weight_unit: "lbs",
+            set_variant: "Set 1",
+            set_type: "reps",
+            timed_set_duration: null,
+            status: "default",
+            set_order: 1,
+          });
+        } else {
+          templateConfigs.forEach((template, templateIndex) => {
           const savedSet = savedSetsForExercise.find(
             (saved) => saved.routine_set_id === template.routine_set_id
           );
 
-          console.log(`Checking template ${template.routine_set_id}:`, template);
+          console.log(`Template ${templateIndex}:`, template);
           console.log(`Found saved set:`, savedSet);
 
           // Skip this template set if there's a hidden saved set for it
@@ -142,6 +168,7 @@ const ActiveWorkoutSection = ({
           }
 
           if (savedSet) {
+            console.log(`Using saved set for template ${templateIndex}`);
             mergedSetConfigs.push({
               id: savedSet.id,
               routine_set_id: savedSet.routine_set_id,
@@ -157,6 +184,7 @@ const ActiveWorkoutSection = ({
               account_id: savedSet.account_id, // Include account_id to track who completed the set
             });
           } else {
+            console.log(`Using template set for template ${templateIndex}`);
             mergedSetConfigs.push({
               ...template,
               unit: template.unit || "lbs",
@@ -165,10 +193,35 @@ const ActiveWorkoutSection = ({
             });
           }
         });
+        }
+        console.log(`After processing templates: ${mergedSetConfigs.length} merged sets`);
+
+        // Since saved sets have null routine_set_ids, we need to handle them differently
+        // For now, let's skip all saved sets with null routine_set_ids to prevent duplicates
+        const validSavedSets = savedSetsForExercise.filter(saved => saved.routine_set_id !== null);
+        
+        console.log(`Original saved sets: ${savedSetsForExercise.length}, Valid saved sets: ${validSavedSets.length}`);
+        
+        // Deduplicate valid saved sets by routine_set_id (keep the first occurrence)
+        const deduplicatedSavedSets = [];
+        const seenRoutineSetIds = new Set();
+        
+        validSavedSets.forEach((saved, index) => {
+          console.log(`Valid saved set ${index}:`, { id: saved.id, routine_set_id: saved.routine_set_id, status: saved.status });
+          
+          if (!seenRoutineSetIds.has(saved.routine_set_id)) {
+            seenRoutineSetIds.add(saved.routine_set_id);
+            deduplicatedSavedSets.push(saved);
+            console.log(`Added saved set with routine_set_id: ${saved.routine_set_id}`);
+          } else {
+            console.log(`Skipping duplicate saved set with routine_set_id: ${saved.routine_set_id}`);
+          }
+        });
+        console.log(`After deduplication: ${deduplicatedSavedSets.length} saved sets`);
 
         // Add orphaned saved sets at the end
         let orphanIndex = templateConfigs.length;
-        savedSetsForExercise.forEach((saved) => {
+        deduplicatedSavedSets.forEach((saved) => {
           if (saved.status === "hidden") return; // never render hidden orphan sets
 
           const hasTemplateCounterpart = templateConfigs.some(
@@ -223,17 +276,26 @@ const ActiveWorkoutSection = ({
           }
         });
 
+        const finalSetConfigs = mergedSetConfigs.filter(set => set != null);
+        console.log(`Final setConfigs for ${we.exercise_id}:`, finalSetConfigs.length, finalSetConfigs);
+        
         return {
           id: we.id,
           exercise_id: we.exercise_id,
           section: section,
           name: we.name_override || we.snapshot_name,
-          setConfigs: mergedSetConfigs,
+          setConfigs: finalSetConfigs,
         };
       });
 
       // Hide exercises that have no visible sets (safety against zero-set configs)
       const nonEmptyExercises = processedExercises.filter((ex) => (ex.setConfigs?.length || 0) > 0);
+      
+      console.log(`[ActiveWorkoutSection] Processed exercises: ${processedExercises.length}, Non-empty exercises: ${nonEmptyExercises.length}`);
+      nonEmptyExercises.forEach((ex, index) => {
+        console.log(`[ActiveWorkoutSection] Exercise ${index}: ${ex.name} with ${ex.setConfigs?.length || 0} sets`);
+        console.log(`[ActiveWorkoutSection] Exercise ${index} setConfigs:`, ex.setConfigs);
+      });
 
       setExercises(nonEmptyExercises);
       // Update global context with exercises for this section
@@ -247,7 +309,7 @@ const ActiveWorkoutSection = ({
     } finally {
       // setLoading(false); // This line is removed as per the new_code
     }
-  }, [activeWorkout?.id, activeWorkout?.programId, section, firstLoad]);
+  }, [activeWorkout?.id, activeWorkout?.routine_id, section, firstLoad]);
 
   // Fetch exercises when workout changes
   useEffect(() => {
@@ -353,7 +415,14 @@ const ActiveWorkoutSection = ({
         exercise_id: exerciseId,
         set_variant: (setConfig.set_variant || '').slice(0, MAX_SET_NAME_LEN),
         status: 'complete',
-        account_id: user?.id // Always use the authenticated user's ID (manager's ID when delegating)
+        account_id: user?.id, // Always use the authenticated user's ID (manager's ID when delegating)
+        reps: 0,
+        weight: 0,
+        weight_unit: 'lbs',
+        routine_set_id: '',
+        set_type: 'reps',
+        timed_set_duration: 0,
+        set_order: 0
       };
 
       const isTimed = setConfig.set_type === 'timed';
@@ -522,12 +591,19 @@ const ActiveWorkoutSection = ({
 
   // Handle set press (open edit modal)
   const handleSetPress = (exerciseId, setConfig, index) => {
+    // Check if setConfig is valid
+    if (!setConfig) {
+      console.error('[ActiveWorkoutSection] handleSetPress called with null/undefined setConfig');
+      return;
+    }
+
     // If completed set is tapped, open undo dialog instead of editor
     if (setConfig?.status === 'complete') {
       undoTargetRef.current = { exerciseId, setConfig };
       setConfirmUndoSetOpen(true);
       return;
     }
+    
     setEditingSet({ exerciseId, setConfig, index });
     setEditSheetOpen(true);
     const initialValues = {
@@ -614,7 +690,7 @@ const ActiveWorkoutSection = ({
   };
 
   // Helper to determine next exercise_order value (1-based)
-  const getNextOrder = useCallback(async (table, fkField, fkValue) => {
+  const getNextOrder = useCallback(async (table: string, fkField: string, fkValue: string) => {
     const { data: row, error } = await supabase
       .from(table)
       .select("exercise_order")
@@ -785,14 +861,14 @@ const ActiveWorkoutSection = ({
       const nextRoutineOrder = await getNextOrder(
         "routine_exercises",
         "routine_id",
-        activeWorkout.programId
+        activeWorkout.routine_id
       );
 
       // Add to routine_exercises
       const { data: routineExercise, error: routineExerciseError } = await supabase
         .from("routine_exercises")
         .insert({
-          routine_id: activeWorkout.programId,
+          routine_id: activeWorkout.routine_id,
           exercise_id: exerciseId,
           exercise_order: nextRoutineOrder,
         })
@@ -925,7 +1001,7 @@ const ActiveWorkoutSection = ({
         const { data: routineExercise } = await supabase
           .from("routine_exercises")
           .select("id")
-          .eq("routine_id", activeWorkout.programId)
+          .eq("routine_id", activeWorkout.routine_id)
           .eq("exercise_id", exercise_id)
           .single();
 
@@ -1534,14 +1610,16 @@ const ActiveWorkoutSection = ({
                 exerciseName={ex.name}
                 initialSetConfigs={ex.setConfigs}
                 onSetComplete={handleSetComplete}
-                onSetDataChange={handleSetDataChange}
+                onSetDataChange={(setId, data) => handleSetDataChange(ex.exercise_id, setId, 'data', data)}
                 onExerciseComplete={() => handleExerciseComplete(ex.exercise_id)}
-                onSetPress={(setConfig, index) =>
-                  handleSetPress(ex.exercise_id, setConfig, index)
-                }
-                isUnscheduled={!!activeWorkout?.is_unscheduled}
-                onSetProgrammaticUpdate={handleSetDataChange}
-                onSetReorder={handleSetReorder}
+                onSetPress={(setConfig, index) => {
+                  console.log(`[ActiveWorkoutSection] onSetPress called with:`, { setConfig, index, exerciseId: ex.exercise_id, setConfigsLength: ex.setConfigs?.length });
+                  console.log(`[ActiveWorkoutSection] Full setConfigs array:`, ex.setConfigs);
+                  handleSetPress(ex.exercise_id, setConfig, index);
+                }}
+                isUnscheduled={false}
+                onSetProgrammaticUpdate={(setId, data) => handleSetDataChange(ex.exercise_id, setId, 'data', data)}
+                onSetReorder={(exerciseId, reorderedSets) => handleSetReorder(exerciseId, reorderedSets, 0, 0)}
                 isFocused={isFocused}
                 isExpanded={isExpanded}
                 onFocus={() => {

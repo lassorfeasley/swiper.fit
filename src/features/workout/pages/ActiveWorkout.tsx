@@ -27,7 +27,7 @@ function debug(...args) {
   if (DEBUG_LOG) console.log("[ActiveWorkout]", ...args);
 }
 
-const ActiveWorkoutContent = () => {
+const ActiveWorkoutContent: React.FC = () => {
   const { setPageName } = useContext(PageNameContext);
   const navigate = useNavigate();
   const {
@@ -36,7 +36,6 @@ const ActiveWorkoutContent = () => {
     loading,
     endWorkout: contextEndWorkout,
     updateLastExercise,
-    lastExerciseIdChangeTrigger,
     elapsedTime,
   } = useActiveWorkout();
 
@@ -103,7 +102,8 @@ const ActiveWorkoutContent = () => {
 
   // Use the dedicated autoscroll hook
   useAutoScroll({
-    focusedExercise,
+    focusedId: focusedExercise?.exercise_id || null,
+    elementPrefix: 'exercise-',
     viewportPosition: 0.2,
     recenterOnIdleMs: 5000,
     recenterThresholdPx: 40
@@ -117,13 +117,6 @@ const ActiveWorkoutContent = () => {
     isRestoringFocusRef.current = false;
   }, [activeWorkout?.id]);
 
-  // Reset restoration flag when lastExerciseId changes via real-time subscription (cross-device sync)
-  useEffect(() => {
-    if (lastExerciseIdChangeTrigger > 0) {
-      console.log('[ActiveWorkout] Cross-device focus change detected, resetting restoration flag');
-      isRestoringFocusRef.current = false;
-    }
-  }, [lastExerciseIdChangeTrigger]);
   
   useEffect(() => {
     if (!activeWorkout?.id) return;
@@ -131,9 +124,9 @@ const ActiveWorkoutContent = () => {
     // Prevent multiple restoration attempts
     if (isRestoringFocusRef.current) return;
 
-    // Fresh workout: only prefer warmup if there's no lastExerciseId (truly new workout)
+    // Fresh workout: only prefer warmup if there's no last_workout_exercise_id (truly new workout)
     const isFreshWorkout = (elapsedTime ?? 0) < 120;
-    if (isFreshWorkout && !didWarmupOverrideRef.current && !activeWorkout?.lastExerciseId) {
+    if (isFreshWorkout && !didWarmupOverrideRef.current && !activeWorkout?.last_workout_exercise_id) {
       if (!loadedSections?.warmup) return; // wait until we know if warmup exists
       const warm = sectionExercises?.warmup || [];
       if (warm.length > 0) {
@@ -149,9 +142,9 @@ const ActiveWorkoutContent = () => {
 
     // Standard restore flow
     const timer = setTimeout(() => {
-      if (activeWorkout?.lastExerciseId) {
+      if (activeWorkout?.last_workout_exercise_id) {
         isRestoringFocusRef.current = true;
-        setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+        setFocusedExerciseId(activeWorkout.last_workout_exercise_id, null);
       } else {
         const order = ['warmup', 'training', 'cooldown'];
         for (const section of order) {
@@ -172,28 +165,28 @@ const ActiveWorkoutContent = () => {
 
   // Reactive trigger: Restore focus as soon as sections have loaded exercises
   useEffect(() => {
-    // If we’ve enforced warmup-first, don’t revert to lastExerciseId
+    // If we've enforced warmup-first, don't revert to last_workout_exercise_id
     if (didWarmupOverrideRef.current) return;
-    if (!activeWorkout?.lastExerciseId || isRestoringFocusRef.current) return;
+    if (!activeWorkout?.last_workout_exercise_id || isRestoringFocusRef.current) return;
     
     // Check if any sections have loaded exercises
     const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
     
     if (hasExercises) {
       // Sections are ready, restore focus with a small delay to avoid render-phase state updates
-      console.log('[ActiveWorkout] Sections loaded, restoring focus to:', activeWorkout.lastExerciseId);
+      console.log('[ActiveWorkout] Sections loaded, restoring focus to:', activeWorkout.last_workout_exercise_id);
       isRestoringFocusRef.current = true;
       
       // Use setTimeout to defer the state update to the next tick
       setTimeout(() => {
         // Add a small delay to give timer-based restoration priority
         setTimeout(() => {
-          console.log('[ActiveWorkout] Reactive restoration setting focus to:', activeWorkout.lastExerciseId);
-          setFocusedExerciseId(activeWorkout.lastExerciseId, null);
+          console.log('[ActiveWorkout] Reactive restoration setting focus to:', activeWorkout.last_workout_exercise_id);
+          setFocusedExerciseId(activeWorkout.last_workout_exercise_id, null);
         }, 100);
       }, 0);
     }
-  }, [sectionExercises, activeWorkout?.lastExerciseId, setFocusedExerciseId]);
+  }, [sectionExercises, activeWorkout?.last_workout_exercise_id, setFocusedExerciseId]);
 
   // Fallback rule: If no exercise is focused, focus the first exercise of the first section
   useEffect(() => {
@@ -224,15 +217,16 @@ const ActiveWorkoutContent = () => {
     // Prevent the auto-redirect effect from firing
     skipAutoRedirectRef.current = true;
     try {
-      const saved = await contextEndWorkout();
+      const hadSets = await contextEndWorkout();
       const wid = activeWorkout?.id;
-      if (saved && wid) {
-        // Workout had completed sets – go to summary
+      
+      if (hadSets && wid) {
+        // Go to workout summary if sets were completed
         navigate(`/history/${wid}`, { replace: true });
       } else {
-        // No sets completed – route based on role
+        // No sets completed, go back to routines page
         if (isDelegated) {
-          navigate('/trainers', { replace: true });
+          returnToSelf();
         } else {
           navigate('/routines', { replace: true });
         }
@@ -288,8 +282,8 @@ const ActiveWorkoutContent = () => {
             // Prevent the auto-redirect effect from firing
             skipAutoRedirectRef.current = true;
             // End workout first to clear active context and prevent redirects
-            const saved = await contextEndWorkout();
-            if (saved && wid) {
+            const hadSets = await contextEndWorkout();
+            if (hadSets && wid) {
               if (isDelegated) {
                 // For delegates, return to their own sharing page
                 returnToSelf();
@@ -324,11 +318,10 @@ const ActiveWorkoutContent = () => {
       showPlusButton={false}
       pageNameEditable={false}
       showBackButton={false}
-      title={activeWorkout?.routines?.routine_name || "Active Workout"}
+      title={activeWorkout?.routine_name || "Active Workout"}
       showAdd={false}
       showSettings={false}
       onSettings={undefined}
-      onTitleChange={undefined}
       onDelete={handleDeleteWorkout}
       showDeleteOption={true}
       search={true}

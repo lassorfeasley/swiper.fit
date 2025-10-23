@@ -1,9 +1,33 @@
 /**
  * Generate a PNG image for Open Graph sharing using Canvas API
- * @param {Object} workoutData - The workout data
- * @returns {Promise<string>} - Base64 PNG data URL
  */
-export function generateOGImagePNG(workoutData) {
+
+/**
+ * Workout data interface for OG image generation
+ */
+export interface WorkoutData {
+  routineName?: string;
+  workoutName: string;
+  date: string;
+  duration?: string;
+  exerciseCount: number;
+  setCount: number;
+}
+
+/**
+ * Routine data interface for OG image generation
+ */
+export interface RoutineData {
+  routineName?: string;
+  ownerName?: string;
+  exerciseCount?: number;
+  setCount?: number;
+}
+
+/**
+ * Generate a PNG image for Open Graph sharing using Canvas API
+ */
+export function generateOGImagePNG(workoutData: WorkoutData): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
       // Create canvas
@@ -11,6 +35,10 @@ export function generateOGImagePNG(workoutData) {
       canvas.width = 1200;
       canvas.height = 630;
       const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
+      }
       
       // Ensure fonts are loaded for correct native kerning
       try {
@@ -105,16 +133,18 @@ export function generateOGImagePNG(workoutData) {
 
 /**
  * Generate a PNG for Routine OG image using the green theme
- * @param {Object} routineData - { routineName, ownerName, exerciseCount, setCount }
- * @returns {Promise<string>} Base64 PNG data URL
  */
-export function generateRoutineOGImagePNG(routineData) {
+export function generateRoutineOGImagePNG(routineData: RoutineData): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 1200;
       canvas.height = 630;
       const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
+      }
 
       try { if (document?.fonts?.ready) { await document.fonts.ready; } } catch (_) {}
 
@@ -183,7 +213,13 @@ export function generateRoutineOGImagePNG(routineData) {
 /**
  * Draw text with letter spacing
  */
-function drawTextWithLetterSpacing(ctx, text, x, y, letterSpacing) {
+function drawTextWithLetterSpacing(
+  ctx: CanvasRenderingContext2D, 
+  text: string, 
+  x: number, 
+  y: number, 
+  letterSpacing: number
+): void {
   // Default canvas kerning without manual spacing
   if (!letterSpacing || letterSpacing === 0) {
     ctx.fillText(text, x, y);
@@ -217,9 +253,16 @@ function drawTextWithLetterSpacing(ctx, text, x, y, letterSpacing) {
  * Draws centered, wrapped text around a center point.
  * Breaks on spaces to keep lines within maxWidth.
  */
-function drawWrappedCenteredText(ctx, text, centerX, centerY, maxWidth, lineHeight) {
+function drawWrappedCenteredText(
+  ctx: CanvasRenderingContext2D, 
+  text: string, 
+  centerX: number, 
+  centerY: number, 
+  maxWidth: number, 
+  lineHeight: number
+): void {
   const words = (text || '').split(' ');
-  const lines = [];
+  const lines: string[] = [];
   let current = '';
   for (let i = 0; i < words.length; i++) {
     const test = current ? current + ' ' + words[i] : words[i];
@@ -244,9 +287,16 @@ function drawWrappedCenteredText(ctx, text, centerX, centerY, maxWidth, lineHeig
 /**
  * Draws left-aligned, wrapped text given a top-left anchor (x aligned, y centered overall).
  */
-function drawWrappedLeftText(ctx, text, leftX, centerY, maxWidth, lineHeight) {
+function drawWrappedLeftText(
+  ctx: CanvasRenderingContext2D, 
+  text: string, 
+  leftX: number, 
+  centerY: number, 
+  maxWidth: number, 
+  lineHeight: number
+): void {
   const words = (text || '').split(' ');
-  const lines = [];
+  const lines: string[] = [];
   let current = '';
   for (let i = 0; i < words.length; i++) {
     const test = current ? current + ' ' + words[i] : words[i];
@@ -272,7 +322,15 @@ function drawWrappedLeftText(ctx, text, leftX, centerY, maxWidth, lineHeight) {
 /**
  * Draw a metric box with text. Returns the actual width used, allowing caller spacing.
  */
-function drawMetricBox(ctx, x, y, width, height, text, horizontalPadding = 20) {
+function drawMetricBox(
+  ctx: CanvasRenderingContext2D, 
+  x: number, 
+  y: number, 
+  width: number, 
+  height: number, 
+  text: string, 
+  horizontalPadding: number = 20
+): number {
   // Ensure font set for accurate measurement
   ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
   const textWidth = ctx.measureText(text).width;
@@ -301,7 +359,14 @@ function drawMetricBox(ctx, x, y, width, height, text, horizontalPadding = 20) {
 }
 
 // Draw white pill metric with gray border and dynamic width
-function drawMetricPill(ctx, x, y, text, minWidth = 140, height = 68) {
+function drawMetricPill(
+  ctx: CanvasRenderingContext2D, 
+  x: number, 
+  y: number, 
+  text: string, 
+  minWidth: number = 140, 
+  height: number = 68
+): number {
   ctx.font = '300 30px "Be Vietnam Pro", Arial, sans-serif';
   const paddingX = 20;
   const textWidth = ctx.measureText(text).width;
@@ -335,7 +400,14 @@ function drawMetricPill(ctx, x, y, text, minWidth = 140, height = 68) {
 }
 
 // Helper to draw a rounded rectangle path
-function drawRoundedRectPath(ctx, x, y, width, height, radius = 10) {
+function drawRoundedRectPath(
+  ctx: CanvasRenderingContext2D, 
+  x: number, 
+  y: number, 
+  width: number, 
+  height: number, 
+  radius: number = 10
+): void {
   const r = Math.max(0, Math.min(radius, width / 2, height / 2));
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -354,7 +426,17 @@ function drawRoundedRectPath(ctx, x, y, width, height, radius = 10) {
  * Draw a Lucide-style checkmark centered within a bounding box.
  * The path mirrors Lucide's Check icon proportions (120x120 viewBox).
  */
-function drawLucideCheckmark(ctx, boxX, boxY, boxW, boxH, color = 'white', lineWidth = 25, lineCap = 'round', lineJoin = 'round') {
+function drawLucideCheckmark(
+  ctx: CanvasRenderingContext2D, 
+  boxX: number, 
+  boxY: number, 
+  boxW: number, 
+  boxH: number, 
+  color: string = 'white', 
+  lineWidth: number = 25, 
+  lineCap: CanvasLineCap = 'round', 
+  lineJoin: CanvasLineJoin = 'round'
+): void {
   const baseSize = 120; // Lucide check viewBox size
   const scale = Math.min(boxW, boxH) / baseSize;
   const offsetX = boxX + (boxW - baseSize * scale) / 2;
@@ -383,7 +465,14 @@ function drawLucideCheckmark(ctx, boxX, boxY, boxW, boxH, color = 'white', lineW
  * Draw the provided SVG checkmark path scaled into the target box.
  * SVG path: M320 39.8487L110.663 251L0 148.673L36.1637 107.801L109.058 175.204L282.151 0.6185L320 39.8487Z
  */
-function drawSvgCheckmark(ctx, boxX, boxY, boxW, boxH, fill = '#22C55E') {
+function drawSvgCheckmark(
+  ctx: CanvasRenderingContext2D, 
+  boxX: number, 
+  boxY: number, 
+  boxW: number, 
+  boxH: number, 
+  fill: string = '#22C55E'
+): void {
   // Use a Path2D built from the path data (supported in modern browsers)
   const path = new Path2D('M320 39.8487L110.663 251L0 148.673L36.1637 107.801L109.058 175.204L282.151 0.6185L320 39.8487Z');
 
@@ -403,25 +492,25 @@ function drawSvgCheckmark(ctx, boxX, boxY, boxW, boxH, fill = '#22C55E') {
 
 /**
  * Generate and upload OG image for a workout using server-side generation
- * @param {string} workoutId - The workout ID
- * @param {Object} workoutData - The workout data
- * @param {number} maxRetries - Maximum number of retry attempts
- * @returns {Promise<string>} - The public URL of the uploaded image
  */
-export async function generateAndUploadOGImage(workoutId, workoutData, maxRetries = 3) {
-  let lastError;
+export async function generateAndUploadOGImage(
+  workoutId: string, 
+  workoutData: WorkoutData, 
+  maxRetries: number = 3
+): Promise<string> {
+  let lastError: Error | undefined;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[OGImage] Attempt ${attempt}/${maxRetries} for workout ${workoutId}`);
       // Client-side render -> data URL
       const dataUrl = await generateOGImagePNG(workoutData);
-      const { uploadOGImage, updateWorkoutOGImage } = await import('./ogImageStorage.js');
+      const { uploadOGImage, updateWorkoutOGImage } = await import('./ogImageStorage.ts');
       const imageUrl = await uploadOGImage(workoutId, dataUrl);
       await updateWorkoutOGImage(workoutId, imageUrl);
       console.log(`[OGImage] Successfully generated OG image for workout ${workoutId} on attempt ${attempt}`);
       return imageUrl;
     } catch (error) {
-      lastError = error;
+      lastError = error as Error;
       console.error(`[OGImage] Attempt ${attempt}/${maxRetries} failed for workout ${workoutId}:`, error);
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt - 1) * 1000;
@@ -436,13 +525,13 @@ export async function generateAndUploadOGImage(workoutId, workoutData, maxRetrie
 
 /**
  * Generate and upload OG image for a routine
- * @param {string} routineId
- * @param {Object} routineData - { routineName, ownerName, exerciseCount, setCount }
- * @param {number} maxRetries
- * @returns {Promise<string>} public URL
  */
-export async function generateAndUploadRoutineOGImage(routineId, routineData, maxRetries = 3) {
-  let lastError;
+export async function generateAndUploadRoutineOGImage(
+  routineId: string, 
+  routineData: RoutineData, 
+  maxRetries: number = 3
+): Promise<string> {
+  let lastError: Error | undefined;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const dataUrl = await generateRoutineOGImagePNG({
@@ -451,12 +540,12 @@ export async function generateAndUploadRoutineOGImage(routineId, routineData, ma
         exerciseCount: routineData?.exerciseCount ?? 0,
         setCount: routineData?.setCount ?? 0,
       });
-      const { uploadRoutineOGImage, updateRoutineOGImage } = await import('./ogImageStorage.js');
+      const { uploadRoutineOGImage, updateRoutineOGImage } = await import('./ogImageStorage.ts');
       const imageUrl = await uploadRoutineOGImage(routineId, dataUrl);
       await updateRoutineOGImage(routineId, imageUrl);
       return imageUrl;
     } catch (error) {
-      lastError = error;
+      lastError = error as Error;
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt - 1) * 1000;
         await new Promise((r) => setTimeout(r, delay));

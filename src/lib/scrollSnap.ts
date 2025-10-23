@@ -2,7 +2,65 @@
  * Scroll snap configuration for different contexts
  */
 
-export const SCROLL_SNAP_CONFIG = {
+/**
+ * Scroll snap configuration interface
+ */
+export interface ScrollSnapConfig {
+  snapType: string;
+  snapPaddingTop: string;
+  cardSnapAlign?: string;
+  cardScrollMarginTop?: string;
+  sectionSnapAlign?: string;
+  enableSnap: boolean;
+}
+
+/**
+ * Scroll snap styles interface
+ */
+export interface ScrollSnapStyles {
+  scrollSnapType: string;
+  scrollPaddingTop: string;
+}
+
+/**
+ * Scroll snap classes interface
+ */
+export interface ScrollSnapClasses {
+  container: string;
+  item: string;
+}
+
+/**
+ * CSS variables interface
+ */
+export interface ScrollSnapCSSVars {
+  '--scroll-snap-type': string;
+  '--scroll-padding-top': string;
+  '--card-snap-align'?: string;
+  '--card-scroll-margin-top'?: string;
+}
+
+/**
+ * Animation durations interface
+ */
+export interface AnimationDurations {
+  CARD_ANIMATION_DURATION_MS: number;
+  SCROLL_DELAY_MS: number;
+  FOCUS_TRANSITION_MS: number;
+  SWIPE_COMPLETE_ANIMATION_MS: number;
+  EXTRA_POST_COMPLETE_DELAY_MS: number;
+}
+
+/**
+ * Scroll contexts interface
+ */
+export interface ScrollContexts {
+  WORKOUT: string;
+  ROUTINE_BUILDER: string;
+  DEFAULT: string;
+}
+
+export const SCROLL_SNAP_CONFIG: Record<string, ScrollSnapConfig> = {
   // Active workout scroll snap settings
   workout: {
     snapType: 'y mandatory',
@@ -32,10 +90,8 @@ export const SCROLL_SNAP_CONFIG = {
 
 /**
  * Get scroll snap styles for a specific context
- * @param {string} configKey - The configuration key to use
- * @returns {Object} CSS styles object
  */
-export const getScrollSnapStyles = (configKey) => {
+export const getScrollSnapStyles = (configKey: string): ScrollSnapStyles => {
   const config = SCROLL_SNAP_CONFIG[configKey] || SCROLL_SNAP_CONFIG.default;
   
   return {
@@ -46,10 +102,8 @@ export const getScrollSnapStyles = (configKey) => {
 
 /**
  * Get CSS class names for scroll snap behavior
- * @param {string} configKey - The configuration key to use
- * @returns {Object} Object with CSS class names
  */
-export const getScrollSnapClasses = (configKey) => {
+export const getScrollSnapClasses = (configKey: string): ScrollSnapClasses => {
   const config = SCROLL_SNAP_CONFIG[configKey] || SCROLL_SNAP_CONFIG.default;
   
   return {
@@ -60,10 +114,8 @@ export const getScrollSnapClasses = (configKey) => {
 
 /**
  * Generate CSS variables for scroll snap configuration
- * @param {string} configKey - The configuration key to use
- * @returns {Object} CSS variables object
  */
-export const getScrollSnapCSSVars = (configKey) => {
+export const getScrollSnapCSSVars = (configKey: string): ScrollSnapCSSVars => {
   const config = SCROLL_SNAP_CONFIG[configKey] || SCROLL_SNAP_CONFIG.default;
   
   return {
@@ -77,7 +129,7 @@ export const getScrollSnapCSSVars = (configKey) => {
 /**
  * Constants for animation durations
  */
-export const ANIMATION_DURATIONS = {
+export const ANIMATION_DURATIONS: AnimationDurations = {
   CARD_ANIMATION_DURATION_MS: 500, // Matches ActiveExerciseCard.jsx
   SCROLL_DELAY_MS: 450, // Card animation with shorter buffer to feel snappier
   FOCUS_TRANSITION_MS: 200,
@@ -90,8 +142,8 @@ export const ANIMATION_DURATIONS = {
 /**
  * Scroll snap context types
  */
-export const SCROLL_CONTEXTS = {
+export const SCROLL_CONTEXTS: ScrollContexts = {
   WORKOUT: 'workout',
   ROUTINE_BUILDER: 'routineBuilder',
   DEFAULT: 'default'
-}; 
+};

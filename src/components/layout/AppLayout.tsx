@@ -28,26 +28,31 @@ interface AppLayoutProps {
   showBackButton?: boolean;
   showSearch?: boolean;
   showSettings?: boolean;
-  showAdd?: boolean;
+  showAddButton?: boolean;
   showPlusButton?: boolean;
   showShare?: boolean;
+  pageContext?: string;
+  pageNameEditable?: boolean;
+  showAdd?: boolean;
+  className?: string;
+  onAdd?: () => void;
+  onSettings?: () => void;
+  onShare?: () => void;
+  sharingNavAbove?: React.ReactNode;
+  sharingNavContent?: React.ReactNode;
+  sharingSection?: React.ReactNode;
+  "data-component"?: string;
   showStartWorkout?: boolean;
   showStartWorkoutIcon?: boolean;
   showUpload?: boolean;
   showDelete?: boolean;
   onBack?: () => void;
   onSearch?: () => void;
-  onSettings?: () => void;
-  onAdd?: () => void;
-  onShare?: () => void;
   onStartWorkout?: () => void;
   onStartWorkoutIcon?: () => void;
   onUpload?: () => void;
   titleRightText?: string;
   startCtaText?: string;
-  sharingSection?: React.ReactNode;
-  sharingNavAbove?: boolean;
-  sharingNavContent?: React.ReactNode;
 }
 
 export default function AppLayout({
@@ -159,7 +164,7 @@ export default function AppLayout({
             style={{
               "--mobile-nav-height": "80px",
               ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
-            }}
+            } as React.CSSProperties}
           >
             <div className="pb-24 md:pb-0">
               {children}

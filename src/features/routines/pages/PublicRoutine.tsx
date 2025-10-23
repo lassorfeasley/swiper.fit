@@ -269,7 +269,12 @@ export default function PublicRoutine() {
       };
 
       // 3) Start a workout from the saved routine
-      await startWorkout(program);
+      const programForWorkout = {
+        id: program.id,
+        name: program.routine_name,
+        exercises: program.routine_exercises
+      };
+      await startWorkout(programForWorkout);
       navigate('/workout/active');
     } catch (e) {
       console.error('[PublicRoutine] Add & start error:', e);
@@ -310,11 +315,11 @@ export default function PublicRoutine() {
                     alt={`${routine.routine_name} routine`}
                     draggable={false}
                     onError={(e) => {
-                      console.log('Image failed to load:', e.target.src);
+                      console.log('Image failed to load:', (e.target as HTMLImageElement).src);
                       console.log('Falling back to default image');
-                      e.target.src = "/images/default-open-graph.png";
+                      (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
                     }}
-                    onLoad={() => console.log('Image loaded successfully:', e.target.src)}
+                    onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
                   />
                 </div>
               </div>

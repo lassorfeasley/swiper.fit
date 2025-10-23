@@ -3,15 +3,36 @@
  */
 
 /**
- * Scroll an element into view with configurable options
- * @param {HTMLElement} element - The element to scroll into view
- * @param {Object} options - Scroll options
- * @param {string} options.behavior - Scroll behavior ('smooth', 'auto', 'instant')
- * @param {string} options.block - Vertical alignment ('start', 'center', 'end', 'nearest')
- * @param {number} options.delay - Delay before scrolling in milliseconds
- * @param {number} options.offset - Additional offset to apply
+ * Scroll options interface
  */
-export const scrollIntoView = (element, options = {}) => {
+export interface ScrollOptions {
+  behavior?: ScrollBehavior;
+  block?: ScrollLogicalPosition;
+  delay?: number;
+  offset?: number;
+}
+
+/**
+ * Element scroll options interface
+ */
+export interface ElementScrollOptions {
+  behavior?: ScrollBehavior;
+  offset?: number;
+  container?: HTMLElement;
+}
+
+/**
+ * Scroll position interface
+ */
+export interface ScrollPosition {
+  top: number;
+  left: number;
+}
+
+/**
+ * Scroll an element into view with configurable options
+ */
+export const scrollIntoView = (element: HTMLElement | null, options: ScrollOptions = {}): void => {
   const {
     behavior = 'smooth',
     block = 'start',
@@ -21,7 +42,7 @@ export const scrollIntoView = (element, options = {}) => {
   
   if (!element?.scrollIntoView) return;
   
-  const scroll = () => {
+  const scroll = (): void => {
     element.scrollIntoView({ behavior, block });
     if (offset) {
       // Apply additional offset if needed
@@ -42,10 +63,8 @@ export const scrollIntoView = (element, options = {}) => {
 
 /**
  * Scroll to a specific section with header offset consideration
- * @param {string} sectionId - The ID of the section to scroll to
- * @param {number} headerOffset - Additional header offset
  */
-export const scrollToSection = (sectionId, headerOffset = 0) => {
+export const scrollToSection = (sectionId: string, headerOffset: number = 0): void => {
   const element = document.getElementById(sectionId);
   if (!element) return;
   
@@ -63,10 +82,8 @@ export const scrollToSection = (sectionId, headerOffset = 0) => {
 
 /**
  * Scroll to a specific element with custom offset
- * @param {string|HTMLElement} target - Element ID or HTMLElement
- * @param {Object} options - Scroll options
  */
-export const scrollToElement = (target, options = {}) => {
+export const scrollToElement = (target: string | HTMLElement | null, options: ElementScrollOptions = {}): void => {
   const {
     behavior = 'smooth',
     offset = 0,
@@ -87,10 +104,8 @@ export const scrollToElement = (target, options = {}) => {
 
 /**
  * Get the current scroll position
- * @param {HTMLElement} container - The scroll container (defaults to document)
- * @returns {Object} Object with top and left scroll positions
  */
-export const getScrollPosition = (container = document.documentElement) => {
+export const getScrollPosition = (container: HTMLElement = document.documentElement): ScrollPosition => {
   return {
     top: container.scrollTop || window.pageYOffset,
     left: container.scrollLeft || window.pageXOffset
@@ -99,11 +114,8 @@ export const getScrollPosition = (container = document.documentElement) => {
 
 /**
  * Check if an element is in viewport
- * @param {HTMLElement} element - The element to check
- * @param {number} threshold - Threshold for considering element "in view" (0-1)
- * @returns {boolean} Whether the element is in viewport
  */
-export const isInViewport = (element, threshold = 0.1) => {
+export const isInViewport = (element: HTMLElement | null, threshold: number = 0.1): boolean => {
   if (!element) return false;
   
   const rect = element.getBoundingClientRect();
@@ -117,4 +129,4 @@ export const isInViewport = (element, threshold = 0.1) => {
   const totalArea = rect.height * rect.width;
   
   return visibleArea / totalArea >= threshold;
-}; 
+};

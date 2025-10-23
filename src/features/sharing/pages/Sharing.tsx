@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
-import { ActionPill } from "@/components/shared/ActionPill";
+import ActionPill from "@/components/shared/ActionPill";
 import { ActionCard } from "@/components/shared/ActionCard";
 import AppLayout from "@/components/layout/AppLayout";
 import { generateWorkoutName } from "@/lib/utils";
@@ -19,11 +19,12 @@ import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapp
 import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import SwiperForm from "@/components/shared/SwiperForm";
+import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import { toast } from "sonner";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingRequests, acceptSharingRequest, declineSharingRequest, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
+import { getPendingInvitations, acceptInvitation, rejectInvitation, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 
@@ -153,7 +154,7 @@ export default function Sharing() {
         // Get the most recent completed workout
         const completedWorkouts = (routine.workouts || []).filter(w => w.completed_at);
         const lastCompletedWorkout = completedWorkouts.length > 0 
-          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())[0]
           : null;
         
         // Format the completion date
@@ -166,7 +167,7 @@ export default function Sharing() {
           const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
           const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           
-          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+          const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays === 0) {
@@ -325,7 +326,7 @@ export default function Sharing() {
     queryFn: async () => {
       if (!user?.id) return [];
       console.log('[Sharing] Fetching pending requests for user:', user.id);
-      return await getPendingRequests(user.id);
+      return await getPendingInvitations(user.id);
     },
     enabled: !!user?.id,
   });
@@ -444,7 +445,7 @@ export default function Sharing() {
   // Mutations
   // -------------------------------
   const createShareMutation = useMutation({
-    mutationFn: async (shareData) => {
+    mutationFn: async (shareData: any) => {
       console.log("createShareMutation called with data:", shareData);
       
       const { data, error } = await supabase
@@ -464,7 +465,7 @@ export default function Sharing() {
     },
     onSuccess: () => {
       console.log("Mutation onSuccess called");
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
       setEmail("");
       setShowAddPerson(false);
       try {
@@ -474,9 +475,9 @@ export default function Sharing() {
           to_account_id: undefined,
           granted_by_user_id: user.id,
           permissions: {
-            can_create_routines: permissions.can_create_routines,
-            can_start_workouts: permissions.can_start_workouts,
-            can_review_history: permissions.can_review_history,
+            can_create_routines: false,
+            can_start_workouts: false,
+            can_review_history: false,
           },
         });
       } catch (_) {}
@@ -487,7 +488,8 @@ export default function Sharing() {
   });
 
   const updateSharePermissionsMutation = useMutation({
-    mutationFn: async ({ shareId, permissions }) => {
+    mutationFn: async (params: { shareId: string; permissions: any }) => {
+      const { shareId, permissions } = params;
       const { data, error } = await supabase
         .from("account_shares")
         .update(permissions)
@@ -498,7 +500,7 @@ export default function Sharing() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
     },
   });
 
@@ -513,20 +515,20 @@ export default function Sharing() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
     },
   });
 
   // Mutations for handling requests
   const acceptRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
-      return await acceptSharingRequest(requestId, user.id);
+    mutationFn: async (requestId: string) => {
+      return await acceptInvitation(requestId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["pending_requests"]);
-      queryClient.invalidateQueries(["outgoing_requests"]);
-      queryClient.invalidateQueries(["shares_shared_with_me"]);
-      queryClient.invalidateQueries(["shares_owned_by_me"]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["shares_shared_with_me"] });
+      queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
       toast.success("Request accepted successfully");
     },
     onError: (error) => {
@@ -536,12 +538,12 @@ export default function Sharing() {
   });
 
   const declineRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
-      return await declineSharingRequest(requestId, user.id);
+    mutationFn: async (requestId: string) => {
+      return await rejectInvitation(requestId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["pending_requests"]);
-      queryClient.invalidateQueries(["outgoing_requests"]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
       toast.success("Request declined");
     },
     onError: (error) => {
@@ -703,7 +705,7 @@ export default function Sharing() {
       setShowAddPersonDialog(false);
       
       // Refresh queries
-      queryClient.invalidateQueries(["outgoing_requests"]);
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
     } catch (error) {
       console.error("Error creating invitation:", error);
       toast.error(error.message || "Failed to send invitation. Please try again.");
@@ -721,21 +723,21 @@ export default function Sharing() {
     setShowAddPersonDialog(false);
   };
 
-  const handleDialogPermissionToggle = (permission, value) => {
+  const handleDialogPermissionToggle = (permission: string, value: any) => {
     setDialogPermissions(prev => ({
       ...prev,
       [permission]: value
     }));
   };
 
-  const handlePermissionToggle = (shareId, permission, value) => {
+  const handlePermissionToggle = (shareId: string, permission: string, value: any) => {
     updateSharePermissionsMutation.mutate({
       shareId,
       permissions: { [permission]: value }
     });
   };
 
-  const handleStartWorkout = async (clientProfile) => {
+  const handleStartWorkout = async (clientProfile: any) => {
     // Ensure dialog shows the Start view (no primary create button)
     setDialogMode('workout');
     setSelectedClient(clientProfile);
@@ -801,7 +803,7 @@ export default function Sharing() {
         // Get the most recent completed workout
         const completedWorkouts = (routine.workouts || []).filter(w => w.completed_at);
         const lastCompletedWorkout = completedWorkouts.length > 0 
-          ? completedWorkouts.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0]
+          ? completedWorkouts.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())[0]
           : null;
         
         // Format the completion date
@@ -814,7 +816,7 @@ export default function Sharing() {
           const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
           const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           
-          const diffTime = Math.abs(nowDateOnly - completedDateOnly);
+          const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays === 0) {
@@ -1080,7 +1082,7 @@ export default function Sharing() {
   };
 
   // Open delete invitation confirmation dialog
-  const handleDeleteInvitation = (requestId) => {
+  const handleDeleteInvitation = (requestId: string) => {
     setInvitationToDeleteId(requestId);
     setShowDeleteInvitationDialog(true);
   };
@@ -1101,8 +1103,8 @@ export default function Sharing() {
       }
 
       toast.success("Invitation deleted");
-      queryClient.invalidateQueries(["pending_requests", user.id]);
-      queryClient.invalidateQueries(["outgoing_requests", user.id]);
+      queryClient.invalidateQueries({ queryKey: ["pending_requests", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["outgoing_requests", user.id] });
     } catch (error) {
       console.error("Error deleting invitation:", error);
       toast.error("Failed to delete invitation");
@@ -1143,8 +1145,8 @@ export default function Sharing() {
                             <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                               <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
                                 {request.request_type === 'trainer_invite'
-                                  ? `${formatUserDisplay(request.profiles)} wants you to be their trainer`
-                                  : `${formatUserDisplay(request.profiles)} wants you to be their client`
+                                  ? `${formatUserDisplay((request as any).profiles)} wants you to be their trainer`
+                                  : `${formatUserDisplay((request as any).profiles)} wants you to be their client`
                                 }
                               </div>
                             </div>
@@ -1222,7 +1224,7 @@ export default function Sharing() {
                               </SwiperButton>
                             </div>
                             <div className="ThisInvitationWillExpireIn14Days self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
-                              This invitation will expire in {Math.ceil((new Date(request.expires_at) - new Date()) / (1000 * 60 * 60 * 24))} days.
+                              This invitation will expire in {Math.ceil((new Date(request.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days.
                             </div>
                           </div>
                         </div>
@@ -1242,7 +1244,7 @@ export default function Sharing() {
                             <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
                               <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
                                 <div data-layer="example@account.com was invited to be your trainer" className="ExampleAccountComWasInvitedToBeYourTrainer justify-center">
-                                  <span className="text-neutral-neutral-700 text-sm font-bold font-['Be_Vietnam_Pro'] leading-tight">{formatUserDisplay(request.profiles)} </span>
+                                  <span className="text-neutral-neutral-700 text-sm font-bold font-['Be_Vietnam_Pro'] leading-tight">{formatUserDisplay((request as any).profiles)} </span>
                                   <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">{request.request_type === 'trainer_invite' ? 'was invited to be your trainer' : 'was invited to be your client'}</span>
                                 </div>
                                 <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
@@ -1614,7 +1616,7 @@ export default function Sharing() {
             rightText="Create"
             leftText="Cancel"
           >
-            <SwiperForm.Section bordered={false}>
+            <FormSectionWrapper bordered={false}>
               <div className="w-full flex flex-col">
                 <div className="w-full flex justify-between items-center mb-2">
                   <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
@@ -1633,7 +1635,7 @@ export default function Sharing() {
                   error={(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN}
                 />
               </div>
-            </SwiperForm.Section>
+            </FormSectionWrapper>
           </SwiperForm>
         </div>
         {/* Delete Share Confirmation Dialog */}

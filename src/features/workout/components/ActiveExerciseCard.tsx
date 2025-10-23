@@ -47,7 +47,7 @@ interface ActiveExerciseCardProps {
   isFocused?: boolean;
   isExpanded?: boolean;
   onFocus?: (exerciseId: string | number) => void;
-  onSetPress?: (setId: string) => void;
+  onSetPress?: (setConfig: any, index: number) => void;
   onEditExercise?: (exerciseId: string | number) => void;
   onSetReorder?: (exerciseId: string | number, reorderedSets: any[]) => void;
   index?: number;
@@ -283,7 +283,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
                       }}
                       onClick={() => {
                         if (onSetPress) {
-                          onSetPress(set.id);
+                          onSetPress(set, index);
                         }
                       }}
                       className="w-full"

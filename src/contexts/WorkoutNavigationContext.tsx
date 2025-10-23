@@ -39,7 +39,7 @@ interface WorkoutNavigationContextType {
   markExerciseIncomplete: (exerciseId: string) => void;
   setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
   setSwipeAnimationRunning: (running: boolean) => void;
-  handleSectionComplete: (section: string) => void;
+  handleSectionComplete: (section: string) => Exercise | null;
   isWorkoutComplete: () => boolean;
   getProgressStats: () => {
     total: number;

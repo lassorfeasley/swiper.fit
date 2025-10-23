@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAccount } from "@/contexts/AccountContext";
 import SidebarNavItems from "@/components/shared/SidebarNavItems";
 
-const SideBarNav = () => {
+const SideBarNav: React.FC = () => {
   const navItems = useNavItems();
   const { isDelegated } = useAccount();
   const accountItem = navItems.find(item => item.label === "Account");

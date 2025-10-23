@@ -8,6 +8,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Share2, Blend, X } from "lucide-react";
 import { toast } from "sonner";
 import SwiperForm from "@/components/shared/SwiperForm";
+import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
@@ -184,14 +185,14 @@ const History = () => {
       leftText="Close"
     >
       {/* Description */}
-      <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+      <FormSectionWrapper bordered={true} className="flex flex-col gap-5">
         <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
           Publish your workout history <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
         </p>
-      </SwiperForm.Section>
+      </FormSectionWrapper>
 
       {/* Controls */}
-      <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+      <FormSectionWrapper bordered={false} className="flex flex-col gap-5">
         <SwiperFormSwitch
           label="Public link"
           checked={isPublic}
@@ -208,7 +209,7 @@ const History = () => {
             icon={<Copy />}
           />
         )}
-      </SwiperForm.Section>
+      </FormSectionWrapper>
     </SwiperForm>
   );
 
@@ -338,9 +339,9 @@ const History = () => {
       sharingNavContent={headerSharingContent}
       sharingSection={(
         <SwiperCombobox
-          items={routineOptions}
+          options={routineOptions}
           value={selectedRoutine}
-          onChange={setSelectedRoutine}
+          onValueChange={setSelectedRoutine}
           placeholder="Filter routines"
           filterPlaceholder="Search"
           width={240}

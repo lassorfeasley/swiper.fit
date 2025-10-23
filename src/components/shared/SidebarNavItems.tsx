@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/lib/utils";
 
-const SidebarNavItems = () => {
+const SidebarNavItems: React.FC = () => {
   const navItems = useNavItems();
 
   return (

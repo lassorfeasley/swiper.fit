@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateAndUploadOGImage } from '../lib/ogImageGenerator.js';
+import { generateAndUploadOGImage } from '../lib/ogImageGenerator.ts';
 
 interface OGImageGeneratorReturn {
   isGenerating: boolean;

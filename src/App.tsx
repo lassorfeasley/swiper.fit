@@ -1,8 +1,8 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Train } from "@/features/workout";
-import Home from "./pages/Home/Home";
-import Landing from "./pages/Landing/Landing";
+import Home from "./pages/Home/Home.tsx";
+import Landing from "./pages/Landing/Landing.tsx";
 import { Routines, PublicRoutine, RoutineBuilder } from "@/features/routines";
 import { History, CompletedWorkout } from "@/features/history";
 import { ActiveWorkout } from "@/features/workout";
@@ -20,10 +20,10 @@ import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
 import DialogTest from "./pages/Sandbox/DialogTest";
 import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
-// import MobileNav from "./components/layout/MobileNav";
-// import SideBarNav from "./components/layout/SideBarNav";
+import MobileNav from "./components/layout/MobileNav";
+import SideBarNav from "./components/layout/SideBarNav";
 import { LoggedOutNav } from "@/features/auth";
-import Account from "./pages/Account/Account";
+import Account from "./pages/Account/Account.tsx";
 import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
 import ComponentsGallery from "./pages/ComponentsGallery";
@@ -31,7 +31,12 @@ import EmailTest from "./pages/EmailTest";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
-export const PageNameContext = createContext({
+interface PageNameContextType {
+  setPageName: (name: string) => void;
+  pageName: string;
+}
+
+export const PageNameContext = createContext<PageNameContextType>({
   setPageName: () => {},
   pageName: "",
 });
@@ -244,7 +249,7 @@ function AppContent() {
       </main>
 
       {/* Show normal navigation only when no workout is active and not delegated */}
-      {/* {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />} */}
+      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
 
       {/* Global toast notifications */}

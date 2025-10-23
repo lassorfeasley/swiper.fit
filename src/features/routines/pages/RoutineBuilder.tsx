@@ -10,6 +10,7 @@ import ExerciseCard from "@/components/shared/cards/ExerciseCard";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import SwiperForm from "@/components/shared/SwiperForm";
+import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import SectionNav from "@/components/shared/SectionNav";
 import { SwiperButton } from "@/components/shared/SwiperButton";
@@ -158,8 +159,8 @@ const RoutineBuilder = () => {
       const items = (progExs || []).map((pe) => ({
         id: pe.id,
         exercise_id: pe.exercise_id,
-        name: pe.exercises?.name || "[Exercise name]",
-        section: pe.exercises?.section || "training",
+        name: (pe.exercises as any)?.name || "[Exercise name]",
+        section: (pe.exercises as any)?.section || "training",
         sets: pe.routine_sets?.length || 0,
         order: pe.exercise_order || 0,
         setConfigs: (pe.routine_sets || [])
@@ -517,7 +518,12 @@ const RoutineBuilder = () => {
     
     // Users should never be able to access this page with an active workout due to redirect logic
     // If they somehow do, just start the workout (this will end the current one)
-    startWorkout(routine)
+    const programForWorkout = {
+      id: routine.id,
+      name: routine.routine_name,
+      exercises: routine.routine_exercises
+    };
+    startWorkout(programForWorkout)
       .then(() => navigate("/workout/active"))
       .catch((error) => {
         console.error('[RoutineBuilder] startWorkout error for routine', routine, error);
@@ -690,8 +696,8 @@ const RoutineBuilder = () => {
     const items = (progExs || []).map((pe) => ({
       id: pe.id,
       exercise_id: pe.exercise_id,
-      name: pe.exercises?.name || "[Exercise name]",
-      section: pe.exercises?.section || "training",
+      name: (pe.exercises as any)?.name || "[Exercise name]",
+      section: (pe.exercises as any)?.section || "training",
       sets: pe.routine_sets?.length || 0,
       order: pe.exercise_order || 0,
       setConfigs: (pe.routine_sets || [])
@@ -929,7 +935,7 @@ const RoutineBuilder = () => {
                   draggable={false}
                   onError={(e) => {
                     console.log('Image failed to load:', program?.og_image_url);
-                    e.target.src = "https://placehold.co/500x262";
+                    (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
                   }}
                   onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
                 />
@@ -1034,7 +1040,7 @@ const RoutineBuilder = () => {
                   showAddExercise ? "Add a new exercise" : "Edit exercise"
                 }
                 onActionIconClick={
-                  showAddExercise ? handleAddExercise : handleEditExercise
+                  showAddExercise ? () => handleAddExercise({}) : () => handleEditExercise({})
                 }
                 onDelete={editingExercise ? handleDeleteExercise : undefined}
                 initialName={editingExercise?.name}
@@ -1047,11 +1053,11 @@ const RoutineBuilder = () => {
                 }
                 initialSets={editingExercise?.setConfigs?.length}
                 initialSetConfigs={editingExercise?.setConfigs}
-                onDirtyChange={setDirty}
+                onDirtyChange={() => setDirty(true)}
                 hideActionButtons
                 showAddToProgramToggle={false}
                 hideSetDefaults={!!editingExercise}
-                onEditSet={handleEditSet}
+                onEditSet={() => handleEditSet(0, {})}
               />
               {editingExercise && (
                 <div className="flex flex-col gap-3 py-4 px-4">
@@ -1078,13 +1084,13 @@ const RoutineBuilder = () => {
         leftAction={() => setShareDialogOpen(false)}
         leftText="Close"
       >
-        <SwiperForm.Section bordered={true} className="flex flex-col gap-5">
+        <FormSectionWrapper bordered={true} className="flex flex-col gap-5">
           <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
             Publish your routine <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
           </p>
-        </SwiperForm.Section>
+        </FormSectionWrapper>
 
-        <SwiperForm.Section bordered={false} className="flex flex-col gap-5">
+        <FormSectionWrapper bordered={false} className="flex flex-col gap-5">
           <TextInput
             label="Click to copy"
             value={`${window.location.origin}/routines/public/${programId}`}
@@ -1093,7 +1099,7 @@ const RoutineBuilder = () => {
             onClick={handleCopyLink}
             icon={<Copy />}
           />
-        </SwiperForm.Section>
+        </FormSectionWrapper>
       </SwiperForm>
 
       <SwiperForm
@@ -1106,7 +1112,7 @@ const RoutineBuilder = () => {
         rightAction={() => handleTitleChange(programName)}
         rightText="Save"
       >
-        <SwiperForm.Section>
+        <FormSectionWrapper>
           <div className="w-full flex flex-col">
             <div className="w-full flex justify-between items-center mb-2">
               <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Routine name</div>
@@ -1124,8 +1130,8 @@ const RoutineBuilder = () => {
               error={(programName || '').length >= MAX_ROUTINE_NAME_LEN}
             />
           </div>
-        </SwiperForm.Section>
-        <SwiperForm.Section bordered={false}>
+        </FormSectionWrapper>
+        <FormSectionWrapper bordered={false}>
           <SwiperButton
             variant="destructive"
             onClick={handleDeleteProgram}
@@ -1133,7 +1139,7 @@ const RoutineBuilder = () => {
           >
             Delete program
           </SwiperButton>
-        </SwiperForm.Section>
+        </FormSectionWrapper>
       </SwiperForm>
 
       <SwiperForm

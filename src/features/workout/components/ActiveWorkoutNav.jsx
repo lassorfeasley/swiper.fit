@@ -6,7 +6,7 @@ import { Blend, X, Square, Pause, Play } from "lucide-react";
 import ActionPill from "@/components/shared/ActionPill";
 
 export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
-  const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout } = useActiveWorkout();
+  const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout, loading } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
 
@@ -154,7 +154,8 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
                     type="button"
                     aria-label="Resume workout"
                     onClick={resumeWorkout}
-                    className="ActionPill size-10 bg-green-600 rounded-[20px] flex justify-center items-center"
+                    disabled={loading}
+                    className={`ActionPill size-10 bg-green-600 rounded-[20px] flex justify-center items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Play className="w-6 h-6 text-white" />
                   </button>
@@ -162,7 +163,8 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
                     type="button"
                     aria-label="End workout"
                     onClick={onEnd}
-                    className="ActionPill size-10 bg-neutral-900 rounded-[20px] flex justify-center items-center"
+                    disabled={loading}
+                    className={`ActionPill size-10 bg-neutral-900 rounded-[20px] flex justify-center items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Square className="w-6 h-6 text-white" />
                   </button>
@@ -172,7 +174,8 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
                   type="button"
                   aria-label="Pause workout"
                   onClick={pauseWorkout}
-                  className="ActionPill size-10 bg-orange-600 rounded-[20px] flex justify-center items-center"
+                  disabled={loading || !activeWorkout}
+                  className={`ActionPill size-10 bg-orange-600 rounded-[20px] flex justify-center items-center ${loading || !activeWorkout ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Pause className="w-6 h-6 text-white" />
                 </button>
