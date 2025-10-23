@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,13 @@ const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
-const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
+export interface SheetOverlayProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay> {}
+
+const SheetOverlay = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Overlay>,
+  SheetOverlayProps
+>(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
       "fixed inset-0 z-[1500] bg-white/60 backdrop-blur-sm pointer-events-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -43,21 +49,36 @@ const sheetVariants = cva(
   }
 );
 
-const SheetContent = React.forwardRef(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content
-        ref={ref}
-        className={cn(sheetVariants({ side }), className)}
-        {...props}
-      >
-        {children}
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  )
-);
+export interface SheetContentProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
+    VariantProps<typeof sheetVariants> {}
+
+const SheetContent = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Content>,
+  SheetContentProps
+>(({ side = "right", className, children, ...props }, ref) => (
+  <SheetPortal>
+    <SheetOverlay />
+    <SheetPrimitive.Content
+      ref={ref}
+      className={cn(sheetVariants({ side }), className)}
+      {...props}
+    >
+      {children}
+    </SheetPrimitive.Content>
+  </SheetPortal>
+));
 SheetContent.displayName = SheetPrimitive.Content.displayName;
+
+export interface FormHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  leftAction?: () => void;
+  rightAction?: () => void;
+  leftText?: string;
+  rightText?: string;
+  title?: string;
+  showBackIcon?: boolean;
+  rightEnabled?: boolean;
+}
 
 const FormHeader = ({
   className,
@@ -69,7 +90,7 @@ const FormHeader = ({
   showBackIcon = false,
   rightEnabled = true,
   ...props
-}) => (
+}: FormHeaderProps) => (
   <div
     className={cn(
       "mt-4 mb-4 lg:mt-0 self-stretch p-3 border-b border-neutral-300 inline-flex justify-center items-center gap-5 w-full",
@@ -85,12 +106,12 @@ const FormHeader = ({
               <div className="w-1.5 h-3 left-[9px] top-[6px] absolute outline outline-2 outline-offset-[-1px] outline-slate-600" />
             </div>
           )}
-                  <button
-          onClick={leftAction}
-          className="text-red-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight text-left focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
-        >
-          {leftText}
-        </button>
+          <button
+            onClick={leftAction}
+            className="text-red-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight text-left focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+          >
+            {leftText}
+          </button>
         </>
       )}
     </div>
@@ -120,7 +141,9 @@ const FormHeader = ({
 );
 FormHeader.displayName = "FormHeader";
 
-const SheetFooter = ({ className, ...props }) => (
+export interface SheetFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+const SheetFooter = ({ className, ...props }: SheetFooterProps) => (
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
@@ -131,7 +154,13 @@ const SheetFooter = ({ className, ...props }) => (
 );
 SheetFooter.displayName = "SheetFooter";
 
-const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
+export interface SheetTitleProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title> {}
+
+const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Title>,
+  SheetTitleProps
+>(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
     className={cn("text-heading-md text-foreground", className)}
@@ -140,7 +169,13 @@ const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
-const SheetDescription = React.forwardRef(({ className, ...props }, ref) => (
+export interface SheetDescriptionProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description> {}
+
+const SheetDescription = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Description>,
+  SheetDescriptionProps
+>(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
