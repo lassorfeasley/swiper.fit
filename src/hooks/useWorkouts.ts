@@ -8,7 +8,6 @@ interface Workout {
   started_at: string;
   ended_at?: string;
   is_active: boolean;
-  is_paused: boolean;
   routine_name?: string;
   exercises?: any[];
 }
@@ -40,7 +39,6 @@ export function useWorkouts(): UseWorkoutsReturn {
             started_at,
             ended_at,
             is_active,
-            is_paused,
             routine_name,
             workout_exercises!workout_exercises_workout_id_fkey(
               id,

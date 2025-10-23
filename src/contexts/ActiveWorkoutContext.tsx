@@ -37,7 +37,6 @@ interface Workout {
   started_at: string;
   ended_at?: string;
   is_active: boolean;
-  is_paused: boolean;
   exercises: WorkoutExercise[];
 }
 
@@ -188,7 +187,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           setElapsedTime(elapsed);
           
           // Start timer if workout is not paused
-          if (!workout.is_paused) {
+          if (!workout.is_active) {
             const timer = setInterval(() => {
               setElapsedTime(prev => prev + 1);
             }, 1000);
@@ -285,14 +284,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
   // Timer for elapsed time
   useEffect(() => {
-    if (!isWorkoutActive || !activeWorkout?.is_paused) return;
+    if (!isWorkoutActive || !activeWorkout?.is_active) return;
 
     const timer = setInterval(() => {
       setElapsedTime(prev => prev + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isWorkoutActive, activeWorkout?.is_paused]);
+  }, [isWorkoutActive, activeWorkout?.is_active]);
 
   const refreshActiveWorkout = useCallback(async (workoutId: string) => {
     console.log('[ActiveWorkout] Refreshing workout:', workoutId);
@@ -361,8 +360,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           routine_name: program.name,
           name: workoutName,
           started_at: new Date().toISOString(),
-          is_active: true,
-          is_paused: false
+          is_active: true
         })
         .select()
         .single();
@@ -589,56 +587,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, []);
 
   const pauseWorkout = useCallback(async () => {
-    if (!activeWorkout || activeWorkout.is_paused) return;
-
-    console.log('[ActiveWorkout] Pausing workout:', activeWorkout.id);
-
-    try {
-      const { error } = await supabase
-        .from('workouts')
-        .update({ is_paused: true })
-        .eq('id', activeWorkout.id);
-
-      if (error) {
-        console.error('[ActiveWorkout] Error pausing workout:', error);
-        toast.error('Failed to pause workout');
-        return;
-      }
-
-      setActiveWorkout(prev => prev ? { ...prev, is_paused: true } : null);
-      toast.success('Workout paused');
-      
-    } catch (error) {
-      console.error('[ActiveWorkout] Error pausing workout:', error);
-      toast.error('Failed to pause workout');
-    }
-  }, [activeWorkout]);
+    console.log('[ActiveWorkout] Pause functionality not implemented');
+    toast.info('Pause functionality not available');
+  }, []);
 
   const resumeWorkout = useCallback(async () => {
-    if (!activeWorkout || !activeWorkout.is_paused) return;
-
-    console.log('[ActiveWorkout] Resuming workout:', activeWorkout.id);
-
-    try {
-      const { error } = await supabase
-        .from('workouts')
-        .update({ is_paused: false })
-        .eq('id', activeWorkout.id);
-
-      if (error) {
-        console.error('[ActiveWorkout] Error resuming workout:', error);
-        toast.error('Failed to resume workout');
-        return;
-      }
-
-      setActiveWorkout(prev => prev ? { ...prev, is_paused: false } : null);
-      toast.success('Workout resumed');
-      
-    } catch (error) {
-      console.error('[ActiveWorkout] Error resuming workout:', error);
-      toast.error('Failed to resume workout');
-    }
-  }, [activeWorkout]);
+    console.log('[ActiveWorkout] Resume functionality not implemented');
+    toast.info('Resume functionality not available');
+  }, []);
 
   const reactivateWorkout = useCallback(async (workoutId: string) => {
     console.log('[ActiveWorkout] Reactivating workout:', workoutId);
@@ -647,8 +603,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       const { error } = await supabase
         .from('workouts')
         .update({ 
-          is_active: true,
-          is_paused: false
+          is_active: true
         })
         .eq('id', workoutId);
 
@@ -672,7 +627,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     isWorkoutActive,
     elapsedTime,
     loading,
-    isPaused: activeWorkout?.is_paused || false,
+    isPaused: false,
     isFinishing,
     startWorkout,
     endWorkout,
