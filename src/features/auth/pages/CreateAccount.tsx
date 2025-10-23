@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
@@ -22,7 +22,7 @@ import { postEmailEvent } from "@/lib/emailEvents";
 import { linkPendingInvitations } from "@/lib/sharingApi";
 import { toast } from "sonner";
 
-export default function CreateAccount() {
+export default function CreateAccount(): React.JSX.Element {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -133,8 +133,8 @@ export default function CreateAccount() {
     const newRoutineId = newRoutine.id;
 
     const exercisesPayload = (src.routine_exercises || [])
-      .sort((a,b) => (a.exercise_order||0) - (b.exercise_order||0))
-      .map((re) => ({ routine_id: newRoutineId, exercise_id: re.exercises.id, exercise_order: re.exercise_order || 0, user_id: uid }));
+      .sort((a: any, b: any) => (a.exercise_order||0) - (b.exercise_order||0))
+      .map((re: any) => ({ routine_id: newRoutineId, exercise_id: re.exercises.id, exercise_order: re.exercise_order || 0, user_id: uid }));
     let inserted = [];
     if (exercisesPayload.length > 0) {
       const { data: reRows, error: reErr } = await supabase
@@ -145,7 +145,7 @@ export default function CreateAccount() {
       inserted = reRows || [];
     }
     for (const re of src.routine_exercises || []) {
-      const target = inserted.find((x) => x.exercise_id === re.exercises.id);
+      const target = inserted.find((x: any) => x.exercise_id === (re as any).exercises.id);
       if (!target) continue;
       const setsPayload = (re.routine_sets || []).sort((a,b)=> (a.set_order||0)-(b.set_order||0)).map((rs) => ({
         routine_exercise_id: target.id,
@@ -168,7 +168,7 @@ export default function CreateAccount() {
   };
 
   const signupMutation = useMutation({
-    mutationFn: async ({ email, password, firstName, lastName }) => {
+    mutationFn: async ({ email, password, firstName, lastName }: { email: string; password: string; firstName: string; lastName: string }) => {
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -266,7 +266,7 @@ export default function CreateAccount() {
       };
       checkWorkoutAndRedirect();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setErrorMessage(error.message);
       setSuccessMessage("");
       toast.error(error.message);
@@ -274,7 +274,7 @@ export default function CreateAccount() {
     },
   });
 
-  const handleSignup = async (e) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     signupMutation.mutate({ email, password, firstName, lastName });
   };

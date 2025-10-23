@@ -29,14 +29,37 @@ import React, {
 import SwipeSwitch from "./SwipeSwitch";
 import { ANIMATION_DURATIONS } from "@/lib/scrollSnap";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
-import PropTypes from "prop-types";
-import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 
 export const CARD_ANIMATION_DURATION_MS = 500;
 
-const ActiveExerciseCard = React.forwardRef(({
+interface ActiveExerciseCardProps {
+  exerciseId: string | number;
+  exerciseName: string;
+  initialSetConfigs?: any[];
+  onSetComplete?: (setId: string, data: any) => void;
+  onSetDataChange?: (setId: string, data: any) => void;
+  onExerciseComplete?: (exerciseId: string | number) => void;
+  isUnscheduled?: boolean;
+  onSetProgrammaticUpdate?: (setId: string, data: any) => void;
+  isFocused?: boolean;
+  isExpanded?: boolean;
+  onFocus?: (exerciseId: string | number) => void;
+  onSetPress?: (setId: string) => void;
+  onEditExercise?: (exerciseId: string | number) => void;
+  onSetReorder?: (exerciseId: string | number, reorderedSets: any[]) => void;
+  index?: number;
+  focusedIndex?: number;
+  totalCards?: number;
+  topOffset?: number;
+  isFirstCard?: boolean;
+  isCompleted?: boolean;
+  demo?: boolean;
+}
+
+const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardProps>(({
   exerciseId,
   exerciseName,
   initialSetConfigs = [],
@@ -117,7 +140,7 @@ const ActiveExerciseCard = React.forwardRef(({
     // Notify parent of the reorder for database persistence
     if (onSetReorder) {
       Promise.resolve(
-        onSetReorder(exerciseId, newOrder, fromIndex, toIndex)
+      onSetReorder(exerciseId, newOrder)
       ).catch((error) => {
         console.error('Failed to persist set reorder:', error);
         // Revert optimistic update on error
@@ -135,7 +158,7 @@ const ActiveExerciseCard = React.forwardRef(({
       // Call onSetComplete for the parent to handle
       if (onSetComplete) {
         Promise.resolve(
-          onSetComplete(exerciseId, { ...setToComplete, status: "complete" })
+          onSetComplete(String(exerciseId), { ...setToComplete, status: "complete" })
         ).catch(console.error);
       }
 
@@ -205,9 +228,9 @@ const ActiveExerciseCard = React.forwardRef(({
       status={cardStatus}
       onClick={() => {
         if (isFocused) {
-          onEditExercise?.();
+          onEditExercise?.(exerciseId);
         } else {
-          onFocus?.();
+          onFocus?.(exerciseId);
         }
       }}
       index={index}
@@ -258,10 +281,9 @@ const ActiveExerciseCard = React.forwardRef(({
                           fn();
                         }
                       }}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         if (onSetPress) {
-                          onSetPress(set, index);
+                          onSetPress(set.id);
                         }
                       }}
                       className="w-full"
@@ -277,30 +299,5 @@ const ActiveExerciseCard = React.forwardRef(({
     </CardWrapper>
   );
 });
-
-ActiveExerciseCard.propTypes = {
-  exerciseId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
-  exerciseName: PropTypes.string.isRequired,
-  initialSetConfigs: PropTypes.array,
-  onSetComplete: PropTypes.func,
-  onSetDataChange: PropTypes.func,
-  onExerciseComplete: PropTypes.func,
-  isUnscheduled: PropTypes.bool,
-  onSetProgrammaticUpdate: PropTypes.func,
-  isFocused: PropTypes.bool,
-  isExpanded: PropTypes.bool,
-  onFocus: PropTypes.func,
-  onSetPress: PropTypes.func,
-  onEditExercise: PropTypes.func,
-  onSetReorder: PropTypes.func,
-  index: PropTypes.number,
-  focusedIndex: PropTypes.number,
-  totalCards: PropTypes.number,
-  topOffset: PropTypes.number,
-  isFirstCard: PropTypes.bool,
-  isCompleted: PropTypes.bool,
-  demo: PropTypes.bool,
-};
 
 export default ActiveExerciseCard; 

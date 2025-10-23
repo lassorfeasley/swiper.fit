@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
@@ -30,7 +30,7 @@ export default function Login() {
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }) => {
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -67,7 +67,7 @@ export default function Login() {
 
       checkWorkoutAndRedirect();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       const msg = error.message.toLowerCase();
       setEmailError(
         msg.includes("email") ||
@@ -83,7 +83,7 @@ export default function Login() {
     },
   });
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate({ email, password });
   };

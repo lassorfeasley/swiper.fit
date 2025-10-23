@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,4 +18,4 @@ export default function RequireAuth() {
 
   if (!session) return null;
   return <Outlet />;
-} 
+}

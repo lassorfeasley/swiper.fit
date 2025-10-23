@@ -1,20 +1,28 @@
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { motion, useAnimation } from "framer-motion";
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Check, Repeat2, Weight, Clock, Loader2, Lock } from "lucide-react";
-import React from "react";
 import { useActiveWorkout } from "../../../contexts/ActiveWorkoutContext";
 import { supabase } from "../../../supabaseClient";
 
 // Debounce utility
-function debounce(fn, delay) {
-  let timer = null;
-  return (...args) => {
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+  let timer: NodeJS.Timeout | null = null;
+  return ((...args: any[]) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
-  };
+  }) as T;
 }
 
-export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick, className = "", demo = false }) {
+interface SwipeSwitchProps {
+  set: any;
+  onComplete?: (setId: string, data: any) => void;
+  onVisualComplete?: (setId: string) => void;
+  onClick?: (setId: string) => void;
+  className?: string;
+  demo?: boolean;
+}
+
+export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick, className = "", demo = false }: SwipeSwitchProps) {
   const {
     status = "locked",
     reps,
@@ -156,7 +164,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
       borderRadius: THUMB_RADIUS,
       scaleX: 1,
       scaleY: 1,
-    }, tweenConfig).then(() => {
+    }, tweenConfig as any).then(() => {
       if (!isMountedRef.current) return;
       
       // Step 2: Expand to full content width (within padding)
@@ -167,7 +175,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
         borderRadius: THUMB_RADIUS,
         scaleX: 1,
         scaleY: 1,
-      }, tweenConfig).then(() => {
+      }, tweenConfig as any).then(() => {
         if (!isMountedRef.current) return;
         
         // Step 3: Expand outward to cover all padding using transforms to avoid layout flicker
@@ -194,7 +202,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
             setIsAnimating(false);
             setIsCheckVisible(true);
             // Notify parent that the visual completion animation has finished
-            onVisualCompleteRef.current?.();
+            onVisualCompleteRef.current?.(set.id);
           }, 100);
         });
       });
@@ -233,7 +241,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
         borderRadius: THUMB_RADIUS,
         scaleX: 1,
         scaleY: 1,
-      }, tweenConfig).then(() => {
+      }, tweenConfig as any).then(() => {
         if (!isMountedRef.current) return;
 
         // Step 3: swipe thumb back to the left and return to white
@@ -244,7 +252,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           borderRadius: THUMB_RADIUS,
           scaleX: 1,
           scaleY: 1,
-        }, tweenConfig).then(() => {
+        }, tweenConfig as any).then(() => {
           if (!isMountedRef.current) return;
           setSwipedComplete(false);
           setIsManualSwipe(false);
@@ -372,7 +380,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     if (isPaused) {
       setIsDragging(false);
       if (isMountedRef.current) {
-        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig);
+        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig as any);
       }
       return;
     }
@@ -392,12 +400,12 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
       
       // Call onComplete after a short delay to allow animation to start
       setTimeout(() => {
-        onCompleteRef.current?.();
+        onCompleteRef.current?.(set.id, { ...set, status: "complete" });
       }, 100);
     } else {
       // Incomplete: reset thumb
       if (isMountedRef.current) {
-        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig);
+        controls.start({ x: 0, width: THUMB_WIDTH, backgroundColor: "#FFFFFF", borderRadius: THUMB_RADIUS, scaleX: 1, scaleY: 1 }, tweenConfig as any);
       }
     }
     
@@ -442,7 +450,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           e.stopPropagation();
           setTimeout(() => {
             if (!dragMoved.current && !isDragging) {
-              onClick?.(e);
+              onClick?.(set.id);
             }
           }, 10);
         }

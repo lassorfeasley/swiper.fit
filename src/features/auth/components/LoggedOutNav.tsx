@@ -1,7 +1,12 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MoveUpRight } from "lucide-react";
 
-export default function LoggedOutNav({ showAuthButtons = true }) {
+interface LoggedOutNavProps {
+  showAuthButtons?: boolean;
+}
+
+export default function LoggedOutNav({ showAuthButtons = true }: LoggedOutNavProps) {
   const navigate = useNavigate();
 
   return (
@@ -99,4 +104,4 @@ export default function LoggedOutNav({ showAuthButtons = true }) {
       </div>
     </>
   );
-} 
+}
