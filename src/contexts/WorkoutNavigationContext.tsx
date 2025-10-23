@@ -15,6 +15,7 @@ interface SectionExercises {
   warmup: Exercise[];
   training: Exercise[];
   cooldown: Exercise[];
+  [key: string]: Exercise[];
 }
 
 interface LoadedSections {

@@ -126,8 +126,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, []);
 
   // State for tracking manually completed sets and toast notifications
-  const [manuallyCompletedSets, setManuallyCompletedSets] = useState<Set<string>>(new Set());
-  const [toastedSets, setToastedSets] = useState<Set<string>>(new Set());
+  const [manuallyCompletedSets, setManuallyCompletedSets] = useState<Set<string>>(new Set<string>());
+  const [toastedSets, setToastedSets] = useState<Set<string>>(new Set<string>());
 
   // Check for active workout on mount
   useEffect(() => {

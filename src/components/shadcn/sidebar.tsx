@@ -127,7 +127,7 @@ export interface SidebarNavItemProps extends React.HTMLAttributes<HTMLElement> {
   asChild?: boolean;
 }
 
-const SidebarNavItem = React.forwardRef<HTMLElement, SidebarNavItemProps>(
+const SidebarNavItem = React.forwardRef<HTMLAnchorElement, SidebarNavItemProps>(
   ({ 
     className, 
     active,
@@ -139,7 +139,7 @@ const SidebarNavItem = React.forwardRef<HTMLElement, SidebarNavItemProps>(
     const Comp = asChild ? React.Fragment : "a"
     return (
       <Comp
-        ref={ref}
+        ref={asChild ? undefined : ref}
         className={cn(
           "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           "hover:bg-accent hover:text-accent-foreground",

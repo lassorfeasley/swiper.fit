@@ -13,7 +13,7 @@ interface Profile {
 
 interface AccountContextType {
   authUser: User | null;
-  currentUser: User | null;
+  currentUser: User | Profile | null;
   isDelegated: boolean;
   actingUser: Profile | null;
   switchToUser: (profile: Profile) => void;

@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]): string {
  * Generates a workout name based on the current day and time of day
  * @returns A workout name like "Monday Morning Workout" or "Tuesday Evening Workout"
  */
-export const generateWorkoutName = (): string => {
+export const generateWorkoutName = (routineName?: string): string => {
   const now = new Date();
   const day = now.toLocaleDateString("en-US", { weekday: "long" });
 
