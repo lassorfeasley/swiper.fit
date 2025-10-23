@@ -3,7 +3,7 @@ import { useAccount } from "@/contexts/AccountContext";
 import PageHeader from "@/components/layout/PageHeader";
 import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
-// import SideBarNav from "@/components/organisms/side-bar-nav";
+import SideBarNav from "@/components/layout/SideBarNav";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -88,7 +88,7 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen flex bg-stone-100 relative">
-      {/* {showSidebar && <SideBarNav />} */}
+      {showSidebar && <SideBarNav />}
       <div 
         className={cn(
           "flex flex-col flex-1 z-[100]",
