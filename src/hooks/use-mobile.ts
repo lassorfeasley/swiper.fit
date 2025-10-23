@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+const useIsMobile = (): boolean => {
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
 
   useEffect(() => {
-    const handleResize = () => {
+    const handleResize = (): void => {
       setIsMobile(window.innerWidth < 768);
     };
 
@@ -15,4 +15,4 @@ const useIsMobile = () => {
   return isMobile;
 };
 
-export { useIsMobile }; 
+export { useIsMobile };

@@ -1,6 +1,35 @@
 import { useState, useEffect } from 'react';
 
-const defaultValues = {
+interface SetDefaults {
+  set_type: 'reps' | 'timed';
+  reps: number;
+  timed_set_duration: number;
+  weight: number;
+  unit: 'lbs' | 'kg' | 'body';
+}
+
+interface SetOverrides {
+  set_variant?: string;
+  set_type?: 'reps' | 'timed';
+  reps?: number;
+  timed_set_duration?: number;
+  weight?: number;
+  unit?: 'lbs' | 'kg' | 'body';
+  weight_unit?: string;
+}
+
+interface SetConfigReturn {
+  defaults: SetDefaults;
+  sets: SetOverrides[];
+  updateDefault: (field: keyof SetDefaults, value: any) => void;
+  updateSetField: (index: number, field: keyof SetOverrides, value: any) => void;
+  setName: (index: number, name: string) => void;
+  getSetMerged: (index: number) => SetDefaults & SetOverrides;
+  addSet: () => void;
+  removeLastSet: () => void;
+}
+
+const defaultValues: SetDefaults = {
   set_type: 'reps',
   reps: 10,
   timed_set_duration: 30,
@@ -10,7 +39,10 @@ const defaultValues = {
 
 // Hook to manage a collection of sets with global defaults and per-set overrides.
 // All property keys use snake_case so that objects can be persisted directly to Supabase rows.
-export default function useSetConfig(initialCount = 3, initialDefaults = defaultValues) {
+export default function useSetConfig(
+  initialCount: number = 3, 
+  initialDefaults: SetDefaults = defaultValues
+): SetConfigReturn {
   /*
    defaults – global defaults that newly created sets inherit.  Shape:
      {
@@ -24,17 +56,17 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
    sets – array where each element stores ONLY fields that deviate from `defaults`.  Example:
      { set_variant: 'Warm-up', reps: 8 } // unit & weight come from defaults
    */
-  const [defaults, setDefaults] = useState(initialDefaults || defaultValues);
-  const [sets, setSets] = useState(Array.from({ length: initialCount }, (_, index) => ({
+  const [defaults, setDefaults] = useState<SetDefaults>(initialDefaults || defaultValues);
+  const [sets, setSets] = useState<SetOverrides[]>(Array.from({ length: initialCount }, (_, index) => ({
     set_variant: `Set ${index + 1}`
   })));
 
   // --- updater helpers ----------------------------------------------------
-  const updateDefault = (field, value) => {
+  const updateDefault = (field: keyof SetDefaults, value: any): void => {
     setDefaults((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateSetField = (index, field, value) => {
+  const updateSetField = (index: number, field: keyof SetOverrides, value: any): void => {
     setSets((prev) => {
       const next = [...prev];
       // Ensure the array is large enough
@@ -47,15 +79,15 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
   };
 
   // merge helpers ----------------------------------------------------------
-  const getSetMerged = (index) => {
+  const getSetMerged = (index: number): SetDefaults & SetOverrides => {
     const overrides = sets[index] || {};
     return { ...defaults, ...overrides };
   };
 
-  const setName = (index, name) => updateSetField(index, 'set_variant', name);
+  const setName = (index: number, name: string): void => updateSetField(index, 'set_variant', name);
 
   // array helpers ----------------------------------------------------------
-  const addSet = () => {
+  const addSet = (): void => {
     setSets((prev) => {
       if (prev.length === 0) {
         // If no sets exist, use defaults
@@ -78,7 +110,7 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
       
       // Create a new set with the same configuration as the last set
       // but remove any database-specific fields and use proper naming
-      const newSetConfig = {
+      const newSetConfig: SetOverrides = {
         set_type: lastSetConfig.set_type,
         reps: lastSetConfig.reps,
         timed_set_duration: lastSetConfig.timed_set_duration,
@@ -92,7 +124,7 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
     });
   };
   
-  const removeLastSet = () =>
+  const removeLastSet = (): void =>
     setSets((prev) => {
       // Keep at least one set in the collection
       if (prev.length <= 1) {
@@ -111,4 +143,4 @@ export default function useSetConfig(initialCount = 3, initialDefaults = default
     addSet,
     removeLastSet,
   };
-} 
+}
