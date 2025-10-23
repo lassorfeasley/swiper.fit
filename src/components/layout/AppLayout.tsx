@@ -1,12 +1,54 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAccount } from "@/contexts/AccountContext";
 import PageHeader from "@/components/layout/PageHeader";
-import PropTypes from "prop-types";
 import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/layout/SideBarNav";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
+
+interface AppLayoutProps {
+  children: React.ReactNode;
+  showSidebar?: boolean;
+  onDelete?: () => void;
+  showDeleteOption?: boolean;
+  onEdit?: () => void;
+  showEditOption?: boolean;
+  search?: boolean;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  enableScrollSnap?: boolean;
+  noTopPadding?: boolean;
+  hideHeader?: boolean;
+  hideDelegateHeader?: boolean;
+  title?: string;
+  // Header props that can be passed through
+  variant?: string;
+  reserveSpace?: boolean;
+  showBackButton?: boolean;
+  showSearch?: boolean;
+  showSettings?: boolean;
+  showAdd?: boolean;
+  showPlusButton?: boolean;
+  showShare?: boolean;
+  showStartWorkout?: boolean;
+  showStartWorkoutIcon?: boolean;
+  showUpload?: boolean;
+  showDelete?: boolean;
+  onBack?: () => void;
+  onSearch?: () => void;
+  onSettings?: () => void;
+  onAdd?: () => void;
+  onShare?: () => void;
+  onStartWorkout?: () => void;
+  onStartWorkoutIcon?: () => void;
+  onUpload?: () => void;
+  titleRightText?: string;
+  startCtaText?: string;
+  sharingSection?: React.ReactNode;
+  sharingNavAbove?: boolean;
+  sharingNavContent?: React.ReactNode;
+}
 
 export default function AppLayout({
   children,
@@ -24,9 +66,9 @@ export default function AppLayout({
   hideDelegateHeader = false,
   title,
   ...headerProps
-}) {
-  const headerRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
+}: AppLayoutProps) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
   const location = useLocation();
 
   // Detect delegate mode
@@ -53,7 +95,7 @@ export default function AppLayout({
       document.documentElement.style.setProperty("--header-height", `${h}px`);
     }
     updateHeaderHeight();
-    let ro;
+    let ro: ResizeObserver | undefined;
     if (!hideHeader && typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(updateHeaderHeight);
       if (headerRef.current) ro.observe(headerRef.current);
@@ -131,20 +173,3 @@ export default function AppLayout({
     </div>
   );
 }
-
-AppLayout.propTypes = {
-  children: PropTypes.node,
-  showSidebar: PropTypes.bool,
-  onDelete: PropTypes.func,
-  showDeleteOption: PropTypes.bool,
-  onEdit: PropTypes.func,
-  showEditOption: PropTypes.bool,
-  search: PropTypes.bool,
-  searchValue: PropTypes.string,
-  onSearchChange: PropTypes.func,
-  enableScrollSnap: PropTypes.bool,
-  noTopPadding: PropTypes.bool,
-  hideHeader: PropTypes.bool,
-  hideDelegateHeader: PropTypes.bool,
-  title: PropTypes.string,
-};
