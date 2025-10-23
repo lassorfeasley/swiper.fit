@@ -302,9 +302,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         .from('workouts')
         .select(`
           *,
-          exercises:workout_exercises(
+          workout_exercises!workout_exercises_workout_id_fkey(
             *,
-            sets:sets(
+            sets!sets_workout_exercise_id_fkey(
               *
             )
           )
@@ -319,16 +319,22 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       if (workout) {
         // Sort exercises and sets
-        if (workout.exercises) {
-          workout.exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => a.order_index - b.order_index);
-          workout.exercises.forEach((exercise: WorkoutExercise) => {
+        if (workout.workout_exercises) {
+          workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => a.order_index - b.order_index);
+          workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
             if (exercise.sets) {
               exercise.sets.sort((a: Set, b: Set) => a.order_index - b.order_index);
             }
           });
         }
         
-        setActiveWorkout(workout);
+        // Map workout_exercises to exercises for compatibility
+        const processedWorkout = {
+          ...workout,
+          exercises: workout.workout_exercises || []
+        };
+        
+        setActiveWorkout(processedWorkout);
         setIsWorkoutActive(workout.is_active);
       }
     } catch (error) {

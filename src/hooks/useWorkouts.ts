@@ -42,11 +42,11 @@ export function useWorkouts(): UseWorkoutsReturn {
             is_active,
             is_paused,
             routine_name,
-            exercises:workout_exercises(
+            workout_exercises!workout_exercises_workout_id_fkey(
               id,
               exercise_name,
               order_index,
-              sets:sets(
+              sets!sets_workout_exercise_id_fkey(
                 id,
                 reps,
                 weight,
@@ -65,7 +65,13 @@ export function useWorkouts(): UseWorkoutsReturn {
           throw error;
         }
 
-        setWorkouts(data || []);
+        // Process the data to map workout_exercises to exercises for compatibility
+        const processedWorkouts = (data || []).map(workout => ({
+          ...workout,
+          exercises: workout.workout_exercises || []
+        }));
+
+        setWorkouts(processedWorkouts);
       } catch (err: any) {
         setError(err.message);
       } finally {
