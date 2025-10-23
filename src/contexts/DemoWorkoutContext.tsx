@@ -1,10 +1,92 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 
-const DemoWorkoutContext = createContext();
+interface SetConfig {
+  id: string;
+  routine_set_id: string;
+  reps: number;
+  weight: number;
+  weight_unit: string;
+  set_variant: string;
+  set_type: string;
+  timed_set_duration?: number;
+  status: string;
+  set_order: number;
+}
 
-export function DemoWorkoutProvider({ children }) {
+interface DemoExercise {
+  id: string;
+  exercise_id: string;
+  name: string;
+  section: string;
+  setConfigs: SetConfig[];
+}
+
+interface DemoWorkout {
+  id: string;
+  workoutName: string;
+  startTime: string;
+  isActive: boolean;
+}
+
+interface EditingSet {
+  exerciseId: string;
+  setConfig: SetConfig;
+  index: number;
+}
+
+interface EditingExercise {
+  id: string;
+  exercise_id: string;
+  name: string;
+  section: string;
+  setConfigs: SetConfig[];
+}
+
+interface DemoWorkoutContextType {
+  demoWorkout: DemoWorkout;
+  demoExercises: DemoExercise[];
+  focusedExerciseId: string | null;
+  completedExercises: Set<string>;
+  setCompletedExercises: React.Dispatch<React.SetStateAction<Set<string>>>;
+  showAddExercise: boolean;
+  setShowAddExercise: React.Dispatch<React.SetStateAction<boolean>>;
+  editingSet: EditingSet | null;
+  setEditingSet: React.Dispatch<React.SetStateAction<EditingSet | null>>;
+  isEditSheetOpen: boolean;
+  setEditSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  editingExercise: EditingExercise | null;
+  setEditingExercise: React.Dispatch<React.SetStateAction<EditingExercise | null>>;
+  editingExerciseDirty: boolean;
+  setEditingExerciseDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  autoCompleteEnabled: boolean;
+  setAutoCompleteEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  currentExerciseIndex: number;
+  currentSetIndex: number;
+  userHasInteracted: boolean;
+  handleSetComplete: (exerciseId: string, setConfig: SetConfig, isManualSwipe?: boolean) => void;
+  handleSetEdit: (exerciseId: string, setConfig: SetConfig, index: number) => void;
+  handleSetUpdate: (exerciseId: string, setConfig: SetConfig, updates: Partial<SetConfig>) => void;
+  handleSetDelete: (exerciseId: string, setConfig: SetConfig) => void;
+  handleExerciseFocus: (exerciseId: string, isManualClick?: boolean) => void;
+  handleEditExercise: (exercise: DemoExercise) => void;
+  handleSaveExerciseEdit: (data: { name: string; section: string; setConfigs: SetConfig[] }) => void;
+  handleOpenAddExercise: () => void;
+  handleAddExercise: (exerciseData: { name: string; section: string; setConfigs: SetConfig[] }) => void;
+  setFocusedExerciseId: React.Dispatch<React.SetStateAction<string | null>>;
+  startAutoComplete: () => void;
+  stopAutoComplete: () => void;
+  resetDemo: () => void;
+}
+
+const DemoWorkoutContext = createContext<DemoWorkoutContextType | null>(null);
+
+interface DemoWorkoutProviderProps {
+  children: ReactNode;
+}
+
+export function DemoWorkoutProvider({ children }: DemoWorkoutProviderProps) {
   // Demo workout state
-  const [demoWorkout, setDemoWorkout] = useState({
+  const [demoWorkout, setDemoWorkout] = useState<DemoWorkout>({
     id: 'demo-workout',
     workoutName: 'Demo Workout',
     startTime: new Date().toISOString(),
@@ -12,7 +94,7 @@ export function DemoWorkoutProvider({ children }) {
   });
 
   // Demo exercises with sample data matching the Figma design
-  const [demoExercises, setDemoExercises] = useState([
+  const [demoExercises, setDemoExercises] = useState<DemoExercise[]>([
     {
       id: 'demo-exercise-1',
       exercise_id: 'chest-press',
@@ -145,33 +227,33 @@ export function DemoWorkoutProvider({ children }) {
   ]);
 
   // Focus management
-  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
-  const [completedExercises, setCompletedExercises] = useState(new Set());
+  const [focusedExerciseId, setFocusedExerciseId] = useState<string | null>(null);
+  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 
   // Form state
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [editingSet, setEditingSet] = useState(null);
-  const [isEditSheetOpen, setEditSheetOpen] = useState(false);
+  const [showAddExercise, setShowAddExercise] = useState<boolean>(false);
+  const [editingSet, setEditingSet] = useState<EditingSet | null>(null);
+  const [isEditSheetOpen, setEditSheetOpen] = useState<boolean>(false);
   
   // Edit exercise state
-  const [editingExercise, setEditingExercise] = useState(null);
-  const [editingExerciseDirty, setEditingExerciseDirty] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<EditingExercise | null>(null);
+  const [editingExerciseDirty, setEditingExerciseDirty] = useState<boolean>(false);
 
   // Auto-complete demo feature
-  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
-  const [autoCompleteInterval, setAutoCompleteInterval] = useState(null);
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [userHasInteracted, setUserHasInteracted] = useState(false);
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState<boolean>(false);
+  const [autoCompleteInterval, setAutoCompleteInterval] = useState<NodeJS.Timeout | null>(null);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number>(0);
+  const [currentSetIndex, setCurrentSetIndex] = useState<number>(0);
+  const [userHasInteracted, setUserHasInteracted] = useState<boolean>(false);
   
   // Use refs to track current auto-complete state to avoid closure issues
-  const autoCompleteEnabledRef = useRef(false);
-  const currentExerciseIndexRef = useRef(0);
-  const currentSetIndexRef = useRef(0);
+  const autoCompleteEnabledRef = useRef<boolean>(false);
+  const currentExerciseIndexRef = useRef<number>(0);
+  const currentSetIndexRef = useRef<number>(0);
 
   // Sync completedExercises with actual set statuses
   useEffect(() => {
-    const newCompletedExercises = new Set();
+    const newCompletedExercises = new Set<string>();
     demoExercises.forEach(exercise => {
       const allSetsComplete = exercise.setConfigs.every(set => set.status === 'complete');
       if (allSetsComplete) {
@@ -182,7 +264,7 @@ export function DemoWorkoutProvider({ children }) {
   }, [demoExercises]);
 
   // Handle set completion
-  const handleSetComplete = useCallback((exerciseId, setConfig, isManualSwipe = false) => {
+  const handleSetComplete = useCallback((exerciseId: string, setConfig: SetConfig, isManualSwipe: boolean = false) => {
     setDemoExercises(prev => 
       prev.map(exercise => {
         if (exercise.exercise_id === exerciseId) {
@@ -254,13 +336,13 @@ export function DemoWorkoutProvider({ children }) {
   }, [demoExercises, completedExercises, autoCompleteEnabled, autoCompleteInterval]);
 
   // Handle set editing
-  const handleSetEdit = useCallback((exerciseId, setConfig, index) => {
+  const handleSetEdit = useCallback((exerciseId: string, setConfig: SetConfig, index: number) => {
     setEditingSet({ exerciseId, setConfig, index });
     setEditSheetOpen(true);
   }, []);
 
   // Handle set data update
-  const handleSetUpdate = useCallback((exerciseId, setConfig, updates) => {
+  const handleSetUpdate = useCallback((exerciseId: string, setConfig: SetConfig, updates: Partial<SetConfig>) => {
     setDemoExercises(prev => 
       prev.map(exercise => {
         if (exercise.exercise_id === exerciseId) {
@@ -272,7 +354,7 @@ export function DemoWorkoutProvider({ children }) {
                     ...set, 
                     ...updates,
                     // Map 'unit' to 'weight_unit' for compatibility
-                    weight_unit: updates.unit || set.weight_unit || set.unit
+                    weight_unit: (updates as any).unit || set.weight_unit || (set as any).unit
                   }
                 : set
             )
@@ -284,7 +366,7 @@ export function DemoWorkoutProvider({ children }) {
   }, []);
 
   // Handle set deletion
-  const handleSetDelete = useCallback((exerciseId, setConfig) => {
+  const handleSetDelete = useCallback((exerciseId: string, setConfig: SetConfig) => {
     setDemoExercises(prev => 
       prev.map(exercise => {
         if (exercise.exercise_id === exerciseId) {
@@ -322,7 +404,7 @@ export function DemoWorkoutProvider({ children }) {
   }, []);
 
   // Handle exercise focus - allow clicking on any exercise
-  const handleExerciseFocus = useCallback((exerciseId, isManualClick = false) => {
+  const handleExerciseFocus = useCallback((exerciseId: string, isManualClick: boolean = false) => {
     setFocusedExerciseId(exerciseId);
     // If auto-complete is running and user manually clicks, stop it permanently
     if (autoCompleteEnabledRef.current && isManualClick) {
@@ -343,7 +425,7 @@ export function DemoWorkoutProvider({ children }) {
   }, [autoCompleteEnabled, autoCompleteInterval]);
 
   // Handle edit exercise
-  const handleEditExercise = useCallback((exercise) => {
+  const handleEditExercise = useCallback((exercise: DemoExercise) => {
     setEditingExercise({
       id: exercise.id,
       exercise_id: exercise.exercise_id,
@@ -354,8 +436,10 @@ export function DemoWorkoutProvider({ children }) {
   }, []);
 
   // Handle save exercise edit
-  const handleSaveExerciseEdit = useCallback((data) => {
+  const handleSaveExerciseEdit = useCallback((data: { name: string; section: string; setConfigs: SetConfig[] }) => {
     const { name, section, setConfigs } = data;
+    
+    if (!editingExercise) return;
     
     setDemoExercises(prev => {
       const updatedExercises = prev.map(exercise => {
@@ -397,14 +481,14 @@ export function DemoWorkoutProvider({ children }) {
   }, []);
 
   // Handle adding new exercise (form submission)
-  const handleAddExercise = useCallback((exerciseData) => {
+  const handleAddExercise = useCallback((exerciseData: { name: string; section: string; setConfigs: SetConfig[] }) => {
     // Ensure all setConfigs have proper status and other required fields
     const processedSetConfigs = (exerciseData.setConfigs || []).map((setConfig, index) => ({
       id: setConfig.id || `demo-set-new-${Date.now()}-${index + 1}`,
       routine_set_id: setConfig.routine_set_id || `demo-routine-set-new-${Date.now()}-${index + 1}`,
       reps: setConfig.reps || 10,
       weight: setConfig.weight || 0,
-      weight_unit: setConfig.weight_unit || setConfig.unit || 'lbs',
+      weight_unit: setConfig.weight_unit || (setConfig as any).unit || 'lbs',
       set_variant: setConfig.set_variant || `Set ${index + 1}`,
       set_type: setConfig.set_type || 'reps',
       timed_set_duration: setConfig.timed_set_duration || 30,
@@ -412,7 +496,7 @@ export function DemoWorkoutProvider({ children }) {
       set_order: setConfig.set_order || index + 1
     }));
 
-    const newExercise = {
+    const newExercise: DemoExercise = {
       id: `demo-exercise-${Date.now()}`,
       exercise_id: `new-exercise-${Date.now()}`,
       name: exerciseData.name,
@@ -727,7 +811,7 @@ export function DemoWorkoutProvider({ children }) {
     setUserHasInteracted(false);
   }, [autoCompleteInterval]);
 
-  const value = {
+  const value: DemoWorkoutContextType = {
     demoWorkout,
     demoExercises,
     focusedExerciseId,
@@ -770,7 +854,7 @@ export function DemoWorkoutProvider({ children }) {
   );
 }
 
-export function useDemoWorkout() {
+export function useDemoWorkout(): DemoWorkoutContextType {
   const context = useContext(DemoWorkoutContext);
   if (!context) {
     throw new Error('useDemoWorkout must be used within a DemoWorkoutProvider');

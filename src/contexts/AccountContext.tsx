@@ -1,18 +1,40 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { User } from '@supabase/supabase-js';
+
+interface Profile {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface AccountContextType {
+  authUser: User | null;
+  currentUser: User | null;
+  isDelegated: boolean;
+  actingUser: Profile | null;
+  switchToUser: (profile: Profile) => void;
+  returnToSelf: () => void;
+  loading: boolean;
+}
 
 // Context to expose account-switching helpers
-const AccountContext = createContext(null);
+const AccountContext = createContext<AccountContextType | null>(null);
 
-export const AccountProvider = ({ children }) => {
+interface AccountProviderProps {
+  children: ReactNode;
+}
+
+export const AccountProvider = ({ children }: AccountProviderProps) => {
   const { user: authUser } = useAuth(); // signed-in user
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [actingUser, setActingUser] = useState(null); // delegator we are impersonating
-  const [loading, setLoading] = useState(true);
+  const [actingUser, setActingUser] = useState<Profile | null>(null); // delegator we are impersonating
+  const [loading, setLoading] = useState<boolean>(true);
 
   // On mount or when authUser changes, hydrate actingUser from localStorage
   useEffect(() => {
@@ -41,8 +63,8 @@ export const AccountProvider = ({ children }) => {
     })();
   }, [authUser]);
 
-  const switchToUser = (profile) => {
-    if (!profile || profile.id === authUser.id) {
+  const switchToUser = (profile: Profile) => {
+    if (!profile || profile.id === authUser?.id) {
       returnToSelf();
       return;
     }
@@ -91,14 +113,14 @@ export const AccountProvider = ({ children }) => {
   );
 };
 
-export const useAccount = () => {
+export const useAccount = (): AccountContextType => {
   const ctx = useContext(AccountContext);
   if (!ctx) throw new Error("useAccount must be used within an AccountProvider");
   return ctx;
 };
 
 // Convenience hook – mirrors previous usage where components expected `user`
-export const useCurrentUser = () => {
+export const useCurrentUser = (): User | null => {
   const { currentUser } = useAccount();
   return currentUser;
-}; 
+};

@@ -1,11 +1,21 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/supabaseClient';
+import { Session, User } from '@supabase/supabase-js';
 
-const AuthContext = createContext(null);
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+}
 
-export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state change listener');
@@ -33,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const value = {
+  const value: AuthContextType = {
     session,
     user: session?.user || null,
   };
@@ -47,10 +57,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

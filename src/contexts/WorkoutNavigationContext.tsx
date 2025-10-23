@@ -1,13 +1,56 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { 
   areAllExercisesComplete
 } from '@/lib/exerciseNavigation';
 import { useWorkoutAutoFocus } from '@/hooks/useAutoFocus';
 import { ANIMATION_DURATIONS } from '@/lib/scrollSnap';
 
-const WorkoutNavigationContext = createContext();
+interface Exercise {
+  exercise_id: string;
+  setConfigs?: any[];
+  [key: string]: any;
+}
 
-export const useWorkoutNavigation = () => {
+interface SectionExercises {
+  warmup: Exercise[];
+  training: Exercise[];
+  cooldown: Exercise[];
+}
+
+interface LoadedSections {
+  warmup: boolean;
+  training: boolean;
+  cooldown: boolean;
+}
+
+interface FocusedExercise extends Exercise {
+  section: string | null;
+}
+
+interface WorkoutNavigationContextType {
+  sectionExercises: SectionExercises;
+  loadedSections: LoadedSections;
+  completedExercises: Set<string>;
+  focusedExercise: FocusedExercise | null;
+  isRestoringFocus: boolean;
+  updateSectionExercises: (section: string, exercises: Exercise[]) => void;
+  markExerciseComplete: (exerciseId: string) => void;
+  markExerciseIncomplete: (exerciseId: string) => void;
+  setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
+  setSwipeAnimationRunning: (running: boolean) => void;
+  handleSectionComplete: (section: string) => void;
+  isWorkoutComplete: () => boolean;
+  getProgressStats: () => {
+    total: number;
+    completed: number;
+    remaining: number;
+    percentage: number;
+  };
+}
+
+const WorkoutNavigationContext = createContext<WorkoutNavigationContextType | null>(null);
+
+export const useWorkoutNavigation = (): WorkoutNavigationContextType => {
   const context = useContext(WorkoutNavigationContext);
   if (!context) {
     throw new Error('useWorkoutNavigation must be used within a WorkoutNavigationProvider');
@@ -16,11 +59,11 @@ export const useWorkoutNavigation = () => {
 };
 
 // Utility function to find exercise across all sections
-const findExerciseInSections = (exerciseId, sectionExercises) => {
+const findExerciseInSections = (exerciseId: string, sectionExercises: SectionExercises): { exercise: Exercise | null; section: string | null } => {
   const sections = ['warmup', 'training', 'cooldown'];
   
   for (const sectionName of sections) {
-    const exercises = sectionExercises[sectionName] || [];
+    const exercises = sectionExercises[sectionName as keyof SectionExercises] || [];
     const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
     if (exercise) {
       return { exercise, section: sectionName };
@@ -30,36 +73,40 @@ const findExerciseInSections = (exerciseId, sectionExercises) => {
   return { exercise: null, section: null };
 };
 
-export const WorkoutNavigationProvider = ({ children }) => {
+interface WorkoutNavigationProviderProps {
+  children: ReactNode;
+}
+
+export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProviderProps) => {
   // Store exercises for each section
-  const [sectionExercises, setSectionExercises] = useState({
+  const [sectionExercises, setSectionExercises] = useState<SectionExercises>({
     warmup: [],
     training: [],
     cooldown: []
   });
   // Track which sections have finished their initial load
-  const [loadedSections, setLoadedSections] = useState({
+  const [loadedSections, setLoadedSections] = useState<LoadedSections>({
     warmup: false,
     training: false,
     cooldown: false
   });
   
   // Store completed exercises across all sections
-  const [completedExercises, setCompletedExercises] = useState(new Set());
+  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   
   // Store the currently focused exercise
-  const [focusedExercise, setFocusedExercise] = useState(null);
+  const [focusedExercise, setFocusedExercise] = useState<FocusedExercise | null>(null);
   // Timeout handle for deferring focus until previous card collapses
-  const pendingFocusTimeoutRef = useRef(null);
+  const pendingFocusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Block focus changes while a swipe completion animation is running
-  const isSwipeAnimationRunningRef = useRef(false);
-  const queuedFocusRef = useRef(null);
+  const isSwipeAnimationRunningRef = useRef<boolean>(false);
+  const queuedFocusRef = useRef<{ exerciseId: string; section?: string } | null>(null);
   
   // Flag to prevent auto-focus when restoring from database
-  const [isRestoringFocus, setIsRestoringFocus] = useState(false);
+  const [isRestoringFocus, setIsRestoringFocus] = useState<boolean>(false);
 
   // Update exercises for a specific section
-  const updateSectionExercises = useCallback((section, exercises) => {
+  const updateSectionExercises = useCallback((section: string, exercises: Exercise[]) => {
     setSectionExercises(prev => ({
       ...prev,
       [section]: exercises
@@ -68,12 +115,12 @@ export const WorkoutNavigationProvider = ({ children }) => {
   }, []);
 
   // Mark an exercise as completed
-  const markExerciseComplete = useCallback((exerciseId) => {
+  const markExerciseComplete = useCallback((exerciseId: string) => {
     setCompletedExercises(prev => new Set([...prev, exerciseId]));
   }, []);
 
   // Mark an exercise as incomplete (for undo functionality)
-  const markExerciseIncomplete = useCallback((exerciseId) => {
+  const markExerciseIncomplete = useCallback((exerciseId: string) => {
     setCompletedExercises(prev => {
       const newSet = new Set(prev);
       newSet.delete(exerciseId);
@@ -82,7 +129,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
   }, []);
 
   // Set the focused exercise; when switching between different cards, defer until collapse completes
-  const setFocusedExerciseId = useCallback((exerciseId, section) => {
+  const setFocusedExerciseId = useCallback((exerciseId: string | null, section?: string) => {
     if (isSwipeAnimationRunningRef.current) {
       // Defer and queue the most recent focus request until animation finishes
       queuedFocusRef.current = exerciseId ? { exerciseId, section } : null;
@@ -101,7 +148,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
 
     const applyFocus = () => {
       if (section) {
-        const exercises = sectionExercises[section] || [];
+        const exercises = sectionExercises[section as keyof SectionExercises] || [];
         const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
         if (exercise) {
           setFocusedExercise({ ...exercise, section });
@@ -132,7 +179,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
 
     if (section) {
       // Search in specific section
-      const exercises = sectionExercises[section] || [];
+      const exercises = sectionExercises[section as keyof SectionExercises] || [];
       const exercise = exercises.find(ex => ex.exercise_id === exerciseId);
       
       if (exercise) {
@@ -190,8 +237,6 @@ export const WorkoutNavigationProvider = ({ children }) => {
     }
   }, [focusedExercise, isRestoringFocus]);
 
-
-
   // Check if all exercises are complete
   const isWorkoutComplete = useCallback(() => {
     return areAllExercisesComplete(sectionExercises, completedExercises);
@@ -230,7 +275,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
     };
   }, [sectionExercises]);
 
-  const value = {
+  const value: WorkoutNavigationContextType = {
     // State
     sectionExercises,
     loadedSections,
@@ -244,7 +289,7 @@ export const WorkoutNavigationProvider = ({ children }) => {
     markExerciseIncomplete,
     setFocusedExerciseId,
     // Control flags for swipe animation to serialize transitions
-    setSwipeAnimationRunning: (running) => {
+    setSwipeAnimationRunning: (running: boolean) => {
       isSwipeAnimationRunningRef.current = running;
       if (!running && queuedFocusRef.current) {
         const { exerciseId, section } = queuedFocusRef.current;
