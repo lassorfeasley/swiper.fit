@@ -1,0 +1,480 @@
+import { supabase } from '@/supabaseClient';
+import { postEmailEvent } from '@/lib/emailEvents';
+
+/**
+ * Consolidated Sharing API (client helper)
+ * Handles all sharing-related operations including invitations, legacy shares, and permissions
+ */
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+interface Permissions {
+  can_create_routines?: boolean;
+  can_start_workouts?: boolean;
+  can_review_history?: boolean;
+}
+
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface AccountShare {
+  id: string;
+  owner_user_id: string;
+  delegate_user_id?: string;
+  delegate_email?: string;
+  status: string;
+  request_type: string;
+  expires_at: string;
+  can_create_routines: boolean;
+  can_start_workouts: boolean;
+  can_review_history: boolean;
+}
+
+// ============================================================================
+// INVITATION FUNCTIONS
+// ============================================================================
+
+export async function createTrainerInvite(
+  clientEmail: string, 
+  trainerId: string, 
+  permissions: Permissions = {}
+): Promise<void> {
+  try {
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .eq("email", clientEmail.trim().toLowerCase())
+      .limit(1);
+
+    if (profileError) {
+      console.error("Profile lookup error:", profileError);
+      throw new Error("Failed to look up user");
+    }
+
+    if (!profiles?.length) {
+      console.log(`[createTrainerInvite] No user found, creating non-member invitation for: ${clientEmail}`);
+      const { count: pendingDupCount } = await supabase
+        .from("account_shares")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", trainerId)
+        .is("delegate_user_id", null)
+        .eq("delegate_email", clientEmail.trim().toLowerCase())
+        .eq("request_type", "trainer_invite")
+        .eq("status", "pending");
+      if ((pendingDupCount || 0) > 0) {
+        throw new Error("A pending invitation already exists for this email");
+      }
+
+      const invitationData: Partial<AccountShare> = {
+        owner_user_id: trainerId,
+        delegate_user_id: null,
+        delegate_email: clientEmail.trim().toLowerCase(),
+        status: 'pending',
+        request_type: 'trainer_invite',
+        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        can_create_routines: permissions.can_create_routines || false,
+        can_start_workouts: permissions.can_start_workouts || false,
+        can_review_history: permissions.can_review_history || false,
+      };
+
+      const { error: insertError } = await supabase
+        .from("account_shares")
+        .insert(invitationData);
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw new Error("Failed to create invitation");
+      }
+
+      // Send email notification
+      await postEmailEvent('trainer_invitation', clientEmail, {
+        trainer_id: trainerId,
+        permissions: invitationData
+      });
+
+      return;
+    }
+
+    // User exists, create member invitation
+    const clientProfile = profiles[0] as Profile;
+    console.log(`[createTrainerInvite] User found, creating member invitation for: ${clientProfile.email}`);
+
+    // Check for existing pending invitation
+    const { count: pendingDupCount } = await supabase
+      .from("account_shares")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_user_id", trainerId)
+      .eq("delegate_user_id", clientProfile.id)
+      .eq("request_type", "trainer_invite")
+      .eq("status", "pending");
+    
+    if ((pendingDupCount || 0) > 0) {
+      throw new Error("A pending invitation already exists for this user");
+    }
+
+    const invitationData: Partial<AccountShare> = {
+      owner_user_id: trainerId,
+      delegate_user_id: clientProfile.id,
+      delegate_email: clientProfile.email,
+      status: 'pending',
+      request_type: 'trainer_invite',
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      can_create_routines: permissions.can_create_routines || false,
+      can_start_workouts: permissions.can_start_workouts || false,
+      can_review_history: permissions.can_review_history || false,
+    };
+
+    const { error: insertError } = await supabase
+      .from("account_shares")
+      .insert(invitationData);
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw new Error("Failed to create invitation");
+    }
+
+    // Send email notification
+    await postEmailEvent('trainer_invitation', clientProfile.email, {
+      trainer_id: trainerId,
+      client_profile: clientProfile,
+      permissions: invitationData
+    });
+
+  } catch (error) {
+    console.error("createTrainerInvite error:", error);
+    throw error;
+  }
+}
+
+export async function createClientInvite(
+  trainerEmail: string, 
+  clientId: string, 
+  permissions: Permissions = {}
+): Promise<void> {
+  try {
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .eq("email", trainerEmail.trim().toLowerCase())
+      .limit(1);
+
+    if (profileError) {
+      console.error("Profile lookup error:", profileError);
+      throw new Error("Failed to look up trainer");
+    }
+
+    if (!profiles?.length) {
+      console.log(`[createClientInvite] No trainer found, creating non-member invitation for: ${trainerEmail}`);
+      const { count: pendingDupCount } = await supabase
+        .from("account_shares")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", clientId)
+        .is("delegate_user_id", null)
+        .eq("delegate_email", trainerEmail.trim().toLowerCase())
+        .eq("request_type", "client_invite")
+        .eq("status", "pending");
+      if ((pendingDupCount || 0) > 0) {
+        throw new Error("A pending invitation already exists for this email");
+      }
+
+      const invitationData: Partial<AccountShare> = {
+        owner_user_id: clientId,
+        delegate_user_id: null,
+        delegate_email: trainerEmail.trim().toLowerCase(),
+        status: 'pending',
+        request_type: 'client_invite',
+        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        can_create_routines: permissions.can_create_routines || false,
+        can_start_workouts: permissions.can_start_workouts || false,
+        can_review_history: permissions.can_review_history || false,
+      };
+
+      const { error: insertError } = await supabase
+        .from("account_shares")
+        .insert(invitationData);
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw new Error("Failed to create invitation");
+      }
+
+      // Send email notification
+      await postEmailEvent('client_invitation', trainerEmail, {
+        client_id: clientId,
+        permissions: invitationData
+      });
+
+      return;
+    }
+
+    // Trainer exists, create member invitation
+    const trainerProfile = profiles[0] as Profile;
+    console.log(`[createClientInvite] Trainer found, creating member invitation for: ${trainerProfile.email}`);
+
+    // Check for existing pending invitation
+    const { count: pendingDupCount } = await supabase
+      .from("account_shares")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_user_id", clientId)
+      .eq("delegate_user_id", trainerProfile.id)
+      .eq("request_type", "client_invite")
+      .eq("status", "pending");
+    
+    if ((pendingDupCount || 0) > 0) {
+      throw new Error("A pending invitation already exists for this trainer");
+    }
+
+    const invitationData: Partial<AccountShare> = {
+      owner_user_id: clientId,
+      delegate_user_id: trainerProfile.id,
+      delegate_email: trainerProfile.email,
+      status: 'pending',
+      request_type: 'client_invite',
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      can_create_routines: permissions.can_create_routines || false,
+      can_start_workouts: permissions.can_start_workouts || false,
+      can_review_history: permissions.can_review_history || false,
+    };
+
+    const { error: insertError } = await supabase
+      .from("account_shares")
+      .insert(invitationData);
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw new Error("Failed to create invitation");
+    }
+
+    // Send email notification
+    await postEmailEvent('client_invitation', trainerProfile.email, {
+      client_id: clientId,
+      trainer_profile: trainerProfile,
+      permissions: invitationData
+    });
+
+  } catch (error) {
+    console.error("createClientInvite error:", error);
+    throw error;
+  }
+}
+
+export async function acceptInvitation(invitationId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("account_shares")
+      .update({ status: 'accepted' })
+      .eq("id", invitationId);
+
+    if (error) {
+      console.error("Accept invitation error:", error);
+      throw new Error("Failed to accept invitation");
+    }
+  } catch (error) {
+    console.error("acceptInvitation error:", error);
+    throw error;
+  }
+}
+
+export async function rejectInvitation(invitationId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("account_shares")
+      .update({ status: 'rejected' })
+      .eq("id", invitationId);
+
+    if (error) {
+      console.error("Reject invitation error:", error);
+      throw new Error("Failed to reject invitation");
+    }
+  } catch (error) {
+    console.error("rejectInvitation error:", error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// LEGACY SHARING FUNCTIONS
+// ============================================================================
+
+export async function createShare(
+  ownerId: string, 
+  delegateId: string, 
+  permissions: Permissions = {}
+): Promise<void> {
+  try {
+    const shareData: Partial<AccountShare> = {
+      owner_user_id: ownerId,
+      delegate_user_id: delegateId,
+      status: 'accepted',
+      request_type: 'legacy_share',
+      can_create_routines: permissions.can_create_routines || false,
+      can_start_workouts: permissions.can_start_workouts || false,
+      can_review_history: permissions.can_review_history || false,
+    };
+
+    const { error } = await supabase
+      .from("account_shares")
+      .insert(shareData);
+
+    if (error) {
+      console.error("Create share error:", error);
+      throw new Error("Failed to create share");
+    }
+  } catch (error) {
+    console.error("createShare error:", error);
+    throw error;
+  }
+}
+
+export async function updateSharePermissions(
+  shareId: string, 
+  permissions: Permissions
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("account_shares")
+      .update({
+        can_create_routines: permissions.can_create_routines || false,
+        can_start_workouts: permissions.can_start_workouts || false,
+        can_review_history: permissions.can_review_history || false,
+      })
+      .eq("id", shareId);
+
+    if (error) {
+      console.error("Update share permissions error:", error);
+      throw new Error("Failed to update share permissions");
+    }
+  } catch (error) {
+    console.error("updateSharePermissions error:", error);
+    throw error;
+  }
+}
+
+export async function removeShare(shareId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("account_shares")
+      .delete()
+      .eq("id", shareId);
+
+    if (error) {
+      console.error("Remove share error:", error);
+      throw new Error("Failed to remove share");
+    }
+  } catch (error) {
+    console.error("removeShare error:", error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// QUERY FUNCTIONS
+// ============================================================================
+
+export async function getPendingInvitations(userId: string): Promise<AccountShare[]> {
+  try {
+    const { data, error } = await supabase
+      .from("account_shares")
+      .select("*")
+      .eq("delegate_user_id", userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get pending invitations error:", error);
+      throw new Error("Failed to get pending invitations");
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("getPendingInvitations error:", error);
+    throw error;
+  }
+}
+
+export async function getAccountShares(userId: string): Promise<AccountShare[]> {
+  try {
+    const { data, error } = await supabase
+      .from("account_shares")
+      .select("*")
+      .or(`owner_user_id.eq.${userId},delegate_user_id.eq.${userId}`)
+      .eq("status", "accepted")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get account shares error:", error);
+      throw new Error("Failed to get account shares");
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("getAccountShares error:", error);
+    throw error;
+  }
+}
+
+export async function getSharedAccounts(userId: string): Promise<AccountShare[]> {
+  try {
+    const { data, error } = await supabase
+      .from("account_shares")
+      .select("*")
+      .eq("delegate_user_id", userId)
+      .eq("status", "accepted")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get shared accounts error:", error);
+      throw new Error("Failed to get shared accounts");
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("getSharedAccounts error:", error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+export function hasPermission(
+  share: AccountShare, 
+  permission: keyof Permissions
+): boolean {
+  return share[permission] || false;
+}
+
+export function canCreateRoutines(share: AccountShare): boolean {
+  return hasPermission(share, 'can_create_routines');
+}
+
+export function canStartWorkouts(share: AccountShare): boolean {
+  return hasPermission(share, 'can_start_workouts');
+}
+
+export function canReviewHistory(share: AccountShare): boolean {
+  return hasPermission(share, 'can_review_history');
+}
+
+export function isExpired(share: AccountShare): boolean {
+  return new Date(share.expires_at) < new Date();
+}
+
+export function isPending(share: AccountShare): boolean {
+  return share.status === 'pending';
+}
+
+export function isAccepted(share: AccountShare): boolean {
+  return share.status === 'accepted';
+}
+
+export function isRejected(share: AccountShare): boolean {
+  return share.status === 'rejected';
+}
