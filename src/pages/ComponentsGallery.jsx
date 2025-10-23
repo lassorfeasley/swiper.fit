@@ -263,7 +263,7 @@ export default function ComponentsGallery() {
                 { value: 'astro', label: 'Astro' },
               ]}
               placeholder="Filter workouts"
-              filterPlaceholder="Search routines"
+              filterPlaceholder="Search"
               width={240}
               className=""
             />

@@ -341,8 +341,8 @@ const History = () => {
           items={routineOptions}
           value={selectedRoutine}
           onChange={setSelectedRoutine}
-          placeholder="Filter by routine"
-          filterPlaceholder="Search routines"
+          placeholder="Filter routines"
+          filterPlaceholder="Search"
           width={240}
           useRelativePositioning={true}
         />
