@@ -1,5 +1,4 @@
 import React, { useState, useEffect, memo, useRef } from "react";
-import PropTypes from "prop-types";
 import NumericInput from "@/components/shared/inputs/NumericInput";
 import DurationInput from "@/components/shared/inputs/DurationInput";
 import { SwiperButton } from "@/components/shared/SwiperButton";
@@ -8,6 +7,35 @@ import { TextInput } from "@/components/shared/inputs/TextInput";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { MAX_SET_NAME_LEN } from "@/lib/constants";
+
+interface SetEditFormProps {
+  formPrompt?: string;
+  onSave?: (values: any) => void;
+  onSaveForFuture?: (values: any) => void;
+  onDelete?: () => void;
+  saveButtonText?: string;
+  onValuesChange?: (values: any) => void;
+  isChildForm?: boolean;
+  initialValues?: {
+    reps: number;
+    weight: number;
+    unit: "kg" | "lbs" | "body";
+    set_type: string;
+    timed_set_duration?: number;
+    set_variant: string;
+    ui_id?: number;
+  };
+  className?: string;
+  showSetNameField?: boolean;
+  hideActionButtons?: boolean;
+  hideInternalHeader?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
+  isUnscheduled?: boolean;
+  onSetProgrammaticUpdate?: (values: any) => void;
+  addType?: string;
+  onAddTypeChange?: (type: string) => void;
+  hideToggle?: boolean;
+}
 
 const setTypeOptions = [
   { label: "Reps", value: "reps" },
@@ -187,7 +215,7 @@ const FormContent = ({
   );
 };
 
-const SetEditForm = React.forwardRef((
+const SetEditForm = React.forwardRef<any, SetEditFormProps>((
     {
       formPrompt = "Edit set",
       onSave,
@@ -323,11 +351,7 @@ const SetEditForm = React.forwardRef((
 
       if (isProgramUpdate) {
         if (onSetProgrammaticUpdate) {
-          onSetProgrammaticUpdate(
-            formValues.exerciseId,
-            formValues.routine_set_id,
-            formValues
-          );
+          onSetProgrammaticUpdate(formValues);
         }
       } else {
         if (onSave) {
@@ -358,34 +382,5 @@ const SetEditForm = React.forwardRef((
 });
 
 SetEditForm.displayName = "SetEditForm";
-
-SetEditForm.propTypes = {
-  formPrompt: PropTypes.string,
-  onSave: PropTypes.func,
-  onSaveForFuture: PropTypes.func,
-  onDelete: PropTypes.func,
-  saveButtonText: PropTypes.string,
-  onValuesChange: PropTypes.func,
-  isChildForm: PropTypes.bool,
-  initialValues: PropTypes.shape({
-    reps: PropTypes.number,
-    weight: PropTypes.number,
-    unit: PropTypes.oneOf(["kg", "lbs", "body"]),
-    set_type: PropTypes.string,
-    timed_set_duration: PropTypes.number,
-    set_variant: PropTypes.string,
-    ui_id: PropTypes.number,
-  }),
-  className: PropTypes.string,
-  showSetNameField: PropTypes.bool,
-  hideActionButtons: PropTypes.bool,
-  hideInternalHeader: PropTypes.bool,
-  onDirtyChange: PropTypes.func,
-  isUnscheduled: PropTypes.bool,
-  onSetProgrammaticUpdate: PropTypes.func,
-  addType: PropTypes.string,
-  onAddTypeChange: PropTypes.func,
-  hideToggle: PropTypes.bool,
-};
 
 export default SetEditForm;

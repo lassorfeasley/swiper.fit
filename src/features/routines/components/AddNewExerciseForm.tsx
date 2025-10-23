@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { MAX_EXERCISE_NAME_LEN } from "@/lib/constants";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
@@ -11,7 +10,28 @@ import SetBuilderForm from "./SetBuilderForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { Minus, Plus } from "lucide-react";
 
-const AddNewExerciseForm = React.forwardRef(
+interface AddNewExerciseFormProps {
+  onActionIconClick?: () => void;
+  onDelete?: () => void;
+  formPrompt?: string;
+  initialName?: string;
+  initialSets?: number;
+  initialSection?: string;
+  initialSetConfigs?: any[];
+  onDirtyChange?: (isDirty: boolean) => void;
+  hideActionButtons?: boolean;
+  showAddToProgramToggle?: boolean;
+  showSectionToggle?: boolean;
+  showUpdateTypeToggle?: boolean;
+  updateType?: string;
+  onUpdateTypeChange?: (type: string) => void;
+  onEditSet?: (setId: string) => void;
+  onSetsConfigChange?: (configs: any[]) => void;
+  disabled?: boolean;
+  hideSetDefaults?: boolean;
+}
+
+const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormProps>(
   (
     {
       onActionIconClick,
@@ -99,7 +119,7 @@ const AddNewExerciseForm = React.forwardRef(
       
       if (initialSetConfigs.length > 0) {
         initialSetConfigs.forEach((cfg, idx) => {
-          Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k, v));
+          Object.entries(cfg).forEach(([k, v]) => updateSetField(idx, k as any, v));
           
           // Ensure each set has a proper set_variant name
           if (!cfg.set_variant) {
@@ -176,20 +196,12 @@ const AddNewExerciseForm = React.forwardRef(
       console.log('[DEBUG] Final setConfigs with set_variant names:', setConfigs.map((set, idx) => ({ 
         index: idx, 
         set_variant: set.set_variant, 
-        id: set.id,
-        routine_set_id: set.routine_set_id 
+        id: (set as any).id,
+        routine_set_id: (set as any).routine_set_id 
       })));
 
       if (onActionIconClick) {
-        onActionIconClick(
-          {
-            name: exerciseName.trim(),
-            section,
-            sets: setsCount,
-            setConfigs,
-          },
-          addType
-        );
+        onActionIconClick();
       }
     };
 
@@ -375,27 +387,6 @@ const AddNewExerciseForm = React.forwardRef(
     );
   }
 );
-
-AddNewExerciseForm.propTypes = {
-  onActionIconClick: PropTypes.func,
-  onDelete: PropTypes.func,
-  formPrompt: PropTypes.string,
-  initialName: PropTypes.string,
-  initialSets: PropTypes.number,
-  initialSection: PropTypes.string,
-  initialSetConfigs: PropTypes.array,
-  onDirtyChange: PropTypes.func,
-  hideActionButtons: PropTypes.bool,
-  showAddToProgramToggle: PropTypes.bool,
-  showSectionToggle: PropTypes.bool,
-  showUpdateTypeToggle: PropTypes.bool,
-  updateType: PropTypes.string,
-  onUpdateTypeChange: PropTypes.func,
-  onEditSet: PropTypes.func,
-  onSetsConfigChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  hideSetDefaults: PropTypes.bool,
-};
 
 AddNewExerciseForm.displayName = "AddNewExerciseForm";
 

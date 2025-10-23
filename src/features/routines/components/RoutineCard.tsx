@@ -1,10 +1,21 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Play, Cog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "sonner";
 import ActionPill from "@/components/shared/ActionPill";
+
+interface RoutineCardProps {
+  id: string | number;
+  name: string;
+  lastCompleted?: string;
+  routineData?: any;
+  isFirstCard?: boolean;
+  hideStart?: boolean;
+  onCardClick?: (id: string | number) => void;
+  onStartClick?: (routineData: any) => void;
+  onSettingsClick?: (id: string | number) => void;
+}
 
 /**
  * RoutineCard – card representation of a workout program with direct start and builder access.
@@ -16,11 +27,11 @@ import ActionPill from "@/components/shared/ActionPill";
  *  • routineData – full routine data object for starting workouts.
  *  • isFirstCard – whether this is the first card (unused).
  */
-const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideStart, onCardClick, onStartClick, onSettingsClick }) => {
+const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideStart, onCardClick, onStartClick, onSettingsClick }: RoutineCardProps) => {
   const navigate = useNavigate();
   const { startWorkout } = useActiveWorkout();
 
-  const handleStartWorkout = async (e) => {
+  const handleStartWorkout = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     if (!routineData) {
       toast.error("Routine data not available");
@@ -32,14 +43,14 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
       const formattedRoutine = {
         id: routineData.id,
         routine_name: routineData.routine_name,
-        routine_exercises: (routineData.routine_exercises || []).map((re) => ({
+        routine_exercises: (routineData.routine_exercises || []).map((re: any) => ({
           id: re.id,
           exercise_id: re.exercise_id,
           exercises: {
             name: re.exercises?.name,
             section: re.exercises?.section
           },
-          routine_sets: (re.routine_sets || []).map((rs) => ({
+          routine_sets: (re.routine_sets || []).map((rs: any) => ({
             id: rs.id,
             reps: rs.reps,
             weight: rs.weight,
@@ -52,31 +63,36 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
         }))
       };
 
-      await startWorkout(formattedRoutine);
+      await startWorkout(formattedRoutine as any);
       navigate("/workout/active");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to start workout:", error);
       toast.error("Failed to start workout: " + error.message);
     }
   };
 
-  const handleSettingsClick = (e) => {
+  const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     if (onSettingsClick) {
-      onSettingsClick(e);
+      onSettingsClick(id);
       return;
     }
     navigate(`/routines/${id}/configure`);
   };
 
   const handleCardClick = () => {
-    navigate(`/routines/${id}/configure`);
+    if (onCardClick) {
+      onCardClick(id);
+    } else {
+      navigate(`/routines/${id}/configure`);
+    }
   };
+
   return (
     <div
       data-layer="Routine Card"
       className="RoutineCard w-full p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer"
-      onClick={onCardClick || handleCardClick}
+      onClick={handleCardClick}
     >
       <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
         <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
@@ -94,7 +110,7 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
             <ActionPill
               label="Edit routine"
               Icon={Cog}
-              onClick={handleSettingsClick}
+              onClick={() => handleSettingsClick({} as React.MouseEvent)}
               color="neutral"
               iconColor="neutral"
               showText={true}
@@ -104,17 +120,4 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
   );
 };
 
-RoutineCard.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  name: PropTypes.string.isRequired,
-  lastCompleted: PropTypes.string,
-  routineData: PropTypes.object,
-  isFirstCard: PropTypes.bool,
-  hideStart: PropTypes.bool,
-  onCardClick: PropTypes.func,
-  onStartClick: PropTypes.func,
-  onSettingsClick: PropTypes.func,
-};
-
-export default RoutineCard; 
-// gjkgfhjk
+export default RoutineCard;
