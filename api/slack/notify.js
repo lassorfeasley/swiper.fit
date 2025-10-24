@@ -54,8 +54,6 @@ export default async function handler(req, res) {
 // --- Helpers ---
 import { getSupabaseServerClient } from '../../server/supabase.js';
 
-const supabase = getSupabaseServerClient();
-
 async function buildFriendlyPayload(event, context, data) {
   const env = context.env || process.env.VERCEL_ENV || 'production';
   const contextLabel = { type: 'context', elements: [{ type: 'mrkdwn', text: `env: \`${env}\`` }] };
@@ -111,6 +109,7 @@ async function buildFriendlyPayload(event, context, data) {
 async function getUserDisplayName(userId) {
   try {
     if (!userId) return null;
+    const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from('profiles')
       .select('first_name, last_name, email')
@@ -129,6 +128,7 @@ async function getUserDisplayName(userId) {
 async function getRoutineName(routineId) {
   try {
     if (!routineId) return null;
+    const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from('routines')
       .select('routine_name')
