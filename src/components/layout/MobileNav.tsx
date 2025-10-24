@@ -2,46 +2,52 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/lib/utils";
-import { useAccount } from "@/contexts/AccountContext";
 
 const MobileNav: React.FC = () => {
   const navItems = useNavItems();
-  const location = useLocation();
-  const { isDelegated } = useAccount();
+  const { pathname } = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-neutral-300 mobile-nav">
-      <div className="flex items-center justify-around h-20 px-2">
+    <div className="md:hidden fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 px-5 pb-4">
+      <div className="w-96 h-16 bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-between items-center px-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to || 
-            (item.to !== "/" && location.pathname.startsWith(item.to));
+          const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
           
           return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex flex-col items-center justify-center min-h-12 px-3 py-2 rounded-xl transition-colors",
-                "hover:bg-neutral-neutral-100 active:bg-neutral-neutral-200",
-                isActive 
-                  ? "text-neutral-neutral-600 bg-neutral-neutral-100" 
-                  : "text-neutral-neutral-600",
-                item.disabled && "opacity-50 pointer-events-none"
-              )}
-            >
-              <div className="flex items-center justify-center w-6 h-6 mb-1">
-                {React.cloneElement(item.icon, {
-                  className: "size-5 text-neutral-neutral-600"
-                })}
-              </div>
-              <span className="text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide text-center">
-                {item.label}
-              </span>
-            </Link>
+            <div key={item.to} className="flex-1">
+              <Link
+                to={item.to}
+                className={cn(
+                  "flex flex-col justify-center items-center gap-2 w-full",
+                  item.disabled && "opacity-50 pointer-events-none"
+                )}
+                aria-current={selected ? "page" : undefined}
+              >
+                <div className={cn(
+                  "self-stretch flex-1 py-1 flex flex-col justify-center items-center gap-2",
+                  selected ? "bg-neutral-100/60 rounded-[100px]" : ""
+                )}>
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <span className={cn(
+                      "size-5",
+                      selected ? "text-neutral-neutral-700" : "text-neutral-neutral-400"
+                    )}>
+                      {item.icon}
+                    </span>
+                  </div>
+                  <div className={cn(
+                    "text-center text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide",
+                    selected ? "text-neutral-neutral-700" : "text-neutral-neutral-400"
+                  )}>
+                    {item.label}
+                  </div>
+                </div>
+              </Link>
+            </div>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 };
 
