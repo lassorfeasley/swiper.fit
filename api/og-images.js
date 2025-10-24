@@ -49,8 +49,8 @@ export default async function handler(req, res) {
 async function handleWorkoutOG(req, res, workoutId) {
   // For now, redirect to default OG image
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
-  const host = `https://${req.headers.host}`;
-  return res.redirect(302, `${host}/images/default-open-graph.png`);
+  res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
+  return res.status(302).end();
 }
 
 // ============================================================================
@@ -63,8 +63,8 @@ async function handleRoutineOG(req, res, routineId, userAgent) {
 
   // For now, redirect to default OG image
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
-  const host = `https://${req.headers.host}`;
-  return res.redirect(302, `${host}/images/default-open-graph.png`);
+  res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
+  return res.status(302).end();
 }
 
 // ============================================================================
@@ -91,6 +91,6 @@ async function handleUserHistoryOG(req, res, userId) {
 
   // For now, redirect to default OG image
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
-  const host = `https://${req.headers.host}`;
-  return res.redirect(302, `${host}/images/default-open-graph.png`);
+  res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
+  return res.status(302).end();
 }
