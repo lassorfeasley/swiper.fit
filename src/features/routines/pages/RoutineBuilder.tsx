@@ -920,11 +920,6 @@ const RoutineBuilder = () => {
         onSettings={() => setEditProgramOpen(true)}
         showDelete={true}
         onDelete={() =>	setDeleteProgramConfirmOpen(true)}
-        showUpload={true}
-        onUpload={() => {
-          // TODO: Implement upload functionality
-          console.log('Upload routine');
-        }}
         showSidebar={!isDelegated && !isMobile}
         sharingSection={undefined}
       >
