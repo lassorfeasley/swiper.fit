@@ -117,8 +117,8 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/routines/public/${routineId}`;
     
-    const title = ownerName ? `${ownerName} shared an exercise routine on Swiper.Fit` : 'Exercise routine on Swiper.Fit';
-    const description = `Swiper.Fit is the effortless way to log workouts`;
+    const title = ownerName ? `${ownerName} shared a ${routine.routine_name} on Swiper` : `${routine.routine_name} on Swiper`;
+    const description = `Swiper is the effortless way to log workouts`;
     
     // Use pre-generated OG image if available, otherwise use API endpoint
     const ogImageUrl = routine.og_image_url || `${baseUrl}/api/og-images?type=routine&routineId=${routineId}`;
@@ -285,8 +285,8 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     const exerciseCount = workout.workout_exercises?.length || 0;
     const setCount = workout.sets?.length || 0;
 
-    const title = `${ownerName}'s ${workout.workout_name || routineName}`;
-    const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}`;
+    const title = `${ownerName} completed a ${workout.workout_name || routineName} on Swiper`;
+    const description = `Swiper is the effortless way to log workouts`;
     
     // Use pre-generated OG image if available, otherwise use API endpoint
     const ogImage = workout.og_image_url || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
