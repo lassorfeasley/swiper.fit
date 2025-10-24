@@ -19,6 +19,6 @@
     { "source": "/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
     { "source": "/app/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
     { "source": "/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 } 
