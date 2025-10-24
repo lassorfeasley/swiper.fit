@@ -178,7 +178,7 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
           <div className="flex items-center gap-2 flex-shrink-0">
             {sharingSection || sharingNavContent}
             
-            {!(sharingSection || sharingNavContent) && (showSearch || showSettings || showPlusButton || showShare || showUpload || showDelete) && (
+            {!(sharingSection || sharingNavContent) && (showSearch || showSettings || showPlusButton || showShare || showUpload || showDelete || showStartWorkoutIcon) && (
               <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
                 {showSearch && !isSearchActive && (
                   <button
@@ -227,6 +227,16 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
                     aria-label="Share"
                   >
                     <Share className="w-6 h-6 text-white" />
+                  </button>
+                )}
+
+                {showStartWorkoutIcon && (
+                  <button
+                    onClick={onStartWorkoutIcon}
+                    className="h-10 min-w-10 py-3 bg-green-600 rounded-[20px] flex justify-center items-center gap-1"
+                    aria-label="Start Workout"
+                  >
+                    <Play className="w-6 h-6 text-white" />
                   </button>
                 )}
 
