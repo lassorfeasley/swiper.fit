@@ -53,10 +53,10 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
 
   // Bot/crawler - serve static HTML with OG tags
   try {
-    // Fetch routine and visibility
+    // Fetch routine and visibility including OG image URL
     const { data: routine, error: routineError } = await supabase
       .from('routines')
-      .select(`id, routine_name, is_public, user_id, created_by, shared_by`)
+      .select(`id, routine_name, is_public, user_id, created_by, shared_by, og_image_url`)
       .eq('id', routineId)
       .single();
 
@@ -119,6 +119,9 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
     
     const title = ownerName ? `${ownerName} shared an exercise routine on Swiper.Fit` : 'Exercise routine on Swiper.Fit';
     const description = `Swiper.Fit is the effortless way to log workouts`;
+    
+    // Use pre-generated OG image if available, otherwise use API endpoint
+    const ogImageUrl = routine.og_image_url || `${baseUrl}/api/og-images?type=routine&routineId=${routineId}`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -133,14 +136,14 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${baseUrl}/api/og-images?type=routine&routineId=${routineId}">
+  <meta property="og:image" content="${ogImageUrl}">
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${pageUrl}">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="${baseUrl}/api/og-images?type=routine&routineId=${routineId}">
+  <meta property="twitter:image" content="${ogImageUrl}">
   
   <style>
     body {
@@ -241,7 +244,7 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
       `);
     }
 
-    // Fetch workout data
+    // Fetch workout data including OG image URL
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
@@ -284,7 +287,9 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
 
     const title = `${ownerName}'s ${workout.workout_name || routineName}`;
     const description = `${ownerName} completed ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} with ${setCount} set${setCount !== 1 ? 's' : ''}`;
-    const ogImage = `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
+    
+    // Use pre-generated OG image if available, otherwise use API endpoint
+    const ogImage = workout.og_image_url || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
