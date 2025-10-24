@@ -130,9 +130,7 @@ export function formatEvent(eventKey, contextData = {}, data = {}) {
         text: `${eventKey} (${env})`,
         blocks: [
           header(`🔔 ${eventKey}`),
-          sectionMarkdown('```
-' + JSON.stringify({ context: contextData, data }, null, 2) + '
-```'),
+          sectionMarkdown('```\n' + JSON.stringify({ context: contextData, data }, null, 2) + '\n```'),
           divider(),
           context(commonContext),
         ],
