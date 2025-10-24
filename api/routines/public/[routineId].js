@@ -92,7 +92,7 @@ export default async function handler(req, res) {
     const exerciseCount = (routineExercises || []).length;
     const setCount = (routineSets || []).length;
 
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiper.fit';
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/routines/public/${routineId}`;
     
     // Headline and subtitle for OG cards and visible header
@@ -132,14 +132,14 @@ function generateHTML({ title, description, url, routineName, ownerName, exercis
   <meta property="og:url" content="${url}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiper.fit'}/api/og-images?type=routine&routineId=${routineId}">
+  <meta property="og:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/og-images?type=routine&routineId=${routineId}">
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${url}">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://swiper.fit'}/api/og-images?type=routine&routineId=${routineId}">
+  <meta property="twitter:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/og-images?type=routine&routineId=${routineId}">
   
   <style>
     body {
