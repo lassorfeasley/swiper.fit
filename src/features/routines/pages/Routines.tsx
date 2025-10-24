@@ -192,29 +192,10 @@ const RoutinesIndex = () => {
     <AppLayout
       reserveSpace={false}
       title="Routines"
-      showPlusButton={true}
-      onAdd={() => {
-        setShowSheet(true);
-        setProgramName("");
-        setTimeout(() => {
-          if (inputRef.current) inputRef.current.focus();
-        }, 100);
-      }}
-      showShare={true}
-      onShare={() => {
-        // TODO: Implement share functionality
-        console.log('Share routines');
-      }}
-      showSettings={true}
-      onSettings={() => {
-        // TODO: Implement settings functionality
-        console.log('Routine settings');
-      }}
-      showDelete={true}
-      onDelete={() => {
-        // TODO: Implement delete functionality
-        console.log('Delete routine');
-      }}
+      showPlusButton={false}
+      showShare={false}
+      showSettings={false}
+      showDelete={false}
       showSearch={false}
       showBackButton={false}
       search={false}

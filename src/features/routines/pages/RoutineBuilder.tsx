@@ -911,6 +911,12 @@ const RoutineBuilder = () => {
         title={programName || "Build your routine"}
         sharingNavAbove={isDelegated}
         sharingNavContent={headerSharingContent}
+        showPlusButton={true}
+        onAdd={() => {
+          // Add new exercise functionality
+          setAddExerciseSection("training");
+          setShowAddExercise(true);
+        }}
         showShare={true}
         onShare={shareRoutine}
         showStartWorkoutIcon={!isDelegated}
@@ -919,6 +925,11 @@ const RoutineBuilder = () => {
         onSettings={() => setEditProgramOpen(true)}
         showDelete={true}
         onDelete={() =>	setDeleteProgramConfirmOpen(true)}
+        showUpload={true}
+        onUpload={() => {
+          // TODO: Implement upload functionality
+          console.log('Upload routine');
+        }}
         showSidebar={!isDelegated && !isMobile}
         sharingSection={undefined}
       >
