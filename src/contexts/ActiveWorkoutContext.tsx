@@ -162,6 +162,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           .from('workouts')
           .select(`
             *,
+            routines!workouts_routine_id_fkey(
+              routine_name
+            ),
             sets!sets_workout_id_fkey(
               *
             )
@@ -186,6 +189,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 .from('workouts')
                 .select(`
                   *,
+                  routines!workouts_routine_id_fkey(
+                    routine_name
+                  ),
                   sets!sets_workout_id_fkey(
                     *
                   )

@@ -83,11 +83,11 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
     <>
       {/* PrimaryNavScrollable - scrolls away */}
       <div data-layer="active-workout-name-and-routine" className="ActiveWorkoutNameAndRoutine self-stretch flex flex-col justify-center items-start px-4 md:px-8 pt-5 pb-0 bg-stone-100">
-        <div data-layer="workout-name" className="self-stretch justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-[24px]">
-          {activeWorkout?.workout_name || ""}
+        <div data-layer="workout-name" className="self-stretch justify-center text-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">
+          {activeWorkout?.workout_name || "Test Workout Name"}
         </div>
-        <div data-layer="routine-name" className="self-stretch justify-center text-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-          {activeWorkout?.routine_name || ""}
+        <div data-layer="routine-name" className="self-stretch justify-center text-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-normal">
+          {activeWorkout?.routine_name || activeWorkout?.routines?.routine_name || "Test Routine Name"}
         </div>
       </div>
 
