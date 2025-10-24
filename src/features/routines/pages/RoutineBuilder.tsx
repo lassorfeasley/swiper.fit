@@ -911,13 +911,8 @@ const RoutineBuilder = () => {
         title={programName || "Build your routine"}
         sharingNavAbove={isDelegated}
         sharingNavContent={headerSharingContent}
-        showPlusButton={true}
-        onAdd={() => {
-          // Add new exercise functionality
-          setAddExerciseSection("training");
-          setShowAddExercise(true);
-        }}
-        showShare={false}
+        showPlusButton={false}
+        showShare={true}
         onShare={shareRoutine}
         showStartWorkoutIcon={!isDelegated}
         onStartWorkoutIcon={handleStartWorkout}
