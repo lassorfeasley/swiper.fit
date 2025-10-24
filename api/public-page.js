@@ -12,9 +12,9 @@ export default async function handler(req, res) {
 
   // Route to appropriate handler
   if (type === 'routine') {
-    return await handleRoutinePage(req, res, id, isBot, userAgent);
+    return await handleRoutinePage(req, res, id, isBot, userAgent, supabase);
   } else if (type === 'workout') {
-    return await handleWorkoutPage(req, res, id, isBot, userAgent);
+    return await handleWorkoutPage(req, res, id, isBot, userAgent, supabase);
   } else {
     return res.status(400).send('Invalid type parameter. Use type=routine or type=workout');
   }
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 // ============================================================================
 // ROUTINE PUBLIC PAGE HANDLER
 // ============================================================================
-async function handleRoutinePage(req, res, routineId, isBot, userAgent) {
+async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase) {
   if (!routineId) {
     return res.status(400).send('Missing required routineId');
   }
@@ -207,7 +207,7 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent) {
 // ============================================================================
 // WORKOUT PUBLIC PAGE HANDLER
 // ============================================================================
-async function handleWorkoutPage(req, res, workoutId, isBot, userAgent) {
+async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase) {
   if (!isBot) {
     // Real user - redirect to the main app
     return res.redirect(302, '/');
