@@ -65,7 +65,7 @@ const RoutineBuilder = () => {
   const ogLastRunRef = useRef(0);
   
   // Use spacing hook for consistent layout
-  const spacing = useSpacing('SECTION_BASED');
+  const spacing = useSpacing('SIMPLE_LIST');
   
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
