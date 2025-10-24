@@ -2,9 +2,8 @@ import { getSupabaseServerClient } from '../server/supabase.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const supabase = getSupabaseServerClient();
-
 export default async function handler(req, res) {
+  const supabase = getSupabaseServerClient();
   const { type, id } = req.query;
   const userAgent = req.headers['user-agent'] || '';
 
