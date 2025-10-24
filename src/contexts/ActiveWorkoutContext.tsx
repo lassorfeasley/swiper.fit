@@ -473,7 +473,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         .insert({
           user_id: user.id,
           routine_id: program.id,
-          routine_name: routineName,
           workout_name: workoutName,
           is_active: true
         })
