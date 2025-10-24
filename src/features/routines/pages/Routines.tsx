@@ -20,9 +20,10 @@ import { SwiperButton } from "@/components/shared/SwiperButton";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/shared/ActionCard";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import { Plus } from "lucide-react";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
+import { useSpacing } from "@/hooks/useSpacing";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -38,6 +39,9 @@ const RoutinesIndex = () => {
   const [search, setSearch] = useState("");
   const inputRef = React.useRef(null);
   const navigate = useNavigate();
+  
+  // Use spacing hook for consistent layout
+  const spacing = useSpacing('SIMPLE_LIST');
 
   useEffect(() => {
     setPageName("Routines");
@@ -186,8 +190,7 @@ const RoutinesIndex = () => {
 
   return (
     <AppLayout
-      reserveSpace={true}
-      variant="glass"
+      reserveSpace={false}
       title="Routines"
       showPlusButton={true}
       onAdd={() => {
@@ -196,6 +199,21 @@ const RoutinesIndex = () => {
         setTimeout(() => {
           if (inputRef.current) inputRef.current.focus();
         }, 100);
+      }}
+      showShare={true}
+      onShare={() => {
+        // TODO: Implement share functionality
+        console.log('Share routines');
+      }}
+      showSettings={true}
+      onSettings={() => {
+        // TODO: Implement settings functionality
+        console.log('Routine settings');
+      }}
+      showDelete={true}
+      onDelete={() => {
+        // TODO: Implement delete functionality
+        console.log('Delete routine');
       }}
       showSearch={false}
       showBackButton={false}
@@ -208,10 +226,10 @@ const RoutinesIndex = () => {
       <MainContentSection className="!p-0 flex-1 min-h-0 flex flex-col">
         <div className="flex justify-center flex-1">
           <DeckWrapper 
-            gap={12} 
-            paddingTop={82}
-            paddingBottom={0}
-            maxWidth={500}
+            gap={spacing.gap} 
+            paddingTop={spacing.paddingTop}
+            paddingBottom={spacing.paddingBottom}
+            maxWidth={spacing.maxWidth}
             className="flex-1 mt-0 min-h-screen"
           >
           {loading ? (

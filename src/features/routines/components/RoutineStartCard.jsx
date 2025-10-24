@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 
 /**
  * RoutineStartCard – streamlined card for starting workouts quickly.

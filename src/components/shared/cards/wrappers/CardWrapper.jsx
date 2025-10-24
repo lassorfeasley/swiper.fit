@@ -14,12 +14,13 @@ import PropTypes from "prop-types";
 import { Reorder } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { SPACING } from "@/lib/spacing";
 
 // ========= Global CardWrapper spacing constants =========
-// Adjust these three numbers to control default spacing everywhere.
-export const CARD_WRAPPER_GAP_PX = 0; // default gap removed as per new design
-export const CARD_WRAPPER_MARGIN_TOP_PX = 0; // space above the first card
-export const CARD_WRAPPER_MARGIN_BOTTOM_PX = 0; // space below the last card
+// These constants are now managed by the centralized spacing system
+export const CARD_WRAPPER_GAP_PX = SPACING.CARD_GAP; // Use centralized card gap
+export const CARD_WRAPPER_MARGIN_TOP_PX = SPACING.CARD_MARGIN_TOP; // Use centralized margin top
+export const CARD_WRAPPER_MARGIN_BOTTOM_PX = SPACING.CARD_MARGIN_BOTTOM; // Use centralized margin bottom
 
 const CardWrapper = React.forwardRef(({
   children,

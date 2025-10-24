@@ -5,7 +5,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
 import ExerciseCard from "@/components/shared/cards/ExerciseCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import { useAuth } from "@/contexts/AuthContext";
 import { Bookmark } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
@@ -291,7 +291,6 @@ export default function PublicRoutine() {
       showSidebar={false}
       title={routine?.routine_name || "Routine"}
       titleRightText={routine?.owner_name ? `Shared by ${routine.owner_name}` : undefined}
-      variant="glass"
       showShare={true}
       onShare={handleShare}
     >

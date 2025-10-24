@@ -4,7 +4,7 @@ import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import SwiperForm from "@/components/shared/SwiperForm";
 import { AddNewExerciseForm } from "@/features/routines";
 import { SetEditForm } from "@/features/routines";

@@ -143,23 +143,20 @@ html, body, #root {
 }
 
 @media (min-width: 1024px) {
+  /* Use the document (body) as the scroll container to avoid double scrollbars */
   body.sidebar-shown main {
-    height: 100vh;
-    overflow-y: auto;
-    /* Create a new stacking context for sticky elements */
-    position: relative;
+    height: auto;
+    overflow-y: visible;
+    position: static;
   }
   main {
     padding-bottom: 0;
   }
   
-  /* Adjust sticky elements to work within the main scrolling container */
+  /* Preserve sticky behavior without forcing a separate scroll context */
   body.sidebar-shown .sticky {
-    /* Sticky elements now work relative to the main container */
     position: sticky;
   }
-  
-
 }
 
 

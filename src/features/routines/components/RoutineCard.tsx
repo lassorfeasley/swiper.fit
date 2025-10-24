@@ -2,7 +2,7 @@ import React from "react";
 import { Play, Cog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import ActionPill from "@/components/shared/ActionPill";
 
 interface RoutineCardProps {

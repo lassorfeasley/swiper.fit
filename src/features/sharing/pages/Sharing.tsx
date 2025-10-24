@@ -21,7 +21,7 @@ import SwiperDialog from "@/components/shared/SwiperDialog";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { SwiperButton } from "@/components/shared/SwiperButton";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import { getPendingInvitations, acceptInvitation, rejectInvitation, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
@@ -1115,7 +1115,7 @@ export default function Sharing() {
   };
 
   return (
-    <AppLayout title="Trainers" variant="glass">
+    <AppLayout title="Trainers">
       <MainContentSection className="!p-0 flex-1 min-h-0">
         <div className="w-full flex flex-col min-h-screen pt-20">
               {/* Requests section - only show if there are requests or errors */}

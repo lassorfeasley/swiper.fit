@@ -6,7 +6,7 @@ import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Share2, Blend, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { SwiperButton } from "@/components/shared/SwiperButton";
@@ -327,7 +327,6 @@ const History = () => {
   return (
     <AppLayout
       reserveSpace={false}
-      variant="glass"
       title="Analysis"
       showSidebar={!paramUserId && !isDelegated && !managingForOwner && !managingForClient}
       showShare={false}
@@ -337,7 +336,7 @@ const History = () => {
       hideDelegateHeader={true}
       sharingNavAbove={isInSharingMode}
       sharingNavContent={headerSharingContent}
-      sharingSection={(
+      sharingSection={
         <SwiperCombobox
           options={routineOptions}
           value={selectedRoutine}
@@ -347,7 +346,7 @@ const History = () => {
           width={240}
           useRelativePositioning={true}
         />
-      )}
+      }
       data-component="AppHeader"
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">

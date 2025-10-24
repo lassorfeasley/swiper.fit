@@ -19,7 +19,7 @@ import WorkoutSummaryCard from "@/components/shared/cards/WorkoutSummaryCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2 } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 
@@ -807,27 +807,9 @@ const CompletedWorkout = () => {
         hideHeader={false}
         title="Workout summary"
         titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
-        variant="glass"
         hideDelegateHeader={true}
         sharingNavAbove={isDelegated}
         sharingNavContent={headerSharingContent}
-        showBackButton={!isPublicWorkoutView || ownerHistoryPublic || (isDelegated && workout)}
-        onBack={() => {
-          if (isPublicWorkoutView && workout) {
-            navigate(`/history/public/${workout.user_id}`);
-          } else if (isDelegated && workout) {
-            // For delegates, navigate to the owner's history page
-            navigate(`/history`, { 
-              state: { 
-                managingForOwner: true, 
-                ownerId: workout.user_id,
-                ownerName: ownerName
-              } 
-            });
-          } else {
-            navigate('/history');
-          }
-        }}
         showShare={false}
         onShare={shareWorkout}
         showUpload={false}

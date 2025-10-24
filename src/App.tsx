@@ -24,7 +24,6 @@ import MobileNav from "./components/layout/MobileNav";
 import SideBarNav from "./components/layout/SideBarNav";
 import { LoggedOutNav } from "@/features/auth";
 import Account from "./pages/Account/Account.tsx";
-import { Toaster } from "sonner";
 import OGEnv from "./pages/OGEnv";
 import ComponentsGallery from "./pages/ComponentsGallery";
 import EmailTest from "./pages/EmailTest";
@@ -251,9 +250,6 @@ function AppContent() {
       {/* Show normal navigation only when no workout is active and not delegated */}
       {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
-
-      {/* Global toast notifications */}
-      <Toaster richColors position="top-center" />
     </div>
   );
 }

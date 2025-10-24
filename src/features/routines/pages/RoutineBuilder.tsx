@@ -20,10 +20,11 @@ import SetEditForm from "../components/SetEditForm";
 import { ActionCard } from "@/components/shared/ActionCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Copy, Blend, X } from "lucide-react";
+import { useSpacing } from "@/hooks/useSpacing";
 
 const RoutineBuilder = () => {
   const { programId } = useParams();
@@ -62,6 +63,10 @@ const RoutineBuilder = () => {
   const ogGenTimerRef = useRef(null);
   const ogLastSigRef = useRef("");
   const ogLastRunRef = useRef(0);
+  
+  // Use spacing hook for consistent layout
+  const spacing = useSpacing('SECTION_BASED');
+  
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
     if (!profile) return "Unknown User";
@@ -904,11 +909,8 @@ const RoutineBuilder = () => {
         hideHeader={false}
         hideDelegateHeader={true}
         title={programName || "Build your routine"}
-        variant="glass"
         sharingNavAbove={isDelegated}
         sharingNavContent={headerSharingContent}
-        showBackButton={true}
-        onBack={handleBack}
         showShare={true}
         onShare={shareRoutine}
         showStartWorkoutIcon={!isDelegated}
@@ -920,7 +922,7 @@ const RoutineBuilder = () => {
         showSidebar={!isDelegated && !isMobile}
         sharingSection={undefined}
       >
-        <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+        <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
           {/* Routine Image Section */}
           <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-3">
@@ -985,7 +987,7 @@ const RoutineBuilder = () => {
             showPlusButton={false}
             onPlus={() => handleOpenAddExercise(section)}
             applyPaddingOnParent={true}
-            style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+            style={{ paddingLeft: spacing.paddingX, paddingRight: spacing.paddingX, paddingBottom: 0, maxWidth: spacing.maxWidth, minWidth: '0px' }}
           >
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -1040,7 +1042,7 @@ const RoutineBuilder = () => {
                   showAddExercise ? "Add a new exercise" : "Edit exercise"
                 }
                 onActionIconClick={
-                  showAddExercise ? () => handleAddExercise({}) : () => handleEditExercise({})
+                  showAddExercise ? (exerciseData) => handleAddExercise(exerciseData) : (exerciseData) => handleEditExercise(exerciseData)
                 }
                 onDelete={editingExercise ? handleDeleteExercise : undefined}
                 initialName={editingExercise?.name}

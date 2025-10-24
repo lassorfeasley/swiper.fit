@@ -11,7 +11,7 @@ import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWr
 import { Minus, Plus } from "lucide-react";
 
 interface AddNewExerciseFormProps {
-  onActionIconClick?: () => void;
+  onActionIconClick?: (exerciseData?: any) => void;
   onDelete?: () => void;
   formPrompt?: string;
   initialName?: string;
@@ -201,7 +201,12 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
       })));
 
       if (onActionIconClick) {
-        onActionIconClick();
+        const exerciseData = {
+          name: exerciseName,
+          section: section,
+          setConfigs: setConfigs
+        };
+        onActionIconClick(exerciseData);
       }
     };
 

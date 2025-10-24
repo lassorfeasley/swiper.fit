@@ -7,7 +7,8 @@ import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import AppLayout from "@/components/layout/AppLayout";
 import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import MainContentSection from "@/components/layout/MainContentSection";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
+import { useSpacing } from "@/hooks/useSpacing";
 
 const Train = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -16,6 +17,9 @@ const Train = () => {
   const { isWorkoutActive } = useActiveWorkout();
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Use spacing hook for consistent layout
+  const spacing = useSpacing('SIMPLE_LIST');
 
   useEffect(() => {
     setPageName("Train");
@@ -151,8 +155,7 @@ const Train = () => {
   if (loading) {
     return (
       <AppLayout
-        reserveSpace={true}
-        variant="glass"
+        reserveSpace={false}
         title="Train"
         showSidebar={true}
         showShare={false}
@@ -173,8 +176,7 @@ const Train = () => {
   if (!user) {
     return (
       <AppLayout
-        reserveSpace={true}
-        variant="glass"
+        reserveSpace={false}
         title="Train"
         showSidebar={true}
         showShare={false}
@@ -194,8 +196,7 @@ const Train = () => {
 
   return (
     <AppLayout
-      reserveSpace={true}
-      variant="glass"
+      reserveSpace={false}
       title="Train"
       showSidebar={true}
       showShare={false}
@@ -206,10 +207,10 @@ const Train = () => {
       <MainContentSection className="!p-0 flex-1 min-h-0 flex flex-col">
         <div className="flex justify-center flex-1">
           <DeckWrapper 
-            gap={12} 
-            paddingTop={82}
-            paddingBottom={0}
-            maxWidth={500}
+            gap={spacing.gap} 
+            paddingTop={spacing.paddingTop}
+            paddingBottom={spacing.paddingBottom}
+            maxWidth={spacing.maxWidth}
             className="flex-1 mt-0 min-h-screen"
           >
           {routines.length === 0 ? (

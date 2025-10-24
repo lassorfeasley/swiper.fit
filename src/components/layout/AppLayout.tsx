@@ -23,7 +23,7 @@ interface AppLayoutProps {
   hideDelegateHeader?: boolean;
   title?: string;
   // Header props that can be passed through
-  variant?: string;
+  variant?: 'default' | 'dark-fixed' | 'programs';
   reserveSpace?: boolean;
   showBackButton?: boolean;
   showSearch?: boolean;
@@ -41,6 +41,7 @@ interface AppLayoutProps {
   sharingNavAbove?: React.ReactNode;
   sharingNavContent?: React.ReactNode;
   sharingSection?: React.ReactNode;
+  rightContent?: React.ReactNode;
   "data-component"?: string;
   showStartWorkout?: boolean;
   showStartWorkoutIcon?: boolean;
@@ -115,7 +116,7 @@ export default function AppLayout({
   const allowedHeaderProps = [
     'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout', 'showStartWorkoutIcon',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onStartWorkoutIcon', 'onUpload', 'onDelete',
-    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent'
+    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent', 'rightContent'
   ];
 
   const filteredHeaderProps = Object.fromEntries(
@@ -134,7 +135,7 @@ export default function AppLayout({
   const totalHeaderHeight = baseHeaderHeight;
 
   return (
-    <div className="min-h-screen flex bg-stone-100 relative">
+    <div className="min-h-screen flex relative">
       {showSidebar && <SideBarNav />}
       <div 
         className={cn(

@@ -3,7 +3,7 @@ import { supabase } from '@/supabaseClient';
 import { useCurrentUser } from '@/contexts/AccountContext';
 import { generateWorkoutName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toastReplacement';
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 
 // Type definitions for workout data structures
@@ -157,6 +157,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         let workouts: any[] | null = null;
         let error: any = null;
 
+        // First try to get active workouts only (most common case)
         const attempt = await supabase
           .from('workouts')
           .select(`
@@ -166,29 +167,41 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             )
           `)
           .eq('user_id', user.id)
-          .or('is_active.eq.true,is_paused.eq.true')
+          .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (attempt.error && String(attempt.error.message || '').includes('is_paused')) {
-          // Fallback for legacy schema without is_paused
-          const fallback = await supabase
-            .from('workouts')
-            .select(`
-              *,
-              sets!sets_workout_id_fkey(
-                *
-              )
-            `)
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(1);
-          workouts = fallback.data as any[] | null;
-          error = fallback.error;
+        if (attempt.error) {
+          console.error('Error fetching active workouts:', attempt.error);
+          workouts = null;
+          error = attempt.error;
         } else {
           workouts = attempt.data as any[] | null;
-          error = attempt.error;
+          error = null;
+          
+          // If no active workout found, check for paused workouts
+          if (!workouts || workouts.length === 0) {
+            try {
+              const pausedAttempt = await supabase
+                .from('workouts')
+                .select(`
+                  *,
+                  sets!sets_workout_id_fkey(
+                    *
+                  )
+                `)
+                .eq('user_id', user.id)
+                .eq('is_paused', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
+                
+              if (!pausedAttempt.error) {
+                workouts = pausedAttempt.data as any[] | null;
+              }
+            } catch (pausedError) {
+              console.log('[ActiveWorkout] is_paused column not available, skipping paused workout check');
+            }
+          }
         }
 
         if (error) {

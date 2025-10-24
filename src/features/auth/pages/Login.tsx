@@ -12,7 +12,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { Eye } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import LoggedOutNav from "../components/LoggedOutNav";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";

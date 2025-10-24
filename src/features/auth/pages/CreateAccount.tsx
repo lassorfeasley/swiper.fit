@@ -20,7 +20,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { postEmailEvent } from "@/lib/emailEvents";
 import { linkPendingInvitations } from "@/lib/sharingApi";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 
 export default function CreateAccount(): React.JSX.Element {
   const [firstName, setFirstName] = useState("");

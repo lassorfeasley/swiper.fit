@@ -13,7 +13,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import ActiveWorkoutNav from "../components/ActiveWorkoutNav";
 import SwiperProgress from "@/features/workout/components/SwiperProgress";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
  
 import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";

@@ -2,6 +2,7 @@ import React, { forwardRef, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { cn } from "@/lib/utils";
 import { Reorder } from "framer-motion";
+import { SPACING, getStandardPaddingTop } from "@/lib/spacing";
 
 /**
  * DeckWrapper – a vertical flex container meant to hold a stack of CardWrapper components.
@@ -11,10 +12,10 @@ const DeckWrapper = forwardRef(
   (
     {
       children,
-      gap = 12, // spacing between items (px)
+      gap = SPACING.CARD_GAP, // spacing between items (px)
       paddingX = 20, // horizontal padding (px)
       paddingTop, // top padding; if undefined, uses header-aware default
-      maxWidth = 500, // maximum width (px)
+      maxWidth = SPACING.MAX_WIDTH_STANDARD, // maximum width (px)
       minWidth = 0, // minimum width (px)
       className,
       variant = "list", // "list" shows deck borders and separators, "cards" centers standalone card components
@@ -38,16 +39,15 @@ const DeckWrapper = forwardRef(
     // Count number of child elements to enable responsive tweaks (flatten fragments)
     const childCount = React.Children.toArray(children).length;
     
-    // Compute top padding – default to header height + 20px when a page header is present.
-    // Falls back to 20px when --header-height is unset.
-    const computedPaddingTop =
-      paddingTop !== undefined ? paddingTop : 'calc(var(--header-height, 0px) + 20px)';
+    // Compute top padding – default to header height + buffer when a page header is present.
+    // Falls back to buffer when --header-height is unset.
+    const computedPaddingTop = getStandardPaddingTop(paddingTop);
 
     const style = {
       gap,
       rowGap: gap,
       paddingTop: computedPaddingTop,
-      paddingBottom: paddingBottom !== undefined ? paddingBottom : 40,
+      paddingBottom: paddingBottom !== undefined ? paddingBottom : SPACING.PAGE_PADDING_BOTTOM,
       ...(maxWidth && { maxWidth: `${maxWidth}px` }),
       ...(minWidth && { minWidth: `${minWidth}px` }),
       ...(paddingX !== undefined ? { paddingLeft: paddingX, paddingRight: paddingX } : {}),

@@ -7,7 +7,7 @@ import { TextInput } from "@/components/shared/inputs/TextInput";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapperLabel";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
-import { toast } from "sonner";
+import { toast } from "@/lib/toastReplacement";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
 import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
@@ -926,6 +926,7 @@ const Account = () => {
       setShowAddPersonDialog(false);
       
       queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
     } catch (error) {
       console.error("Error creating invitation:", error);
       toast.error(error.message || "Failed to send invitation. Please try again.");
@@ -999,7 +1000,7 @@ const Account = () => {
   }
 
   return (
-    <AppLayout title="Account" variant="glass">
+    <AppLayout title="Account">
       <MainContentSection className="!p-0 flex-1 min-h-0">
         <div className="w-full flex flex-col min-h-screen pt-20">
           {/* Requests section */}
