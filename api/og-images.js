@@ -17,11 +17,6 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
-  // Handle legacy og-image endpoint (redirect to og-images)
-  if (!type && workoutId) {
-    return res.redirect(302, `/api/og-images?type=workout&workoutId=${workoutId}`);
-  }
-
   try {
     switch (type) {
       case 'workout':
@@ -144,9 +139,46 @@ async function handleRoutineOG(req, res, routineId, userAgent) {
     // Generate OG image using Vercel's ImageResponse
     console.log('Generating routine OG image for:', routineId, routine.routine_name);
     
-    // Test with a simple response first - updated
-    res.setHeader('Content-Type', 'text/plain');
-    return res.status(200).send(`Routine: ${routine.routine_name}, Exercises: ${exerciseCount}, Sets: ${setCount} - Updated`);
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'white',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '60px',
+              fontWeight: '700',
+              color: '#171717',
+              textAlign: 'center',
+            }}
+          >
+            {routine.routine_name}
+          </div>
+          <div
+            style={{
+              fontSize: '30px',
+              color: '#737373',
+              marginTop: '20px',
+            }}
+          >
+            {exerciseCount} Exercises • {setCount} Sets
+          </div>
+        </div>
+      ),
+      {
+        width: 1200,
+        height: 630,
+      }
+    );
   } catch (error) {
     console.error('Error generating routine OG image:', error);
     console.error('Error details:', {
