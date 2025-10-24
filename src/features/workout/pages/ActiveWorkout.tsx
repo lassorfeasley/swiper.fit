@@ -252,7 +252,7 @@ const ActiveWorkoutContent: React.FC = () => {
       if (isDelegated) {
         returnToSelf();
       } else {
-        navigate("/routines");
+        navigate("/train");
       }
     } catch (err) {
       alert("Failed to delete workout: " + err.message);
@@ -294,7 +294,7 @@ const ActiveWorkoutContent: React.FC = () => {
               if (isDelegated) {
                 returnToSelf();
               } else {
-                navigate("/routines");
+                navigate("/train");
               }
             }
           })();
