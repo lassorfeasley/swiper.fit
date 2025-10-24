@@ -472,7 +472,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       }
 
       // Create workout
-      const routineName = (program as any)?.name || (program as any)?.routine_name || 'Workout';
+      const routineName = (program as any)?.routine_name || (program as any)?.name || 'Workout';
       const workoutName = generateWorkoutName(routineName);
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
@@ -633,47 +633,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     setIsFinishing(true);
 
     try {
-      // Update workout as ended
-      const { error: updateError } = await supabase
-        .from('workouts')
-        .update({
-          is_active: false
-        })
-        .eq('id', activeWorkout.id);
-
-      if (updateError) {
-        console.error('[ActiveWorkout] Error ending workout:', updateError);
-        toast.error('Failed to end workout');
-        return;
-      }
-
-      // Generate and upload OG image (fire-and-forget, don't block navigation)
-      gatherWorkoutDataForOG(activeWorkout.id)
-        .then(async (workoutData) => {
-          if (workoutData) {
-            try { await generateAndUploadOGImage(activeWorkout.id, workoutData); } catch (_) {}
-          }
-        })
-        .catch(() => {});
-
-      // Post Slack event
-      postSlackEvent('workout_completed', {
-        user_id: user?.id,
-        workout_id: activeWorkout.id,
-        routine_name: activeWorkout.routine_name
-      });
-
-      // Clear workout state
-      setActiveWorkout(null);
-      // Ending a workout should disable the active-workout redirect logic
-      setIsWorkoutActive(false);
-      setElapsedTime(0);
-      setManuallyCompletedSets(() => new Set<string>());
-      setToastedSets(() => new Set<string>());
-
-      toast.success('Workout completed!');
-      
-      // Check if any sets were completed by querying the database
+      // First check if any sets were completed by querying the database
       const { data: completedSets, error: setsError } = await supabase
         .from('sets')
         .select('id')
@@ -688,6 +648,65 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       const hadAnySets = completedSets && completedSets.length > 0;
       console.log(`[ActiveWorkout] Workout ended with ${completedSets?.length || 0} completed sets`);
+      
+      // Only save the workout if there are completed sets
+      if (hadAnySets) {
+        // Update workout as ended
+        const { error: updateError } = await supabase
+          .from('workouts')
+          .update({
+            is_active: false
+          })
+          .eq('id', activeWorkout.id);
+
+        if (updateError) {
+          console.error('[ActiveWorkout] Error ending workout:', updateError);
+          toast.error('Failed to end workout');
+          return false;
+        }
+
+        // Generate and upload OG image (fire-and-forget, don't block navigation)
+        gatherWorkoutDataForOG(activeWorkout.id)
+          .then(async (workoutData) => {
+            if (workoutData) {
+              try { await generateAndUploadOGImage(activeWorkout.id, workoutData); } catch (_) {}
+            }
+          })
+          .catch(() => {});
+
+        // Post Slack event
+        postSlackEvent('workout_completed', {
+          user_id: user?.id,
+          workout_id: activeWorkout.id,
+          routine_name: activeWorkout.routine_name
+        });
+
+        toast.success('Workout completed!');
+      } else {
+        // No sets completed - delete the workout instead of saving it
+        console.log('[ActiveWorkout] No sets completed, deleting workout instead of saving');
+        
+        const { error: deleteError } = await supabase
+          .from('workouts')
+          .delete()
+          .eq('id', activeWorkout.id);
+
+        if (deleteError) {
+          console.error('[ActiveWorkout] Error deleting workout:', deleteError);
+          toast.error('Failed to delete workout');
+          return false;
+        }
+
+        toast.info('Workout cancelled - no sets were completed');
+      }
+
+      // Clear workout state
+      setActiveWorkout(null);
+      // Ending a workout should disable the active-workout redirect logic
+      setIsWorkoutActive(false);
+      setElapsedTime(0);
+      setManuallyCompletedSets(() => new Set<string>());
+      setToastedSets(() => new Set<string>());
       
       return hadAnySets;
     } catch (error) {

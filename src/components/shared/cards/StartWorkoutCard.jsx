@@ -20,6 +20,10 @@ const StartWorkoutCard = ({
   name, 
   lastCompleted, 
   routineData, 
+  reorderable,
+  reorderValue,
+  isDragging,
+  isFirstCard,
   ...props 
 }) => {
   const navigate = useNavigate();
@@ -113,6 +117,10 @@ StartWorkoutCard.propTypes = {
   name: PropTypes.string.isRequired,
   lastCompleted: PropTypes.string,
   routineData: PropTypes.object.isRequired,
+  reorderable: PropTypes.bool,
+  reorderValue: PropTypes.any,
+  isDragging: PropTypes.bool,
+  isFirstCard: PropTypes.bool,
 };
 
 export default StartWorkoutCard;

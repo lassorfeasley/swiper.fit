@@ -993,18 +993,17 @@ const RoutineBuilder = () => {
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
             ) : secExercises.map((ex, exIndex) => (
-              <div key={ex.id} className="w-full">
-                <ExerciseCard
-                  mode="default"
-                  exerciseName={ex.name}
-                  setConfigs={ex.setConfigs}
-                  onEdit={() => setEditingExercise(ex)}
-                  onSetConfigsChange={(newSetConfigs) =>
-                    handleSetConfigsChange(ex.exercise_id, newSetConfigs)
-                  }
-                  onCardClick={() => setEditingExercise(ex)}
-                />
-              </div>
+              <ExerciseCard
+                key={ex.id}
+                mode="default"
+                exerciseName={ex.name}
+                setConfigs={ex.setConfigs}
+                onEdit={() => setEditingExercise(ex)}
+                onSetConfigsChange={(newSetConfigs) =>
+                  handleSetConfigsChange(ex.exercise_id, newSetConfigs)
+                }
+                onCardClick={() => setEditingExercise(ex)}
+              />
             ))}
             {/* Single persistent add button as last item */}
             <CardWrapper gap={0} marginTop={12} marginBottom={0}>

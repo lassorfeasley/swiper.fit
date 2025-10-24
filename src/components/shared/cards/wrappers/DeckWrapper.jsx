@@ -88,44 +88,41 @@ const DeckWrapper = forwardRef(
             className="w-full flex flex-col items-center"
             style={{ gap }}
           >
-            {items.map((item, idx) => (
-              <Reorder.Item
-                key={item.id}
-                value={item}
-                className={cn(
-                  "w-full flex justify-center"
-                )}
-                style={{ 
-                  touchAction: "pan-y",
-                  position: "relative"
-                }}
-                onDragStart={() => setDragging(true)}
-                onDragEnd={() => setDragging(false)}
-                dragConstraints={containerRef}
-                dragElastic={0}
-                whileDrag={{ 
-                  zIndex: 9999
-                }}
-              >
-                <div className="w-full flex justify-center">
-                  {React.Children.toArray(children)[idx] && 
-                    (() => {
-                      const childEl = React.Children.toArray(children)[idx];
-                      if (!React.isValidElement(childEl)) return childEl;
-                      const extraProps = {
+            {items.map((item, idx) => {
+              const childEl = React.Children.toArray(children)[idx];
+              if (!React.isValidElement(childEl)) return null;
+              
+              return (
+                <Reorder.Item
+                  key={item.id}
+                  value={item}
+                  className={cn(
+                    "w-full flex justify-center"
+                  )}
+                  style={{ 
+                    touchAction: "pan-y",
+                    position: "relative"
+                  }}
+                  onDragStart={() => setDragging(true)}
+                  onDragEnd={() => setDragging(false)}
+                  dragConstraints={containerRef}
+                  dragElastic={0}
+                  whileDrag={{ 
+                    zIndex: 9999
+                  }}
+                >
+                  {typeof childEl.type === 'string' 
+                    ? childEl 
+                    : React.cloneElement(childEl, {
                         reorderable: true,
                         reorderValue: item,
-                        isDragging: false, // We'll handle this differently,
-                      };
-                      if (typeof childEl.type !== 'string') {
-                        extraProps.isFirstCard = idx === 0;
-                      }
-                      return React.cloneElement(childEl, extraProps);
-                    })()
+                        isDragging: false,
+                        isFirstCard: idx === 0
+                      })
                   }
-                </div>
-              </Reorder.Item>
-            ))}
+                </Reorder.Item>
+              );
+            })}
           </Reorder.Group>
           
           {/* Render additional children that are not part of the reorderable items */}
