@@ -11,14 +11,13 @@
     }
   ],
   "rewrites": [
+    { "source": "/history/public/workout/(.*)", "destination": "/api/public-page?type=workout&id=$1" },
+    { "source": "/routines/public/(.*)", "destination": "/api/public-page?type=routine&id=$1" },
     { "source": "/app/history/public/workout/(.*)", "destination": "/api/workout/workoutId?id=$1" },
     { "source": "/app/history/public/(.*)", "destination": "/api/history/userId?id=$1" },
-    { "source": "/history/public/workout/(.*)", "destination": "/api/workout/workoutId?id=$1" },
-    { "source": "/history/public/(.*)", "destination": "/api/history/userId?id=$1" },
     { "source": "/app/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
     { "source": "/history/(.*)", "destination": "/api/workout/workoutId?id=$1" },
     { "source": "/app/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
-    { "source": "/routines/public/(.*)", "destination": "/api/routines/routineId?id=$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 } 
