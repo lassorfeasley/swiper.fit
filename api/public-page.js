@@ -2,6 +2,7 @@ import { getSupabaseServerClient } from '../server/supabase.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+// Consolidated public page handler for routines and workouts
 export default async function handler(req, res) {
   try {
     const supabase = getSupabaseServerClient();
