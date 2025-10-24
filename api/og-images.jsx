@@ -137,171 +137,18 @@ async function handleRoutineOG(req, res, routineId, userAgent) {
     const setCount = (routineSets || []).length;
 
     // Generate OG image using Vercel's ImageResponse
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'white',
-            fontFamily: 'system-ui, sans-serif',
-          }}
-        >
-          {/* Top bar */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '120px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 60px',
-              backgroundColor: 'white',
-            }}
-          >
-            {/* Routine label */}
-            <div
-              style={{
-                fontSize: '30px',
-                fontWeight: '700',
-                color: '#737373',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              EXERCISE ROUTINE
-            </div>
-            
-            {/* Owner name */}
-            {ownerName && (
-              <div
-                style={{
-                  fontSize: '30px',
-                  fontWeight: '700',
-                  color: '#737373',
-                  letterSpacing: '1.2px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {ownerName.toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          {/* Main title */}
-          <div
-            style={{
-              fontSize: '80px',
-              fontWeight: '700',
-              color: '#171717',
-              letterSpacing: '0px',
-              textAlign: 'center',
-              marginTop: '60px',
-              marginBottom: '60px',
-              maxWidth: '800px',
-              lineHeight: '1.1',
-            }}
-          >
-            {routine.routine_name}
-          </div>
-
-          {/* Stats boxes */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '60px',
-              left: '60px',
-              display: 'flex',
-              gap: '20px',
-            }}
-          >
-            {/* Exercise count box */}
-            <div
-              style={{
-                width: '200px',
-                height: '68px',
-                backgroundColor: '#FAFAFA',
-                border: '2px solid #D4D4D4',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '30px',
-                fontWeight: '300',
-                color: '#404040',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {exerciseCount} EXERCISE{exerciseCount !== 1 ? 'S' : ''}
-            </div>
-            
-            {/* Set count box */}
-            <div
-              style={{
-                width: '200px',
-                height: '68px',
-                backgroundColor: '#FAFAFA',
-                border: '2px solid #D4D4D4',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '30px',
-                fontWeight: '300',
-                color: '#404040',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {setCount} SET{setCount !== 1 ? 'S' : ''}
-            </div>
-          </div>
-
-          {/* Purple dumbbell icon */}
-          <div
-            style={{
-              position: 'absolute',
-              right: '60px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '320px',
-              height: '250px',
-              backgroundColor: '#8B5CF6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {/* Dumbbell icon SVG */}
-            <svg
-              width="120"
-              height="120"
-              viewBox="0 0 120 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="20" y="50" width="80" height="20" rx="10" fill="white" />
-              <rect x="10" y="45" width="15" height="30" rx="7.5" fill="white" />
-              <rect x="95" y="45" width="15" height="30" rx="7.5" fill="white" />
-            </svg>
-          </div>
-        </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-      }
-    );
+    console.log('Generating routine OG image for:', routineId, routine.routine_name);
+    
+    // Test with a simple response first - updated
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(200).send(`Routine: ${routine.routine_name}, Exercises: ${exerciseCount}, Sets: ${setCount} - Updated`);
   } catch (error) {
     console.error('Error generating routine OG image:', error);
+    console.error('Error details:', {
+      routineId,
+      error: error.message,
+      stack: error.stack
+    });
     return res.status(500).json({ error: 'Failed to generate image' });
   }
 }
