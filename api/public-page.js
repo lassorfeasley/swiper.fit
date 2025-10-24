@@ -3,20 +3,29 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 export default async function handler(req, res) {
-  const supabase = getSupabaseServerClient();
-  const { type, id } = req.query;
-  const userAgent = req.headers['user-agent'] || '';
+  try {
+    const supabase = getSupabaseServerClient();
+    const { type, id } = req.query;
+    const userAgent = req.headers['user-agent'] || '';
 
   // Check if this is a crawler/bot
   const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin|postinspector|linkedinbot|orcascan|opengraph|og|meta|validator/i.test(userAgent);
 
-  // Route to appropriate handler
-  if (type === 'routine') {
-    return await handleRoutinePage(req, res, id, isBot, userAgent, supabase);
-  } else if (type === 'workout') {
-    return await handleWorkoutPage(req, res, id, isBot, userAgent, supabase);
-  } else {
-    return res.status(400).send('Invalid type parameter. Use type=routine or type=workout');
+    // Route to appropriate handler
+    if (type === 'routine') {
+      return await handleRoutinePage(req, res, id, isBot, userAgent, supabase);
+    } else if (type === 'workout') {
+      return await handleWorkoutPage(req, res, id, isBot, userAgent, supabase);
+    } else {
+      return res.status(400).send('Invalid type parameter. Use type=routine or type=workout');
+    }
+  } catch (error) {
+    console.error('Error in public-page handler:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack
+    });
   }
 }
 
