@@ -52,6 +52,9 @@ interface Workout {
   og_image_url?: string;
   active_seconds_accumulated?: number;
   exercises: WorkoutExercise[];
+  routines?: {
+    routine_name: string;
+  };
 }
 
 interface Program {
@@ -394,6 +397,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         .from('workouts')
         .select(`
           *,
+          routines!workouts_routine_id_fkey(
+            routine_name
+          ),
           workout_exercises!workout_exercises_workout_id_fkey(
             *,
             sets!fk_sets_workout_exercise_id(
