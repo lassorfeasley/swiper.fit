@@ -1,5 +1,4 @@
 import { getSupabaseServerClient } from '../server/supabase.js';
-import { ImageResponse } from '@vercel/og';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -329,176 +328,11 @@ async function handleUserHistoryOG(req, res, userId) {
 
     const ownerName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
 
-    // Generate OG image using Vercel's ImageResponse
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'white',
-            fontFamily: 'system-ui, sans-serif',
-          }}
-        >
-          {/* Top bar */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '120px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 60px',
-              backgroundColor: 'white',
-            }}
-          >
-            {/* Workout history label */}
-            <div
-              style={{
-                fontSize: '30px',
-                fontWeight: '700',
-                color: '#737373',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              WORKOUT HISTORY
-            </div>
-            
-            {/* User name */}
-            <div
-              style={{
-                fontSize: '30px',
-                fontWeight: '700',
-                color: '#737373',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {ownerName.toUpperCase()}
-            </div>
-          </div>
-
-          {/* Main title */}
-          <div
-            style={{
-              fontSize: '80px',
-              fontWeight: '700',
-              color: '#171717',
-              letterSpacing: '0px',
-              textAlign: 'center',
-              marginTop: '60px',
-              marginBottom: '60px',
-            }}
-          >
-            Fitness Journey
-          </div>
-
-          {/* Stats boxes */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '60px',
-              left: '60px',
-              display: 'flex',
-              gap: '20px',
-            }}
-          >
-            {/* Workouts completed box */}
-            <div
-              style={{
-                width: '200px',
-                height: '68px',
-                backgroundColor: '#FAFAFA',
-                border: '2px solid #D4D4D4',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '30px',
-                fontWeight: '300',
-                color: '#404040',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              WORKOUTS
-            </div>
-            
-            {/* Progress box */}
-            <div
-              style={{
-                width: '200px',
-                height: '68px',
-                backgroundColor: '#FAFAFA',
-                border: '2px solid #D4D4D4',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '30px',
-                fontWeight: '300',
-                color: '#404040',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              PROGRESS
-            </div>
-          </div>
-
-          {/* Purple chart icon */}
-          <div
-            style={{
-              position: 'absolute',
-              right: '60px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '320px',
-              height: '250px',
-              backgroundColor: '#8B5CF6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {/* Chart icon SVG */}
-            <svg
-              width="120"
-              height="120"
-              viewBox="0 0 120 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M20 100L40 80L60 60L80 40L100 20"
-                stroke="white"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <circle cx="20" cy="100" r="6" fill="white" />
-              <circle cx="40" cy="80" r="6" fill="white" />
-              <circle cx="60" cy="60" r="6" fill="white" />
-              <circle cx="80" cy="40" r="6" fill="white" />
-              <circle cx="100" cy="20" r="6" fill="white" />
-            </svg>
-          </div>
-        </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-      }
-    );
+    // For now, redirect to default OG image until we fix the JSX issue
+    // TODO: Implement proper user history OG image generation
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    const host = `https://${req.headers.host}`;
+    return res.redirect(302, `${host}/images/default-open-graph.png`);
   } catch (error) {
     console.error('Error generating user history OG image:', error);
     return res.status(500).json({ error: 'Failed to generate image' });
@@ -515,10 +349,7 @@ function generateRoutineHTML({ title, description, url, routineName, ownerName, 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Primary Meta Tags -->
     <title>${title}</title>
-    <meta name="title" content="${title}" />
     <meta name="description" content="${description}" />
     
     <!-- Open Graph / Facebook -->
@@ -526,66 +357,71 @@ function generateRoutineHTML({ title, description, url, routineName, ownerName, 
     <meta property="og:url" content="${url}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:site_name" content="SwiperFit" />
-    <meta property="og:image" content="https://www.swiper.fit/api/og-images?type=routine&routineId=${routineId}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/og-images?type=routine&routineId=${routineId}" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="${url}" />
     <meta property="twitter:title" content="${title}" />
     <meta property="twitter:description" content="${description}" />
-    <meta property="twitter:image" content="https://www.swiper.fit/api/og-images?type=routine&routineId=${routineId}" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/images/swiper-fav-icon.png" />
-    <link rel="shortcut icon" type="image/png" href="/images/swiper-fav-icon.png" />
-    <link rel="apple-touch-icon" href="/images/swiper-fav-icon.png" />
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta property="twitter:image" content="${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit'}/api/og-images?type=routine&routineId=${routineId}" />
     
     <style>
-      body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 40px 20px; background: #f8fafc; color: #374151; line-height: 1.6; }
-      .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-      .header { text-align: center; margin-bottom: 32px; }
-      .title { font-size: 28px; font-weight: 600; color: #111827; margin-bottom: 8px; }
-      .subtitle { font-size: 18px; color: #6b7280; margin-bottom: 24px; }
-      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin-bottom: 32px; }
-      .stat { text-align: center; padding: 16px; background: #f9fafb; border-radius: 8px; }
-      .stat-number { font-size: 24px; font-weight: 600; color: #059669; display: block; }
-      .stat-label { font-size: 14px; color: #6b7280; margin-top: 4px; }
-      .cta { text-align: center; margin-top: 32px; }
-      .button { display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: background 0.2s; }
-      .button:hover { background: #047857; }
-      .branding { text-align: center; margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 14px; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #1a1a1a;
+        margin-bottom: 20px;
+      }
+      .stats {
+        display: flex;
+        gap: 40px;
+        margin: 30px 0;
+      }
+      .stat {
+        text-align: center;
+      }
+      .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #2563eb;
+      }
+      .stat-label {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .owner {
+        color: #666;
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="header">
-        <h1 class="title">${title}</h1>
-        <p class="subtitle">${description}</p>
-      </div>
+      <h1>${routineName}</h1>
       <div class="stats">
         <div class="stat">
-          <span class="stat-number">${exerciseCount}</span>
+          <div class="stat-number">${exerciseCount}</div>
           <div class="stat-label">Exercise${exerciseCount !== 1 ? 's' : ''}</div>
         </div>
         <div class="stat">
-          <span class="stat-number">${setCount}</span>
+          <div class="stat-number">${setCount}</div>
           <div class="stat-label">Set${setCount !== 1 ? 's' : ''}</div>
         </div>
       </div>
-      <div class="cta">
-        <a href="/app/routines/public/${routineId}" class="button">Open in App</a>
-      </div>
-      <div class="branding">
-        <p>Powered by SwiperFit</p>
-      </div>
+      ${ownerName ? `<div class="owner">Shared by ${ownerName}</div>` : ''}
     </div>
   </body>
 </html>`;
@@ -597,10 +433,7 @@ function generateStaticWorkoutHTML({ title, description, url, workoutName, owner
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Primary Meta Tags -->
     <title>${title}</title>
-    <meta name="title" content="${title}" />
     <meta name="description" content="${description}" />
     
     <!-- Open Graph / Facebook -->
@@ -608,10 +441,7 @@ function generateStaticWorkoutHTML({ title, description, url, workoutName, owner
     <meta property="og:url" content="${url}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:site_name" content="SwiperFit" />
     <meta property="og:image" content="${ogImage}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
@@ -620,130 +450,65 @@ function generateStaticWorkoutHTML({ title, description, url, workoutName, owner
     <meta property="twitter:description" content="${description}" />
     <meta property="twitter:image" content="${ogImage}" />
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    
     <style>
       body {
-        font-family: 'Be Vietnam Pro', sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
         margin: 0;
-        padding: 40px 20px;
-        background: #f8fafc;
-        color: #374151;
-        line-height: 1.6;
+        padding: 20px;
+        background: #f5f5f5;
       }
       .container {
-        max-width: 600px;
+        max-width: 800px;
         margin: 0 auto;
         background: white;
         border-radius: 12px;
-        padding: 32px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
-      .header {
-        text-align: center;
-        margin-bottom: 32px;
-      }
-      .title {
-        font-size: 28px;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 8px;
-      }
-      .subtitle {
-        font-size: 18px;
-        color: #6b7280;
-        margin-bottom: 24px;
+      h1 {
+        color: #1a1a1a;
+        margin-bottom: 20px;
       }
       .stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 16px;
-        margin-bottom: 32px;
+        display: flex;
+        gap: 40px;
+        margin: 30px 0;
       }
       .stat {
         text-align: center;
-        padding: 16px;
-        background: #f9fafb;
-        border-radius: 8px;
       }
       .stat-number {
-        font-size: 24px;
-        font-weight: 600;
-        color: #059669;
-        display: block;
+        font-size: 2em;
+        font-weight: bold;
+        color: #2563eb;
       }
       .stat-label {
-        font-size: 14px;
-        color: #6b7280;
-        margin-top: 4px;
+        color: #666;
+        font-size: 0.9em;
       }
-      .cta {
-        text-align: center;
-        margin-top: 32px;
-      }
-      .button {
-        display: inline-block;
-        background: #059669;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: background 0.2s;
-      }
-      .button:hover {
-        background: #047857;
-      }
-      .redirect-note {
-        margin-top: 16px;
-        font-size: 14px;
-        color: #6b7280;
+      .details {
+        color: #666;
+        margin-top: 20px;
       }
     </style>
-    
-    <!-- Auto-redirect to SPA for actual users -->
-    <script>
-      // Only redirect if this is a real user (not a crawler)
-      if (navigator.userAgent && !navigator.userAgent.includes('bot') && !navigator.userAgent.includes('Bot')) {
-        window.location.href = '/history/public/workout/${workoutName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}?redirect=' + encodeURIComponent(window.location.pathname);
-      }
-    </script>
   </head>
   <body>
     <div class="container">
-      <div class="header">
-        <h1 class="title">${workoutName}</h1>
-        <p class="subtitle">by ${ownerName} • ${date}</p>
-      </div>
-      
+      <h1>${workoutName}</h1>
       <div class="stats">
         <div class="stat">
-          <span class="stat-number">${exerciseCount}</span>
+          <div class="stat-number">${exerciseCount}</div>
           <div class="stat-label">Exercise${exerciseCount !== 1 ? 's' : ''}</div>
         </div>
         <div class="stat">
-          <span class="stat-number">${setCount}</span>
+          <div class="stat-number">${setCount}</div>
           <div class="stat-label">Set${setCount !== 1 ? 's' : ''}</div>
         </div>
-        ${duration ? `<div class="stat">
-          <span class="stat-number">${duration.split(' ')[0]}</span>
-          <div class="stat-label">${duration.includes('hour') ? 'Hours' : 'Minutes'}</div>
-        </div>` : ''}
       </div>
-      
-      <div class="cta">
-        <a href="/history/public/workout/${workoutName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}" class="button">
-          View Full Workout
-        </a>
-        <p class="redirect-note">
-          You'll be redirected to the interactive workout view
-        </p>
+      <div class="details">
+        <div>Completed by ${ownerName}</div>
+        <div>Date: ${date}</div>
+        ${duration ? `<div>Duration: ${duration}</div>` : ''}
       </div>
     </div>
   </body>
