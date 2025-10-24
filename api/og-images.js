@@ -1,3 +1,5 @@
+/** @jsxImportSource react */
+
 import { getSupabaseServerClient } from '../server/supabase.js';
 import { ImageResponse } from '@vercel/og';
 import { promises as fs } from 'fs';
@@ -148,10 +150,6 @@ async function handleRoutineOG(req, res, routineId, userAgent) {
 
     const exerciseCount = (routineExercises || []).length;
     const setCount = (routineSets || []).length;
-
-    // Set headers
-    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
-    res.setHeader('Content-Type', 'image/png');
 
     console.log('Generating routine OG image for:', routineId, routine.routine_name);
     
