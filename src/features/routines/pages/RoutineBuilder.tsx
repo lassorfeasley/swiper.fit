@@ -917,7 +917,7 @@ const RoutineBuilder = () => {
           setAddExerciseSection("training");
           setShowAddExercise(true);
         }}
-        showShare={true}
+        showShare={false}
         onShare={shareRoutine}
         showStartWorkoutIcon={!isDelegated}
         onStartWorkoutIcon={handleStartWorkout}

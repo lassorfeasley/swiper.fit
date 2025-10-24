@@ -206,7 +206,7 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
                     className="h-10 min-w-10 py-3 bg-neutral-700 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Settings"
                   >
-                    <Settings2 className="w-6 h-6 text-white" />
+                    <Cog className="w-6 h-6 text-white" />
                   </button>
                 )}
 
