@@ -141,19 +141,179 @@ async function handleRoutineOG(req, res, routineId, userAgent) {
     const exerciseCount = (routineExercises || []).length;
     const setCount = (routineSets || []).length;
 
-    // Generate OG image using Vercel's ImageResponse
+    // Set headers
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    res.setHeader('Content-Type', 'image/png');
+
     console.log('Generating routine OG image for:', routineId, routine.routine_name);
     
-    // Test with simple response first to debug
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).json({
-      success: true,
-      routine: routine.routine_name,
-      exerciseCount,
-      setCount,
-      ownerName,
-      message: 'Routine OG endpoint working - ready for ImageResponse'
-    });
+    // Generate OG image using Vercel's ImageResponse
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'white',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
+          {/* Top bar */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '120px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 60px',
+              backgroundColor: 'white',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '30px',
+                fontWeight: '700',
+                color: '#737373',
+                letterSpacing: '1.2px',
+                textTransform: 'uppercase',
+              }}
+            >
+              WORKOUT ROUTINE
+            </div>
+            {ownerName && (
+              <div
+                style={{
+                  fontSize: '30px',
+                  fontWeight: '700',
+                  color: '#737373',
+                  letterSpacing: '1.2px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                BY {ownerName.toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* Main content */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: '120px 60px 60px',
+            }}
+          >
+            {/* Routine name */}
+            <div
+              style={{
+                fontSize: '80px',
+                fontWeight: '700',
+                color: '#171717',
+                marginBottom: '60px',
+                lineHeight: 1.1,
+                maxWidth: '900px',
+              }}
+            >
+              {routine.routine_name}
+            </div>
+
+            {/* Stats */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '80px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '72px',
+                    fontWeight: '700',
+                    color: '#2563eb',
+                  }}
+                >
+                  {exerciseCount}
+                </div>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    color: '#737373',
+                    fontWeight: '600',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Exercise{exerciseCount !== 1 ? 's' : ''}
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '72px',
+                    fontWeight: '700',
+                    color: '#2563eb',
+                  }}
+                >
+                  {setCount}
+                </div>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    color: '#737373',
+                    fontWeight: '600',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Set{setCount !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer branding */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '60px',
+              fontSize: '28px',
+              fontWeight: '700',
+              color: '#737373',
+              letterSpacing: '1.5px',
+            }}
+          >
+            SWIPER.FIT
+          </div>
+        </div>
+      ),
+      {
+        width: 1200,
+        height: 630,
+      }
+    );
   } catch (error) {
     console.error('Error generating routine OG image:', error);
     console.error('Error details:', {
