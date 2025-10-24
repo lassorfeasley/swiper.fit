@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 // ============================================================================
 async function handleWorkoutOG(req, res, workoutId) {
   // For now, redirect to default OG image
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
   res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
   return res.status(302).end();
 }
@@ -75,8 +75,8 @@ async function handleStaticWorkoutOG(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  return res.status(200).json({
-    success: true,
+    return res.status(200).json({
+      success: true,
     message: 'Static workout OG generation not implemented yet'
   });
 }
