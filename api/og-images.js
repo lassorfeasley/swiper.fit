@@ -38,7 +38,15 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Error in consolidated OG handler:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      type,
+      workoutId,
+      routineId,
+      userId
+    });
   }
 }
 
