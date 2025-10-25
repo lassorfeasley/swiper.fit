@@ -1787,7 +1787,7 @@ const ActiveWorkoutSection = ({
         confirmVariant="default"
         cancelVariant="outline"
         contentClassName=""
-        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
         footerClassName="self-stretch px-3 py-3"
       />
 
@@ -1835,7 +1835,7 @@ const ActiveWorkoutSection = ({
         confirmVariant="outline"
         cancelVariant="destructive"
         contentClassName=""
-        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
         footerClassName="self-stretch px-3 py-3"
       >
         Deleting this set will remove the exercise from today’s workout.

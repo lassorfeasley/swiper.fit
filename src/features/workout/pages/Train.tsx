@@ -108,17 +108,17 @@ const Train = () => {
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {
-              lastCompletedText = "Last completed today";
+              lastCompletedText = "Completed today";
             } else if (diffDays === 1) {
-              lastCompletedText = "Last completed yesterday";
+              lastCompletedText = "Completed yesterday";
             } else if (diffDays < 7) {
-              lastCompletedText = `Last completed ${diffDays} days ago`;
+              lastCompletedText = `Completed ${diffDays} days ago`;
             } else if (diffDays < 30) {
               const weeks = Math.floor(diffDays / 7);
-              lastCompletedText = `Last completed ${weeks} week${weeks > 1 ? 's' : ''} ago`;
+              lastCompletedText = `Completed ${weeks} week${weeks > 1 ? 's' : ''} ago`;
             } else {
               const months = Math.floor(diffDays / 30);
-              lastCompletedText = `Last completed ${months} month${months > 1 ? 's' : ''} ago`;
+              lastCompletedText = `Completed ${months} month${months > 1 ? 's' : ''} ago`;
             }
           }
 

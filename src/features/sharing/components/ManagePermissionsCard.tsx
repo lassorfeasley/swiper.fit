@@ -56,7 +56,7 @@ const ManagePermissionsCard = ({
   return (
     <div className={`w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}>
       {/* Card Header */}
-      <div className="CardHeader self-stretch p-3 inline-flex justify-between items-center">
+      <div className="CardHeader self-stretch p-3 border-b border-neutral-300 inline-flex justify-between items-center">
         <div className="Frame84 flex-1 flex justify-start items-center gap-3">
           <div className="justify-center text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
             {displayName}
@@ -74,7 +74,7 @@ const ManagePermissionsCard = ({
 
       {/* Permissions Section */}
       <div className="Frame79 self-stretch flex flex-col justify-start items-start gap-4">
-        <div className={`TrainerPermissions self-stretch ${variant === 'client' ? 'border-t border-neutral-300' : 'border border-neutral-300'} flex flex-col justify-start items-start overflow-hidden`}>
+        <div className="TrainerPermissions self-stretch flex flex-col justify-start items-start overflow-hidden">
           {variant === "trainer" ? (
             <>
               {/* Trainer (Account Manager) Permissions - Switches */}

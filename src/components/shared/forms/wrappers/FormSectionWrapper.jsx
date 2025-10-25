@@ -6,7 +6,7 @@ const FormSectionWrapper = ({ children, className = "", bordered = true }) => {
     <div
       className={cn(
         "w-full flex flex-col gap-4 px-4 py-4",
-        bordered && "border-b border-neutral-300 last:border-b-0",
+        bordered && "last:border-b-0",
         className
       )}
     >

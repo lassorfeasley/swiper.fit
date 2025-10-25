@@ -37,7 +37,7 @@ const ExerciseCardBase = ({
       {/* Header */}
       <div
         data-layer="card-label"
-        className={`self-stretch pl-4 bg-neutral-neutral-200 border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
+        className={`self-stretch pl-4 bg-neutral-neutral-200 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
       >
         <div className="flex-1 h-11 flex items-center justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
           {exerciseName}
