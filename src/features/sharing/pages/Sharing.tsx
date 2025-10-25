@@ -869,17 +869,26 @@ export default function Sharing() {
 
   const handleRoutineManage = (routine) => {
     if (selectedClient) {
+      console.log('[Sharing] handleRoutineManage called for routine:', routine.id);
+      console.log('[Sharing] Switching to client:', selectedClient.id);
+      console.log('[Sharing] Will navigate to:', `/routines/${routine.id}/configure`);
+      
       // Switch to the client's (account owner) context
       switchToUser(selectedClient);
       
-      // Navigate to routine builder with the specific routine
-      navigate(`/routines/${routine.id}/configure`, { 
-        state: { 
-          managingForClient: true, 
-          clientId: selectedClient.id,
-          clientName: formatUserDisplay(selectedClient)
-        } 
-      });
+      // Use setTimeout to ensure context switch completes before navigation
+      setTimeout(() => {
+        console.log('[Sharing] Navigating to routine builder:', `/routines/${routine.id}/configure`);
+        // Navigate to routine builder with the specific routine
+        navigate(`/routines/${routine.id}/configure`, { 
+          state: { 
+            managingForClient: true, 
+            clientId: selectedClient.id,
+            clientName: formatUserDisplay(selectedClient)
+          } 
+        });
+      }, 100);
+      
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);
       setClientRoutines([]);
@@ -1003,6 +1012,8 @@ export default function Sharing() {
             workout_name: workoutName,
             is_active: true,
             is_public: true,
+            running_since: new Date().toISOString(),
+            active_seconds_accumulated: 0
           })
           .select()
           .single();
@@ -1069,8 +1080,41 @@ export default function Sharing() {
       // Switch to the account owner's context so delegate can see the active workout in manager mode
       switchToUser(selectedClient);
       
-      // Navigate to active workout page so delegate can see what they created
-      navigate('/workout/active');
+      // Wait for the workout to be detected before navigating
+      // This prevents the double routine selection issue
+      const checkWorkoutAndNavigate = async () => {
+        let attempts = 0;
+        const maxAttempts = 20; // 2 seconds max wait
+        
+        while (attempts < maxAttempts) {
+          try {
+            const { data: activeWorkoutData } = await supabase
+              .from("workouts")
+              .select("id")
+              .eq("user_id", selectedClient.id)
+              .eq("is_active", true)
+              .single();
+            
+            if (activeWorkoutData) {
+              // Workout is detected, navigate to active workout page
+              navigate('/workout/active');
+              break;
+            }
+          } catch (error) {
+            // Workout not found yet, continue waiting
+          }
+          
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // If we couldn't detect the workout after max attempts, navigate anyway
+        if (attempts >= maxAttempts) {
+          navigate('/workout/active');
+        }
+      };
+      
+      checkWorkoutAndNavigate();
       
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);

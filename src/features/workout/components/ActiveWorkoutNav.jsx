@@ -1,41 +1,11 @@
 import React, { useEffect } from "react";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import { useAccount } from "@/contexts/AccountContext";
 import { formatSecondsHHMMSS } from "@/lib/utils";
-import { Blend, X, Square, Pause, Play } from "lucide-react";
-import ActionPill from "@/components/shared/ActionPill";
+import { Square, Pause, Play } from "lucide-react";
 
 export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
   const { activeWorkout, elapsedTime, isPaused, pauseWorkout, resumeWorkout, loading } = useActiveWorkout();
-  const { isDelegated, actingUser, returnToSelf } = useAccount();
   const formattedTime = formatSecondsHHMMSS(elapsedTime);
-
-  // Helper function to format user display name
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-
-    // If we have both first and last name, use them
-    if (firstName && lastName) {
-      return `${firstName} ${lastName}`;
-    }
-
-    // If we only have first name, use it
-    if (firstName) {
-      return firstName;
-    }
-
-    // If we only have last name, use it
-    if (lastName) {
-      return lastName;
-    }
-
-    // If we have no name, just use email
-    return email;
-  };
 
   useEffect(() => {
     const sub = document.getElementById("sticky-subnav");
@@ -90,32 +60,6 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
           {activeWorkout?.routine_name || activeWorkout?.routines?.routine_name || "Test Routine Name"}
         </div>
       </div>
-
-      {/* Delegate banner (part of PrimaryNavScrollable) */}
-      {isDelegated && (
-        <div data-layer="Frame 84" className="Frame84 self-stretch px-3 pt-3 bg-stone-100 inline-flex justify-start items-start gap-2.5">
-          <div data-layer="Frame 73" className="Frame73 inline-flex pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] items-center">
-            <div data-layer="IconButton" data-property-1="Default" data-show-text="false" className="Iconbutton size-10 p-2.5 flex justify-start items-center gap-2.5">
-              <Blend className="w-6 h-6 text-white" />
-            </div>
-            <div data-layer="Frame 71" className="Frame71 size- flex justify-center items-center gap-5">
-              <div data-layer="[user]" className="ManagingUserSAccount justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                {formatUserDisplay(actingUser)}
-              </div>
-            </div>
-          </div>
-          <div data-layer="Frame 58" className="Frame58 size-10 flex justify-center items-start gap-2">
-            <button
-              type="button"
-              aria-label="Exit delegate mode"
-              onClick={returnToSelf}
-              className="ActionIcons size-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
-            >
-              <X className="w-6 h-6 text-white" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 0-height sentinel just above StickySubNav */}
       <div id="sticky-subnav-sentinel" aria-hidden="true" className="h-0" />

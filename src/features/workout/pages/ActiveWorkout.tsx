@@ -82,6 +82,8 @@ const ActiveWorkoutContent: React.FC = () => {
         return;
       }
       // Delegates should remain on the active workout route on refresh
+      // Also prevent redirect during context switches when delegates are managing clients
+      // Trainers should never see the routines page - they access routines via dialog
       if (isDelegated) {
         console.log('[ActiveWorkout] Delegate detected – staying on active workout route after refresh');
         return;

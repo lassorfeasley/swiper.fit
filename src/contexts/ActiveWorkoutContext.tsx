@@ -288,21 +288,68 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     return () => clearInterval(timer);
   }, [activeWorkout?.is_active]);
 
-  // Real-time subscription for workout updates
+  // Real-time subscription for new workouts and workout updates
   useEffect(() => {
-    if (!user || !activeWorkout) return;
+    if (!user) return;
 
-    console.log('[ActiveWorkout] Setting up real-time subscription for workout:', activeWorkout.id);
+    console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
 
     const channel = supabase
-      .channel(`workout-${activeWorkout.id}`)
+      .channel(`user-workouts-${user.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'workouts',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('[ActiveWorkout] New workout created for user:', payload);
+        // Refresh the active workout when a new one is created
+        // Re-fetch the active workout for this user
+        try {
+          const { data: workouts } = await supabase
+            .from('workouts')
+            .select(`
+              *,
+              routines!workouts_routine_id_fkey(
+                routine_name
+              ),
+              sets!sets_workout_id_fkey(
+                *
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (workouts && workouts.length > 0) {
+            const workout = workouts[0];
+            console.log('[ActiveWorkout] Detected new active workout:', workout.id);
+            setActiveWorkout(workout);
+            setIsWorkoutActive(true);
+            
+            // Initialize elapsed time
+            if (workout.running_since) {
+              const startTime = new Date(workout.running_since).getTime();
+              const now = Date.now();
+              const runningTime = Math.floor((now - startTime) / 1000);
+              const accumulated = workout.active_seconds_accumulated || 0;
+              setElapsedTime(accumulated + runningTime);
+            }
+          }
+        } catch (error) {
+          console.error('[ActiveWorkout] Error refreshing workout after creation:', error);
+        }
+      })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'workouts',
-        filter: `id=eq.${activeWorkout.id}`
+        filter: `user_id=eq.${user.id}`
       }, (payload) => {
         console.log('[ActiveWorkout] Workout update received:', payload);
+        // Only handle updates if we have an active workout
+        if (!activeWorkout) return;
         
         if (payload.eventType === 'UPDATE') {
           const updatedWorkout = payload.new as Workout;
@@ -351,7 +398,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         event: '*',
         schema: 'public',
         table: 'sets',
-        filter: `workout_id=eq.${activeWorkout.id}`
+        filter: `workout_id=eq.${activeWorkout?.id || ''}`
       }, (payload) => {
         console.log('[ActiveWorkout] Set update received:', payload);
         
