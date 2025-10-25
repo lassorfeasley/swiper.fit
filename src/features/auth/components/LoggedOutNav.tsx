@@ -95,7 +95,7 @@ export default function LoggedOutNav({ showAuthButtons = true }: LoggedOutNavPro
                 // Force navigation with window.location.href
                 window.location.href = '/create-account';
               }}
-              className="w-48 h-10 max-w-96 px-4 py-2 bg-green-600 rounded-[20px] border border-neutral-300 flex justify-center items-center gap-2.5 hover:bg-green-700 transition-colors cursor-pointer"
+              className="w-48 h-10 max-w-96 px-4 py-2 bg-green-600 rounded-lg border border-neutral-300 flex justify-center items-center gap-2.5 hover:bg-green-700 transition-colors cursor-pointer"
             >
               <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create account</div>
             </button>
