@@ -304,9 +304,9 @@ const CompletedWorkout = () => {
         (snapData || []).forEach((row) => {
           // Prefer name_override, then snapshot_name, then the current exercises.name value
           const displayName = row.name_override || row.snapshot_name || '';
-          const sec = "training";
+          const section = row.exercises?.section || "training";
           if (displayName) {
-            exercisesObj[row.exercise_id] = { name: displayName, section: sec };
+            exercisesObj[row.exercise_id] = { name: displayName, section: section };
           }
         });
 
