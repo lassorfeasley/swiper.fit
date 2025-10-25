@@ -13,7 +13,7 @@ const CompletedWorkoutCard = ({ name, subtitle, relativeLabel, ...props }) => {
   return (
     <div
       data-layer="workout-card"
-      className="RoutineCard w-full p-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-end gap-2"
+      className="RoutineCard w-full p-3 bg-neutral-50 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-end gap-2"
       {...props}
     >
       <div data-layer="Frame 5010" className="Frame5010 w-full inline-flex flex-col justify-start items-start gap-3">

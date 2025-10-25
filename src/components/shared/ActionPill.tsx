@@ -52,7 +52,7 @@ export default function ActionPill({
     <button
       type="button"
       onClick={onClick}
-      className={`ActionPill h-10 min-w-10 ${showText ? 'px-4 py-3' : 'py-3'} ${backgroundColor} ${showText ? 'rounded-full' : 'rounded-[20px]'} inline-flex justify-center items-center gap-0.5 whitespace-nowrap ${className}`}
+      className={`ActionPill h-10 min-w-24 ${showText ? 'px-4 py-3' : 'py-3'} ${backgroundColor} ${showText ? 'rounded-full' : 'rounded-[20px]'} shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-0.5 whitespace-nowrap ${className}`}
       aria-label={label}
     >
       <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden">

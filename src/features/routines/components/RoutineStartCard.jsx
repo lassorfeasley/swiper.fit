@@ -68,25 +68,25 @@ const StartWorkoutCard = ({
     <div
       data-layer="card-wrapper"
       data-property-1="full-bleed"
-      className="CardWrapper w-full min-h-14 bg-white rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] border border-neutral-300 backdrop-blur-[1px] flex justify-start items-center gap-2.5 overflow-hidden cursor-pointer"
+      className="CardWrapper w-full min-h-14 bg-neutral-50 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] outline outline-1 outline-offset-[-1px] outline-neutral-300 backdrop-blur-[1px] flex justify-start items-center gap-4 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
       {...props}
     >
       <div 
         data-layer="workout-card" 
-        className="WorkoutCard flex-1 p-4 inline-flex flex-col justify-start items-start gap-8"
+        className="WorkoutCard flex-1 p-4 inline-flex flex-col justify-start items-start gap-10"
       >
         <div data-layer="Frame 77" className="Frame77 self-stretch flex flex-col justify-start items-start gap-2">
           <div 
             data-layer="Back, triceps, and biceps" 
-            className="BackTricepsAndBiceps self-stretch justify-center text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal"
+            className="BackTricepsAndBiceps self-stretch justify-center text-neutral-800 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal"
           >
             {name}
           </div>
           {lastCompleted && (
             <div 
               data-layer="Last completed 3 days ago" 
-              className="LastCompleted3DaysAgo self-stretch justify-center text-neutral-neutral-400 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
+              className="LastCompleted3DaysAgo self-stretch justify-center text-neutral-400 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight"
             >
               {lastCompleted}
             </div>
