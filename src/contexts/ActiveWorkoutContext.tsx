@@ -51,6 +51,7 @@ interface Workout {
   last_workout_exercise_id?: string;
   og_image_url?: string;
   active_seconds_accumulated?: number;
+  running_since?: string | null;
   exercises: WorkoutExercise[];
   routines?: {
     routine_name: string;
