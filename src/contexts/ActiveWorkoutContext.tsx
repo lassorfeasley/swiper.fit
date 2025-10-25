@@ -391,18 +391,18 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
   // Timer for elapsed time
   useEffect(() => {
-    if (!isWorkoutActive || !activeWorkout?.is_active) return;
+    if (!isWorkoutActive || !activeWorkout?.is_active || loading) return;
 
     const timer = setInterval(() => {
       setElapsedTime(prev => prev + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isWorkoutActive, activeWorkout?.is_active]);
+  }, [isWorkoutActive, activeWorkout?.is_active, loading]);
 
   // Periodic sync of accumulated time to database (every 10 seconds while running)
   useEffect(() => {
-    if (!activeWorkout || !activeWorkout.is_active || !activeWorkout.running_since) return;
+    if (!activeWorkout || !activeWorkout.is_active || !activeWorkout.running_since || loading) return;
 
     const syncInterval = setInterval(async () => {
       try {
@@ -427,7 +427,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     }, 10000);
 
     return () => clearInterval(syncInterval);
-  }, [activeWorkout?.id, activeWorkout?.is_active, activeWorkout?.running_since]);
+  }, [activeWorkout?.id, activeWorkout?.is_active, activeWorkout?.running_since, loading]);
 
   const refreshActiveWorkout = useCallback(async (workoutId: string) => {
     console.log('[ActiveWorkout] Refreshing workout:', workoutId);
