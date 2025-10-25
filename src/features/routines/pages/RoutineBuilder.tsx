@@ -909,8 +909,6 @@ const RoutineBuilder = () => {
         hideHeader={false}
         hideDelegateHeader={true}
         title={programName || "Build your routine"}
-        sharingNavAbove={isDelegated}
-        sharingNavContent={headerSharingContent}
         showPlusButton={false}
         showShare={true}
         onShare={shareRoutine}

@@ -3,6 +3,7 @@ import { useAccount } from "@/contexts/AccountContext";
 import PageHeader from "@/components/layout/PageHeader";
 import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/layout/SideBarNav";
+import TrainerNavigation from "@/components/shared/TrainerNavigation";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -38,8 +39,6 @@ interface AppLayoutProps {
   onAdd?: () => void;
   onSettings?: () => void;
   onShare?: () => void;
-  sharingNavAbove?: React.ReactNode;
-  sharingNavContent?: React.ReactNode;
   sharingSection?: React.ReactNode;
   rightContent?: React.ReactNode;
   "data-component"?: string;
@@ -116,7 +115,7 @@ export default function AppLayout({
   const allowedHeaderProps = [
     'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout', 'showStartWorkoutIcon',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onStartWorkoutIcon', 'onUpload', 'onDelete',
-    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'sharingNavAbove', 'sharingNavContent', 'rightContent'
+    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'rightContent'
   ];
 
   const filteredHeaderProps = Object.fromEntries(
@@ -158,7 +157,7 @@ export default function AppLayout({
             className={undefined}
           />
         )}
-        <div>
+        <div className="flex-1 flex flex-col">
           <main
             data-scroll-snap-enabled={enableScrollSnap}
             data-no-top-padding={noTopPadding}
@@ -166,14 +165,25 @@ export default function AppLayout({
               "--mobile-nav-height": "80px",
               ...(enableScrollSnap ? getScrollSnapCSSVars(SCROLL_CONTEXTS.WORKOUT) : {})
             } as React.CSSProperties}
+            className="flex-1"
           >
             <div className="pb-24 md:pb-0">
               {children}
             </div>
+            {/* Add bottom padding when sharing nav is visible to prevent content overlap */}
+            {isDelegated && <div className="h-20" />}
             {/* Spacer above footer */}
             <div aria-hidden="true" style={{ height: 60 }} />
             <Footer />
           </main>
+          
+          {/* Trainer Navigation - Fixed at bottom */}
+          <div className={cn(
+            "fixed bottom-0 z-[200] w-screen",
+            showSidebar ? "left-64" : "left-0"
+          )}>
+            <TrainerNavigation />
+          </div>
         </div>
       </div>
     </div>

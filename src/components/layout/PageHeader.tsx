@@ -22,8 +22,6 @@ interface PageHeaderProps {
   showUpload?: boolean;
   showDelete?: boolean;
   sharingSection?: React.ReactNode;
-  sharingNavAbove?: boolean;
-  sharingNavContent?: React.ReactNode;
   onBack?: () => void;
   onSearch?: () => void;
   onSettings?: () => void;
@@ -56,8 +54,6 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
   showUpload = false,
   showDelete = false,
   sharingSection,
-  sharingNavAbove = false,
-  sharingNavContent,
   onBack,
   onSearch,
   onSettings,
@@ -176,9 +172,9 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
 
           {/* Right side */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {sharingSection || sharingNavContent}
+            {sharingSection}
             
-            {!(sharingSection || sharingNavContent) && (showSearch || showSettings || showPlusButton || showShare || showUpload || showDelete || showStartWorkoutIcon) && (
+            {!sharingSection && (showSearch || showSettings || showPlusButton || showShare || showUpload || showDelete || showStartWorkoutIcon) && (
               <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
                 {showSearch && !isSearchActive && (
                   <button
@@ -262,7 +258,7 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
               </div>
             )}
 
-            {!(sharingSection || sharingNavContent) && showStartWorkout && (
+            {!sharingSection && showStartWorkout && (
               <button
                 onClick={onStartWorkout}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"

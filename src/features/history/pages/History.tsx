@@ -334,13 +334,11 @@ const History = () => {
       search={false}
       pageContext="history"
       hideDelegateHeader={true}
-      sharingNavAbove={isInSharingMode}
-      sharingNavContent={headerSharingContent}
       sharingSection={
         <SwiperCombobox
-          options={routineOptions}
+          items={routineOptions}
           value={selectedRoutine}
-          onValueChange={setSelectedRoutine}
+          onChange={setSelectedRoutine}
           placeholder="Filter routines"
           filterPlaceholder="Search"
           width={240}

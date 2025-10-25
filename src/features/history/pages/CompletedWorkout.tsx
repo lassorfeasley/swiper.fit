@@ -808,8 +808,6 @@ const CompletedWorkout = () => {
         title="Workout summary"
         titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
         hideDelegateHeader={true}
-        sharingNavAbove={isDelegated}
-        sharingNavContent={headerSharingContent}
         showShare={false}
         onShare={shareWorkout}
         showUpload={false}
