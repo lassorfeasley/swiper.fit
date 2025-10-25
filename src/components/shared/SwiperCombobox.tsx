@@ -12,13 +12,19 @@ import {
 import { cn } from "@/lib/utils";
 
 interface SwiperComboboxProps {
-  options: Array<{ value: string; label: string; disabled?: boolean }>;
+  items: Array<{ value: string; label: string; disabled?: boolean }>;
   value?: string;
-  onValueChange?: (value: string) => void;
+  onChange?: (value: string) => void;
   placeholder?: string;
   searchable?: boolean;
   className?: string;
   disabled?: boolean;
+  triggerClassName?: string;
+  contentClassName?: string;
+  emptyText?: string;
+  filterPlaceholder?: string;
+  width?: number;
+  useRelativePositioning?: boolean;
 }
 
 /**
@@ -39,17 +45,9 @@ export default function SwiperCombobox({
   emptyText = "No results",
   filterPlaceholder = "Search…",
   width = 240,
-  useRelativePositioning = false, // New prop to control positioning
-}: SwiperComboboxProps & {
-  items?: Array<{ value: string; label: string; disabled?: boolean }>;
-  onChange?: (value: string) => void;
-  triggerClassName?: string;
-  contentClassName?: string;
-  emptyText?: string;
-  filterPlaceholder?: string;
-  width?: number;
-  useRelativePositioning?: boolean;
-}) {
+  useRelativePositioning = false,
+  disabled = false,
+}: SwiperComboboxProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,9 +70,10 @@ export default function SwiperCombobox({
         <div
           role="combobox"
           aria-expanded={isOpen}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
           className={cn(
             "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
+            disabled && "opacity-50 cursor-not-allowed",
             triggerClassName
           )}
           style={{ width, maxWidth: width }}
@@ -122,7 +121,8 @@ export default function SwiperCombobox({
                       }}
                       className={cn(
                         "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full cursor-pointer",
-                        selected ? "bg-neutral-100" : "bg-white hover:bg-neutral-100"
+                        selected ? "bg-neutral-100" : "bg-white hover:bg-neutral-100",
+                        item.disabled && "opacity-50 cursor-not-allowed"
                       )}
                     >
                       <div className="flex-1 justify-start text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight truncate">
@@ -151,16 +151,17 @@ export default function SwiperCombobox({
     );
   }
 
-  // Original DropdownMenu implementation
+  // DropdownMenu implementation with proper state management
   return (
     <div className={cn("Combobox w-full inline-flex flex-col justify-start items-center gap-2", className)}>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <div
             role="combobox"
-            aria-expanded={undefined}
+            aria-expanded={isOpen}
             className={cn(
               "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
+              disabled && "opacity-50 cursor-not-allowed",
               triggerClassName
             )}
             style={{ width, maxWidth: width }}
@@ -201,7 +202,11 @@ export default function SwiperCombobox({
                 return (
                   <DropdownMenuItem
                     key={item.value}
-                    onSelect={() => onChange?.(item.value)}
+                    onSelect={() => {
+                      onChange?.(item.value);
+                      setQuery("");
+                    }}
+                    disabled={item.disabled}
                     className={cn(
                       "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full",
                       selected ? "bg-neutral-100" : "bg-white hover:bg-neutral-100"

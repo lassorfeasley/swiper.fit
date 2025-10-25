@@ -266,6 +266,7 @@ export default function ComponentsGallery() {
               filterPlaceholder="Search"
               width={240}
               className=""
+              onChange={(value) => console.log('Selected:', value)}
             />
           </div>
         </section>
