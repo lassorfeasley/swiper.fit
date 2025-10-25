@@ -307,6 +307,17 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           const updatedWorkout = payload.new as Workout;
           setActiveWorkout(prev => prev ? { ...prev, ...updatedWorkout } : null);
           
+          // Sync elapsed time from real-time update
+          if (updatedWorkout.is_active && updatedWorkout.running_since) {
+            const startTime = new Date(updatedWorkout.running_since).getTime();
+            const now = Date.now();
+            const runningTime = Math.floor((now - startTime) / 1000);
+            const accumulated = updatedWorkout.active_seconds_accumulated || 0;
+            setElapsedTime(accumulated + runningTime);
+          } else if (updatedWorkout.active_seconds_accumulated !== undefined) {
+            setElapsedTime(updatedWorkout.active_seconds_accumulated);
+          }
+          
           const hasPausedField = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
           const paused = hasPausedField ? Boolean((updatedWorkout as any).is_paused) : false;
           if (hasPausedField) {
@@ -388,6 +399,35 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
     return () => clearInterval(timer);
   }, [isWorkoutActive, activeWorkout?.is_active]);
+
+  // Periodic sync of accumulated time to database (every 10 seconds while running)
+  useEffect(() => {
+    if (!activeWorkout || !activeWorkout.is_active || !activeWorkout.running_since) return;
+
+    const syncInterval = setInterval(async () => {
+      try {
+        const runningSince = new Date(activeWorkout.running_since).getTime();
+        const now = Date.now();
+        const runningTime = Math.floor((now - runningSince) / 1000);
+        const currentAccumulated = activeWorkout.active_seconds_accumulated || 0;
+        const totalTime = currentAccumulated + runningTime;
+
+        await supabase
+          .from('workouts')
+          .update({ 
+            active_seconds_accumulated: totalTime,
+            running_since: new Date().toISOString()
+          })
+          .eq('id', activeWorkout.id);
+
+        console.log('[ActiveWorkout] Synced accumulated time:', totalTime);
+      } catch (error) {
+        console.error('[ActiveWorkout] Error syncing time:', error);
+      }
+    }, 10000);
+
+    return () => clearInterval(syncInterval);
+  }, [activeWorkout?.id, activeWorkout?.is_active, activeWorkout?.running_since]);
 
   const refreshActiveWorkout = useCallback(async (workoutId: string) => {
     console.log('[ActiveWorkout] Refreshing workout:', workoutId);
@@ -486,7 +526,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           user_id: user.id,
           routine_id: program.id,
           workout_name: workoutName,
-          is_active: true
+          is_active: true,
+          running_since: new Date().toISOString(),
+          active_seconds_accumulated: 0
         })
         .select()
         .single();
@@ -657,11 +699,25 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       
       // Only save the workout if there are completed sets
       if (hadAnySets) {
+        // Calculate final accumulated time
+        const currentAccumulated = activeWorkout.active_seconds_accumulated || 0;
+        let additionalTime = 0;
+        
+        if (activeWorkout.running_since) {
+          const runningSince = new Date(activeWorkout.running_since).getTime();
+          const now = Date.now();
+          additionalTime = Math.floor((now - runningSince) / 1000);
+        }
+        
+        const finalAccumulated = currentAccumulated + additionalTime;
+        
         // Update workout as ended
         const { error: updateError } = await supabase
           .from('workouts')
           .update({
-            is_active: false
+            is_active: false,
+            running_since: null,
+            active_seconds_accumulated: finalAccumulated
           })
           .eq('id', activeWorkout.id);
 
@@ -780,12 +836,26 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     console.log('[ActiveWorkout] Pausing workout:', activeWorkout.id);
     
     try {
+      // Calculate accumulated time before pausing
+      const currentAccumulated = activeWorkout.active_seconds_accumulated || 0;
+      let additionalTime = 0;
+      
+      if (activeWorkout.running_since) {
+        const runningSince = new Date(activeWorkout.running_since).getTime();
+        const now = Date.now();
+        additionalTime = Math.floor((now - runningSince) / 1000);
+      }
+      
+      const newAccumulated = currentAccumulated + additionalTime;
+      
       // First try to set both flags (new schema)
       const firstAttempt = await supabase
         .from('workouts')
         .update({ 
           is_active: false,
-          is_paused: true
+          is_paused: true,
+          running_since: null,
+          active_seconds_accumulated: newAccumulated
         })
         .eq('id', activeWorkout.id);
 
@@ -795,7 +865,11 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         if (msg.includes('is_paused')) {
           const fallback = await supabase
             .from('workouts')
-            .update({ is_active: false })
+            .update({ 
+              is_active: false,
+              running_since: null,
+              active_seconds_accumulated: newAccumulated
+            })
             .eq('id', activeWorkout.id);
           if (fallback.error) {
             console.error('[ActiveWorkout] Error pausing workout (fallback failed):', fallback.error);
@@ -813,10 +887,13 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       setActiveWorkout(prev => prev ? {
         ...prev,
         is_active: false,
+        running_since: null,
+        active_seconds_accumulated: newAccumulated,
         // Only set is_paused locally if the field exists on the object
         ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: true } : {})
       } : null);
       
+      setElapsedTime(newAccumulated);
       setIsWorkoutActive(true);
       toast.success('Workout paused');
       
@@ -832,12 +909,15 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     console.log('[ActiveWorkout] Resuming workout:', activeWorkout.id);
     
     try {
+      const now = new Date().toISOString();
+      
       // Try new schema first
       const firstAttempt = await supabase
         .from('workouts')
         .update({ 
           is_active: true,
-          is_paused: false
+          is_paused: false,
+          running_since: now
         })
         .eq('id', activeWorkout.id);
 
@@ -846,7 +926,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         if (msg.includes('is_paused')) {
           const fallback = await supabase
             .from('workouts')
-            .update({ is_active: true })
+            .update({ 
+              is_active: true,
+              running_since: now
+            })
             .eq('id', activeWorkout.id);
           if (fallback.error) {
             console.error('[ActiveWorkout] Error resuming workout (fallback failed):', fallback.error);
@@ -864,6 +947,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       setActiveWorkout(prev => prev ? {
         ...prev,
         is_active: true,
+        running_since: now,
         ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: false } : {})
       } : null);
       
@@ -907,11 +991,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       }
 
       // Try new schema first, then fall back
+      const now = new Date().toISOString();
+      
       const firstAttempt = await supabase
         .from('workouts')
         .update({ 
           is_active: true,
-          is_paused: false
+          is_paused: false,
+          running_since: now
         })
         .eq('id', workoutId);
 
@@ -920,7 +1007,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         if (msg.includes('is_paused')) {
           const fallback = await supabase
             .from('workouts')
-            .update({ is_active: true })
+            .update({ 
+              is_active: true,
+              running_since: now
+            })
             .eq('id', workoutId);
           if (fallback.error) {
             console.error('[ActiveWorkout] Error reactivating workout (fallback failed):', fallback.error);
