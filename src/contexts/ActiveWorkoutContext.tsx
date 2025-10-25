@@ -389,16 +389,31 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     };
   }, [user, activeWorkout, navigate]);
 
-  // Timer for elapsed time
+  // Timer for elapsed time - calculate from running_since instead of incrementing
   useEffect(() => {
     if (!isWorkoutActive || !activeWorkout?.is_active || loading) return;
 
-    const timer = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
+    const updateElapsedTime = () => {
+      if (activeWorkout.running_since) {
+        const startTime = new Date(activeWorkout.running_since).getTime();
+        const now = Date.now();
+        const runningTime = Math.floor((now - startTime) / 1000);
+        const accumulated = activeWorkout.active_seconds_accumulated || 0;
+        setElapsedTime(accumulated + runningTime);
+      } else {
+        // Paused - use accumulated time
+        setElapsedTime(activeWorkout.active_seconds_accumulated || 0);
+      }
+    };
+
+    // Update immediately
+    updateElapsedTime();
+
+    // Then update every second
+    const timer = setInterval(updateElapsedTime, 1000);
 
     return () => clearInterval(timer);
-  }, [isWorkoutActive, activeWorkout?.is_active, loading]);
+  }, [isWorkoutActive, activeWorkout?.is_active, activeWorkout?.running_since, activeWorkout?.active_seconds_accumulated, loading]);
 
   // Periodic sync of accumulated time to database (every 10 seconds while running)
   useEffect(() => {
