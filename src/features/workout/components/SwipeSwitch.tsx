@@ -180,16 +180,22 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
         
         // Step 3: Expand outward to cover all padding using transforms to avoid layout flicker
         const contentWidth = getContentWidth();
-        const targetScaleX = contentWidth > 0 ? (trackWidth || 0) / contentWidth : 1;
-        const targetScaleY = (trackHeight || 0) / 48; // Fill rail height while icon is hidden
-        setFinalScaleX(targetScaleX || 1);
-        setFinalScaleY(targetScaleY || 1);
+        // Ensure we have valid measurements before calculating scales
+        const validTrackWidth = trackWidth && trackWidth > 0 ? trackWidth : contentWidth;
+        const validTrackHeight = trackHeight && trackHeight > 0 ? trackHeight : 48;
+        const targetScaleX = contentWidth > 0 ? validTrackWidth / contentWidth : 1;
+        const targetScaleY = validTrackHeight > 0 ? validTrackHeight / 48 : 1;
+        // Ensure scale values are reasonable (between 1 and 2)
+        const safeScaleX = Math.max(1, Math.min(2, targetScaleX || 1));
+        const safeScaleY = Math.max(1, Math.min(2, targetScaleY || 1));
+        setFinalScaleX(safeScaleX);
+        setFinalScaleY(safeScaleY);
 
         controls.start({
           x: 0,
           width: contentWidth, // keep width constant and scale to fill padding
-          scaleX: targetScaleX,
-          scaleY: targetScaleY,
+          scaleX: safeScaleX,
+          scaleY: safeScaleY,
           backgroundColor: '#22C55E',
           borderRadius: THUMB_RADIUS
         }, { 
@@ -504,10 +510,10 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
               initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
               animate={{
                 opacity: isCheckVisible ? 1 : 0,
-                // Inversely scale to counter parent scale during/after expansion
-                // Ensure we always have valid scale values to prevent squishing
-                scaleX: finalScaleX > 0 ? 1 / finalScaleX : 1,
-                scaleY: finalScaleY > 0 ? 1 / finalScaleY : 1,
+                // Use a conservative inverse scale to prevent distortion
+                // Cap the inverse scale to prevent the checkmark from becoming too large
+                scaleX: finalScaleX > 0 ? Math.min(1.2, 1 / finalScaleX) : 1,
+                scaleY: finalScaleY > 0 ? Math.min(1.2, 1 / finalScaleY) : 1,
               }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               style={{ transformOrigin: 'center', zIndex: 3 }}
