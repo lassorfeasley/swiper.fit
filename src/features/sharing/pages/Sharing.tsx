@@ -64,7 +64,6 @@ export default function Sharing() {
   const [showRoutineSelectionDialog, setShowRoutineSelectionDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
-  const [activeWorkout, setActiveWorkout] = useState(null);
   const [dialogMode, setDialogMode] = useState('workout'); // 'workout' or 'manage'
   const subscriptionRef = useRef(null);
   const retryTimeoutRef = useRef(null);
@@ -781,23 +780,6 @@ export default function Sharing() {
         return;
       }
 
-      // Check for active workout
-      const { data: activeWorkoutData, error: activeWorkoutError } = await supabase
-        .from("workouts")
-        .select(`
-          id,
-          user_id,
-          routine_id,
-          routines!fk_workouts__routines(routine_name)
-        `)
-        .eq("user_id", clientProfile.id)
-        .is("completed_at", null)
-        .single();
-
-      if (activeWorkoutError && activeWorkoutError.code !== 'PGRST116') {
-        console.error("Error fetching active workout:", activeWorkoutError);
-      }
-
       // Process routines to add completion status
       const routinesWithCompletion = (routines || []).map((routine) => {
         // Get the most recent completed workout
@@ -843,27 +825,11 @@ export default function Sharing() {
       console.log("Fetched active routines for client (account owner):", clientProfile.id);
       console.log("Routine data structure:", routinesWithCompletion);
       console.log("Number of routines found:", routinesWithCompletion?.length || 0);
-      console.log("Active workout:", activeWorkoutData);
       
       setClientRoutines(routinesWithCompletion || []);
-      setActiveWorkout(activeWorkoutData);
       setShowRoutineSelectionDialog(true);
     } catch (error) {
       console.error("Error fetching routines:", error);
-    }
-  };
-
-  const handleJoinActiveWorkout = () => {
-    if (activeWorkout && selectedClient) {
-      // Switch to the client's (account owner) context so we can see their active workout
-      switchToUser(selectedClient);
-      
-      // Navigate to active workout page
-      navigate('/workout/active');
-      setShowRoutineSelectionDialog(false);
-      setSelectedClient(null);
-      setClientRoutines([]);
-      setActiveWorkout(null);
     }
   };
 
@@ -892,7 +858,6 @@ export default function Sharing() {
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);
       setClientRoutines([]);
-      setActiveWorkout(null);
     }
   };
 
@@ -1094,14 +1059,14 @@ export default function Sharing() {
         
         while (attempts < maxAttempts) {
           try {
-            const { data: activeWorkoutData } = await supabase
+            const { data: workoutData } = await supabase
               .from("workouts")
               .select("id")
               .eq("user_id", selectedClient.id)
               .eq("is_active", true)
               .single();
             
-            if (activeWorkoutData) {
+            if (workoutData) {
               // Workout is detected, navigate to active workout page
               navigate('/workout/active');
               break;
@@ -1544,56 +1509,19 @@ export default function Sharing() {
               paddingTop={0}
               paddingBottom={0}
             >
-            {dialogMode === 'workout' && activeWorkout && (
-              <div 
-                data-layer="Routine Card" 
-                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-green-50"
-                onClick={handleJoinActiveWorkout}
-              >
-                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
-                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-green-800 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      {activeWorkout.routines?.routine_name || 'Active workout'}
-                    </div>
-                    <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-green-600 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-                      Active workout in progress
-                    </div>
-                  </div>
-                </div>
-                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-                  <div 
-                    data-layer="Frame 5012" 
-                    className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
-                  >
-                    <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                      <Play className="w-4 h-4 text-white" />
-                    </div>
-                    <div data-layer="Start" className="Start justify-center text-white text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Join</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {clientRoutines
-              .filter(routine => dialogMode === 'workout' ? (!activeWorkout || routine.id !== activeWorkout.routine_id) : true)
-              .map((routine, index) => (
+            {clientRoutines.map((routine, index) => (
               <div 
                 key={routine.id}
                 data-layer="Routine Card" 
-                className={`RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden ${
-                  dialogMode === 'workout' && activeWorkout ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-neutral-50'
-                }`}
-                onClick={dialogMode === 'workout' && activeWorkout ? undefined : () => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
+                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-neutral-50"
+                onClick={() => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
               >
                 <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
                   <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                    <div data-layer="Biceps and chest" className={`BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight ${
-                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-600'
-                    }`}>
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight text-neutral-neutral-600">
                       {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
                     </div>
-                    <div data-layer="Completed 5 days ago" className={`Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none ${
-                      dialogMode === 'workout' && activeWorkout ? 'text-neutral-300' : 'text-neutral-neutral-400'
-                    }`}>
+                    <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none text-neutral-neutral-400">
                       {routine.lastCompletedText || 'Never completed'}
                     </div>
                   </div>
@@ -1602,10 +1530,8 @@ export default function Sharing() {
                   {dialogMode === 'workout' ? (
                     <div 
                       data-layer="Frame 5012" 
-                      className={`Frame5012 h-7 px-2 rounded-[50px] flex justify-start items-center gap-1 ${
-                        activeWorkout ? 'bg-neutral-300' : 'bg-green-600'
-                      } ${activeWorkout ? '' : 'cursor-pointer'}`}
-                      onClick={activeWorkout ? undefined : (e) => {
+                      className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
+                      onClick={(e) => {
                         e.stopPropagation();
                         handleRoutineSelect(routine);
                       }}
@@ -1613,9 +1539,7 @@ export default function Sharing() {
                       <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
                         <Play className="w-4 h-4 text-white" />
                       </div>
-                      <div data-layer="Start" className={`Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight ${
-                        activeWorkout ? 'text-neutral-500' : 'text-white'
-                      }`}>
+                      <div data-layer="Start" className="Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight text-white">
                         Start
                       </div>
                     </div>
