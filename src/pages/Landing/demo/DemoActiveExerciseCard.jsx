@@ -94,7 +94,7 @@ const DemoActiveExerciseCard = React.forwardRef(({
       totalCards={totalCards}
       style={{ touchAction: isFocused ? 'pan-x' : 'auto', overscrollBehaviorY: isFocused ? 'contain' : 'auto' }}
     >
-      <div className={cn("w-full bg-white rounded-[12px] border border-neutral-300 inline-flex flex-col justify-center items-center overflow-hidden", (isFocused || isExpanded) && "gap-4")}> 
+      <div className={cn("w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-center items-center overflow-hidden", (isFocused || isExpanded) && "gap-4")}> 
         <div className={cn("self-stretch p-3 flex flex-col justify-start items-start", (isFocused || isExpanded) && "gap-5")}> 
           {/* Label Section */}
           <div className="self-stretch inline-flex justify-start items-center gap-5">

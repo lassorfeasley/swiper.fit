@@ -28,7 +28,7 @@ const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({
   return (
     <div 
       ref={ref} 
-      className={`ActionCard w-[500px] h-14 max-w-[500px] rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer ${className}`} 
+      className={`ActionCard w-[500px] h-14 max-w-[500px] rounded-lg border border-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer ${className}`} 
       onClick={onClick} 
       {...props}
     >

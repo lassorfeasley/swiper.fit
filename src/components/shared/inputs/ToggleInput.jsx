@@ -28,7 +28,7 @@ const ToggleInput = ({
         value={value}
         onValueChange={disabled ? undefined : (onValueChange || onChange)}
         disabled={disabled}
-        className="gap-0 self-stretch rounded-sm border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0"
+        className="gap-0 self-stretch rounded-lg border border-neutral-300 flex justify-start items-center overflow-hidden h-7 p-0"
       >
         {options.map((option, idx) => (
           <ToggleGroupItem

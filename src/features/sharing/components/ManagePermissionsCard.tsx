@@ -54,7 +54,7 @@ const ManagePermissionsCard = ({
   const displayName = typeof name === 'string' ? name : formatUserDisplay(name);
 
   return (
-    <div className={`w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}>
+    <div className={`w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}>
       {/* Card Header */}
       <div className="CardHeader self-stretch p-3 inline-flex justify-between items-center">
         <div className="Frame84 flex-1 flex justify-start items-center gap-3">
@@ -74,7 +74,7 @@ const ManagePermissionsCard = ({
 
       {/* Permissions Section */}
       <div className="Frame79 self-stretch flex flex-col justify-start items-start gap-4">
-        <div className={`TrainerPermissions self-stretch ${variant === 'client' ? 'border-t border-neutral-neutral-300' : 'outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300'} flex flex-col justify-start items-start overflow-hidden`}>
+        <div className={`TrainerPermissions self-stretch ${variant === 'client' ? 'border-t border-neutral-300' : 'border border-neutral-300'} flex flex-col justify-start items-start overflow-hidden`}>
           {variant === "trainer" ? (
             <>
               {/* Trainer (Account Manager) Permissions - Switches */}

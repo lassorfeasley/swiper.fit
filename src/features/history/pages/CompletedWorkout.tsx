@@ -183,7 +183,7 @@ const CompletedWorkout = () => {
 
   const headerSharingContent = isDelegated ? (
     <>
-      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
         <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
           <Blend className="w-6 h-6 text-white" />
         </div>
@@ -197,7 +197,7 @@ const CompletedWorkout = () => {
         type="button"
         aria-label="Exit delegate mode"
         onClick={returnToSelf}
-        className="w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+        className="w-10 h-10 p-2 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
       >
         <X className="w-6 h-6 text-white" />
       </button>
@@ -717,7 +717,7 @@ const CompletedWorkout = () => {
   // Build custom header action pod with Resume + Share + Delete
   const headerActions = (
     <div className="inline-flex flex-col justify-center items-end gap-2.5">
-      <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+      <div className="p-2 bg-white/80 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
         {isOwner && (
           <button
             onClick={() => setResumeConfirmOpen(true)}
@@ -834,7 +834,7 @@ const CompletedWorkout = () => {
             {/* Image and Routine Label Section */}
             <div className="self-stretch flex flex-col justify-center items-center gap-3 mb-10">
               {/* Image Container */}
-              <div className="w-full max-w-[500px] rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+              <div className="w-full max-w-[500px] rounded-lg border border-neutral-300 flex flex-col justify-center items-center overflow-hidden">
                 <img 
                   className="w-full h-auto max-h-64" 
                   src={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
@@ -848,7 +848,7 @@ const CompletedWorkout = () => {
               {/* Routine Label Container */}
               {workout?.routine_id && (
                 <div 
-                  className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                  className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-lg border border-neutral-300 inline-flex justify-start items-center cursor-pointer"
                   onClick={handleOpenRoutine}
                   role="button"
                   tabIndex={0}

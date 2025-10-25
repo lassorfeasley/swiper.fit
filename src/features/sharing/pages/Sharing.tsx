@@ -1149,14 +1149,14 @@ export default function Sharing() {
 
                     {/* Incoming requests */}
                     {pendingRequestsQuery.isLoading && (
-                      <div className="w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center p-6">
                         <div className="text-neutral-neutral-400 text-sm font-medium">Loading incoming requests...</div>
                       </div>
                     )}
                     {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
                       pendingRequestsQuery.data.map((request) => (
-                        <div key={request.id} className="SharedWithMeCard w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
-                          <div className="CardHeader self-stretch p-3 outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-between items-center">
+                        <div key={request.id} className="SharedWithMeCard w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                          <div className="CardHeader self-stretch p-3 border border-neutral-300 inline-flex justify-between items-center">
                             <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                               <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
                                 {request.request_type === 'trainer_invite'
@@ -1176,7 +1176,7 @@ export default function Sharing() {
                           </div>
                           <div className="Frame79 self-stretch p-3 flex flex-col justify-start items-start gap-4">
                             <div className="YourPermissions self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
-                            <div className="PermissionRows self-stretch bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                            <div className="PermissionRows self-stretch bg-stone-100 rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
                               <div className="InputWrapper self-stretch h-14 p-3 inline-flex justify-center items-center">
                                 <div className="Frame75 flex-1 flex justify-start items-center gap-5">
                                   <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
@@ -1225,7 +1225,7 @@ export default function Sharing() {
                                 onClick={() => handleAcceptRequest(request.id)}
                                 disabled={acceptRequestMutation.isPending}
                                 variant="default"
-                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl flex justify-center items-center gap-2.5"
+                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] flex justify-center items-center gap-2.5"
                               >
                                 <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Accept</div>
                               </SwiperButton>
@@ -1233,7 +1233,7 @@ export default function Sharing() {
                                 onClick={() => handleDeclineRequest(request.id)}
                                 disabled={declineRequestMutation.isPending}
                                 variant="destructive"
-                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-red-red-400 rounded-xl flex justify-center items-center gap-2.5"
+                                className="flex-1 h-12 min-w-44 px-4 py-2 bg-red-red-400 rounded-[20px] flex justify-center items-center gap-2.5"
                               >
                                 <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Decline</div>
                               </SwiperButton>
@@ -1248,14 +1248,14 @@ export default function Sharing() {
 
                     {/* Outgoing requests */}
                     {outgoingRequestsQuery.isLoading && (
-                      <div className="w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center p-6">
                         <div className="text-neutral-neutral-400 text-sm font-medium">Loading outgoing requests...</div>
                       </div>
                     )}
                     {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
                       outgoingRequestsQuery.data.map((request) => (
-                        <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
-                          <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
+                        <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
+                          <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white border border-neutral-300 flex flex-col justify-start items-start gap-3">
                             <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
                               <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
                                 <div data-layer="example@account.com was invited to be your trainer" className="ExampleAccountComWasInvitedToBeYourTrainer justify-center">
@@ -1280,12 +1280,12 @@ export default function Sharing() {
 
                     {/* Error states */}
                     {pendingRequestsQuery.isError && (
-                      <div className="w-full bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-red-50 rounded-lg border border-red-200 flex flex-col justify-center items-center p-6">
                         <div className="text-red-600 text-sm font-medium">Failed to load incoming requests. Please try again.</div>
                       </div>
                     )}
                     {outgoingRequestsQuery.isError && (
-                      <div className="w-full bg-red-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200 flex flex-col justify-center items-center p-6">
+                      <div className="w-full bg-red-50 rounded-lg border border-red-200 flex flex-col justify-center items-center p-6">
                         <div className="text-red-600 text-sm font-medium">Failed to load outgoing requests. Please try again.</div>
                       </div>
                     )}
@@ -1329,7 +1329,7 @@ export default function Sharing() {
                     setShowAddPersonDialog(true);
                   }}
                   variant="default"
-                  className="w-full h-14 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
+                  className="w-full h-14 rounded-lg border border-neutral-300"
                 />
               </DeckWrapper>
             </div>
@@ -1376,7 +1376,7 @@ export default function Sharing() {
                     setShowAddPersonDialog(true);
                   }}
                   variant="default"
-                  className="w-full h-14 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300"
+                  className="w-full h-14 rounded-lg border border-neutral-300"
                 />
               </DeckWrapper>
             </div>
@@ -1405,7 +1405,7 @@ export default function Sharing() {
                   </div>
                 </div>
               </div>
-              <div className="self-stretch h-11 pl-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5">
+              <div className="self-stretch h-11 pl-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2.5">
                 <input
                   type="email"
                   value={dialogEmail}
@@ -1417,9 +1417,9 @@ export default function Sharing() {
             </div>
           </div>
           <div className="self-stretch flex flex-col justify-start items-start gap-0">
-            <div className="self-stretch rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+            <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
               {dialogInviteType === 'client' ? (
-                <div className="self-stretch rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start overflow-hidden">
+                <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
                   <SwiperFormSwitch
                     label="Create or edit routines"
                     checked={dialogPermissions.can_create_routines}
@@ -1479,7 +1479,7 @@ export default function Sharing() {
             headerRight={
               <button
                 onClick={() => setShowRoutineSelectionDialog(false)}
-                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-neutral-neutral-300"
+                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-neutral-300"
                 aria-label="Close dialog"
               />
             }
@@ -1513,7 +1513,7 @@ export default function Sharing() {
               <div 
                 key={routine.id}
                 data-layer="Routine Card" 
-                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-neutral-50"
+                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-neutral-50"
                 onClick={() => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
               >
                 <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
@@ -1530,7 +1530,7 @@ export default function Sharing() {
                   {dialogMode === 'workout' ? (
                     <div 
                       data-layer="Frame 5012" 
-                      className="Frame5012 h-7 px-2 bg-green-600 rounded-[50px] flex justify-start items-center gap-1 cursor-pointer"
+                      className="Frame5012 h-7 px-2 bg-green-600 rounded-lg flex justify-start items-center gap-1 cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRoutineSelect(routine);
@@ -1546,7 +1546,7 @@ export default function Sharing() {
                   ) : (
                     <div 
                       data-layer="Frame 5013" 
-                      className="Frame5013 w-7 h-7 bg-neutral-200 rounded-[50px] flex justify-center items-center gap-1 cursor-pointer"
+                      className="Frame5013 w-7 h-7 bg-neutral-200 rounded-lg flex justify-center items-center gap-1 cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRoutineManage(routine);
@@ -1561,7 +1561,7 @@ export default function Sharing() {
               </div>
             ))}
             {clientRoutines.length === 0 && (
-              <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
+              <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
                 <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
                   <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
                     <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight text-center">

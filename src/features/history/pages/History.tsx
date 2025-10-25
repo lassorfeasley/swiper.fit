@@ -64,7 +64,7 @@ const History = () => {
   const isInSharingMode = isDelegated || managingForOwner || managingForClient;
   const headerSharingContent = isInSharingMode ? (
     <>
-      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+      <div className="max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
         <div className="w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
           <Blend className="w-6 h-6 text-white" />
         </div>
@@ -78,7 +78,7 @@ const History = () => {
         type="button"
         aria-label="Exit delegate mode"
         onClick={returnToSelf}
-        className="w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+        className="w-10 h-10 p-2 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
       >
         <X className="w-6 h-6 text-white" />
       </button>

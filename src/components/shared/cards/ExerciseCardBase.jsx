@@ -30,7 +30,7 @@ const ExerciseCardBase = ({
   return (
     <div
       data-layer="exercise-card-base"
-      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
+      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
       style={style}
       {...domProps}
     >

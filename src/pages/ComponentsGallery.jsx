@@ -163,7 +163,7 @@ export default function ComponentsGallery() {
       render: () => (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-neutral-700">Dropdown Menu</h2>
-          <div className="bg-white border rounded-xl p-4 inline-block">
+          <div className="bg-white border rounded-lg p-4 inline-block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <UiButton variant="outline">Open Menu</UiButton>
@@ -200,7 +200,7 @@ export default function ComponentsGallery() {
       render: () => (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-neutral-700">Inputs</h2>
-          <div className="space-y-3 bg-white border rounded-xl p-4">
+          <div className="space-y-3 bg-white border rounded-lg p-4">
             <div className="grid grid-cols-1 gap-3">
               <EditableTextInput label="Editable" value={textVal} onChange={setTextVal} />
               <SearchField value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" />
@@ -336,7 +336,7 @@ export default function ComponentsGallery() {
     <AppLayout title="Components Gallery" search={false} showSidebar={true} reserveSpace={true}>
       <div className="max-w-6xl mx-auto px-5 pt-6 pb-12 grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside className="md:col-span-1">
-          <div className="bg-white border rounded-xl p-3 sticky top-[calc(var(--header-height,0px)+16px)]">
+          <div className="bg-white border rounded-lg p-3 sticky top-[calc(var(--header-height,0px)+16px)]">
             <input
               type="text"
               value={search}

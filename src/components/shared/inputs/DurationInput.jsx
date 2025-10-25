@@ -125,7 +125,7 @@ export default function DurationInput({
   }, [value, isFocused]);
 
   const wrapperCls = useMemo(() => {
-    const base = "self-stretch h-12 bg-white rounded-sm border border-neutral-300 flex justify-start items-center gap-0";
+    const base = "self-stretch h-12 bg-white rounded-lg border border-neutral-300 flex justify-start items-center gap-0";
     if (readOnly) return cn(base, "border-neutral-300");
     if (isFocused || isHovered) return cn(base, "border-slate-600");
     return cn(base, "border-neutral-300");

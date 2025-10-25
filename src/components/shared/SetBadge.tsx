@@ -10,7 +10,7 @@ interface SetBadgeSegmentProps {
 
 const SetBadgeSegment = ({ icon, value, isFirst, isLast }: SetBadgeSegmentProps) => {
   const IconComponent = icon;
-  const borderRadius = isFirst && isLast ? 'rounded-sm' : isFirst ? 'rounded-l-sm' : isLast ? 'rounded-r-sm' : '';
+  const borderRadius = isFirst && isLast ? 'rounded-lg' : isFirst ? 'rounded-l-lg' : isLast ? 'rounded-r-lg' : '';
   const borderClass = !isFirst ? 'border-l border-neutral-300' : '';
   
   return (
@@ -100,8 +100,8 @@ const SetBadge = ({
   }
 
   const badgeClasses = `
-    h-7 bg-neutral-300 rounded-sm 
-    outline outline-1 outline-offset-[-1px] outline-neutral-300 
+    h-7 bg-neutral-300 rounded-lg 
+    border border-neutral-300 
     inline-flex justify-start items-center overflow-hidden
     ${editable ? "cursor-pointer" : ""}
     ${className}

@@ -45,7 +45,7 @@ export default function PasswordReset() {
       <div className="self-stretch flex flex-col justify-center items-center flex-1">
         <DeckWrapper gap={0} className="flex-1">
           <CardWrapper>
-            <div className="self-stretch p-5 bg-white rounded-[12px] border border-neutral-300 flex flex-col justify-start items-start gap-5">
+            <div className="self-stretch p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
               <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
                 {/* Header */}
                 <div className="self-stretch flex flex-col gap-2">
@@ -95,7 +95,7 @@ export default function PasswordReset() {
                 {/* Submit button */}
                 <Button
                   type="submit"
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl text-white"
+                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
                 >
                   Send reset link
                 </Button>

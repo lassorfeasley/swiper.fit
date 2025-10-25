@@ -82,7 +82,7 @@ const RoutineBuilder = () => {
   // Full sharing nav row content matching Active Workout style
   const headerSharingContent = isDelegated ? (
     <>
-      <div className="Frame73 max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-[50px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
+      <div className="Frame73 max-w-[500px] pl-2 pr-5 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-start items-center">
         <div className="Iconbutton w-10 h-10 p-2.5 flex justify-start items-center gap-2.5">
           <Blend className="w-6 h-6 text-white" />
         </div>
@@ -96,7 +96,7 @@ const RoutineBuilder = () => {
         type="button"
         aria-label="Exit delegate mode"
         onClick={returnToSelf}
-        className="ActionIcons w-10 h-10 p-2 bg-neutral-950 rounded-3xl shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
+        className="ActionIcons w-10 h-10 p-2 bg-neutral-950 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2"
       >
         <X className="w-6 h-6 text-white" />
       </button>
@@ -926,7 +926,7 @@ const RoutineBuilder = () => {
           <div className="self-stretch inline-flex flex-col justify-start items-center">
             <div className="self-stretch px-5 inline-flex justify-center items-center gap-3">
               <div 
-                className="w-full max-w-[500px] rounded-[20px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden cursor-pointer"
+                className="w-full max-w-[500px] rounded-lg border border-neutral-300 overflow-hidden cursor-pointer"
                 onClick={shareRoutine}
               >
                 <img 
@@ -946,7 +946,7 @@ const RoutineBuilder = () => {
             {/* View routine history CTA (matches action card/button style) */}
             <div className="self-stretch px-5 mt-3 inline-flex justify-center items-center">
               <div
-                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-white rounded-lg border border-neutral-300 inline-flex justify-start items-center cursor-pointer"
                 role="button"
                 tabIndex={0}
                 onClick={() => navigate('/history', { state: { filterRoutine: programName } })}

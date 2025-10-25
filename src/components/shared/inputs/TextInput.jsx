@@ -24,7 +24,7 @@ const TextInput = React.forwardRef(
     const getInputStyles = () => {
       // Base field style (height / spacing / typography / colours according to spec)
       const baseBase =
-        "h-[52px] bg-white rounded border border-neutral-300 outline outline-1 outline-offset-[-1px] text-base font-medium leading-tight font-vietnam placeholder:font-medium placeholder:text-slate-500 shadow-none focus:ring-0 focus-visible:ring-0";
+        "h-[52px] bg-white rounded-lg border border-neutral-300 text-base font-medium leading-tight font-vietnam placeholder:font-medium placeholder:text-slate-500 shadow-none focus:ring-0 focus-visible:ring-0";
 
       // Padding differs when disabled (spec shows 16px -> p-4)
       const baseStyles = disabled ? cn(baseBase, "p-4") : cn(baseBase, "p-3");

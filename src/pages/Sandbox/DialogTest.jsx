@@ -182,7 +182,7 @@ export default function DialogTest() {
             </SwiperButton>
             <div data-layer="deck-wrapper" className="DeckWrapper self-stretch w-full flex flex-col justify-center items-center gap-3 px-0">
               {[1,2,3].map((idx) => (
-                <div key={idx} data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
+                <div key={idx} data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
                   <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
                     <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
                       <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-neutral-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Biceps and chest</div>
@@ -190,7 +190,7 @@ export default function DialogTest() {
                     </div>
                   </div>
                   <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-                    <div data-layer="Frame 5013" className="Frame5013 w-7 h-7 bg-neutral-neutral-200 rounded-[50px] flex justify-center items-center gap-1">
+                    <div data-layer="Frame 5013" className="Frame5013 w-7 h-7 bg-neutral-neutral-200 rounded-lg flex justify-center items-center gap-1">
                        <Plus className="w-5 h-5 text-neutral-neutral-500" strokeWidth={2} />
                     </div>
                   </div>
@@ -202,10 +202,10 @@ export default function DialogTest() {
               <div data-layer="text-wrapper" className="TextWrapper self-stretch pt-3 pb-4 inline-flex justify-center items-center gap-2.5">
                 <div data-layer="Are you sure you want to take this action?" className="AreYouSureYouWantToTakeThisAction flex-1 justify-start text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">Are you sure you want to take this action?</div>
               </div>
-              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-xl" variant="default">
+              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-lg" variant="default">
                 Button text
               </SwiperButton>
-              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-xl" variant="destructive">
+              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-lg" variant="destructive">
                 Button text
               </SwiperButton>
             </div>

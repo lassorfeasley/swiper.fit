@@ -246,7 +246,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
     >
         <div
           className={cn(
-            "w-full bg-white rounded-[12px] border border-neutral-300 inline-flex flex-col justify-center items-center overflow-hidden",
+            "w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-center items-center overflow-hidden",
             (isFocused || isExpanded) && "gap-4"
           )}
         >

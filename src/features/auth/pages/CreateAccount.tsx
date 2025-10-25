@@ -298,7 +298,7 @@ export default function CreateAccount(): React.JSX.Element {
       <div className="self-stretch flex flex-col justify-center items-center flex-1">
         <DeckWrapper gap={0} className="flex-1">
           <CardWrapper>
-            <div className="self-stretch p-5 bg-white rounded-[12px] border border-neutral-300 flex flex-col justify-start items-start gap-5">
+            <div className="self-stretch p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
               <form onSubmit={handleSignup} className="w-full flex flex-col gap-5">
                 {/* Header row */}
                 <div className="self-stretch inline-flex justify-between items-center">
@@ -402,7 +402,7 @@ export default function CreateAccount(): React.JSX.Element {
                 <Button
                   disabled={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()}
                   onClick={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() ? undefined : handleSignup}
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-xl text-white"
+                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
                 >
                   <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
                     {signupMutation.isPending ? "Creating Account..." : "Create Account"}

@@ -109,7 +109,7 @@ const SwiperDialog: React.FC<SwiperDialogProps> = ({
       <DialogPortal>
         <DialogOverlay onClick={handleBackdropClick} />
         <DialogContent
-          className={`w-full ${widthClass} ${mobileSafeWidthClass} shadow-none border border-neutral-neutral-300 bg-stone-100 p-0 rounded-xl overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
+          className={`w-full ${widthClass} ${mobileSafeWidthClass} shadow-none border border-neutral-300 bg-stone-100 p-0 rounded-lg overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
           onClick={handleBackdropClick}
           tabIndex={-1}
         >
@@ -121,12 +121,12 @@ const SwiperDialog: React.FC<SwiperDialogProps> = ({
             aria-labelledby="swiper-dialog-title"
           >
               {title && (
-                <div className={`self-stretch h-11 px-3 ${tone === 'error' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-b border-neutral-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
+                <div className={`self-stretch h-11 px-3 ${tone === 'error' ? 'bg-red-50' : 'bg-neutral-neutral-200'} border-b border-neutral-300 inline-flex justify-start items-center ${headerClassName || ''}`}>
                   <div id="swiper-dialog-title" className="flex-1 justify-start text-neutral-neutral-700 text-lg font-medium leading-tight">{title}</div>
                   {headerRight ?? (showHeaderDismiss ? (
                     <button
                       onClick={() => onOpenChange?.(false)}
-                      className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+                      className="w-4 h-4 bg-red-300 rounded-full border border-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
                       aria-label="Close dialog"
                     />
                   ) : null)}

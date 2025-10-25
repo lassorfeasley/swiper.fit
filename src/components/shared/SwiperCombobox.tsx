@@ -74,7 +74,7 @@ export default function SwiperCombobox({
           aria-expanded={isOpen}
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
+            "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
             triggerClassName
           )}
           style={{ width, maxWidth: width }}
@@ -160,7 +160,7 @@ export default function SwiperCombobox({
             role="combobox"
             aria-expanded={undefined}
             className={cn(
-              "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 outline outline-1 outline-offset-[-1px] outline-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
+              "Dropdown self-stretch h-11 px-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2 cursor-pointer",
               triggerClassName
             )}
             style={{ width, maxWidth: width }}

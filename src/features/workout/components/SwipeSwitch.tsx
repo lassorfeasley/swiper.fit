@@ -473,7 +473,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           {set_variant}
         </div>
       )}
-      <div className="Swipeswitch self-stretch bg-neutral-neutral-400 rounded-xl flex flex-col justify-center overflow-hidden">
+      <div className="Swipeswitch self-stretch bg-neutral-neutral-400 rounded-lg flex flex-col justify-center overflow-hidden">
         <div className="Swipeswitch self-stretch bg-neutral-neutral-200 flex flex-col justify-start items-start">
           <div
             ref={trackRef}
@@ -485,7 +485,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
 
           {/* Draggable Thumb */}
           <motion.div
-            className="Thumb w-20 h-12 p-2.5 bg-white rounded-xl flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
+            className="Thumb w-20 h-12 p-2.5 bg-white rounded-lg flex justify-center items-center gap-2.5 absolute top-0 bottom-0 my-auto"
             style={{ ...thumbStyle, pointerEvents: (isVisuallyComplete || isPaused) ? 'none' : 'auto', overflow: 'visible' }}
             drag={!isVisuallyComplete && isDefault && !isPaused ? "x" : false}
             dragElastic={0}
