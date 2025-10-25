@@ -224,11 +224,11 @@ const ActiveWorkoutContent: React.FC = () => {
         // Go to workout summary if sets were completed
         navigate(`/history/${wid}`, { replace: true });
       } else {
-        // No sets completed, go back to routines page
+        // No sets completed, go back to train page
         if (isDelegated) {
           returnToSelf();
         } else {
-          navigate('/routines', { replace: true });
+          navigate('/train', { replace: true });
         }
       }
     } catch (error) {

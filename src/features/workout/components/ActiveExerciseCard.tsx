@@ -28,6 +28,7 @@ import React, {
 } from "react";
 import SwipeSwitch from "./SwipeSwitch";
 import { ANIMATION_DURATIONS } from "@/lib/scrollSnap";
+import { toast } from "@/lib/toastReplacement";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -157,9 +158,14 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
 
       // Call onSetComplete for the parent to handle
       if (onSetComplete) {
-        Promise.resolve(
-          onSetComplete(String(exerciseId), { ...setToComplete, status: "complete" })
-        ).catch(console.error);
+        try {
+          await onSetComplete(String(exerciseId), { ...setToComplete, status: "complete" });
+        } catch (error) {
+          console.error('Failed to save set:', error);
+          toast.error('Failed to save set. Please check your connection and try again.');
+          // Don't proceed with exercise completion if save failed
+          return;
+        }
       }
 
       // After updating the set's status, check if all sets for this exercise are now complete.

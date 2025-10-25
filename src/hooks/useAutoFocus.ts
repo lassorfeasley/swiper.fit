@@ -10,7 +10,7 @@ interface AutoFocusOptions<T> {
 interface WorkoutAutoFocusOptions {
   sectionExercises: Record<string, any[]>;
   completedExercises: Set<string>;
-  setFocusedExercise: (exercise: any) => void;
+  setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
   isRestoringFocus: boolean;
 }
 
@@ -134,12 +134,15 @@ export const useAutoFocus = <T extends Record<string, any>>({
 export const useWorkoutAutoFocus = ({
   sectionExercises,
   completedExercises,
-  setFocusedExercise,
+  setFocusedExerciseId,
   isRestoringFocus
 }: WorkoutAutoFocusOptions) => {
   
   const handleSectionComplete = useCallback((section: string): any => {
+    console.log(`[useAutoFocus] Section "${section}" completed, looking for next exercise...`);
+    
     if (isRestoringFocus) {
+      console.log('[useAutoFocus] Skipping auto-focus (restoring focus)');
       return null; // Don't auto-focus during restoration
     }
     
@@ -150,10 +153,13 @@ export const useWorkoutAutoFocus = ({
     
     if (incompleteExercises.length > 0) {
       // Focus on the first incomplete exercise in this section
-      setFocusedExercise(incompleteExercises[0]);
-      return incompleteExercises[0];
+      const firstIncomplete = incompleteExercises[0];
+      console.log(`[useAutoFocus] Found incomplete exercise in "${section}":`, firstIncomplete.exercise_id);
+      setFocusedExerciseId(firstIncomplete.exercise_id, section);
+      return firstIncomplete;
     } else {
       // All exercises in this section are complete, look for next section
+      console.log(`[useAutoFocus] All exercises in "${section}" complete, checking next sections...`);
       const sections = ['warmup', 'training', 'cooldown'];
       const currentSectionIndex = sections.indexOf(section);
       
@@ -164,17 +170,22 @@ export const useWorkoutAutoFocus = ({
           !completedExercises.has(exercise.exercise_id)
         );
         
+        console.log(`[useAutoFocus] Checking section "${nextSection}": ${nextIncompleteExercises.length} incomplete exercises`);
+        
         if (nextIncompleteExercises.length > 0) {
-          setFocusedExercise(nextIncompleteExercises[0]);
-          return nextIncompleteExercises[0];
+          const firstIncomplete = nextIncompleteExercises[0];
+          console.log(`[useAutoFocus] Moving focus to "${nextSection}":`, firstIncomplete.exercise_id);
+          setFocusedExerciseId(firstIncomplete.exercise_id, nextSection);
+          return firstIncomplete;
         }
       }
       
       // No more incomplete exercises found
-      setFocusedExercise(null);
+      console.log('[useAutoFocus] No more incomplete exercises found - workout complete!');
+      setFocusedExerciseId(null);
       return null;
     }
-  }, [sectionExercises, completedExercises, setFocusedExercise, isRestoringFocus]);
+  }, [sectionExercises, completedExercises, setFocusedExerciseId, isRestoringFocus]);
 
   return {
     handleSectionComplete

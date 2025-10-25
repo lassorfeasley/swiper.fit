@@ -221,7 +221,7 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
   const { handleSectionComplete } = useWorkoutAutoFocus({
     sectionExercises,
     completedExercises,
-    setFocusedExercise,
+    setFocusedExerciseId,
     isRestoringFocus
   });
 

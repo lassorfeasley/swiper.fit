@@ -197,13 +197,16 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           ease: 'easeOut',
           duration: 0.35
         }).then(() => {
+          // Ensure component is still mounted and wait for scale animation to fully complete
+          if (!isMountedRef.current) return;
           setTimeout(() => {
+            if (!isMountedRef.current) return;
             setIsManualSwipe(false);
             setIsAnimating(false);
             setIsCheckVisible(true);
             // Notify parent that the visual completion animation has finished
             onVisualCompleteRef.current?.(set.id);
-          }, 100);
+          }, 150); // Increased from 100ms to 150ms to ensure scale animation completes
         });
       });
     });
@@ -286,7 +289,9 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
     }
 
     // Normal reset when entering default state without needing reverse animation
-    if (status === 'default') {
+    // Only reset if we're not currently animating AND this wasn't a manual swipe that's pending DB save
+    // This prevents visual glitches when DB save is slow or fails
+    if (status === 'default' && !isAnimating && !locallyManuallySwipedRef.current && !isSetManuallyCompleted(uniqueSetId)) {
       setSwipedComplete(false);
       setIsManualSwipe(false);
       setIsAnimating(false);
@@ -500,8 +505,9 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
               animate={{
                 opacity: isCheckVisible ? 1 : 0,
                 // Inversely scale to counter parent scale during/after expansion
-                scaleX: 1 / (finalScaleX || 1),
-                scaleY: 1 / (finalScaleY || 1),
+                // Ensure we always have valid scale values to prevent squishing
+                scaleX: finalScaleX > 0 ? 1 / finalScaleX : 1,
+                scaleY: finalScaleY > 0 ? 1 / finalScaleY : 1,
               }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               style={{ transformOrigin: 'center', zIndex: 3 }}
