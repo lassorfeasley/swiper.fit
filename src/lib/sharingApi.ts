@@ -47,6 +47,22 @@ export async function createTrainerInvite(
   permissions: Permissions = {}
 ): Promise<void> {
   try {
+    // Fetch the trainer's (inviter's) profile
+    const { data: trainerProfiles, error: trainerProfileError } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .eq("id", trainerId)
+      .limit(1);
+
+    if (trainerProfileError || !trainerProfiles?.length) {
+      console.error("Trainer profile lookup error:", trainerProfileError);
+      throw new Error("Failed to look up trainer profile");
+    }
+
+    const trainerProfile = trainerProfiles[0] as Profile;
+    const inviterName = `${trainerProfile.first_name} ${trainerProfile.last_name}`.trim() || trainerProfile.email;
+
+    // Fetch the client's (invitee's) profile
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("id, first_name, last_name, email")
@@ -94,9 +110,10 @@ export async function createTrainerInvite(
         throw new Error("Failed to create invitation");
       }
 
-      // Send email notification
-      await postEmailEvent('trainer_invitation', clientEmail, {
-        trainer_id: trainerId,
+      // Send email notification for non-member (join invitation)
+      await postEmailEvent('join.trainer-invitation', clientEmail, {
+        inviter_name: inviterName,
+        email: clientEmail,
         permissions: invitationData
       });
 
@@ -142,10 +159,9 @@ export async function createTrainerInvite(
       throw new Error("Failed to create invitation");
     }
 
-    // Send email notification
-    await postEmailEvent('trainer_invitation', clientProfile.email, {
-      trainer_id: trainerId,
-      client_profile: clientProfile,
+    // Send email notification for existing member
+    await postEmailEvent('trainer.invitation', clientProfile.email, {
+      inviter_name: inviterName,
       permissions: invitationData
     });
 
@@ -161,6 +177,22 @@ export async function createClientInvite(
   permissions: Permissions = {}
 ): Promise<void> {
   try {
+    // Fetch the client's (inviter's) profile
+    const { data: clientProfiles, error: clientProfileError } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .eq("id", clientId)
+      .limit(1);
+
+    if (clientProfileError || !clientProfiles?.length) {
+      console.error("Client profile lookup error:", clientProfileError);
+      throw new Error("Failed to look up client profile");
+    }
+
+    const clientProfile = clientProfiles[0] as Profile;
+    const inviterName = `${clientProfile.first_name} ${clientProfile.last_name}`.trim() || clientProfile.email;
+
+    // Fetch the trainer's (invitee's) profile
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("id, first_name, last_name, email")
@@ -208,9 +240,10 @@ export async function createClientInvite(
         throw new Error("Failed to create invitation");
       }
 
-      // Send email notification
-      await postEmailEvent('client_invitation', trainerEmail, {
-        client_id: clientId,
+      // Send email notification for non-member (join invitation)
+      await postEmailEvent('join.client-invitation', trainerEmail, {
+        inviter_name: inviterName,
+        email: trainerEmail,
         permissions: invitationData
       });
 
@@ -256,10 +289,9 @@ export async function createClientInvite(
       throw new Error("Failed to create invitation");
     }
 
-    // Send email notification
-    await postEmailEvent('client_invitation', trainerProfile.email, {
-      client_id: clientId,
-      trainer_profile: trainerProfile,
+    // Send email notification for existing member
+    await postEmailEvent('client.invitation', trainerProfile.email, {
+      inviter_name: inviterName,
       permissions: invitationData
     });
 
