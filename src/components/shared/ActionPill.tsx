@@ -52,7 +52,7 @@ export default function ActionPill({
     <button
       type="button"
       onClick={onClick}
-      className={`ActionPill h-10 min-w-10 ${showText ? 'pl-3 pr-4 py-3' : 'py-3'} ${backgroundColor} rounded-[20px] inline-flex justify-center items-center gap-0.5 whitespace-nowrap ${className}`}
+      className={`ActionPill h-10 min-w-10 ${showText ? 'px-4 py-3' : 'py-3'} ${backgroundColor} ${showText ? 'rounded-full' : 'rounded-[20px]'} inline-flex justify-center items-center gap-0.5 whitespace-nowrap ${className}`}
       aria-label={label}
     >
       <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden">
@@ -63,7 +63,7 @@ export default function ActionPill({
         )}
       </div>
       {showText && (
-        <div data-layer="text" className={`Text justify-center ${textColorClass} text-base font-medium font-['Be_Vietnam_Pro'] leading-none`}>{label}</div>
+        <div data-layer="text" className={`Text justify-center ${textColorClass} text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5`}>{label}</div>
       )}
     </button>
   );
