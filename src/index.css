@@ -217,14 +217,35 @@ main[data-scroll-snap-enabled="true"][data-no-top-padding="true"] {
   
   /* Fix for mobile browsers where sticky doesn't work in certain containers */
   main {
-    /* Ensure main container establishes proper stacking context */
-    isolation: isolate;
+    /* Remove isolation that interferes with fixed positioning */
+    isolation: unset;
   }
   
   /* Improve mobile sticky behavior */
   .sticky:not([data-no-transform]) {
     /* Ensure sticky elements have proper containing block */
     contain: layout style paint;
+  }
+  
+  /* === Mobile Navigation Fixed Positioning Fix === */
+  /* Ensure mobile navigation stays fixed at bottom regardless of scroll */
+  .md\\:hidden.fixed.bottom-0 {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999 !important;
+    /* Prevent any parent container from affecting positioning */
+    isolation: isolate !important;
+    /* Ensure it's not affected by scroll containers */
+    contain: layout style paint !important;
+  }
+  
+  /* Additional safeguard for mobile nav container */
+  .md\\:hidden.fixed.bottom-0 > div {
+    /* Ensure the inner container doesn't interfere */
+    position: relative !important;
+    transform: none !important;
   }
 }
 
@@ -274,6 +295,52 @@ nav button,
     /* Prevent any transform interference */
     -webkit-transform: none !important;
     transform: none !important;
+  }
+  
+  /* === Mobile Navigation Safari Fix === */
+  /* Ensure mobile navigation works properly in Safari */
+  .md\\:hidden.fixed.bottom-0 {
+    /* Force Safari to respect fixed positioning */
+    position: fixed !important;
+    -webkit-transform: translateX(-50%) !important;
+    transform: translateX(-50%) !important;
+    /* Prevent Safari from applying hardware acceleration */
+    will-change: auto !important;
+    -webkit-backface-visibility: visible !important;
+    backface-visibility: visible !important;
+  }
+}
+
+/* === Global Mobile Navigation Safeguard === */
+/* Ensure mobile navigation is never affected by any scroll containers */
+@media (max-width: 768px) {
+  /* Force mobile navigation to stay fixed regardless of parent containers */
+  .mobile-nav-fixed {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999 !important;
+    /* Create new stacking context to isolate from parent */
+    isolation: isolate !important;
+    /* Ensure it's not affected by any scroll containers */
+    contain: layout style paint !important;
+    /* Prevent any transform interference */
+    will-change: auto !important;
+  }
+  
+  /* Ensure no parent container can affect mobile nav positioning */
+  * {
+    /* Prevent any parent from creating scroll contexts that affect fixed positioning */
+    overflow-anchor: none;
+  }
+  
+  /* Specific fix for main container */
+  main {
+    /* Ensure main doesn't create scroll contexts that interfere with fixed nav */
+    overflow-anchor: none;
+    /* Remove any containment that might affect fixed positioning */
+    contain: unset;
   }
 }
 

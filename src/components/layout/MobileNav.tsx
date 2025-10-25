@@ -8,7 +8,7 @@ const MobileNav: React.FC = () => {
   const { pathname } = useLocation();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 px-5 pb-4">
+    <div className="md:hidden fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 px-5 pb-4 mobile-nav-fixed">
       <div className="w-96 h-16 bg-white/80 rounded-[100px] shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] flex justify-between items-center px-2">
         {navItems.map((item) => {
           const selected = new RegExp(`^${item.to}(\/|$)`).test(pathname);
