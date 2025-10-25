@@ -409,6 +409,9 @@ const RoutineBuilder = () => {
     saveOrder();
     if (location.state && location.state.fromPublicImport) {
       navigate('/routines');
+    } else if (location.state && location.state.managingForClient) {
+      // If trainer is managing a client, go back to the trainer's account page
+      navigate('/account');
     } else {
       navigate(-1);
     }

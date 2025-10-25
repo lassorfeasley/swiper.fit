@@ -902,14 +902,25 @@ export default function Sharing() {
       } catch (_) {}
 
       // Switch context to client (account owner) so the builder opens in their account
+      console.log('[Sharing] Switching to client context and navigating to routine builder');
       switchToUser(selectedClient);
-      navigate(`/routines/${routine.id}/configure`, {
-        state: {
-          managingForClient: true,
-          clientId: selectedClient.id,
-          clientName: formatUserDisplay(selectedClient),
-        },
-      });
+      
+      // Use setTimeout to ensure context switch completes before navigation
+      setTimeout(() => {
+        try {
+          console.log('[Sharing] Navigating to routine builder:', `/routines/${routine.id}/configure`);
+          navigate(`/routines/${routine.id}/configure`, {
+            state: {
+              managingForClient: true,
+              clientId: selectedClient.id,
+              clientName: formatUserDisplay(selectedClient),
+            },
+          });
+        } catch (navError) {
+          console.error('[Sharing] Navigation failed:', navError);
+          toast.error('Failed to navigate to routine builder. Please try again.');
+        }
+      }, 100);
 
       setShowCreateRoutineSheet(false);
       setShowRoutineSelectionDialog(false);
