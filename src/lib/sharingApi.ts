@@ -34,6 +34,7 @@ interface AccountShare {
   can_create_routines: boolean;
   can_start_workouts: boolean;
   can_review_history: boolean;
+  profiles?: Profile; // Added for invitation sender profile data
 }
 
 // ============================================================================
@@ -66,7 +67,8 @@ export async function createTrainerInvite(
         .is("delegate_user_id", null)
         .eq("delegate_email", clientEmail.trim().toLowerCase())
         .eq("request_type", "trainer_invite")
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .is("revoked_at", null);
       if ((pendingDupCount || 0) > 0) {
         throw new Error("A pending invitation already exists for this email");
       }
@@ -105,14 +107,15 @@ export async function createTrainerInvite(
     const clientProfile = profiles[0] as Profile;
     console.log(`[createTrainerInvite] User found, creating member invitation for: ${clientProfile.email}`);
 
-    // Check for existing pending invitation
+    // Check for existing pending invitation (excluding revoked ones)
     const { count: pendingDupCount } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
       .eq("owner_user_id", trainerId)
       .eq("delegate_user_id", clientProfile.id)
       .eq("request_type", "trainer_invite")
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .is("revoked_at", null);
     
     if ((pendingDupCount || 0) > 0) {
       throw new Error("A pending invitation already exists for this user");
@@ -178,15 +181,16 @@ export async function createClientInvite(
         .is("delegate_user_id", null)
         .eq("delegate_email", trainerEmail.trim().toLowerCase())
         .eq("request_type", "client_invite")
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .is("revoked_at", null);
       if ((pendingDupCount || 0) > 0) {
         throw new Error("A pending invitation already exists for this email");
       }
 
       const invitationData: Partial<AccountShare> = {
-        owner_user_id: clientId,
+        owner_user_id: clientId, // The client (person inviting) is the owner
         delegate_user_id: null,
-        delegate_email: trainerEmail.trim().toLowerCase(),
+        delegate_email: trainerEmail.trim().toLowerCase(), // The trainer (person being invited) is the delegate
         status: 'pending',
         request_type: 'client_invite',
         expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -217,14 +221,15 @@ export async function createClientInvite(
     const trainerProfile = profiles[0] as Profile;
     console.log(`[createClientInvite] Trainer found, creating member invitation for: ${trainerProfile.email}`);
 
-    // Check for existing pending invitation
+    // Check for existing pending invitation (excluding revoked ones)
     const { count: pendingDupCount } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
       .eq("owner_user_id", clientId)
       .eq("delegate_user_id", trainerProfile.id)
       .eq("request_type", "client_invite")
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .is("revoked_at", null);
     
     if ((pendingDupCount || 0) > 0) {
       throw new Error("A pending invitation already exists for this trainer");
@@ -266,9 +271,52 @@ export async function createClientInvite(
 
 export async function acceptInvitation(invitationId: string): Promise<void> {
   try {
+    // First, get the invitation details to check for conflicts
+    const { data: invitation, error: fetchError } = await supabase
+      .from("account_shares")
+      .select("*")
+      .eq("id", invitationId)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching invitation:", fetchError);
+      throw new Error("Failed to fetch invitation");
+    }
+
+    if (!invitation) {
+      throw new Error("Invitation not found");
+    }
+
+    // Check if there's already an active relationship between these users (excluding revoked ones)
+    if (invitation.delegate_user_id) {
+      const { count: existingCount } = await supabase
+        .from("account_shares")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", invitation.owner_user_id)
+        .eq("delegate_user_id", invitation.delegate_user_id)
+        .eq("request_type", invitation.request_type)
+        .eq("status", "active")
+        .is("revoked_at", null);
+
+      if ((existingCount || 0) > 0) {
+        // There's already an active relationship, just update the invitation to declined
+        const { error: updateError } = await supabase
+          .from("account_shares")
+          .update({ status: 'declined' })
+          .eq("id", invitationId);
+
+        if (updateError) {
+          console.error("Error updating invitation to declined:", updateError);
+          throw new Error("Failed to update invitation");
+        }
+        return; // Exit early since relationship already exists
+      }
+    }
+
+    // No conflict, proceed with accepting the invitation
     const { error } = await supabase
       .from("account_shares")
-      .update({ status: 'accepted' })
+      .update({ status: 'active' })
       .eq("id", invitationId);
 
     if (error) {
@@ -285,7 +333,7 @@ export async function rejectInvitation(invitationId: string): Promise<void> {
   try {
     const { error } = await supabase
       .from("account_shares")
-      .update({ status: 'rejected' })
+      .update({ status: 'declined' })
       .eq("id", invitationId);
 
     if (error) {
@@ -311,7 +359,7 @@ export async function createShare(
     const shareData: Partial<AccountShare> = {
       owner_user_id: ownerId,
       delegate_user_id: delegateId,
-      status: 'accepted',
+      status: 'active',
       request_type: 'legacy_share',
       can_create_routines: permissions.can_create_routines || false,
       can_start_workouts: permissions.can_start_workouts || false,
@@ -381,7 +429,15 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
   try {
     const { data, error } = await supabase
       .from("account_shares")
-      .select("*")
+      .select(`
+        *,
+        profiles!account_shares_owner_user_id_fkey(
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
       .eq("delegate_user_id", userId)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
@@ -404,7 +460,7 @@ export async function getAccountShares(userId: string): Promise<AccountShare[]> 
       .from("account_shares")
       .select("*")
       .or(`owner_user_id.eq.${userId},delegate_user_id.eq.${userId}`)
-      .eq("status", "accepted")
+      .eq("status", "active")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -425,7 +481,7 @@ export async function getSharedAccounts(userId: string): Promise<AccountShare[]>
       .from("account_shares")
       .select("*")
       .eq("delegate_user_id", userId)
-      .eq("status", "accepted")
+      .eq("status", "active")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -472,11 +528,11 @@ export function isPending(share: AccountShare): boolean {
 }
 
 export function isAccepted(share: AccountShare): boolean {
-  return share.status === 'accepted';
+  return share.status === 'active';
 }
 
 export function isRejected(share: AccountShare): boolean {
-  return share.status === 'rejected';
+  return share.status === 'declined';
 }
 
 // ============================================================================
@@ -506,7 +562,7 @@ export async function linkPendingInvitations(userId: string, email: string): Pro
       .from("account_shares")
       .update({ 
         delegate_user_id: userId,
-        status: "accepted"
+        status: "active"
       })
       .eq("delegate_email", email)
       .eq("status", "pending");
