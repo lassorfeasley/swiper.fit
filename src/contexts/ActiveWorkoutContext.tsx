@@ -644,6 +644,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       // Create sets for each exercise (supports both routine_sets and pre-expanded sets)
       const setsToInsert: any[] = [];
       console.log('[ActiveWorkout] Creating sets for normalized exercises:', normalizedExercises.length);
+      
+      // Add null check for user.id before creating sets
+      if (!user?.id) {
+        console.error('[ActiveWorkout] Cannot create sets: user ID is null');
+        toast.error('User not authenticated. Please refresh and try again.');
+        return;
+      }
+      
       normalizedExercises.forEach((normalized: any, exerciseIndex: number) => {
         console.log(`[ActiveWorkout] Processing exercise ${exerciseIndex}:`, normalized.exercise_id, 'with', normalized.sets?.length || 0, 'sets');
         const workoutExercise = workoutExercises.find((we: any) => we.exercise_id === normalized.exercise_id);
@@ -663,7 +671,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
               weight: typeof set.weight === 'number' ? set.weight : 0,
               weight_unit: set.weight_unit,
               set_order: (typeof set.set_order === 'number' ? set.set_order : i + 1),
-              user_id: user.id,
+              user_id: user.id, // This is now guaranteed to be non-null
             });
           });
         } else {

@@ -26,7 +26,7 @@ const ActiveWorkoutSection = ({
   isLastSection = false,
 }) => {
   const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted, isPaused } = useActiveWorkout();
-  const { isDelegated } = useAccount();
+  const { isDelegated, currentUser } = useAccount();
   const {
     updateSectionExercises,
     markExerciseComplete,
@@ -763,6 +763,13 @@ const ActiveWorkoutSection = ({
 
       if (workoutExerciseError) throw workoutExerciseError;
 
+      // Add null check for currentUser.id before creating sets
+      if (!currentUser?.id) {
+        console.error('[ActiveWorkoutSection] Cannot create sets: currentUser ID is null');
+        toast.error('User not authenticated. Please refresh and try again.');
+        return;
+      }
+
       // Create sets: use form setConfigs if provided, otherwise default to 3 sets
       let setRows;
       if (setConfigs && setConfigs.length > 0) {
@@ -778,6 +785,7 @@ const ActiveWorkoutSection = ({
           set_type: cfg.set_type || "reps",
           timed_set_duration: cfg.timed_set_duration || 30,
           status: "default",
+          user_id: currentUser?.id, // Add user_id to prevent null constraint error
         }));
       } else {
         // Default to 3 sets
@@ -792,6 +800,7 @@ const ActiveWorkoutSection = ({
           set_type: "reps",
           timed_set_duration: 30,
           status: "default",
+          user_id: currentUser?.id, // Add user_id to prevent null constraint error
         }));
       }
 

@@ -1041,6 +1041,12 @@ export default function Sharing() {
 
         if (snapshotErr) throw snapshotErr;
 
+        // Add null check for selectedClient.id before creating sets
+        if (!selectedClient?.id) {
+          console.error('[Sharing] Cannot create sets: selectedClient ID is null');
+          throw new Error('Client not selected. Please try again.');
+        }
+
         // 4) Snapshot sets for each exercise
         for (const progEx of routineData.routine_exercises) {
           const workoutExercise = insertedExercises.find(we => we.exercise_id === progEx.exercise_id);
@@ -1054,7 +1060,7 @@ export default function Sharing() {
               set_variant: set.set_variant,
               set_type: set.set_type,
               timed_set_duration: set.timed_set_duration,
-              user_id: selectedClient.id, // Use account owner's ID
+              user_id: selectedClient.id, // This is now guaranteed to be non-null
               account_id: selectedClient.id, // Use account owner's ID
             }));
 

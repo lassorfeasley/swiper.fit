@@ -852,6 +852,12 @@ const Account = () => {
 
         if (snapshotErr) throw snapshotErr;
 
+        // Add null check for selectedClient.id before creating sets
+        if (!selectedClient?.id) {
+          console.error('[Account] Cannot create sets: selectedClient ID is null');
+          throw new Error('Client not selected. Please try again.');
+        }
+
         for (const progEx of routineData.routine_exercises) {
           const workoutExercise = insertedExercises.find(we => we.exercise_id === progEx.exercise_id);
           if (workoutExercise && progEx.routine_sets.length > 0) {
@@ -864,7 +870,7 @@ const Account = () => {
               set_variant: set.set_variant,
               set_type: set.set_type,
               timed_set_duration: set.timed_set_duration,
-              user_id: selectedClient.id,
+              user_id: selectedClient.id, // This is now guaranteed to be non-null
               account_id: selectedClient.id,
             }));
 
