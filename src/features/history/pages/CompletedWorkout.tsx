@@ -20,8 +20,9 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import { toast } from "@/lib/toastReplacement";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2 } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
+import ActionPill from "@/components/shared/ActionPill";
 
 import { useAccount } from "@/contexts/AccountContext";
 
@@ -717,31 +718,40 @@ const CompletedWorkout = () => {
   // Build custom header action pod with Resume + Share + Delete
   const headerActions = (
     <div className="inline-flex flex-col justify-center items-end gap-2.5">
-      <div className="p-2 bg-white/80 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-2">
+      <div className="p-1 bg-white rounded-full shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center">
         {isOwner && (
-          <button
+          <ActionPill
             onClick={() => setResumeConfirmOpen(true)}
-            aria-label="Resume workout"
-            className="size-6 flex items-center justify-center"
-          >
-            <Play className="w-6 h-6 text-neutral-700" strokeWidth={2} />
-          </button>
+            Icon={Play}
+            color="neutral"
+            iconColor="neutral"
+            fill={false}
+            showText={false}
+            showShadow={false}
+            className="bg-white"
+          />
         )}
-        <button
+        <ActionPill
           onClick={handleShare}
-          aria-label="Share"
-          className="size-6 flex items-center justify-center"
-        >
-          <ShareIcon className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-        </button>
+          Icon={ShareIcon}
+          color="neutral"
+          iconColor="neutral"
+          fill={false}
+          showText={false}
+          showShadow={false}
+          className="bg-white"
+        />
         {(isOwner || isDelegated) && (
-          <button
+          <ActionPill
             onClick={handleDeleteWorkout}
-            aria-label="Delete"
-            className="size-6 flex items-center justify-center"
-          >
-            <Trash2 className="w-5 h-5 text-neutral-700" strokeWidth={2} />
-          </button>
+            Icon={Trash2}
+            color="neutral"
+            iconColor="neutral"
+            fill={false}
+            showText={false}
+            showShadow={false}
+            className="bg-white"
+          />
         )}
       </div>
     </div>
@@ -805,7 +815,7 @@ const CompletedWorkout = () => {
     <>
       <AppLayout
         hideHeader={false}
-        title="Workout summary"
+        title="Analysis"
         titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
         hideDelegateHeader={true}
         showShare={false}
@@ -832,43 +842,38 @@ const CompletedWorkout = () => {
         ) : workout ? (
           <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Image and Routine Label Section */}
-            <div className="self-stretch flex flex-col justify-center items-center gap-3 mb-10">
-              {/* Image Container */}
-              <div className="w-full max-w-[500px] rounded-lg border border-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+            <div className="self-stretch inline-flex flex-col justify-center items-center mb-10">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
                 <img 
-                  className="w-full h-auto max-h-64" 
+                  data-layer="open-graph-image"
+                  className="OpenGraphImage w-full h-auto" 
                   src={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
                   alt="Workout social preview"
                   draggable={false}
-                  onClick={shareWorkout}
-                  title="Share"
+                  style={{ maxHeight: '256px', objectFit: 'contain' }}
                 />
+                
+                {/* Routine Label Container */}
+                {workout?.routine_id && (
+                  <div 
+                    data-layer="routine-link"
+                    className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                    onClick={handleOpenRoutine}
+                    style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
+                    aria-label="Open routine"
+                  >
+                    <div className="justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                      {workout?.routines?.routine_name || 'View routine'}
+                    </div>
+                    <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                      <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
+                    </div>
+                  </div>
+                )}
               </div>
-              
-              {/* Routine Label Container */}
-              {workout?.routine_id && (
-                <div 
-                  className="w-full h-14 max-w-[500px] pl-2 pr-5 bg-white rounded-lg border border-neutral-300 inline-flex justify-start items-center cursor-pointer"
-                  onClick={handleOpenRoutine}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
-                  aria-label="Open routine"
-                >
-                  <div className="p-2.5 flex justify-start items-center gap-2.5">
-                    <div className="relative">
-                      <Star className="w-6 h-6 text-neutral-600" strokeWidth={2} />
-                    </div>
-                  </div>
-                  <div className="flex justify-center items-center gap-5">
-                    <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                      {workout?.routines?.routine_name ? `${workout.routines.routine_name} routine` : 'View routine'}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Private-only route to history removed per request; button now exists on routine builder only */}
             </div>
 
             {/* Exercise List */}

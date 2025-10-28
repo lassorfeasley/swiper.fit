@@ -223,7 +223,7 @@ const ActiveWorkoutContent: React.FC = () => {
       const wid = activeWorkout?.id;
       
       if (hadSets && wid) {
-        // Go to workout summary if sets were completed
+        // Go to analysis page if sets were completed
         navigate(`/history/${wid}`, { replace: true });
       } else {
         // No sets completed, go back to train page

@@ -336,7 +336,7 @@ const History = () => {
       hideDelegateHeader={true}
       sharingSection={
         <SwiperCombobox
-          options={routineOptions}
+          items={routineOptions}
           value={selectedRoutine}
           onChange={setSelectedRoutine}
           placeholder="Filter routines"

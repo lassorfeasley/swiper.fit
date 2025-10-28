@@ -7,7 +7,7 @@ import ExerciseCard from "@/components/shared/cards/ExerciseCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "@/lib/toastReplacement";
 import { useAuth } from "@/contexts/AuthContext";
-import { Bookmark } from "lucide-react";
+import { Bookmark, ListChecks } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 
@@ -301,25 +301,35 @@ export default function PublicRoutine() {
           <div className="text-gray-400 text-center py-8">Routine not available.</div>
         ) : (
           <>
-            {/* Routine Image Section */}
-            <div className="self-stretch inline-flex flex-col justify-start items-center">
-              <div className="self-stretch px-5 inline-flex justify-center items-center gap-5">
+            {/* Routine Image and Link Section */}
+            <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+                <img 
+                  data-layer="open-graph-image"
+                  className="OpenGraphImage w-full h-auto" 
+                  src={routine?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
+                  alt={`${routine.routine_name} routine`}
+                  draggable={false}
+                  style={{ maxHeight: '256px', objectFit: 'contain' }}
+                  onError={(e) => {
+                    console.log('Image failed to load:', (e.target as HTMLImageElement).src);
+                    console.log('Falling back to default image');
+                    (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
+                  }}
+                  onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
+                />
                 <div 
-                  className="w-full max-w-[500px] rounded-lg border border-neutral-300 overflow-hidden cursor-pointer"
+                  data-layer="routine-link"
+                  className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
                   onClick={handleShare}
+                  style={{ cursor: "pointer" }}
                 >
-                  <img 
-                    className="w-full h-auto block" 
-                    src={routine?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
-                    alt={`${routine.routine_name} routine`}
-                    draggable={false}
-                    onError={(e) => {
-                      console.log('Image failed to load:', (e.target as HTMLImageElement).src);
-                      console.log('Falling back to default image');
-                      (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
-                    }}
-                    onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
-                  />
+                  <div data-layer="Chest and triceps" className="ChestAndTriceps justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                    {routine.routine_name} 
+                  </div>
+                  <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                    <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
+                  </div>
                 </div>
               </div>
             </div>

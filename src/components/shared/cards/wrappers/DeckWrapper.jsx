@@ -55,7 +55,7 @@ const DeckWrapper = forwardRef(
     };
 
     const containerClasses = cn(
-      "card-container w-full flex flex-col items-center",
+      "DeckWrapper w-full flex flex-col justify-start items-center overflow-hidden",
       className
     );
 

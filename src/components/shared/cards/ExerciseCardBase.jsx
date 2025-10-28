@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Repeat2, Weight, Clock } from "lucide-react";
 
-// Presentational base for exercise-style cards used in routine builder and workout summary
+// Presentational base for exercise-style cards used in routine builder and analysis
 const ExerciseCardBase = ({
   exerciseName,
   sets = [],
@@ -30,20 +30,20 @@ const ExerciseCardBase = ({
   return (
     <div
       data-layer="exercise-card-base"
-      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
+      className={`ExerciseCard w-full max-w-[500px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden ${className}`}
       style={style}
       {...domProps}
     >
       {/* Header */}
       <div
         data-layer="card-label"
-        className={`self-stretch pl-4 bg-neutral-neutral-200 border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
+        className={`self-stretch h-9 px-2 bg-white border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
       >
-        <div className="flex-1 h-11 flex items-center justify-start text-neutral-neutral-700 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+        <div className="flex-1 justify-start text-neutral-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
           {exerciseName}
         </div>
         {rightHeader && (
-          <div data-layer="IconButton" className="p-2.5 flex justify-start items-center gap-2.5">
+          <div data-layer="IconButton" className="flex justify-start items-center">
             {rightHeader}
           </div>
         )}
@@ -54,8 +54,8 @@ const ExerciseCardBase = ({
         <>
           {sets.map((config, idx) => {
             const rowClasses = [
-              "self-stretch h-11 px-4 inline-flex justify-between items-center overflow-hidden",
-              idx % 2 === 1 ? "bg-neutral-50" : "",
+              "self-stretch h-9 px-2 inline-flex justify-between items-center overflow-hidden",
+              idx % 2 === 1 ? "bg-neutral-Neutral-50" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -70,12 +70,12 @@ const ExerciseCardBase = ({
 
             return (
               <div key={idx} data-layer="card-row" className={rowClasses} onClick={handleClick}>
-                <div className="justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                <div className="justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
                   {setName}
                 </div>
                 <div data-layer="metrics" className="self-stretch min-w-12 flex justify-start items-center gap-px overflow-hidden">
                   {/* First metric: Reps or Time */}
-                  <div className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                  <div className="self-stretch pl-2 flex justify-center items-center gap-0.5">
                     <div className="size-4 relative overflow-hidden flex items-center justify-center">
                       {config.set_type === "timed" ? (
                         <Clock className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
@@ -83,18 +83,18 @@ const ExerciseCardBase = ({
                         <Repeat2 className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
                       )}
                     </div>
-                    <div className="text-center justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    <div className="text-center justify-center text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
                       {config.set_type === "timed"
                         ? formatTime(config.timed_set_duration || 0)
                         : config.reps || 0}
                     </div>
                   </div>
                   {/* Weight */}
-                  <div className="self-stretch pl-1 pr-2 flex justify-center items-center gap-0.5">
+                  <div className="self-stretch pl-2 flex justify-center items-center gap-0.5">
                     <div className="size-4 relative overflow-hidden flex items-center justify-center">
                       <Weight className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
                     </div>
-                    <div className="text-center justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                    <div className="text-center justify-center text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
                       {config.unit === "body" ? "BW" : config.weight || 0}
                     </div>
                   </div>

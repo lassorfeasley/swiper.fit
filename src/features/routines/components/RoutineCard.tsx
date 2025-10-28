@@ -1,5 +1,4 @@
 import React from "react";
-import { Play, Cog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "@/lib/toastReplacement";
@@ -91,30 +90,27 @@ const RoutineCard = ({ id, name, lastCompleted, routineData, isFirstCard, hideSt
   return (
     <div
       data-layer="Routine Card"
-      className="RoutineCard w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer"
+      className="RoutineCard w-full p-3 bg-white rounded-lg outline outline-1 outline-offset-[-1px] outline-gray-300 inline-flex flex-col justify-start items-start gap-10 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
     >
-      <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
-        <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-          <div data-layer="Biceps and chest" className="BicepsAndChest justify-start text-gray-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
-            {name}
-          </div>
-          {lastCompleted && (
-            <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-gray-400 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-              {lastCompleted}
-            </div>
-          )}
+      <div data-layer="label-wrapper" className="LabelWrapper self-stretch flex flex-col justify-start items-start">
+        <div data-layer="Biceps and chest" className="BicepsAndChest justify-start text-gray-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
+          {name}
         </div>
+        {lastCompleted && (
+          <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-gray-400 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            {lastCompleted}
+          </div>
+        )}
       </div>
       <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-            <ActionPill
-              label="Edit routine"
-              Icon={Cog}
-              onClick={() => handleSettingsClick({} as React.MouseEvent)}
-              color="neutral"
-              iconColor="neutral"
-              showText={true}
-            />
+        <ActionPill
+          label="Edit routine"
+          onClick={(e) => handleSettingsClick(e)}
+          color="blue-700"
+          showText={true}
+          showShadow={false}
+        />
       </div>
     </div>
   );
