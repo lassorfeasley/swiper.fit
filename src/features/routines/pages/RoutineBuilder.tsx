@@ -972,7 +972,6 @@ const RoutineBuilder = () => {
             className={`${section === "warmup" ? "border-t-0" : ""} ${index === exercisesBySection.length - 1 ? "flex-1" : ""}`}
             backgroundClass="bg-transparent"
             showPlusButton={false}
-            onPlus={() => handleOpenAddExercise(section)}
             applyPaddingOnParent={true}
             style={{ paddingLeft: spacing.paddingX, paddingRight: spacing.paddingX, paddingBottom: 0, maxWidth: spacing.maxWidth, minWidth: '0px' }}
           >

@@ -155,6 +155,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
     const checkForActiveWorkout = async () => {
       console.log('[ActiveWorkout] Checking for active workout for user:', user.id);
+      console.log('[ActiveWorkout] Current context state - actingUser:', user);
       
       try {
         // Try to fetch either active or paused (new schema) workouts
@@ -222,7 +223,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
         if (workouts && workouts.length > 0) {
           const workout = workouts[0];
-          console.log('[ActiveWorkout] Found active workout:', workout.id);
+          console.log('[ActiveWorkout] Found active workout:', workout.id, 'for user:', user.id);
           
           // Sort sets by set_order or created_at
           if (workout.sets) {
@@ -245,6 +246,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             }] : []
           };
           
+          console.log('[ActiveWorkout] Setting workout as active:', workout.id);
           setActiveWorkout(processedWorkout);
           setIsWorkoutActive(Boolean(workout.is_active || (workout as any).is_paused));
           
@@ -261,7 +263,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           }
           setElapsedTime(elapsed);
         } else {
-          console.log('[ActiveWorkout] No active workout found');
+          console.log('[ActiveWorkout] No active workout found for user:', user.id);
           setActiveWorkout(null);
           setIsWorkoutActive(false);
         }

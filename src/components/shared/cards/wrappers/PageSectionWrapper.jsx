@@ -13,8 +13,6 @@ const PageSectionWrapper = ({
   children, 
   className, 
   deckGap = 12, 
-  showPlusButton = false, 
-  onPlus, 
   isFirst = false,
   reorderable = false,
   items = [],
@@ -84,13 +82,6 @@ const PageSectionWrapper = ({
               <div className="self-stretch h-4 justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-4">
                 {displayTitle}
               </div>
-              {showPlusButton && (
-                <button onClick={onPlus} aria-label="Add exercise" className="p-1">
-                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.11663 13H24M13.2083 2.20834V23.7917" stroke="#A3A3A3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              )}
             </div>
           )}
         >
@@ -106,8 +97,6 @@ PageSectionWrapper.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   deckGap: PropTypes.number,
-  showPlusButton: PropTypes.bool,
-  onPlus: PropTypes.func,
   isFirst: PropTypes.bool,
   reorderable: PropTypes.bool,
   items: PropTypes.array,

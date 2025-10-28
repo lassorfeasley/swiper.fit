@@ -28,6 +28,7 @@ function debug(...args) {
 }
 
 const ActiveWorkoutContent: React.FC = () => {
+  console.log('[ActiveWorkoutContent] Component rendering...');
   const { setPageName } = useContext(PageNameContext);
   const navigate = useNavigate();
   const {
@@ -38,6 +39,8 @@ const ActiveWorkoutContent: React.FC = () => {
     updateLastExercise,
     elapsedTime,
   } = useActiveWorkout();
+  
+  console.log('[ActiveWorkoutContent] Context values:', { loading, isWorkoutActive, activeWorkoutId: activeWorkout?.id });
 
   const {
     focusedExercise,
@@ -62,14 +65,35 @@ const ActiveWorkoutContent: React.FC = () => {
   const { isDelegated, returnToSelf, loading: accountLoading } = useAccount();
   const { user } = useAuth();
   
+  console.log('[ActiveWorkoutContent] All contexts loaded:', { loading, accountLoading, isWorkoutActive, isDelegated, userId: user?.id });
+  
   
 
   // List container ref (kept – may be used by the replacement implementation)
   const listRef = useRef(null);
 
   useEffect(() => {
+    // CRITICAL: If we're in delegated mode, NEVER redirect to routines
+    // Trainers managing clients should ALWAYS stay on the workout page (even if no workout exists)
+    if (isDelegated) {
+      console.log('[ActiveWorkout] Delegate mode - NEVER redirect to routines');
+      console.log('[ActiveWorkout] Delegate state:', { isDelegated, isWorkoutActive, loading, accountLoading });
+      return;
+    }
+    
     // Only redirect after both contexts finish loading (workout + delegation)
-    if (loading || accountLoading) return;
+    if (loading || accountLoading) {
+      console.log('[ActiveWorkout] Still loading, waiting...', { loading, accountLoading });
+      return;
+    }
+    
+    console.log('[ActiveWorkout] Contexts loaded, checking workout state:', {
+      isWorkoutActive,
+      isDelegated,
+      currentUser: user?.id,
+      workoutId: activeWorkout?.id
+    });
+    
     if (!isWorkoutActive) {
       console.log('[ActiveWorkout] Workout not active, checking auto-redirect...');
       console.log('[ActiveWorkout] skipAutoRedirectRef.current:', skipAutoRedirectRef.current);
@@ -81,17 +105,11 @@ const ActiveWorkoutContent: React.FC = () => {
         skipAutoRedirectRef.current = false;
         return;
       }
-      // Delegates should remain on the active workout route on refresh
-      // Also prevent redirect during context switches when delegates are managing clients
-      // Trainers should never see the routines page - they access routines via dialog
-      if (isDelegated) {
-        console.log('[ActiveWorkout] Delegate detected – staying on active workout route after refresh');
-        return;
-      }
-      console.log('[ActiveWorkout] Auto-redirecting to routines');
+      
+      console.log('[ActiveWorkout] Auto-redirecting to routines (user NOT delegated)');
       navigate("/routines", { replace: true });
     }
-  }, [loading, accountLoading, isWorkoutActive, navigate, user?.id, isDelegated]);
+  }, [loading, accountLoading, isWorkoutActive, navigate, user?.id, isDelegated, activeWorkout?.id]);
 
   useEffect(() => {
     setNavBarVisible(false);

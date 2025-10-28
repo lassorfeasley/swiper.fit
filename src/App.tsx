@@ -147,7 +147,16 @@ function AppContent() {
       console.log('[App] Immediate redirect to active workout after loading');
       navigate('/workout/active', { replace: true });
     }
-  }, [workoutLoading, isWorkoutActive, location.pathname, navigate]);
+  }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
+  
+  // For delegates (trainers) with active workout, also redirect to /workout/active but ONLY from /routines
+  // This prevents trainers from getting stuck on the routines page when switching to a client with an active workout
+  useEffect(() => {
+    if (!workoutLoading && isWorkoutActive && isDelegated && location.pathname === '/routines') {
+      console.log('[App] Delegate with active workout on /routines - redirecting to /workout/active');
+      navigate('/workout/active', { replace: true });
+    }
+  }, [workoutLoading, isWorkoutActive, isDelegated, location.pathname, navigate]);
 
   // Additional safety checks: immediately redirect if on restricted pages with active workout
   useEffect(() => {

@@ -123,6 +123,10 @@ const DemoActiveExerciseCard = React.forwardRef(({
                     key={set.routine_set_id || set.tempId || set.id || `exercise-${exerciseId}-set-${index}`}
                     set={set}
                     onComplete={() => handleSetComplete(index)}
+                    onUndo={(e) => {
+                      e.stopPropagation();
+                      onSetPress?.(set, index);
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onSetPress?.(set, index);

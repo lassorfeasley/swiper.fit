@@ -64,6 +64,7 @@ interface DemoWorkoutContextType {
   currentSetIndex: number;
   userHasInteracted: boolean;
   handleSetComplete: (exerciseId: string, setConfig: SetConfig, isManualSwipe?: boolean) => void;
+  handleSetMarkIncomplete: (exerciseId: string, setConfig: SetConfig) => void;
   handleSetEdit: (exerciseId: string, setConfig: SetConfig, index: number) => void;
   handleSetUpdate: (exerciseId: string, setConfig: SetConfig, updates: Partial<SetConfig>) => void;
   handleSetDelete: (exerciseId: string, setConfig: SetConfig) => void;
@@ -334,6 +335,25 @@ export function DemoWorkoutProvider({ children }: DemoWorkoutProviderProps) {
       }
     }, 500);
   }, [demoExercises, completedExercises, autoCompleteEnabled, autoCompleteInterval]);
+
+  // Handle marking a set incomplete (undo)
+  const handleSetMarkIncomplete = useCallback((exerciseId: string, setConfig: SetConfig) => {
+    setDemoExercises(prev => 
+      prev.map(exercise => {
+        if (exercise.exercise_id === exerciseId) {
+          return {
+            ...exercise,
+            setConfigs: exercise.setConfigs.map(set => 
+              set.id === setConfig.id 
+                ? { ...set, status: 'default' }
+                : set
+            )
+          };
+        }
+        return exercise;
+      })
+    );
+  }, []);
 
   // Handle set editing
   const handleSetEdit = useCallback((exerciseId: string, setConfig: SetConfig, index: number) => {
@@ -833,6 +853,7 @@ export function DemoWorkoutProvider({ children }: DemoWorkoutProviderProps) {
     currentSetIndex,
     userHasInteracted,
     handleSetComplete,
+    handleSetMarkIncomplete,
     handleSetEdit,
     handleSetUpdate,
     handleSetDelete,

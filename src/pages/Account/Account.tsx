@@ -861,11 +861,16 @@ const Account = () => {
       
       toast.success(`Workout started for ${formatUserDisplay(selectedClient)}. They will be notified when they open the app.`);
       
+      console.log('[Account] Switching to user:', selectedClient.id);
       switchToUser(selectedClient);
+      
+      // Small delay to allow context to update before checking for workout
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Wait for the workout to be detected before navigating
       // This prevents the double routine selection issue
       const checkWorkoutAndNavigate = async () => {
+        console.log('[Account] Starting to check for workout...');
         let attempts = 0;
         const maxAttempts = 20; // 2 seconds max wait
         
@@ -880,6 +885,7 @@ const Account = () => {
             
             if (workoutData) {
               // Workout is detected, navigate to active workout page
+              console.log('[Account] Workout detected, navigating to /workout/active');
               navigate('/workout/active');
               break;
             }
@@ -893,6 +899,7 @@ const Account = () => {
         
         // If we couldn't detect the workout after max attempts, navigate anyway
         if (attempts >= maxAttempts) {
+          console.log('[Account] Reached max attempts, navigating to /workout/active anyway');
           navigate('/workout/active');
         }
       };

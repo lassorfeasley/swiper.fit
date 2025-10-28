@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import DemoActiveExerciseCard from '@/pages/Landing/demo/DemoActiveExerciseCard';
 import { useDemoWorkout } from '@/contexts/DemoWorkoutContext';
 import { SetEditForm } from '@/features/routines';
 import SwiperForm from '@/components/shared/SwiperForm';
+import SwiperDialog from '@/components/shared/SwiperDialog';
 import { AddNewExerciseForm } from '@/features/routines';
 import DeckWrapper from '@/components/shared/cards/wrappers/DeckWrapper';
 import CardWrapper from '@/components/shared/cards/wrappers/CardWrapper';
@@ -32,6 +33,7 @@ export default function DemoWorkoutSection() {
     setAutoCompleteEnabled,
     userHasInteracted,
     handleSetComplete,
+    handleSetMarkIncomplete,
     handleSetEdit,
     handleSetUpdate,
     handleSetDelete,
@@ -44,6 +46,36 @@ export default function DemoWorkoutSection() {
     stopAutoComplete,
     resetDemo
   } = useDemoWorkout();
+
+  // Undo confirmation dialog state
+  const [confirmUndoSetOpen, setConfirmUndoSetOpen] = useState(false);
+  const undoTargetRef = useRef(null);
+
+  // Handle marking a set incomplete
+  const handleSetMarkIncompleteConfirm = useCallback(() => {
+    const target = undoTargetRef.current;
+    if (!target?.exerciseId || !target?.setConfig) {
+      setConfirmUndoSetOpen(false);
+      return;
+    }
+    
+    handleSetMarkIncomplete(target.exerciseId, target.setConfig);
+    setConfirmUndoSetOpen(false);
+    undoTargetRef.current = null;
+  }, [handleSetMarkIncomplete]);
+
+  // Handle set press - check if complete and show confirmation
+  const handleSetPressWithCheck = useCallback((exerciseId, setConfig, index) => {
+    // If completed set is tapped, open undo dialog instead of editor
+    if (setConfig?.status === 'complete') {
+      undoTargetRef.current = { exerciseId, setConfig, index };
+      setConfirmUndoSetOpen(true);
+      return;
+    }
+    
+    // Otherwise, open the edit dialog
+    handleSetEdit(exerciseId, setConfig, index);
+  }, [handleSetEdit]);
 
   // Filter exercises for training section (demo only shows training)
   const trainingExercises = demoExercises.filter(ex => ex.section === 'training');
@@ -110,7 +142,7 @@ export default function DemoWorkoutSection() {
                   exerciseName={exercise.name}
                   initialSetConfigs={exercise.setConfigs}
                   onSetComplete={(exerciseId, setConfig) => handleSetComplete(exerciseId, setConfig, true)}
-                  onSetPress={(setConfig, index) => handleSetEdit(exercise.exercise_id, setConfig, index)}
+                  onSetPress={(setConfig, index) => handleSetPressWithCheck(exercise.exercise_id, setConfig, index)}
                   isFocused={isFocused}
                   isExpanded={isFocused}
                   onFocus={() => handleExerciseFocus(exercise.exercise_id, true)}
@@ -261,6 +293,18 @@ export default function DemoWorkoutSection() {
           </div>
         </SwiperForm>
       )}
+
+      {/* Confirm undo completed set */}
+      <SwiperDialog
+        open={confirmUndoSetOpen}
+        onOpenChange={setConfirmUndoSetOpen}
+        onConfirm={handleSetMarkIncompleteConfirm}
+        onCancel={() => setConfirmUndoSetOpen(false)}
+        title="Mark set incomplete?"
+        description="This will undo the completion of the set"
+        confirmText="Mark incomplete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }
