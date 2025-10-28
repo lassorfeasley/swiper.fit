@@ -12,12 +12,17 @@ import {
 import { cn } from "@/lib/utils";
 
 interface SwiperComboboxProps {
-  options: Array<{ value: string; label: string; disabled?: boolean }>;
+  items?: Array<{ value: string; label: string; disabled?: boolean }>;
   value?: string;
-  onValueChange?: (value: string) => void;
+  onChange?: (value: string) => void;
   placeholder?: string;
-  searchable?: boolean;
   className?: string;
+  triggerClassName?: string;
+  contentClassName?: string;
+  emptyText?: string;
+  filterPlaceholder?: string;
+  width?: number;
+  useRelativePositioning?: boolean;
   disabled?: boolean;
 }
 
@@ -39,17 +44,8 @@ export default function SwiperCombobox({
   emptyText = "No results",
   filterPlaceholder = "Search…",
   width = 240,
-  useRelativePositioning = false, // New prop to control positioning
-}: SwiperComboboxProps & {
-  items?: Array<{ value: string; label: string; disabled?: boolean }>;
-  onChange?: (value: string) => void;
-  triggerClassName?: string;
-  contentClassName?: string;
-  emptyText?: string;
-  filterPlaceholder?: string;
-  width?: number;
-  useRelativePositioning?: boolean;
-}) {
+  useRelativePositioning = false,
+}: SwiperComboboxProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
