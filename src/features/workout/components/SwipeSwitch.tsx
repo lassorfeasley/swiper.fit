@@ -92,8 +92,8 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
   const THUMB_WIDTH = 80; // w-20
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // p-2 in Tailwind
-  const RAIL_RADIUS = '12px';
-  const THUMB_RADIUS = '12px';
+  const RAIL_RADIUS = '8px'; // Match Tailwind rounded-lg (0.5rem)
+  const THUMB_RADIUS = '8px'; // Match Tailwind rounded-lg (0.5rem)
   const DRAG_COMPLETE_THRESHOLD = 70;
   const getContentWidth = () => {
     if (!trackWidth || isNaN(trackWidth)) return THUMB_WIDTH;
@@ -197,7 +197,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           scaleX: safeScaleX,
           scaleY: safeScaleY,
           backgroundColor: '#22C55E',
-          borderRadius: THUMB_RADIUS
+          borderRadius: RAIL_RADIUS
         }, { 
           type: 'tween', 
           ease: 'easeOut',

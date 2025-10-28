@@ -170,7 +170,7 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     // then wait for the collapse animation to finish before focusing the new one.
     if (focusedExercise?.exercise_id && focusedExercise.exercise_id !== exerciseId) {
       setFocusedExercise(null);
-      const delay = (ANIMATION_DURATIONS?.CARD_ANIMATION_DURATION_MS ?? 500) + 50;
+      const delay = (ANIMATION_DURATIONS?.CARD_ANIMATION_DURATION_MS ?? 500);
       pendingFocusTimeoutRef.current = setTimeout(() => {
         applyFocus();
         pendingFocusTimeoutRef.current = null;

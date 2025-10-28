@@ -843,14 +843,14 @@ const CompletedWorkout = () => {
           <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Image and Routine Label Section */}
             <div className="self-stretch inline-flex flex-col justify-center items-center mb-10">
-              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
                 <img 
                   data-layer="open-graph-image"
                   className="OpenGraphImage w-full h-auto" 
                   src={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
                   alt="Workout social preview"
                   draggable={false}
-                  style={{ maxHeight: '256px', objectFit: 'contain' }}
+                  style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
                 />
                 
                 {/* Routine Label Container */}

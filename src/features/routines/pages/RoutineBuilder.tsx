@@ -924,14 +924,14 @@ const RoutineBuilder = () => {
         <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
           {/* Routine Image and Link Section */}
           <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
-            <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+            <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
               <img 
                 data-layer="open-graph-image"
                 className="OpenGraphImage w-full h-auto" 
                 src={program?.og_image_url || "https://placehold.co/500x262"} 
                 alt={`${programName} routine`}
                 draggable={false}
-                style={{ maxHeight: '256px', objectFit: 'contain' }}
+                style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
                 onError={(e) => {
                   console.log('Image failed to load:', program?.og_image_url);
                   (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
