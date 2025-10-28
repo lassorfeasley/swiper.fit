@@ -13,6 +13,7 @@ import {
 } from "@/components/shadcn/dialog";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { SwiperButton } from "@/components/shared/SwiperButton";
+import { ActionCard } from "@/components/shared/ActionCard";
 import { Square, Plus } from "lucide-react";
 
 export default function DialogTest() {
@@ -172,14 +173,11 @@ export default function DialogTest() {
               />
             }
           >
-            <SwiperButton 
-              variant="primary-action"
+            <ActionCard
+              text="Create action here"
               className="self-stretch w-full"
               onClick={() => alert('Primary action clicked!')}
-            >
-              <span className="flex-1">Create action here</span>
-              <Plus className="w-6 h-6" strokeWidth={2} />
-            </SwiperButton>
+            />
             <div data-layer="deck-wrapper" className="DeckWrapper self-stretch w-full flex flex-col justify-center items-center gap-3 px-0">
               {[1,2,3].map((idx) => (
                 <div key={idx} data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">

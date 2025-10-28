@@ -1227,7 +1227,6 @@ const Account = () => {
                       setDialogInviteType('trainer');
                       setShowAddPersonDialog(true);
                     }}
-                    variant="default"
                     className="w-full h-14 rounded-lg border border-neutral-300"
                   />
                 </DeckWrapper>
@@ -1274,7 +1273,6 @@ const Account = () => {
                       setDialogInviteType('client');
                       setShowAddPersonDialog(true);
                     }}
-                    variant="default"
                     className="w-full h-14 rounded-lg border border-neutral-300"
                   />
                 </DeckWrapper>
@@ -1547,14 +1545,11 @@ const Account = () => {
             }}
           >
             {dialogMode !== 'workout' && (
-              <SwiperButton
-                variant="primary-action"
+              <ActionCard
+                text="Create new routine"
                 className="self-stretch w-full"
                 onClick={handleCreateRoutineForClient}
-              >
-                <span className="flex-1">Create new routine</span>
-                <Plus className="w-6 h-6" strokeWidth={2} />
-              </SwiperButton>
+              />
             )}
 
             <DeckWrapper 

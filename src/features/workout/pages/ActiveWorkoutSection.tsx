@@ -1502,7 +1502,6 @@ const ActiveWorkoutSection = ({
             <ActionCard
               text="Add an exercise"
               onClick={handleAddExercise}
-              fillColor="bg-neutral-200"
               className="self-stretch w-full"
             />
           </CardWrapper>
@@ -1621,7 +1620,6 @@ const ActiveWorkoutSection = ({
           <ActionCard
             text="Add an exercise"
             onClick={handleAddExercise}
-            fillColor="bg-neutral-200"
             className="self-stretch w-full"
           />
         </CardWrapper>

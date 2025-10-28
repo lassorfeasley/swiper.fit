@@ -298,7 +298,7 @@ export default function ComponentsGallery() {
           <h2 className="text-lg font-semibold text-neutral-700">Action Components</h2>
           <div className="space-y-3">
             <ActionCard text="Create a new routine" onClick={() => {}} />
-            <ActionCard text="Primary action" variant="primary" onClick={() => {}} />
+            <ActionCard text="Primary action" onClick={() => {}} />
             <ActionPill label="Play" Icon={Play} onClick={() => {}} />
           </div>
         </section>

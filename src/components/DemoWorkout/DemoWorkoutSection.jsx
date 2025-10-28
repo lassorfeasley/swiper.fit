@@ -8,8 +8,6 @@ import { AddNewExerciseForm } from '@/features/routines';
 import DeckWrapper from '@/components/shared/cards/wrappers/DeckWrapper';
 import CardWrapper from '@/components/shared/cards/wrappers/CardWrapper';
 import { ActionCard } from '@/components/shared/ActionCard';
-import { SwiperButton } from '@/components/shared/SwiperButton';
-import { Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function DemoWorkoutSection() {
@@ -156,14 +154,11 @@ export default function DemoWorkoutSection() {
             );
           })}
           <div className="w-full">
-            <SwiperButton 
-              variant="primary-action" 
+            <ActionCard 
+              text="Add exercise"
               className="self-stretch w-full"
               onClick={handleOpenAddExercise}
-            >
-              <span className="flex-1">Add exercise</span>
-              <Plus className="w-6 h-6" strokeWidth={2} />
-            </SwiperButton>
+            />
           </div>
         </DeckWrapper>
       </div>

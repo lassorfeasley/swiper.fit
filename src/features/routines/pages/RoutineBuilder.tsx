@@ -995,7 +995,6 @@ const RoutineBuilder = () => {
               <ActionCard
                 text="Add an exercise"
                 onClick={() => handleOpenAddExercise(section)}
-                fillColor="bg-neutral-200"
                 className="self-stretch w-full"
               />
             </CardWrapper>
