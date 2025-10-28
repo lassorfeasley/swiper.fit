@@ -175,84 +175,100 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
             {sharingSection}
             
             {!sharingSection && (showSearch || showSettings || showPlusButton || showShare || showUpload || showDelete || showStartWorkoutIcon) && (
-              <div className="p-2 bg-white/80 rounded-3xl shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] flex justify-center items-center gap-2">
+              <div data-layer="action-icons" className="ActionIcons max-w-fit p-2 bg-white/80 rounded-full shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center">
                 {showSearch && !isSearchActive && (
                   <button
                     onClick={handleSearchToggle}
-                    className="h-10 min-w-10 py-3 bg-blue-500 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Search"
                   >
-                    <Search className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="search" className="LucideIcon size-6 relative overflow-hidden">
+                      <Search className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
                 
                 {isSearchActive && (
                   <button
                     onClick={handleSearchToggle}
-                    className="h-10 min-w-10 py-3 bg-neutral-700 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Close search"
                   >
-                    <X className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="x" className="LucideIcon size-6 relative overflow-hidden">
+                      <X className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
 
                 {showSettings && (
                   <button
                     onClick={onSettings}
-                    className="h-10 min-w-10 py-3 bg-neutral-700 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Settings"
                   >
-                    <Cog className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="cog" className="LucideIcon size-6 relative overflow-hidden">
+                      <Cog className="w-5 h-5 text-neutral-700" />
+                    </div>
                   </button>
                 )}
 
                 {showPlusButton && (
                   <button
                     onClick={onAdd}
-                    className="h-10 min-w-10 py-3 bg-green-600 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Add"
                   >
-                    <Plus className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" className="LucideIcon size-6 relative overflow-hidden">
+                      <Plus className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
 
                 {showShare && (
                   <button
                     onClick={onShare}
-                    className="h-10 min-w-10 py-3 bg-blue-500 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Share"
                   >
-                    <Share className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="share" className="LucideIcon size-6 relative overflow-hidden">
+                      <Share className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
 
                 {showStartWorkoutIcon && (
                   <button
                     onClick={onStartWorkoutIcon}
-                    className="h-10 min-w-10 py-3 bg-green-600 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Start Workout"
                   >
-                    <Play className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="Play" className="LucideIcon size-6 relative overflow-hidden">
+                      <Play className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
 
                 {showUpload && (
                   <button
                     onClick={onUpload}
-                    className="h-10 min-w-10 py-3 bg-neutral-700 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Upload"
                   >
-                    <Upload className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" className="LucideIcon size-6 relative overflow-hidden">
+                      <Upload className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
 
                 {showDelete && (
                   <button
                     onClick={onDelete}
-                    className="h-10 min-w-10 py-3 bg-red-500 rounded-[20px] flex justify-center items-center gap-1"
+                    className="ActionPill h-10 min-w-10 py-3 bg-white/0 rounded-[20px] flex justify-center items-center gap-1"
                     aria-label="Delete"
                   >
-                    <Trash2 className="w-6 h-6 text-white" />
+                    <div data-layer="lucide-icon" data-icon="trash-2" className="LucideIcon size-6 relative overflow-hidden">
+                      <Trash2 className="w-5 h-5 text-neutral-950" />
+                    </div>
                   </button>
                 )}
               </div>

@@ -533,37 +533,10 @@ const ActiveWorkoutSection = ({
         throw error;
       }
 
-      // Refresh exercises to get updated data
-      const updatedExercises = await fetchExercises();
-
-      // Helper to determine if an exercise is complete based on its set statuses
-      const isExerciseCompleteLocal = (ex) => (ex.setConfigs || []).every((s) => s.status === 'complete');
-
-      // Check if all sets in this exercise are now complete
-      const currentExercise = updatedExercises.find((ex) => ex.exercise_id === exerciseId);
-      if (currentExercise && isExerciseCompleteLocal(currentExercise)) {
-        // Prefer the next incomplete exercise lower in the list; if none, search upwards.
-        const currentIndex = updatedExercises.findIndex((ex) => ex.exercise_id === exerciseId);
-
-        for (let i = currentIndex + 1; i < updatedExercises.length; i++) {
-          const ex = updatedExercises[i];
-          if (!isExerciseCompleteLocal(ex)) {
-            changeFocus(ex.exercise_id);
-            return;
-          }
-        }
-
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          const ex = updatedExercises[i];
-          if (!isExerciseCompleteLocal(ex)) {
-            changeFocus(ex.exercise_id);
-            return;
-          }
-        }
-
-        // If no incomplete exercises found in this section, trigger section complete
-        onSectionComplete?.(section);
-      }
+      // Refresh exercises to get updated data for UI consistency.
+      // Do not advance focus here; the card will call onExerciseComplete after
+      // its animation finishes, which routes to handleExerciseComplete.
+      await fetchExercises();
     } catch (error) {
       console.error("Failed to save set:", error);
       toast.error(`Failed to save set. Please try again.`);

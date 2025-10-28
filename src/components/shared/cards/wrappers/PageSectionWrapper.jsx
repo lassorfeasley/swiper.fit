@@ -35,7 +35,7 @@ const PageSectionWrapper = ({
     if (!section) return "";
     const lowered = section.toLowerCase();
     if (lowered === "training" || lowered === "workout") return "Training";
-    if (lowered === "warmup") return "Warmup";
+    if (lowered === "warmup") return "Warm up";
     if (lowered === "cooldown") return "Cooldown";
     // Fallback – capitalize first letter
     return section.charAt(0).toUpperCase() + section.slice(1);
@@ -53,7 +53,7 @@ const PageSectionWrapper = ({
   return (
     <div
       className={cn(
-        "Workoutcardwrapper w-full flex flex-col justify-start items-center",
+        "WorkoutSummaryStyling self-stretch inline-flex flex-col justify-start items-center",
         backgroundClass,
         className
       )}
@@ -68,7 +68,7 @@ const PageSectionWrapper = ({
         style={parentPaddingStyle}
       >
         <DeckWrapper 
-          gap={deckGap}
+          gap={12}
           paddingX={applyPaddingOnParent ? 0 : paddingX}
           paddingTop={applyPaddingOnParent ? 0 : undefined}
           paddingBottom={0}
@@ -80,8 +80,8 @@ const PageSectionWrapper = ({
           maxWidth={500}
           style={applyPaddingOnParent ? { maxWidth: style?.maxWidth || 500, minWidth: style?.minWidth } : style}
           header={(
-            <div className="w-full inline-flex justify-center items-center gap-2.5" style={{ marginBottom: 0 }}>
-              <div className="flex flex-1 items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+            <div className="w-full inline-flex justify-start items-center gap-2.5" style={{ marginBottom: 0 }}>
+              <div className="self-stretch h-4 justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-4">
                 {displayTitle}
               </div>
               {showPlusButton && (

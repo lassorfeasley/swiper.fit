@@ -23,7 +23,7 @@ import { useAccount } from "@/contexts/AccountContext";
 import { toast } from "@/lib/toastReplacement";
 import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Copy, Blend, X } from "lucide-react";
+import { Copy, Blend, X, ListChecks } from "lucide-react";
 import { useSpacing } from "@/hooks/useSpacing";
 
 const RoutineBuilder = () => {
@@ -925,49 +925,37 @@ const RoutineBuilder = () => {
         sharingSection={undefined}
       >
         <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
-          {/* Routine Image Section */}
-          <div className="self-stretch inline-flex flex-col justify-start items-center">
-            <div className="self-stretch px-5 inline-flex justify-center items-center gap-3">
+          {/* Routine Image and Link Section */}
+          <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
+            <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
+              <img 
+                data-layer="open-graph-image"
+                className="OpenGraphImage w-full h-auto" 
+                src={program?.og_image_url || "https://placehold.co/500x262"} 
+                alt={`${programName} routine`}
+                draggable={false}
+                style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
+                onError={(e) => {
+                  console.log('Image failed to load:', program?.og_image_url);
+                  (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
+                }}
+                onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
+              />
               <div 
-                className="w-full max-w-[500px] rounded-lg border border-neutral-300 overflow-hidden cursor-pointer"
-                onClick={shareRoutine}
-              >
-                <img 
-                  className="w-full h-auto block" 
-                  src={program?.og_image_url || "https://placehold.co/500x262"} 
-                  alt={`${programName} routine`}
-                  draggable={false}
-                  onError={(e) => {
-                    console.log('Image failed to load:', program?.og_image_url);
-                    (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
-                  }}
-                  onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
-                />
-              </div>
-            </div>
-
-            {/* View routine history CTA (matches action card/button style) */}
-            <div className="self-stretch px-5 mt-3 inline-flex justify-center items-center">
-              <div
-                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-white rounded-lg border border-neutral-300 inline-flex justify-start items-center cursor-pointer"
+                data-layer="routine-link"
+                className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+                style={{ cursor: "pointer" }}
                 role="button"
                 tabIndex={0}
-                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/history', { state: { filterRoutine: programName } }); } }}
                 aria-label="View routine history"
               >
-                <div className="p-2.5 flex justify-start items-center gap-2.5">
-                  <div className="relative">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13 5H18V10" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M6 18L18 6" stroke="#525252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
+                <div data-layer="routine-name" className="justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                  {programName} 
                 </div>
-                <div className="flex justify-center items-center gap-5">
-                  <div className="justify-center text-neutral-600 text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                    View workouts for this routine
-                  </div>
+                <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                  <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
                 </div>
               </div>
             </div>

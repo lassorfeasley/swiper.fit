@@ -136,7 +136,7 @@ export const ANIMATION_DURATIONS: AnimationDurations = {
   // Total time for SwipeSwitch completion animation (3 x 0.35s tweens + ~0.1s buffer)
   SWIPE_COMPLETE_ANIMATION_MS: 1150,
   // Delay after swipe completes before closing/opening next card
-  EXTRA_POST_COMPLETE_DELAY_MS: 250
+  EXTRA_POST_COMPLETE_DELAY_MS: 0
 };
 
 /**
