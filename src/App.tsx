@@ -15,17 +15,11 @@ import React, { createContext, useState, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Login, CreateAccount, PasswordReset, UpdatePassword, RequireAuth } from "@/features/auth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
-import DemoPage from "./pages/Sandbox/DemoPage";
-import SwipeSwitchTest from "./pages/Sandbox/SwipeSwitchTest";
-import DialogTest from "./pages/Sandbox/DialogTest";
-import OGImageTest from "./pages/OGImageTest";
 import OGImageAdmin from "./pages/OGImageAdmin";
 import MobileNav from "./components/layout/MobileNav";
 import SideBarNav from "./components/layout/SideBarNav";
 import { LoggedOutNav } from "@/features/auth";
 import Account from "./pages/Account/Account.tsx";
-import OGEnv from "./pages/OGEnv";
-import ComponentsGallery from "./pages/ComponentsGallery";
 import EmailTest from "./pages/EmailTest";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
@@ -216,16 +210,8 @@ function AppContent() {
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
-            <Route path="/demo" element={<DemoPage />} />
-            <Route path="/swipe-test" element={<SwipeSwitchTest />} />
-            <Route path="/og-test" element={<OGImageTest />} />
             <Route path="/og-image-admin" element={<OGImageAdmin />} />
-            <Route path="/og-env" element={<OGEnv />} />
-            <Route path="/dialog-test" element={<DialogTest />} />
             <Route path="/history/:workoutId" element={<CompletedWorkout />} />
-            {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
-              <Route path="/components" element={<ComponentsGallery />} />
-            )}
             {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
               <Route path="/email-test" element={<EmailTest />} />
             )}
