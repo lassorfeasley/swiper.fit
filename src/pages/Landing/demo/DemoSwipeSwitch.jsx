@@ -12,7 +12,7 @@ function debounce(fn, delay) {
   };
 }
 
-export default function DemoSwipeSwitch({ set, onComplete, onClick, className = "", demo = false }) {
+export default function DemoSwipeSwitch({ set, onComplete, onUndo, onClick, className = "", demo = false }) {
   // Constants
   const THUMB_WIDTH = 80;
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8;
@@ -42,6 +42,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   const trackRef = useRef(null);
   const isMountedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const onUndoRef = useRef(onUndo);
   
   // Add stability tracking like the real component
   const [trackWidth, setTrackWidth] = useState(0);
@@ -69,6 +70,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   const hasManualSwipedThisSession = useRef(false);
   const skipAutoCompleteOnce = useRef(false);
   const lastManualSwipeTime = useRef(0);
+  const prevStatusRef = useRef(status);
 
   // Timer state
   const duration = timed_set_duration || 30;
@@ -180,6 +182,65 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
 
   }, [controls, tweenConfig, getContentWidth, isInitialized]);
 
+  // Reverse animation sequence for undo
+  const triggerReverseAnimation = useCallback(() => {
+    if (!isMountedRef.current) return;
+
+    setIsAnimating(true);
+    setIsCheckVisible(false);
+
+    // Ensure travel values are up to date
+    updateThumbTravel();
+
+    const contentWidth = getContentWidth();
+
+    // Step 1: dissolve check and re-add margins by shrinking scale from full padding coverage back to content width
+    controls.start({
+      x: 0,
+      width: contentWidth,
+      backgroundColor: '#22C55E',
+      borderRadius: THUMB_RADIUS,
+      scaleX: 1,
+      scaleY: 1,
+    }, { type: 'tween', ease: 'easeOut', duration: 0.25 }).then(() => {
+      if (!isMountedRef.current) return;
+
+      // Step 2: shrink thumb while staying on the right side
+      const currentThumbTravel = thumbTravelRef.current;
+      controls.start({
+        x: currentThumbTravel,
+        width: THUMB_WIDTH,
+        backgroundColor: '#22C55E',
+        borderRadius: THUMB_RADIUS,
+        scaleX: 1,
+        scaleY: 1,
+      }, tweenConfig).then(() => {
+        if (!isMountedRef.current) return;
+
+        // Step 3: swipe thumb back to the left and return to white
+        controls.start({
+          x: 0,
+          width: THUMB_WIDTH,
+          backgroundColor: '#FFFFFF',
+          borderRadius: THUMB_RADIUS,
+          scaleX: 1,
+          scaleY: 1,
+        }, tweenConfig).then(() => {
+          if (!isMountedRef.current) return;
+          setSwipedComplete(false);
+          setIsManualSwipe(false);
+          setIsAnimating(false);
+          setIsCheckVisible(false);
+          setFinalScaleX(1);
+          setFinalScaleY(1);
+          locallyManuallySwipedRef.current = false;
+          hasManualSwipedThisSession.current = false;
+          skipAutoCompleteOnce.current = false;
+        });
+      });
+    });
+  }, [controls, tweenConfig, getContentWidth, updateThumbTravel]);
+
   // Drag handlers
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
@@ -226,6 +287,10 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  useEffect(() => {
+    onUndoRef.current = onUndo;
+  }, [onUndo]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -291,12 +356,22 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
          }, 50);
       }
     }
-     }, [status, swipedComplete, isAnimating, triggerCompleteAnimation, updateThumbTravel, isInitialized]);
+  }, [status, swipedComplete, isAnimating, triggerCompleteAnimation, updateThumbTravel, isInitialized]);
 
   // Computed values
   const isDefault = status === "default";
   const isComplete = status === "complete";
   const isVisuallyComplete = (isComplete && !isAnimating) || swipedComplete;
+
+  // Handle reverse animation when status changes from complete to default (undo)
+  useLayoutEffect(() => {
+    if (prevStatusRef.current === 'complete' && status === 'default' && isVisuallyComplete && !isAnimating) {
+      skipAutoCompleteOnce.current = true;
+      triggerReverseAnimation();
+    }
+    
+    prevStatusRef.current = status;
+  }, [status, isVisuallyComplete, isAnimating, triggerReverseAnimation]);
   
   // Thumb style
   const thumbStyle = {
@@ -313,7 +388,12 @@ export default function DemoSwipeSwitch({ set, onComplete, onClick, className = 
         e.stopPropagation();
         setTimeout(() => {
           if (!dragMoved.current && !isDragging) {
-            onClick?.(e);
+            if (isVisuallyComplete && isComplete) {
+              // If completed set is tapped, call onUndo
+              onUndoRef.current?.(e);
+            } else {
+              onClick?.(e);
+            }
           }
         }, 10);
       }}

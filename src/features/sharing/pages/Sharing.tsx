@@ -1060,11 +1060,16 @@ export default function Sharing() {
       toast.success(`Workout started for ${formatUserDisplay(selectedClient)}. They will be notified when they open the app.`);
       
       // Switch to the account owner's context so delegate can see the active workout in manager mode
+      console.log('[Sharing] Switching to user:', selectedClient.id);
       switchToUser(selectedClient);
+      
+      // Small delay to allow context to update before checking for workout
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Wait for the workout to be detected before navigating
       // This prevents the double routine selection issue
       const checkWorkoutAndNavigate = async () => {
+        console.log('[Sharing] Starting to check for workout...');
         let attempts = 0;
         const maxAttempts = 20; // 2 seconds max wait
         
@@ -1079,6 +1084,7 @@ export default function Sharing() {
             
             if (workoutData) {
               // Workout is detected, navigate to active workout page
+              console.log('[Sharing] Workout detected, navigating to /workout/active');
               navigate('/workout/active');
               break;
             }
@@ -1092,6 +1098,7 @@ export default function Sharing() {
         
         // If we couldn't detect the workout after max attempts, navigate anyway
         if (attempts >= maxAttempts) {
+          console.log('[Sharing] Reached max attempts, navigating to /workout/active anyway');
           navigate('/workout/active');
         }
       };
