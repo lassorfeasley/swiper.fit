@@ -701,9 +701,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       navigate(`/workout/${workout.id}`);
       
       // Post Slack event
-      postSlackEvent('workout_started', {
+      postSlackEvent('workout.started', {
         user_id: user.id,
         workout_id: workout.id,
+        routine_id: workout.routine_id,
         routine_name: routineName
       });
 
@@ -810,10 +811,13 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           .catch(() => {});
 
         // Post Slack event
-        postSlackEvent('workout_completed', {
+        postSlackEvent('workout.ended', {
           user_id: user?.id,
           workout_id: activeWorkout.id,
-          routine_name: activeWorkout.routine_name
+          routine_id: activeWorkout.routine_id,
+          routine_name: activeWorkout.routine_name,
+          duration_sec: finalAccumulated,
+          total_sets: completedSets?.length || 0
         });
 
         toast.success('Workout completed!');

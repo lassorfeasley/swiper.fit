@@ -68,7 +68,7 @@ const StartWorkoutCard = ({
     <div
       data-layer="card-wrapper"
       data-property-1="full-bleed"
-      className="CardWrapper w-full min-h-14 bg-neutral-50 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] outline outline-1 outline-offset-[-1px] outline-neutral-300 backdrop-blur-[1px] flex justify-start items-center gap-4 overflow-hidden cursor-pointer"
+      className="CardWrapper w-full min-h-14 bg-neutral-50 rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] border border-neutral-300 backdrop-blur-[1px] flex justify-start items-center gap-4 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
       {...props}
     >

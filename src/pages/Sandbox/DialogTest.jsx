@@ -164,11 +164,11 @@ export default function DialogTest() {
             align={align}
             closeOnOverlayClick={closeOnOverlayClick}
             hideFooter
-            headerClassName="self-stretch h-11 px-3 bg-neutral-Neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+            headerClassName="self-stretch h-11 px-3 bg-neutral-Neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
             headerRight={
               <button 
                 onClick={() => setOpenSwiper(false)}
-                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer"
+                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-300 hover:bg-red-400 transition-colors cursor-pointer"
                 aria-label="Close dialog"
               />
             }

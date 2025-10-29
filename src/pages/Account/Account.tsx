@@ -722,14 +722,26 @@ const Account = () => {
         });
       } catch (_) {}
 
+      // Switch to client context and navigate to routine builder
+      console.log('[Account] Switching to client context and navigating to routine builder');
       switchToUser(selectedClient);
-      navigate(`/routines/${routine.id}/configure`, {
-        state: {
-          managingForClient: true,
-          clientId: selectedClient.id,
-          clientName: formatUserDisplay(selectedClient),
-        },
-      });
+      
+      // Use setTimeout to ensure context switch completes before navigation
+      setTimeout(() => {
+        try {
+          console.log('[Account] Navigating to routine builder:', `/routines/${routine.id}/configure`);
+          navigate(`/routines/${routine.id}/configure`, {
+            state: {
+              managingForClient: true,
+              clientId: selectedClient.id,
+              clientName: formatUserDisplay(selectedClient),
+            },
+          });
+        } catch (navError) {
+          console.error('[Account] Navigation failed:', navError);
+          toast.error('Failed to navigate to routine builder. Please try again.');
+        }
+      }, 100);
 
       setShowCreateRoutineSheet(false);
       setShowRoutineSelectionDialog(false);

@@ -92,6 +92,7 @@ const ActiveWorkoutSection = ({
       // Group template sets by exercise_id
       const templateSetsMap = {};
       console.log('[ActiveWorkoutSection] Raw template sets:', templateSets);
+    console.log('[ActiveWorkoutSection] Raw routine exercises:', templateSets);
       (templateSets || []).forEach((re) => {
         console.log(`[ActiveWorkoutSection] Processing routine exercise ${re.exercise_id} with ${re.routine_sets?.length || 0} sets`);
         templateSetsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
@@ -119,8 +120,9 @@ const ActiveWorkoutSection = ({
         });
 
               // Build exercise objects with merged set configs
+        console.log('[ActiveWorkoutSection] Processing workout exercises:', filteredExercises.map(we => ({ id: we.exercise_id, name: we.name_override || we.exercise?.name })));
         const processedExercises = filteredExercises.map((we) => {
-        console.log(`Processing exercise ID: ${we.exercise_id}`);
+        console.log(`Processing exercise ID: ${we.exercise_id}, name: ${we.name_override || we.exercise?.name}`);
         const templateConfigs = templateSetsMap[we.exercise_id] || [];
         const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
 
@@ -136,9 +138,9 @@ const ActiveWorkoutSection = ({
         // Start with template sets in their original order
         console.log(`Processing ${templateConfigs.length} template configs`);
         
-        // If no template configs, create a default set to prevent empty exercises
-        if (templateConfigs.length === 0) {
-          console.log(`No template configs found for exercise ${we.exercise_id}, creating default set`);
+        // If no template configs exist AND no saved sets exist, create a default set
+        if (templateConfigs.length === 0 && savedSetsForExercise.length === 0) {
+          console.log(`No template configs and no saved sets found for exercise ${we.exercise_id}, creating default set`);
           mergedSetConfigs.push({
             id: null,
             routine_set_id: null,
@@ -152,7 +154,12 @@ const ActiveWorkoutSection = ({
             status: "default",
             set_order: 1,
           });
-        } else {
+        } else if (templateConfigs.length === 0 && savedSetsForExercise.length > 0) {
+          console.log(`No template configs but ${savedSetsForExercise.length} saved sets exist for exercise ${we.exercise_id}, skipping default set creation`);
+        }
+        
+        // Process template configs if they exist
+        if (templateConfigs.length > 0) {
           templateConfigs.forEach((template, templateIndex) => {
           const savedSet = savedSetsForExercise.find(
             (saved) => saved.routine_set_id === template.routine_set_id
@@ -197,24 +204,44 @@ const ActiveWorkoutSection = ({
         console.log(`After processing templates: ${mergedSetConfigs.length} merged sets`);
 
         // Since saved sets have null routine_set_ids, we need to handle them differently
-        // For now, let's skip all saved sets with null routine_set_ids to prevent duplicates
-        const validSavedSets = savedSetsForExercise.filter(saved => saved.routine_set_id !== null);
+        // Include all saved sets, but handle null routine_set_ids differently
+        const validSavedSets = savedSetsForExercise.filter(saved => {
+          // Include sets with routine_set_ids (template-based)
+          if (saved.routine_set_id !== null) return true;
+          // Include sets without routine_set_ids (custom/added sets) but only if they're not duplicates
+          // We'll handle deduplication differently for these
+          return true;
+        });
         
         console.log(`Original saved sets: ${savedSetsForExercise.length}, Valid saved sets: ${validSavedSets.length}`);
         
         // Deduplicate valid saved sets by routine_set_id (keep the first occurrence)
+        // For sets without routine_set_id, deduplicate by ID to avoid duplicates
         const deduplicatedSavedSets = [];
         const seenRoutineSetIds = new Set();
+        const seenSetIds = new Set();
         
         validSavedSets.forEach((saved, index) => {
-          console.log(`Valid saved set ${index}:`, { id: saved.id, routine_set_id: saved.routine_set_id, status: saved.status });
+          console.log(`Valid saved set ${index}:`, { id: saved.id, routine_set_id: saved.routine_set_id, status: saved.status, set_order: saved.set_order });
           
-          if (!seenRoutineSetIds.has(saved.routine_set_id)) {
-            seenRoutineSetIds.add(saved.routine_set_id);
-            deduplicatedSavedSets.push(saved);
-            console.log(`Added saved set with routine_set_id: ${saved.routine_set_id}`);
+          if (saved.routine_set_id !== null) {
+            // Handle template-based sets (with routine_set_id)
+            if (!seenRoutineSetIds.has(saved.routine_set_id)) {
+              seenRoutineSetIds.add(saved.routine_set_id);
+              deduplicatedSavedSets.push(saved);
+              console.log(`Added saved set with routine_set_id: ${saved.routine_set_id}`);
+            } else {
+              console.log(`Skipping duplicate saved set with routine_set_id: ${saved.routine_set_id}`);
+            }
           } else {
-            console.log(`Skipping duplicate saved set with routine_set_id: ${saved.routine_set_id}`);
+            // Handle custom sets (without routine_set_id) - deduplicate by ID
+            if (!seenSetIds.has(saved.id)) {
+              seenSetIds.add(saved.id);
+              deduplicatedSavedSets.push(saved);
+              console.log(`Added custom saved set with id: ${saved.id}`);
+            } else {
+              console.log(`Skipping duplicate custom saved set with id: ${saved.id}`);
+            }
           }
         });
         console.log(`After deduplication: ${deduplicatedSavedSets.length} saved sets`);
@@ -224,25 +251,49 @@ const ActiveWorkoutSection = ({
         deduplicatedSavedSets.forEach((saved) => {
           if (saved.status === "hidden") return; // never render hidden orphan sets
 
-          const hasTemplateCounterpart = templateConfigs.some(
-            (template) => template.routine_set_id === saved.routine_set_id
-          );
+          if (saved.routine_set_id !== null) {
+            // Handle template-based sets
+            const hasTemplateCounterpart = templateConfigs.some(
+              (template) => template.routine_set_id === saved.routine_set_id
+            );
 
-          if (!hasTemplateCounterpart) {
-            mergedSetConfigs.push({
-              id: saved.id,
-              routine_set_id: saved.routine_set_id,
-              reps: saved.reps,
-              weight: saved.weight,
-              unit: saved.weight_unit,
-              weight_unit: saved.weight_unit,
-              set_variant: saved.set_variant,
-              set_type: saved.set_type,
-              timed_set_duration: saved.timed_set_duration,
-              status: saved.status || "default",
-              set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
-              account_id: saved.account_id, // Include account_id to track who completed the set
-            });
+            if (!hasTemplateCounterpart) {
+              mergedSetConfigs.push({
+                id: saved.id,
+                routine_set_id: saved.routine_set_id,
+                reps: saved.reps,
+                weight: saved.weight,
+                unit: saved.weight_unit,
+                weight_unit: saved.weight_unit,
+                set_variant: saved.set_variant,
+                set_type: saved.set_type,
+                timed_set_duration: saved.timed_set_duration,
+                status: saved.status || "default",
+                set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
+                account_id: saved.account_id, // Include account_id to track who completed the set
+              });
+            }
+          } else {
+            // Handle custom sets (without routine_set_id)
+            // Only add if there are NO template configs (i.e., this is a completely custom exercise)
+            if (templateConfigs.length === 0) {
+              mergedSetConfigs.push({
+                id: saved.id,
+                routine_set_id: saved.routine_set_id, // This will be null
+                reps: saved.reps,
+                weight: saved.weight,
+                unit: saved.weight_unit,
+                weight_unit: saved.weight_unit,
+                set_variant: saved.set_variant,
+                set_type: saved.set_type,
+                timed_set_duration: saved.timed_set_duration,
+                status: saved.status || "default",
+                set_order: saved.set_order || orphanIndex++, // Use saved set_order or assign next
+                account_id: saved.account_id, // Include account_id to track who completed the set
+              });
+            }
+            // If there ARE template configs, don't add custom sets as orphaned
+            // because the template sets should be used instead
           }
         });
 
@@ -419,7 +470,7 @@ const ActiveWorkoutSection = ({
         reps: 0,
         weight: 0,
         weight_unit: 'lbs',
-        routine_set_id: '',
+        routine_set_id: setConfig.routine_set_id || null,
         set_type: 'reps',
         timed_set_duration: 0,
         set_order: 0
@@ -642,6 +693,7 @@ const ActiveWorkoutSection = ({
 
   // Handle exercise edit
   const handleEditExercise = (exercise) => {
+    console.log('[ActiveWorkoutSection] Opening edit form for exercise:', exercise);
     setEditingExercise({
       id: exercise.id,
       exercise_id: exercise.exercise_id,
@@ -649,6 +701,7 @@ const ActiveWorkoutSection = ({
       section: exercise.section,
       setConfigs: exercise.setConfigs,
     });
+    setEditingExerciseDirty(false); // Reset dirty state when opening
   };
 
   // Simplified handle focus function
@@ -664,18 +717,27 @@ const ActiveWorkoutSection = ({
 
   // Helper to determine next exercise_order value (1-based)
   const getNextOrder = useCallback(async (table: string, fkField: string, fkValue: string) => {
-    const { data: row, error } = await supabase
-      .from(table)
-      .select("exercise_order")
-      .eq(fkField, fkValue)
-      .order("exercise_order", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) {
-      console.error("[getNextOrder] error querying", table, error);
-      throw error;
+    try {
+      const { data: rows, error } = await supabase
+        .from(table)
+        .select("exercise_order")
+        .eq(fkField, fkValue)
+        .order("exercise_order", { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error("[getNextOrder] error querying", table, error);
+        throw error;
+      }
+      
+      // Handle case where no rows exist or multiple rows returned
+      const maxOrder = rows && rows.length > 0 ? rows[0].exercise_order : 0;
+      return maxOrder + 1;
+    } catch (err) {
+      console.error("[getNextOrder] unexpected error:", err);
+      // Fallback to order 1 if there's any issue
+      return 1;
     }
-    return (row?.exercise_order ?? 0) + 1;
   }, []);
 
   // Handle adding exercise (today only)
@@ -685,13 +747,15 @@ const ActiveWorkoutSection = ({
 
       // Find or create exercise
       let exerciseId;
-      const { data: existingExercise, error: searchError } = await supabase
+      const { data: existingExercises, error: searchError } = await supabase
         .from("exercises")
         .select("id, section")
-        .eq("name", exerciseName)
-        .maybeSingle();
+        .eq("name", exerciseName);
 
       if (searchError) throw searchError;
+
+      // Handle multiple exercises with the same name by taking the first one
+      const existingExercise = existingExercises && existingExercises.length > 0 ? existingExercises[0] : null;
 
       if (existingExercise) {
         exerciseId = existingExercise.id;
@@ -720,21 +784,43 @@ const ActiveWorkoutSection = ({
         activeWorkout.id
       );
 
-      const { data: workoutExercise, error: workoutExerciseError } =
-        await supabase
-          .from("workout_exercises")
-          .insert({
-            workout_id: activeWorkout.id,
-            exercise_id: exerciseId,
-            exercise_order: nextOrder,
-            snapshot_name: exerciseName.trim(),
-            // Honor the drawer's chosen section; fall back to the current section tab
-            section_override: exerciseSection || section,
-          })
-          .select("id")
-          .single();
+      // Check if this exercise already exists in this workout to prevent duplicates
+      const { data: existingWorkoutExercise, error: checkError } = await supabase
+        .from("workout_exercises")
+        .select("id")
+        .eq("workout_id", activeWorkout.id)
+        .eq("exercise_id", exerciseId)
+        .limit(1);
 
-      if (workoutExerciseError) throw workoutExerciseError;
+      if (checkError) {
+        console.error("Error checking for existing workout exercise:", checkError);
+        throw checkError;
+      }
+
+      let workoutExerciseId;
+      if (existingWorkoutExercise && existingWorkoutExercise.length > 0) {
+        // Exercise already exists in this workout, use the existing one
+        workoutExerciseId = existingWorkoutExercise[0].id;
+        console.log("Exercise already exists in workout, using existing ID:", workoutExerciseId);
+      } else {
+        // Create new workout exercise
+        const { data: workoutExercise, error: workoutExerciseError } =
+          await supabase
+            .from("workout_exercises")
+            .insert({
+              workout_id: activeWorkout.id,
+              exercise_id: exerciseId,
+              exercise_order: nextOrder,
+              snapshot_name: exerciseName.trim(),
+              // Honor the drawer's chosen section; fall back to the current section tab
+              section_override: exerciseSection || section,
+            })
+            .select("id")
+            .single();
+
+        if (workoutExerciseError) throw workoutExerciseError;
+        workoutExerciseId = workoutExercise.id;
+      }
 
       // Add null check for currentUser.id before creating sets
       if (!currentUser?.id) {
@@ -750,6 +836,7 @@ const ActiveWorkoutSection = ({
         setRows = setConfigs.map((cfg, idx) => ({
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
+          workout_exercise_id: workoutExerciseId,
           set_order: idx + 1, // Add proper set_order for database consistency
           reps: Number(cfg.reps) || 10,
           weight: Number(cfg.weight) || 25,
@@ -765,6 +852,7 @@ const ActiveWorkoutSection = ({
         setRows = Array.from({ length: 3 }, (_, idx) => ({
           workout_id: activeWorkout.id,
           exercise_id: exerciseId,
+          workout_exercise_id: workoutExerciseId,
           set_order: idx + 1, // Add proper set_order for database consistency
           reps: 10,
           weight: 25,
@@ -777,12 +865,17 @@ const ActiveWorkoutSection = ({
         }));
       }
 
-      const { error: setError } = await supabase.from("sets").insert(setRows);
+      // Only create sets if this is a new workout exercise
+      if (!existingWorkoutExercise || existingWorkoutExercise.length === 0) {
+        const { error: setError } = await supabase.from("sets").insert(setRows);
 
-      if (setError) {
-        console.error("Failed to create sets:", setError);
-        // Don't throw here - the exercise was created successfully
-        // Just log the error and continue
+        if (setError) {
+          console.error("Failed to create sets:", setError);
+          // Don't throw here - the exercise was created successfully
+          // Just log the error and continue
+        }
+      } else {
+        console.log("Exercise already exists in workout, skipping set creation");
       }
 
       toast.success(`Added ${exerciseName} to ${section}`);
@@ -797,24 +890,33 @@ const ActiveWorkoutSection = ({
       }, 100);
     } catch (error) {
       console.error("Error adding exercise:", error);
+      console.error("Error details:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       toast.error("Failed to add exercise. Please try again.");
     }
   };
 
   // Handle adding exercise to routine (future workouts)
   const handleAddExerciseFuture = async (data) => {
+    console.log('[ActiveWorkoutSection] handleAddExerciseFuture called with:', data);
     try {
       const { name: exerciseName, section: exerciseSection, setConfigs } = data;
 
       // Find or create exercise
       let exerciseId;
-      const { data: existingExercise, error: searchError } = await supabase
+      const { data: existingExercises, error: searchError } = await supabase
         .from("exercises")
         .select("id, section")
-        .eq("name", exerciseName)
-        .maybeSingle();
+        .eq("name", exerciseName);
 
       if (searchError) throw searchError;
+
+      // Handle multiple exercises with the same name by taking the first one
+      const existingExercise = existingExercises && existingExercises.length > 0 ? existingExercises[0] : null;
 
       if (existingExercise) {
         exerciseId = existingExercise.id;
@@ -847,6 +949,12 @@ const ActiveWorkoutSection = ({
       );
 
       // Add to routine_exercises
+      console.log('[ActiveWorkoutSection] Adding to routine_exercises:', {
+        routine_id: activeWorkout.routine_id,
+        exercise_id: exerciseId,
+        exercise_order: nextRoutineOrder,
+      });
+      
       const { data: routineExercise, error: routineExerciseError } = await supabase
         .from("routine_exercises")
         .insert({
@@ -857,7 +965,12 @@ const ActiveWorkoutSection = ({
         .select("id")
         .single();
 
-      if (routineExerciseError) throw routineExerciseError;
+      if (routineExerciseError) {
+        console.error('[ActiveWorkoutSection] Error adding to routine_exercises:', routineExerciseError);
+        throw routineExerciseError;
+      }
+      
+      console.log('[ActiveWorkoutSection] Successfully added to routine_exercises:', routineExercise);
 
       // Add to routine_sets
       if (setConfigs && setConfigs.length > 0) {
@@ -872,16 +985,21 @@ const ActiveWorkoutSection = ({
           timed_set_duration: cfg.timed_set_duration || 30,
         }));
 
+        console.log('[ActiveWorkoutSection] Adding routine_sets:', routineSetRows);
+
         const { error: routineSetError } = await supabase
           .from("routine_sets")
           .insert(routineSetRows);
 
         if (routineSetError) {
-          console.error("Failed to add sets to routine template:", routineSetError);
+          console.error('[ActiveWorkoutSection] Failed to add sets to routine template:', routineSetError);
           toast.error("Failed to add sets to routine template. Exercise added to today's workout only.");
         } else {
+          console.log('[ActiveWorkoutSection] Successfully added routine_sets');
           toast.success("Exercise added to routine template");
         }
+      } else {
+        console.log('[ActiveWorkoutSection] No setConfigs provided, skipping routine_sets');
       }
 
       // Add to current workout (but don't call handleAddExerciseToday to avoid duplication)
@@ -918,16 +1036,16 @@ const ActiveWorkoutSection = ({
       // Focus on the newly added exercise
       changeFocus(exerciseId);
     } catch (error) {
-      console.error("Error adding exercise to routine:", error);
+      console.error('[ActiveWorkoutSection] Error adding exercise to routine:', error);
       toast.error("Failed to add exercise to routine. Please try again.");
     }
   };
 
   // Handle saving exercise edits
   const handleSaveExerciseEdit = async (data, type = "today") => {
-    // console.log('[DEBUG] handleSaveExerciseEdit called with:', { data, type, editingExercise });
+    console.log('[ActiveWorkoutSection] handleSaveExerciseEdit called with:', { data, type, editingExercise });
     if (!editingExercise) {
-      // console.log('[DEBUG] No editingExercise, returning');
+      console.log('[ActiveWorkoutSection] No editingExercise, returning');
       return;
     }
 
@@ -963,8 +1081,13 @@ const ActiveWorkoutSection = ({
 
       if (error) throw error;
 
+      // Track if routine template update was successful
+      let routineTemplateUpdated = false;
+      
       // If type is "future", also update the routine template
       if (type === "future") {
+        console.log('[ActiveWorkoutSection] Updating routine template for exercise:', exercise_id);
+        
         // Update the exercise name and section in the exercises table
         const { error: exerciseUpdateError } = await supabase
           .from("exercises")
@@ -975,47 +1098,149 @@ const ActiveWorkoutSection = ({
           .eq("id", exercise_id);
 
         if (exerciseUpdateError) {
-          console.error("Failed to update exercise in routine template:", exerciseUpdateError);
+          console.error("[ActiveWorkoutSection] Failed to update exercise in routine template:", exerciseUpdateError);
           toast.error("Failed to update exercise in routine template. Changes saved for today only.");
+          // Don't return - continue with set updates attempt
+        } else {
+          console.log('[ActiveWorkoutSection] Exercise name/section updated successfully');
         }
 
         // Find the routine_exercise_id for this exercise
-        const { data: routineExercise } = await supabase
+        console.log('[ActiveWorkoutSection] Looking for routine_exercise with routine_id:', activeWorkout.routine_id, 'exercise_id:', exercise_id);
+        const { data: routineExercise, error: queryError } = await supabase
           .from("routine_exercises")
           .select("id")
           .eq("routine_id", activeWorkout.routine_id)
           .eq("exercise_id", exercise_id)
-          .single();
+          .maybeSingle();
 
-        if (routineExercise) {
+        if (queryError) {
+          console.error('[ActiveWorkoutSection] Error querying routine_exercises:', queryError);
+          toast.error("Failed to query routine template. Changes saved for today only.");
+        } else if (routineExercise) {
+          // Exercise exists in routine template - update it
+          console.log('[ActiveWorkoutSection] Exercise exists in routine template (id:', routineExercise.id, '), updating sets');
+          
           // Delete existing routine_sets for this exercise
-          await supabase
+          const { error: deleteError } = await supabase
             .from("routine_sets")
             .delete()
             .eq("routine_exercise_id", routineExercise.id);
 
-          // Insert new routine_sets
-          const routineSetRows = newSetConfigs.map((cfg, idx) => ({
-            routine_exercise_id: routineExercise.id,
-            set_order: idx + 1,
-            reps: Number(cfg.reps),
-            weight: Number(cfg.weight),
-            weight_unit: cfg.weight_unit,
-            set_variant: cfg.set_variant,
-            set_type: cfg.set_type,
-            timed_set_duration: cfg.timed_set_duration,
-          }));
+          if (deleteError) {
+            console.error('[ActiveWorkoutSection] Error deleting existing routine_sets:', deleteError);
+            toast.error("Failed to update routine template sets. Changes saved for today only.");
+          } else {
+            // Insert new routine_sets
+            const routineSetRows = newSetConfigs.map((cfg, idx) => ({
+              routine_exercise_id: routineExercise.id,
+              set_order: idx + 1,
+              reps: Number(cfg.reps),
+              weight: Number(cfg.weight),
+              weight_unit: cfg.weight_unit,
+              set_variant: cfg.set_variant,
+              set_type: cfg.set_type,
+              timed_set_duration: cfg.timed_set_duration,
+            }));
 
-          if (routineSetRows.length > 0) {
-            const { error: routineSetError } = await supabase
-              .from("routine_sets")
-              .insert(routineSetRows);
-            
-            if (routineSetError) {
-              console.error("Failed to update routine template:", routineSetError);
-              toast.error("Failed to update routine template. Changes saved for today only.");
+            console.log('[ActiveWorkoutSection] Inserting', routineSetRows.length, 'routine_sets');
+            if (routineSetRows.length > 0) {
+              const { error: routineSetError } = await supabase
+                .from("routine_sets")
+                .insert(routineSetRows);
+              
+              if (routineSetError) {
+                console.error("[ActiveWorkoutSection] Failed to update routine template sets:", routineSetError);
+                toast.error("Failed to update routine template sets. Changes saved for today only.");
+              } else {
+                console.log('[ActiveWorkoutSection] Routine template sets updated successfully');
+                routineTemplateUpdated = true;
+              }
             } else {
-              toast.success("Exercise updated in routine template");
+              console.log('[ActiveWorkoutSection] No sets to insert');
+              routineTemplateUpdated = true;
+            }
+          }
+        } else {
+          // Exercise doesn't exist in routine template - add it
+          console.log('[ActiveWorkoutSection] Exercise not in routine template, adding it');
+          
+          // Get the next exercise order for this routine
+          const { data: maxOrderData, error: orderError } = await supabase
+            .from("routine_exercises")
+            .select("exercise_order")
+            .eq("routine_id", activeWorkout.routine_id)
+            .order("exercise_order", { ascending: false })
+            .limit(1);
+
+          if (orderError) {
+            console.error('[ActiveWorkoutSection] Error getting max exercise order:', orderError);
+            toast.error("Failed to add exercise to routine template. Changes saved for today only.");
+          } else {
+            const nextOrder = maxOrderData && maxOrderData.length > 0 
+              ? (maxOrderData[0].exercise_order || 0) + 1 
+              : 1;
+
+            console.log('[ActiveWorkoutSection] Adding exercise to routine with order:', nextOrder);
+
+            // Add exercise to routine template
+            const { data: newRoutineExercise, error: routineExerciseError } = await supabase
+              .from("routine_exercises")
+              .insert({
+                routine_id: activeWorkout.routine_id,
+                exercise_id: exercise_id,
+                exercise_order: nextOrder,
+              })
+              .select("id")
+              .single();
+
+            if (routineExerciseError) {
+              console.error("[ActiveWorkoutSection] Failed to add exercise to routine template:", routineExerciseError);
+              console.error("[ActiveWorkoutSection] Error details:", {
+                code: routineExerciseError.code,
+                message: routineExerciseError.message,
+                details: routineExerciseError.details,
+                hint: routineExerciseError.hint
+              });
+              toast.error("Failed to add exercise to routine template. Changes saved for today only.");
+            } else {
+              console.log('[ActiveWorkoutSection] Exercise added to routine template (id:', newRoutineExercise.id, ')');
+              
+              // Insert routine_sets for the new exercise
+              const routineSetRows = newSetConfigs.map((cfg, idx) => ({
+                routine_exercise_id: newRoutineExercise.id,
+                set_order: idx + 1,
+                reps: Number(cfg.reps),
+                weight: Number(cfg.weight),
+                weight_unit: cfg.weight_unit,
+                set_variant: cfg.set_variant,
+                set_type: cfg.set_type,
+                timed_set_duration: cfg.timed_set_duration,
+              }));
+
+              console.log('[ActiveWorkoutSection] Inserting', routineSetRows.length, 'routine_sets for new exercise');
+              if (routineSetRows.length > 0) {
+                const { error: routineSetError } = await supabase
+                  .from("routine_sets")
+                  .insert(routineSetRows);
+                
+                if (routineSetError) {
+                  console.error("[ActiveWorkoutSection] Failed to add sets to routine template:", routineSetError);
+                  console.error("[ActiveWorkoutSection] Error details:", {
+                    code: routineSetError.code,
+                    message: routineSetError.message,
+                    details: routineSetError.details,
+                    hint: routineSetError.hint
+                  });
+                  toast.error("Failed to add sets to routine template. Exercise added to routine only.");
+                } else {
+                  console.log('[ActiveWorkoutSection] Routine sets added successfully');
+                  routineTemplateUpdated = true;
+                }
+              } else {
+                console.log('[ActiveWorkoutSection] No sets to insert');
+                routineTemplateUpdated = true;
+              }
             }
           }
         }
@@ -1142,7 +1367,16 @@ const ActiveWorkoutSection = ({
           .eq("id", set.id);
       }
 
-      toast.success("Exercise updated successfully");
+      // Show appropriate success message
+      if (type === "future") {
+        if (routineTemplateUpdated) {
+          toast.success("Exercise updated in routine template");
+        } else {
+          toast.success("Exercise updated for today only");
+        }
+      } else {
+        toast.success("Exercise updated successfully");
+      }
       setEditingExercise(null);
 
       // Refresh exercises to get updated data
@@ -1529,8 +1763,14 @@ const ActiveWorkoutSection = ({
               formPrompt={`Add a new ${section} exercise`}
               disabled={false}
               onActionIconClick={(data, type) => {
-                if (type === "future") handleAddExerciseFuture(data);
-                else handleAddExerciseToday(data);
+                console.log('[ActiveWorkoutSection] Form callback received:', { data, type });
+                if (type === "future") {
+                  console.log('[ActiveWorkoutSection] Calling handleAddExerciseFuture');
+                  handleAddExerciseFuture(data);
+                } else {
+                  console.log('[ActiveWorkoutSection] Calling handleAddExerciseToday');
+                  handleAddExerciseToday(data);
+                }
               }}
               initialSets={3}
               initialSection={section}
@@ -1665,18 +1905,24 @@ const ActiveWorkoutSection = ({
       {editingExercise && (
         <SwiperForm
           open={!!editingExercise}
-          onOpenChange={() => setEditingExercise(null)}
+          onOpenChange={() => {
+            console.log('[ActiveWorkoutSection] Closing edit form');
+            setEditingExercise(null);
+          }}
           title="Edit exercise"
           description="Edit exercise details including name, section, and sets"
-          leftAction={() => setEditingExercise(null)}
+          leftAction={() => {
+            console.log('[ActiveWorkoutSection] Cancel button clicked');
+            setEditingExercise(null);
+          }}
           leftText="Close"
           rightAction={() => {
-            // console.log('[DEBUG] Save button clicked, using ref');
+            console.log('[ActiveWorkoutSection] Save button clicked, editingExerciseDirty:', editingExerciseDirty);
             if (editExerciseFormRef.current) {
-              // console.log('[DEBUG] Calling requestSubmit on form ref');
+              console.log('[ActiveWorkoutSection] Calling requestSubmit on form ref');
               editExerciseFormRef.current.requestSubmit();
             } else {
-              // console.log('[DEBUG] Form ref not found!');
+              console.log('[ActiveWorkoutSection] Form ref not found!');
             }
           }}
           rightText="Save"
@@ -1685,6 +1931,15 @@ const ActiveWorkoutSection = ({
           className="edit-exercise-drawer"
         >
           <div className="flex-1 overflow-y-auto">
+            {(() => {
+              console.log('[ActiveWorkoutSection] Rendering edit form with data:', {
+                name: editingExercise.name,
+                section: editingExercise.section,
+                setConfigs: editingExercise.setConfigs,
+                setConfigsLength: editingExercise.setConfigs?.length || 0
+              });
+              return null;
+            })()}
             <AddNewExerciseForm
               ref={editExerciseFormRef}
               key={`edit-${editingExercise.id}`}
@@ -1700,13 +1955,20 @@ const ActiveWorkoutSection = ({
               hideActionButtons={true}
               showAddToProgramToggle={false}
               hideSetDefaults={true}
-              onActionIconClick={(data) =>
-                handleSaveExerciseEdit(data, exerciseUpdateType)
-              }
-              onDirtyChange={setEditingExerciseDirty}
+              onActionIconClick={(data) => {
+                console.log('[ActiveWorkoutSection] Form submitted with data:', data);
+                handleSaveExerciseEdit(data, exerciseUpdateType);
+              }}
+              onDirtyChange={(dirty) => {
+                console.log('[ActiveWorkoutSection] Form dirty state changed:', dirty);
+                setEditingExerciseDirty(dirty);
+              }}
               showUpdateTypeToggle={true}
               updateType={exerciseUpdateType}
-              onUpdateTypeChange={setExerciseUpdateType}
+              onUpdateTypeChange={(newType) => {
+                console.log('[ActiveWorkoutSection] Update type changed from', exerciseUpdateType, 'to', newType);
+                setExerciseUpdateType(newType);
+              }}
             />
           </div>
         </SwiperForm>
@@ -1758,7 +2020,7 @@ const ActiveWorkoutSection = ({
         confirmVariant="default"
         cancelVariant="outline"
         contentClassName=""
-        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
         footerClassName="self-stretch px-3 py-3"
       />
 
@@ -1806,7 +2068,7 @@ const ActiveWorkoutSection = ({
         confirmVariant="outline"
         cancelVariant="destructive"
         contentClassName=""
-        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
         footerClassName="self-stretch px-3 py-3"
       >
         Deleting this set will remove the exercise from today’s workout.

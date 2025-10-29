@@ -409,6 +409,9 @@ const RoutineBuilder = () => {
     saveOrder();
     if (location.state && location.state.fromPublicImport) {
       navigate('/routines');
+    } else if (location.state && location.state.managingForClient) {
+      // If trainer is managing a client, go back to the trainer's account page
+      navigate('/account');
     } else {
       navigate(-1);
     }
@@ -1172,7 +1175,7 @@ const RoutineBuilder = () => {
         confirmVariant="outline"
         cancelVariant="destructive"
         contentClassName=""
-        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+        headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-t border-neutral-300 inline-flex justify-start items-center"
         footerClassName="self-stretch px-3 py-3"
         showHeaderDismiss={true}
       />

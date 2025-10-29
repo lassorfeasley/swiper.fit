@@ -92,7 +92,7 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
   const tweenConfig = { type: "tween", ease: "easeInOut", duration: 0.35 };
   const THUMB_WIDTH = 80; // w-20
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8; // p-2 in Tailwind
-  const RAIL_RADIUS = '8px'; // Match Tailwind rounded-lg (0.5rem)
+  const RAIL_RADIUS = '5px'; // Match Tailwind rounded-[5px]
   const THUMB_RADIUS = '8px'; // Match Tailwind rounded-lg (0.5rem)
   const DRAG_COMPLETE_THRESHOLD = 70;
   const getContentWidth = () => {
@@ -473,11 +473,11 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
           {set_variant}
         </div>
       )}
-      <div className="Swipeswitch self-stretch bg-neutral-neutral-400 rounded-lg flex flex-col justify-center overflow-hidden">
-        <div className="Swipeswitch self-stretch bg-neutral-neutral-200 flex flex-col justify-start items-start">
+      <div className="Swipeswitch self-stretch flex flex-col justify-center overflow-hidden">
+        <div className="Swipeswitch self-stretch h-16 bg-neutral-neutral-200 rounded-[5px] outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-start items-start overflow-hidden">
           <div
             ref={trackRef}
-            className={"Rail self-stretch p-2 inline-flex justify-between items-center flex-nowrap relative overflow-hidden"}
+            className={"Rail flex-1 h-16 p-2 flex justify-between items-center flex-wrap content-center relative overflow-hidden"}
             style={{ touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
           >
           {/* Left spacer to align with draggable thumb */}
@@ -535,30 +535,32 @@ export default function SwipeSwitch({ set, onComplete, onVisualComplete, onClick
               </div>
             )}
           </motion.div>
-          {/* Absolute overlay for text so it doesn't shift */}
-          {(set_variant || set_type === 'timed' || typeof reps === 'number' || weight_unit === 'body' || weight > 0) && (
-            <div className="absolute inset-0 flex justify-end items-center pointer-events-none px-2" style={{ zIndex: 1 }}>
-              <div className="Cardpill h-12 flex items-center gap-4">
-                <div className="Frame1 flex justify-center items-baseline gap-0.5">
+          {/* Absolute, non-interactive overlay for segmented metrics */}
+          {((set_type === 'timed') || (typeof reps === 'number' && reps !== 1) || (weight_unit !== 'body')) && (
+            <div className="absolute inset-0 flex justify-end items-stretch pointer-events-none" style={{ zIndex: 1 }}>
+              {/* Reps/Time segment */}
+              {(set_type === 'timed' || (typeof reps === 'number' && reps !== 1)) && (
+                <div className="h-full px-4 border-l border-neutral-neutral-300 flex items-center gap-2">
                   {set_type === 'timed' ? (
                     <>
-                      <Clock className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">
-                        {formatTime(duration)}
-                      </div>
+                      <Clock className="size-6 text-neutral-neutral-500" strokeWidth={1} />
+                      <span className="text-neutral-neutral-500 text-3xl font-light leading-9">{formatTime(duration)}</span>
                     </>
                   ) : (
                     <>
-                      <Repeat2 className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                      <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{typeof reps === 'number' ? reps : ''}</div>
+                      <Repeat2 className="size-6 text-neutral-neutral-500" strokeWidth={1} />
+                      <span className="text-neutral-neutral-500 text-3xl font-light leading-9">{typeof reps === 'number' ? reps : ''}</span>
                     </>
                   )}
                 </div>
-                <div className="Frame2 flex justify-center items-baseline gap-0.5">
-                  <Weight className="size-4 text-neutral-neutral-500 relative -top-0.5" />
-                  <div className="Repsxweight whitespace-nowrap flex-none text-neutral-neutral-500 text-4xl font-black leading-9">{weight_unit === 'body' ? 'BW' : (weight || 0)}</div>
+              )}
+              {/* Weight segment */}
+              {(weight_unit !== 'body') && (
+                <div className="h-full px-4 border-l border-neutral-neutral-300 flex items-center gap-2">
+                  <Weight className="size-6 text-neutral-neutral-500" strokeWidth={1} />
+                  <span className="text-neutral-neutral-500 text-3xl font-light leading-9">{weight || 0}</span>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

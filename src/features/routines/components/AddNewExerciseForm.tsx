@@ -11,7 +11,7 @@ import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWr
 import { Minus, Plus } from "lucide-react";
 
 interface AddNewExerciseFormProps {
-  onActionIconClick?: (exerciseData?: any) => void;
+  onActionIconClick?: (exerciseData?: any, type?: string) => void;
   onDelete?: () => void;
   formPrompt?: string;
   initialName?: string;
@@ -103,6 +103,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
     // Set isInitialized to true on first mount
     useEffect(() => {
       setIsInitialized(true);
+      console.log('[AddNewExerciseForm] Initialized with updateType:', updateType);
     }, []);
 
     // Merge incoming per-set configs into hook state on mount
@@ -206,7 +207,8 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
           section: section,
           setConfigs: setConfigs
         };
-        onActionIconClick(exerciseData);
+        console.log('[AddNewExerciseForm] Submitting with updateType:', updateType);
+        onActionIconClick(exerciseData, updateType);
       }
     };
 
@@ -374,7 +376,10 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
             <ToggleInput
               label="Keep new settings?"
               value={updateType}
-              onValueChange={(value) => value && onUpdateTypeChange(value)}
+              onValueChange={(value) => {
+                console.log('[AddNewExerciseForm] Update type changed to:', value);
+                value && onUpdateTypeChange(value);
+              }}
               options={[
                 { label: "Just for today", value: "today" },
                 { label: "Permanently", value: "future" },
