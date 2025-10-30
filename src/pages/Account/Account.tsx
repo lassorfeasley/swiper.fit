@@ -882,7 +882,7 @@ const Account = () => {
         if (allSetsPayload.length > 0) {
           const { error: setsErr } = await supabase
             .from('sets')
-            .insert(allSetsPayload, { returning: 'minimal', count: null });
+            .insert(allSetsPayload);
           if (setsErr) {
             console.error('Error creating sets:', setsErr);
             throw setsErr;
