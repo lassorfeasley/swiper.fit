@@ -37,7 +37,7 @@ const ExerciseCardBase = ({
       {/* Header */}
       <div
         data-layer="card-label"
-        className={`self-stretch h-9 px-2 bg-white border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
+        className={`self-stretch h-12 px-2 bg-white border-b border-neutral-neutral-300 inline-flex justify-start items-center gap-4${addTopBorder ? " border-t border-neutral-neutral-300" : ""}`}
       >
         <div className="flex-1 justify-start text-neutral-neutral-700 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
           {exerciseName}
@@ -54,7 +54,7 @@ const ExerciseCardBase = ({
         <>
           {sets.map((config, idx) => {
             const rowClasses = [
-              "self-stretch h-9 px-2 inline-flex justify-between items-center overflow-hidden",
+              "self-stretch h-12 px-2 inline-flex justify-between items-center overflow-hidden",
               idx % 2 === 1 ? "bg-neutral-Neutral-50" : "",
             ]
               .filter(Boolean)
@@ -78,9 +78,9 @@ const ExerciseCardBase = ({
                   <div className="self-stretch pl-2 flex justify-center items-center gap-0.5">
                     <div className="size-4 relative overflow-hidden flex items-center justify-center">
                       {config.set_type === "timed" ? (
-                        <Clock className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
+                        <Clock className="size-4 text-neutral-neutral-500" strokeWidth={1} />
                       ) : (
-                        <Repeat2 className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
+                        <Repeat2 className="size-4 text-neutral-neutral-500" strokeWidth={1} />
                       )}
                     </div>
                     <div className="text-center justify-center text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
@@ -92,7 +92,7 @@ const ExerciseCardBase = ({
                   {/* Weight */}
                   <div className="self-stretch pl-2 flex justify-center items-center gap-0.5">
                     <div className="size-4 relative overflow-hidden flex items-center justify-center">
-                      <Weight className="size-4 text-neutral-neutral-500" strokeWidth={1.5} />
+                      <Weight className="size-4 text-neutral-neutral-500" strokeWidth={1} />
                     </div>
                     <div className="text-center justify-center text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-3">
                       {config.unit === "body" ? "BW" : config.weight || 0}
