@@ -139,7 +139,7 @@ const SwiperDialog: React.FC<SwiperDialogProps> = ({
               )}
               {primaryAction}
               {React.Children.count(children) > 0 && (
-                <div className={`self-stretch p-3 bg-stone-100 flex flex-col justify-start items-stretch gap-5 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
+                <div className={`self-stretch px-3 bg-stone-100 flex flex-col justify-start items-start gap-3 overflow-y-auto overflow-x-hidden ${bodyClassName || ''}`}
                      style={{ maxHeight: maxBodyHeight }}>
                   {children}
                 </div>

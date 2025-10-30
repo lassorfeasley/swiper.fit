@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { toast } from "@/lib/toastReplacement";
@@ -24,12 +23,19 @@ const StartWorkoutCard = ({
   reorderValue,
   isDragging,
   isFirstCard,
+  onCardClick, // Custom click handler for sharing context
   ...props 
 }) => {
   const navigate = useNavigate();
   const { startWorkout } = useActiveWorkout();
 
   const handleCardClick = async () => {
+    // If custom onClick provided (e.g., from sharing context), use it instead
+    if (onCardClick) {
+      onCardClick();
+      return;
+    }
+
     if (!routineData) {
       toast.error("Routine data not available");
       return;
@@ -100,7 +106,7 @@ const StartWorkoutCard = ({
           data-layer="action-pill" 
           data-property-1="text" 
           data-show-text="true" 
-          className="ActionPill h-10 min-w-24 px-4 py-3 bg-green-700 rounded-full shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-0.5"
+          className="ActionPill h-10 min-w-24 px-4 py-3 bg-green-600 rounded-full shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] backdrop-blur-[1px] inline-flex justify-center items-center gap-0.5"
         >
           <div data-layer="text" className="Text justify-center text-white text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">Start workout</div>
         </div>
@@ -118,6 +124,7 @@ StartWorkoutCard.propTypes = {
   reorderValue: PropTypes.any,
   isDragging: PropTypes.bool,
   isFirstCard: PropTypes.bool,
+  onCardClick: PropTypes.func, // Custom click handler
 };
 
 export default StartWorkoutCard;

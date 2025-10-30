@@ -9,7 +9,7 @@ import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapp
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import { toast } from "@/lib/toastReplacement";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
-import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Play, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +27,8 @@ import { getPendingInvitations, acceptInvitation, rejectInvitation, createTraine
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 import { generateWorkoutName } from "@/lib/utils";
+import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
+import RoutineCard from "@/features/routines/components/RoutineCard";
 
 const Account = () => {
   const { isDelegated, switchToUser } = useAccount();
@@ -481,6 +483,7 @@ const Account = () => {
           ),
           routine_exercises!fk_routine_exercises__routines(
             id,
+            exercise_id,
             exercise_order,
             exercises!fk_routine_exercises__exercises(
               id,
@@ -571,6 +574,7 @@ const Account = () => {
   const handleStartWorkout = async (clientProfile) => {
     setDialogMode('workout');
     setSelectedClient(clientProfile);
+    console.log('[Account] handleStartWorkout called for client:', clientProfile.id);
     
     try {
       const { data: routines, error } = await supabase
@@ -583,6 +587,7 @@ const Account = () => {
           ),
           routine_exercises!fk_routine_exercises__routines(
             id,
+            exercise_id,
             exercise_order,
             exercises!fk_routine_exercises__exercises(
               id,
@@ -754,8 +759,26 @@ const Account = () => {
   };
 
   const handleRoutineSelect = async (routine) => {
+    console.log('[Account] handleRoutineSelect called');
+    console.log('[Account] selectedClient:', selectedClient);
+    console.log('[Account] selectedClient.id:', selectedClient?.id);
+    
+    // Capture the client ID at the start to ensure consistency throughout the function
+    if (!selectedClient?.id) {
+      console.error('[Account] Cannot start workout: selectedClient is null or missing ID');
+      console.error('[Account] Full selectedClient object:', JSON.stringify(selectedClient, null, 2));
+      toast.error('Client not selected. Please try again.');
+      return;
+    }
+    
+    const clientId = selectedClient.id;
+    const clientProfile = selectedClient;
+    
+    console.log('[Account] Captured clientId:', clientId);
+    console.log('[Account] Captured clientProfile:', clientProfile);
+    
     try {
-      console.log('[Account] Starting workout for client:', selectedClient.id);
+      console.log('[Account] Starting workout for client:', clientId);
       console.log('[Account] Selected routine:', routine);
       
       const routineData = {
@@ -763,7 +786,7 @@ const Account = () => {
         routine_name: routine.routine_name,
         routine_exercises: (routine.routine_exercises || []).map((re) => ({
           id: re.id,
-          exercise_id: re.exercises.id,
+          exercise_id: re.exercise_id,
           exercises: {
             name: re.exercises.name,
             section: re.exercises.section
@@ -789,7 +812,7 @@ const Account = () => {
         await supabase
           .from("workouts")
           .update({ is_active: false, completed_at: new Date().toISOString() })
-          .eq("user_id", selectedClient.id)
+          .eq("user_id", clientId)
           .eq("is_active", true);
       } catch (e) {
         console.warn("Failed to auto-close previous active workouts", e);
@@ -800,7 +823,7 @@ const Account = () => {
         const { data: inserted, error: insertErr } = await supabase
           .from('workouts')
           .insert({
-            user_id: selectedClient.id,
+            user_id: clientId,
             routine_id: routine.id,
             workout_name: workoutName,
             is_active: true,
@@ -808,7 +831,7 @@ const Account = () => {
             running_since: new Date().toISOString(),
             active_seconds_accumulated: 0
           })
-          .select()
+          .select('id, routine_id')
           .single();
         if (insertErr) throw insertErr;
         workout = inserted;
@@ -829,39 +852,40 @@ const Account = () => {
         const { data: insertedExercises, error: snapshotErr } = await supabase
           .from('workout_exercises')
           .insert(snapshotPayload)
-          .select();
+          .select('id, exercise_id');
 
         if (snapshotErr) throw snapshotErr;
 
-        // Add null check for selectedClient.id before creating sets
-        if (!selectedClient?.id) {
-          console.error('[Account] Cannot create sets: selectedClient ID is null');
-          throw new Error('Client not selected. Please try again.');
-        }
-
+        // Build all sets in one payload to reduce network roundtrips
+        const allSetsPayload: any[] = [];
         for (const progEx of routineData.routine_exercises) {
           const workoutExercise = insertedExercises.find(we => we.exercise_id === progEx.exercise_id);
-          if (workoutExercise && progEx.routine_sets.length > 0) {
-            const setsPayload = progEx.routine_sets.map((set, setIdx) => ({
+          if (!workoutExercise || progEx.routine_sets.length === 0) continue;
+          progEx.routine_sets.forEach((set, setIdx) => {
+            allSetsPayload.push({
+              workout_id: workout.id,
+              exercise_id: progEx.exercise_id,
               workout_exercise_id: workoutExercise.id,
+              set_order: set.set_order || setIdx + 1,
               reps: set.reps,
               weight: set.weight,
               weight_unit: set.weight_unit,
-              set_order: set.set_order || setIdx + 1,
               set_variant: set.set_variant,
               set_type: set.set_type,
               timed_set_duration: set.timed_set_duration,
-              user_id: selectedClient.id, // This is now guaranteed to be non-null
-              account_id: selectedClient.id,
-            }));
+              status: 'default',
+              user_id: clientId,
+            });
+          });
+        }
 
-            const { error: setsErr } = await supabase
-              .from('sets')
-              .insert(setsPayload);
-
-            if (setsErr) {
-              console.error('Error creating sets for exercise:', setsErr);
-            }
+        if (allSetsPayload.length > 0) {
+          const { error: setsErr } = await supabase
+            .from('sets')
+            .insert(allSetsPayload, { returning: 'minimal', count: null });
+          if (setsErr) {
+            console.error('Error creating sets:', setsErr);
+            throw setsErr;
           }
         }
 
@@ -871,52 +895,13 @@ const Account = () => {
         throw new Error('Could not create workout exercises. Please try again.');
       }
       
-      toast.success(`Workout started for ${formatUserDisplay(selectedClient)}. They will be notified when they open the app.`);
+      toast.success(`Workout started for ${formatUserDisplay(clientProfile)}. They will be notified when they open the app.`);
       
-      console.log('[Account] Switching to user:', selectedClient.id);
-      switchToUser(selectedClient);
+      console.log('[Account] Switching to user:', clientId);
+      switchToUser(clientProfile);
       
-      // Small delay to allow context to update before checking for workout
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Wait for the workout to be detected before navigating
-      // This prevents the double routine selection issue
-      const checkWorkoutAndNavigate = async () => {
-        console.log('[Account] Starting to check for workout...');
-        let attempts = 0;
-        const maxAttempts = 20; // 2 seconds max wait
-        
-        while (attempts < maxAttempts) {
-          try {
-            const { data: workoutData } = await supabase
-              .from("workouts")
-              .select("id")
-              .eq("user_id", selectedClient.id)
-              .eq("is_active", true)
-              .single();
-            
-            if (workoutData) {
-              // Workout is detected, navigate to active workout page
-              console.log('[Account] Workout detected, navigating to /workout/active');
-              navigate('/workout/active');
-              break;
-            }
-          } catch (error) {
-            // Workout not found yet, continue waiting
-          }
-          
-          attempts++;
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
-        // If we couldn't detect the workout after max attempts, navigate anyway
-        if (attempts >= maxAttempts) {
-          console.log('[Account] Reached max attempts, navigating to /workout/active anyway');
-          navigate('/workout/active');
-        }
-      };
-      
-      checkWorkoutAndNavigate();
+      // Navigate immediately; ActiveWorkout will load using context
+      navigate('/workout/active');
       
       setShowRoutineSelectionDialog(false);
       setSelectedClient(null);
@@ -1542,6 +1527,8 @@ const Account = () => {
             hideFooter
             containerClassName="bg-stone-100"
             headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-b border-neutral-neutral-300 inline-flex justify-start items-center"
+            bodyClassName="min-h-0 overflow-y-auto pt-3"
+            maxBodyHeight="60vh"
             headerRight={
               <button
                 onClick={() => setShowRoutineSelectionDialog(false)}
@@ -1556,85 +1543,52 @@ const Account = () => {
               setDialogMode('workout');
             }}
           >
+            <div className="w-full flex flex-col items-center gap-3 pb-4">
             {dialogMode !== 'workout' && (
-              <ActionCard
-                text="Create new routine"
-                className="self-stretch w-full"
-                onClick={handleCreateRoutineForClient}
-              />
+              <CardWrapper gap={0} marginTop={0} marginBottom={0}>
+                <ActionCard
+                  text="Create new routine"
+                  className="self-stretch w-full"
+                  onClick={handleCreateRoutineForClient}
+                />
+              </CardWrapper>
             )}
 
-            <DeckWrapper 
-              className="self-stretch w-full flex flex-col justify-center items-center gap-3 px-0"
-              maxWidth={null}
-              minWidth={null}
-              paddingX={0}
-              paddingTop={0}
-              paddingBottom={0}
-            >
             {clientRoutines.map((routine, index) => (
-              <div 
-                key={routine.id}
-                data-layer="Routine Card" 
-                className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden cursor-pointer hover:bg-neutral-50"
-                onClick={() => dialogMode === 'workout' ? handleRoutineSelect(routine) : handleRoutineManage(routine)}
-              >
-                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
-                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight text-neutral-neutral-600">
-                      {routine.routine_name || routine.name || routine.title || `Routine ${routine.id}`}
-                    </div>
-                    <div data-layer="Completed 5 days ago" className="Completed5DaysAgo text-center justify-center text-xs font-medium font-['Be_Vietnam_Pro'] leading-none text-neutral-neutral-400">
-                      {routine.lastCompletedText || 'Never completed'}
-                    </div>
-                  </div>
+              dialogMode === 'workout' ? (
+                <div key={routine.id} className="w-full flex justify-center">
+                  <StartWorkoutCard
+                    id={routine.id}
+                    name={routine.routine_name || `Routine ${routine.id}`}
+                    lastCompleted={routine.lastCompletedText}
+                    routineData={routine}
+                    onCardClick={() => handleRoutineSelect(routine)}
+                  />
                 </div>
-                <div data-layer="Frame 5014" className="Frame5014 inline-flex justify-start items-start gap-2">
-                  {dialogMode === 'workout' ? (
-                    <div 
-                      data-layer="Frame 5012" 
-                      className="Frame5012 h-7 px-2 bg-green-600 rounded-lg flex justify-start items-center gap-1 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRoutineSelect(routine);
-                      }}
-                    >
-                      <div data-layer="lucide-icon" className="LucideIcon w-4 h-4 relative flex items-center justify-center">
-                        <Play className="w-4 h-4 text-white" />
-                      </div>
-                      <div data-layer="Start" className="Start justify-center text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight text-white">
-                        Start
-                      </div>
-                    </div>
-                  ) : (
-                    <div 
-                      data-layer="Frame 5013" 
-                      className="Frame5013 w-7 h-7 bg-neutral-200 rounded-lg flex justify-center items-center gap-1 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRoutineManage(routine);
-                      }}
-                    >
-                      <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden flex items-center justify-center">
-                        <Cog className="w-5 h-5 text-neutral-500" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              ) : (
+                <CardWrapper key={routine.id} gap={0} marginTop={0} marginBottom={0}>
+                  <RoutineCard
+                    id={routine.id}
+                    name={routine.routine_name || `Routine ${routine.id}`}
+                    lastCompleted={routine.lastCompletedText}
+                    routineData={routine}
+                    onCardClick={() => handleRoutineManage(routine)}
+                  />
+                </CardWrapper>
+              )
             ))}
             {clientRoutines.length === 0 && (
               <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
                 <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
                   <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-neutral-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight text-center">
+                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight text-neutral-neutral-600">
                       {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
                     </div>
                   </div>
                 </div>
               </div>
             )}
-            </DeckWrapper>
+            </div>
           </SwiperDialog>
 
           {/* Create routine name sheet */}
