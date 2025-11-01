@@ -4,6 +4,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import Footer from "@/components/layout/Footer";
 import SideBarNav from "@/components/layout/SideBarNav";
 import TrainerNavigation from "@/components/shared/TrainerNavigation";
+import PendingInvitationsBanner from "@/components/shared/PendingInvitationsBanner";
 import { getScrollSnapCSSVars, SCROLL_CONTEXTS } from "@/lib/scrollSnap";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -133,6 +134,11 @@ export default function AppLayout({
   const baseHeaderHeight = hideHeader ? 0 : headerHeight;
   const totalHeaderHeight = baseHeaderHeight;
 
+  // Determine if banner should be shown
+  const isActiveWorkout = location.pathname === '/workout/active';
+  const isPublicRoute = /^\/(app\/)?(history|routines)\/public\//.test(location.pathname);
+  const shouldShowBanner = !isActiveWorkout && !isPublicRoute && !hideHeader;
+
   return (
     <div className="min-h-screen flex relative">
       {showSidebar && <SideBarNav />}
@@ -155,6 +161,8 @@ export default function AppLayout({
             searchValue={searchValue}
             onSearchChange={onSearchChange}
             className={undefined}
+            hasBannerAbove={shouldShowBanner}
+            bannerContent={shouldShowBanner ? <PendingInvitationsBanner /> : undefined}
           />
         )}
         <div className="flex-1 flex flex-col">

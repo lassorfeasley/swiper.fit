@@ -22,6 +22,8 @@ interface PageHeaderProps {
   showUpload?: boolean;
   showDelete?: boolean;
   sharingSection?: React.ReactNode;
+  hasBannerAbove?: boolean;
+  bannerContent?: React.ReactNode;
   onBack?: () => void;
   onSearch?: () => void;
   onSettings?: () => void;
@@ -54,6 +56,8 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
   showUpload = false,
   showDelete = false,
   sharingSection,
+  hasBannerAbove = false,
+  bannerContent,
   onBack,
   onSearch,
   onSettings,
@@ -112,17 +116,27 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
   // Determine header classes based on variant
   const getHeaderClasses = () => {
     const baseClasses = "w-full";
+    const hasBanner = hasBannerAbove && bannerContent;
     
     switch (variant) {
       case 'dark-fixed':
-        return cn(baseClasses, "bg-neutral-900 text-white fixed top-0 z-50", showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0");
+        return cn(
+          baseClasses, 
+          "bg-neutral-900 text-white fixed z-50",
+          hasBanner ? "flex-col" : "",
+          "top-0",
+          showSidebar ? "left-0 right-0 md:left-64 md:right-0" : "left-0 right-0"
+        );
       case 'programs':
-        return cn(baseClasses, "bg-white border-b border-neutral-200");
+        return cn(baseClasses, "bg-white border-b border-neutral-200", hasBanner ? "flex-col" : "");
       default:
         return cn(
           baseClasses,
           // Default variant - glass styling
-          "fixed top-0 z-[200] h-11 pt-5 bg-gradient-to-t from-transparent to-stone-100 inline-flex justify-between items-center",
+          "fixed z-[200]",
+          hasBanner ? "flex-col" : "h-11 pt-5 inline-flex justify-between items-center bg-gradient-to-t from-transparent to-stone-100",
+          !hasBanner && "bg-gradient-to-t from-transparent to-stone-100",
+          "top-0",
           showSidebar ? "left-0 w-full md:left-64 md:w-[calc(100%-16rem)]" : "left-0 w-full"
         );
     }
@@ -131,18 +145,36 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
   // Determine if header should be fixed
   const isFixed = variant === 'dark-fixed' || variant === 'default';
   const shouldReserveSpace = reserveSpace && isFixed;
+  const hasBanner = hasBannerAbove && bannerContent;
+  const bannerHeight = hasBanner ? 60 : 0; // Approximate banner height
 
   return (
     <>
-      {shouldReserveSpace && <div className="h-16" />}
-      <div ref={ref} className={cn(getHeaderClasses(), className)} style={{ overflow: 'visible' }}>
-        <div className="flex items-center justify-between px-4 h-11 w-full overflow-visible">
+      {shouldReserveSpace && (
+        <>
+          {hasBanner && <div style={{ height: `${bannerHeight}px` }} />}
+          <div className={hasBanner ? "h-16" : "h-16"} />
+        </>
+      )}
+      <div ref={ref} data-layer="page-header" className={cn(getHeaderClasses(), "inline-flex", className)} style={{ overflow: 'visible' }}>
+        {/* Banner content - first child when present */}
+        {hasBanner && (
+          <div data-layer="Frame 5011" className="Frame5011 self-stretch">
+            {bannerContent}
+          </div>
+        )}
+        
+        {/* Main nav content */}
+        <div data-layer="main-nav" className={cn(
+          "self-stretch flex items-center justify-between w-full overflow-visible",
+          hasBanner ? "px-4 pt-4 pb-3 bg-gradient-to-b from-stone-100 to-transparent" : "px-4 h-11"
+        )}>
           {/* Left side */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {showBackButton && (
               <button
                 onClick={onBack}
-                className="p-2 -ml-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
                 aria-label="Go back"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -285,7 +317,6 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
             )}
           </div>
         </div>
-
       </div>
     </>
   );

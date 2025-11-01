@@ -104,7 +104,7 @@ const EditableTextInput = ({
       {/* Static value wrapper matching TextInput structure */}
       <div className="relative w-full group">
         <div
-          className="h-[52px] bg-neutral-100 rounded-lg border-none text-neutral-500 p-3 pr-14 flex items-center"
+          className="h-[52px] bg-stone-100 rounded-lg border-none text-neutral-500 p-3 pr-14 flex items-center"
         >
           <div className="flex-1 text-base font-medium font-vietnam leading-tight">
             {value}

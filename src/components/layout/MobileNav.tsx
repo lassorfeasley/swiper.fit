@@ -25,7 +25,7 @@ const MobileNav: React.FC = () => {
               >
                 <div className={cn(
                   "self-stretch flex-1 py-1 flex flex-col justify-center items-center gap-2",
-                  selected ? "bg-neutral-100/60 rounded-[100px]" : ""
+                  selected ? "bg-stone-100/60 rounded-[100px]" : ""
                 )}>
                   <div className="w-6 h-6 flex items-center justify-center">
                     <span className={cn(

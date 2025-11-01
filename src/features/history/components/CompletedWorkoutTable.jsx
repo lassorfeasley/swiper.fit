@@ -54,7 +54,7 @@ const CompletedWorkoutTable = ({ data = [], onEditSet }) => {
 
   return (
     <table className="w-full text-sm border-collapse">
-      <thead className="hidden md:table-header-group bg-neutral-100 sticky top-0 z-10">
+      <thead className="hidden md:table-header-group bg-stone-100 sticky top-0 z-10">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id}>
             {headerGroup.headers.map((header) => (

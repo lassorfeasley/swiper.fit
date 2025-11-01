@@ -471,6 +471,7 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
         )
       `)
       .eq("delegate_user_id", userId)
+      .neq("owner_user_id", userId)  // Exclude invitations where user is the owner
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 

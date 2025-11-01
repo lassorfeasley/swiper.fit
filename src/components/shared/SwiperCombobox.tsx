@@ -121,7 +121,7 @@ export default function SwiperCombobox({
                       }}
                       className={cn(
                         "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full cursor-pointer",
-                        selected ? "bg-neutral-100" : "bg-white hover:bg-neutral-100",
+                        selected ? "bg-stone-100" : "bg-white hover:bg-stone-100",
                         item.disabled && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -209,7 +209,7 @@ export default function SwiperCombobox({
                     disabled={item.disabled}
                     className={cn(
                       "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full",
-                      selected ? "bg-neutral-100" : "bg-white hover:bg-neutral-100"
+                      selected ? "bg-stone-100" : "bg-white hover:bg-stone-100"
                     )}
                   >
                     <div className="flex-1 justify-start text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight truncate">

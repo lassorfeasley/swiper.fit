@@ -22,7 +22,7 @@ export default function LoggedOutNav({ showAuthButtons = true }: LoggedOutNavPro
                 // Force navigation with window.location.href
                 window.location.href = '/login';
               }}
-              className="w-1/2 h-11 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer"
+              className="w-1/2 h-11 border-r border-neutral-neutral-300 flex justify-center items-center gap-2 hover:bg-stone-100 transition-colors cursor-pointer"
             >
               <div className="justify-start text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">Log in</div>
               <MoveUpRight className="w-5 h-5 text-neutral-neutral-700" />

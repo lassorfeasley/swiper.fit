@@ -14,7 +14,7 @@ const SetBadgeSegment = ({ icon, value, isFirst, isLast }: SetBadgeSegmentProps)
   const borderClass = !isFirst ? 'border-l border-neutral-300' : '';
   
   return (
-    <div className={`self-stretch px-2 bg-neutral-100 flex justify-center items-center gap-0.5 ${borderRadius} ${borderClass}`}>
+    <div className={`self-stretch px-2 bg-stone-100 flex justify-center items-center gap-0.5 ${borderRadius} ${borderClass}`}>
       <IconComponent className="size-4 text-neutral-500" strokeWidth={1.5} />
       {value != null && value !== '' && (
         <span className="text-center text-neutral-500 text-label">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useAccount } from "@/contexts/AccountContext";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/supabaseClient";
 import { TextInput } from "@/components/shared/inputs/TextInput";
@@ -9,7 +9,7 @@ import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapp
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import { toast } from "@/lib/toastReplacement";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
-import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,12 +29,60 @@ import ManagePermissionsCard from "@/features/sharing/components/ManagePermissio
 import { generateWorkoutName } from "@/lib/utils";
 import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import RoutineCard from "@/features/routines/components/RoutineCard";
+import AccountSettingsMenu from "@/components/shared/AccountSettingsMenu";
 
 const Account = () => {
   const { isDelegated, switchToUser } = useAccount();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Section navigation state
+  const [activeSection, setActiveSection] = useState(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const hasSetSectionRef = useRef(false);
+
+  // Handle query parameter for section navigation
+  useEffect(() => {
+    const sectionParam = searchParams.get('section');
+    const resetParam = searchParams.get('reset');
+    
+    // Handle reset to main page
+    if (resetParam === 'true') {
+      setActiveSection(null);
+      hasSetSectionRef.current = false;
+      searchParams.delete('reset');
+      setSearchParams(searchParams, { replace: true });
+      return;
+    }
+    
+    // Handle section navigation
+    if (sectionParam && ['sharing-requests', 'trainers', 'clients', 'personal-info', 'email-password'].includes(sectionParam)) {
+      setActiveSection(sectionParam);
+      hasSetSectionRef.current = true;
+      // Remove the query parameter from URL after setting the section
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('section');
+      setSearchParams(newParams, { replace: true });
+      return; // Early return to prevent reset logic
+    }
+    
+    // Only reset if we explicitly navigate to /account with no params and we haven't just set a section
+    if (!sectionParam && !resetParam && location.pathname === '/account' && location.search === '' && !hasSetSectionRef.current) {
+      setActiveSection(null);
+    }
+    
+    // Reset the flag after processing to allow future resets
+    if (hasSetSectionRef.current && !sectionParam) {
+      // Use a small delay to ensure the URL update has been processed
+      const timer = setTimeout(() => {
+        hasSetSectionRef.current = false;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, setSearchParams, location.pathname, location.search]);
 
   // Account info state
   const [loading, setLoading] = useState(true);
@@ -1029,19 +1077,51 @@ const Account = () => {
     <AppLayout title="Account">
       <MainContentSection className="!p-0 flex-1 min-h-0">
         <div className="w-full flex flex-col min-h-screen pt-20">
-          {/* Requests section */}
-          {((pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0) ||
-            (outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0) ||
-            pendingRequestsQuery.isError ||
-            outgoingRequestsQuery.isError ||
-            pendingRequestsQuery.isLoading ||
-            outgoingRequestsQuery.isLoading) && (
-            <div className="self-stretch inline-flex flex-col justify-start items-center px-5">
-              <div className="w-full max-w-[500px] pb-14 flex flex-col justify-start items-center gap-3">
-                <div className="w-full pb-0 inline-flex justify-center items-center gap-2.5">
-                  <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Requests</div>
+          {/* Account Settings Header and Menu */}
+          {!activeSection && (
+            <div className="w-full flex justify-center px-5 pt-5">
+              <div className="w-full max-w-[500px] flex flex-col justify-start items-start gap-5">
+                <div className="self-stretch h-4 justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-4">
+                  Account settings
                 </div>
-                <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
+                <AccountSettingsMenu
+                  activeSection={activeSection}
+                  onSectionChange={setActiveSection}
+                  onDeleteAccount={() => setDeleteConfirmOpen(true)}
+                />
+                {/* Logout button */}
+                <div className="self-stretch flex flex-col justify-start items-start gap-5">
+                  <div 
+                    className="Swiperbutton self-stretch h-12 min-w-44 px-4 py-2 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-50"
+                    onClick={() => setShowLogoutDialog(true)}
+                  >
+                    <div className="ButtonText justify-start text-neutral-neutral-600 text-base font-medium font-['Be_Vietnam_Pro'] leading-5">
+                      Log out
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section Content */}
+          <div className="w-full flex justify-center px-5">
+            <div className="w-full max-w-[500px] flex flex-col justify-start items-start">
+              {/* Sharing requests section */}
+              {activeSection === 'sharing-requests' && (
+                <div className="w-full flex justify-center pb-5">
+                  <div className="w-full max-w-[500px] pt-5 pb-14 flex flex-col justify-start items-start gap-3">
+                    <div className="w-full h-4 flex items-center justify-start gap-0">
+                      <button
+                        onClick={() => setActiveSection(null)}
+                        className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
+                        aria-label="Go back"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                      <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Sharing requests</div>
+                    </div>
+                    <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
 
                   {/* Incoming requests */}
                   {pendingRequestsQuery.isLoading && (
@@ -1073,13 +1153,13 @@ const Account = () => {
                         <div className="Frame79 self-stretch p-3 flex flex-col justify-start items-start gap-4">
                           <div className="YourPermissions self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
                           <div className="PermissionRows self-stretch bg-stone-100 rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                            <div className="InputWrapper self-stretch h-14 p-3 inline-flex justify-center items-center">
+                            <div className="InputWrapper self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
                               <div className="Frame75 flex-1 flex justify-start items-center gap-5">
                                 <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
-                                  <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Start workouts</div>
+                                  <div className="Text self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Start workouts</div>
                                 </div>
                               </div>
-                              <div className="LucideIcon relative">
+                              <div className="LucideIcon w-6 h-6 flex items-center justify-center">
                                 {request.can_start_workouts && (
                                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1090,10 +1170,10 @@ const Account = () => {
                             <div className="InputWrapper self-stretch h-14 p-3 bg-neutral-Neutral-50 inline-flex justify-center items-center">
                               <div className="Frame75 flex-1 flex justify-start items-center gap-5">
                                 <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
-                                  <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
+                                  <div className="Text self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Create or edit routines</div>
                                 </div>
                               </div>
-                              <div className="LucideIcon relative">
+                              <div className="LucideIcon w-6 h-6 flex items-center justify-center">
                                 {request.can_create_routines && (
                                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1101,13 +1181,13 @@ const Account = () => {
                                 )}
                               </div>
                             </div>
-                            <div className="InputWrapper self-stretch h-14 p-3 inline-flex justify-center items-center">
+                            <div className="InputWrapper self-stretch h-14 p-3 bg-white inline-flex justify-center items-center">
                               <div className="Frame75 flex-1 flex justify-start items-center gap-5">
                                 <div className="Frame74 flex-1 inline-flex flex-col justify-center items-start">
-                                  <div className="StartAWorkout self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
+                                  <div className="Text self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Review history</div>
                                 </div>
                               </div>
-                              <div className="LucideIcon relative">
+                              <div className="LucideIcon w-6 h-6 flex items-center justify-center">
                                 {request.can_review_history && (
                                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M20 6L9 17L4 12" stroke="var(--green-green-600, #00A63E)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1185,18 +1265,51 @@ const Account = () => {
                       <div className="text-red-600 text-sm font-medium">Failed to load outgoing requests. Please try again.</div>
                     </div>
                   )}
-                </DeckWrapper>
-              </div>
-            </div>
-          )}
-
-          {/* Trainers (Account Managers) section */}
-          <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
-            <div className="pb-20 inline-flex flex-col justify-start items-center w-full max-w-[500px]">
-              <div className="flex flex-col justify-start items-start gap-3 w-full">
-                <div className="w-full h-14 py-3 inline-flex justify-center items-center gap-2.5">
-                  <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Trainers</div>
+                      {(!pendingRequestsQuery.data || pendingRequestsQuery.data.length === 0) &&
+                        (!outgoingRequestsQuery.data || outgoingRequestsQuery.data.length === 0) &&
+                        !pendingRequestsQuery.isLoading &&
+                        !outgoingRequestsQuery.isLoading &&
+                        !pendingRequestsQuery.isError &&
+                        !outgoingRequestsQuery.isError && (
+                          <div className="w-full bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center p-6">
+                            <div className="text-neutral-neutral-400 text-sm font-medium">No sharing requests</div>
+                          </div>
+                        )}
+                      <ActionCard
+                        text="Invite A Trainer"
+                        onClick={() => {
+                          setDialogInviteType('trainer');
+                          setShowAddPersonDialog(true);
+                        }}
+                        className="w-full h-14 rounded-lg border border-neutral-300"
+                      />
+                      <ActionCard
+                        text="Invite A Client"
+                        onClick={() => {
+                          setDialogInviteType('client');
+                          setShowAddPersonDialog(true);
+                        }}
+                        className="w-full h-14 rounded-lg border border-neutral-300"
+                      />
+                    </DeckWrapper>
+                  </div>
                 </div>
+              )}
+
+              {/* Trainers section */}
+              {activeSection === 'trainers' && (
+                <div className="w-full flex justify-center pb-5">
+            <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
+              <div className="w-full h-4 flex items-center justify-start gap-0">
+                <button
+                  onClick={() => setActiveSection(null)}
+                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Trainers</div>
+              </div>
                 <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
                   {trainerSharesQuery.data?.map((share) => (
                     <ManagePermissionsCard
@@ -1227,17 +1340,24 @@ const Account = () => {
                     className="w-full h-14 rounded-lg border border-neutral-300"
                   />
                 </DeckWrapper>
-              </div>
             </div>
-          </div>
-
-          {/* Clients (Account Owners) section */}
-          <div className="self-stretch px-5 inline-flex justify-center items-start gap-2.5">
-            <div className="pb-20 inline-flex flex-col justify-start items-center w-full max-w-[500px]">
-              <div className="flex flex-col justify-start items-start gap-3 w-full">
-                <div className="w-full h-14 inline-flex justify-center items-center gap-2.5">
-                  <div className="flex-1 justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-normal">Clients</div>
                 </div>
+              )}
+
+              {/* Clients section */}
+              {activeSection === 'clients' && (
+                <div className="w-full flex justify-center pb-5">
+            <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
+              <div className="w-full h-4 flex items-center justify-start gap-0">
+                <button
+                  onClick={() => setActiveSection(null)}
+                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Clients</div>
+              </div>
                 <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
                   {clientSharesQuery.data?.map((share) => (
                     <ManagePermissionsCard
@@ -1273,14 +1393,24 @@ const Account = () => {
                     className="w-full h-14 rounded-lg border border-neutral-300"
                   />
                 </DeckWrapper>
-              </div>
             </div>
-          </div>
+                </div>
+              )}
 
-          {/* Personal Information Section */}
-          <div className="w-full flex justify-center px-5">
+              {/* Personal info section */}
+              {activeSection === 'personal-info' && (
+                <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="PersonalInformation w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Personal information</div>
+              <div className="PersonalInformation w-full h-4 flex items-center justify-start gap-0">
+                <button
+                  onClick={() => setActiveSection(null)}
+                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Personal information</div>
+              </div>
               <div className="CardWrapper w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center gap-5">
               {/* First Name Field */}
               <EditableTextInput
@@ -1339,12 +1469,23 @@ const Account = () => {
               )}
               </div>
             </div>
-          </div>
+                </div>
+              )}
 
-          {/* Login and Password Section */}
-          <div className="w-full flex justify-center px-5">
+              {/* Email and password section */}
+              {activeSection === 'email-password' && (
+                <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="LoginAndPassword w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Login and password</div>
+              <div className="LoginAndPassword w-full h-4 flex items-center justify-start gap-0">
+                <button
+                  onClick={() => setActiveSection(null)}
+                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Login and password</div>
+              </div>
               <div className="Frame56 w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
               {/* Email Field */}
               <EditableTextInput
@@ -1406,33 +1547,12 @@ const Account = () => {
               )}
               </div>
             </div>
-          </div>
+                </div>
+              )}
 
-          {/* Account Section */}
-          <div className="w-full flex justify-center px-5">
-            <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
-              <div className="Account w-full h-8 flex items-center justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Account</div>
-              <div className="Frame62 self-stretch w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
-              <div 
-                className="Swiperbutton self-stretch h-12 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-neutral-700"
-                onClick={handleLogout}
-              >
-                <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                  Log out
-                </div>
-              </div>
-              <div 
-                className="Swiperbutton self-stretch h-12 px-4 py-2 bg-red-400 rounded-[20px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-500"
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                  Delete account
-                </div>
-              </div>
-              </div>
-              </div>
             </div>
           </div>
+        </div>
 
           {/* Add person dialog */}
           <SwiperDialog
@@ -1691,6 +1811,20 @@ const Account = () => {
               />
             </div>
           </SwiperDialog>
+
+          {/* Logout confirmation dialog */}
+          <SwiperDialog
+            open={showLogoutDialog}
+            onOpenChange={setShowLogoutDialog}
+            onConfirm={handleLogout}
+            onCancel={() => setShowLogoutDialog(false)}
+            title="Log out"
+            description="Are you sure you want to log out?"
+            confirmText="Log out"
+            cancelText="Cancel"
+            confirmVariant="default"
+            cancelVariant="outline"
+          />
       </MainContentSection>
     </AppLayout>
   );

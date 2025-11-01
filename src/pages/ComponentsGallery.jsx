@@ -351,7 +351,7 @@ export default function ComponentsGallery() {
                   key={d.key}
                   type="button"
                   onClick={() => setActiveKey(d.key)}
-                  className={`text-left py-2 px-2 rounded hover:bg-neutral-50 ${activeKey === d.key ? 'bg-neutral-100 font-medium' : ''}`}
+                  className={`text-left py-2 px-2 rounded hover:bg-neutral-50 ${activeKey === d.key ? 'bg-stone-100 font-medium' : ''}`}
                 >
                   {d.label}
                 </button>

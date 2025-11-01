@@ -1,6 +1,6 @@
 import { SidebarFooter } from "@/components/shadcn/sidebar";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/contexts/AccountContext";
@@ -9,8 +9,22 @@ import SidebarNavItems from "@/components/shared/SidebarNavItems";
 const SideBarNav: React.FC = () => {
   const navItems = useNavItems();
   const { isDelegated } = useAccount();
+  const navigate = useNavigate();
+  const location = useLocation();
   const accountItem = navItems.find(item => item.label === "Account");
   const selectedAccount = new RegExp(`^${accountItem.to}(\/|$)`).test(location.pathname);
+
+  const handleAccountClick = (e: React.MouseEvent) => {
+    if (isDelegated) {
+      e.preventDefault();
+      return;
+    }
+    // If already on account page, navigate with reset param to return to main page
+    if (location.pathname === '/account') {
+      e.preventDefault();
+      navigate('/account?reset=true', { replace: true });
+    }
+  };
   return (
     <aside
       data-layer="Property 1=sidebar-desktop"
@@ -44,7 +58,7 @@ const SideBarNav: React.FC = () => {
                   isDelegated && "opacity-50 cursor-not-allowed"
                 )}
                 aria-current={selectedAccount ? "page" : undefined}
-                onClick={e => { if (isDelegated) e.preventDefault(); }}
+                onClick={handleAccountClick}
               >
                 <div data-layer="icon-text-wrapper" className="flex-1 flex items-center gap-2 rounded-sm">
                   <div data-layer="lucide-icon" className="size-6 relative overflow-hidden">
