@@ -24,6 +24,7 @@ interface PageHeaderProps {
   sharingSection?: React.ReactNode;
   hasBannerAbove?: boolean;
   bannerContent?: React.ReactNode;
+  breadcrumbs?: Array<{ label: string; onClick?: () => void }>;
   onBack?: () => void;
   onSearch?: () => void;
   onSettings?: () => void;
@@ -58,6 +59,7 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
   sharingSection,
   hasBannerAbove = false,
   bannerContent,
+  breadcrumbs,
   onBack,
   onSearch,
   onSettings,
@@ -191,6 +193,31 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
                   placeholder="Search..."
                   className="w-full"
                 />
+              </div>
+            ) : breadcrumbs && breadcrumbs.length > 0 ? (
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {breadcrumbs.map((crumb, index) => (
+                  <React.Fragment key={index}>
+                    {index > 0 && (
+                      <span className="text-neutral-neutral-500 text-lg font-semibold">→</span>
+                    )}
+                    {crumb.onClick ? (
+                      <button
+                        onClick={crumb.onClick}
+                        className="text-neutral-neutral-700 hover:text-neutral-neutral-900 hover:underline text-lg font-semibold truncate transition-colors"
+                      >
+                        {crumb.label}
+                      </button>
+                    ) : (
+                      <span className="text-neutral-neutral-700 text-lg font-semibold truncate">
+                        {crumb.label}
+                      </span>
+                    )}
+                  </React.Fragment>
+                ))}
+                {titleRightText && (
+                  <span className="text-sm text-neutral-500 ml-2">{titleRightText}</span>
+                )}
               </div>
             ) : (
               <div className="flex-1 min-w-0">

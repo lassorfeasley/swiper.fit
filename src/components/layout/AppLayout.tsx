@@ -24,6 +24,7 @@ interface AppLayoutProps {
   hideHeader?: boolean;
   hideDelegateHeader?: boolean;
   title?: string;
+  breadcrumbs?: Array<{ label: string; onClick?: () => void }>;
   // Header props that can be passed through
   variant?: 'default' | 'dark-fixed' | 'programs';
   reserveSpace?: boolean;
@@ -116,7 +117,7 @@ export default function AppLayout({
   const allowedHeaderProps = [
     'variant', 'reserveSpace', 'showBackButton', 'showSearch', 'showSettings', 'showAdd', 'showPlusButton', 'showShare', 'showStartWorkout', 'showStartWorkoutIcon',
     'showUpload', 'showDelete', 'onBack', 'onSearch', 'onSettings', 'onAdd', 'onShare', 'onStartWorkout', 'onStartWorkoutIcon', 'onUpload', 'onDelete',
-    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'rightContent'
+    'searchValue', 'onSearchChange', 'className', 'titleRightText', 'startCtaText', 'sharingSection', 'rightContent', 'breadcrumbs'
   ];
 
   const filteredHeaderProps = Object.fromEntries(

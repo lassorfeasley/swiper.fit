@@ -42,7 +42,18 @@ const Account = () => {
   // Section navigation state
   const [activeSection, setActiveSection] = useState(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showDeclineConfirmDialog, setShowDeclineConfirmDialog] = useState(false);
+  const [requestToDeclineId, setRequestToDeclineId] = useState<string | null>(null);
   const hasSetSectionRef = useRef(false);
+
+  // Section name mapping for breadcrumbs
+  const sectionNames = {
+    'sharing-requests': 'Sharing requests',
+    'trainers': 'Trainers',
+    'clients': 'Clients',
+    'personal-info': 'Personal information',
+    'email-password': 'Login and password',
+  };
 
   // Handle query parameter for section navigation
   useEffect(() => {
@@ -971,8 +982,15 @@ const Account = () => {
   };
 
   const handleDeclineRequest = (requestId) => {
-    if (confirm("Are you sure you want to decline this request?")) {
-      declineRequestMutation.mutate(requestId);
+    setRequestToDeclineId(requestId);
+    setShowDeclineConfirmDialog(true);
+  };
+
+  const handleConfirmDecline = () => {
+    if (requestToDeclineId) {
+      declineRequestMutation.mutate(requestToDeclineId);
+      setShowDeclineConfirmDialog(false);
+      setRequestToDeclineId(null);
     }
   };
 
@@ -1074,16 +1092,24 @@ const Account = () => {
   }
 
   return (
-    <AppLayout title="Account">
+    <AppLayout 
+      title={activeSection ? undefined : "Account"}
+      breadcrumbs={activeSection ? [
+        { 
+          label: 'Account', 
+          onClick: () => setActiveSection(null) 
+        },
+        { 
+          label: sectionNames[activeSection as keyof typeof sectionNames] 
+        }
+      ] : undefined}
+    >
       <MainContentSection className="!p-0 flex-1 min-h-0">
-        <div className="w-full flex flex-col min-h-screen pt-20">
+        <div className="w-full flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height, 64px) + 20px)' }}>
           {/* Account Settings Header and Menu */}
           {!activeSection && (
             <div className="w-full flex justify-center px-5 pt-5">
               <div className="w-full max-w-[500px] flex flex-col justify-start items-start gap-5">
-                <div className="self-stretch h-4 justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-4">
-                  Account settings
-                </div>
                 <AccountSettingsMenu
                   activeSection={activeSection}
                   onSectionChange={setActiveSection}
@@ -1111,16 +1137,6 @@ const Account = () => {
               {activeSection === 'sharing-requests' && (
                 <div className="w-full flex justify-center pb-5">
                   <div className="w-full max-w-[500px] pt-5 pb-14 flex flex-col justify-start items-start gap-3">
-                    <div className="w-full h-4 flex items-center justify-start gap-0">
-                      <button
-                        onClick={() => setActiveSection(null)}
-                        className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
-                        aria-label="Go back"
-                      >
-                        <ArrowLeft className="w-5 h-5" />
-                      </button>
-                      <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Sharing requests</div>
-                    </div>
                     <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
 
                   {/* Incoming requests */}
@@ -1300,16 +1316,6 @@ const Account = () => {
               {activeSection === 'trainers' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
-              <div className="w-full h-4 flex items-center justify-start gap-0">
-                <button
-                  onClick={() => setActiveSection(null)}
-                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Trainers</div>
-              </div>
                 <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
                   {trainerSharesQuery.data?.map((share) => (
                     <ManagePermissionsCard
@@ -1348,16 +1354,6 @@ const Account = () => {
               {activeSection === 'clients' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
-              <div className="w-full h-4 flex items-center justify-start gap-0">
-                <button
-                  onClick={() => setActiveSection(null)}
-                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Clients</div>
-              </div>
                 <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
                   {clientSharesQuery.data?.map((share) => (
                     <ManagePermissionsCard
@@ -1401,16 +1397,6 @@ const Account = () => {
               {activeSection === 'personal-info' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="PersonalInformation w-full h-4 flex items-center justify-start gap-0">
-                <button
-                  onClick={() => setActiveSection(null)}
-                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Personal information</div>
-              </div>
               <div className="CardWrapper w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center gap-5">
               {/* First Name Field */}
               <EditableTextInput
@@ -1476,16 +1462,6 @@ const Account = () => {
               {activeSection === 'email-password' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="LoginAndPassword w-full h-4 flex items-center justify-start gap-0">
-                <button
-                  onClick={() => setActiveSection(null)}
-                  className="p-2 -ml-2 rounded-lg hover:bg-stone-100 transition-colors"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex items-center justify-start text-neutral-neutral-700 text-sm font-extrabold font-['Be_Vietnam_Pro'] leading-[1.14]">Login and password</div>
-              </div>
               <div className="Frame56 w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
               {/* Email Field */}
               <EditableTextInput
@@ -1823,6 +1799,23 @@ const Account = () => {
             confirmText="Log out"
             cancelText="Cancel"
             confirmVariant="default"
+            cancelVariant="outline"
+          />
+
+          {/* Decline request confirmation dialog */}
+          <SwiperDialog
+            open={showDeclineConfirmDialog}
+            onOpenChange={setShowDeclineConfirmDialog}
+            onConfirm={handleConfirmDecline}
+            onCancel={() => {
+              setShowDeclineConfirmDialog(false);
+              setRequestToDeclineId(null);
+            }}
+            title="Decline request?"
+            description="Are you sure you want to decline this request?"
+            confirmText="Decline"
+            cancelText="Cancel"
+            confirmVariant="destructive"
             cancelVariant="outline"
           />
       </MainContentSection>
