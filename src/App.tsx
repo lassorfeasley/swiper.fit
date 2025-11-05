@@ -12,7 +12,7 @@ import {
   useNavBarVisibility,
 } from "@/contexts/NavBarVisibilityContext";
 import React, { createContext, useState, useEffect } from "react";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Login, CreateAccount, PasswordReset, UpdatePassword, RequireAuth } from "@/features/auth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import OGImageAdmin from "./pages/OGImageAdmin";
@@ -37,6 +37,7 @@ export const PageNameContext = createContext<PageNameContextType>({
 
 function AppContent() {
   const location = useLocation();
+  const { session } = useAuth();
   const { isWorkoutActive, loading: workoutLoading, isStartingWorkout, isFinishing } = useActiveWorkout();
   const { isDelegated } = useAccount();
   const navigate = useNavigate();
@@ -196,7 +197,8 @@ function AppContent() {
   );
 
   // Show loading state while workout context is loading to prevent premature navigation
-  if (workoutLoading) {
+  // ONLY show for authenticated users
+  if (session && workoutLoading) {
     return checkingWorkoutOverlay;
   }
 
