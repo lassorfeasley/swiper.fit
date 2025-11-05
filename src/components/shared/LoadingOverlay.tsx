@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface LoadingOverlayProps {
   /** Whether the overlay should be visible */
@@ -177,11 +178,10 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     </svg>
   );
 
-  return (
+  const overlayContent = (
     <div 
       data-layer="loading-state-overlay"
-      className={`LoadingStateOverlay w-screen h-screen left-0 top-0 fixed bg-green-600 inline-flex flex-col justify-center items-center gap-10 ${className}`}
-      style={{ zIndex: 9999 }}
+      className={`LoadingStateOverlay w-screen h-screen left-0 top-0 fixed bg-green-600 inline-flex flex-col justify-center items-center gap-10 !z-[9999] ${className}`}
     >
       <div data-svg-wrapper data-layer="Vector 1 (Stroke)" className="Vector1Stroke flex items-center justify-center">
         {displayIcon}
@@ -198,6 +198,9 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       </div>
     </div>
   );
+
+  // Render via portal to ensure it's always on top
+  return createPortal(overlayContent, document.body);
 };
 
 export default LoadingOverlay;

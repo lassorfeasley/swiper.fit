@@ -175,9 +175,10 @@ function AppContent() {
   }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
 
   // Render loading overlays (manage their own visibility based on animation state)
+  // Only show workout checking overlay for authenticated users
   const checkingWorkoutOverlay = (
     <LoadingOverlay 
-      isLoading={workoutLoading} 
+      isLoading={session && workoutLoading} 
       message="Checking for active workouts..."
     />
   );
