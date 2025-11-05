@@ -30,6 +30,7 @@ import { generateWorkoutName } from "@/lib/utils";
 import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import RoutineCard from "@/features/routines/components/RoutineCard";
 import AccountSettingsMenu from "@/components/shared/AccountSettingsMenu";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 const Account = () => {
   const { isDelegated, switchToUser } = useAccount();
@@ -1091,8 +1092,42 @@ const Account = () => {
     return <Navigate to="/routines" replace />;
   }
 
+  // Render loading overlays for sharing operations
+  const inviteOverlay = (
+    <LoadingOverlay 
+      isLoading={createShareMutation.isPending} 
+      message="Sending invitation..."
+    />
+  );
+
+  const deleteShareOverlay = (
+    <LoadingOverlay 
+      isLoading={deleteShareMutation.isPending} 
+      message="Removing access..."
+    />
+  );
+
+  const acceptRequestOverlay = (
+    <LoadingOverlay 
+      isLoading={acceptRequestMutation.isPending} 
+      message="Accepting invitation..."
+    />
+  );
+
+  const declineRequestOverlay = (
+    <LoadingOverlay 
+      isLoading={declineRequestMutation.isPending} 
+      message="Declining invitation..."
+    />
+  );
+
   return (
-    <AppLayout 
+    <>
+      {inviteOverlay}
+      {deleteShareOverlay}
+      {acceptRequestOverlay}
+      {declineRequestOverlay}
+      <AppLayout 
       title={activeSection ? undefined : "Account"}
       breadcrumbs={activeSection ? [
         { 
@@ -1820,6 +1855,7 @@ const Account = () => {
           />
       </MainContentSection>
     </AppLayout>
+    </>
   );
 };
 

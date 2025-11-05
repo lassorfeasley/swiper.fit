@@ -71,6 +71,7 @@ interface ActiveWorkoutContextType {
   loading: boolean;
   isPaused: boolean;
   isFinishing: boolean;
+  isStartingWorkout: boolean;
   startWorkout: (program: Program) => Promise<void>;
   endWorkout: () => Promise<boolean>;
   pauseWorkout: () => Promise<void>;
@@ -101,6 +102,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   const [loading, setLoading] = useState<boolean>(true);
   const [lastExerciseIdChangeTrigger, setLastExerciseIdChangeTrigger] = useState<number>(0);
   const [isFinishing, setIsFinishing] = useState<boolean>(false);
+  const [isStartingWorkout, setIsStartingWorkout] = useState<boolean>(false);
   const isFinishingRef = useRef<boolean>(false);
   // Guard window to avoid transient pause right after start
   const startGuardUntilRef = useRef<number>(0);
@@ -552,6 +554,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     }
 
     console.log('[ActiveWorkout] Starting workout for program:', program.id);
+    setIsStartingWorkout(true);
     
     try {
       // First, check if there's already an active workout and clean it up
@@ -713,6 +716,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     } catch (error) {
       console.error('[ActiveWorkout] Error starting workout:', error);
       toast.error('Failed to start workout');
+    } finally {
+      setIsStartingWorkout(false);
     }
   }, [user, navigate, refreshActiveWorkout, postSlackEvent]);
 
@@ -1121,6 +1126,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           : !activeWorkout.is_active)
       : false,
     isFinishing,
+    isStartingWorkout,
     startWorkout,
     endWorkout,
     pauseWorkout,

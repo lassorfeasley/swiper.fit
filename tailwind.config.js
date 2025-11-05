@@ -101,10 +101,15 @@ export default {
             height: "0",
           },
         },
+        "blink": {
+          "0%, 50%": { opacity: "1" },
+          "51%, 100%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "blink": "blink 1s step-end infinite",
       },
       boxShadow: {
         'calendar-selected': '0px 0px 8.3px 0px rgba(2,6,24,0.40)',

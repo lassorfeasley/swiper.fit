@@ -17,6 +17,7 @@ import LoggedOutNav from "../components/LoggedOutNav";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -88,20 +89,23 @@ export default function Login() {
     loginMutation.mutate({ email, password });
   };
 
+  // Render loading overlay (manages its own visibility)
+  const loadingOverlay = (
+    <LoadingOverlay 
+      isLoading={loginMutation.isSuccess && workoutLoading} 
+      message="Checking for active workouts..."
+    />
+  );
+
   // Show loading state while workout context is loading after login
   if (loginMutation.isSuccess && workoutLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking for active workouts...</p>
-        </div>
-      </div>
-    );
+    return loadingOverlay;
   }
 
   return (
-    <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-stone-100 pt-20">
+    <>
+      {loadingOverlay}
+      <div className="w-full inline-flex flex-col justify-start items-start min-h-screen bg-stone-100 pt-20">
 
       {/* Main Content */}
       <div className="self-stretch flex flex-col justify-center items-center flex-1">
@@ -222,5 +226,6 @@ export default function Login() {
         </div>
       </div>
     </div>
+    </>
   );
 }

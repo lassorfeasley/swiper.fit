@@ -21,6 +21,7 @@ import SideBarNav from "./components/layout/SideBarNav";
 import { LoggedOutNav } from "@/features/auth";
 import Account from "./pages/Account/Account.tsx";
 import EmailTest from "./pages/EmailTest";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
@@ -36,7 +37,7 @@ export const PageNameContext = createContext<PageNameContextType>({
 
 function AppContent() {
   const location = useLocation();
-  const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
+  const { isWorkoutActive, loading: workoutLoading, isStartingWorkout, isFinishing } = useActiveWorkout();
   const { isDelegated } = useAccount();
   const navigate = useNavigate();
   const { navBarVisible } = useNavBarVisibility();
@@ -172,16 +173,31 @@ function AppContent() {
     }
   }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
 
+  // Render loading overlays (manage their own visibility based on animation state)
+  const checkingWorkoutOverlay = (
+    <LoadingOverlay 
+      isLoading={workoutLoading} 
+      message="Checking for active workouts..."
+    />
+  );
+
+  const startingWorkoutOverlay = (
+    <LoadingOverlay 
+      isLoading={isStartingWorkout} 
+      message="Starting workout..."
+    />
+  );
+
+  const endingWorkoutOverlay = (
+    <LoadingOverlay 
+      isLoading={isFinishing} 
+      message="Finishing workout..."
+    />
+  );
+
   // Show loading state while workout context is loading to prevent premature navigation
   if (workoutLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking for active workouts...</p>
-        </div>
-      </div>
-    );
+    return checkingWorkoutOverlay;
   }
 
   // Don't render any content if we should be redirecting - this prevents the page from showing briefly
@@ -193,7 +209,11 @@ function AppContent() {
 
   
   return (
-    <div className="min-h-screen relative overflow-auto">
+    <>
+      {checkingWorkoutOverlay}
+      {startingWorkoutOverlay}
+      {endingWorkoutOverlay}
+      <div className="min-h-screen relative overflow-auto">
       {/* Persistent LoggedOutNav for unauthenticated routes */}
       {!isAuthenticatedRoute && <LoggedOutNav showAuthButtons={true} />}
       
@@ -246,6 +266,7 @@ function AppContent() {
       {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
     </div>
+    </>
   );
 }
 

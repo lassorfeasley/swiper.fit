@@ -6,6 +6,7 @@ import { DemoWorkoutProvider } from "@/contexts/DemoWorkoutContext";
 import DemoWorkoutSection from "@/components/DemoWorkout/DemoWorkoutSection";
 import { MoveUpRight } from "lucide-react";
 import LoggedOutNav from "@/features/auth/components/LoggedOutNav";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -25,16 +26,17 @@ export default function Landing() {
     }
   }, [session, isWorkoutActive, workoutLoading, navigate]);
 
+  // Render loading overlay (manages its own visibility)
+  const loadingOverlay = (
+    <LoadingOverlay 
+      isLoading={session && workoutLoading} 
+      message="Checking for active workouts..."
+    />
+  );
+
   // Show loading state while workout context is loading
   if (session && workoutLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking for active workouts...</p>
-        </div>
-      </div>
-    );
+    return loadingOverlay;
   }
 
   // Don't render if we're redirecting
@@ -43,7 +45,9 @@ export default function Landing() {
   }
 
   return (
-    <DemoWorkoutProvider>
+    <>
+      {loadingOverlay}
+      <DemoWorkoutProvider>
       {/* Mobile Layout - Only visible on mobile breakpoints */}
       <div className="md:hidden w-full min-h-screen bg-stone-100 flex flex-col pt-20">
 
@@ -111,5 +115,6 @@ export default function Landing() {
         </div>
       </div>
     </DemoWorkoutProvider>
+    </>
   );
 }
