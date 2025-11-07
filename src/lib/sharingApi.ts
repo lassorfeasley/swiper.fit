@@ -138,7 +138,7 @@ export async function createTrainerInvite(
       throw new Error("A pending invitation already exists for this user");
     }
 
-    // Check for existing active relationship in either direction
+    // Check for existing active relationship in the same direction (prevent duplicates)
     const { count: activeInSameDirection } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
@@ -147,20 +147,8 @@ export async function createTrainerInvite(
       .eq("status", "active")
       .is("revoked_at", null);
 
-    const { count: activeInOppositeDirection } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", clientProfile.id)
-      .eq("delegate_user_id", trainerId)
-      .eq("status", "active")
-      .is("revoked_at", null);
-
     if ((activeInSameDirection || 0) > 0) {
       throw new Error("An active sharing relationship already exists with this user");
-    }
-
-    if ((activeInOppositeDirection || 0) > 0) {
-      throw new Error("This user is already managing your account. Remove that relationship first before inviting them as your client.");
     }
 
     const invitationData: Partial<AccountShare> = {
@@ -293,7 +281,7 @@ export async function createClientInvite(
       throw new Error("A pending invitation already exists for this trainer");
     }
 
-    // Check for existing active relationship in either direction
+    // Check for existing active relationship in the same direction (prevent duplicates)
     const { count: activeInSameDirection } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
@@ -302,20 +290,8 @@ export async function createClientInvite(
       .eq("status", "active")
       .is("revoked_at", null);
 
-    const { count: activeInOppositeDirection } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", trainerProfile.id)
-      .eq("delegate_user_id", clientId)
-      .eq("status", "active")
-      .is("revoked_at", null);
-
     if ((activeInSameDirection || 0) > 0) {
       throw new Error("An active sharing relationship already exists with this trainer");
-    }
-
-    if ((activeInOppositeDirection || 0) > 0) {
-      throw new Error("You are already managing this trainer's account. Remove that relationship first before inviting them to manage yours.");
     }
 
     const invitationData: Partial<AccountShare> = {
@@ -369,8 +345,7 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
       throw new Error("Invitation not found");
     }
 
-    // Check if there's already an active relationship between these users in EITHER direction
-    // This prevents bidirectional relationships (A managing B AND B managing A)
+    // Check if there's already an active relationship in the same direction (prevent duplicates)
     if (invitation.delegate_user_id) {
       // Check for existing relationship in the same direction
       const { count: sameDirectionCount } = await supabase
@@ -381,16 +356,7 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
         .eq("status", "active")
         .is("revoked_at", null);
 
-      // Check for existing relationship in the opposite direction
-      const { count: oppositeDirectionCount } = await supabase
-        .from("account_shares")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_user_id", invitation.delegate_user_id)
-        .eq("delegate_user_id", invitation.owner_user_id)
-        .eq("status", "active")
-        .is("revoked_at", null);
-
-      if ((sameDirectionCount || 0) > 0 || (oppositeDirectionCount || 0) > 0) {
+      if ((sameDirectionCount || 0) > 0) {
         // There's already an active relationship, just update the invitation to declined
         const { error: updateError } = await supabase
           .from("account_shares")
@@ -402,9 +368,7 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
           throw new Error("Failed to update invitation");
         }
         
-        // Provide a helpful error message
-        const direction = (sameDirectionCount || 0) > 0 ? "same" : "opposite";
-        throw new Error(`An active sharing relationship already exists between these users (${direction} direction). Please remove the existing relationship first.`);
+        throw new Error("An active sharing relationship already exists in this direction.");
       }
     }
 

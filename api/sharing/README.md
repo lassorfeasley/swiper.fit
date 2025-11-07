@@ -10,6 +10,14 @@ The sharing system now supports two types of invitations:
 
 All invitations require acceptance before access is granted.
 
+## Bidirectional Relationships
+
+The system supports bidirectional trainer-client relationships:
+- User A can be User B's trainer (A manages B's account)
+- User B can simultaneously be User A's trainer (B manages A's account)
+- Each direction is managed independently with its own permissions
+- Removing one direction does not affect the other direction
+
 ## Database Schema
 
 The `account_shares` table has been extended with new columns:
