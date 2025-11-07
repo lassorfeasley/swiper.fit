@@ -55,6 +55,7 @@ interface AppLayoutProps {
   onUpload?: () => void;
   titleRightText?: string;
   startCtaText?: string;
+  hideBanner?: boolean;
 }
 
 export default function AppLayout({
@@ -72,6 +73,7 @@ export default function AppLayout({
   hideHeader = false,
   hideDelegateHeader = false,
   title,
+  hideBanner = false,
   ...headerProps
 }: AppLayoutProps) {
   const headerRef = useRef<HTMLDivElement>(null);
@@ -138,7 +140,7 @@ export default function AppLayout({
   // Determine if banner should be shown
   const isActiveWorkout = location.pathname === '/workout/active';
   const isPublicRoute = /^\/(app\/)?(history|routines)\/public\//.test(location.pathname);
-  const shouldShowBanner = !isActiveWorkout && !isPublicRoute && !hideHeader;
+  const shouldShowBanner = !isActiveWorkout && !isPublicRoute && !hideHeader && !hideBanner;
 
   return (
     <div className="min-h-screen flex relative">

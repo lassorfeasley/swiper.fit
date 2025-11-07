@@ -121,6 +121,8 @@ const Account = () => {
     can_start_workouts: true,
     can_review_history: true
   });
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
+  const [inviteeEmail, setInviteeEmail] = useState("");
   const [showDeleteShareDialog, setShowDeleteShareDialog] = useState(false);
   const [shareToDeleteId, setShareToDeleteId] = useState(null);
   const [shareToDeleteName, setShareToDeleteName] = useState("");
@@ -130,7 +132,6 @@ const Account = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
   const [dialogMode, setDialogMode] = useState('workout');
-  const subscriptionRef = useRef(null);
   const retryTimeoutRef = useRef(null);
   const [showCreateRoutineSheet, setShowCreateRoutineSheet] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState("");
@@ -418,6 +419,48 @@ const Account = () => {
     },
     enabled: !!user?.id,
   });
+
+  // Real-time subscription for account_shares changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('[Account] Setting up real-time subscription for account_shares');
+
+    const channel = supabase
+      .channel(`account-shares-${user.id}`)
+      // Listen for changes where user is the owner (trainers/outgoing requests)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'account_shares',
+        filter: `owner_user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('[Account] Account share change (as owner):', payload.eventType, payload);
+        
+        // Invalidate queries for owned shares and outgoing requests
+        queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["outgoing_requests", user.id] });
+      })
+      // Listen for changes where user is the delegate (clients/incoming requests)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'account_shares',
+        filter: `delegate_user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('[Account] Account share change (as delegate):', payload.eventType, payload);
+        
+        // Invalidate queries for shared with me and pending requests
+        queryClient.invalidateQueries({ queryKey: ["shares_shared_with_me", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["pending_requests", user.id] });
+      })
+      .subscribe();
+
+    return () => {
+      console.log('[Account] Cleaning up real-time subscription');
+      channel.unsubscribe();
+    };
+  }, [user?.id, queryClient]);
 
   // Trainers functionality mutations
   const createShareMutation = useMutation({
@@ -1001,11 +1044,18 @@ const Account = () => {
     try {
       console.log("Dialog form submitted with email:", dialogEmail, "invite type:", dialogInviteType);
       
+      // Close dialog and show loading overlay
+      setShowAddPersonDialog(false);
+      setIsSendingInvitation(true);
+      setInviteeEmail(dialogEmail.trim());
+      
       if (dialogInviteType === 'trainer') {
-        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        // When inviting a trainer, YOU are the client inviting THEM as trainer
+        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
         toast.success("Trainer invitation sent successfully");
       } else {
-        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        // When inviting a client, YOU are the trainer inviting THEM as client
+        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
         toast.success("Client invitation sent successfully");
       }
 
@@ -1016,13 +1066,15 @@ const Account = () => {
         can_start_workouts: true,
         can_review_history: true
       });
-      setShowAddPersonDialog(false);
       
       queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
       queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
     } catch (error) {
       console.error("Error creating invitation:", error);
       toast.error(error.message || "Failed to send invitation. Please try again.");
+    } finally {
+      setIsSendingInvitation(false);
+      setInviteeEmail("");
     }
   };
 
@@ -1095,8 +1147,8 @@ const Account = () => {
   // Render loading overlays for sharing operations
   const inviteOverlay = (
     <LoadingOverlay 
-      isLoading={createShareMutation.isPending} 
-      message="Sending invitation..."
+      isLoading={isSendingInvitation} 
+      message={`Sending ${inviteeEmail} your request...`}
     />
   );
 
@@ -1138,6 +1190,7 @@ const Account = () => {
           label: sectionNames[activeSection as keyof typeof sectionNames] 
         }
       ] : undefined}
+      hideBanner={activeSection === 'sharing-requests'}
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">
         <div className="w-full flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height, 64px) + 20px)' }}>
@@ -1327,7 +1380,7 @@ const Account = () => {
                           </div>
                         )}
                       <ActionCard
-                        text="Invite A Trainer"
+                        text="Invite a trainer"
                         onClick={() => {
                           setDialogInviteType('trainer');
                           setShowAddPersonDialog(true);
@@ -1335,7 +1388,7 @@ const Account = () => {
                         className="w-full h-14 rounded-lg border border-neutral-300"
                       />
                       <ActionCard
-                        text="Invite A Client"
+                        text="Invite a client"
                         onClick={() => {
                           setDialogInviteType('client');
                           setShowAddPersonDialog(true);
@@ -1373,7 +1426,7 @@ const Account = () => {
                     />
                   ))}
                   <ActionCard
-                    text="Invite A Trainer"
+                    text="Invite a trainer"
                     onClick={() => {
                       setDialogInviteType('trainer');
                       setShowAddPersonDialog(true);
@@ -1416,7 +1469,7 @@ const Account = () => {
                     />
                   ))}
                   <ActionCard
-                    text="Invite A Client"
+                    text="Invite a client"
                     onClick={() => {
                       setDialogInviteType('client');
                       setShowAddPersonDialog(true);
