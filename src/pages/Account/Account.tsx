@@ -1051,11 +1051,11 @@ const Account = () => {
       
       if (dialogInviteType === 'trainer') {
         // When inviting a trainer, YOU are the client inviting THEM as trainer
-        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
         toast.success("Trainer invitation sent successfully");
       } else {
         // When inviting a client, YOU are the trainer inviting THEM as client
-        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
         toast.success("Client invitation sent successfully");
       }
 
