@@ -296,7 +296,6 @@ export default function DemoWorkoutSection() {
         onConfirm={handleSetMarkIncompleteConfirm}
         onCancel={() => setConfirmUndoSetOpen(false)}
         title="Mark set incomplete?"
-        description="This will undo the completion of the set"
         confirmText="Mark incomplete"
         cancelText="Cancel"
       />

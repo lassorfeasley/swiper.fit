@@ -17,7 +17,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onUndo, onClick, clas
   const THUMB_WIDTH = 80;
   const RAIL_HORIZONTAL_PADDING_PER_SIDE = 8;
   const RAIL_RADIUS = '5px';
-  const THUMB_RADIUS = '12px';
+  const THUMB_RADIUS = '8px';
   const DRAG_COMPLETE_THRESHOLD = 70;
 
   // Destructure set properties
@@ -88,9 +88,17 @@ export default function DemoSwipeSwitch({ set, onComplete, onUndo, onClick, clas
   }, []);
 
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
+    const total = Math.max(0, Math.floor(secs || 0));
+    const hNum = Math.floor(total / 3600);
+    const mNum = Math.floor((total % 3600) / 60);
+    const m = mNum.toString().padStart(2, "0");
+    const s = (total % 60).toString().padStart(2, "0");
+    if (hNum > 0) {
+      const h = String(hNum).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+    if (mNum === 0) return `:${s}`;
+    return `${mNum}:${s}`;
   };
 
   // Production-stable thumb travel calculation (pattern from working real component)
@@ -423,7 +431,7 @@ export default function DemoSwipeSwitch({ set, onComplete, onUndo, onClick, clas
                   {set_type === 'timed' ? (
                     <>
                       <Clock className="size-6 text-neutral-neutral-500" strokeWidth={1} />
-                      <span className="text-neutral-neutral-500 text-3xl font-light leading-9">{duration >= 60 ? formatTime(duration) : `${duration}`}</span>
+                      <span className="text-neutral-neutral-500 text-3xl font-light leading-9">{formatTime(duration)}</span>
                     </>
                   ) : (
                     <>
@@ -460,16 +468,16 @@ export default function DemoSwipeSwitch({ set, onComplete, onUndo, onClick, clas
           >
             <motion.div className="size-6 relative flex items-center justify-center"
               initial={{ opacity: 0, scaleX: 1, scaleY: 1 }}
-              animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: 1 / (finalScaleX || 1), scaleY: 1 / (finalScaleY || 1) }}
+              animate={{ opacity: isCheckVisible ? 1 : 0, scaleX: finalScaleX > 0 ? Math.min(1.2, 1 / finalScaleX) : 1, scaleY: finalScaleY > 0 ? Math.min(1.2, 1 / finalScaleY) : 1 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               style={{ transformOrigin: 'center', zIndex: 3 }}
             >
               {isVisuallyComplete && (
                 <div className="Check relative flex items-center justify-center">
                   {isOptimistic ? (
-                    <Loader2 className="w-10 h-10 text-white animate-spin" />
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
                   ) : (
-                    <Check className="w-10 h-10 text-white" />
+                    <Check className="w-8 h-8 text-white" />
                   )}
                 </div>
               )}
