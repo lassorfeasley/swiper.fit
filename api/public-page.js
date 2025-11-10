@@ -237,9 +237,21 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
 // WORKOUT PUBLIC PAGE HANDLER
 // ============================================================================
 async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase) {
+  if (!workoutId) {
+    return res.status(400).send('Missing required workoutId');
+  }
+
   if (!isBot) {
-    // Real user - redirect to the main app
-    return res.redirect(302, '/');
+    // Real user - serve the built SPA HTML so React Router can handle the route
+    try {
+      const distIndexPath = path.join(process.cwd(), 'dist', 'index.html');
+      const indexHtml = await fs.readFile(distIndexPath, 'utf8');
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(indexHtml);
+    } catch (err) {
+      console.error('Error reading built index.html:', err);
+      return res.redirect(302, '/');
+    }
   }
 
   // Bot/crawler - serve static HTML with OG tags
