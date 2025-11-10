@@ -270,6 +270,17 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
       `)
       .eq('id', workoutId)
       .single();
+    
+    // Log OG image status for debugging
+    if (workout) {
+      console.log('[public-page] Workout OG image status:', {
+        workoutId,
+        hasOgImageUrl: !!workout.og_image_url,
+        ogImageUrl: workout.og_image_url,
+        workoutName: workout.workout_name,
+        completedAt: workout.completed_at
+      });
+    }
 
     console.log('[public-page] Workout query result:', {
       workoutId,
@@ -328,12 +339,17 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     const description = `Swiper is the effortless way to log workouts`;
     
     // Use pre-generated OG image if available, otherwise use API endpoint
+    // Note: If og_image_url is missing, the workout needs OG image generation
+    // This can be done via the OG Image Admin page or will happen automatically
+    // when the workout is viewed in the app
     const ogImage = workout.og_image_url || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
     
     console.log('[public-page] Workout OG image:', {
       workoutId,
       hasCustomImage: !!workout.og_image_url,
-      ogImage
+      ogImageUrl: workout.og_image_url,
+      ogImage,
+      needsGeneration: !workout.og_image_url && workout.completed_at && workout.is_active === false
     });
 
     const html = `<!DOCTYPE html>
