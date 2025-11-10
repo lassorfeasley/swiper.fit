@@ -721,6 +721,83 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     }
   }, [user, navigate, refreshActiveWorkout, postSlackEvent]);
 
+  // Helper to format workout data for OG image generation
+  const formatWorkoutDataForOG = useCallback(async (workoutId: string, workout: any, completedSets: any[]) => {
+    try {
+      // Get completed sets with exercise info
+      const validSets = completedSets || [];
+      if (validSets.length === 0) {
+        return null;
+      }
+
+      const uniqueExercises = new Set(validSets.map(s => s.exercise_id).filter(Boolean));
+      const exerciseCount = uniqueExercises.size;
+      const setCount = validSets.length;
+      
+      // Format duration
+      const durationSeconds = workout.duration_seconds || workout.active_seconds_accumulated || 0;
+      const hours = Math.floor(durationSeconds / 3600);
+      const minutes = Math.floor((durationSeconds % 3600) / 60);
+      const duration = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m` : '';
+      
+      // Format date
+      const date = new Date(workout.completed_at || workout.created_at || Date.now())
+        .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      
+      // Get owner name for possessive
+      let ownerFullName = '';
+      if (workout.user_id) {
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', workout.user_id)
+            .maybeSingle();
+          if (prof) {
+            const first = prof.first_name || '';
+            const last = prof.last_name || '';
+            ownerFullName = `${first} ${last}`.trim();
+          }
+        } catch (err) {
+          console.warn('[ActiveWorkout] Error fetching profile for OG:', err);
+        }
+      }
+      
+      const ownerFirst = (ownerFullName.trim().split(' ')[0] || '').trim();
+      const possessive = ownerFirst ? ownerFirst + (ownerFirst.toLowerCase().endsWith('s') ? "'" : "'s") + ' ' : '';
+      const displayWorkoutName = `${possessive}${workout.workout_name || 'Completed Workout'}`;
+
+      // Get routine name
+      let routineName = 'Workout';
+      if (workout.routine_id) {
+        try {
+          const { data: routine } = await supabase
+            .from('routines')
+            .select('routine_name')
+            .eq('id', workout.routine_id)
+            .maybeSingle();
+          if (routine?.routine_name) {
+            routineName = routine.routine_name;
+          }
+        } catch (err) {
+          console.warn('[ActiveWorkout] Error fetching routine for OG:', err);
+        }
+      }
+
+      return {
+        routineName,
+        workoutName: displayWorkoutName,
+        date,
+        duration,
+        exerciseCount,
+        setCount
+      };
+    } catch (error) {
+      console.error('[ActiveWorkout] Error formatting workout data for OG:', error);
+      return null;
+    }
+  }, []);
+
   const gatherWorkoutDataForOG = useCallback(async (workoutId: string) => {
     try {
       const { data: workout, error } = await supabase
@@ -761,9 +838,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
     try {
       // First check if any sets were completed by querying the database
+      // Get full set data including exercise_id for OG image generation
       const { data: completedSets, error: setsError } = await supabase
         .from('sets')
-        .select('id')
+        .select('id, exercise_id')
         .eq('workout_id', activeWorkout.id)
         .eq('status', 'complete');
 
@@ -790,13 +868,14 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         
         const finalAccumulated = currentAccumulated + additionalTime;
         
-        // Update workout as ended
+        // Update workout as ended (set completed_at for OG image date)
         const { error: updateError } = await supabase
           .from('workouts')
           .update({
             is_active: false,
             running_since: null,
-            active_seconds_accumulated: finalAccumulated
+            active_seconds_accumulated: finalAccumulated,
+            completed_at: new Date().toISOString()
           })
           .eq('id', activeWorkout.id);
 
@@ -806,14 +885,37 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           return false;
         }
 
-        // Generate and upload OG image (fire-and-forget, don't block navigation)
-        gatherWorkoutDataForOG(activeWorkout.id)
-          .then(async (workoutData) => {
-            if (workoutData) {
-              try { await generateAndUploadOGImage(activeWorkout.id, workoutData); } catch (_) {}
-            }
-          })
-          .catch(() => {});
+        // Fetch updated workout data for OG generation
+        const { data: updatedWorkout, error: fetchError } = await supabase
+          .from('workouts')
+          .select('*')
+          .eq('id', activeWorkout.id)
+          .single();
+
+        if (!fetchError && updatedWorkout) {
+          // Generate and upload OG image (fire-and-forget, don't block navigation)
+          // But with proper error handling and logging
+          formatWorkoutDataForOG(activeWorkout.id, updatedWorkout, completedSets)
+            .then(async (formattedData) => {
+              if (formattedData) {
+                try {
+                  console.log('[ActiveWorkout] Generating OG image for workout:', activeWorkout.id);
+                  await generateAndUploadOGImage(activeWorkout.id, formattedData);
+                  console.log('[ActiveWorkout] Successfully generated OG image for workout:', activeWorkout.id);
+                } catch (error) {
+                  console.error('[ActiveWorkout] Failed to generate OG image:', error);
+                  // Don't show error to user - this is background work
+                }
+              } else {
+                console.warn('[ActiveWorkout] Could not format workout data for OG image');
+              }
+            })
+            .catch((error) => {
+              console.error('[ActiveWorkout] Error in OG image generation flow:', error);
+            });
+        } else {
+          console.warn('[ActiveWorkout] Could not fetch updated workout for OG generation:', fetchError);
+        }
 
         // Post Slack event
         postSlackEvent('workout.ended', {
