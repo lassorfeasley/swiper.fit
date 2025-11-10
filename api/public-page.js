@@ -274,7 +274,6 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
         sets!sets_workout_id_fkey(id)
       `)
       .eq('id', workoutId)
-      .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {
@@ -283,11 +282,11 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
         <html>
           <head>
             <title>Workout Not Found - SwiperFit</title>
-            <meta name="description" content="Workout not found or not public." />
+            <meta name="description" content="Workout not found." />
           </head>
           <body>
             <h1>Workout Not Found</h1>
-            <p>The requested workout could not be found or is not public.</p>
+            <p>The requested workout could not be found.</p>
           </body>
         </html>
       `);

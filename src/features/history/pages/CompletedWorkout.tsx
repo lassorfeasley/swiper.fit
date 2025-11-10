@@ -26,46 +26,6 @@ import ActionPill from "@/components/shared/ActionPill";
 
 import { useAccount } from "@/contexts/AccountContext";
 
-// Share dialog extracted outside of the component scope so it preserves identity between renders
-const ShareWorkoutDialog = ({ open, onOpenChange, isPublic, onTogglePublic, shareUrl, onCopy }) => (
-  <SwiperForm
-    open={open}
-    onOpenChange={onOpenChange}
-    title="Share"
-    leftAction={() => onOpenChange(false)}
-    leftText="Close"
-  >
-    {/* Description section */}
-    <FormSectionWrapper bordered={true} className="flex flex-col gap-5">
-      <p className="text-base font-medium leading-tight font-vietnam text-slate-600">
-        Publish your workout <span className="text-slate-300">to a public website that anyone you share the link with can view.</span>
-      </p>
-            </FormSectionWrapper>
-
-    {/* Controls section */}
-    <FormSectionWrapper bordered={false} className="flex flex-col gap-5">
-      <SwiperFormSwitch
-        label="Public link"
-        checked={isPublic}
-        onCheckedChange={onTogglePublic}
-      />
-
-      {isPublic && (
-        <TextInput
-          label="Click to copy"
-          value={shareUrl}
-          readOnly
-          onFocus={(e) => e.target.select()}
-          onClick={onCopy}
-          icon={<Copy />}
-        />
-      )}
-            </FormSectionWrapper>
-  </SwiperForm>
-);
-
-ShareWorkoutDialog.displayName = "ShareWorkoutDialog";
-
 // Individual Exercise Card Component
 const ExerciseCompletedCard = ({ exercise, setLog }) => {
 
@@ -161,10 +121,8 @@ const CompletedWorkout = () => {
   // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
   const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
 
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
-  const [publicLink, setPublicLink] = useState(false);
   const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   const ogAttemptedRef = useRef(false);
 
@@ -396,7 +354,6 @@ const CompletedWorkout = () => {
   useEffect(() => {
     if (workout) {
       setWorkoutName(workout.workout_name);
-      setPublicLink(Boolean(workout.is_public));
     }
   }, [workout]);
 
@@ -633,59 +590,12 @@ const CompletedWorkout = () => {
 
 
 
-  const ensurePublic = async () => {
-    if (!workout.is_public) {
-      const { error } = await supabase
-        .from('workouts')
-        .update({ is_public: true })
-        .eq('id', workoutId)
-        .eq('user_id', currentUser.id);
-      if (error) throw error;
-      setWorkout((prev) => ({ ...prev, is_public: true }));
-    }
-  };
-
   const handleShare = () => {
     shareWorkout();
   };
 
-  const handleTogglePublic = async (val) => {
-    // Optimistic update: update local state immediately
-    setPublicLink(val);
-    try {
-      await supabase
-        .from('workouts')
-        .update({ is_public: val })
-        .eq('id', workoutId)
-        .eq('user_id', currentUser.id);
-      setWorkout((prev) => ({ ...prev, is_public: val }));
-      
-      // Trigger static generation for crawler support
-      try {
-        await fetch('/api/trigger-static-generation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            workoutId,
-            isPublic: val
-          })
-        });
-      } catch (triggerError) {
-        console.warn('Failed to trigger static generation:', triggerError);
-        // Don't show user error for this since it's not critical to core functionality
-      }
-    } catch (e) {
-      // Revert on failure
-      setPublicLink(!val);
-      toast.error('Failed: ' + e.message);
-    }
-  };
-
   const handleCopyLink = async () => {
     try {
-      await ensurePublic();
       await navigator.clipboard.writeText(`${window.location.origin}/history/public/workout/${workoutId}`);
       toast.success('Link copied');
     } catch (e) {
@@ -762,11 +672,6 @@ const CompletedWorkout = () => {
   const shareWorkout = async () => {
     setSharing(true);
     try {
-      // Only ensure public if user is logged in and owns the workout
-      if (!isPublicWorkoutView && isOwner) {
-        await ensurePublic();
-      }
-
       const url = `${window.location.origin}/history/public/workout/${workoutId}`;
       const title = workout?.workout_name || 'Completed Workout';
       const text = title;
@@ -909,14 +814,6 @@ const CompletedWorkout = () => {
             <p>Workout not found.</p>
           </div>
         )}
-        <ShareWorkoutDialog
-          open={shareDialogOpen}
-          onOpenChange={setShareDialogOpen}
-          isPublic={publicLink}
-          shareUrl={`${window.location.origin}/history/public/workout/${workoutId}`}
-          onCopy={handleCopyLink}
-          onTogglePublic={handleTogglePublic}
-        />
         <SwiperDialog
           open={isDeleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}

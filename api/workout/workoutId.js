@@ -30,14 +30,13 @@ export default async function handler(req, res) {
   try {
     const supabase = getSupabaseServerClient();
     // Fetch workout data (same as generate-static-workout.js)
-    const { data: workout, error: workoutError } = await supabase
+    const { data: workout, error: workoutError} = await supabase
       .from('workouts')
       .select(`
         *,
         routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
-      .eq('is_public', true)
       .single();
 
     if (workoutError || !workout) {
@@ -46,11 +45,11 @@ export default async function handler(req, res) {
         <html>
           <head>
             <title>Workout Not Found - SwiperFit</title>
-            <meta name="description" content="This workout was not found or is not public." />
+            <meta name="description" content="This workout was not found." />
           </head>
           <body>
             <h1>Workout Not Found</h1>
-            <p>This workout was not found or is not public.</p>
+            <p>This workout was not found.</p>
           </body>
         </html>
       `);

@@ -13,11 +13,7 @@ This application generates custom Open Graph (OG) images for workout summaries a
 
 ## Privacy Settings
 
-### Routines
-**All routines are public by design.** There is no privacy toggle for routines - any routine can be shared and viewed by anyone with the link. This simplifies sharing and collaboration.
-
-### Workouts
-**Workouts have privacy controls.** Users can toggle workout visibility on/off through the share dialog. Only public workouts can be viewed via share links.
+**All shared content is public by design.** Both routines and workouts can be shared and viewed by anyone with the link. There are no privacy toggles - this simplifies sharing and ensures OG images work consistently.
 
 ## Supabase Storage Configuration
 
