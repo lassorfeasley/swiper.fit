@@ -263,6 +263,7 @@ function AppContent() {
           {/* App-prefixed alias used by OG pages */}
           <Route path="/app/history/public/workout/:workoutId" element={<CompletedWorkout />} />
           {/* Public shared routine view (unauthenticated) */}
+          <Route path="/routines/:routineId" element={<PublicRoutine />} />
           <Route path="/routines/public/:routineId" element={<PublicRoutine />} />
           {/* App-prefixed alias used by OG pages */}
           <Route path="/app/routines/public/:routineId" element={<PublicRoutine />} />

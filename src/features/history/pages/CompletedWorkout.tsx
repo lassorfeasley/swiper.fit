@@ -671,7 +671,7 @@ const CompletedWorkout = () => {
   const shareWorkout = async () => {
     setSharing(true);
     try {
-      const url = `${window.location.origin}/history/public/workout/${workoutId}`;
+      const url = `${window.location.origin}/history/${workoutId}`;
       const title = workout?.workout_name || 'Completed Workout';
       const text = title;
 

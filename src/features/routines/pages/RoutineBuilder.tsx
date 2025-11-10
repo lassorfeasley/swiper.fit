@@ -427,7 +427,7 @@ const RoutineBuilder = () => {
 
   const handleCopyLink = async () => {
     try {
-      const shareUrl = `${window.location.origin}/routines/public/${programId}`;
+      const shareUrl = `${window.location.origin}/routines/${programId}`;
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied");
     } catch (e) {
@@ -440,7 +440,7 @@ const RoutineBuilder = () => {
   const shareRoutine = async () => {
     setSharing(true);
     try {
-      const url = `${window.location.origin}/routines/public/${programId}`;
+      const url = `${window.location.origin}/routines/${programId}`;
       const title = programName || 'Routine';
       const text = title;
 
