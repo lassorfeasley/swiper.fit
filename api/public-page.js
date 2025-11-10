@@ -261,11 +261,18 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     }
 
     // Fetch workout data including OG image URL
-    // First, get the workout without foreign key relationships that might fail
+    // Explicitly select fields to match routine query pattern (routines work, so match that style)
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
-        *,
+        id,
+        workout_name,
+        user_id,
+        completed_at,
+        is_active,
+        og_image_url,
+        duration_seconds,
+        created_at,
         routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
