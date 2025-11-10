@@ -261,22 +261,30 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     }
 
     // Fetch workout data including OG image URL
+    // First, get the workout without foreign key relationships that might fail
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .select(`
         *,
-        routines!workouts_routine_id_fkey(routine_name),
-        accounts!workouts_user_id_fkey(full_name),
-        workout_exercises(
-          id,
-          exercises(name)
-        ),
-        sets!sets_workout_id_fkey(id)
+        routines!workouts_routine_id_fkey(routine_name)
       `)
       .eq('id', workoutId)
       .single();
 
+    console.log('[public-page] Workout query result:', {
+      workoutId,
+      hasWorkout: !!workout,
+      error: workoutError?.message,
+      errorCode: workoutError?.code,
+      errorDetails: workoutError?.details,
+      errorHint: workoutError?.hint
+    });
+
     if (workoutError || !workout) {
+      console.error('[public-page] Workout not found:', {
+        workoutId,
+        error: workoutError
+      });
       return res.status(404).send(`
         <!DOCTYPE html>
         <html>
@@ -295,10 +303,26 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/history/public/workout/${workoutId}`;
     
-    const ownerName = workout.accounts?.full_name || 'A user';
+    // Fetch owner name from profiles
+    let ownerName = 'A user';
+    if (workout.user_id) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', workout.user_id)
+          .maybeSingle();
+        if (profile) {
+          const first = profile.first_name || '';
+          const last = profile.last_name || '';
+          ownerName = `${first} ${last}`.trim() || 'A user';
+        }
+      } catch (err) {
+        console.warn('[public-page] Error fetching profile:', err);
+      }
+    }
+    
     const routineName = workout.routines?.routine_name || 'Workout';
-    const exerciseCount = workout.workout_exercises?.length || 0;
-    const setCount = workout.sets?.length || 0;
 
     const title = `${ownerName} completed a ${workout.workout_name || routineName} on Swiper`;
     const description = `Swiper is the effortless way to log workouts`;
