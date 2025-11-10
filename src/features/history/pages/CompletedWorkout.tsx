@@ -163,7 +163,6 @@ const CompletedWorkout = () => {
     </>
   ) : undefined;
 
-  const openShareSettings = () => setShareDialogOpen(true);
   console.log('[CompletedWorkout] isDelegated:', isDelegated, 'showSidebar:', showSidebar);
 
   // Sharing busy state
