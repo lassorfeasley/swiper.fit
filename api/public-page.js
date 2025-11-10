@@ -12,6 +12,14 @@ export default async function handler(req, res) {
     // Check if this is a crawler/bot
     const isBot = /bot|crawl|slurp|spider|facebook|whatsapp|twitter|telegram|skype|slack|discord|imessage|linkedin|postinspector|linkedinbot|orcascan|opengraph|og|meta|validator/i.test(userAgent);
 
+    // Log for debugging
+    console.log('[public-page]', {
+      type,
+      id,
+      isBot,
+      userAgent: userAgent.substring(0, 100) // Truncate for readability
+    });
+
     // Route to appropriate handler
     if (type === 'routine') {
       return await handleRoutinePage(req, res, id, isBot, userAgent, supabase);
@@ -122,6 +130,12 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
     
     // Use pre-generated OG image if available, otherwise use API endpoint
     const ogImageUrl = routine.og_image_url || `${baseUrl}/api/og-images?type=routine&routineId=${routineId}`;
+    
+    console.log('[public-page] Routine OG image:', {
+      routineId,
+      hasCustomImage: !!routine.og_image_url,
+      ogImageUrl
+    });
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -137,6 +151,8 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${ogImageUrl}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -290,6 +306,12 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     
     // Use pre-generated OG image if available, otherwise use API endpoint
     const ogImage = workout.og_image_url || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
+    
+    console.log('[public-page] Workout OG image:', {
+      workoutId,
+      hasCustomImage: !!workout.og_image_url,
+      ogImage
+    });
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -305,6 +327,8 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${ogImage}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">

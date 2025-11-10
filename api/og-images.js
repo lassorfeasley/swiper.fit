@@ -1,3 +1,5 @@
+import { getSupabaseServerClient } from '../server/supabase.js';
+
 export default async function handler(req, res) {
   const { type, workoutId, routineId, userId } = req.query;
   const userAgent = req.headers['user-agent'] || '';
@@ -47,8 +49,36 @@ export default async function handler(req, res) {
 // WORKOUT OG IMAGE HANDLER
 // ============================================================================
 async function handleWorkoutOG(req, res, workoutId) {
-  // For now, redirect to default OG image
-      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+  if (!workoutId) {
+    console.log('[OG] No workoutId provided, using default image');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+    res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
+    return res.status(302).end();
+  }
+
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data: workout, error } = await supabase
+      .from('workouts')
+      .select('og_image_url')
+      .eq('id', workoutId)
+      .single();
+
+    if (!error && workout?.og_image_url) {
+      console.log('[OG] Found custom image for workout:', workoutId, workout.og_image_url);
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+      res.setHeader('Location', workout.og_image_url);
+      return res.status(302).end();
+    } else {
+      console.log('[OG] No custom image for workout:', workoutId, 'error:', error?.message);
+    }
+  } catch (error) {
+    console.error('[OG] Error fetching workout OG image:', error);
+  }
+
+  // Fallback to default
+  console.log('[OG] Using default image for workout:', workoutId);
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
   res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
   return res.status(302).end();
 }
@@ -58,10 +88,34 @@ async function handleWorkoutOG(req, res, workoutId) {
 // ============================================================================
 async function handleRoutineOG(req, res, routineId, userAgent) {
   if (!routineId) {
-    return res.status(400).send('Missing required routineId');
+    console.log('[OG] No routineId provided, using default image');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+    res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
+    return res.status(302).end();
   }
 
-  // For now, redirect to default OG image
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data: routine, error } = await supabase
+      .from('routines')
+      .select('og_image_url')
+      .eq('id', routineId)
+      .single();
+
+    if (!error && routine?.og_image_url) {
+      console.log('[OG] Found custom image for routine:', routineId, routine.og_image_url);
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+      res.setHeader('Location', routine.og_image_url);
+      return res.status(302).end();
+    } else {
+      console.log('[OG] No custom image for routine:', routineId, 'error:', error?.message);
+    }
+  } catch (error) {
+    console.error('[OG] Error fetching routine OG image:', error);
+  }
+
+  // Fallback to default
+  console.log('[OG] Using default image for routine:', routineId);
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
   res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
   return res.status(302).end();
