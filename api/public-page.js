@@ -313,7 +313,9 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     if (workoutError || !workout) {
       console.error('[public-page] Workout not found:', {
         workoutId,
-        error: workoutError
+        error: workoutError?.message,
+        errorCode: workoutError?.code,
+        errorDetails: workoutError?.details
       });
       return res.status(404).send(`
         <!DOCTYPE html>
@@ -328,6 +330,12 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
           </body>
         </html>
       `);
+    }
+
+    // Safety check - ensure workout has required fields
+    if (!workout.id) {
+      console.error('[public-page] Workout missing required fields:', workoutId);
+      return res.status(500).send('Internal server error');
     }
 
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
@@ -360,9 +368,10 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     // Use pre-generated OG image if available, otherwise use API endpoint
     // IMPORTANT: Always use the direct image URL when available (not the API endpoint)
     // This ensures better caching and avoids redirect chains
-    const ogImage = workout.og_image_url 
-      ? workout.og_image_url  // Direct URL to the image
-      : `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;  // API endpoint that will redirect
+    const ogImageUrl = workout.og_image_url && typeof workout.og_image_url === 'string' 
+      ? workout.og_image_url.trim() 
+      : null;
+    const ogImage = ogImageUrl || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
     
     console.log('[public-page] Workout OG image:', {
       workoutId,
@@ -465,7 +474,23 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
   } catch (error) {
-    console.error('Error generating workout page:', error);
-    return res.status(500).send('Internal server error');
+    console.error('[public-page] Error generating workout page:', {
+      workoutId,
+      error: error?.message,
+      stack: error?.stack,
+      name: error?.name
+    });
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Error - SwiperFit</title>
+        </head>
+        <body>
+          <h1>Internal Server Error</h1>
+          <p>An error occurred while generating this page.</p>
+        </body>
+      </html>
+    `);
   }
 }
