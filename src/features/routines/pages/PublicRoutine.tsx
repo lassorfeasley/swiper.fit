@@ -32,7 +32,6 @@ export default function PublicRoutine() {
           .select(`
             id,
             routine_name,
-            is_public,
             user_id,
             og_image_url,
             created_by,
@@ -54,7 +53,6 @@ export default function PublicRoutine() {
             )
           `)
           .eq("id", routineId)
-          .eq("is_public", true)
           .single();
         if (error || !data) {
           setRoutine(null);
@@ -121,7 +119,6 @@ export default function PublicRoutine() {
         routine_name: routine.routine_name,
         user_id: user.id,
         is_archived: false,
-        is_public: false,
         created_by: routine.created_by || routine.user_id,
         shared_by: routine.user_id,
       })

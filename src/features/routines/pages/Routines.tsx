@@ -150,7 +150,6 @@ const RoutinesIndex = () => {
         .insert({ 
           routine_name: programName.slice(0, MAX_ROUTINE_NAME_LEN), 
           user_id: user.id, 
-          is_public: true,
           created_by: user.id,
           shared_by: user.id
         })

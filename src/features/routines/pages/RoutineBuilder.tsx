@@ -46,7 +46,6 @@ const RoutineBuilder = () => {
   const [isDeleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] =
     useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [isPublic, setIsPublic] = useState(true); // All routines are now public
   const [sharing, setSharing] = useState(false);
   const [program, setProgram] = useState(null);
 
@@ -123,11 +122,10 @@ const RoutineBuilder = () => {
       setLoading(true);
       const { data: programData } = await supabase
         .from("routines")
-        .select("routine_name, is_public, og_image_url")
+        .select("routine_name, og_image_url")
         .eq("id", programId)
         .single();
       setProgramName(programData?.routine_name || "");
-      setIsPublic(true); // All routines are now public
       setProgram(programData);
       console.log('Program data:', programData);
       console.log('OG Image URL:', programData?.og_image_url);
@@ -442,15 +440,6 @@ const RoutineBuilder = () => {
   const shareRoutine = async () => {
     setSharing(true);
     try {
-      // Ensure routine is public
-      if (!isPublic) {
-        await supabase
-          .from("routines")
-          .update({ is_public: true })
-          .eq("id", programId);
-        setIsPublic(true);
-      }
-
       const url = `${window.location.origin}/routines/public/${programId}`;
       const title = programName || 'Routine';
       const text = title;

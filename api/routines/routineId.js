@@ -28,24 +28,24 @@ export default async function handler(req, res) {
 
   try {
     const supabase = getSupabaseServerClient();
-    // Fetch routine and visibility
+    // Fetch routine
     const { data: routine, error: routineError } = await supabase
       .from('routines')
-      .select(`id, routine_name, is_public, user_id, created_by, shared_by`)
+      .select(`id, routine_name, user_id, created_by, shared_by`)
       .eq('id', routineId)
       .single();
 
-    if (routineError || !routine || !routine.is_public) {
+    if (routineError || !routine) {
       return res.status(404).send(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Routine Not Public - SwiperFit</title>
-            <meta name="description" content="This routine is not public or was not found." />
+            <title>Routine Not Found - SwiperFit</title>
+            <meta name="description" content="This routine was not found." />
           </head>
           <body>
-            <h1>Routine Not Public</h1>
-            <p>This routine is not public or was not found.</p>
+            <h1>Routine Not Found</h1>
+            <p>This routine was not found.</p>
           </body>
         </html>
       `);

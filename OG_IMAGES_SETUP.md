@@ -11,6 +11,14 @@ This application generates custom Open Graph (OG) images for workout summaries a
 3. **Database**: The public URL is saved to `workouts.og_image_url` or `routines.og_image_url`
 4. **Serving**: When social media crawlers request the link, the server returns HTML with meta tags pointing to the stored image
 
+## Privacy Settings
+
+### Routines
+**All routines are public by design.** There is no privacy toggle for routines - any routine can be shared and viewed by anyone with the link. This simplifies sharing and collaboration.
+
+### Workouts
+**Workouts have privacy controls.** Users can toggle workout visibility on/off through the share dialog. Only public workouts can be viewed via share links.
+
 ## Supabase Storage Configuration
 
 For OG images to work properly, the `og-images` bucket must be configured to allow public access.
@@ -123,6 +131,7 @@ https://www.swiper.fit/routines/public/[routine-id]
 - **No image at all**: Bucket not public or bot detection failing
 - **Old image shows**: Social media platform cache (clear with debugging tools)
 - **Blank/broken image**: CORS issue or invalid URL
+- **"Routine Not Found" error**: Routine doesn't exist (all routines are viewable by default)
 
 ## Image Specifications
 
