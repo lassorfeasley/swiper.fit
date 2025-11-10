@@ -96,7 +96,6 @@ export default function OGImageAdmin() {
           workout_name,
           duration_seconds,
           completed_at,
-          is_public,
           og_image_url,
           created_at,
           routines!workouts_routine_id_fkey(routine_name)
@@ -125,7 +124,7 @@ export default function OGImageAdmin() {
 
       const { data, error } = await supabase
         .from('routines')
-        .select('id, routine_name, created_at, is_public, og_image_url, user_id')
+        .select('id, routine_name, created_at, og_image_url, user_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -145,8 +144,6 @@ export default function OGImageAdmin() {
     switch (filter) {
       case 'missing':
         return !workout.og_image_url;
-      case 'public':
-        return workout.is_public;
       case 'all':
         return true;
       default:
@@ -159,8 +156,6 @@ export default function OGImageAdmin() {
     switch (filter) {
       case 'missing':
         return !routine.og_image_url;
-      case 'public':
-        return routine.is_public;
       case 'all':
         return true;
       default:
@@ -692,11 +687,10 @@ export default function OGImageAdmin() {
           borderBottom: '1px solid #ccc',
           fontWeight: 'bold'
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 120px 120px 120px', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 120px 120px', gap: '10px' }}>
             <div>Select</div>
             <div>Workout</div>
             <div>Status</div>
-            <div>Public</div>
             <div>OG Image</div>
           </div>
         </div>
@@ -715,7 +709,7 @@ export default function OGImageAdmin() {
               key={workout.id} 
               style={{ 
                 display: 'grid', 
-                gridTemplateColumns: '40px 1fr 120px 120px 120px', 
+                gridTemplateColumns: '40px 1fr 120px 120px', 
                 gap: '10px',
                 padding: '10px',
                 borderBottom: '1px solid #eee',
@@ -751,18 +745,6 @@ export default function OGImageAdmin() {
                   color: workout.completed_at ? '#155724' : '#721c24'
                 }}>
                   {workout.completed_at ? 'Completed' : 'Active'}
-                </span>
-              </div>
-              
-              <div>
-                <span style={{
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  backgroundColor: workout.is_public ? '#d4edda' : '#f8d7da',
-                  color: workout.is_public ? '#155724' : '#721c24'
-                }}>
-                  {workout.is_public ? 'Public' : 'Private'}
                 </span>
               </div>
               
@@ -851,10 +833,9 @@ export default function OGImageAdmin() {
           borderBottom: '1px solid #ccc',
           fontWeight: 'bold'
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 120px 120px', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 120px', gap: '10px' }}>
             <div>Select</div>
             <div>Routine</div>
-            <div>Public</div>
             <div>OG Image</div>
           </div>
         </div>
@@ -873,7 +854,7 @@ export default function OGImageAdmin() {
               key={routine.id} 
               style={{ 
                 display: 'grid', 
-                gridTemplateColumns: '40px 1fr 120px 120px', 
+                gridTemplateColumns: '40px 1fr 120px', 
                 gap: '10px',
                 padding: '10px',
                 borderBottom: '1px solid #eee',
@@ -892,17 +873,6 @@ export default function OGImageAdmin() {
                 <div style={{ fontSize: '12px', color: '#666' }}>
                   {new Date(routine.created_at).toLocaleDateString()}
                 </div>
-              </div>
-              <div>
-                <span style={{
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  backgroundColor: routine.is_public ? '#d4edda' : '#f8d7da',
-                  color: routine.is_public ? '#155724' : '#721c24'
-                }}>
-                  {routine.is_public ? 'Public' : 'Private'}
-                </span>
               </div>
               <div>
                 {routine.og_image_url ? (
