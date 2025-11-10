@@ -56,28 +56,47 @@ async function handleWorkoutOG(req, res, workoutId) {
     return res.status(302).end();
   }
 
+  console.log('[OG] Handling workout OG image request:', workoutId);
+
   try {
     const supabase = getSupabaseServerClient();
     const { data: workout, error } = await supabase
       .from('workouts')
-      .select('og_image_url')
+      .select('og_image_url, workout_name, completed_at, is_active')
       .eq('id', workoutId)
       .single();
 
+    console.log('[OG] Workout query result:', {
+      workoutId,
+      hasWorkout: !!workout,
+      hasOgImageUrl: !!workout?.og_image_url,
+      ogImageUrl: workout?.og_image_url,
+      workoutName: workout?.workout_name,
+      completedAt: workout?.completed_at,
+      isActive: workout?.is_active,
+      error: error?.message,
+      errorCode: error?.code
+    });
+
     if (!error && workout?.og_image_url) {
-      console.log('[OG] Found custom image for workout:', workoutId, workout.og_image_url);
+      console.log('[OG] ✅ Found custom image for workout:', workoutId, workout.og_image_url);
       res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
       res.setHeader('Location', workout.og_image_url);
       return res.status(302).end();
     } else {
-      console.log('[OG] No custom image for workout:', workoutId, 'error:', error?.message);
+      console.log('[OG] ❌ No custom image for workout:', workoutId, {
+        error: error?.message,
+        errorCode: error?.code,
+        workoutExists: !!workout,
+        hasOgImageUrl: !!workout?.og_image_url
+      });
     }
   } catch (error) {
     console.error('[OG] Error fetching workout OG image:', error);
   }
 
   // Fallback to default
-  console.log('[OG] Using default image for workout:', workoutId);
+  console.log('[OG] ⚠️ Using default image for workout:', workoutId);
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
   res.setHeader('Location', `https://${req.headers.host}/images/default-open-graph.png`);
   return res.status(302).end();
