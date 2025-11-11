@@ -55,16 +55,12 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }) => {
                     role="button"
                     tabIndex={0}
                     onClick={() =>
-                      navigate(
-                        viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
-                      )
+                      navigate(`/history/workout/${w.id}`)
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        navigate(
-                          viewingOwn ? `/history/${w.id}` : `/history/public/workout/${w.id}`
-                        );
+                        navigate(`/history/workout/${w.id}`);
                       }
                     }}
                     className="cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-ring w-full"

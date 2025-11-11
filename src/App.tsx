@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Train } from "@/features/workout";
 import Home from "./pages/Home/Home.tsx";
 import Landing from "./pages/Landing/Landing.tsx";
-import { Routines, PublicRoutine, RoutineBuilder } from "@/features/routines";
+import { Routines, RoutineBuilder } from "@/features/routines";
 import { History, CompletedWorkout } from "@/features/history";
 import { ActiveWorkout } from "@/features/workout";
 import "./App.css";
@@ -53,7 +53,7 @@ function AppContent() {
   }, [location.pathname])
 
   const isProgramDetailOrEditOrCreateOrLoginPage =
-    /^\/routines\/[^/]+(\/edit|\/configure)?$/.test(location.pathname) ||
+    /^\/routines\/[^/]+$/.test(location.pathname) ||
     location.pathname === "/create_or_edit_exercise_demo" ||
     location.pathname === "/login" ||
     location.pathname === "/create-account" ||
@@ -68,10 +68,8 @@ function AppContent() {
     "/reset-password",
   ].includes(location.pathname);
 
-  // Detect public shared views (history list, workout, or routine)
-  const isPublicHistoryView = /^\/(app\/)?history\/public\//.test(location.pathname);
-  const isPublicRoutineView = /^\/(app\/)?routines\/public\//.test(location.pathname);
-  const hideNavForPublic = isPublicHistoryView || isPublicRoutineView;
+  // Unified URLs - no longer need to detect public vs private routes
+  const hideNavForPublic = false;
 
   // Define paths that should be allowed even when workout is active
   // When a workout is active, users should ONLY be able to access the workout page and essential auth pages
@@ -235,16 +233,10 @@ function AppContent() {
             <Route path="/dashboard" element={<Home />} />
             <Route path="/train" element={<Train />} />
             <Route path="/routines" element={<Routines />} />
-            <Route
-              path="/routines/:programId/configure"
-              element={<RoutineBuilder />}
-            />
-            <Route path="/history" element={<History />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
             <Route path="/og-image-admin" element={<OGImageAdmin />} />
-            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
             {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
               <>
                 <Route path="/email-test" element={<EmailTest />} />
@@ -254,19 +246,10 @@ function AppContent() {
 
           </Route>
 
-          {/* Public shared history route (unauthenticated) */}
-          <Route path="/history/public/:userId" element={<History />} />
-          {/* App-prefixed alias used by OG pages */}
-          <Route path="/app/history/public/:userId" element={<History />} />
-          {/* Public shared single workout view (unauthenticated) */}
-          <Route path="/history/public/workout/:workoutId" element={<CompletedWorkout />} />
-          {/* App-prefixed alias used by OG pages */}
-          <Route path="/app/history/public/workout/:workoutId" element={<CompletedWorkout />} />
-          {/* Public shared routine view (unauthenticated) */}
-          <Route path="/routines/:routineId" element={<PublicRoutine />} />
-          <Route path="/routines/public/:routineId" element={<PublicRoutine />} />
-          {/* App-prefixed alias used by OG pages */}
-          <Route path="/app/routines/public/:routineId" element={<PublicRoutine />} />
+          {/* Unified URL routes - work for both owners and viewers */}
+          <Route path="/routines/:routineId" element={<RoutineBuilder />} />
+          <Route path="/history/:userId" element={<History />} />
+          <Route path="/history/workout/:workoutId" element={<CompletedWorkout />} />
         </Routes>
       </main>
 

@@ -793,7 +793,7 @@ export default function OGImageAdmin() {
                       API Endpoint
                     </a>
                     <a
-                      href={`/history/public/workout/${workout.id}`}
+                      href={`/history/workout/${workout.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ 
@@ -903,7 +903,7 @@ export default function OGImageAdmin() {
                       View Image
                     </a>
                     <a
-                      href={`/routines/public/${routine.id}`}
+                      href={`/routines/${routine.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ 

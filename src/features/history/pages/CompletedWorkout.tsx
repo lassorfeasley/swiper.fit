@@ -118,16 +118,13 @@ const CompletedWorkout = () => {
   const currentUser = useCurrentUser(); // Use delegation-aware user context
   const location = useLocation();
   const { reactivateWorkout } = useActiveWorkout();
-  // Detect if we are on the public-share route  e.g. /history/public/workout/:workoutId
-  const isPublicWorkoutView = location.pathname.startsWith("/history/public/workout/");
 
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
-  const [ownerHistoryPublic, setOwnerHistoryPublic] = useState(false);
   const ogAttemptedRef = useRef(false);
 
   const { isDelegated, actingUser, returnToSelf } = useAccount();
-  const showSidebar = isOwner && !isPublicWorkoutView && !isDelegated;
+  const showSidebar = isOwner && !isDelegated;
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
     if (!profile) return "Unknown User";
@@ -186,12 +183,34 @@ const CompletedWorkout = () => {
       const { data: workoutData, error: workoutError } = await workoutQuery.single();
       console.log('[CompletedWorkout] workoutData:', workoutData, 'workoutError:', workoutError);
 
-      // If workout not found (e.g., not public), stop here
+      // If workout not found, stop here
       if (workoutError || !workoutData) {
         setWorkout(null);
         setLoading(false);
         return;
       }
+
+      // Access control: Check if user can view this workout
+      const isWorkoutOwner = user && workoutData.user_id === currentUser?.id;
+      
+      if (!isWorkoutOwner) {
+        // Not the owner - check if workout is publicly accessible
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("share_all_workouts")
+          .eq("id", workoutData.user_id)
+          .maybeSingle();
+        
+        if (!profileData?.share_all_workouts) {
+          // Workout is private and user is not owner
+          console.log('[CompletedWorkout] Workout is private, access denied');
+          toast.error("This workout is private");
+          setWorkout(null);
+          setLoading(false);
+          return;
+        }
+      }
+
       setWorkout(workoutData);
 
       // Fetch only completed sets for this workout
@@ -415,11 +434,9 @@ const CompletedWorkout = () => {
     })();
   }, []);
 
-  // Fetch owner name when not owner or when delegated
+  // Fetch owner name when not owner
   useEffect(() => {
-    if (!workout) return;
-    // Fetch owner name if not owner OR if delegated (to show client name)
-    if (isOwner && !isDelegated) return;
+    if (!workout || isOwner) return;
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -431,25 +448,7 @@ const CompletedWorkout = () => {
         setOwnerName(name || "User");
       }
     })();
-  }, [workout, isOwner, isDelegated]);
-
-  // -------------------------------------------------------------
-  // Fetch whether the workout owner's history is globally shared
-  // (needed to decide whether to show a back button on public view)
-  // -------------------------------------------------------------
-  useEffect(() => {
-    if (!isPublicWorkoutView || !workout) return;
-    (async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("share_all_workouts")
-        .eq("id", workout.user_id)
-        .single();
-      if (!error && data) {
-        setOwnerHistoryPublic(Boolean(data.share_all_workouts));
-      }
-    })();
-  }, [isPublicWorkoutView, workout]);
+  }, [workout, isOwner]);
 
   // Group sets by exercise_id, but only include exercises that have valid sets
   const setsByExercise = {};
@@ -595,7 +594,7 @@ const CompletedWorkout = () => {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/history/public/workout/${workoutId}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/history/workout/${workoutId}`);
       toast.success('Link copied');
     } catch (e) {
       toast.error('Error copying: ' + e.message);
@@ -604,15 +603,12 @@ const CompletedWorkout = () => {
 
   const handleOpenRoutine = () => {
     if (!workout?.routine_id) return;
-    const target = (isOwner && !isPublicWorkoutView)
-      ? `/routines/${workout.routine_id}/configure`
-      : `/routines/public/${workout.routine_id}`;
-    navigate(target);
+    navigate(`/routines/${workout.routine_id}`);
   };
 
   const handleViewRoutineHistory = () => {
     const routineName = workout?.routines?.routine_name;
-    if (!routineName || !isOwner || isPublicWorkoutView) return;
+    if (!routineName || !isOwner) return;
     navigate('/history', { state: { filterRoutine: routineName } });
   };
 
@@ -671,7 +667,7 @@ const CompletedWorkout = () => {
   const shareWorkout = async () => {
     setSharing(true);
     try {
-      const url = `${window.location.origin}/history/${workoutId}`;
+      const url = `${window.location.origin}/history/workout/${workoutId}`;
       const title = workout?.workout_name || 'Completed Workout';
       const text = title;
 
@@ -720,7 +716,7 @@ const CompletedWorkout = () => {
       <AppLayout
         hideHeader={false}
         title="Analysis"
-        titleRightText={isPublicWorkoutView && ownerName ? `Shared by ${ownerName}` : undefined}
+        titleRightText={!isOwner && ownerName ? `Shared by ${ownerName}` : undefined}
         hideDelegateHeader={true}
         showShare={false}
         onShare={shareWorkout}
@@ -739,7 +735,7 @@ const CompletedWorkout = () => {
         onSearchChange={setSearch}
         pageContext="workout"
         showDeleteOption={isOwner || isDelegated}
-        showSidebar={!isPublicWorkoutView && !isDelegated}
+        showSidebar={showSidebar}
       >
         {loading ? (
           <div className="p-6">Loading...</div>

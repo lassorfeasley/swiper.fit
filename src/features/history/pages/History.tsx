@@ -164,7 +164,7 @@ const History = () => {
   const handleCopyLink = async () => {
     try {
       await ensurePublic();
-      await navigator.clipboard.writeText(`${window.location.origin}/history/public/${targetUserId}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/history/${targetUserId}`);
       toast.success("Link copied");
     } catch (e) {
       toast.error("Error copying: " + e.message);
@@ -363,7 +363,7 @@ const History = () => {
           onOpenChange={setShareDialogOpen}
           isPublic={shareAll}
           onTogglePublic={handleToggleShareAll}
-          shareUrl={`${window.location.origin}/history/public/${user?.id}`}
+          shareUrl={`${window.location.origin}/history/${user?.id}`}
           onCopy={handleCopyLink}
         />
       )}
