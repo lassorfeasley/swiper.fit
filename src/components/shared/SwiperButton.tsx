@@ -29,7 +29,7 @@ const SwiperButton = React.forwardRef<
     <Button
       ref={ref}
       variant={variant}
-      className={cn(swiperButtonVariants({ variant, className }))}
+      className={cn(swiperButtonVariants({ variant }), className)}
       {...props}
     />
   );
