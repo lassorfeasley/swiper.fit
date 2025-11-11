@@ -20,19 +20,21 @@ import SetEditForm from "../components/SetEditForm";
 import { ActionCard } from "@/components/shared/ActionCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/lib/toastReplacement";
 import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Copy, Blend, X, ListChecks } from "lucide-react";
+import { Copy, Blend, X, ListChecks, Bookmark } from "lucide-react";
 import { useSpacing } from "@/hooks/useSpacing";
 
 const RoutineBuilder = () => {
-  const { programId } = useParams();
+  const { routineId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { setPageName } = useContext(PageNameContext);
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,13 @@ const RoutineBuilder = () => {
   const ogGenTimerRef = useRef(null);
   const ogLastSigRef = useRef("");
   const ogLastRunRef = useRef(0);
+  
+  // Viewer mode state (for non-owners)
+  const [isViewerMode, setIsViewerMode] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   
   // Use spacing hook for consistent layout
   const spacing = useSpacing('SIMPLE_LIST');
@@ -120,16 +129,40 @@ const RoutineBuilder = () => {
   useEffect(() => {
     async function fetchProgramAndExercises() {
       setLoading(true);
+      
+      // Fetch routine with user_id to determine ownership
       const { data: programData } = await supabase
         .from("routines")
-        .select("routine_name, og_image_url")
-        .eq("id", programId)
+        .select("routine_name, og_image_url, user_id, created_by, shared_by")
+        .eq("id", routineId)
         .single();
+        
+      if (!programData) {
+        setLoading(false);
+        return;
+      }
+      
       setProgramName(programData?.routine_name || "");
       setProgram(programData);
       console.log('Program data:', programData);
       console.log('OG Image URL:', programData?.og_image_url);
 
+      // Determine if current user is the owner
+      const userIsOwner = user && programData.user_id === user.id;
+      setIsViewerMode(!userIsOwner);
+      
+      // If not owner, fetch owner name
+      if (!userIsOwner && programData.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', programData.user_id)
+          .maybeSingle();
+        if (profile) {
+          const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+          setOwnerName(name);
+        }
+      }
 
       const { data: progExs, error } = await supabase
         .from("routine_exercises")
@@ -152,7 +185,7 @@ const RoutineBuilder = () => {
              timed_set_duration
            )`
         )
-        .eq("routine_id", programId)
+        .eq("routine_id", routineId)
         .order("exercise_order", { ascending: true });
       if (error) {
         setExercises([]);
@@ -188,10 +221,12 @@ const RoutineBuilder = () => {
     fetchProgramAndExercises();
     return () => {
       isUnmounted.current = true;
-      saveOrder();
+      if (!isViewerMode) {
+        saveOrder();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programId]);
+  }, [routineId, user]);
 
   // Reset OG image generation refs when routine changes to avoid cross-routine bleed
   useEffect(() => {
@@ -201,11 +236,11 @@ const RoutineBuilder = () => {
       clearTimeout(ogGenTimerRef.current);
       ogGenTimerRef.current = null;
     }
-  }, [programId]);
+  }, [routineId]);
 
   // Debounced + throttled routine OG image regeneration on material changes
   useEffect(() => {
-    if (!programId) return;
+    if (!routineId) return;
 
     const exerciseCount = exercises.length;
     const setCount = exercises.reduce((t, ex) => t + (ex.setConfigs?.length || 0), 0);
@@ -229,7 +264,7 @@ const RoutineBuilder = () => {
       const run = async () => {
         try {
           const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
-          const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+          const imageUrl = await generateAndUploadRoutineOGImage(routineId, {
             routineName: name || 'Routine',
             ownerName: '',
             exerciseCount,
@@ -255,7 +290,7 @@ const RoutineBuilder = () => {
         ogGenTimerRef.current = null;
       }
     };
-  }, [programId, programName, exercises]);
+  }, [routineId, programName, exercises]);
 
   const handleEditSet = (index, setConfig) => {
     setEditingSet(setConfig);
@@ -403,8 +438,163 @@ const RoutineBuilder = () => {
     }, 300);
   };
 
+  // Clone routine for non-owner viewers
+  const cloneRoutineForCurrentUser = async () => {
+    if (!program) return null;
+    
+    // Try RPC first (if function exists)
+    try {
+      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
+        source_routine_id: routineId,
+        new_name: program.routine_name,
+      });
+      if (!rpcError && newId) {
+        console.log('[RoutineBuilder] RPC clone_routine succeeded, new routine ID:', newId);
+        return newId;
+      }
+    } catch (e) {
+      console.log('[RoutineBuilder] RPC clone_routine failed, falling back to manual clone:', e);
+    }
+
+    // Fallback manual clone
+    const { data: newRoutine, error: routineErr } = await supabase
+      .from('routines')
+      .insert({
+        routine_name: program.routine_name,
+        user_id: user.id,
+        is_archived: false,
+        created_by: program.created_by || program.user_id,
+        shared_by: program.user_id,
+      })
+      .select('id')
+      .single();
+    if (routineErr || !newRoutine) throw routineErr || new Error('Failed to create routine');
+
+    const newRoutineId = newRoutine.id;
+
+    // Insert routine_exercises
+    const exercisesPayload = exercises
+      .map((ex) => ({
+        routine_id: newRoutineId,
+        exercise_id: ex.exercise_id,
+        exercise_order: ex.order || 0,
+        user_id: user.id,
+      }));
+    let insertedREs = [];
+    if (exercisesPayload.length > 0) {
+      const { data: reRows, error: reErr } = await supabase
+        .from('routine_exercises')
+        .insert(exercisesPayload)
+        .select('id, exercise_id');
+      if (reErr) throw reErr;
+      insertedREs = reRows || [];
+    }
+
+    // Insert routine_sets
+    for (const ex of exercises) {
+      const newRE = insertedREs.find((row) => row.exercise_id === ex.exercise_id);
+      if (!newRE) continue;
+      const setsPayload = (ex.setConfigs || [])
+        .map((config, idx) => ({
+          routine_exercise_id: newRE.id,
+          set_order: idx + 1,
+          reps: config.reps,
+          weight: config.weight,
+          weight_unit: config.unit,
+          set_type: config.set_type,
+          timed_set_duration: config.timed_set_duration,
+          set_variant: config.set_variant,
+          user_id: user.id,
+        }));
+      if (setsPayload.length > 0) {
+        const { error: rsErr } = await supabase
+          .from('routine_sets')
+          .insert(setsPayload);
+        if (rsErr) throw rsErr;
+      }
+    }
+
+    return newRoutineId;
+  };
+
+  // Handler for non-owner to add routine to their account
+  const handleAddRoutineToAccount = async () => {
+    if (!user) {
+      navigate(`/create-account?importRoutineId=${routineId}`);
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const newId = await cloneRoutineForCurrentUser();
+      toast.success('Routine saved to your account');
+      navigate(`/routines/${newId}`);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to save routine');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
+  // Handler for non-owner to add and start workout
+  const handleAddAndStart = async () => {
+    if (!user) {
+      navigate(`/create-account?importRoutineId=${routineId}`);
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const newId = await cloneRoutineForCurrentUser();
+      
+      // Build program payload for startWorkout
+      const programForWorkout = {
+        id: newId,
+        name: program.routine_name,
+        exercises: exercises.map((ex, idx) => ({
+          id: ex.id,
+          exercise_id: ex.exercise_id,
+          exercise_order: idx + 1,
+          exercises: {
+            name: ex.name,
+            section: ex.section
+          },
+          routine_sets: (ex.setConfigs || []).map((config, i) => ({
+            reps: config.reps,
+            weight: config.weight,
+            weight_unit: config.unit,
+            set_order: i + 1,
+            set_variant: config.set_variant,
+            set_type: config.set_type,
+            timed_set_duration: config.timed_set_duration
+          }))
+        }))
+      };
+      
+      await startWorkout(programForWorkout);
+      navigate('/workout/active');
+    } catch (e) {
+      console.error('[RoutineBuilder] Add & start error:', e);
+      toast.error(e?.message || 'Failed to start workout');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
+  const openAddDialog = () => {
+    if (!user) {
+      setAuthDialogOpen(true);
+      return;
+    }
+    setAddDialogOpen(true);
+  };
+
   const handleBack = () => {
-    saveOrder();
+    if (!isViewerMode) {
+      saveOrder();
+    }
     if (location.state && location.state.fromPublicImport) {
       navigate('/routines');
     } else if (location.state && location.state.managingForClient) {
@@ -427,7 +617,7 @@ const RoutineBuilder = () => {
 
   const handleCopyLink = async () => {
     try {
-      const shareUrl = `${window.location.origin}/routines/${programId}`;
+      const shareUrl = `${window.location.origin}/routines/${routineId}`;
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied");
     } catch (e) {
@@ -440,7 +630,7 @@ const RoutineBuilder = () => {
   const shareRoutine = async () => {
     setSharing(true);
     try {
-      const url = `${window.location.origin}/routines/${programId}`;
+      const url = `${window.location.origin}/routines/${routineId}`;
       const title = programName || 'Routine';
       const text = title;
 
@@ -506,7 +696,7 @@ const RoutineBuilder = () => {
     }));
 
     const routine = {
-      id: programId,
+      id: routineId,
       routine_name: programName,
       routine_exercises: routine_exercises,
     };
@@ -560,7 +750,7 @@ const RoutineBuilder = () => {
       const { data: existingRoutineExercise } = await supabase
         .from("routine_exercises")
         .select("id")
-        .eq("routine_id", programId)
+        .eq("routine_id", routineId)
         .eq("exercise_id", exercise_id)
         .maybeSingle();
 
@@ -572,7 +762,7 @@ const RoutineBuilder = () => {
       const { data: maxOrderResult } = await supabase
         .from("routine_exercises")
         .select("exercise_order")
-        .eq("routine_id", programId)
+        .eq("routine_id", routineId)
         .order("exercise_order", { ascending: false })
         .limit(1)
         .single();
@@ -582,7 +772,7 @@ const RoutineBuilder = () => {
       const { data: progEx, error: progExError } = await supabase
         .from("routine_exercises")
         .insert({
-          routine_id: programId,
+          routine_id: routineId,
           exercise_id,
           exercise_order: nextOrder,
         })
@@ -688,7 +878,7 @@ const RoutineBuilder = () => {
            timed_set_duration
          )`
       )
-      .eq("routine_id", programId)
+      .eq("routine_id", routineId)
       .order("exercise_order", { ascending: true });
     const items = (progExs || []).map((pe) => ({
       id: pe.id,
@@ -837,7 +1027,7 @@ const RoutineBuilder = () => {
     await supabase
       .from("routines")
       .update({ routine_name: nameClamped })
-      .eq("id", programId);
+      .eq("id", routineId);
     setEditProgramOpen(false);
 
     // Immediately refresh OG image for fast rename propagation
@@ -857,7 +1047,7 @@ const RoutineBuilder = () => {
       ogLastRunRef.current = Date.now();
 
       const { generateAndUploadRoutineOGImage } = await import('@/lib/ogImageGenerator');
-      const imageUrl = await generateAndUploadRoutineOGImage(programId, {
+      const imageUrl = await generateAndUploadRoutineOGImage(routineId, {
         routineName: name || 'Routine',
         ownerName: '',
         exerciseCount,
@@ -879,7 +1069,7 @@ const RoutineBuilder = () => {
       const { error } = await supabase
         .from("routines")
         .update({ is_archived: true })
-        .eq("id", programId);
+        .eq("id", routineId);
 
       if (error) throw error;
 
@@ -900,21 +1090,109 @@ const RoutineBuilder = () => {
       <AppLayout
         hideHeader={false}
         hideDelegateHeader={true}
-        title={programName || "Build your routine"}
+        title={programName || "Routine"}
+        titleRightText={isViewerMode && ownerName ? `Shared by ${ownerName}` : undefined}
         showPlusButton={false}
         showShare={true}
         onShare={shareRoutine}
-        showStartWorkoutIcon={!isDelegated}
+        showStartWorkoutIcon={!isViewerMode && !isDelegated}
         onStartWorkoutIcon={handleStartWorkout}
-        showSettings={true}
+        showSettings={!isViewerMode}
         onSettings={() => setEditProgramOpen(true)}
-        showDelete={true}
+        showDelete={!isViewerMode}
         onDelete={() =>	setDeleteProgramConfirmOpen(true)}
-        showSidebar={!isDelegated && !isMobile}
+        showSidebar={!isViewerMode && !isDelegated && !isMobile}
         sharingSection={undefined}
       >
-        <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
-          {/* Routine Image and Link Section */}
+        {isViewerMode ? (
+          /* VIEWER MODE: Read-only view for non-owners */
+          <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+            {/* Routine Image */}
+            <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+                <img 
+                  data-layer="open-graph-image"
+                  className="OpenGraphImage w-full h-auto" 
+                  src={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
+                  alt={`${programName} routine`}
+                  draggable={false}
+                  style={{ maxHeight: '256px', objectFit: 'contain' }}
+                  onError={(e) => {
+                    console.log('Image failed to load:', (e.target as HTMLImageElement).src);
+                    console.log('Falling back to default image');
+                    (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
+                  }}
+                  onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
+                />
+                <div 
+                  data-layer="routine-link"
+                  className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                  onClick={shareRoutine}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div data-layer="routine-name" className="ChestAndTriceps justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                    {programName} 
+                  </div>
+                  <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                    <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Exercise list (read-only) */}
+            <PageSectionWrapper
+              section="workout"
+              id={`section-workout`}
+              deckGap={12}
+              deckVariant="cards"
+              reorderable={false}
+              items={exercises}
+              className="flex-1"
+              applyPaddingOnParent={true}
+              style={{ paddingLeft: 28, paddingRight: 28, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+            >
+            {loading ? (
+              <div className="text-gray-400 text-center py-8">Loading...</div>
+            ) : exercises.map((ex) => (
+              <ExerciseCard
+                key={ex.id}
+                exerciseName={ex.name}
+                setConfigs={ex.setConfigs}
+                hideGrip
+                addTopBorder
+              />
+            ))}
+            </PageSectionWrapper>
+            
+            {/* Persistent Add Button - Absolutely positioned at bottom */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
+              <div 
+                className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+                onClick={openAddDialog}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog(); } }}
+                aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
+              >
+                <div className="p-2.5 flex justify-start items-center gap-2.5">
+                  <div className="relative">
+                    <Bookmark className="w-6 h-6" stroke="white" strokeWidth="2" />
+                  </div>
+                </div>
+                <div className="flex justify-center items-center gap-5">
+                  <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                    {user ? "Add routine to my account" : "Create account or login to add routine"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* OWNER MODE: Full editor for routine owners */
+          <>
+            <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
+              {/* Routine Image and Link Section */}
           <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
             <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
               <img 
@@ -1051,6 +1329,9 @@ const RoutineBuilder = () => {
             </div>
           </div>
         </SwiperForm>
+            </div>
+          </>
+        )}
         
       </AppLayout>
 
@@ -1071,7 +1352,7 @@ const RoutineBuilder = () => {
         <FormSectionWrapper bordered={false} className="flex flex-col gap-5">
           <TextInput
             label="Click to copy"
-            value={`${window.location.origin}/routines/public/${programId}`}
+            value={`${window.location.origin}/routines/${routineId}`}
             readOnly
             onFocus={(e) => e.target.select()}
             onClick={handleCopyLink}
@@ -1168,6 +1449,59 @@ const RoutineBuilder = () => {
         footerClassName="self-stretch px-3 py-3"
         showHeaderDismiss={true}
       />
+
+      {/* Viewer Mode Dialogs */}
+      {isViewerMode && (
+        <>
+          {/* Add/Save Dialog */}
+          <SwiperDialog
+            open={addDialogOpen}
+            onOpenChange={setAddDialogOpen}
+            title="Add routine to my account?"
+            hideFooter
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <SwiperButton
+                variant="outline"
+                onClick={handleAddAndStart}
+                disabled={saving}
+              >
+                Add & start workout
+              </SwiperButton>
+              <SwiperButton
+                variant="outline"
+                onClick={handleAddRoutineToAccount}
+                disabled={saving}
+              >
+                Add to my account
+              </SwiperButton>
+            </div>
+          </SwiperDialog>
+
+          {/* Auth Dialog for logged-out users */}
+          <SwiperDialog
+            open={authDialogOpen}
+            onOpenChange={setAuthDialogOpen}
+            title="Have an account?"
+            hideFooter
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <SwiperButton
+                variant="outline"
+                onClick={() => navigate(`/create-account?importRoutineId=${routineId}`)}
+              >
+                Create account
+              </SwiperButton>
+              <SwiperButton
+                variant="outline"
+                onClick={() => navigate(`/login?importRoutineId=${routineId}`)}
+              >
+                Login
+              </SwiperButton>
+            </div>
+          </SwiperDialog>
+        </>
+      )}
 
     </>
   );

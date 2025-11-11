@@ -20,7 +20,7 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import { toast } from "@/lib/toastReplacement";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks, Bookmark } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 import ActionPill from "@/components/shared/ActionPill";
 
@@ -122,6 +122,11 @@ const CompletedWorkout = () => {
   const [ownerName, setOwnerName] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const ogAttemptedRef = useRef(false);
+  
+  // Viewer mode state (for non-owners)
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const showSidebar = isOwner && !isDelegated;
@@ -620,6 +625,115 @@ const CompletedWorkout = () => {
     } catch (_) {}
   };
 
+  // Clone workout for non-owner viewers
+  const cloneWorkoutForCurrentUser = async () => {
+    if (!workout || !user) return null;
+
+    try {
+      // Create a new workout based on the viewed workout
+      const { data: newWorkout, error: workoutError } = await supabase
+        .from('workouts')
+        .insert({
+          user_id: user.id,
+          workout_name: workout.workout_name || 'Workout',
+          routine_id: null, // Don't link to original routine
+          is_active: false,
+          status: 'template', // Mark as template/plan, not completed
+        })
+        .select('id')
+        .single();
+
+      if (workoutError || !newWorkout) {
+        throw workoutError || new Error('Failed to create workout');
+      }
+
+      const newWorkoutId = newWorkout.id;
+
+      // Clone the sets as template sets
+      const setsToClone = sets.map((set, idx) => ({
+        workout_id: newWorkoutId,
+        exercise_id: set.exercise_id,
+        set_order: set.set_order || idx + 1,
+        reps: set.reps,
+        weight: set.weight,
+        weight_unit: set.weight_unit || 'lbs',
+        set_type: set.set_type || 'reps',
+        timed_set_duration: set.timed_set_duration,
+        set_variant: set.set_variant,
+        status: 'pending', // Template sets start as pending
+        user_id: user.id,
+      }));
+
+      if (setsToClone.length > 0) {
+        const { error: setsError } = await supabase
+          .from('sets')
+          .insert(setsToClone);
+        
+        if (setsError) throw setsError;
+      }
+
+      return newWorkoutId;
+    } catch (error) {
+      console.error('[CompletedWorkout] Clone error:', error);
+      throw error;
+    }
+  };
+
+  // Handler for non-owner to add workout to their account
+  const handleAddWorkoutToAccount = async () => {
+    if (!user) {
+      navigate(`/create-account?importWorkoutId=${workoutId}`);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const newId = await cloneWorkoutForCurrentUser();
+      toast.success('Workout saved to your account');
+      navigate(`/history/workout/${newId}`);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to save workout');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
+  // Handler for non-owner to add and start workout
+  const handleAddAndStart = async () => {
+    if (!user) {
+      navigate(`/create-account?importWorkoutId=${workoutId}`);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await cloneWorkoutForCurrentUser();
+      
+      // Navigate to the routine if it exists, otherwise go to train
+      if (workout?.routine_id) {
+        navigate(`/routines/${workout.routine_id}`);
+      } else {
+        toast.success('Workout saved to your account');
+        navigate('/train');
+      }
+    } catch (e) {
+      console.error('[CompletedWorkout] Add & start error:', e);
+      toast.error(e?.message || 'Failed to start workout');
+    } finally {
+      setSaving(false);
+      setAddDialogOpen(false);
+    }
+  };
+
+  const openAddDialog = () => {
+    if (!user) {
+      setAuthDialogOpen(true);
+      return;
+    }
+    setAddDialogOpen(true);
+  };
+
   // Build custom header action pod with Resume + Share + Delete
   const headerActions = (
     <div className="inline-flex flex-col justify-center items-end gap-2.5">
@@ -809,6 +923,32 @@ const CompletedWorkout = () => {
             <p>Workout not found.</p>
           </div>
         )}
+
+        {/* CTA Button for non-owners - Absolutely positioned at bottom */}
+        {!isOwner && workout && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
+            <div 
+              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+              onClick={openAddDialog}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog(); } }}
+              aria-label={user ? "Add workout to my account" : "Create account or login to save workout"}
+            >
+              <div className="p-2.5 flex justify-start items-center gap-2.5">
+                <div className="relative">
+                  <Bookmark className="w-6 h-6" stroke="white" strokeWidth="2" />
+                </div>
+              </div>
+              <div className="flex justify-center items-center gap-5">
+                <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
+                  {user ? "Add workout to my account" : "Create account or login to save workout"}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <SwiperDialog
           open={isDeleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}
@@ -862,6 +1002,59 @@ const CompletedWorkout = () => {
         </SwiperForm>
 
       </AppLayout>
+
+      {/* Viewer Mode Dialogs for non-owners */}
+      {!isOwner && (
+        <>
+          {/* Add/Save Dialog */}
+          <SwiperDialog
+            open={addDialogOpen}
+            onOpenChange={setAddDialogOpen}
+            title="Add workout to my account?"
+            hideFooter
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <SwiperButton
+                variant="outline"
+                onClick={handleAddAndStart}
+                disabled={saving}
+              >
+                {workout?.routine_id ? 'View routine' : 'Add to my workouts'}
+              </SwiperButton>
+              <SwiperButton
+                variant="outline"
+                onClick={handleAddWorkoutToAccount}
+                disabled={saving}
+              >
+                Add to my account
+              </SwiperButton>
+            </div>
+          </SwiperDialog>
+
+          {/* Auth Dialog for logged-out users */}
+          <SwiperDialog
+            open={authDialogOpen}
+            onOpenChange={setAuthDialogOpen}
+            title="Have an account?"
+            hideFooter
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <SwiperButton
+                variant="outline"
+                onClick={() => navigate(`/create-account?importWorkoutId=${workoutId}`)}
+              >
+                Create account
+              </SwiperButton>
+              <SwiperButton
+                variant="outline"
+                onClick={() => navigate(`/login?importWorkoutId=${workoutId}`)}
+              >
+                Login
+              </SwiperButton>
+            </div>
+          </SwiperDialog>
+        </>
+      )}
     </>
   );
 };
