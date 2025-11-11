@@ -1018,6 +1018,7 @@ const CompletedWorkout = () => {
                 variant="outline"
                 onClick={handleAddAndStart}
                 disabled={saving}
+                className="w-full"
               >
                 {workout?.routine_id ? 'View routine' : 'Add to my workouts'}
               </SwiperButton>
@@ -1025,6 +1026,7 @@ const CompletedWorkout = () => {
                 variant="outline"
                 onClick={handleAddWorkoutToAccount}
                 disabled={saving}
+                className="w-full"
               >
                 Add to my account
               </SwiperButton>
@@ -1042,12 +1044,14 @@ const CompletedWorkout = () => {
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/create-account?importWorkoutId=${workoutId}`)}
+                className="w-full"
               >
                 Create account
               </SwiperButton>
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/login?importWorkoutId=${workoutId}`)}
+                className="w-full"
               >
                 Login
               </SwiperButton>

@@ -1464,6 +1464,7 @@ const RoutineBuilder = () => {
                 variant="outline"
                 onClick={handleAddAndStart}
                 disabled={saving}
+                className="w-full"
               >
                 Add & start workout
               </SwiperButton>
@@ -1471,6 +1472,7 @@ const RoutineBuilder = () => {
                 variant="outline"
                 onClick={handleAddRoutineToAccount}
                 disabled={saving}
+                className="w-full"
               >
                 Add to my account
               </SwiperButton>
@@ -1488,12 +1490,14 @@ const RoutineBuilder = () => {
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/create-account?importRoutineId=${routineId}`)}
+                className="w-full"
               >
                 Create account
               </SwiperButton>
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/login?importRoutineId=${routineId}`)}
+                className="w-full"
               >
                 Login
               </SwiperButton>
