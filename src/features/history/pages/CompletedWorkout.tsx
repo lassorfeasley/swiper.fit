@@ -1013,7 +1013,7 @@ const CompletedWorkout = () => {
             title="Add workout to my account?"
             hideFooter
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 pb-3">
               <SwiperButton
                 variant="outline"
                 onClick={handleAddAndStart}
@@ -1038,7 +1038,7 @@ const CompletedWorkout = () => {
             title="Have an account?"
             hideFooter
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 pb-3">
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/create-account?importWorkoutId=${workoutId}`)}

@@ -1459,7 +1459,7 @@ const RoutineBuilder = () => {
             title="Add routine to my account?"
             hideFooter
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 pb-3">
               <SwiperButton
                 variant="outline"
                 onClick={handleAddAndStart}
@@ -1484,7 +1484,7 @@ const RoutineBuilder = () => {
             title="Have an account?"
             hideFooter
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 pb-3">
               <SwiperButton
                 variant="outline"
                 onClick={() => navigate(`/create-account?importRoutineId=${routineId}`)}
