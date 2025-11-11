@@ -10,7 +10,7 @@
 
 ### Code Changes
 - **File**: `src/lib/sharingApi.ts`
-- **Functions Modified**: `createTrainerInvite()`, `createClientInvite()`
+- **Functions Modified**: `inviteClientToBeManaged()`, `inviteTrainerToManage()`
 
 ---
 
@@ -133,7 +133,7 @@
 
 ### Issue: Email shows "John Smith" instead of real name
 **Cause**: `inviter_name` not being passed or profile lookup failed  
-**Check**: Browser console for errors in `createTrainerInvite` or `createClientInvite`
+**Check**: Browser console for errors in `inviteClientToBeManaged` or `inviteTrainerToManage`
 
 ### Issue: Email doesn't arrive
 **Cause**: Template name mismatch or Resend API error  
@@ -170,10 +170,10 @@
 
 ### Console Logs to Watch
 ```javascript
-[createTrainerInvite] No user found, creating non-member invitation
-[createTrainerInvite] User found, creating member invitation
-[createClientInvite] No trainer found, creating non-member invitation
-[createClientInvite] Trainer found, creating member invitation
+[inviteClientToBeManaged] No user found, creating non-member invitation
+[inviteClientToBeManaged] User found, creating member invitation
+[inviteTrainerToManage] No trainer found, creating non-member invitation
+[inviteTrainerToManage] Trainer found, creating member invitation
 ```
 
 ---

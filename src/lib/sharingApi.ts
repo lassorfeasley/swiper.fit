@@ -41,7 +41,18 @@ interface AccountShare {
 // INVITATION FUNCTIONS
 // ============================================================================
 
-export async function createTrainerInvite(
+/**
+ * Invites a client to be managed by a trainer.
+ * Creates an invitation where the trainer will manage the client's account.
+ * 
+ * Relationship created: owner=trainer, delegate=client
+ * This means the trainer (owner) manages the client's (delegate) account.
+ * 
+ * @param clientEmail - Email of the client to invite
+ * @param trainerId - ID of the trainer sending the invitation (will be the owner)
+ * @param permissions - Permissions to grant the trainer
+ */
+export async function inviteClientToBeManaged(
   clientEmail: string, 
   trainerId: string, 
   permissions: Permissions = {}
@@ -75,7 +86,7 @@ export async function createTrainerInvite(
     }
 
     if (!profiles?.length) {
-      console.log(`[createTrainerInvite] No user found, creating non-member invitation for: ${clientEmail}`);
+      console.log(`[inviteClientToBeManaged] No user found, creating non-member invitation for: ${clientEmail}`);
       const { count: pendingDupCount } = await supabase
         .from("account_shares")
         .select("id", { count: "exact", head: true })
@@ -122,7 +133,7 @@ export async function createTrainerInvite(
 
     // User exists, create member invitation
     const clientProfile = profiles[0] as Profile;
-    console.log(`[createTrainerInvite] User found, creating member invitation for: ${clientProfile.email}`);
+    console.log(`[inviteClientToBeManaged] User found, creating member invitation for: ${clientProfile.email}`);
 
     // Check for existing pending invitation (excluding revoked ones)
     const { count: pendingDupCount } = await supabase
@@ -179,12 +190,23 @@ export async function createTrainerInvite(
     });
 
   } catch (error) {
-    console.error("createTrainerInvite error:", error);
+    console.error("inviteClientToBeManaged error:", error);
     throw error;
   }
 }
 
-export async function createClientInvite(
+/**
+ * Invites a trainer to manage a client's account.
+ * Creates an invitation where the trainer will manage the client's account.
+ * 
+ * Relationship created: owner=client, delegate=trainer
+ * This means the trainer (delegate) manages the client's (owner) account.
+ * 
+ * @param trainerEmail - Email of the trainer to invite
+ * @param clientId - ID of the client sending the invitation (will be the owner)
+ * @param permissions - Permissions to grant the trainer
+ */
+export async function inviteTrainerToManage(
   trainerEmail: string, 
   clientId: string, 
   permissions: Permissions = {}
@@ -218,7 +240,7 @@ export async function createClientInvite(
     }
 
     if (!profiles?.length) {
-      console.log(`[createClientInvite] No trainer found, creating non-member invitation for: ${trainerEmail}`);
+      console.log(`[inviteTrainerToManage] No trainer found, creating non-member invitation for: ${trainerEmail}`);
       const { count: pendingDupCount } = await supabase
         .from("account_shares")
         .select("id", { count: "exact", head: true })
@@ -265,7 +287,7 @@ export async function createClientInvite(
 
     // Trainer exists, create member invitation
     const trainerProfile = profiles[0] as Profile;
-    console.log(`[createClientInvite] Trainer found, creating member invitation for: ${trainerProfile.email}`);
+    console.log(`[inviteTrainerToManage] Trainer found, creating member invitation for: ${trainerProfile.email}`);
 
     // Check for existing pending invitation (excluding revoked ones)
     const { count: pendingDupCount } = await supabase
@@ -322,7 +344,7 @@ export async function createClientInvite(
     });
 
   } catch (error) {
-    console.error("createClientInvite error:", error);
+    console.error("inviteTrainerToManage error:", error);
     throw error;
   }
 }
@@ -486,6 +508,8 @@ export async function removeShare(shareId: string): Promise<void> {
 
 export async function getPendingInvitations(userId: string): Promise<AccountShare[]> {
   try {
+    // Get invitations where user is the delegate (being invited to manage someone)
+    // OR where user is the owner (being asked to let someone manage their account)
     const { data, error } = await supabase
       .from("account_shares")
       .select(`
@@ -497,8 +521,7 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
           email
         )
       `)
-      .eq("delegate_user_id", userId)
-      .neq("owner_user_id", userId)  // Exclude invitations where user is the owner
+      .or(`delegate_user_id.eq.${userId},owner_user_id.eq.${userId}`)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 

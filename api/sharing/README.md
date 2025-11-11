@@ -30,25 +30,29 @@ The `account_shares` table has been extended with new columns:
 
 ### Invitation Functions
 
-#### `createTrainerInvite(clientEmail, trainerId, permissions)`
-Creates an invitation where a trainer wants to manage a client's account.
+#### `inviteClientToBeManaged(clientEmail, trainerId, permissions)`
+Invites a client to be managed by a trainer.
+Creates an invitation where the trainer will manage the client's account.
+
+**Relationship created:** `owner=trainer`, `delegate=client`
+This means the trainer (owner) manages the client's (delegate) account.
 
 **Parameters:**
 - `clientEmail` (string): Email of the client to invite
-- `trainerId` (string): ID of the trainer sending the invitation
+- `trainerId` (string): ID of the trainer sending the invitation (will be the owner)
 - `permissions` (object, optional): Default permissions
   - `can_create_routines` (boolean, default: false)
   - `can_start_workouts` (boolean, default: false)
   - `can_review_history` (boolean, default: false)
 
-**Returns:** Promise<object> - Created invitation data with client profile
+**Returns:** Promise<void>
 
 **Example:**
 ```javascript
-import { createTrainerInvite } from '@/api/sharing';
+import { inviteClientToBeManaged } from '@/lib/sharingApi';
 
 try {
-  const invitation = await createTrainerInvite(
+  await inviteClientToBeManaged(
     'client@example.com',
     'trainer-user-id',
     {
@@ -57,28 +61,35 @@ try {
       can_review_history: false
     }
   );
-  console.log('Invitation sent:', invitation);
+  console.log('Invitation sent');
 } catch (error) {
   console.error('Failed to send invitation:', error.message);
 }
 ```
 
-#### `createClientInvite(trainerEmail, clientId, permissions)`
-Creates an invitation where a client wants a trainer to manage their account.
+#### `inviteTrainerToManage(trainerEmail, clientId, permissions)`
+Invites a trainer to manage a client's account.
+Creates an invitation where the trainer will manage the client's account.
+
+**Relationship created:** `owner=client`, `delegate=trainer`
+This means the trainer (delegate) manages the client's (owner) account.
 
 **Parameters:**
 - `trainerEmail` (string): Email of the trainer to invite
-- `clientId` (string): ID of the client sending the invitation
+- `clientId` (string): ID of the client sending the invitation (will be the owner)
 - `permissions` (object, optional): Default permissions
+  - `can_create_routines` (boolean, default: false)
+  - `can_start_workouts` (boolean, default: false)
+  - `can_review_history` (boolean, default: false)
 
-**Returns:** Promise<object> - Created invitation data with trainer profile
+**Returns:** Promise<void>
 
 **Example:**
 ```javascript
-import { createClientInvite } from '@/api/sharing';
+import { inviteTrainerToManage } from '@/lib/sharingApi';
 
 try {
-  const invitation = await createClientInvite(
+  await inviteTrainerToManage(
     'trainer@example.com',
     'client-user-id',
     {
@@ -87,7 +98,7 @@ try {
       can_review_history: true
     }
   );
-  console.log('Invitation sent:', invitation);
+  console.log('Invitation sent');
 } catch (error) {
   console.error('Failed to send invitation:', error.message);
 }
@@ -220,15 +231,15 @@ All functions throw errors with descriptive messages:
 
 ```javascript
 import { 
-  createTrainerInvite, 
-  getPendingRequests, 
-  acceptSharingRequest 
-} from '@/api/sharing';
+  inviteTrainerToManage, 
+  getPendingInvitations, 
+  acceptInvitation 
+} from '@/lib/sharingApi';
 
 // In a React component
 const handleSendInvitation = async () => {
   try {
-    await createTrainerInvite(email, userId, permissions);
+    await inviteTrainerToManage(trainerEmail, clientId, permissions);
     toast.success('Invitation sent successfully');
   } catch (error) {
     toast.error(error.message);

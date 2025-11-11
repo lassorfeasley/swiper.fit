@@ -23,7 +23,7 @@ import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingInvitations, acceptInvitation, rejectInvitation, createTrainerInvite, createClientInvite } from "@/lib/sharingApi";
+import { getPendingInvitations, acceptInvitation, rejectInvitation, inviteClientToBeManaged, inviteTrainerToManage } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 import { generateWorkoutName } from "@/lib/utils";
@@ -1051,11 +1051,47 @@ const Account = () => {
       
       if (dialogInviteType === 'trainer') {
         // When inviting a trainer, YOU are the client inviting THEM as trainer
-        await createTrainerInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        // Result: trainer manages client's account (owner=client, delegate=trainer)
+        // inviteTrainerToManage creates: owner=clientId, delegate=trainer
+        // Parameters: (trainerEmail, clientId, permissions)
+        if (!user.email) {
+          throw new Error("Unable to send invitation: your email not found");
+        }
+        
+        const trainerEmail = dialogEmail.trim();
+        // inviteTrainerToManage will look up trainer by email
+        // Pass client's ID (user.id) as the owner
+        await inviteTrainerToManage(trainerEmail, user.id, dialogPermissions);
         toast.success("Trainer invitation sent successfully");
       } else {
         // When inviting a client, YOU are the trainer inviting THEM as client
-        await createClientInvite(dialogEmail.trim(), user.id, dialogPermissions);
+        // Result: trainer manages client's account (owner=client, delegate=trainer)
+        // inviteTrainerToManage creates: owner=clientId, delegate=trainer
+        // Parameters: (trainerEmail, clientId, permissions)
+        if (!user.email) {
+          throw new Error("Unable to send invitation: trainer email not found");
+        }
+        
+        const clientEmail = dialogEmail.trim();
+        // Look up client by email to get their ID
+        const { data: clientProfiles, error: clientLookupError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", clientEmail.toLowerCase())
+          .limit(1);
+        
+        if (clientLookupError) {
+          throw new Error("Failed to look up client");
+        }
+        
+        if (clientProfiles?.length) {
+          // Client exists, pass trainer's email and client's ID
+          await inviteTrainerToManage(user.email, clientProfiles[0].id, dialogPermissions);
+        } else {
+          // Client doesn't exist yet - inviteTrainerToManage requires clientId
+          // For now, require client to have an account
+          throw new Error("Client must have an account to be invited. Please ask them to create an account first.");
+        }
         toast.success("Client invitation sent successfully");
       }
 
