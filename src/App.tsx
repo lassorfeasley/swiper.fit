@@ -233,6 +233,7 @@ function AppContent() {
             <Route path="/dashboard" element={<Home />} />
             <Route path="/train" element={<Train />} />
             <Route path="/routines" element={<Routines />} />
+            <Route path="/history" element={<History />} />
             <Route path="/workout/active" element={<ActiveWorkout />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/account" element={<Account />} />
