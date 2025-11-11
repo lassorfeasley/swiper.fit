@@ -20,11 +20,12 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import { toast } from "@/lib/toastReplacement";
-import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks, Bookmark } from "lucide-react";
+import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 import ActionPill from "@/components/shared/ActionPill";
 
 import { useAccount } from "@/contexts/AccountContext";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 // Individual Exercise Card Component
 const ExerciseCompletedCard = ({ exercise, setLog }) => {
@@ -689,10 +690,10 @@ const CompletedWorkout = () => {
     setSaving(true);
     try {
       const newId = await cloneWorkoutForCurrentUser();
-      toast.success('Workout saved to your account');
+      toast.success('Routine copied to your account');
       navigate(`/history/workout/${newId}`);
     } catch (e) {
-      toast.error(e?.message || 'Failed to save workout');
+      toast.error(e?.message || 'Failed to copy routine');
     } finally {
       setSaving(false);
       setAddDialogOpen(false);
@@ -928,21 +929,29 @@ const CompletedWorkout = () => {
         {!isOwner && workout && (
           <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
             <div 
-              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
+              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer focus:outline-none focus-visible:outline-none active:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 select-none border-2 border-transparent active:border-transparent"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                userSelect: 'none',
+                transform: 'none',
+                willChange: 'auto',
+                touchAction: 'manipulation'
+              }}
               onClick={openAddDialog}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog(); } }}
-              aria-label={user ? "Add workout to my account" : "Create account or login to save workout"}
+              aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
             >
               <div className="p-2.5 flex justify-start items-center gap-2.5">
                 <div className="relative">
-                  <Bookmark className="w-6 h-6" stroke="white" strokeWidth="2" />
+                  <ListChecks className="w-6 h-6" stroke="white" strokeWidth="2" />
                 </div>
               </div>
               <div className="flex justify-center items-center gap-5">
                 <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                  {user ? "Add workout to my account" : "Create account or login to save workout"}
+                  {user ? "Add routine to my account" : "Create account or login to add routine"}
                 </div>
               </div>
             </div>
@@ -1010,25 +1019,32 @@ const CompletedWorkout = () => {
           <SwiperDialog
             open={addDialogOpen}
             onOpenChange={setAddDialogOpen}
-            title="Add workout to my account?"
+            title="Add routine to my account"
             hideFooter
           >
             <div className="grid grid-cols-1 gap-3 pb-3 w-full">
-              <SwiperButton
-                variant="outline"
-                onClick={handleAddAndStart}
-                disabled={saving}
-                className="w-full"
-              >
-                {workout?.routine_id ? 'View routine' : 'Add to my workouts'}
-              </SwiperButton>
               <SwiperButton
                 variant="outline"
                 onClick={handleAddWorkoutToAccount}
                 disabled={saving}
                 className="w-full"
               >
-                Add to my account
+                Copy to my account
+              </SwiperButton>
+              <SwiperButton
+                variant="outline"
+                onClick={() => {
+                  if (workout?.routine_id) {
+                    navigate(`/routines/${workout.routine_id}`);
+                  } else {
+                    toast.error('This workout is not associated with a routine');
+                  }
+                  setAddDialogOpen(false);
+                }}
+                disabled={saving || !workout?.routine_id}
+                className="w-full"
+              >
+                View full routine
               </SwiperButton>
             </div>
           </SwiperDialog>
@@ -1059,6 +1075,12 @@ const CompletedWorkout = () => {
           </SwiperDialog>
         </>
       )}
+
+      {/* Loading overlay when copying routine */}
+      <LoadingOverlay
+        isLoading={saving}
+        message="Copying routine to your account"
+      />
     </>
   );
 };

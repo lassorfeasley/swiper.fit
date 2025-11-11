@@ -1109,14 +1109,14 @@ const RoutineBuilder = () => {
           <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Routine Image */}
             <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
-              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col justify-center items-center overflow-hidden">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col overflow-hidden">
                 <img 
                   data-layer="open-graph-image"
                   className="OpenGraphImage w-full h-auto" 
                   src={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
                   alt={`${programName} routine`}
                   draggable={false}
-                  style={{ maxHeight: '256px', objectFit: 'contain' }}
+                  style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
                   onError={(e) => {
                     console.log('Image failed to load:', (e.target as HTMLImageElement).src);
                     console.log('Falling back to default image');

@@ -216,14 +216,14 @@ const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(({
                   </React.Fragment>
                 ))}
                 {titleRightText && (
-                  <span className="text-sm text-neutral-500 ml-2">{titleRightText}</span>
+                  <span className="text-sm text-neutral-500">{titleRightText}</span>
                 )}
               </div>
             ) : (
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg font-semibold truncate">{title}</h1>
                 {titleRightText && (
-                  <span className="text-sm text-neutral-500 ml-2">{titleRightText}</span>
+                  <span className="text-sm text-neutral-500">{titleRightText}</span>
                 )}
               </div>
             )}
