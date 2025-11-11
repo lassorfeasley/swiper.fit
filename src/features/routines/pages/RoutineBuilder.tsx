@@ -1270,8 +1270,8 @@ const RoutineBuilder = () => {
             </CardWrapper>
           </PageSectionWrapper>
         ))}
-        </div>
-        <SwiperForm
+            </div>
+            <SwiperForm
           open={showAddExercise || !!editingExercise}
           onOpenChange={(open) => {
             handleModalClose();
@@ -1329,7 +1329,6 @@ const RoutineBuilder = () => {
             </div>
           </div>
         </SwiperForm>
-            </div>
           </>
         )}
         
