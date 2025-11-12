@@ -60,7 +60,7 @@ const ToggleGroupItem = React.forwardRef<
 >(({ className, variant, size, ...props }, ref) => (
   <ToggleGroupPrimitive.Item
     ref={ref}
-    className={cn(toggleGroupVariants({ variant, size, className }))}
+    className={cn(toggleGroupVariants({ variant, size }), className)}
     {...props} />
 ))
 

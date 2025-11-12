@@ -16,7 +16,6 @@ import NumericInput from "@/components/shared/inputs/NumericInput";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
 import SearchField from "@/components/shared/inputs/SearchField";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
-import SectionNav from "@/components/shared/SectionNav";
 import { ActionCard } from "@/components/shared/ActionCard";
 import ActionPill from "@/components/shared/ActionPill";
 // import StaticCard from "@/components/organisms/static-card";
@@ -57,7 +56,6 @@ export default function ComponentsGallery() {
   const [search, setSearch] = React.useState("");
   const [num, setNum] = React.useState(5);
   const [secs, setSecs] = React.useState(75);
-  const [section, setSection] = React.useState("warmup");
   const [toggle, setToggle] = React.useState("a");
   const [textVal, setTextVal] = React.useState("Sample value");
 
@@ -203,7 +201,6 @@ export default function ComponentsGallery() {
                 value={toggle}
                 onValueChange={setToggle}
               />
-              <SectionNav value={section} onChange={setSection} />
             </div>
           </div>
         </section>
@@ -295,7 +292,7 @@ export default function ComponentsGallery() {
         </section>
       )
     },
-  ]), [checked, date, num, openDialog, openForm, openSheet, radioValue, section, secs, textVal, toggle]);
+  ]), [checked, date, num, openDialog, openForm, openSheet, radioValue, secs, textVal, toggle]);
 
   const [activeKey, setActiveKey] = React.useState(demos[0]?.key);
   const filtered = demos.filter(d => d.label.toLowerCase().includes(search.toLowerCase()));

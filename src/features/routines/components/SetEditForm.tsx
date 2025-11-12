@@ -114,7 +114,7 @@ const FormContent = ({
         <div className="self-stretch flex flex-col justify-start items-start gap-4">
           <div data-field-label="true" className="w-full max-w-[500px] flex flex-col justify-start items-center gap-2">
             <div className="self-stretch justify-start text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Set type</div>
-            <div className="self-stretch rounded border border-neutral-300 inline-flex justify-start items-center overflow-hidden">
+            <div className="self-stretch inline-flex justify-start items-center">
               <ToggleInput
                 value={set_type}
                 onValueChange={handleSetTypeChange}
@@ -145,7 +145,7 @@ const FormContent = ({
         <div className="self-stretch flex flex-col justify-start items-start gap-4">
           <div data-field-label="true" className="w-full max-w-[500px] flex flex-col justify-start items-center gap-2">
             <div className="self-stretch justify-start text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Weight unit</div>
-            <div className="self-stretch rounded border border-neutral-300 inline-flex justify-start items-center overflow-hidden">
+            <div className="self-stretch inline-flex justify-start items-center">
               <ToggleInput
                 value={unit}
                 onValueChange={handleUnitChange}

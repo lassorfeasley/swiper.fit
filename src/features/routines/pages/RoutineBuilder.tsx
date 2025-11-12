@@ -12,7 +12,6 @@ import SwiperDialog from "@/components/shared/SwiperDialog";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
-import SectionNav from "@/components/shared/SectionNav";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";

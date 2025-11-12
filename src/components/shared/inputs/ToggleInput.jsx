@@ -35,9 +35,10 @@ const ToggleInput = ({
             key={option.value}
             value={option.value}
             className={cn(
-              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 text-body border-0 rounded-none shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 data-[state=on]:bg-neutral-300 data-[state=off]:bg-white",
+              "flex-1 h-7 flex justify-center items-center gap-2.5 p-0 text-body border-0 shadow-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 data-[state=on]:bg-neutral-300 data-[state=off]:bg-white",
               disabled ? "text-neutral-300 cursor-not-allowed" : "text-slate-600",
-              idx !== options.length - 1 && "border-r border-neutral-300"
+              idx !== options.length - 1 && "border-r border-neutral-300",
+              "rounded-none"
             )}
             style={{ minWidth: 0 }}
             tabIndex={0}
