@@ -22,6 +22,7 @@ import { LoggedOutNav } from "@/features/auth";
 import Account from "./pages/Account/Account.tsx";
 import EmailTest from "./pages/EmailTest";
 import ButtonTest from "./pages/ButtonTest";
+import ComponentsGallery from "./pages/ComponentsGallery";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
@@ -242,6 +243,7 @@ function AppContent() {
               <>
                 <Route path="/email-test" element={<EmailTest />} />
                 <Route path="/button-test" element={<ButtonTest />} />
+                <Route path="/components-gallery" element={<ComponentsGallery />} />
               </>
             )}
 

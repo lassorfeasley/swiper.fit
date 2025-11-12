@@ -12,7 +12,6 @@ import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import AppLayout from "@/components/layout/AppLayout";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import ActiveWorkoutNav from "../components/ActiveWorkoutNav";
-import SwiperProgress from "@/features/workout/components/SwiperProgress";
 import { toast } from "@/lib/toastReplacement";
  
 import { useAccount } from "@/contexts/AccountContext";
@@ -390,11 +389,6 @@ const ActiveWorkoutContent: React.FC = () => {
         confirmText="End workout"
         cancelText="Keep working out"
       />
-
-      {/* Bottom progress bar is now redundant; header shows progress */}
-      {/* <SwiperProgress completedSets={completedSets} totalSets={totalSets} /> */}
-
-      
     </AppLayout>
   );
 };

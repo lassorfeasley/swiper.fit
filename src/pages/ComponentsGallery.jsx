@@ -1,26 +1,22 @@
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button as UiButton } from "@/components/shadcn/button";
-import { Button as AppButton } from "@/components/shadcn/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/shadcn/dropdown-menu";
-import { Switch as AtomSwitch } from "@/components/shadcn/switch";
-import { Switch as UiSwitch } from "@/components/shadcn/switch";
+import { Switch } from "@/components/shadcn/switch";
 import { SwiperButton } from "@/components/shared/SwiperButton";
 import { SwiperCard, SwiperCardContent, SwiperCardDescription, SwiperCardFooter, SwiperCardHeader, SwiperCardTitle } from "@/components/shared/SwiperCard";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 import { SwiperSheet } from "@/components/shared/SwiperSheet";
 import SwiperForm, { SwiperFormSection } from "@/components/shared/SwiperForm";
-import SwiperProgress from "@/features/workout/components/SwiperProgress";
 import DurationInput from "@/components/shared/inputs/DurationInput";
 import NumericInput from "@/components/shared/inputs/NumericInput";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
 import SearchField from "@/components/shared/inputs/SearchField";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import SectionNav from "@/components/shared/SectionNav";
-import SetBadge from "@/components/shared/SetBadge";
 import { ActionCard } from "@/components/shared/ActionCard";
 import ActionPill from "@/components/shared/ActionPill";
 // import StaticCard from "@/components/organisms/static-card";
@@ -78,7 +74,6 @@ export default function ComponentsGallery() {
             <UiButton variant="secondary">Secondary</UiButton>
             <UiButton variant="outline">Outline</UiButton>
             <UiButton variant="destructive">Destructive</UiButton>
-            <AppButton>App Button</AppButton>
             <SwiperButton>Swiper Button</SwiperButton>
           </div>
         </section>
@@ -142,12 +137,8 @@ export default function ComponentsGallery() {
           <h2 className="text-lg font-semibold text-neutral-700">Switches</h2>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-600">Atom</span>
-              <AtomSwitch checked={checked} onCheckedChange={setChecked} />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-600">UI</span>
-              <UiSwitch checked={checked} onCheckedChange={setChecked} />
+              <span className="text-sm text-neutral-600">Base Switch</span>
+              <Switch checked={checked} onCheckedChange={setChecked} />
             </div>
             <div className="flex-1">
               <SwiperFormSwitch label="Form Switch" checked={checked} onCheckedChange={setChecked} />
@@ -213,7 +204,6 @@ export default function ComponentsGallery() {
                 onValueChange={setToggle}
               />
               <SectionNav value={section} onChange={setSection} />
-              <SetBadge reps={10} weight={135} unit="lbs" />
             </div>
           </div>
         </section>
@@ -302,29 +292,6 @@ export default function ComponentsGallery() {
             <ActionCard text="Primary action" onClick={() => {}} />
             <ActionPill label="Play" Icon={Play} onClick={() => {}} />
           </div>
-        </section>
-      )
-    },
-    {
-      key: 'staticCard',
-      label: 'Static Card (Organism)',
-      render: () => (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-neutral-700">Static Card (Organism)</h2>
-          <div className="space-y-3">
-            {/* <StaticCard id={1} name="Upper Body Strength" labels={["Push", "Pull"]} count={6} duration="45m" onClick={() => {}} /> */}
-          </div>
-        </section>
-      )
-    },
-    {
-      key: 'progress',
-      label: 'Progress Bar',
-      render: () => (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-neutral-700">Progress Bar</h2>
-          <p className="text-sm text-neutral-600">Appears fixed at bottom; included for completeness.</p>
-          <SwiperProgress completedSets={3} totalSets={10} />
         </section>
       )
     },

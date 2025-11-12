@@ -28,4 +28,3 @@ export { default as SwiperCombobox } from './SwiperCombobox.tsx';
 export { default as ActionCard } from './ActionCard.tsx';
 export { default as ActionPill } from './ActionPill.tsx';
 export { default as SectionNav } from './SectionNav.tsx';
-export { default as SetBadge } from './SetBadge.tsx';
