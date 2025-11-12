@@ -1065,33 +1065,14 @@ const Account = () => {
         toast.success("Trainer invitation sent successfully");
       } else {
         // When inviting a client, YOU are the trainer inviting THEM as client
-        // Result: trainer manages client's account (owner=client, delegate=trainer)
-        // inviteTrainerToManage creates: owner=clientId, delegate=trainer
-        // Parameters: (trainerEmail, clientId, permissions)
-        if (!user.email) {
-          throw new Error("Unable to send invitation: trainer email not found");
-        }
-        
+        // Result: trainer manages client's account (owner=trainer, delegate=client)
+        // inviteClientToBeManaged creates: owner=trainerId, delegate=client
+        // Parameters: (clientEmail, trainerId, permissions)
         const clientEmail = dialogEmail.trim();
-        // Look up client by email to get their ID
-        const { data: clientProfiles, error: clientLookupError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", clientEmail.toLowerCase())
-          .limit(1);
         
-        if (clientLookupError) {
-          throw new Error("Failed to look up client");
-        }
+        // inviteClientToBeManaged handles both existing users and non-members internally
+        await inviteClientToBeManaged(clientEmail, user.id, dialogPermissions);
         
-        if (clientProfiles?.length) {
-          // Client exists, pass trainer's email and client's ID
-          await inviteTrainerToManage(user.email, clientProfiles[0].id, dialogPermissions);
-        } else {
-          // Client doesn't exist yet - inviteTrainerToManage requires clientId
-          // For now, require client to have an account
-          throw new Error("Client must have an account to be invited. Please ask them to create an account first.");
-        }
         toast.success("Client invitation sent successfully");
       }
 

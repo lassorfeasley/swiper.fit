@@ -248,6 +248,7 @@ function AppContent() {
           </Route>
 
           {/* Unified URL routes - work for both owners and viewers */}
+          <Route path="/routines/:routineId/configure" element={<RoutineBuilder />} />
           <Route path="/routines/:routineId" element={<RoutineBuilder />} />
           <Route path="/history/:userId" element={<History />} />
           <Route path="/history/workout/:workoutId" element={<CompletedWorkout />} />
@@ -255,7 +256,7 @@ function AppContent() {
       </main>
 
       {/* Show normal navigation only when no workout is active and not delegated */}
-      {isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && <MobileNav />}
+      {session && isAuthenticatedRoute && !hideNavForPublic && !isWorkoutActive && !isDelegated && !isProgramDetailOrEditOrCreateOrLoginPage && navBarVisible && <MobileNav />}
       {/* SideBarNav is now rendered by AppLayout on each page, so remove global instance */}
     </div>
     </>

@@ -14,6 +14,7 @@ interface SwiperFormSwitchProps {
   actionPillColor?: "orange" | "neutral" | "red" | "green" | "blue";
   actionPillIconColor?: "neutral" | "red" | "green" | "blue" | "white" | "black";
   actionPillFill?: boolean;
+  labelClassName?: string;
 }
 
 /**
@@ -33,7 +34,8 @@ const SwiperFormSwitch: React.FC<SwiperFormSwitchProps> = ({
   Icon,
   actionPillColor = "neutral",
   actionPillIconColor = "neutral",
-  actionPillFill = true
+  actionPillFill = true,
+  labelClassName
 }) => {
   const switchId = id || `swiper-form-switch-${label?.toLowerCase().replace(/\s+/g, "-") || "input"}`;
   const containerRef = useRef(null);
@@ -73,7 +75,10 @@ const SwiperFormSwitch: React.FC<SwiperFormSwitchProps> = ({
       {label && (
         <label
           htmlFor={switchId}
-          className="flex-1 text-left text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight select-none"
+          className={cn(
+            "flex-1 text-left text-neutral-neutral-700 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight select-none",
+            labelClassName
+          )}
         >
           {label}
         </label>

@@ -255,7 +255,7 @@ const History = () => {
         .select("can_review_history")
         .eq("owner_user_id", targetUserId)
         .eq("delegate_user_id", user?.id)
-        .eq("revoked_at", null)
+        .is("revoked_at", null)
         .single();
 
       if (shareError || !shareData?.can_review_history) {

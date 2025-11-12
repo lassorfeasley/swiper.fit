@@ -21,14 +21,11 @@ import { ActionCard } from "@/components/shared/ActionCard";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useAccount } from "@/contexts/AccountContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { toast } from "@/lib/toastReplacement";
 import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Copy, Blend, X, ListChecks, Bookmark } from "lucide-react";
 import { useSpacing } from "@/hooks/useSpacing";
-import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { OGImageWrapper } from "@/components/shared/OGImageWrapper";
 
 const RoutineBuilder = () => {
   const { routineId } = useParams();
@@ -38,7 +35,6 @@ const RoutineBuilder = () => {
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const { user } = useAuth();
-  const { setNavBarVisible } = useNavBarVisibility();
   const isMobile = useIsMobile();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +71,6 @@ const RoutineBuilder = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [isArchived, setIsArchived] = useState(false);
   
   // Use spacing hook for consistent layout
   const spacing = useSpacing('SIMPLE_LIST');
@@ -121,18 +116,6 @@ const RoutineBuilder = () => {
     setPageName("RoutineBuilder");
   }, [setPageName]);
 
-  // Hide mobile nav when in viewer mode (non-owner viewing routine) or archived mode
-  useEffect(() => {
-    if (isViewerMode || isArchived) {
-      setNavBarVisible(false);
-    } else {
-      setNavBarVisible(true);
-    }
-    return () => {
-      setNavBarVisible(true);
-    };
-  }, [isViewerMode, isArchived, setNavBarVisible]);
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -150,7 +133,7 @@ const RoutineBuilder = () => {
       // Fetch routine with user_id to determine ownership
       const { data: programData } = await supabase
         .from("routines")
-        .select("routine_name, og_image_url, user_id, created_by, shared_by, is_archived")
+        .select("routine_name, og_image_url, user_id, created_by, shared_by")
         .eq("id", routineId)
         .single();
         
@@ -161,7 +144,6 @@ const RoutineBuilder = () => {
       
       setProgramName(programData?.routine_name || "");
       setProgram(programData);
-      setIsArchived(programData?.is_archived || false);
       console.log('Program data:', programData);
       console.log('OG Image URL:', programData?.og_image_url);
 
@@ -609,32 +591,8 @@ const RoutineBuilder = () => {
     setAddDialogOpen(true);
   };
 
-  const handleRestoreRoutine = async () => {
-    if (!user || !routineId) return;
-    
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("routines")
-        .update({ is_archived: false })
-        .eq("id", routineId)
-        .eq("user_id", user.id);
-      
-      if (error) throw error;
-      
-      setIsArchived(false);
-      toast.success('Routine restored');
-      // Refresh the routine data by reloading the page
-      window.location.reload();
-    } catch (e) {
-      toast.error(e?.message || 'Failed to restore routine');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleBack = () => {
-    if (!isViewerMode && !isArchived) {
+    if (!isViewerMode) {
       saveOrder();
     }
     if (location.state && location.state.fromPublicImport) {
@@ -1137,99 +1095,50 @@ const RoutineBuilder = () => {
         showPlusButton={false}
         showShare={true}
         onShare={shareRoutine}
-        showStartWorkoutIcon={!isViewerMode && !isArchived && !isDelegated}
+        showStartWorkoutIcon={!isViewerMode && !isDelegated}
         onStartWorkoutIcon={handleStartWorkout}
-        showSettings={!isViewerMode && !isArchived}
+        showSettings={!isViewerMode}
         onSettings={() => setEditProgramOpen(true)}
-        showDelete={!isViewerMode && !isArchived}
+        showDelete={!isViewerMode}
         onDelete={() =>	setDeleteProgramConfirmOpen(true)}
-        showSidebar={!isViewerMode && !isArchived && !isDelegated && !isMobile}
+        showSidebar={!isViewerMode && !isDelegated && !isMobile}
         sharingSection={undefined}
       >
-        {(() => {
-          const userIsOwner = user && program?.user_id === user.id;
-          const isArchivedMode = isArchived && userIsOwner;
-          
-          if (isArchivedMode) {
-            /* ARCHIVED MODE: Read-only view with restore option for owners */
-            return (
-              <div className="flex flex-col min-h-screen px-5" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
-                {/* Routine Image */}
-                <OGImageWrapper
-                  imageUrl={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`}
-                  fallbackUrl="/images/default-open-graph.png"
+        {isViewerMode ? (
+          /* VIEWER MODE: Read-only view for non-owners */
+          <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
+            {/* Routine Image */}
+            <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col overflow-hidden">
+                <img 
+                  data-layer="open-graph-image"
+                  className="OpenGraphImage w-full h-auto" 
+                  src={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
                   alt={`${programName} routine`}
-                  routineName={programName}
-                  onRoutineClick={() => navigate('/history', { state: { filterRoutine: programName } })}
-                  showRoutineLink={!!programName}
-                  className="mb-3"
+                  draggable={false}
+                  style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    console.log('Image failed to load:', (e.target as HTMLImageElement).src);
+                    console.log('Falling back to default image');
+                    (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
+                  }}
+                  onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
                 />
-                
-                {/* Exercise list (read-only) */}
-                <PageSectionWrapper
-                  section="workout"
-                  id={`section-workout`}
-                  deckGap={12}
-                  deckVariant="cards"
-                  reorderable={false}
-                  items={exercises}
-                  className="flex-1"
-                  applyPaddingOnParent={true}
-                  style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0, maxWidth: '500px', minWidth: '0px' }}
+                <div 
+                  data-layer="routine-link"
+                  className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                  onClick={shareRoutine}
+                  style={{ cursor: "pointer" }}
                 >
-                {loading ? (
-                  <div className="text-gray-400 text-center py-8">Loading...</div>
-                ) : exercises.map((ex) => (
-                  <ExerciseCard
-                    key={ex.id}
-                    exerciseName={ex.name}
-                    setConfigs={ex.setConfigs}
-                    hideGrip
-                    addTopBorder
-                  />
-                ))}
-                </PageSectionWrapper>
-                
-                {/* Persistent Restore Button - Absolutely positioned at bottom */}
-                <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
-                  <div 
-                    className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-blue-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer"
-                    onClick={handleRestoreRoutine}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRestoreRoutine(); } }}
-                    aria-label="Restore routine"
-                  >
-                    <div className="p-2.5 flex justify-start items-center gap-2.5">
-                      <div className="relative">
-                        <Bookmark className="w-6 h-6" stroke="white" strokeWidth="2" />
-                      </div>
-                    </div>
-                    <div className="flex justify-center items-center gap-5">
-                      <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                        {saving ? "Restoring..." : "Restore routine"}
-                      </div>
-                    </div>
+                  <div data-layer="routine-name" className="ChestAndTriceps justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                    {programName} 
+                  </div>
+                  <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                    <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
                   </div>
                 </div>
               </div>
-            );
-          }
-          
-          if (isViewerMode) {
-            /* VIEWER MODE: Read-only view for non-owners */
-            return (
-              <div className="flex flex-col min-h-screen px-5" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
-            {/* Routine Image */}
-            <OGImageWrapper
-              imageUrl={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`}
-              fallbackUrl="/images/default-open-graph.png"
-              alt={`${programName} routine`}
-              routineName={programName}
-              onRoutineClick={shareRoutine}
-              showRoutineLink={!!programName}
-              className="mb-3"
-            />
+            </div>
             
             {/* Exercise list (read-only) */}
             <PageSectionWrapper
@@ -1279,23 +1188,45 @@ const RoutineBuilder = () => {
               </div>
             </div>
           </div>
-            );
-          }
-          
+        ) : (
           /* OWNER MODE: Full editor for routine owners */
-          return (
-            <>
-            <div className="flex flex-col min-h-screen px-5" style={{ paddingTop: spacing.paddingTop }}>
+          <>
+            <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
               {/* Routine Image and Link Section */}
-              <OGImageWrapper
-                imageUrl={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`}
-                fallbackUrl="/images/default-open-graph.png"
+          <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
+            <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
+              <img 
+                data-layer="open-graph-image"
+                className="OpenGraphImage w-full h-auto" 
+                src={program?.og_image_url || "https://placehold.co/500x262"} 
                 alt={`${programName} routine`}
-                routineName={programName}
-                onRoutineClick={() => navigate('/history', { state: { filterRoutine: programName } })}
-                showRoutineLink={!!programName}
-                className="mb-3"
+                draggable={false}
+                style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
+                onError={(e) => {
+                  console.log('Image failed to load:', program?.og_image_url);
+                  (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
+                }}
+                onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
               />
+              <div 
+                data-layer="routine-link"
+                className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+                style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/history', { state: { filterRoutine: programName } }); } }}
+                aria-label="View routine history"
+              >
+                <div data-layer="routine-name" className="justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                  {programName} 
+                </div>
+                <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                  <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
+                </div>
+              </div>
+            </div>
+          </div>
           
           {exercisesBySection.map(({ section, exercises: secExercises }, index) => (
           <PageSectionWrapper
@@ -1312,7 +1243,7 @@ const RoutineBuilder = () => {
             backgroundClass="bg-transparent"
             showPlusButton={false}
             applyPaddingOnParent={true}
-            style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0, maxWidth: spacing.maxWidth, minWidth: '0px' }}
+            style={{ paddingLeft: spacing.paddingX, paddingRight: spacing.paddingX, paddingBottom: 0, maxWidth: spacing.maxWidth, minWidth: '0px' }}
           >
           {loading ? (
               <div className="text-gray-400 text-center py-8">Loading...</div>
@@ -1399,8 +1330,7 @@ const RoutineBuilder = () => {
           </div>
         </SwiperForm>
           </>
-          );
-        })()}
+        )}
         
       </AppLayout>
 
@@ -1576,11 +1506,6 @@ const RoutineBuilder = () => {
         </>
       )}
 
-      {/* Loading overlay when restoring archived routine */}
-      <LoadingOverlay
-        isLoading={saving && isArchived}
-        message="Restoring archived routine"
-      />
     </>
   );
 };

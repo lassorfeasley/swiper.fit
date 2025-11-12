@@ -73,6 +73,14 @@ export async function inviteClientToBeManaged(
     const trainerProfile = trainerProfiles[0] as Profile;
     const inviterName = `${trainerProfile.first_name} ${trainerProfile.last_name}`.trim() || trainerProfile.email;
 
+    // VALIDATION: Prevent self-invitation by email
+    const normalizedClientEmail = clientEmail.trim().toLowerCase();
+    const normalizedTrainerEmail = trainerProfile.email.trim().toLowerCase();
+    
+    if (normalizedClientEmail === normalizedTrainerEmail) {
+      throw new Error("You cannot invite yourself");
+    }
+
     // Fetch the client's (invitee's) profile
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
@@ -87,16 +95,21 @@ export async function inviteClientToBeManaged(
 
     if (!profiles?.length) {
       console.log(`[inviteClientToBeManaged] No user found, creating non-member invitation for: ${clientEmail}`);
+      
+      // Check for existing pending invitation by email, regardless of request_type
+      // This catches old incorrect records and prevents duplicates
+      const normalizedClientEmail = clientEmail.trim().toLowerCase();
+      
       const { count: pendingDupCount } = await supabase
         .from("account_shares")
         .select("id", { count: "exact", head: true })
         .eq("owner_user_id", trainerId)
-        .is("delegate_user_id", null)
-        .eq("delegate_email", clientEmail.trim().toLowerCase())
-        .eq("request_type", "trainer_invite")
+        .eq("delegate_email", normalizedClientEmail)
         .eq("status", "pending")
         .is("revoked_at", null);
+      
       if ((pendingDupCount || 0) > 0) {
+        console.log(`[inviteClientToBeManaged] Duplicate pending invitation found for email ${normalizedClientEmail}`);
         throw new Error("A pending invitation already exists for this email");
       }
 
@@ -135,17 +148,22 @@ export async function inviteClientToBeManaged(
     const clientProfile = profiles[0] as Profile;
     console.log(`[inviteClientToBeManaged] User found, creating member invitation for: ${clientProfile.email}`);
 
-    // Check for existing pending invitation (excluding revoked ones)
+    // VALIDATION: Prevent self-invitation by ID
+    if (clientProfile.id === trainerId) {
+      throw new Error("You cannot invite yourself");
+    }
+
+    // Check for existing pending invitation in BOTH directions, regardless of request_type
+    // This catches old incorrect records and prevents duplicates
     const { count: pendingDupCount } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", trainerId)
-      .eq("delegate_user_id", clientProfile.id)
-      .eq("request_type", "trainer_invite")
+      .or(`and(owner_user_id.eq.${trainerId},delegate_user_id.eq.${clientProfile.id}),and(owner_user_id.eq.${clientProfile.id},delegate_user_id.eq.${trainerId})`)
       .eq("status", "pending")
       .is("revoked_at", null);
     
     if ((pendingDupCount || 0) > 0) {
+      console.log(`[inviteClientToBeManaged] Duplicate pending invitation found between trainer ${trainerId} and client ${clientProfile.id}`);
       throw new Error("A pending invitation already exists for this user");
     }
 
@@ -227,6 +245,14 @@ export async function inviteTrainerToManage(
     const clientProfile = clientProfiles[0] as Profile;
     const inviterName = `${clientProfile.first_name} ${clientProfile.last_name}`.trim() || clientProfile.email;
 
+    // VALIDATION: Prevent self-invitation by email
+    const normalizedTrainerEmail = trainerEmail.trim().toLowerCase();
+    const normalizedClientEmail = clientProfile.email.trim().toLowerCase();
+    
+    if (normalizedTrainerEmail === normalizedClientEmail) {
+      throw new Error("You cannot invite yourself");
+    }
+
     // Fetch the trainer's (invitee's) profile
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
@@ -288,6 +314,11 @@ export async function inviteTrainerToManage(
     // Trainer exists, create member invitation
     const trainerProfile = profiles[0] as Profile;
     console.log(`[inviteTrainerToManage] Trainer found, creating member invitation for: ${trainerProfile.email}`);
+
+    // VALIDATION: Prevent self-invitation by ID
+    if (trainerProfile.id === clientId) {
+      throw new Error("You cannot invite yourself");
+    }
 
     // Check for existing pending invitation (excluding revoked ones)
     const { count: pendingDupCount } = await supabase
@@ -365,6 +396,24 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
 
     if (!invitation) {
       throw new Error("Invitation not found");
+    }
+
+    // Get current user to validate they're the delegate
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // VALIDATION: Only delegate can accept
+    const isDelegate = invitation.delegate_user_id === currentUser.id;
+    const isOwner = invitation.owner_user_id === currentUser.id;
+
+    if (!isDelegate) {
+      throw new Error("Only the person being invited can accept this invitation");
+    }
+
+    if (isOwner) {
+      throw new Error("You cannot accept your own invitation");
     }
 
     // Check if there's already an active relationship in the same direction (prevent duplicates)
@@ -508,8 +557,8 @@ export async function removeShare(shareId: string): Promise<void> {
 
 export async function getPendingInvitations(userId: string): Promise<AccountShare[]> {
   try {
-    // Get invitations where user is the delegate (being invited to manage someone)
-    // OR where user is the owner (being asked to let someone manage their account)
+    // ONLY get invitations where user is the delegate (being invited)
+    // NOT where user is the owner (they sent the invitation - those are outgoing)
     const { data, error } = await supabase
       .from("account_shares")
       .select(`
@@ -521,7 +570,8 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
           email
         )
       `)
-      .or(`delegate_user_id.eq.${userId},owner_user_id.eq.${userId}`)
+      .eq("delegate_user_id", userId)
+      .neq("owner_user_id", userId)  // Extra safety: exclude self-invitations
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 

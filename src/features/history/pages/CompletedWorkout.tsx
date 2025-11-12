@@ -25,9 +25,7 @@ import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 import ActionPill from "@/components/shared/ActionPill";
 
 import { useAccount } from "@/contexts/AccountContext";
-import { useNavBarVisibility } from "@/contexts/NavBarVisibilityContext";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { OGImageWrapper } from "@/components/shared/OGImageWrapper";
 
 // Individual Exercise Card Component
 const ExerciseCompletedCard = ({ exercise, setLog }) => {
@@ -132,7 +130,6 @@ const CompletedWorkout = () => {
   const [saving, setSaving] = useState(false);
 
   const { isDelegated, actingUser, returnToSelf } = useAccount();
-  const { setNavBarVisible } = useNavBarVisibility();
   const showSidebar = isOwner && !isDelegated;
   // Helper to format delegate display name
   const formatUserDisplay = (profile) => {
@@ -178,18 +175,6 @@ const CompletedWorkout = () => {
     setIsOwner(user && workout && workout.user_id === currentUser?.id);
   }, [user, currentUser, workout]);
 
-  // Hide mobile nav when viewing someone else's workout (viewer mode) so CTA is visible
-  useEffect(() => {
-    if (!isOwner) {
-      setNavBarVisible(false);
-    } else {
-      setNavBarVisible(true);
-    }
-    return () => {
-      setNavBarVisible(true);
-    };
-  }, [isOwner, setNavBarVisible]);
-
   useEffect(() => {
     const fetchData = async () => {
       console.log('[CompletedWorkout] Fetching workout with ID:', workoutId);
@@ -198,7 +183,7 @@ const CompletedWorkout = () => {
       let workoutQuery = supabase
         .from("workouts")
         // Use the explicit foreign-key relationship name to embed routine data
-        .select("*, routines!fk_workouts__routines(routine_name)")
+        .select("*, routines!workouts_routine_id_fkey(routine_name)")
         .eq("id", workoutId);
 
       const { data: workoutData, error: workoutError } = await workoutQuery.single();
@@ -211,8 +196,26 @@ const CompletedWorkout = () => {
         return;
       }
 
-      // Access control: Workouts are no longer private - all users can view any workout
-      // No permission checks needed
+      // Access control: Check if user can view this workout
+      const isWorkoutOwner = user && workoutData.user_id === currentUser?.id;
+      
+      if (!isWorkoutOwner) {
+        // Not the owner - check if workout is publicly accessible
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("share_all_workouts")
+          .eq("id", workoutData.user_id)
+          .maybeSingle();
+        
+        if (!profileData?.share_all_workouts) {
+          // Workout is private and user is not owner
+          console.log('[CompletedWorkout] Workout is private, access denied');
+          toast.error("This workout is private");
+          setWorkout(null);
+          setLoading(false);
+          return;
+        }
+      }
 
       setWorkout(workoutData);
 
@@ -396,7 +399,7 @@ const CompletedWorkout = () => {
             // Fetch data needed for generation
             const { data: w } = await supabase
               .from('workouts')
-              .select(`*, routines!fk_workouts__routines(routine_name)`) 
+              .select(`*, routines!workouts_routine_id_fkey(routine_name)`) 
               .eq('id', id)
               .maybeSingle();
             if (!w) { continue; }
@@ -854,15 +857,39 @@ const CompletedWorkout = () => {
         ) : workout ? (
           <div className="w-full px-5 pb-10 flex flex-col justify-start items-start" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Image and Routine Label Section */}
-            <OGImageWrapper
-              imageUrl={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
-              fallbackUrl="/images/default-open-graph.png"
-              alt="Workout social preview"
-              routineName={workout?.routines?.routine_name || 'View routine'}
-              onRoutineClick={workout?.routine_id ? handleOpenRoutine : undefined}
-              showRoutineLink={!!workout?.routine_id}
-              className="mb-10"
-            />
+            <div className="self-stretch inline-flex flex-col justify-center items-center mb-10">
+              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
+                <img 
+                  data-layer="open-graph-image"
+                  className="OpenGraphImage w-full h-auto" 
+                  src={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
+                  alt="Workout social preview"
+                  draggable={false}
+                  style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
+                />
+                
+                {/* Routine Label Container */}
+                {workout?.routine_id && (
+                  <div 
+                    data-layer="routine-link"
+                    className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
+                    onClick={handleOpenRoutine}
+                    style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoutine(); } }}
+                    aria-label="Open routine"
+                  >
+                    <div className="justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
+                      {workout?.routines?.routine_name || 'View routine'}
+                    </div>
+                    <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
+                      <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Exercise List */}
             <div className="self-stretch flex flex-col justify-start items-center overflow-hidden">

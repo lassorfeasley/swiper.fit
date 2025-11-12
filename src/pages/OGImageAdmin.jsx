@@ -98,7 +98,7 @@ export default function OGImageAdmin() {
           completed_at,
           og_image_url,
           created_at,
-          routines!workouts_routine_id_fkey(routine_name)
+          routines!fk_workouts__routines(routine_name)
         `)
         .eq('is_active', false) // Only completed workouts
         .not('completed_at', 'is', null)
@@ -333,7 +333,7 @@ export default function OGImageAdmin() {
     // Load base workout info
     const { data: w, error: wErr } = await supabase
       .from('workouts')
-      .select('user_id, workout_name, completed_at, created_at, duration_seconds, routines!workouts_routine_id_fkey(routine_name)')
+      .select('user_id, workout_name, completed_at, created_at, duration_seconds, routines!fk_workouts__routines(routine_name)')
       .eq('id', workoutId)
       .single();
     if (wErr || !w) throw new Error('Workout not found');

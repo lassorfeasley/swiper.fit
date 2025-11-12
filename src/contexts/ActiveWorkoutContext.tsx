@@ -169,7 +169,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           .from('workouts')
           .select(`
             *,
-            routines!workouts_routine_id_fkey(
+            routines!fk_workouts__routines(
               routine_name
             ),
             sets!sets_workout_id_fkey(
@@ -196,7 +196,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 .from('workouts')
                 .select(`
                   *,
-                  routines!workouts_routine_id_fkey(
+                  routines!fk_workouts__routines(
                     routine_name
                   ),
                   sets!sets_workout_id_fkey(
@@ -208,7 +208,15 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 .order('created_at', { ascending: false })
                 .limit(1);
                 
-              if (!pausedAttempt.error) {
+              // Check for error - if column doesn't exist, error will be in pausedAttempt.error
+              if (pausedAttempt.error) {
+                const errorMsg = String(pausedAttempt.error.message || '');
+                if (errorMsg.includes('is_paused') || errorMsg.includes('column') || pausedAttempt.error.code === 'PGRST116') {
+                  console.log('[ActiveWorkout] is_paused column not available, skipping paused workout check');
+                } else {
+                  console.error('[ActiveWorkout] Error checking paused workouts:', pausedAttempt.error);
+                }
+              } else {
                 workouts = pausedAttempt.data as any[] | null;
               }
             } catch (pausedError) {
@@ -314,7 +322,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             .from('workouts')
             .select(`
               *,
-              routines!workouts_routine_id_fkey(
+              routines!fk_workouts__routines(
                 routine_name
               ),
               sets!sets_workout_id_fkey(
@@ -504,7 +512,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         .from('workouts')
         .select(`
           *,
-          routines!workouts_routine_id_fkey(
+          routines!fk_workouts__routines(
             routine_name
           ),
           workout_exercises!workout_exercises_workout_id_fkey(
