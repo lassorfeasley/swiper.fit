@@ -22,8 +22,8 @@ interface SwiperDialogProps {
   onCancel?: () => void;
   variant?: "default" | "destructive";
   className?: string;
-  confirmVariant?: "default" | "destructive" | "outline";
-  cancelVariant?: "default" | "destructive" | "outline";
+  confirmVariant?: "default" | "affirmative" | "destructive" | "outline" | "ghost";
+  cancelVariant?: "default" | "affirmative" | "destructive" | "outline" | "ghost";
   contentClassName?: string;
   containerClassName?: string;
   headerClassName?: string;

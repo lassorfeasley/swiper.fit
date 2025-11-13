@@ -36,11 +36,10 @@ export default function ButtonTest() {
             <h3 className="text-lg font-semibold text-neutral-700">Variants (Default Size)</h3>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-neutral-50 rounded-lg">
               <Button>Default</Button>
-              <Button variant="secondary">Secondary</Button>
+              <Button variant="affirmative">Affirmative</Button>
               <Button variant="outline">Outline</Button>
               <Button variant="destructive">Destructive</Button>
               <Button variant="ghost">Ghost</Button>
-              <Button variant="link">Link</Button>
             </div>
           </div>
 
@@ -60,7 +59,7 @@ export default function ButtonTest() {
             <h3 className="text-lg font-semibold text-neutral-700">Icon Buttons</h3>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-neutral-50 rounded-lg">
               <Button size="icon"><Play className="h-4 w-4" /></Button>
-              <Button size="icon" variant="secondary"><Pause className="h-4 w-4" /></Button>
+              <Button size="icon" variant="affirmative"><Pause className="h-4 w-4" /></Button>
               <Button size="icon" variant="outline"><SkipForward className="h-4 w-4" /></Button>
               <Button size="icon" variant="destructive"><X className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost"><Settings className="h-4 w-4" /></Button>
@@ -72,7 +71,7 @@ export default function ButtonTest() {
             <h3 className="text-lg font-semibold text-neutral-700">Buttons with Icons</h3>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-neutral-50 rounded-lg">
               <Button><Play className="h-4 w-4 mr-2" />Play</Button>
-              <Button variant="secondary"><Pause className="h-4 w-4 mr-2" />Pause</Button>
+              <Button variant="affirmative"><Pause className="h-4 w-4 mr-2" />Pause</Button>
               <Button variant="outline"><Plus className="h-4 w-4 mr-2" />Add</Button>
               <Button variant="destructive"><X className="h-4 w-4 mr-2" />Delete</Button>
               <Button variant="ghost"><Settings className="h-4 w-4 mr-2" />Settings</Button>
@@ -84,11 +83,10 @@ export default function ButtonTest() {
             <h3 className="text-lg font-semibold text-neutral-700">Disabled States</h3>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-neutral-50 rounded-lg">
               <Button disabled>Default</Button>
-              <Button variant="secondary" disabled>Secondary</Button>
+              <Button variant="affirmative" disabled>Affirmative</Button>
               <Button variant="outline" disabled>Outline</Button>
               <Button variant="destructive" disabled>Destructive</Button>
               <Button variant="ghost" disabled>Ghost</Button>
-              <Button variant="link" disabled>Link</Button>
             </div>
           </div>
 
@@ -101,7 +99,7 @@ export default function ButtonTest() {
                   <tr className="bg-neutral-100">
                     <th className="border border-neutral-300 p-3 text-left text-sm font-semibold">Size / Variant</th>
                     <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Default</th>
-                    <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Secondary</th>
+                    <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Affirmative</th>
                     <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Outline</th>
                     <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Destructive</th>
                     <th className="border border-neutral-300 p-3 text-center text-sm font-semibold">Ghost</th>
@@ -111,7 +109,7 @@ export default function ButtonTest() {
                   <tr>
                     <td className="border border-neutral-300 p-3 font-medium bg-neutral-50">Small</td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="sm">Button</Button></td>
-                    <td className="border border-neutral-300 p-3 text-center"><Button size="sm" variant="secondary">Button</Button></td>
+                    <td className="border border-neutral-300 p-3 text-center"><Button size="sm" variant="affirmative">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="sm" variant="outline">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="sm" variant="destructive">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="sm" variant="ghost">Button</Button></td>
@@ -119,7 +117,7 @@ export default function ButtonTest() {
                   <tr>
                     <td className="border border-neutral-300 p-3 font-medium bg-neutral-50">Default</td>
                     <td className="border border-neutral-300 p-3 text-center"><Button>Button</Button></td>
-                    <td className="border border-neutral-300 p-3 text-center"><Button variant="secondary">Button</Button></td>
+                    <td className="border border-neutral-300 p-3 text-center"><Button variant="affirmative">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button variant="outline">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button variant="destructive">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button variant="ghost">Button</Button></td>
@@ -127,7 +125,7 @@ export default function ButtonTest() {
                   <tr>
                     <td className="border border-neutral-300 p-3 font-medium bg-neutral-50">Large</td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="lg">Button</Button></td>
-                    <td className="border border-neutral-300 p-3 text-center"><Button size="lg" variant="secondary">Button</Button></td>
+                    <td className="border border-neutral-300 p-3 text-center"><Button size="lg" variant="affirmative">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="lg" variant="outline">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="lg" variant="destructive">Button</Button></td>
                     <td className="border border-neutral-300 p-3 text-center"><Button size="lg" variant="ghost">Button</Button></td>
@@ -475,7 +473,7 @@ export default function ButtonTest() {
                 <tr>
                   <td className="border border-neutral-300 p-3 font-medium">Button</td>
                   <td className="border border-neutral-300 p-3 text-sm"><code className="text-xs">@/components/shadcn/button</code></td>
-                  <td className="border border-neutral-300 p-3 text-sm">default, secondary, outline, destructive, ghost, link</td>
+                  <td className="border border-neutral-300 p-3 text-sm">default, affirmative, outline, destructive, ghost</td>
                   <td className="border border-neutral-300 p-3 text-sm">sm, default, lg, icon</td>
                   <td className="border border-neutral-300 p-3 text-sm">General purpose buttons</td>
                 </tr>
