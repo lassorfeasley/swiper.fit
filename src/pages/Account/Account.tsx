@@ -1320,7 +1320,6 @@ const Account = () => {
                             <Button
                               onClick={() => handleAcceptRequest(request.id)}
                               disabled={acceptRequestMutation.isPending}
-                              variant="affirmative"
                               className="flex-1"
                             >
                               Accept
@@ -1328,7 +1327,6 @@ const Account = () => {
                             <Button
                               onClick={() => handleDeclineRequest(request.id)}
                               disabled={declineRequestMutation.isPending}
-                              variant="destructive"
                               className="flex-1"
                             >
                               Decline
@@ -1532,7 +1530,6 @@ const Account = () => {
               {isEditingName && (
                 <div className="flex flex-col gap-3 w-full">
                   <Button
-                    variant="affirmative"
                     className="w-full"
                     onClick={() => {
                       handleSaveName();
@@ -1542,7 +1539,6 @@ const Account = () => {
                     Save changes
                   </Button>
                   <Button
-                    variant="outline"
                     className="w-full"
                     onClick={() => {
                       setFirstName(profile.first_name);
@@ -1598,7 +1594,6 @@ const Account = () => {
               {isEditingLogin && (
                 <div className="flex flex-col gap-3 w-full">
                   <Button
-                    variant="affirmative"
                     className="w-full"
                     onClick={() => {
                       handleSaveLoginSection();
@@ -1608,7 +1603,6 @@ const Account = () => {
                     Save changes
                   </Button>
                   <Button
-                    variant="outline"
                     className="w-full"
                     onClick={() => {
                       setEmail(user.email || "");
@@ -1637,8 +1631,8 @@ const Account = () => {
             title={dialogInviteType === 'trainer' ? "Invite a trainer" : "Invite a client"}
             confirmText={dialogInviteType === 'trainer' ? "Invite trainer" : "Invite client"}
             cancelText="Cancel"
-            confirmVariant="outline"
-            cancelVariant="destructive"
+            confirmVariant="default"
+            cancelVariant="default"
             onConfirm={handleDialogSubmit}
             onCancel={handleDialogCancel}
             containerClassName="bg-stone-100"
@@ -1831,8 +1825,8 @@ const Account = () => {
             title="Delete request?"
             confirmText="Yes"
             cancelText="No"
-            confirmVariant="destructive"
-            cancelVariant="outline"
+            confirmVariant="default"
+            cancelVariant="default"
             onConfirm={performDeleteInvitation}
             onCancel={() => {
               setShowDeleteInvitationDialog(false);
@@ -1847,8 +1841,8 @@ const Account = () => {
             description={`${shareToDeleteName} will no longer be a trainer on your account.`}
             confirmText="Remove access"
             cancelText="Cancel"
-            confirmVariant="destructive"
-            cancelVariant="outline"
+            confirmVariant="default"
+            cancelVariant="default"
             onConfirm={() => {
               if (shareToDeleteId) {
                 deleteShareMutation.mutate(shareToDeleteId);
@@ -1870,8 +1864,8 @@ const Account = () => {
             title="Confirm deletion"
             confirmText="Delete account"
             cancelText="Cancel"
-            confirmVariant="destructive"
-            cancelVariant="outline"
+            confirmVariant="default"
+            cancelVariant="default"
             bodyClassName="bg-transparent p-0"
           >
             <div className="self-stretch flex flex-col justify-start items-start gap-4">
@@ -1895,8 +1889,8 @@ const Account = () => {
             description="Are you sure you want to log out?"
             confirmText="Log out"
             cancelText="Cancel"
-            confirmVariant="affirmative"
-            cancelVariant="outline"
+            confirmVariant="default"
+            cancelVariant="default"
           />
 
           {/* Decline request confirmation dialog */}
@@ -1912,8 +1906,8 @@ const Account = () => {
             description="Are you sure you want to decline this request?"
             confirmText="Decline"
             cancelText="Cancel"
-            confirmVariant="destructive"
-            cancelVariant="outline"
+            confirmVariant="default"
+            cancelVariant="default"
           />
       </MainContentSection>
     </AppLayout>
