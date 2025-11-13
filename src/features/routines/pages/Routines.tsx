@@ -20,9 +20,10 @@ import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/shared/ActionCard";
 import { toast } from "@/lib/toastReplacement";
-import { Plus } from "lucide-react";
+import { Plus, ListChecks } from "lucide-react";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import { useSpacing } from "@/hooks/useSpacing";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
@@ -214,7 +215,11 @@ const RoutinesIndex = () => {
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (
-            <div className="text-gray-400 text-center py-8">No routines found.</div>
+            <EmptyState
+              icon={ListChecks}
+              title="Create your first routine."
+              description="Create a routine by adding exercises and sets. It only takes a minute!"
+            />
           ) : (
             filteredRoutines.map((program) => (
               <CardWrapper key={program.id} gap={0} marginTop={0} marginBottom={0}>

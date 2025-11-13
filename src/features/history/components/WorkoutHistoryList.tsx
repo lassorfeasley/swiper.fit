@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import CompletedWorkoutCard from "./CompletedWorkoutCard";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ChartNoAxesCombined } from "lucide-react";
 
 interface WorkoutHistoryListProps {
   workouts?: any[];
@@ -32,7 +34,11 @@ const WorkoutHistoryList = ({ workouts = [], viewingOwn = true }: WorkoutHistory
           className="mt-0"
         >
           {workouts.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">No workouts logged</div>
+            <EmptyState
+              icon={ChartNoAxesCombined}
+              title="Log a workout to view analysis."
+              description="To review your workout history, you need to create a routine and log a workout."
+            />
           ) : (
             workouts.map((w) => {
               const workoutDate = new Date(w.created_at);

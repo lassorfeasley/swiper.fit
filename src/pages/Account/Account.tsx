@@ -31,6 +31,7 @@ import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import RoutineCard from "@/features/routines/components/RoutineCard";
 import AccountSettingsMenu from "@/components/shared/AccountSettingsMenu";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 const Account = () => {
   const { isDelegated, switchToUser } = useAccount();
@@ -1389,26 +1390,52 @@ const Account = () => {
                         !outgoingRequestsQuery.isLoading &&
                         !pendingRequestsQuery.isError &&
                         !outgoingRequestsQuery.isError && (
-                          <div className="w-full bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center p-6">
-                            <div className="text-neutral-neutral-400 text-sm font-medium">No sharing requests</div>
+                          <div className="w-full flex flex-col gap-3">
+                            <EmptyState
+                              title="No invitations pending."
+                              description="Invite a trainer to manage your account or invite a client so you can manage theirs."
+                            />
+                            <ActionCard
+                              text="Invite a trainer"
+                              onClick={() => {
+                                setDialogInviteType('trainer');
+                                setShowAddPersonDialog(true);
+                              }}
+                              className="w-full h-14 rounded-lg border border-neutral-300"
+                            />
+                            <ActionCard
+                              text="Invite a client"
+                              onClick={() => {
+                                setDialogInviteType('client');
+                                setShowAddPersonDialog(true);
+                              }}
+                              className="w-full h-14 rounded-lg border border-neutral-300"
+                            />
                           </div>
                         )}
-                      <ActionCard
-                        text="Invite a trainer"
-                        onClick={() => {
-                          setDialogInviteType('trainer');
-                          setShowAddPersonDialog(true);
-                        }}
-                        className="w-full h-14 rounded-lg border border-neutral-300"
-                      />
-                      <ActionCard
-                        text="Invite a client"
-                        onClick={() => {
-                          setDialogInviteType('client');
-                          setShowAddPersonDialog(true);
-                        }}
-                        className="w-full h-14 rounded-lg border border-neutral-300"
-                      />
+                      {((pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0) ||
+                        (outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0) ||
+                        pendingRequestsQuery.isLoading ||
+                        outgoingRequestsQuery.isLoading) && (
+                        <div className="w-full flex flex-col gap-3">
+                          <ActionCard
+                            text="Invite a trainer"
+                            onClick={() => {
+                              setDialogInviteType('trainer');
+                              setShowAddPersonDialog(true);
+                            }}
+                            className="w-full h-14 rounded-lg border border-neutral-300"
+                          />
+                          <ActionCard
+                            text="Invite a client"
+                            onClick={() => {
+                              setDialogInviteType('client');
+                              setShowAddPersonDialog(true);
+                            }}
+                            className="w-full h-14 rounded-lg border border-neutral-300"
+                          />
+                        </div>
+                      )}
                     </DeckWrapper>
                   </div>
                 </div>
@@ -1418,36 +1445,55 @@ const Account = () => {
               {activeSection === 'trainers' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
-                <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
-                  {trainerSharesQuery.data?.map((share) => (
-                    <ManagePermissionsCard
-                      key={share.id}
-                      variant="trainer"
-                      name={share.profile}
-                      permissions={{
-                        can_create_routines: share.can_create_routines,
-                        can_start_workouts: share.can_start_workouts,
-                        can_review_history: share.can_review_history
-                      }}
-                      onPermissionChange={(newPermissions) => {
-                        Object.keys(newPermissions).forEach(permission => {
-                          if (newPermissions[permission] !== share[permission]) {
-                            handlePermissionToggle(share.id, permission, newPermissions[permission]);
-                          }
-                        });
-                      }}
-                      onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
+                {trainerSharesQuery.isLoading ? (
+                  <div className="text-gray-400 text-center py-8 w-full">Loading...</div>
+                ) : !trainerSharesQuery.data || trainerSharesQuery.data.length === 0 ? (
+                  <>
+                    <EmptyState
+                      title="Add a trainer to your account."
+                      description="Invite a trainer to manage you account to let them build you routines, review your history, and start workouts."
                     />
-                  ))}
-                  <ActionCard
-                    text="Invite a trainer"
-                    onClick={() => {
-                      setDialogInviteType('trainer');
-                      setShowAddPersonDialog(true);
-                    }}
-                    className="w-full h-14 rounded-lg border border-neutral-300"
-                  />
-                </DeckWrapper>
+                    <ActionCard
+                      text="Invite a trainer"
+                      onClick={() => {
+                        setDialogInviteType('trainer');
+                        setShowAddPersonDialog(true);
+                      }}
+                      className="w-full h-14 rounded-lg border border-neutral-300"
+                    />
+                  </>
+                ) : (
+                  <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
+                    {trainerSharesQuery.data.map((share) => (
+                      <ManagePermissionsCard
+                        key={share.id}
+                        variant="trainer"
+                        name={share.profile}
+                        permissions={{
+                          can_create_routines: share.can_create_routines,
+                          can_start_workouts: share.can_start_workouts,
+                          can_review_history: share.can_review_history
+                        }}
+                        onPermissionChange={(newPermissions) => {
+                          Object.keys(newPermissions).forEach(permission => {
+                            if (newPermissions[permission] !== share[permission]) {
+                              handlePermissionToggle(share.id, permission, newPermissions[permission]);
+                            }
+                          });
+                        }}
+                        onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
+                      />
+                    ))}
+                    <ActionCard
+                      text="Invite a trainer"
+                      onClick={() => {
+                        setDialogInviteType('trainer');
+                        setShowAddPersonDialog(true);
+                      }}
+                      className="w-full h-14 rounded-lg border border-neutral-300"
+                    />
+                  </DeckWrapper>
+                )}
             </div>
                 </div>
               )}
@@ -1456,41 +1502,60 @@ const Account = () => {
               {activeSection === 'clients' && (
                 <div className="w-full flex justify-center pb-5">
             <div className="w-full max-w-[500px] pt-5 pb-20 flex flex-col justify-start items-start gap-3">
-                <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
-                  {clientSharesQuery.data?.map((share) => (
-                    <ManagePermissionsCard
-                      key={share.id}
-                      variant="client"
-                      name={share.profile}
-                      permissions={{
-                        can_create_routines: share.can_create_routines,
-                        can_start_workouts: share.can_start_workouts,
-                        can_review_history: share.can_review_history
-                      }}
-                      activeWorkout={share.activeWorkout}
-                      onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
-                      onStartWorkout={() => {
-                        if (!share.can_start_workouts) return;
-                        if (share.activeWorkout) {
-                          switchToUser(share.profile);
-                          navigate('/workout/active');
-                          return;
-                        }
-                        handleStartWorkout(share.profile);
-                      }}
-                      onCreateRoutines={() => share.can_create_routines && handleCreateRoutinesForClient(share.profile)}
-                      onReviewHistory={() => share.can_review_history && handleReviewHistoryForClient(share.profile)}
+                {clientSharesQuery.isLoading ? (
+                  <div className="text-gray-400 text-center py-8 w-full">Loading...</div>
+                ) : !clientSharesQuery.data || clientSharesQuery.data.length === 0 ? (
+                  <>
+                    <EmptyState
+                      title="Add a client to your account."
+                      description="Invite a client to manage their account to build routines for them, review their history, and start workouts."
                     />
-                  ))}
-                  <ActionCard
-                    text="Invite a client"
-                    onClick={() => {
-                      setDialogInviteType('client');
-                      setShowAddPersonDialog(true);
-                    }}
-                    className="w-full h-14 rounded-lg border border-neutral-300"
-                  />
-                </DeckWrapper>
+                    <ActionCard
+                      text="Invite a client"
+                      onClick={() => {
+                        setDialogInviteType('client');
+                        setShowAddPersonDialog(true);
+                      }}
+                      className="w-full h-14 rounded-lg border border-neutral-300"
+                    />
+                  </>
+                ) : (
+                  <DeckWrapper className="w-full" maxWidth={null} minWidth={null} paddingX={0} paddingTop={0} paddingBottom={0}>
+                    {clientSharesQuery.data.map((share) => (
+                      <ManagePermissionsCard
+                        key={share.id}
+                        variant="client"
+                        name={share.profile}
+                        permissions={{
+                          can_create_routines: share.can_create_routines,
+                          can_start_workouts: share.can_start_workouts,
+                          can_review_history: share.can_review_history
+                        }}
+                        activeWorkout={share.activeWorkout}
+                        onRemove={() => handleRemoveShare(share.id, formatUserDisplay(share.profile))}
+                        onStartWorkout={() => {
+                          if (!share.can_start_workouts) return;
+                          if (share.activeWorkout) {
+                            switchToUser(share.profile);
+                            navigate('/workout/active');
+                            return;
+                          }
+                          handleStartWorkout(share.profile);
+                        }}
+                        onCreateRoutines={() => share.can_create_routines && handleCreateRoutinesForClient(share.profile)}
+                        onReviewHistory={() => share.can_review_history && handleReviewHistoryForClient(share.profile)}
+                      />
+                    ))}
+                    <ActionCard
+                      text="Invite a client"
+                      onClick={() => {
+                        setDialogInviteType('client');
+                        setShowAddPersonDialog(true);
+                      }}
+                      className="w-full h-14 rounded-lg border border-neutral-300"
+                    />
+                  </DeckWrapper>
+                )}
             </div>
                 </div>
               )}

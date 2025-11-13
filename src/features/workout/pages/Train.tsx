@@ -9,12 +9,17 @@ import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { toast } from "@/lib/toastReplacement";
 import { useSpacing } from "@/hooks/useSpacing";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ActionCard } from "@/components/shared/ActionCard";
 
 const Train = () => {
   const { setPageName } = useContext(PageNameContext);
   const user = useCurrentUser();
   const { isDelegated } = useAccount();
   const { isWorkoutActive } = useActiveWorkout();
+  const navigate = useNavigate();
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -214,9 +219,17 @@ const Train = () => {
             className="flex-1 mt-0 min-h-screen"
           >
           {routines.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-              <h1 className="text-2xl font-bold text-neutral-700 mb-4">No Routines Yet</h1>
-              <p className="text-neutral-500">Create your first routine to get started</p>
+            <div className="w-full flex flex-col gap-3">
+              <EmptyState
+                icon={Play}
+                title="Create a routine to get started."
+                description="Add exercises and sets to a new routine to start and log a workout."
+              />
+              <ActionCard
+                text="Create new routine"
+                onClick={() => navigate('/routines')}
+                className="w-full h-14 rounded-lg border border-neutral-300"
+              />
             </div>
           ) : (
             routines.map((routine) => (
