@@ -930,7 +930,6 @@ const Account = () => {
             routine_id: routine.id,
             workout_name: workoutName,
             is_active: true,
-            is_public: true,
             running_since: new Date().toISOString(),
             active_seconds_accumulated: 0
           })
