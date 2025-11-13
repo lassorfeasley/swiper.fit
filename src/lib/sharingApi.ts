@@ -71,11 +71,26 @@ export async function inviteClientToBeManaged(
     }
 
     const trainerProfile = trainerProfiles[0] as Profile;
-    const inviterName = `${trainerProfile.first_name} ${trainerProfile.last_name}`.trim() || trainerProfile.email;
+    
+    // Get trainer email from profile or auth user
+    let trainerEmail = trainerProfile.email;
+    if (!trainerEmail) {
+      // If profile doesn't have email, get it from auth user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser || authUser.id !== trainerId) {
+        throw new Error("Trainer profile is missing an email address and cannot be retrieved from authentication");
+      }
+      trainerEmail = authUser.email || null;
+      if (!trainerEmail) {
+        throw new Error("Trainer account is missing an email address");
+      }
+    }
+    
+    const inviterName = `${trainerProfile.first_name} ${trainerProfile.last_name}`.trim() || trainerEmail;
 
     // VALIDATION: Prevent self-invitation by email
     const normalizedClientEmail = clientEmail.trim().toLowerCase();
-    const normalizedTrainerEmail = trainerProfile.email.trim().toLowerCase();
+    const normalizedTrainerEmail = trainerEmail.trim().toLowerCase();
     
     if (normalizedClientEmail === normalizedTrainerEmail) {
       throw new Error("You cannot invite yourself");
@@ -146,7 +161,12 @@ export async function inviteClientToBeManaged(
 
     // User exists, create member invitation
     const clientProfile = profiles[0] as Profile;
-    console.log(`[inviteClientToBeManaged] User found, creating member invitation for: ${clientProfile.email}`);
+    
+    // Use the clientEmail parameter (we looked them up by this email)
+    // But verify the profile has it or use the parameter
+    const clientEmailToUse = clientProfile.email || clientEmail.trim().toLowerCase();
+    
+    console.log(`[inviteClientToBeManaged] User found, creating member invitation for: ${clientEmailToUse}`);
 
     // VALIDATION: Prevent self-invitation by ID
     if (clientProfile.id === trainerId) {
@@ -183,7 +203,7 @@ export async function inviteClientToBeManaged(
     const invitationData: Partial<AccountShare> = {
       owner_user_id: trainerId,
       delegate_user_id: clientProfile.id,
-      delegate_email: clientProfile.email,
+      delegate_email: clientEmailToUse,
       status: 'pending',
       request_type: 'trainer_invite',
       expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -202,7 +222,7 @@ export async function inviteClientToBeManaged(
     }
 
     // Send email notification for existing member
-    await postEmailEvent('trainer.invitation', clientProfile.email, {
+    await postEmailEvent('trainer.invitation', clientEmailToUse, {
       inviter_name: inviterName,
       permissions: invitationData
     });
@@ -243,11 +263,26 @@ export async function inviteTrainerToManage(
     }
 
     const clientProfile = clientProfiles[0] as Profile;
-    const inviterName = `${clientProfile.first_name} ${clientProfile.last_name}`.trim() || clientProfile.email;
+    
+    // Get client email from profile or auth user
+    let clientEmail = clientProfile.email;
+    if (!clientEmail) {
+      // If profile doesn't have email, get it from auth user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser || authUser.id !== clientId) {
+        throw new Error("Client profile is missing an email address and cannot be retrieved from authentication");
+      }
+      clientEmail = authUser.email || null;
+      if (!clientEmail) {
+        throw new Error("Client account is missing an email address");
+      }
+    }
+    
+    const inviterName = `${clientProfile.first_name} ${clientProfile.last_name}`.trim() || clientEmail;
 
     // VALIDATION: Prevent self-invitation by email
     const normalizedTrainerEmail = trainerEmail.trim().toLowerCase();
-    const normalizedClientEmail = clientProfile.email.trim().toLowerCase();
+    const normalizedClientEmail = clientEmail.trim().toLowerCase();
     
     if (normalizedTrainerEmail === normalizedClientEmail) {
       throw new Error("You cannot invite yourself");
@@ -313,7 +348,12 @@ export async function inviteTrainerToManage(
 
     // Trainer exists, create member invitation
     const trainerProfile = profiles[0] as Profile;
-    console.log(`[inviteTrainerToManage] Trainer found, creating member invitation for: ${trainerProfile.email}`);
+    
+    // Use the trainerEmail parameter (we looked them up by this email)
+    // But verify the profile has it or use the parameter
+    const trainerEmailToUse = trainerProfile.email || trainerEmail.trim().toLowerCase();
+    
+    console.log(`[inviteTrainerToManage] Trainer found, creating member invitation for: ${trainerEmailToUse}`);
 
     // VALIDATION: Prevent self-invitation by ID
     if (trainerProfile.id === clientId) {
@@ -350,7 +390,7 @@ export async function inviteTrainerToManage(
     const invitationData: Partial<AccountShare> = {
       owner_user_id: clientId,
       delegate_user_id: trainerProfile.id,
-      delegate_email: trainerProfile.email,
+      delegate_email: trainerEmailToUse,
       status: 'pending',
       request_type: 'client_invite',
       expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -369,7 +409,7 @@ export async function inviteTrainerToManage(
     }
 
     // Send email notification for existing member
-    await postEmailEvent('client.invitation', trainerProfile.email, {
+    await postEmailEvent('client.invitation', trainerEmailToUse, {
       inviter_name: inviterName,
       permissions: invitationData
     });

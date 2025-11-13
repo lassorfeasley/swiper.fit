@@ -1317,7 +1317,7 @@ const Account = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="Frame80 self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
+                          <div className="self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
                             <Button
                               onClick={() => handleAcceptRequest(request.id)}
                               disabled={acceptRequestMutation.isPending}
