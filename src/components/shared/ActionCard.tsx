@@ -7,7 +7,7 @@ export interface ActionCardProps extends React.HTMLAttributes<HTMLDivElement> {
   fillColor?: string;
   textColor?: string;
   isFirstCard?: boolean;
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
 const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({ 
