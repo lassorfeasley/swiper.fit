@@ -23,6 +23,7 @@ import { toast } from "@/lib/toastReplacement";
 import { Blend, Star, Copy, Check, Repeat2, Weight, Clock, X, Play, Share as ShareIcon, Trash2, ListChecks } from "lucide-react";
 import { generateAndUploadOGImage } from '@/lib/ogImageGenerator.ts';
 import ActionPill from "@/components/shared/ActionPill";
+import { ActionCard } from "@/components/shared/ActionCard";
 
 import { useAccount } from "@/contexts/AccountContext";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
@@ -196,27 +197,7 @@ const CompletedWorkout = () => {
         return;
       }
 
-      // Access control: Check if user can view this workout
-      const isWorkoutOwner = user && workoutData.user_id === currentUser?.id;
-      
-      if (!isWorkoutOwner) {
-        // Not the owner - check if workout is publicly accessible
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("share_all_workouts")
-          .eq("id", workoutData.user_id)
-          .maybeSingle();
-        
-        if (!profileData?.share_all_workouts) {
-          // Workout is private and user is not owner
-          console.log('[CompletedWorkout] Workout is private, access denied');
-          toast.error("This workout is private");
-          setWorkout(null);
-          setLoading(false);
-          return;
-        }
-      }
-
+      // All workouts are now public - no access control needed
       setWorkout(workoutData);
 
       // Fetch only completed sets for this workout
@@ -928,33 +909,15 @@ const CompletedWorkout = () => {
         {/* CTA Button for non-owners - Absolutely positioned at bottom */}
         {!isOwner && workout && (
           <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
-            <div 
-              className="w-full max-w-[500px] h-14 pl-2 pr-5 bg-green-600 rounded-[20px] shadow-[0px_0px_8px_0px_rgba(212,212,212,1.00)] backdrop-blur-[1px] inline-flex justify-start items-center cursor-pointer focus:outline-none focus-visible:outline-none active:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 select-none border-2 border-transparent active:border-transparent"
-              style={{ 
-                WebkitTapHighlightColor: 'transparent',
-                WebkitTouchCallout: 'none',
-                userSelect: 'none',
-                transform: 'none',
-                willChange: 'auto',
-                touchAction: 'manipulation'
-              }}
+            <ActionCard
+              text={user ? "Add routine to my account" : "Create account or login to add routine"}
               onClick={openAddDialog}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAddDialog(); } }}
+              icon={ListChecks}
+              fillColor="bg-blue-500"
+              textColor="text-white"
+              className="w-full shadow-lg"
               aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
-            >
-              <div className="p-2.5 flex justify-start items-center gap-2.5">
-                <div className="relative">
-                  <ListChecks className="w-6 h-6" stroke="white" strokeWidth="2" />
-                </div>
-              </div>
-              <div className="flex justify-center items-center gap-5">
-                <div className="justify-center text-white text-xs font-bold font-['Be_Vietnam_Pro'] uppercase leading-3 tracking-wide">
-                  {user ? "Add routine to my account" : "Create account or login to add routine"}
-                </div>
-              </div>
-            </div>
+            />
           </div>
         )}
 
