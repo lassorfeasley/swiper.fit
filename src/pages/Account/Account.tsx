@@ -1252,7 +1252,7 @@ const Account = () => {
                   {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
                     pendingRequestsQuery.data.map((request) => (
                       <div key={request.id} className="SharedWithMeCard w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
-                        <div className="CardHeader self-stretch p-3 border border-neutral-300 inline-flex justify-between items-center">
+                        <div className="CardHeader self-stretch p-3 border-b border-neutral-300 inline-flex justify-between items-center">
                           <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                             <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
                               {request.request_type === 'trainer_invite'
@@ -1349,7 +1349,7 @@ const Account = () => {
                   {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
                     outgoingRequestsQuery.data.map((request) => (
                       <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
-                        <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white border border-neutral-300 flex flex-col justify-start items-start gap-3">
+                        <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white flex flex-col justify-start items-start gap-3">
                           <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
                             <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
                               <div data-layer="example@account.com was invited to be your trainer" className="ExampleAccountComWasInvitedToBeYourTrainer justify-center">
@@ -1632,7 +1632,7 @@ const Account = () => {
             confirmText={dialogInviteType === 'trainer' ? "Invite trainer" : "Invite client"}
             cancelText="Cancel"
             confirmVariant="default"
-            cancelVariant="default"
+            cancelVariant="outline"
             onConfirm={handleDialogSubmit}
             onCancel={handleDialogCancel}
             containerClassName="bg-stone-100"
@@ -1825,8 +1825,8 @@ const Account = () => {
             title="Delete request?"
             confirmText="Yes"
             cancelText="No"
-            confirmVariant="default"
-            cancelVariant="default"
+            confirmVariant="destructive"
+            cancelVariant="outline"
             onConfirm={performDeleteInvitation}
             onCancel={() => {
               setShowDeleteInvitationDialog(false);
