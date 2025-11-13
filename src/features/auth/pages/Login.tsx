@@ -130,7 +130,7 @@ export default function Login() {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         Email
                       </div>
                     </div>
@@ -162,13 +162,13 @@ export default function Login() {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         Password
                       </div>
                     </div>
                     <div className="flex-1 flex justify-between items-start">
                       <div 
-                        className="flex-1 text-right justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
+                        className="flex-1 text-right justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
                         onClick={() => navigate("/reset-password")}
                       >
                         Forgot?
@@ -200,8 +200,9 @@ export default function Login() {
                 {/* Login button */}
                 <Button
                   type="submit"
+                  variant="affirmative"
                   disabled={loginMutation.isPending}
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
+                  className="self-stretch"
                 >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
                 </Button>

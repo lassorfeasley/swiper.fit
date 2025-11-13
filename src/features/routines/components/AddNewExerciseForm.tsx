@@ -4,7 +4,7 @@ import { MAX_EXERCISE_NAME_LEN } from "@/lib/constants";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import NumericInput from "@/components/shared/inputs/NumericInput";
 import DurationInput from "@/components/shared/inputs/DurationInput";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";

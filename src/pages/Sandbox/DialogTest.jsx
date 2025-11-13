@@ -12,7 +12,7 @@ import {
   DialogClose,
 } from "@/components/shadcn/dialog";
 import SwiperDialog from "@/components/shared/SwiperDialog";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button as SwiperButton } from "@/components/shadcn/button";
 import { ActionCard } from "@/components/shared/ActionCard";
 import { Square, Plus } from "lucide-react";
 
@@ -200,10 +200,10 @@ export default function DialogTest() {
               <div data-layer="text-wrapper" className="TextWrapper self-stretch pt-3 pb-4 inline-flex justify-center items-center gap-2.5">
                 <div data-layer="Are you sure you want to take this action?" className="AreYouSureYouWantToTakeThisAction flex-1 justify-start text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-normal">Are you sure you want to take this action?</div>
               </div>
-              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-lg" variant="default">
+              <SwiperButton data-layer="swiperButton" className="self-stretch" variant="default">
                 Button text
               </SwiperButton>
-              <SwiperButton data-layer="swiperButton" className="self-stretch rounded-lg" variant="destructive">
+              <SwiperButton data-layer="swiperButton" className="self-stretch" variant="destructive">
                 Button text
               </SwiperButton>
             </div>

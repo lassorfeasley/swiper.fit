@@ -12,7 +12,7 @@ import SwiperDialog from "@/components/shared/SwiperDialog";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import SetEditForm from "../components/SetEditForm";
@@ -1316,13 +1316,13 @@ const RoutineBuilder = () => {
               />
               {editingExercise && (
                 <div className="flex flex-col gap-3 py-4 px-4">
-                  <SwiperButton
+                  <Button
                     variant="destructive"
                     className="w-full"
                     onClick={handleDeleteExercise}
                   >
                     Delete exercise
-                  </SwiperButton>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1389,13 +1389,13 @@ const RoutineBuilder = () => {
           </div>
         </FormSectionWrapper>
         <FormSectionWrapper bordered={false}>
-          <SwiperButton
+          <Button
             variant="destructive"
             onClick={handleDeleteProgram}
             className="w-full"
           >
             Delete program
-          </SwiperButton>
+          </Button>
         </FormSectionWrapper>
       </SwiperForm>
 
@@ -1459,22 +1459,22 @@ const RoutineBuilder = () => {
             hideFooter
           >
             <div className="grid grid-cols-1 gap-3 pb-3 w-full">
-              <SwiperButton
+              <Button
                 variant="outline"
                 onClick={handleAddAndStart}
                 disabled={saving}
                 className="w-full"
               >
                 Add & start workout
-              </SwiperButton>
-              <SwiperButton
+              </Button>
+              <Button
                 variant="outline"
                 onClick={handleAddRoutineToAccount}
                 disabled={saving}
                 className="w-full"
               >
                 Add to my account
-              </SwiperButton>
+              </Button>
             </div>
           </SwiperDialog>
 
@@ -1486,20 +1486,20 @@ const RoutineBuilder = () => {
             hideFooter
           >
             <div className="grid grid-cols-1 gap-3 pb-3 w-full">
-              <SwiperButton
+              <Button
                 variant="outline"
                 onClick={() => navigate(`/create-account?importRoutineId=${routineId}`)}
                 className="w-full"
               >
                 Create account
-              </SwiperButton>
-              <SwiperButton
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => navigate(`/login?importRoutineId=${routineId}`)}
                 className="w-full"
               >
                 Login
-              </SwiperButton>
+              </Button>
             </div>
           </SwiperDialog>
         </>

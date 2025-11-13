@@ -3,9 +3,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Button as UiButton } from "@/components/shadcn/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/shadcn/dropdown-menu";
 import { Switch } from "@/components/shadcn/switch";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import { SwiperCard, SwiperCardContent, SwiperCardDescription, SwiperCardFooter, SwiperCardHeader, SwiperCardTitle } from "@/components/shared/SwiperCard";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import SwiperDialog from "@/components/shared/SwiperDialog";
@@ -72,7 +71,7 @@ export default function ComponentsGallery() {
             <UiButton variant="secondary">Secondary</UiButton>
             <UiButton variant="outline">Outline</UiButton>
             <UiButton variant="destructive">Destructive</UiButton>
-            <SwiperButton>Swiper Button</SwiperButton>
+            <Button>Swiper Button</Button>
           </div>
         </section>
       )
@@ -121,7 +120,7 @@ export default function ComponentsGallery() {
               <div className="text-sm text-neutral-700">Reusable card styling tailored for Swiper.</div>
             </SwiperCardContent>
             <SwiperCardFooter>
-              <SwiperButton variant="outline">Action</SwiperButton>
+              <Button variant="outline">Action</Button>
             </SwiperCardFooter>
           </SwiperCard>
         </section>
@@ -141,44 +140,6 @@ export default function ComponentsGallery() {
             <div className="flex-1">
               <SwiperFormSwitch label="Form Switch" checked={checked} onCheckedChange={setChecked} />
             </div>
-          </div>
-        </section>
-      )
-    },
-    
-    {
-      key: 'dropdown',
-      label: 'Dropdown Menu',
-      render: () => (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-neutral-700">Dropdown Menu</h2>
-          <div className="bg-white border rounded-lg p-4 inline-block">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <UiButton variant="outline">Open Menu</UiButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Team</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Invite</DropdownMenuItem>
-                    <DropdownMenuItem>Members</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>Emails</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Push Notifications</DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={radioValue} onValueChange={setRadioValue}>
-                  <DropdownMenuRadioItem value="one">One</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="two">Two</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </section>
       )

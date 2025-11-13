@@ -1,7 +1,7 @@
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/shadcn/button";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button as SwiperButton } from "@/components/shadcn/button";
 import ActionPill from "@/components/shared/ActionPill";
 import { ActionCard } from "@/components/shared/ActionCard";
 import { Toggle } from "@/components/shadcn/toggle";

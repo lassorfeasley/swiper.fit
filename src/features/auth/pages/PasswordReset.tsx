@@ -95,7 +95,8 @@ export default function PasswordReset() {
                 {/* Submit button */}
                 <Button
                   type="submit"
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
+                  variant="affirmative"
+                  className="self-stretch"
                 >
                   Send reset link
                 </Button>

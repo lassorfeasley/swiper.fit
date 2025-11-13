@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo, useRef } from "react";
 import NumericInput from "@/components/shared/inputs/NumericInput";
 import DurationInput from "@/components/shared/inputs/DurationInput";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";

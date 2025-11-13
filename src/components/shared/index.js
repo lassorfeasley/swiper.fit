@@ -18,7 +18,6 @@ export { default as ToggleInput } from './inputs/ToggleInput.jsx';
 export { default as SearchField } from './inputs/SearchField.jsx';
 
 // UI Components
-export { default as SwiperButton } from './SwiperButton.tsx';
 export { default as SwiperCard } from './SwiperCard.tsx';
 export { default as SwiperDialog } from './SwiperDialog.tsx';
 export { default as SwiperSheet } from './SwiperSheet.tsx';

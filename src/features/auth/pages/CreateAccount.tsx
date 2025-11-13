@@ -317,7 +317,7 @@ export default function CreateAccount(): React.JSX.Element {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         First name
                       </div>
                     </div>
@@ -337,7 +337,7 @@ export default function CreateAccount(): React.JSX.Element {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         Last name
                       </div>
                     </div>
@@ -357,7 +357,7 @@ export default function CreateAccount(): React.JSX.Element {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         Email
                       </div>
                     </div>
@@ -376,7 +376,7 @@ export default function CreateAccount(): React.JSX.Element {
                 <div className="self-stretch rounded flex flex-col justify-center items-start gap-2">
                   <div className="self-stretch inline-flex justify-start items-start gap-2">
                     <div className="flex-1 flex justify-between items-start">
-                      <div className="flex-1 justify-start text-neutral-400 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                      <div className="flex-1 justify-start text-neutral-600 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">
                         Password
                       </div>
                     </div>
@@ -400,13 +400,12 @@ export default function CreateAccount(): React.JSX.Element {
 
                 {/* Create Account Button */}
                 <Button
+                  variant="affirmative"
                   disabled={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()}
                   onClick={signupMutation.isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() ? undefined : handleSignup}
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
+                  className="self-stretch"
                 >
-                  <div className="justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                    {signupMutation.isPending ? "Creating Account..." : "Create Account"}
-                  </div>
+                  {signupMutation.isPending ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
             </div>

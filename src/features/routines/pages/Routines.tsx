@@ -16,7 +16,6 @@ import RoutineCard from "../components/RoutineCard";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/shared/inputs/TextInput";
-import { SwiperButton } from "@/components/shared/SwiperButton";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { ActionCard } from "@/components/shared/ActionCard";

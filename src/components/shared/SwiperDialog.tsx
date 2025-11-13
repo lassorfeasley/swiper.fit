@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/shadcn/dialog";
-import { SwiperButton } from './SwiperButton';
+import { Button } from '@/components/shadcn/button';
 
 // Force hot reload - AlertDialogCancel and AlertDialogAction removed
 interface SwiperDialogProps {
@@ -150,14 +150,14 @@ const SwiperDialog: React.FC<SwiperDialogProps> = ({
                 ) : ((confirmText || cancelText) && (
                   <div className={`self-stretch grid grid-cols-1 gap-3 p-3 mt-0 ${footerClassName || ''}`}>
                     {confirmText && (
-                      <SwiperButton onClick={handleConfirm} variant={confirmVariant}>
+                      <Button onClick={handleConfirm} variant={confirmVariant}>
                         {confirmText}
-                      </SwiperButton>
+                      </Button>
                     )}
                     {cancelText && (
-                      <SwiperButton onClick={handleCancel} variant={cancelVariant}>
+                      <Button onClick={handleCancel} variant={cancelVariant}>
                         {cancelText}
-                      </SwiperButton>
+                      </Button>
                     )}
                   </div>
                 ))

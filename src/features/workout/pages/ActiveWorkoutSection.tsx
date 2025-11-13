@@ -15,7 +15,7 @@ import { useRealtimeSets } from "@/features/workout/hooks/useRealtimeSets";
 import { useWorkoutNavigation } from "@/contexts/WorkoutNavigationContext";
 import { MAX_SET_NAME_LEN, MAX_ROUTINE_NAME_LEN, MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import { ActionCard } from "@/components/shared/ActionCard";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import { Plus } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
 

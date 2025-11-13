@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Grip } from "lucide-react";
 import ExerciseCardBase from "@/components/shared/cards/ExerciseCardBase";
 import { SetEditForm } from "@/features/routines";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import SwiperForm from "@/components/shared/SwiperForm";
 import { motion, useMotionValue } from "framer-motion";
 import SwiperDialog from "@/components/shared/SwiperDialog";

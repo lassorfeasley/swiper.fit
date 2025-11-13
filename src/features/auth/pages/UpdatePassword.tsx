@@ -133,7 +133,8 @@ export default function UpdatePassword() {
                 {/* Update Password button */}
                 <Button
                   type="submit"
-                  className="self-stretch h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] text-white"
+                  variant="affirmative"
+                  className="self-stretch"
                 >
                   Update Password
                 </Button>

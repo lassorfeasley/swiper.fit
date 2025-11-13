@@ -12,7 +12,7 @@ import { MAX_WORKOUT_NAME_LEN } from "@/lib/constants";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { TextInput } from "@/components/shared/inputs/TextInput";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import WorkoutSummaryCard from "@/components/shared/cards/WorkoutSummaryCard";
@@ -1000,13 +1000,13 @@ const CompletedWorkout = () => {
             </FormSectionWrapper>
 
           <FormSectionWrapper bordered={false}>
-            <SwiperButton
+            <Button
               variant="destructive"
               onClick={handleDeleteWorkout}
               className="w-full"
             >
               Delete workout
-            </SwiperButton>
+            </Button>
             </FormSectionWrapper>
         </SwiperForm>
 
@@ -1023,15 +1023,15 @@ const CompletedWorkout = () => {
             hideFooter
           >
             <div className="grid grid-cols-1 gap-3 pb-3 w-full">
-              <SwiperButton
+              <Button
                 variant="outline"
                 onClick={handleAddWorkoutToAccount}
                 disabled={saving}
                 className="w-full"
               >
                 Copy to my account
-              </SwiperButton>
-              <SwiperButton
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => {
                   if (workout?.routine_id) {
@@ -1045,7 +1045,7 @@ const CompletedWorkout = () => {
                 className="w-full"
               >
                 View full routine
-              </SwiperButton>
+              </Button>
             </div>
           </SwiperDialog>
 
@@ -1057,20 +1057,20 @@ const CompletedWorkout = () => {
             hideFooter
           >
             <div className="grid grid-cols-1 gap-3 pb-3 w-full">
-              <SwiperButton
+              <Button
                 variant="outline"
                 onClick={() => navigate(`/create-account?importWorkoutId=${workoutId}`)}
                 className="w-full"
               >
                 Create account
-              </SwiperButton>
-              <SwiperButton
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => navigate(`/login?importWorkoutId=${workoutId}`)}
                 className="w-full"
               >
                 Login
-              </SwiperButton>
+              </Button>
             </div>
           </SwiperDialog>
         </>

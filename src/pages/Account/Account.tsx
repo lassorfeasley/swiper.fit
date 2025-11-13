@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useSearchParams, useLocation } from "react-route
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/supabaseClient";
 import { TextInput } from "@/components/shared/inputs/TextInput";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapperLabel";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import { toast } from "@/lib/toastReplacement";
@@ -1318,22 +1318,22 @@ const Account = () => {
                             </div>
                           </div>
                           <div className="Frame80 self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
-                            <SwiperButton
+                            <Button
                               onClick={() => handleAcceptRequest(request.id)}
                               disabled={acceptRequestMutation.isPending}
-                              variant="default"
-                              className="flex-1 h-12 min-w-44 px-4 py-2 bg-neutral-neutral-600 rounded-[20px] flex justify-center items-center gap-2.5"
+                              variant="affirmative"
+                              className="flex-1"
                             >
-                              <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Accept</div>
-                            </SwiperButton>
-                            <SwiperButton
+                              Accept
+                            </Button>
+                            <Button
                               onClick={() => handleDeclineRequest(request.id)}
                               disabled={declineRequestMutation.isPending}
                               variant="destructive"
-                              className="flex-1 h-12 min-w-44 px-4 py-2 bg-red-red-400 rounded-[20px] flex justify-center items-center gap-2.5"
+                              className="flex-1"
                             >
-                              <div className="ButtonText justify-start text-white text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Decline</div>
-                            </SwiperButton>
+                              Decline
+                            </Button>
                           </div>
                           <div className="ThisInvitationWillExpireIn14Days self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
                             This invitation will expire in {Math.ceil((new Date(request.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days.
@@ -1531,20 +1531,20 @@ const Account = () => {
 
               {/* Action Buttons */}
               {isEditingName && (
-                <>
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-green-200 rounded-[20px] border border-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                <div className="flex flex-col gap-3 w-full">
+                  <Button
+                    variant="affirmative"
+                    className="w-full"
                     onClick={() => {
                       handleSaveName();
                       setIsEditingName(false);
                     }}
                   >
-                    <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Save changes
-                    </div>
-                  </div>
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-[20px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                    Save changes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
                     onClick={() => {
                       setFirstName(profile.first_name);
                       setLastName(profile.last_name);
@@ -1552,11 +1552,9 @@ const Account = () => {
                       setIsEditingName(false);
                     }}
                   >
-                    <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Discard changes
-                    </div>
-                  </div>
-                </>
+                    Discard changes
+                  </Button>
+                </div>
               )}
               </div>
             </div>
@@ -1599,20 +1597,20 @@ const Account = () => {
 
               {/* Action Buttons for Login Section */}
               {isEditingLogin && (
-                <>
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-green-200 rounded-[20px] border border-neutral-300 inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-green-300"
+                <div className="flex flex-col gap-3 w-full">
+                  <Button
+                    variant="affirmative"
+                    className="w-full"
                     onClick={() => {
                       handleSaveLoginSection();
                       setIsEditingLogin(false);
                     }}
                   >
-                    <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Save changes
-                    </div>
-                  </div>
-                  <div 
-                    className="self-stretch h-12 px-4 py-2 bg-red-300 rounded-[20px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-400"
+                    Save changes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
                     onClick={() => {
                       setEmail(user.email || "");
                       setDirtyEmail(false);
@@ -1620,11 +1618,9 @@ const Account = () => {
                       setIsEditingLogin(false);
                     }}
                   >
-                    <div className="justify-start text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                      Discard changes
-                    </div>
-                  </div>
-                </>
+                    Discard changes
+                  </Button>
+                </div>
               )}
               </div>
             </div>
@@ -1903,7 +1899,7 @@ const Account = () => {
             description="Are you sure you want to log out?"
             confirmText="Log out"
             cancelText="Cancel"
-            confirmVariant="default"
+            confirmVariant="affirmative"
             cancelVariant="outline"
           />
 

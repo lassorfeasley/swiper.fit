@@ -9,7 +9,7 @@ import { Share2, Blend, X } from "lucide-react";
 import { toast } from "@/lib/toastReplacement";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
-import { SwiperButton } from "@/components/shared/SwiperButton";
+import { Button } from "@/components/shadcn/button";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 // import StaticCard from "@/components/organisms/static-card";
