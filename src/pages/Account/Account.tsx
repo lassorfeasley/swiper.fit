@@ -1868,22 +1868,19 @@ const Account = () => {
             onConfirm={handleConfirmDelete}
             onCancel={() => setDeleteConfirmOpen(false)}
             title="Confirm deletion"
-            description="Deleting your account is permanent. This action cannot be undone."
             confirmText="Delete account"
             cancelText="Cancel"
             confirmVariant="destructive"
             cancelVariant="outline"
+            bodyClassName="bg-transparent p-0"
           >
-            <div className="self-stretch px-3 py-5 flex flex-col justify-start items-start gap-4">
-              <p className="text-neutral-neutral-700 text-base font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                Please enter your password to permanently delete your account.
-              </p>
+            <div className="self-stretch flex flex-col justify-start items-start gap-4">
               <TextInput
                 label="Password"
                 type="password"
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
-                customPlaceholder="Enter your password"
+                customPlaceholder="Enter password to delete account"
               />
             </div>
           </SwiperDialog>
