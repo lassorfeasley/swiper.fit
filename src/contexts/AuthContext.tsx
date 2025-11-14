@@ -24,14 +24,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Auth state changed:', { event, session });
       setSession(session);
       setLoading(false);
+
+      // Handle password recovery - redirect to update password page
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('AuthProvider: Password recovery event detected, redirecting to /update-password');
+        // Use setTimeout to ensure navigation happens after React Router is ready
+        setTimeout(() => {
+          if (window.location.pathname !== '/update-password') {
+            window.location.href = '/update-password';
+          }
+        }, 100);
+      }
     });
 
-    // Get initial session
+    // Get initial session and check for recovery token in hash
     console.log('AuthProvider: Getting initial session');
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('AuthProvider: Initial session:', session);
       setSession(session);
       setLoading(false);
+
+      // Check if we have a recovery token in the hash fragment
+      // Supabase password reset links use: #access_token=...&type=recovery
+      const hash = window.location.hash;
+      if (hash.includes('type=recovery') && session) {
+        console.log('AuthProvider: Recovery token detected in hash, redirecting to /update-password');
+        // Clean up the hash from URL and redirect
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/update-password') {
+          // Remove hash and redirect
+          window.history.replaceState(null, '', currentPath);
+          window.location.href = '/update-password';
+        } else {
+          // Already on update-password, just clean up the hash
+          window.history.replaceState(null, '', '/update-password');
+        }
+      }
     }).catch(error => {
       console.error('AuthProvider: Error getting initial session:', error);
       setLoading(false);

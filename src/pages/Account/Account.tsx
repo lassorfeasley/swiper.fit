@@ -1951,11 +1951,10 @@ const Account = () => {
             onConfirm={handleLogout}
             onCancel={() => setShowLogoutDialog(false)}
             title="Log out"
-            description="Are you sure you want to log out?"
             confirmText="Log out"
             cancelText="Cancel"
             confirmVariant="default"
-            cancelVariant="default"
+            cancelVariant="outline"
           />
 
           {/* Decline request confirmation dialog */}

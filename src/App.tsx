@@ -24,6 +24,7 @@ import EmailTest from "./pages/EmailTest";
 import ButtonTest from "./pages/ButtonTest";
 import ComponentsGallery from "./pages/ComponentsGallery";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+import { Toaster } from "sonner";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
 
@@ -282,6 +283,7 @@ export default function App() {
             <PageNameContext.Provider value={{ pageName, setPageName }}>
               <NavBarVisibilityProvider>
                 <AppContent />
+                <Toaster />
               </NavBarVisibilityProvider>
             </PageNameContext.Provider>
           </ActiveWorkoutProvider>

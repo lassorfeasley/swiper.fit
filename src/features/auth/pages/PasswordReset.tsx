@@ -3,7 +3,7 @@ import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/shadcn/button";
 import { Card, CardContent } from "@/components/shadcn/card";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Link } from "react-router-dom";
@@ -11,6 +11,7 @@ import { TextInput } from "@/components/shared/inputs/TextInput";
 import LoggedOutNav from "../components/LoggedOutNav";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
+import { toast } from "@/lib/toastReplacement";
 
 export default function PasswordReset() {
   const [email, setEmail] = useState("");
@@ -31,10 +32,7 @@ export default function PasswordReset() {
     if (error) {
       setStatus({ type: "error", message: error.message });
     } else {
-      setStatus({
-        type: "success",
-        message: "Check your email for a password reset link.",
-      });
+      toast.success("Check your email for a password reset link.");
     }
   };
 
@@ -52,9 +50,6 @@ export default function PasswordReset() {
                   <div className="justify-center text-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
                     Forgot your password?
                   </div>
-                  <div className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                    Enter your email and we'll send you a link to reset your password.
-                  </div>
                 </div>
 
                 {/* Status messages */}
@@ -62,14 +57,6 @@ export default function PasswordReset() {
                   <div className="self-stretch p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-red-600" />
                     <div className="text-red-800 text-sm font-['Be_Vietnam_Pro']">
-                      {status.message}
-                    </div>
-                  </div>
-                )}
-                {status.type === "success" && (
-                  <div className="self-stretch p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <div className="text-green-800 text-sm font-['Be_Vietnam_Pro']">
                       {status.message}
                     </div>
                   </div>
@@ -88,25 +75,27 @@ export default function PasswordReset() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter email to reset password"
                     required
                   />
                 </div>
 
-                {/* Submit button */}
-                <Button
-                  type="submit"
-                  variant="affirmative"
-                  className="self-stretch"
-                >
-                  Send reset link
-                </Button>
+                {/* Buttons */}
+                <div className="self-stretch flex flex-col gap-2">
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                  >
+                    Send reset link
+                  </Button>
 
-                {/* Back to login link */}
-                <div 
-                  className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer text-center"
-                  onClick={() => navigate("/login")}
-                >
-                  Back to login
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/login")}
+                  >
+                    Back to login
+                  </Button>
                 </div>
               </form>
             </div>

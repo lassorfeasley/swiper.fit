@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { Alert } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button";
@@ -21,6 +21,15 @@ export default function UpdatePassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const navigate = useNavigate();
+
+  // Clean up any remaining hash fragments on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      // Clean up the hash from URL
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
