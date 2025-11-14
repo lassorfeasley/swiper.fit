@@ -80,9 +80,6 @@ export default function UpdatePassword() {
                   <div className="justify-center text-neutral-600 text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight">
                     Update Password
                   </div>
-                  <div className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                    Set a new password for your account
-                  </div>
                 </div>
 
                 {/* Status messages */}

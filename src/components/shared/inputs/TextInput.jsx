@@ -65,13 +65,28 @@ const TextInput = React.forwardRef(
     };
 
     const iconPresent = !!icon;
+    const isPasswordToggle = typeof icon === "boolean" && icon;
 
     const handleIconClick = () => {
-      if (typeof icon === "boolean" && icon) {
+      if (isPasswordToggle) {
         setShowPassword(!showPassword);
       } else if (onClick) {
         onClick();
       }
+    };
+
+    // Destructure type from props so we can control it for password visibility toggle
+    const { type: propType, ...restProps } = props;
+    
+    // Determine the input type: if icon is boolean true and showPassword is true, show as text, otherwise use the prop type
+    const inputType = isPasswordToggle && showPassword ? "text" : (propType || "text");
+    
+    // Determine which icon to show
+    const renderIcon = () => {
+      if (isPasswordToggle) {
+        return showPassword ? <Eye /> : <EyeOff />;
+      }
+      return icon;
     };
 
     return (
@@ -89,15 +104,18 @@ const TextInput = React.forwardRef(
         <div className={cn("relative w-full group", className)}>
           <input
             ref={ref}
-            type={typeof icon === "boolean" && icon && showPassword ? "text" : props.type}
+            type={inputType}
             className={cn(
-              "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+              "flex h-10 w-full rounded-md file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50",
+              "focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0", // Remove all focus rings
+              "[&::-ms-reveal]:hidden [&::-ms-clear]:hidden", // Hide IE/Edge password reveal button
               getInputStyles(),
               iconPresent && "pr-14" // leave space for the icon container (w-12 + gap)
             )}
             disabled={disabled}
             placeholder={customPlaceholder}
-            {...props}
+            autoComplete={isPasswordToggle ? "new-password" : restProps.autoComplete}
+            {...restProps}
           />
           {iconPresent && (
             <div
@@ -110,7 +128,7 @@ const TextInput = React.forwardRef(
               )}
               onClick={handleIconClick}
             >
-              {typeof icon === "boolean" ? (showPassword ? <Eye /> : <EyeOff />) : icon}
+              {renderIcon()}
             </div>
           )}
         </div>

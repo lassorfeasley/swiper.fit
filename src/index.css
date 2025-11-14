@@ -137,6 +137,21 @@ html, body, #root {
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Hide browser default password reveal buttons */
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-strong-password-auto-fill-button {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Hide IE/Edge password reveal button */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none !important;
+  }
 }
 
 @media (min-width: 1024px) {
