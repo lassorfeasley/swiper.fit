@@ -73,7 +73,7 @@ export default function UpdatePassword() {
       <div className="self-stretch flex flex-col justify-center items-center flex-1">
         <DeckWrapper gap={0} className="flex-1">
           <CardWrapper>
-            <div className="self-stretch p-5 bg-white border-b border-neutral-300 flex flex-col justify-start items-start gap-5">
+            <div className="self-stretch p-5 bg-white border border-neutral-300 rounded-[4px] flex flex-col justify-start items-start gap-5">
               <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
                 {/* Header */}
                 <div className="self-stretch flex flex-col gap-2">
