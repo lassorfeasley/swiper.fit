@@ -124,7 +124,7 @@ const TextInput = React.forwardRef(
                 disabled && "border-neutral-300 text-neutral-300",
                 !disabled && error && "border-red-400 text-slate-600",
                 !disabled && !error &&
-                  "border-neutral-300 text-slate-500 group-hover:border-slate-600 group-focus-within:border-slate-600"
+                  "border-neutral-300 text-slate-500 group-hover:border-neutral-300 group-focus-within:border-neutral-300"
               )}
               onClick={handleIconClick}
             >

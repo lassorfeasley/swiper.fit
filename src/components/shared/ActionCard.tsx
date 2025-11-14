@@ -14,30 +14,23 @@ const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(({
   className, 
   text = "Add exercise",
   onClick,
-  fillColor,
-  textColor,
+  fillColor, // Keep for backward compatibility but ignore it
+  textColor, // Keep for backward compatibility but ignore it
   isFirstCard, // Extract isFirstCard to prevent DOM warning
   icon: Icon = Plus, // Default to Plus if no icon provided
   ...props 
 }, ref) => {
-  // Determine colors based on props
-  const backgroundColor = fillColor || "bg-white";
-  const textColorClass = textColor || "text-neutral-neutral-700";
-  const iconColorClass = textColor || "text-neutral-neutral-700";
-
   return (
     <div 
       ref={ref} 
-      className={`ActionCard w-[500px] h-14 max-w-[500px] rounded-lg border border-neutral-300 inline-flex justify-between items-center overflow-hidden cursor-pointer ${className}`} 
+      className={`ActionCard w-full h-14 rounded-sm inline-flex justify-between items-center overflow-hidden cursor-pointer ${className}`} 
       onClick={onClick} 
       {...props}
     >
-      <div className={`ClickableArea flex-1 self-stretch pl-3 pr-1 ${backgroundColor} rounded-lg flex justify-between items-center cursor-pointer`}>
-        <div className={`justify-start ${textColorClass} text-sm font-medium font-['Be_Vietnam_Pro'] leading-3`}>{text}</div>
-        <div data-property-1="left-border" data-show-text="false" className="Iconbutton p-2.5 flex justify-start items-center gap-2.5">
-          <div data-layer="lucide-icon" className="LucideIcon w-6 h-6 relative overflow-hidden">
-            <Icon className={`w-6 h-6 ${iconColorClass}`} strokeWidth={2} />
-          </div>
+      <div className="ClickableArea flex-1 self-stretch px-3 bg-sky-600 hover:bg-sky-500 rounded-lg outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex justify-between items-center cursor-pointer transition-colors">
+        <div className="justify-start text-white text-lg font-medium font-['Be_Vietnam_Pro'] leading-5">{text}</div>
+        <div data-layer="lucide-icon" data-icon="plus" className="LucideIcon size-10 relative overflow-hidden">
+          <Icon className="size-9 absolute left-[2px] top-[2px] text-white" strokeWidth={1} />
         </div>
       </div>
     </div>

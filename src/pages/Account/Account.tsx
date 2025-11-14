@@ -1424,7 +1424,7 @@ const Account = () => {
                               setDialogInviteType('trainer');
                               setShowAddPersonDialog(true);
                             }}
-                            className="w-full h-14 rounded-lg border border-neutral-300"
+                            className="w-full"
                           />
                           <ActionCard
                             text="Invite a client"
@@ -1432,7 +1432,7 @@ const Account = () => {
                               setDialogInviteType('client');
                               setShowAddPersonDialog(true);
                             }}
-                            className="w-full h-14 rounded-lg border border-neutral-300"
+                            className="w-full"
                           />
                         </div>
                       )}
