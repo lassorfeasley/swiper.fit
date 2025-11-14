@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/shadcn/button";
 import { Card, CardContent } from "@/components/shadcn/card";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { AlertCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Link } from "react-router-dom";
 import { TextInput } from "@/components/shared/inputs/TextInput";
@@ -17,6 +17,20 @@ export default function PasswordReset() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for expired link error on mount
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'expired') {
+      setStatus({
+        type: "error",
+        message: "This password reset link has expired or is invalid. Please request a new one.",
+      });
+      // Clean up the URL
+      navigate('/reset-password', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -37,16 +37,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
-    // Get initial session and check for recovery token in hash
+    // Get initial session and check for recovery token or errors in hash
     console.log('AuthProvider: Getting initial session');
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('AuthProvider: Initial session:', session);
       setSession(session);
       setLoading(false);
 
+      const hash = window.location.hash;
+      
+      // Check for error in hash (expired/invalid password reset link)
+      if (hash.includes('error=') || hash.includes('error_code=')) {
+        const errorParams = new URLSearchParams(hash.substring(1));
+        const errorCode = errorParams.get('error_code');
+        const errorDescription = errorParams.get('error_description');
+        
+        // Handle expired or invalid password reset links
+        if (errorCode === 'otp_expired' || errorCode === 'access_denied') {
+          console.log('AuthProvider: Expired/invalid password reset link detected');
+          // Clean up the error hash
+          window.history.replaceState(null, '', window.location.pathname);
+          // Redirect to password reset page with error message
+          setTimeout(() => {
+            window.location.href = '/reset-password?error=expired';
+          }, 100);
+          return;
+        }
+      }
+
       // Check if we have a recovery token in the hash fragment
       // Supabase password reset links use: #access_token=...&type=recovery
-      const hash = window.location.hash;
       if (hash.includes('type=recovery') && session) {
         console.log('AuthProvider: Recovery token detected in hash, redirecting to /update-password');
         // Clean up the hash from URL and redirect
