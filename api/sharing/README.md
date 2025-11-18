@@ -34,12 +34,12 @@ The `account_shares` table has been extended with new columns:
 Invites a client to be managed by a trainer.
 Creates an invitation where the trainer will manage the client's account.
 
-**Relationship created:** `owner=trainer`, `delegate=client`
-This means the trainer (owner) manages the client's (delegate) account.
+**Relationship created:** `owner=client`, `delegate=trainer`
+This means the trainer (delegate) manages the client's (owner) account.
 
 **Parameters:**
 - `clientEmail` (string): Email of the client to invite
-- `trainerId` (string): ID of the trainer sending the invitation (will be the owner)
+- `trainerId` (string): ID of the trainer sending the invitation (will be the delegate)
 - `permissions` (object, optional): Default permissions
   - `can_create_routines` (boolean, default: false)
   - `can_start_workouts` (boolean, default: false)

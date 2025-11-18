@@ -813,7 +813,6 @@ const Account = () => {
         .insert({
           routine_name: name,
           user_id: selectedClient.id,
-          is_public: true,
           is_archived: false,
           created_by: user.id,
           shared_by: selectedClient.id,
@@ -1256,10 +1255,22 @@ const Account = () => {
                         <div className="CardHeader self-stretch p-3 border-b border-neutral-300 inline-flex justify-between items-center">
                           <div className="Frame84 flex-1 flex justify-start items-center gap-3">
                             <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                              {request.request_type === 'trainer_invite'
-                                ? `${formatUserDisplay((request as any).profiles)} wants you to be their trainer`
-                                : `${formatUserDisplay((request as any).profiles)} wants you to be their client`
-                              }
+                              {(() => {
+                                const currentUserId = user?.id;
+                                const isTrainerInvite = request.request_type === 'trainer_invite';
+                                const ownerProfile = (request as any).owner_profile;
+                                const delegateProfile = (request as any).delegate_profile;
+
+                                // For trainer_invite, the trainer (delegate) invited the client (owner)
+                                if (isTrainerInvite) {
+                                  const inviter = delegateProfile || ownerProfile;
+                                  return `${formatUserDisplay(inviter)} wants to be your trainer`;
+                                }
+
+                                // For client_invite, the client (owner) invited the trainer (delegate)
+                                const inviter = ownerProfile || delegateProfile;
+                                return `${formatUserDisplay(inviter)} wants you to be their trainer`;
+                              })()}
                             </div>
                           </div>
                           <ActionPill
@@ -1354,8 +1365,14 @@ const Account = () => {
                           <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
                             <div data-layer="Frame 85" className="Frame85 flex-1 inline-flex flex-col justify-start items-start">
                               <div data-layer="example@account.com was invited to be your trainer" className="ExampleAccountComWasInvitedToBeYourTrainer justify-center">
-                                <span className="text-neutral-neutral-700 text-sm font-bold font-['Be_Vietnam_Pro'] leading-tight">{formatUserDisplay(request.profiles)} </span>
-                                <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">{request.request_type === 'trainer_invite' ? 'was invited to be your trainer' : 'was invited to be your client'}</span>
+                                <span className="text-neutral-neutral-700 text-sm font-bold font-['Be_Vietnam_Pro'] leading-tight">
+                                  {formatUserDisplay(request.profiles)}{" "}
+                                </span>
+                                <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
+                                  {request.request_type === "client_invite"
+                                    ? "was invited to be your trainer"
+                                    : "was invited to be your client"}
+                                </span>
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
                             </div>

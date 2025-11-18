@@ -47,7 +47,6 @@ interface Workout {
   started_at: string;
   is_active: boolean;
   is_paused?: boolean;
-  is_public?: boolean;
   last_workout_exercise_id?: string;
   og_image_url?: string;
   active_seconds_accumulated?: number;

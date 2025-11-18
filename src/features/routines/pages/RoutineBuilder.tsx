@@ -146,8 +146,9 @@ const RoutineBuilder = () => {
       console.log('Program data:', programData);
       console.log('OG Image URL:', programData?.og_image_url);
 
-      // Determine if current user is the owner
-      const userIsOwner = user && programData.user_id === user.id;
+      // Determine if current user (or acting user in delegate mode) is the owner
+      const effectiveUserId = isDelegated && actingUser ? actingUser.id : user?.id;
+      const userIsOwner = effectiveUserId && programData.user_id === effectiveUserId;
       setIsViewerMode(!userIsOwner);
       
       // If not owner, fetch owner name

@@ -102,7 +102,6 @@ export default function CreateAccount(): React.JSX.Element {
         )
       `)
       .eq('id', sourceRoutineId)
-      .eq('is_public', true)
       .single();
     if (srcErr || !src) throw new Error('Shared routine not available');
 
@@ -118,7 +117,6 @@ export default function CreateAccount(): React.JSX.Element {
         routine_name: src.routine_name, 
         user_id: uid, 
         is_archived: false, 
-        is_public: false,
         created_by: src.created_by || src.user_id,
         shared_by: src.user_id
       })

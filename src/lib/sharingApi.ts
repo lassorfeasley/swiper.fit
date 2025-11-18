@@ -45,11 +45,11 @@ interface AccountShare {
  * Invites a client to be managed by a trainer.
  * Creates an invitation where the trainer will manage the client's account.
  * 
- * Relationship created: owner=trainer, delegate=client
- * This means the trainer (owner) manages the client's (delegate) account.
+ * Relationship created: owner=client, delegate=trainer
+ * This means the trainer (delegate) manages the client's (owner) account.
  * 
  * @param clientEmail - Email of the client to invite
- * @param trainerId - ID of the trainer sending the invitation (will be the owner)
+ * @param trainerId - ID of the trainer sending the invitation (will be the delegate)
  * @param permissions - Permissions to grant the trainer
  */
 export async function inviteClientToBeManaged(
@@ -118,7 +118,8 @@ export async function inviteClientToBeManaged(
       const { count: pendingDupCount } = await supabase
         .from("account_shares")
         .select("id", { count: "exact", head: true })
-        .eq("owner_user_id", trainerId)
+        .is("owner_user_id", null)
+        .eq("delegate_user_id", trainerId)
         .eq("delegate_email", normalizedClientEmail)
         .eq("status", "pending")
         .is("revoked_at", null);
@@ -129,8 +130,8 @@ export async function inviteClientToBeManaged(
       }
 
       const invitationData: Partial<AccountShare> = {
-        owner_user_id: trainerId,
-        delegate_user_id: null,
+        owner_user_id: null, // Will be populated when client creates account
+        delegate_user_id: trainerId, // Trainer is the delegate who will manage
         delegate_email: clientEmail.trim().toLowerCase(),
         status: 'pending',
         request_type: 'trainer_invite',
@@ -139,6 +140,16 @@ export async function inviteClientToBeManaged(
         can_start_workouts: permissions.can_start_workouts || false,
         can_review_history: permissions.can_review_history || false,
       };
+
+      // Guard against accidental self-invites
+      if (
+        invitationData.owner_user_id &&
+        invitationData.delegate_user_id &&
+        invitationData.owner_user_id === invitationData.delegate_user_id
+      ) {
+        console.error("[inviteClientToBeManaged] Self-invite detected (non-member):", invitationData);
+        throw new Error("You cannot invite yourself");
+      }
 
       const { error: insertError } = await supabase
         .from("account_shares")
@@ -191,8 +202,8 @@ export async function inviteClientToBeManaged(
     const { count: activeInSameDirection } = await supabase
       .from("account_shares")
       .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", trainerId)
-      .eq("delegate_user_id", clientProfile.id)
+      .eq("owner_user_id", clientProfile.id)
+      .eq("delegate_user_id", trainerId)
       .eq("status", "active")
       .is("revoked_at", null);
 
@@ -200,9 +211,10 @@ export async function inviteClientToBeManaged(
       throw new Error("An active sharing relationship already exists with this user");
     }
 
+    // Insert with correct relationship (RLS policy now allows this)
     const invitationData: Partial<AccountShare> = {
-      owner_user_id: trainerId,
-      delegate_user_id: clientProfile.id,
+      owner_user_id: clientProfile.id, // Client's account is being shared
+      delegate_user_id: trainerId, // Trainer manages it
       delegate_email: clientEmailToUse,
       status: 'pending',
       request_type: 'trainer_invite',
@@ -211,6 +223,23 @@ export async function inviteClientToBeManaged(
       can_start_workouts: permissions.can_start_workouts || false,
       can_review_history: permissions.can_review_history || false,
     };
+
+    // Guard against accidental self-invites
+    if (
+      invitationData.owner_user_id &&
+      invitationData.delegate_user_id &&
+      invitationData.owner_user_id === invitationData.delegate_user_id
+    ) {
+      console.error("[inviteClientToBeManaged] Self-invite detected (member):", invitationData);
+      throw new Error("You cannot invite yourself");
+    }
+
+    console.log("[inviteClientToBeManaged] Inserting invitation:", {
+      owner_user_id: clientProfile.id,
+      owner_email: clientProfile.email,
+      delegate_user_id: trainerId,
+      request_type: 'trainer_invite',
+    });
 
     const { error: insertError } = await supabase
       .from("account_shares")
@@ -327,6 +356,16 @@ export async function inviteTrainerToManage(
         can_review_history: permissions.can_review_history || false,
       };
 
+      // Guard against accidental self-invites
+      if (
+        invitationData.owner_user_id &&
+        invitationData.delegate_user_id &&
+        invitationData.owner_user_id === invitationData.delegate_user_id
+      ) {
+        console.error("[inviteTrainerToManage] Self-invite detected (non-member):", invitationData);
+        throw new Error("You cannot invite yourself");
+      }
+
       const { error: insertError } = await supabase
         .from("account_shares")
         .insert(invitationData);
@@ -399,6 +438,16 @@ export async function inviteTrainerToManage(
       can_review_history: permissions.can_review_history || false,
     };
 
+    // Guard against accidental self-invites
+    if (
+      invitationData.owner_user_id &&
+      invitationData.delegate_user_id &&
+      invitationData.owner_user_id === invitationData.delegate_user_id
+    ) {
+      console.error("[inviteTrainerToManage] Self-invite detected (member):", invitationData);
+      throw new Error("You cannot invite yourself");
+    }
+
     const { error: insertError } = await supabase
       .from("account_shares")
       .insert(invitationData);
@@ -444,54 +493,80 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
       throw new Error("User not authenticated");
     }
 
-    // VALIDATION: Only delegate can accept
+    // VALIDATION: Check if user can accept this invitation
     const isDelegate = invitation.delegate_user_id === currentUser.id;
     const isOwner = invitation.owner_user_id === currentUser.id;
+    
+    // For trainer_invite, check if relationship is reversed (owner is trainer, delegate is client)
+    // In this case, the client (delegate) should be the owner, and trainer should be delegate
+    const isReversedTrainerInvite = invitation.request_type === 'trainer_invite' && 
+                                     isDelegate && 
+                                     !isOwner;
 
-    if (!isDelegate) {
+    if (!isDelegate && !isReversedTrainerInvite) {
       throw new Error("Only the person being invited can accept this invitation");
     }
 
-    if (isOwner) {
+    if (isOwner && !isReversedTrainerInvite) {
       throw new Error("You cannot accept your own invitation");
     }
 
-    // Check if there's already an active relationship in the same direction (prevent duplicates)
-    if (invitation.delegate_user_id) {
-      // Check for existing relationship in the same direction
-      const { count: sameDirectionCount } = await supabase
-        .from("account_shares")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_user_id", invitation.owner_user_id)
-        .eq("delegate_user_id", invitation.delegate_user_id)
-        .eq("status", "active")
-        .is("revoked_at", null);
-
-      if ((sameDirectionCount || 0) > 0) {
-        // There's already an active relationship, just update the invitation to declined
-        const { error: updateError } = await supabase
-          .from("account_shares")
-          .update({ status: 'declined' })
-          .eq("id", invitationId);
-
-        if (updateError) {
-          console.error("Error updating invitation to declined:", updateError);
-          throw new Error("Failed to update invitation");
-        }
-        
-        throw new Error("An active sharing relationship already exists in this direction.");
-      }
+    // Determine the correct final relationship
+    let finalOwnerId = invitation.owner_user_id;
+    let finalDelegateId = invitation.delegate_user_id;
+    
+    // If this is a reversed trainer_invite, swap the relationship
+    if (isReversedTrainerInvite) {
+      console.log("[acceptInvitation] Detected reversed trainer_invite relationship, correcting it");
+      finalOwnerId = currentUser.id; // Client becomes owner
+      finalDelegateId = invitation.owner_user_id; // Trainer becomes delegate
     }
 
-    // No conflict, proceed with accepting the invitation
+    // Check if there's already an active relationship in the correct direction (prevent duplicates)
+    const { count: sameDirectionCount } = await supabase
+      .from("account_shares")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_user_id", finalOwnerId)
+      .eq("delegate_user_id", finalDelegateId)
+      .eq("status", "active")
+      .is("revoked_at", null);
+
+    if ((sameDirectionCount || 0) > 0) {
+      // There's already an active relationship, just update the invitation to declined
+      const { error: updateError } = await supabase
+        .from("account_shares")
+        .update({ status: 'declined' })
+        .eq("id", invitationId);
+
+      if (updateError) {
+        console.error("Error updating invitation to declined:", updateError);
+        throw new Error("Failed to update invitation");
+      }
+      
+      throw new Error("An active sharing relationship already exists in this direction.");
+    }
+
+    // Accept the invitation and fix the relationship if needed
+    const updateData: any = { status: 'active' };
+    
+    // If relationship needs to be corrected, update owner and delegate
+    if (isReversedTrainerInvite) {
+      updateData.owner_user_id = finalOwnerId;
+      updateData.delegate_user_id = finalDelegateId;
+    }
+    
     const { error } = await supabase
       .from("account_shares")
-      .update({ status: 'active' })
+      .update(updateData)
       .eq("id", invitationId);
 
     if (error) {
       console.error("Accept invitation error:", error);
       throw new Error("Failed to accept invitation");
+    }
+    
+    if (isReversedTrainerInvite) {
+      console.log("[acceptInvitation] Successfully corrected and accepted reversed trainer_invite");
     }
   } catch (error) {
     console.error("acceptInvitation error:", error);
@@ -597,22 +672,39 @@ export async function removeShare(shareId: string): Promise<void> {
 
 export async function getPendingInvitations(userId: string): Promise<AccountShare[]> {
   try {
-    // ONLY get invitations where user is the delegate (being invited)
-    // NOT where user is the owner (they sent the invitation - those are outgoing)
+    // A "pending invitation" is any account_share where:
+    // - status = 'pending'
+    // - the current user is the one who must respond
+    //
+    // Recipient rules:
+    // - trainer_invite: client (owner) must accept  -> owner_user_id = userId
+    // - client_invite:  trainer (delegate) must accept -> delegate_user_id = userId
+    // - legacy: treat delegate as recipient (if any)
     const { data, error } = await supabase
       .from("account_shares")
       .select(`
         *,
-        profiles!account_shares_owner_user_id_fkey(
+        owner_profile:profiles!account_shares_owner_user_id_fkey(
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        delegate_profile:profiles!account_shares_delegate_user_id_fkey(
           id,
           first_name,
           last_name,
           email
         )
       `)
-      .eq("delegate_user_id", userId)
-      .neq("owner_user_id", userId)  // Extra safety: exclude self-invitations
       .eq("status", "pending")
+      .or(
+        [
+          `and(request_type.eq.trainer_invite,owner_user_id.eq.${userId})`,
+          `and(request_type.eq.client_invite,delegate_user_id.eq.${userId})`,
+          `and(request_type.eq.legacy,delegate_user_id.eq.${userId})`,
+        ].join(",")
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -620,7 +712,21 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
       throw new Error("Failed to get pending invitations");
     }
 
-    return data || [];
+    const invitations = data || [];
+
+    console.log(
+      "[getPendingInvitations] Found invitations:",
+      invitations.map((inv) => ({
+        id: inv.id,
+        owner_user_id: inv.owner_user_id,
+        delegate_user_id: inv.delegate_user_id,
+        request_type: inv.request_type,
+        owner_profile: (inv as any).owner_profile,
+        delegate_profile: (inv as any).delegate_profile,
+      }))
+    );
+
+    return invitations;
   } catch (error) {
     console.error("getPendingInvitations error:", error);
     throw error;
@@ -718,7 +824,7 @@ export async function linkPendingInvitations(userId: string, email: string): Pro
     const { data: pendingInvitations, error: fetchError } = await supabase
       .from("account_shares")
       .select("*")
-      .eq("delegate_email", email)
+      .eq("delegate_email", email.toLowerCase().trim())
       .eq("status", "pending");
 
     if (fetchError) {
@@ -730,22 +836,68 @@ export async function linkPendingInvitations(userId: string, email: string): Pro
       return 0;
     }
 
-    // Update all pending invitations to link them to the new user
-    const { error: updateError } = await supabase
-      .from("account_shares")
-      .update({ 
-        delegate_user_id: userId,
-        status: "active"
-      })
-      .eq("delegate_email", email)
-      .eq("status", "pending");
-
-    if (updateError) {
-      console.error("Error linking pending invitations:", updateError);
-      return 0;
+    // Process each invitation based on request_type
+    let linkedCount = 0;
+    
+    for (const invitation of pendingInvitations) {
+      if (invitation.request_type === 'trainer_invite') {
+        // For trainer_invite: new user (client) becomes owner, trainer remains delegate
+        // Validate that trainer is already set as delegate
+        if (invitation.delegate_user_id && invitation.delegate_user_id !== userId) {
+          const { error: updateError } = await supabase
+            .from("account_shares")
+            .update({ 
+              owner_user_id: userId, // New user (client) becomes owner
+              delegate_user_id: invitation.delegate_user_id, // Keep trainer as delegate
+              status: "active"
+            })
+            .eq("id", invitation.id)
+            .eq("status", "pending");
+          
+          if (updateError) {
+            console.error(`[linkPendingInvitations] Error linking trainer_invite ${invitation.id}:`, updateError);
+            continue;
+          }
+          linkedCount++;
+        } else {
+          console.warn(`[linkPendingInvitations] Skipping trainer_invite ${invitation.id}: delegate_user_id mismatch or missing`);
+        }
+      } else if (invitation.request_type === 'client_invite') {
+        // For client_invite: new user (trainer) becomes delegate, owner already set
+        const { error: updateError } = await supabase
+          .from("account_shares")
+          .update({ 
+            delegate_user_id: userId, // New user (trainer) becomes delegate
+            status: "active"
+          })
+          .eq("id", invitation.id)
+          .eq("status", "pending");
+        
+        if (updateError) {
+          console.error(`[linkPendingInvitations] Error linking client_invite ${invitation.id}:`, updateError);
+          continue;
+        }
+        linkedCount++;
+      } else {
+        // Legacy or unknown request_type - use default behavior
+        const { error: updateError } = await supabase
+          .from("account_shares")
+          .update({ 
+            delegate_user_id: userId,
+            status: "active"
+          })
+          .eq("id", invitation.id)
+          .eq("status", "pending");
+        
+        if (updateError) {
+          console.error(`[linkPendingInvitations] Error linking invitation ${invitation.id}:`, updateError);
+          continue;
+        }
+        linkedCount++;
+      }
     }
 
-    return pendingInvitations.length;
+    return linkedCount;
   } catch (error) {
     console.error("linkPendingInvitations error:", error);
     return 0;
