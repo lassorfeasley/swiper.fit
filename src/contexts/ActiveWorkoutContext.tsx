@@ -395,11 +395,21 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
             if (!isPausedNow) {
               if (hasPausedField2) {
-                console.log('[ActiveWorkout] Workout ended via real-time update');
-                navigate('/history');
+                console.log('[ActiveWorkout] Workout ended via real-time update, navigating to workout summary');
+                // Navigate to workout summary page for both trainer and client
+                if (updatedWorkout.id) {
+                  navigate(`/history/${updatedWorkout.id}`, { replace: true });
+                } else {
+                  navigate('/history', { replace: true });
+                }
               } else if (isFinishingRef.current) {
-                console.log('[ActiveWorkout] Workout ended (legacy schema, finishing flag)');
-                navigate('/history');
+                console.log('[ActiveWorkout] Workout ended (legacy schema, finishing flag), navigating to workout summary');
+                // Navigate to workout summary page for both trainer and client
+                if (updatedWorkout.id) {
+                  navigate(`/history/${updatedWorkout.id}`, { replace: true });
+                } else {
+                  navigate('/history', { replace: true });
+                }
               }
             }
           }

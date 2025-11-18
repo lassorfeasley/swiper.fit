@@ -610,7 +610,9 @@ const ActiveWorkoutSection = ({
     }
 
     // No incomplete exercises left in this section
-    onSectionComplete?.(section);
+    // Pass the just-completed exercise ID so handleSectionComplete can account for it
+    // even if the state update hasn't propagated yet
+    onSectionComplete?.(section, exerciseId);
   }, [globalCompletedExercises, exercises, section, onSectionComplete, changeFocus, markExerciseComplete]);
 
   // Handle set press (open edit modal)

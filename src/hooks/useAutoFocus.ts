@@ -11,7 +11,6 @@ interface WorkoutAutoFocusOptions {
   sectionExercises: Record<string, any[]>;
   completedExercises: Set<string>;
   setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
-  isRestoringFocus: boolean;
 }
 
 /**
@@ -134,28 +133,41 @@ export const useAutoFocus = <T extends Record<string, any>>({
 export const useWorkoutAutoFocus = ({
   sectionExercises,
   completedExercises,
-  setFocusedExerciseId,
-  isRestoringFocus
+  setFocusedExerciseId
 }: WorkoutAutoFocusOptions) => {
   
-  const handleSectionComplete = useCallback((section: string): any => {
+  const handleSectionComplete = useCallback((section: string, justCompletedExerciseId?: string): any => {
     console.log(`[useAutoFocus] Section "${section}" completed, looking for next exercise...`);
+    console.log(`[useAutoFocus] Just completed exercise ID:`, justCompletedExerciseId);
+    console.log(`[useAutoFocus] Current completedExercises:`, Array.from(completedExercises));
+    console.log(`[useAutoFocus] Section exercises for "${section}":`, sectionExercises[section]?.map(e => e.exercise_id));
     
-    if (isRestoringFocus) {
-      console.log('[useAutoFocus] Skipping auto-focus (restoring focus)');
-      return null; // Don't auto-focus during restoration
-    }
+    // Note: We removed the isRestoringFocus check here because section completion
+    // is a user-initiated action that should always trigger auto-focus to the next exercise.
+    // The isRestoringFocus flag should only prevent auto-focus during initial page load
+    // restoration, not during normal workout progression.
     
     const exercises = sectionExercises[section] || [];
+    // Create a set that includes the just-completed exercise to account for async state updates
+    const completedSet = new Set(completedExercises);
+    if (justCompletedExerciseId) {
+      completedSet.add(justCompletedExerciseId);
+    }
+    
     const incompleteExercises = exercises.filter(exercise => 
-      !completedExercises.has(exercise.exercise_id)
+      !completedSet.has(exercise.exercise_id)
     );
+    
+    console.log(`[useAutoFocus] Incomplete exercises in "${section}":`, incompleteExercises.map(e => e.exercise_id));
     
     if (incompleteExercises.length > 0) {
       // Focus on the first incomplete exercise in this section
       const firstIncomplete = incompleteExercises[0];
       console.log(`[useAutoFocus] Found incomplete exercise in "${section}":`, firstIncomplete.exercise_id);
-      setFocusedExerciseId(firstIncomplete.exercise_id, section);
+      // Defer state update to avoid updating during render
+      setTimeout(() => {
+        setFocusedExerciseId(firstIncomplete.exercise_id, section);
+      }, 0);
       return firstIncomplete;
     } else {
       // All exercises in this section are complete, look for next section
@@ -166,26 +178,34 @@ export const useWorkoutAutoFocus = ({
       for (let i = currentSectionIndex + 1; i < sections.length; i++) {
         const nextSection = sections[i];
         const nextSectionExercises = sectionExercises[nextSection] || [];
+        console.log(`[useAutoFocus] Section "${nextSection}" has ${nextSectionExercises.length} exercises`);
         const nextIncompleteExercises = nextSectionExercises.filter(exercise => 
           !completedExercises.has(exercise.exercise_id)
         );
         
         console.log(`[useAutoFocus] Checking section "${nextSection}": ${nextIncompleteExercises.length} incomplete exercises`);
+        console.log(`[useAutoFocus] Exercises in "${nextSection}":`, nextSectionExercises.map(e => ({ id: e.exercise_id, completed: completedExercises.has(e.exercise_id) })));
         
         if (nextIncompleteExercises.length > 0) {
           const firstIncomplete = nextIncompleteExercises[0];
           console.log(`[useAutoFocus] Moving focus to "${nextSection}":`, firstIncomplete.exercise_id);
-          setFocusedExerciseId(firstIncomplete.exercise_id, nextSection);
+          // Defer state update to avoid updating during render
+          setTimeout(() => {
+            setFocusedExerciseId(firstIncomplete.exercise_id, nextSection);
+          }, 0);
           return firstIncomplete;
         }
       }
       
       // No more incomplete exercises found
       console.log('[useAutoFocus] No more incomplete exercises found - workout complete!');
-      setFocusedExerciseId(null);
+      // Defer state update to avoid updating during render
+      setTimeout(() => {
+        setFocusedExerciseId(null);
+      }, 0);
       return null;
     }
-  }, [sectionExercises, completedExercises, setFocusedExerciseId, isRestoringFocus]);
+  }, [sectionExercises, completedExercises, setFocusedExerciseId]);
 
   return {
     handleSectionComplete

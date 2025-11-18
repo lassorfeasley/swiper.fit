@@ -39,7 +39,7 @@ interface WorkoutNavigationContextType {
   markExerciseIncomplete: (exerciseId: string) => void;
   setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
   setSwipeAnimationRunning: (running: boolean) => void;
-  handleSectionComplete: (section: string) => Exercise | null;
+  handleSectionComplete: (section: string, justCompletedExerciseId?: string) => Exercise | null;
   isWorkoutComplete: () => boolean;
   getProgressStats: () => {
     total: number;
@@ -221,8 +221,7 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
   const { handleSectionComplete } = useWorkoutAutoFocus({
     sectionExercises,
     completedExercises,
-    setFocusedExerciseId,
-    isRestoringFocus
+    setFocusedExerciseId
   });
 
   // Debug: Log when focus changes
@@ -230,6 +229,7 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     if (focusedExercise) {
       // Clear restoring flag if we successfully restored focus
       if (isRestoringFocus && focusedExercise.section !== null) {
+        console.log('[WorkoutNavigation] Focus restored successfully:', focusedExercise.exercise_id, 'in section:', focusedExercise.section);
         setIsRestoringFocus(false);
       }
     } else {

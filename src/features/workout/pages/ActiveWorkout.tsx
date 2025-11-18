@@ -120,10 +120,14 @@ const ActiveWorkoutContent: React.FC = () => {
   }, [setPageName]);
 
   // Use the dedicated autoscroll hook
+  // Increase retries and delay for restoration to ensure element is found
   useAutoScroll({
     focusedId: focusedExercise?.exercise_id || null,
     elementPrefix: 'exercise-',
     viewportPosition: 0.2,
+    scrollBehavior: 'smooth',
+    debounceMs: 150,
+    maxRetries: 20, // Increase retries for restoration (up to 3 seconds)
     recenterOnIdleMs: 5000,
     recenterThresholdPx: 40
   });
@@ -159,18 +163,43 @@ const ActiveWorkoutContent: React.FC = () => {
       // If no warmup, fall through to training/cooldown order
     }
 
-    // Standard restore flow
+    // Standard restore flow - restore to last opened exercise
     const timer = setTimeout(() => {
       if (activeWorkout?.last_workout_exercise_id) {
-        isRestoringFocusRef.current = true;
-        setFocusedExerciseId(activeWorkout.last_workout_exercise_id, null);
+        console.log('[ActiveWorkout] Restoring focus to last exercise (workout_exercise.id):', activeWorkout.last_workout_exercise_id);
+        
+        // Find the exercise by workout_exercise.id (stored in last_workout_exercise_id)
+        // and get its exercise_id to set focus
+        let foundExercise = null;
+        let foundSection = null;
+        
+        const sections = ['warmup', 'training', 'cooldown'];
+        for (const section of sections) {
+          const exercises = sectionExercises[section] || [];
+          foundExercise = exercises.find(ex => ex.id === activeWorkout.last_workout_exercise_id);
+          if (foundExercise) {
+            foundSection = section;
+            break;
+          }
+        }
+        
+        if (foundExercise) {
+          console.log('[ActiveWorkout] Found exercise, restoring focus to exercise_id:', foundExercise.exercise_id, 'in section:', foundSection);
+          isRestoringFocusRef.current = true;
+          setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
+        } else {
+          console.log('[ActiveWorkout] Exercise not found yet, will retry when sections load');
+          // Exercise not loaded yet, will be handled by the reactive restoration effect
+        }
       } else {
+        // No last exercise, focus on first exercise of first available section
         const order = ['warmup', 'training', 'cooldown'];
         for (const section of order) {
           if (!loadedSections[section]) return;
           const exercises = sectionExercises[section] || [];
           if (exercises.length > 0) {
             const firstExercise = exercises[0];
+            console.log('[ActiveWorkout] No last exercise, focusing first exercise:', firstExercise.exercise_id, 'in section:', section);
             isRestoringFocusRef.current = true;
             setFocusedExerciseId(firstExercise.exercise_id, section);
             break;
@@ -192,18 +221,32 @@ const ActiveWorkoutContent: React.FC = () => {
     const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
     
     if (hasExercises) {
-      // Sections are ready, restore focus with a small delay to avoid render-phase state updates
-      console.log('[ActiveWorkout] Sections loaded, restoring focus to:', activeWorkout.last_workout_exercise_id);
-      isRestoringFocusRef.current = true;
+      // Find the exercise by workout_exercise.id and get its exercise_id
+      let foundExercise = null;
+      let foundSection = null;
       
-      // Use setTimeout to defer the state update to the next tick
-      setTimeout(() => {
-        // Add a small delay to give timer-based restoration priority
+      const sections = ['warmup', 'training', 'cooldown'];
+      for (const section of sections) {
+        const exercises = sectionExercises[section] || [];
+        foundExercise = exercises.find(ex => ex.id === activeWorkout.last_workout_exercise_id);
+        if (foundExercise) {
+          foundSection = section;
+          break;
+        }
+      }
+      
+      if (foundExercise) {
+        // Sections are ready, restore focus with a small delay to avoid render-phase state updates
+        console.log('[ActiveWorkout] Reactive restoration: Found exercise, setting focus to exercise_id:', foundExercise.exercise_id, 'in section:', foundSection);
+        isRestoringFocusRef.current = true;
+        
+        // Use setTimeout to defer the state update to the next tick
         setTimeout(() => {
-          console.log('[ActiveWorkout] Reactive restoration setting focus to:', activeWorkout.last_workout_exercise_id);
-          setFocusedExerciseId(activeWorkout.last_workout_exercise_id, null);
+          setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
         }, 100);
-      }, 0);
+      } else {
+        console.log('[ActiveWorkout] Reactive restoration: Exercise not found yet, workout_exercise.id:', activeWorkout.last_workout_exercise_id);
+      }
     }
   }, [sectionExercises, activeWorkout?.last_workout_exercise_id, setFocusedExerciseId]);
 
@@ -228,6 +271,56 @@ const ActiveWorkoutContent: React.FC = () => {
     }
   }, [sectionExercises, loadedSections, focusedExercise, setFocusedExerciseId]);
 
+  // Real-time focus synchronization: Watch for changes to last_workout_exercise_id from other devices
+  const lastSyncedExerciseIdRef = useRef<string | null>(null);
+  
+  // Reset sync tracking when workout changes
+  useEffect(() => {
+    lastSyncedExerciseIdRef.current = null;
+  }, [activeWorkout?.id]);
+  
+  useEffect(() => {
+    // Skip if we're in the middle of restoring focus (initial load)
+    if (isRestoringFocusRef.current) return;
+    
+    // Skip if no workout or no last_workout_exercise_id
+    if (!activeWorkout?.last_workout_exercise_id) return;
+    
+    // Find the exercise by workout_exercise.id to get its exercise_id
+    let foundExercise = null;
+    let foundSection = null;
+    
+    const sections = ['warmup', 'training', 'cooldown'];
+    for (const section of sections) {
+      const exercises = sectionExercises[section] || [];
+      foundExercise = exercises.find(ex => ex.id === activeWorkout.last_workout_exercise_id);
+      if (foundExercise) {
+        foundSection = section;
+        break;
+      }
+    }
+    
+    if (!foundExercise) {
+      // Exercise not loaded yet, skip for now
+      return;
+    }
+    
+    // Skip if focused exercise already matches the database value (we're already in sync)
+    // This handles both cases: we just updated it ourselves, or we already synced it
+    if (focusedExercise?.exercise_id === foundExercise.exercise_id) {
+      lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
+      return;
+    }
+    
+    // Skip if we just synced to this exercise (prevent loops)
+    if (lastSyncedExerciseIdRef.current === activeWorkout.last_workout_exercise_id) return;
+    
+    // This is a real-time update from another device - sync the focus
+    console.log('[ActiveWorkout] Syncing focus from real-time update, workout_exercise.id:', activeWorkout.last_workout_exercise_id, 'exercise_id:', foundExercise.exercise_id);
+    lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
+    setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
+  }, [activeWorkout?.last_workout_exercise_id, focusedExercise?.exercise_id, setFocusedExerciseId, sectionExercises]);
+
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);
   };
@@ -240,7 +333,7 @@ const ActiveWorkoutContent: React.FC = () => {
       const wid = activeWorkout?.id;
       
       if (hadSets && wid) {
-        // Go to analysis page if sets were completed
+        // Go to workout summary page for both trainer and client
         navigate(`/history/${wid}`, { replace: true });
       } else {
         // No sets completed, go back to train page
@@ -281,13 +374,14 @@ const ActiveWorkoutContent: React.FC = () => {
   };
 
   // Handle section completion
-  const handleSectionComplete = (sectionName) => {
+  const handleSectionComplete = (sectionName, justCompletedExerciseId) => {
     setCompletedSections(prev => {
       const newSet = new Set(prev);
       newSet.add(sectionName);
 
       // Use the navigation context to find the next exercise
-      const nextExercise = navigationHandleSectionComplete(sectionName);
+      // Pass the just-completed exercise ID to account for async state updates
+      const nextExercise = navigationHandleSectionComplete(sectionName, justCompletedExerciseId);
       
       if (nextExercise) {
         // There are more exercises to complete, continue the workout
@@ -303,17 +397,14 @@ const ActiveWorkoutContent: React.FC = () => {
             // End workout first to clear active context and prevent redirects
             const hadSets = await contextEndWorkout();
             if (hadSets && wid) {
-              if (isDelegated) {
-                // For delegates, return to their own sharing page
-                returnToSelf();
-              } else {
-                navigate(`/history/${wid}`);
-              }
+              // Navigate to workout summary page for both trainer and client
+              navigate(`/history/${wid}`, { replace: true });
             } else {
+              // No sets completed
               if (isDelegated) {
                 returnToSelf();
               } else {
-                navigate("/train");
+                navigate("/train", { replace: true });
               }
             }
           })();
