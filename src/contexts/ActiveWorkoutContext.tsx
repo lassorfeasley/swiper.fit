@@ -173,8 +173,11 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             routines!fk_workouts__routines(
               routine_name
             ),
-            sets!sets_workout_id_fkey(
-              *
+            workout_exercises!workout_exercises_workout_id_fkey(
+              *,
+              sets!fk_sets_workout_exercise_id(
+                *
+              )
             )
           `)
           .eq('user_id', user.id)
@@ -201,8 +204,11 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                   routines!fk_workouts__routines(
                     routine_name
                   ),
-                  sets!sets_workout_id_fkey(
-                    *
+                  workout_exercises!workout_exercises_workout_id_fkey(
+                    *,
+                    sets!fk_sets_workout_exercise_id(
+                      *
+                    )
                   )
                 `)
                 .eq('user_id', user.id)
@@ -244,25 +250,24 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         if (workouts && workouts.length > 0) {
           const workout = workouts[0];
           
-          // Sort sets by set_order or created_at
-          if (workout.sets) {
-            workout.sets.sort((a: Set, b: Set) => {
-              if (a.set_order !== null && b.set_order !== null) {
-                return a.set_order - b.set_order;
+          // Sort exercises and sets (matching other handlers)
+          if (workout.workout_exercises) {
+            workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => 
+              (a.exercise_order || 0) - (b.exercise_order || 0)
+            );
+            workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
+              if (exercise.sets) {
+                exercise.sets.sort((a: Set, b: Set) => 
+                  (a.set_order || 0) - (b.set_order || 0)
+                );
               }
-              return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             });
           }
           
-          // Map sets to exercises for compatibility (since the UI expects exercises)
+          // Map workout_exercises to exercises for compatibility
           const processedWorkout = {
             ...workout,
-            exercises: workout.sets ? [{
-              id: 'workout-sets',
-              exercise_name: 'Workout Sets',
-              order_index: 0,
-              sets: workout.sets
-            }] : []
+            exercises: workout.workout_exercises || []
           };
           
           setActiveWorkout(processedWorkout);
@@ -313,6 +318,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   useEffect(() => {
     if (!user) return;
 
+    console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
     const channel = supabase
       .channel(`user-workouts-${user.id}${activeWorkout?.id ? `-workout-${activeWorkout.id}` : ''}`)
       .on('postgres_changes', {
@@ -321,13 +327,15 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         table: 'workouts',
         filter: `user_id=eq.${user.id}`
       }, async (payload) => {
+        console.log('[ActiveWorkout] INSERT event received:', payload.new);
         // When a new workout is created, check if it's active and load it
         const newWorkout = payload.new as any;
         
         // Only process if the workout is active
         if (newWorkout && newWorkout.is_active === true) {
+          console.log('[ActiveWorkout] INSERT event received for active workout:', newWorkout.id);
           try {
-            // Fetch the full workout with relations
+            // Fetch the full workout with relations (matching refreshActiveWorkout structure)
             const { data: workout, error } = await supabase
               .from('workouts')
               .select(`
@@ -335,8 +343,11 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 routines!fk_workouts__routines(
                   routine_name
                 ),
-                sets!sets_workout_id_fkey(
-                  *
+                workout_exercises!workout_exercises_workout_id_fkey(
+                  *,
+                  sets!fk_sets_workout_exercise_id(
+                    *
+                  )
                 )
               `)
               .eq('id', newWorkout.id)
@@ -348,27 +359,29 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             }
 
             if (workout) {
-              // Sort sets by set_order or created_at
-              if (workout.sets) {
-                workout.sets.sort((a: Set, b: Set) => {
-                  if (a.set_order !== null && b.set_order !== null) {
-                    return a.set_order - b.set_order;
+              // Sort exercises and sets (matching refreshActiveWorkout)
+              if (workout.workout_exercises) {
+                workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => 
+                  (a.exercise_order || 0) - (b.exercise_order || 0)
+                );
+                workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
+                  if (exercise.sets) {
+                    exercise.sets.sort((a: Set, b: Set) => 
+                      (a.set_order || 0) - (b.set_order || 0)
+                    );
                   }
-                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
                 });
               }
               
-              // Map sets to exercises for compatibility
+              // Map workout_exercises to exercises for compatibility
               const processedWorkout = {
                 ...workout,
-                exercises: workout.sets ? [{
-                  id: 'workout-sets',
-                  exercise_name: 'Workout Sets',
-                  order_index: 0,
-                  sets: workout.sets
-                }] : []
+                exercises: workout.workout_exercises || []
               };
               
+              console.log('[ActiveWorkout] Setting active workout from INSERT:', processedWorkout.id);
+              // CRITICAL: Set loading to false so the component can render
+              setLoading(false);
               setActiveWorkout(processedWorkout);
               activeWorkoutRef.current = processedWorkout;
               setIsWorkoutActive(true);
@@ -403,6 +416,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         
         // If a workout just became active and we don't have one loaded, fetch it
         if (justBecameActive && !activeWorkoutRef.current) {
+          console.log('[ActiveWorkout] Workout just became active, fetching:', updatedWorkout.id);
           try {
             const { data: workout, error } = await supabase
               .from('workouts')
@@ -411,35 +425,40 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 routines!fk_workouts__routines(
                   routine_name
                 ),
-                sets!sets_workout_id_fkey(
-                  *
+                workout_exercises!workout_exercises_workout_id_fkey(
+                  *,
+                  sets!fk_sets_workout_exercise_id(
+                    *
+                  )
                 )
               `)
               .eq('id', updatedWorkout.id)
               .single();
 
             if (!error && workout) {
-              // Sort sets by set_order or created_at
-              if (workout.sets) {
-                workout.sets.sort((a: Set, b: Set) => {
-                  if (a.set_order !== null && b.set_order !== null) {
-                    return a.set_order - b.set_order;
+              // Sort exercises and sets (matching refreshActiveWorkout)
+              if (workout.workout_exercises) {
+                workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => 
+                  (a.exercise_order || 0) - (b.exercise_order || 0)
+                );
+                workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
+                  if (exercise.sets) {
+                    exercise.sets.sort((a: Set, b: Set) => 
+                      (a.set_order || 0) - (b.set_order || 0)
+                    );
                   }
-                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
                 });
               }
               
-              // Map sets to exercises for compatibility
+              // Map workout_exercises to exercises for compatibility
               const processedWorkout = {
                 ...workout,
-                exercises: workout.sets ? [{
-                  id: 'workout-sets',
-                  exercise_name: 'Workout Sets',
-                  order_index: 0,
-                  sets: workout.sets
-                }] : []
+                exercises: workout.workout_exercises || []
               };
               
+              console.log('[ActiveWorkout] Setting active workout from UPDATE:', processedWorkout.id);
+              // CRITICAL: Set loading to false so the component can render
+              setLoading(false);
               setActiveWorkout(processedWorkout);
               activeWorkoutRef.current = processedWorkout;
               setIsWorkoutActive(true);
@@ -483,6 +502,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           
           const hasPausedField = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
           const paused = hasPausedField ? Boolean((updatedWorkout as any).is_paused) : false;
+          
           if (hasPausedField) {
             // New schema: active if either active or paused
             setIsWorkoutActive(Boolean(updatedWorkout.is_active || paused));
@@ -498,7 +518,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             const isPausedNow = hasPausedField2 ? Boolean((updatedWorkout as any).is_paused) : false;
 
             if (!isPausedNow) {
+              // Only end workout if we're actually finishing (not just pausing)
               if (hasPausedField2) {
+                // New schema: if is_paused is false and is_active is false, workout ended
                 // Show notification that workout ended
                 toast.success('Workout completed!', {
                   description: 'Viewing workout summary...'
@@ -509,7 +531,13 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 } else {
                   navigate('/history', { replace: true });
                 }
+                // Clear workout state
+                setIsWorkoutActive(false);
+                setActiveWorkout(null);
+                activeWorkoutRef.current = null;
+                setElapsedTime(0);
               } else if (isFinishingRef.current) {
+                // Legacy schema: only end if isFinishingRef indicates we're finishing
                 // Show notification that workout ended
                 toast.success('Workout completed!', {
                   description: 'Viewing workout summary...'
@@ -520,7 +548,13 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 } else {
                   navigate('/history', { replace: true });
                 }
+                // Clear workout state
+                setIsWorkoutActive(false);
+                setActiveWorkout(null);
+                activeWorkoutRef.current = null;
+                setElapsedTime(0);
               }
+              // If neither condition is met, workout is paused (legacy schema) - keep it active
             }
           }
           
@@ -588,12 +622,160 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           });
         }
       })
-      .subscribe();
+      .subscribe(async (status) => {
+        console.log('[ActiveWorkout] Subscription status:', status);
+        
+        // When subscription becomes active, check if there's an active workout we might have missed
+        if (status === 'SUBSCRIBED' && !activeWorkoutRef.current) {
+          console.log('[ActiveWorkout] Subscription active, checking for missed active workout');
+          console.log('[ActiveWorkout] Current activeWorkoutRef:', activeWorkoutRef.current?.id || 'null');
+          console.log('[ActiveWorkout] Querying for active workouts for user:', user.id);
+          console.log('[ActiveWorkout] User object:', { id: user.id, email: (user as any).email });
+          
+          // First, try a simple query to see if we can read workouts at all
+          try {
+            const { data: allWorkouts, error: allError } = await supabase
+              .from('workouts')
+              .select('id, user_id, is_active, created_at')
+              .eq('user_id', user.id)
+              .limit(5);
+            
+            console.log('[ActiveWorkout] Simple query - error:', allError);
+            console.log('[ActiveWorkout] Simple query - all workouts for user:', allWorkouts?.length || 0);
+            if (allWorkouts && allWorkouts.length > 0) {
+              console.log('[ActiveWorkout] Simple query - workout details:', allWorkouts.map(w => ({
+                id: w.id,
+                user_id: w.user_id,
+                is_active: w.is_active,
+                created_at: w.created_at
+              })));
+            }
+          } catch (simpleError) {
+            console.error('[ActiveWorkout] Error in simple query:', simpleError);
+          }
+          
+          try {
+            const { data: workouts, error } = await supabase
+              .from('workouts')
+              .select(`
+                *,
+                routines!fk_workouts__routines(
+                  routine_name
+                ),
+                workout_exercises!workout_exercises_workout_id_fkey(
+                  *,
+                  sets!fk_sets_workout_exercise_id(
+                    *
+                  )
+                )
+              `)
+              .eq('user_id', user.id)
+              .eq('is_active', true)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            console.log('[ActiveWorkout] Full query result - error:', error);
+            console.log('[ActiveWorkout] Full query result - error details:', error ? {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            } : null);
+            console.log('[ActiveWorkout] Full query result - workouts found:', workouts?.length || 0);
+            if (workouts && workouts.length > 0) {
+              console.log('[ActiveWorkout] Full query result - workout IDs:', workouts.map(w => w.id));
+            }
+
+            if (error) {
+              console.error('[ActiveWorkout] Error querying for missed workout:', error);
+              return;
+            }
+
+            if (!workouts || workouts.length === 0) {
+              console.log('[ActiveWorkout] No active workouts found in fallback check');
+              return;
+            }
+
+            const workout = workouts[0];
+            console.log('[ActiveWorkout] Found active workout that was missed:', workout.id);
+            
+            // Sort exercises and sets
+            if (workout.workout_exercises) {
+              workout.workout_exercises.sort((a: WorkoutExercise, b: WorkoutExercise) => 
+                (a.exercise_order || 0) - (b.exercise_order || 0)
+              );
+              workout.workout_exercises.forEach((exercise: WorkoutExercise) => {
+                if (exercise.sets) {
+                  exercise.sets.sort((a: Set, b: Set) => 
+                    (a.set_order || 0) - (b.set_order || 0)
+                  );
+                }
+              });
+            }
+            
+            // Map workout_exercises to exercises for compatibility
+            const processedWorkout = {
+              ...workout,
+              exercises: workout.workout_exercises || []
+            };
+            
+            console.log('[ActiveWorkout] Setting active workout from subscription check:', processedWorkout.id);
+            console.log('[ActiveWorkout] Workout data structure:', {
+              id: processedWorkout.id,
+              hasExercises: !!processedWorkout.exercises,
+              exerciseCount: processedWorkout.exercises?.length || 0,
+              exercises: processedWorkout.exercises?.map(ex => ({
+                id: ex.id,
+                exercise_id: ex.exercise_id,
+                snapshot_name: ex.snapshot_name,
+                setsCount: ex.sets?.length || 0
+              }))
+            });
+            
+            // Set state updates - these will trigger re-renders and redirects
+            // CRITICAL: Set loading to false so the component can render
+            setLoading(false);
+            setActiveWorkout(processedWorkout);
+            activeWorkoutRef.current = processedWorkout;
+            setIsWorkoutActive(true);
+            
+            // Initialize elapsed time
+            if (workout.running_since) {
+              const startTime = new Date(workout.running_since).getTime();
+              const now = Date.now();
+              const runningTime = Math.floor((now - startTime) / 1000);
+              const accumulated = workout.active_seconds_accumulated || 0;
+              setElapsedTime(accumulated + runningTime);
+            } else {
+              setElapsedTime(workout.active_seconds_accumulated || 0);
+            }
+            
+            // Verify state was set correctly after React has processed the update
+            setTimeout(() => {
+              console.log('[ActiveWorkout] State verification after update:', {
+                activeWorkoutId: activeWorkoutRef.current?.id,
+                hasExercises: !!activeWorkoutRef.current?.exercises,
+                exerciseCount: activeWorkoutRef.current?.exercises?.length || 0,
+                workoutData: activeWorkoutRef.current ? {
+                  id: activeWorkoutRef.current.id,
+                  is_active: activeWorkoutRef.current.is_active,
+                  exercisesLength: activeWorkoutRef.current.exercises?.length || 0
+                } : null
+              });
+            }, 100);
+            
+            console.log('[ActiveWorkout] State updated, isWorkoutActive should be true now');
+          } catch (error) {
+            console.error('[ActiveWorkout] Error checking for missed workout:', error);
+          }
+        }
+      });
 
     return () => {
+      console.log('[ActiveWorkout] Cleaning up subscription');
       channel.unsubscribe();
     };
-  }, [user, activeWorkout, navigate]);
+  }, [user, activeWorkout?.id, navigate]); // Only depend on activeWorkout.id to avoid recreating subscription when workout data changes
 
   // Timer for elapsed time - calculate from running_since instead of incrementing
   useEffect(() => {
