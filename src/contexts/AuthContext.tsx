@@ -18,16 +18,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth state change listener');
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', { event, session });
       setSession(session);
       setLoading(false);
 
       // Handle password recovery - redirect to update password page
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('AuthProvider: Password recovery event detected, redirecting to /update-password');
         // Use setTimeout to ensure navigation happens after React Router is ready
         setTimeout(() => {
           if (window.location.pathname !== '/update-password') {
@@ -38,9 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     // Get initial session and check for recovery token or errors in hash
-    console.log('AuthProvider: Getting initial session');
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('AuthProvider: Initial session:', session);
       setSession(session);
       setLoading(false);
 
@@ -54,7 +48,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         // Handle expired or invalid password reset links
         if (errorCode === 'otp_expired' || errorCode === 'access_denied') {
-          console.log('AuthProvider: Expired/invalid password reset link detected');
           // Clean up the error hash
           window.history.replaceState(null, '', window.location.pathname);
           // Redirect to password reset page with error message
@@ -68,7 +61,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Check if we have a recovery token in the hash fragment
       // Supabase password reset links use: #access_token=...&type=recovery
       if (hash.includes('type=recovery') && session) {
-        console.log('AuthProvider: Recovery token detected in hash, redirecting to /update-password');
         // Clean up the hash from URL and redirect
         const currentPath = window.location.pathname;
         if (currentPath !== '/update-password') {
@@ -86,7 +78,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     return () => {
-      console.log('AuthProvider: Cleaning up auth state change listener');
       subscription?.unsubscribe();
     };
   }, []);
@@ -95,8 +86,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     user: session?.user || null,
   };
-
-  console.log('AuthProvider: Current auth state:', value);
 
   return (
     <AuthContext.Provider value={value}>

@@ -5,6 +5,7 @@ import {
   DialogOverlay,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from "@/components/shadcn/dialog";
 import { Button } from '@/components/shadcn/button';
 
@@ -112,8 +113,14 @@ const SwiperDialog: React.FC<SwiperDialogProps> = ({
           className={`w-full ${widthClass} ${mobileSafeWidthClass} shadow-none border border-neutral-300 bg-stone-100 p-0 rounded-lg overflow-hidden ${showCloseButton ? '' : '[&>button]:hidden'} ${contentClassName || ''}`}
           onClick={handleBackdropClick}
           tabIndex={-1}
+          aria-describedby={description ? "swiper-dialog-description" : undefined}
         >
           <DialogTitle className="sr-only">{title || 'Dialog'}</DialogTitle>
+          {description ? (
+            <DialogDescription id="swiper-dialog-description" className="sr-only">
+              {description}
+            </DialogDescription>
+          ) : null}
           <div
             className={`w-full flex flex-col justify-start items-stretch overflow-hidden ${containerClassName || ''}`}
             onClick={(e) => e.stopPropagation()}

@@ -40,6 +40,13 @@ const Account = () => {
   const queryClient = useQueryClient();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Check if we're exiting delegation (passed via navigation state)
+  const isExitingDelegation = location.state?.exitingDelegation === true;
+  // Track if we're processing a section param to prevent premature redirects
+  const isProcessingSection = searchParams.get('section') !== null;
+  
+  // Also check the URL directly as a fallback (in case searchParams haven't parsed yet)
+  const urlHasSectionParam = location.search.includes('section=');
 
   // Section navigation state
   const [activeSection, setActiveSection] = useState(null);
@@ -1156,7 +1163,26 @@ const Account = () => {
     );
   }
 
-  if (isDelegated) {
+  // Don't redirect if we're explicitly navigating to account (e.g., when exiting manage mode)
+  // Check if we're on the account page, have a section query param, have an activeSection set,
+  // OR if we're exiting delegation (passed via navigation state)
+  // (activeSection persists even after the query param is removed by useEffect)
+  // Also check if we're currently processing a section param (prevents redirect during useEffect execution)
+  const sectionParam = searchParams.get('section');
+  
+  // CRITICAL: If we have a section param (either in searchParams or URL), this is ALWAYS explicit navigation - never redirect
+  // This handles the case where returnToSelf navigates to /account?section=clients
+  // We check both searchParams and URL directly to catch edge cases where searchParams might not be parsed yet
+  const hasSectionParam = sectionParam !== null || urlHasSectionParam;
+  
+  const isExplicitAccountNavigation = location.pathname === '/account' || 
+                                      hasSectionParam || 
+                                      activeSection !== null ||
+                                      isExitingDelegation;
+  
+  // Only redirect if delegated AND not explicitly navigating to account
+  // The section param check is critical - it prevents redirect when returnToSelf navigates here
+  if (isDelegated && !isExplicitAccountNavigation) {
     return <Navigate to="/routines" replace />;
   }
 

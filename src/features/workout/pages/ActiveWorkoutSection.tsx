@@ -91,10 +91,7 @@ const ActiveWorkoutSection = ({
 
       // Group template sets by exercise_id
       const templateSetsMap = {};
-      console.log('[ActiveWorkoutSection] Raw template sets:', templateSets);
-    console.log('[ActiveWorkoutSection] Raw routine exercises:', templateSets);
       (templateSets || []).forEach((re) => {
-        console.log(`[ActiveWorkoutSection] Processing routine exercise ${re.exercise_id} with ${re.routine_sets?.length || 0} sets`);
         templateSetsMap[re.exercise_id] = (re.routine_sets || []).map((rs) => ({
           id: null,
           routine_set_id: rs.id,
@@ -108,7 +105,6 @@ const ActiveWorkoutSection = ({
           set_order: rs.set_order,
         }));
       });
-      console.log('[ActiveWorkoutSection] Template sets map:', templateSetsMap);
 
               // Group saved sets by exercise_id (include hidden so we can match them to templates)
         const savedSetsMap = {};
@@ -120,27 +116,16 @@ const ActiveWorkoutSection = ({
         });
 
               // Build exercise objects with merged set configs
-        console.log('[ActiveWorkoutSection] Processing workout exercises:', filteredExercises.map(we => ({ id: we.exercise_id, name: we.name_override || we.exercise?.name })));
         const processedExercises = filteredExercises.map((we) => {
-        console.log(`Processing exercise ID: ${we.exercise_id}, name: ${we.name_override || we.exercise?.name}`);
         const templateConfigs = templateSetsMap[we.exercise_id] || [];
         const savedSetsForExercise = savedSetsMap[we.exercise_id] || [];
-
-        // Debug: Log the actual structure of saved sets to understand why matching fails
-        console.log("Template configs for this exercise:", templateConfigs);
-        console.log("Saved sets for this exercise:", savedSetsForExercise);
-        console.log("Template routine_set_ids:", templateConfigs.map(t => t.routine_set_id));
-        console.log("Saved routine_set_ids:", savedSetsForExercise.map(s => s.routine_set_id));
 
         // Merge template sets with saved sets
         const mergedSetConfigs = [];
 
         // Start with template sets in their original order
-        console.log(`Processing ${templateConfigs.length} template configs`);
-        
         // If no template configs exist AND no saved sets exist, create a default set
         if (templateConfigs.length === 0 && savedSetsForExercise.length === 0) {
-          console.log(`No template configs and no saved sets found for exercise ${we.exercise_id}, creating default set`);
           mergedSetConfigs.push({
             id: null,
             routine_set_id: null,
@@ -165,17 +150,12 @@ const ActiveWorkoutSection = ({
             (saved) => saved.routine_set_id === template.routine_set_id
           );
 
-          console.log(`Template ${templateIndex}:`, template);
-          console.log(`Found saved set:`, savedSet);
-
           // Skip this template set if there's a hidden saved set for it
           if (savedSet && savedSet.status === "hidden") {
-            console.log(`Skipping template ${template.routine_set_id} due to hidden set`);
             return;
           }
 
           if (savedSet) {
-            console.log(`Using saved set for template ${templateIndex}`);
             mergedSetConfigs.push({
               id: savedSet.id,
               routine_set_id: savedSet.routine_set_id,
@@ -191,7 +171,6 @@ const ActiveWorkoutSection = ({
               account_id: savedSet.account_id, // Include account_id to track who completed the set
             });
           } else {
-            console.log(`Using template set for template ${templateIndex}`);
             mergedSetConfigs.push({
               ...template,
               unit: template.unit || "lbs",
@@ -201,7 +180,6 @@ const ActiveWorkoutSection = ({
           }
         });
         }
-        console.log(`After processing templates: ${mergedSetConfigs.length} merged sets`);
 
         // Since saved sets have null routine_set_ids, we need to handle them differently
         // Include all saved sets, but handle null routine_set_ids differently
@@ -213,38 +191,27 @@ const ActiveWorkoutSection = ({
           return true;
         });
         
-        console.log(`Original saved sets: ${savedSetsForExercise.length}, Valid saved sets: ${validSavedSets.length}`);
-        
         // Deduplicate valid saved sets by routine_set_id (keep the first occurrence)
         // For sets without routine_set_id, deduplicate by ID to avoid duplicates
         const deduplicatedSavedSets = [];
         const seenRoutineSetIds = new Set();
         const seenSetIds = new Set();
         
-        validSavedSets.forEach((saved, index) => {
-          console.log(`Valid saved set ${index}:`, { id: saved.id, routine_set_id: saved.routine_set_id, status: saved.status, set_order: saved.set_order });
-          
+        validSavedSets.forEach((saved) => {
           if (saved.routine_set_id !== null) {
             // Handle template-based sets (with routine_set_id)
             if (!seenRoutineSetIds.has(saved.routine_set_id)) {
               seenRoutineSetIds.add(saved.routine_set_id);
               deduplicatedSavedSets.push(saved);
-              console.log(`Added saved set with routine_set_id: ${saved.routine_set_id}`);
-            } else {
-              console.log(`Skipping duplicate saved set with routine_set_id: ${saved.routine_set_id}`);
             }
           } else {
             // Handle custom sets (without routine_set_id) - deduplicate by ID
             if (!seenSetIds.has(saved.id)) {
               seenSetIds.add(saved.id);
               deduplicatedSavedSets.push(saved);
-              console.log(`Added custom saved set with id: ${saved.id}`);
-            } else {
-              console.log(`Skipping duplicate custom saved set with id: ${saved.id}`);
             }
           }
         });
-        console.log(`After deduplication: ${deduplicatedSavedSets.length} saved sets`);
 
         // Add orphaned saved sets at the end
         let orphanIndex = templateConfigs.length;
@@ -328,7 +295,6 @@ const ActiveWorkoutSection = ({
         });
 
         const finalSetConfigs = mergedSetConfigs.filter(set => set != null);
-        console.log(`Final setConfigs for ${we.exercise_id}:`, finalSetConfigs.length, finalSetConfigs);
         
         return {
           id: we.id,
@@ -342,11 +308,6 @@ const ActiveWorkoutSection = ({
       // Hide exercises that have no visible sets (safety against zero-set configs)
       const nonEmptyExercises = processedExercises.filter((ex) => (ex.setConfigs?.length || 0) > 0);
       
-      console.log(`[ActiveWorkoutSection] Processed exercises: ${processedExercises.length}, Non-empty exercises: ${nonEmptyExercises.length}`);
-      nonEmptyExercises.forEach((ex, index) => {
-        console.log(`[ActiveWorkoutSection] Exercise ${index}: ${ex.name} with ${ex.setConfigs?.length || 0} sets`);
-        console.log(`[ActiveWorkoutSection] Exercise ${index} setConfigs:`, ex.setConfigs);
-      });
 
       setExercises(nonEmptyExercises);
       // Update global context with exercises for this section
@@ -1045,9 +1006,7 @@ const ActiveWorkoutSection = ({
 
   // Handle saving exercise edits
   const handleSaveExerciseEdit = async (data, type = "today") => {
-    console.log('[ActiveWorkoutSection] handleSaveExerciseEdit called with:', { data, type, editingExercise });
     if (!editingExercise) {
-      console.log('[ActiveWorkoutSection] No editingExercise, returning');
       return;
     }
 
@@ -1765,12 +1724,9 @@ const ActiveWorkoutSection = ({
               formPrompt={`Add a new ${section} exercise`}
               disabled={false}
               onActionIconClick={(data, type) => {
-                console.log('[ActiveWorkoutSection] Form callback received:', { data, type });
                 if (type === "future") {
-                  console.log('[ActiveWorkoutSection] Calling handleAddExerciseFuture');
                   handleAddExerciseFuture(data);
                 } else {
-                  console.log('[ActiveWorkoutSection] Calling handleAddExerciseToday');
                   handleAddExerciseToday(data);
                 }
               }}
@@ -1908,23 +1864,17 @@ const ActiveWorkoutSection = ({
         <SwiperForm
           open={!!editingExercise}
           onOpenChange={() => {
-            console.log('[ActiveWorkoutSection] Closing edit form');
             setEditingExercise(null);
           }}
           title="Edit exercise"
           description="Edit exercise details including name, section, and sets"
           leftAction={() => {
-            console.log('[ActiveWorkoutSection] Cancel button clicked');
             setEditingExercise(null);
           }}
           leftText="Close"
           rightAction={() => {
-            console.log('[ActiveWorkoutSection] Save button clicked, editingExerciseDirty:', editingExerciseDirty);
             if (editExerciseFormRef.current) {
-              console.log('[ActiveWorkoutSection] Calling requestSubmit on form ref');
               editExerciseFormRef.current.requestSubmit();
-            } else {
-              console.log('[ActiveWorkoutSection] Form ref not found!');
             }
           }}
           rightText="Save"
@@ -1933,15 +1883,6 @@ const ActiveWorkoutSection = ({
           className="edit-exercise-drawer"
         >
           <div className="flex-1 overflow-y-auto">
-            {(() => {
-              console.log('[ActiveWorkoutSection] Rendering edit form with data:', {
-                name: editingExercise.name,
-                section: editingExercise.section,
-                setConfigs: editingExercise.setConfigs,
-                setConfigsLength: editingExercise.setConfigs?.length || 0
-              });
-              return null;
-            })()}
             <AddNewExerciseForm
               ref={editExerciseFormRef}
               key={`edit-${editingExercise.id}`}
@@ -1958,17 +1899,14 @@ const ActiveWorkoutSection = ({
               showAddToProgramToggle={false}
               hideSetDefaults={true}
               onActionIconClick={(data) => {
-                console.log('[ActiveWorkoutSection] Form submitted with data:', data);
                 handleSaveExerciseEdit(data, exerciseUpdateType);
               }}
               onDirtyChange={(dirty) => {
-                console.log('[ActiveWorkoutSection] Form dirty state changed:', dirty);
                 setEditingExerciseDirty(dirty);
               }}
               showUpdateTypeToggle={true}
               updateType={exerciseUpdateType}
               onUpdateTypeChange={(newType) => {
-                console.log('[ActiveWorkoutSection] Update type changed from', exerciseUpdateType, 'to', newType);
                 setExerciseUpdateType(newType);
               }}
             />

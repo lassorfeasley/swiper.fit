@@ -94,6 +94,13 @@ interface ActiveWorkoutProviderProps {
 
 export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) {
   const user = useCurrentUser();
+  // Track if is_paused column exists to avoid repeated failed queries
+  // Use localStorage to persist across page loads
+  const getInitialPausedColumnState = (): boolean | null => {
+    const stored = localStorage.getItem('is_paused_column_available');
+    return stored === null ? null : stored === 'true';
+  };
+  const isPausedColumnAvailableRef = useRef<boolean | null>(getInitialPausedColumnState());
   const navigate = useNavigate();
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState<boolean>(false);
@@ -105,6 +112,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   const isFinishingRef = useRef<boolean>(false);
   // Guard window to avoid transient pause right after start
   const startGuardUntilRef = useRef<number>(0);
+  // Ref to track active workout for use in subscription handlers
+  const activeWorkoutRef = useRef<Workout | null>(null);
   
   // Fire-and-forget Slack event
   const postSlackEvent = useCallback((event: string, data: any) => {
@@ -125,16 +134,12 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     } catch (_) {}
   }, []);
   
-  console.log('[ActiveWorkout] Provider initialized with user:', user?.id);
-  console.log('[ActiveWorkout] Full user object:', user);
-  
   // Test if Supabase real-time is working at all
   useEffect(() => {
-    console.log('[ActiveWorkout] Testing Supabase real-time connection');
     const testChan = supabase
       .channel('test-connection')
       .on('presence', { event: 'sync' }, () => {
-        console.log('[ActiveWorkout] Real-time connection test successful');
+        // Real-time connection test successful
       })
       .subscribe();
     
@@ -155,9 +160,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     }
 
     const checkForActiveWorkout = async () => {
-      console.log('[ActiveWorkout] Checking for active workout for user:', user.id);
-      console.log('[ActiveWorkout] Current context state - actingUser:', user);
-      
       try {
         // Try to fetch either active or paused (new schema) workouts
         let workouts: any[] | null = null;
@@ -189,7 +191,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           error = null;
           
           // If no active workout found, check for paused workouts
-          if (!workouts || workouts.length === 0) {
+          // Skip if we've already determined the is_paused column doesn't exist
+          if ((!workouts || workouts.length === 0) && isPausedColumnAvailableRef.current !== false) {
             try {
               const pausedAttempt = await supabase
                 .from('workouts')
@@ -207,19 +210,27 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                 .order('created_at', { ascending: false })
                 .limit(1);
                 
-              // Check for error - if column doesn't exist, error will be in pausedAttempt.error
+              // Check for error - if column doesn't exist, mark it and skip future queries
               if (pausedAttempt.error) {
                 const errorMsg = String(pausedAttempt.error.message || '');
+                // If it's a missing column error, mark it so we don't try again
                 if (errorMsg.includes('is_paused') || errorMsg.includes('column') || pausedAttempt.error.code === 'PGRST116') {
-                  console.log('[ActiveWorkout] is_paused column not available, skipping paused workout check');
+                  isPausedColumnAvailableRef.current = false;
+                  localStorage.setItem('is_paused_column_available', 'false');
                 } else {
+                  // Only log if it's not a missing column error (which is expected)
                   console.error('[ActiveWorkout] Error checking paused workouts:', pausedAttempt.error);
                 }
               } else {
+                // Column exists and query succeeded
+                isPausedColumnAvailableRef.current = true;
+                localStorage.setItem('is_paused_column_available', 'true');
                 workouts = pausedAttempt.data as any[] | null;
               }
             } catch (pausedError) {
-              console.log('[ActiveWorkout] is_paused column not available, skipping paused workout check');
+              // Mark column as unavailable on any error
+              isPausedColumnAvailableRef.current = false;
+              localStorage.setItem('is_paused_column_available', 'false');
             }
           }
         }
@@ -232,7 +243,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
         if (workouts && workouts.length > 0) {
           const workout = workouts[0];
-          console.log('[ActiveWorkout] Found active workout:', workout.id, 'for user:', user.id);
           
           // Sort sets by set_order or created_at
           if (workout.sets) {
@@ -255,8 +265,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             }] : []
           };
           
-          console.log('[ActiveWorkout] Setting workout as active:', workout.id);
           setActiveWorkout(processedWorkout);
+          activeWorkoutRef.current = processedWorkout;
           setIsWorkoutActive(Boolean(workout.is_active || (workout as any).is_paused));
           
           // Calculate elapsed time based on workout state
@@ -272,8 +282,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           }
           setElapsedTime(elapsed);
         } else {
-          console.log('[ActiveWorkout] No active workout found for user:', user.id);
           setActiveWorkout(null);
+          activeWorkoutRef.current = null;
           setIsWorkoutActive(false);
         }
       } catch (error) {
@@ -303,68 +313,162 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   useEffect(() => {
     if (!user) return;
 
-    console.log('[ActiveWorkout] Setting up real-time subscription for user:', user.id);
-
     const channel = supabase
-      .channel(`user-workouts-${user.id}`)
+      .channel(`user-workouts-${user.id}${activeWorkout?.id ? `-workout-${activeWorkout.id}` : ''}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'workouts',
         filter: `user_id=eq.${user.id}`
       }, async (payload) => {
-        console.log('[ActiveWorkout] New workout created for user:', payload);
-        // Refresh the active workout when a new one is created
-        // Re-fetch the active workout for this user
-        try {
-          const { data: workouts } = await supabase
-            .from('workouts')
-            .select(`
-              *,
-              routines!fk_workouts__routines(
-                routine_name
-              ),
-              sets!sets_workout_id_fkey(
-                *
-              )
-            `)
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (workouts && workouts.length > 0) {
-            const workout = workouts[0];
-            console.log('[ActiveWorkout] Detected new active workout:', workout.id);
-            setActiveWorkout(workout);
-            setIsWorkoutActive(true);
-            
-            // Initialize elapsed time
-            if (workout.running_since) {
-              const startTime = new Date(workout.running_since).getTime();
-              const now = Date.now();
-              const runningTime = Math.floor((now - startTime) / 1000);
-              const accumulated = workout.active_seconds_accumulated || 0;
-              setElapsedTime(accumulated + runningTime);
-            }
-          }
-        } catch (error) {
-          console.error('[ActiveWorkout] Error refreshing workout after creation:', error);
-        }
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'workouts',
-        filter: `user_id=eq.${user.id}`
-      }, (payload) => {
-        console.log('[ActiveWorkout] Workout update received:', payload);
-        // Only handle updates if we have an active workout
-        if (!activeWorkout) return;
+        // When a new workout is created, check if it's active and load it
+        const newWorkout = payload.new as any;
         
-        if (payload.eventType === 'UPDATE') {
-          const updatedWorkout = payload.new as Workout;
-          setActiveWorkout(prev => prev ? { ...prev, ...updatedWorkout } : null);
+        // Only process if the workout is active
+        if (newWorkout && newWorkout.is_active === true) {
+          try {
+            // Fetch the full workout with relations
+            const { data: workout, error } = await supabase
+              .from('workouts')
+              .select(`
+                *,
+                routines!fk_workouts__routines(
+                  routine_name
+                ),
+                sets!sets_workout_id_fkey(
+                  *
+                )
+              `)
+              .eq('id', newWorkout.id)
+              .single();
+
+            if (error) {
+              console.error('[ActiveWorkout] Error fetching new workout:', error);
+              return;
+            }
+
+            if (workout) {
+              // Sort sets by set_order or created_at
+              if (workout.sets) {
+                workout.sets.sort((a: Set, b: Set) => {
+                  if (a.set_order !== null && b.set_order !== null) {
+                    return a.set_order - b.set_order;
+                  }
+                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                });
+              }
+              
+              // Map sets to exercises for compatibility
+              const processedWorkout = {
+                ...workout,
+                exercises: workout.sets ? [{
+                  id: 'workout-sets',
+                  exercise_name: 'Workout Sets',
+                  order_index: 0,
+                  sets: workout.sets
+                }] : []
+              };
+              
+              setActiveWorkout(processedWorkout);
+              activeWorkoutRef.current = processedWorkout;
+              setIsWorkoutActive(true);
+              
+              // Initialize elapsed time
+              if (workout.running_since) {
+                const startTime = new Date(workout.running_since).getTime();
+                const now = Date.now();
+                const runningTime = Math.floor((now - startTime) / 1000);
+                const accumulated = workout.active_seconds_accumulated || 0;
+                setElapsedTime(accumulated + runningTime);
+              } else {
+                setElapsedTime(workout.active_seconds_accumulated || 0);
+              }
+            }
+          } catch (error) {
+            console.error('[ActiveWorkout] Error processing new workout:', error);
+          }
+        }
+      });
+    
+    // Handler for workout updates
+    const handleWorkoutUpdate = async (payload: any) => {
+      if (payload.eventType === 'UPDATE') {
+        const updatedWorkout = payload.new as Workout;
+        const oldWorkout = payload.old as Workout;
+        
+        // Check if a workout just became active (for this user)
+        const justBecameActive = updatedWorkout.is_active === true && 
+                                  (oldWorkout?.is_active === false || oldWorkout?.is_active === undefined) &&
+                                  updatedWorkout.user_id === user.id;
+        
+        // If a workout just became active and we don't have one loaded, fetch it
+        if (justBecameActive && !activeWorkoutRef.current) {
+          try {
+            const { data: workout, error } = await supabase
+              .from('workouts')
+              .select(`
+                *,
+                routines!fk_workouts__routines(
+                  routine_name
+                ),
+                sets!sets_workout_id_fkey(
+                  *
+                )
+              `)
+              .eq('id', updatedWorkout.id)
+              .single();
+
+            if (!error && workout) {
+              // Sort sets by set_order or created_at
+              if (workout.sets) {
+                workout.sets.sort((a: Set, b: Set) => {
+                  if (a.set_order !== null && b.set_order !== null) {
+                    return a.set_order - b.set_order;
+                  }
+                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                });
+              }
+              
+              // Map sets to exercises for compatibility
+              const processedWorkout = {
+                ...workout,
+                exercises: workout.sets ? [{
+                  id: 'workout-sets',
+                  exercise_name: 'Workout Sets',
+                  order_index: 0,
+                  sets: workout.sets
+                }] : []
+              };
+              
+              setActiveWorkout(processedWorkout);
+              activeWorkoutRef.current = processedWorkout;
+              setIsWorkoutActive(true);
+              
+              // Initialize elapsed time
+              if (workout.running_since) {
+                const startTime = new Date(workout.running_since).getTime();
+                const now = Date.now();
+                const runningTime = Math.floor((now - startTime) / 1000);
+                const accumulated = workout.active_seconds_accumulated || 0;
+                setElapsedTime(accumulated + runningTime);
+              } else {
+                setElapsedTime(workout.active_seconds_accumulated || 0);
+              }
+              return;
+            }
+          } catch (error) {
+            console.error('[ActiveWorkout] Error fetching workout that became active:', error);
+          }
+        }
+        
+        // Update workout state and handle side effects
+        setActiveWorkout(prev => {
+          // Only process if this is the active workout
+          if (!prev || updatedWorkout.id !== prev.id) return prev;
+          
+          // Update ref with the new workout state
+          const updated = { ...prev, ...updatedWorkout };
+          activeWorkoutRef.current = updated;
           
           // Sync elapsed time from real-time update
           if (updatedWorkout.is_active && updatedWorkout.running_since) {
@@ -395,7 +499,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
             if (!isPausedNow) {
               if (hasPausedField2) {
-                console.log('[ActiveWorkout] Workout ended via real-time update, navigating to workout summary');
+                // Show notification that workout ended
+                toast.success('Workout completed!', {
+                  description: 'Viewing workout summary...'
+                });
                 // Navigate to workout summary page for both trainer and client
                 if (updatedWorkout.id) {
                   navigate(`/history/${updatedWorkout.id}`, { replace: true });
@@ -403,7 +510,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
                   navigate('/history', { replace: true });
                 }
               } else if (isFinishingRef.current) {
-                console.log('[ActiveWorkout] Workout ended (legacy schema, finishing flag), navigating to workout summary');
+                // Show notification that workout ended
+                toast.success('Workout completed!', {
+                  description: 'Viewing workout summary...'
+                });
                 // Navigate to workout summary page for both trainer and client
                 if (updatedWorkout.id) {
                   navigate(`/history/${updatedWorkout.id}`, { replace: true });
@@ -413,16 +523,42 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
               }
             }
           }
-        }
-      })
-      .on('postgres_changes', {
+          
+          return updated;
+        });
+      }
+    };
+    
+    // Subscribe to workout updates by user_id (for the user's own workouts)
+    // Use the workout owner's user_id if available, otherwise use current user's id
+    const workoutOwnerId = activeWorkout?.user_id || user.id;
+    if (workoutOwnerId) {
+      channel.on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'sets',
-        filter: `workout_id=eq.${activeWorkout?.id || ''}`
-      }, (payload) => {
-        console.log('[ActiveWorkout] Set update received:', payload);
-        
+        table: 'workouts',
+        filter: `user_id=eq.${workoutOwnerId}`
+      }, handleWorkoutUpdate);
+    }
+    
+    // Also subscribe by workout_id when there's an active workout
+    // This ensures both trainer and client receive updates for the same workout
+    if (activeWorkout?.id) {
+      channel.on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'workouts',
+        filter: `id=eq.${activeWorkout.id}`
+      }, handleWorkoutUpdate);
+    }
+    
+    // Subscribe to set updates for the active workout
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'sets',
+      filter: `workout_id=eq.${activeWorkout?.id || ''}`
+    }, (payload) => {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const updatedSet = payload.new as Set;
           
@@ -446,14 +582,15 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
               return exercise;
             });
             
-            return { ...prev, exercises: updatedExercises };
+            const updated = { ...prev, exercises: updatedExercises };
+            activeWorkoutRef.current = updated;
+            return updated;
           });
         }
       })
       .subscribe();
 
     return () => {
-      console.log('[ActiveWorkout] Cleaning up real-time subscription');
       channel.unsubscribe();
     };
   }, [user, activeWorkout, navigate]);
@@ -503,8 +640,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             running_since: new Date().toISOString()
           })
           .eq('id', activeWorkout.id);
-
-        console.log('[ActiveWorkout] Synced accumulated time:', totalTime);
       } catch (error) {
         console.error('[ActiveWorkout] Error syncing time:', error);
       }
@@ -514,8 +649,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, [activeWorkout?.id, activeWorkout?.is_active, activeWorkout?.running_since, loading]);
 
   const refreshActiveWorkout = useCallback(async (workoutId: string) => {
-    console.log('[ActiveWorkout] Refreshing workout:', workoutId);
-    
     try {
       const { data: workout, error } = await supabase
         .from('workouts')
@@ -557,6 +690,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         };
         
         setActiveWorkout(processedWorkout);
+        activeWorkoutRef.current = processedWorkout;
         setIsWorkoutActive(Boolean(workout.is_active || (workout as any).is_paused));
       }
     } catch (error) {
@@ -570,7 +704,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       return;
     }
 
-    console.log('[ActiveWorkout] Starting workout for program:', program.id);
     setIsStartingWorkout(true);
     
     try {
@@ -584,8 +717,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       if (existingError) {
         console.error('[ActiveWorkout] Error checking for existing workouts:', existingError);
       } else if (existingWorkouts && existingWorkouts.length > 0) {
-        console.log('[ActiveWorkout] Found existing active workout(s), cleaning up:', existingWorkouts);
-        
         // Mark existing active workouts as inactive
         const { error: cleanupError } = await supabase
           .from('workouts')
@@ -624,8 +755,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         return;
       }
 
-      console.log('[ActiveWorkout] Created workout:', workout.id);
-
       // Create workout exercises and sets
       const rawExercises: any[] = (program as any).exercises || (program as any).routine_exercises || [];
       if (!rawExercises || !Array.isArray(rawExercises)) {
@@ -635,15 +764,12 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       }
 
       // Normalize incoming exercises to a common shape
-      console.log('[ActiveWorkout] Raw exercises from program:', rawExercises.length);
       const normalizedExercises = rawExercises.map((ex: any, index: number) => {
         const exerciseId = ex.exercise_id ?? ex.id; // routine_exercises.exercise_id or exercises.id
         const name = ex.name ?? ex.snapshot_name ?? ex.exercises?.name ?? 'Exercise';
         const sets = ex.sets ?? ex.routine_sets ?? [];
-        console.log(`[ActiveWorkout] Normalizing exercise ${index}: ${exerciseId} (${name}) with ${sets.length} sets`);
         return { index, exercise_id: exerciseId, name, sets };
       });
-      console.log('[ActiveWorkout] Normalized exercises:', normalizedExercises.length);
 
       const exercisesToInsert = normalizedExercises.map((exercise: any) => ({
         workout_id: workout.id,
@@ -665,7 +791,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       // Create sets for each exercise (supports both routine_sets and pre-expanded sets)
       const setsToInsert: any[] = [];
-      console.log('[ActiveWorkout] Creating sets for normalized exercises:', normalizedExercises.length);
       
       // Add null check for user.id before creating sets
       if (!user?.id) {
@@ -675,12 +800,10 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       }
       
       normalizedExercises.forEach((normalized: any, exerciseIndex: number) => {
-        console.log(`[ActiveWorkout] Processing exercise ${exerciseIndex}:`, normalized.exercise_id, 'with', normalized.sets?.length || 0, 'sets');
         const workoutExercise = workoutExercises.find((we: any) => we.exercise_id === normalized.exercise_id);
         if (workoutExercise) {
           const sets = normalized.sets || [];
           sets.forEach((set: any, i: number) => {
-            console.log(`[ActiveWorkout] Creating set ${i + 1} for exercise ${normalized.exercise_id}`);
             setsToInsert.push({
               workout_id: workout.id,
               // Link to both the canonical exercise and the workout_exercises row
@@ -696,11 +819,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
               user_id: user.id, // This is now guaranteed to be non-null
             });
           });
-        } else {
-          console.warn(`[ActiveWorkout] No workout exercise found for exercise_id: ${normalized.exercise_id}`);
         }
       });
-      console.log('[ActiveWorkout] Total sets to insert:', setsToInsert.length);
 
       if (setsToInsert.length > 0) {
         const { error: setsError } = await supabase
@@ -845,11 +965,9 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
   const endWorkout = useCallback(async () => {
     if (!activeWorkout || isFinishingRef.current) {
-      console.log('[ActiveWorkout] Cannot end workout: no active workout or already finishing');
       return;
     }
 
-    console.log('[ActiveWorkout] Ending workout:', activeWorkout.id);
     isFinishingRef.current = true;
     setIsFinishing(true);
 
@@ -869,7 +987,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       }
 
       const hadAnySets = completedSets && completedSets.length > 0;
-      console.log(`[ActiveWorkout] Workout ended with ${completedSets?.length || 0} completed sets`);
       
       // Only save the workout if there are completed sets
       if (hadAnySets) {
@@ -916,9 +1033,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             .then(async (formattedData) => {
               if (formattedData) {
                 try {
-                  console.log('[ActiveWorkout] Generating OG image for workout:', activeWorkout.id);
                   await generateAndUploadOGImage(activeWorkout.id, formattedData);
-                  console.log('[ActiveWorkout] Successfully generated OG image for workout:', activeWorkout.id);
                 } catch (error) {
                   console.error('[ActiveWorkout] Failed to generate OG image:', error);
                   // Don't show error to user - this is background work
@@ -947,8 +1062,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         toast.success('Workout completed!');
       } else {
         // No sets completed - delete the workout instead of saving it
-        console.log('[ActiveWorkout] No sets completed, deleting workout instead of saving');
-        
         const { error: deleteError } = await supabase
           .from('workouts')
           .delete()
@@ -965,6 +1078,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
       // Clear workout state
       setActiveWorkout(null);
+      activeWorkoutRef.current = null;
       // Ending a workout should disable the active-workout redirect logic
       setIsWorkoutActive(false);
       setElapsedTime(0);
@@ -983,7 +1097,38 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, [activeWorkout, navigate, gatherWorkoutDataForOG, postSlackEvent, user]);
 
   const updateLastExercise = useCallback(async (workoutExerciseId: string) => {
-    if (!activeWorkout) return;
+    // In delegated mode, we might not have activeWorkout loaded yet, but we can still update
+    // by finding the active workout for the current user
+    if (!activeWorkout && user) {
+      try {
+        const { data: workouts } = await supabase
+          .from('workouts')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (workouts && workouts.length > 0) {
+          const workoutId = workouts[0].id;
+          const { error } = await supabase
+            .from('workouts')
+            .update({ last_workout_exercise_id: workoutExerciseId })
+            .eq('id', workoutId);
+          
+          if (error) {
+            console.error('[ActiveWorkout] Error updating last exercise:', error);
+          }
+        }
+      } catch (error) {
+        console.error('[ActiveWorkout] Error in updateLastExercise (fetch first):', error);
+      }
+      return;
+    }
+    
+    if (!activeWorkout) {
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -997,7 +1142,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     } catch (error) {
       console.error('[ActiveWorkout] Error in updateLastExercise:', error);
     }
-  }, [activeWorkout]);
+  }, [activeWorkout, user]);
 
   const markSetManuallyCompleted = useCallback((setId: string) => {
     setManuallyCompletedSets(prev => new Set(prev).add(setId));
@@ -1025,6 +1170,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
   const clearWorkoutState = useCallback(() => {
     setActiveWorkout(null);
+    activeWorkoutRef.current = null;
     setIsWorkoutActive(false);
     setElapsedTime(0);
     setManuallyCompletedSets(() => new Set<string>());
@@ -1033,8 +1179,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
 
   const pauseWorkout = useCallback(async () => {
     if (!activeWorkout) return;
-    
-    console.log('[ActiveWorkout] Pausing workout:', activeWorkout.id);
     
     try {
       // Calculate accumulated time before pausing
@@ -1049,50 +1193,74 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       
       const newAccumulated = currentAccumulated + additionalTime;
       
-      // First try to set both flags (new schema)
-      const firstAttempt = await supabase
-        .from('workouts')
-        .update({ 
-          is_active: false,
-          is_paused: true,
-          running_since: null,
-          active_seconds_accumulated: newAccumulated
-        })
-        .eq('id', activeWorkout.id);
+      // Check if is_paused column is available before trying to use it
+      const shouldUsePausedColumn = isPausedColumnAvailableRef.current !== false;
+      
+      let updateResult;
+      if (shouldUsePausedColumn) {
+        // First try to set both flags (new schema)
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: false,
+            is_paused: true,
+            running_since: null,
+            active_seconds_accumulated: newAccumulated
+          })
+          .eq('id', activeWorkout.id);
 
-      if (firstAttempt.error) {
-        // If server doesn't know about is_paused, fall back to legacy schema
-        const msg = String(firstAttempt.error.message || '');
-        if (msg.includes('is_paused')) {
-          const fallback = await supabase
-            .from('workouts')
-            .update({ 
-              is_active: false,
-              running_since: null,
-              active_seconds_accumulated: newAccumulated
-            })
-            .eq('id', activeWorkout.id);
-          if (fallback.error) {
-            console.error('[ActiveWorkout] Error pausing workout (fallback failed):', fallback.error);
-            toast.error('Failed to pause workout');
-            return;
+        if (updateResult.error) {
+          // If server doesn't know about is_paused, mark it and fall back to legacy schema
+          const msg = String(updateResult.error.message || '');
+          if (msg.includes('is_paused') || updateResult.error.code === 'PGRST116') {
+            isPausedColumnAvailableRef.current = false;
+            localStorage.setItem('is_paused_column_available', 'false');
+            // Fall back to legacy schema
+            updateResult = await supabase
+              .from('workouts')
+              .update({ 
+                is_active: false,
+                running_since: null,
+                active_seconds_accumulated: newAccumulated
+              })
+              .eq('id', activeWorkout.id);
           }
         } else {
-          console.error('[ActiveWorkout] Error pausing workout:', firstAttempt.error);
-          toast.error('Failed to pause workout');
-          return;
+          // Success - mark column as available
+          isPausedColumnAvailableRef.current = true;
+          localStorage.setItem('is_paused_column_available', 'true');
         }
+      } else {
+        // Column doesn't exist, use legacy schema
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: false,
+            running_since: null,
+            active_seconds_accumulated: newAccumulated
+          })
+          .eq('id', activeWorkout.id);
+      }
+
+      if (updateResult?.error) {
+        console.error('[ActiveWorkout] Error pausing workout:', updateResult.error);
+        toast.error('Failed to pause workout');
+        return;
       }
 
       // Update local state regardless of schema
-      setActiveWorkout(prev => prev ? {
-        ...prev,
-        is_active: false,
-        running_since: null,
-        active_seconds_accumulated: newAccumulated,
-        // Only set is_paused locally if the field exists on the object
-        ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: true } : {})
-      } : null);
+      setActiveWorkout(prev => {
+        const updated = prev ? {
+          ...prev,
+          is_active: false,
+          running_since: null,
+          active_seconds_accumulated: newAccumulated,
+          // Only set is_paused locally if the field exists on the object
+          ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: true } : {})
+        } : null;
+        activeWorkoutRef.current = updated;
+        return updated;
+      });
       
       setElapsedTime(newAccumulated);
       setIsWorkoutActive(true);
@@ -1107,50 +1275,71 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   const resumeWorkout = useCallback(async () => {
     if (!activeWorkout) return;
     
-    console.log('[ActiveWorkout] Resuming workout:', activeWorkout.id);
-    
     try {
       const now = new Date().toISOString();
       
-      // Try new schema first
-      const firstAttempt = await supabase
-        .from('workouts')
-        .update({ 
-          is_active: true,
-          is_paused: false,
-          running_since: now
-        })
-        .eq('id', activeWorkout.id);
+      // Check if is_paused column is available before trying to use it
+      const shouldUsePausedColumn = isPausedColumnAvailableRef.current !== false;
+      
+      let updateResult;
+      if (shouldUsePausedColumn) {
+        // Try new schema first
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: true,
+            is_paused: false,
+            running_since: now
+          })
+          .eq('id', activeWorkout.id);
 
-      if (firstAttempt.error) {
-        const msg = String(firstAttempt.error.message || '');
-        if (msg.includes('is_paused')) {
-          const fallback = await supabase
-            .from('workouts')
-            .update({ 
-              is_active: true,
-              running_since: now
-            })
-            .eq('id', activeWorkout.id);
-          if (fallback.error) {
-            console.error('[ActiveWorkout] Error resuming workout (fallback failed):', fallback.error);
-            toast.error('Failed to resume workout');
-            return;
+        if (updateResult.error) {
+          const msg = String(updateResult.error.message || '');
+          if (msg.includes('is_paused') || updateResult.error.code === 'PGRST116') {
+            isPausedColumnAvailableRef.current = false;
+            localStorage.setItem('is_paused_column_available', 'false');
+            // Fall back to legacy schema
+            updateResult = await supabase
+              .from('workouts')
+              .update({ 
+                is_active: true,
+                running_since: now
+              })
+              .eq('id', activeWorkout.id);
           }
         } else {
-          console.error('[ActiveWorkout] Error resuming workout:', firstAttempt.error);
-          toast.error('Failed to resume workout');
-          return;
+          // Success - mark column as available
+          isPausedColumnAvailableRef.current = true;
+          localStorage.setItem('is_paused_column_available', 'true');
         }
+      } else {
+        // Column doesn't exist, use legacy schema
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: true,
+            running_since: now
+          })
+          .eq('id', activeWorkout.id);
+      }
+
+      if (updateResult?.error) {
+        console.error('[ActiveWorkout] Error resuming workout:', updateResult.error);
+        toast.error('Failed to resume workout');
+        return;
       }
 
       // Update local state regardless of schema
-      setActiveWorkout(prev => prev ? {
-        ...prev,
-        is_active: true,
-        running_since: now,
-        ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: false } : {})
-      } : null);
+      setActiveWorkout(prev => {
+        const updated = prev ? {
+          ...prev,
+          is_active: true,
+          running_since: now,
+          ...(Object.prototype.hasOwnProperty.call(prev, 'is_paused') ? { is_paused: false } : {})
+        } : null;
+        activeWorkoutRef.current = updated;
+        return updated;
+      });
       
       setIsWorkoutActive(true);
       toast.success('Workout resumed');
@@ -1162,8 +1351,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   }, [activeWorkout]);
 
   const reactivateWorkout = useCallback(async (workoutId: string) => {
-    console.log('[ActiveWorkout] Reactivating workout:', workoutId);
-
     try {
       // First, check if there's already an active workout and clean it up
       const { data: existingWorkouts, error: existingError } = await supabase
@@ -1175,8 +1362,6 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       if (existingError) {
         console.error('[ActiveWorkout] Error checking for existing workouts:', existingError);
       } else if (existingWorkouts && existingWorkouts.length > 0) {
-        console.log('[ActiveWorkout] Found existing active workout(s), cleaning up:', existingWorkouts);
-        
         // Mark existing active workouts as inactive
         const { error: cleanupError } = await supabase
           .from('workouts')
@@ -1194,35 +1379,54 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       // Try new schema first, then fall back
       const now = new Date().toISOString();
       
-      const firstAttempt = await supabase
-        .from('workouts')
-        .update({ 
-          is_active: true,
-          is_paused: false,
-          running_since: now
-        })
-        .eq('id', workoutId);
+      // Check if is_paused column is available before trying to use it
+      const shouldUsePausedColumn = isPausedColumnAvailableRef.current !== false;
+      
+      let updateResult;
+      if (shouldUsePausedColumn) {
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: true,
+            is_paused: false,
+            running_since: now
+          })
+          .eq('id', workoutId);
 
-      if (firstAttempt.error) {
-        const msg = String(firstAttempt.error.message || '');
-        if (msg.includes('is_paused')) {
-          const fallback = await supabase
-            .from('workouts')
-            .update({ 
-              is_active: true,
-              running_since: now
-            })
-            .eq('id', workoutId);
-          if (fallback.error) {
-            console.error('[ActiveWorkout] Error reactivating workout (fallback failed):', fallback.error);
-            toast.error('Failed to reactivate workout');
-            return;
+        if (updateResult.error) {
+          const msg = String(updateResult.error.message || '');
+          if (msg.includes('is_paused') || updateResult.error.code === 'PGRST116') {
+            isPausedColumnAvailableRef.current = false;
+            localStorage.setItem('is_paused_column_available', 'false');
+            // Fall back to legacy schema
+            updateResult = await supabase
+              .from('workouts')
+              .update({ 
+                is_active: true,
+                running_since: now
+              })
+              .eq('id', workoutId);
           }
         } else {
-          console.error('[ActiveWorkout] Error reactivating workout:', firstAttempt.error);
-          toast.error('Failed to reactivate workout');
-          return;
+          // Success - mark column as available
+          isPausedColumnAvailableRef.current = true;
+          localStorage.setItem('is_paused_column_available', 'true');
         }
+      } else {
+        // Column doesn't exist, use legacy schema
+        updateResult = await supabase
+          .from('workouts')
+          .update({ 
+            is_active: true,
+            running_since: now
+          })
+          .eq('id', workoutId);
+      }
+
+      if (updateResult?.error) {
+        console.error('[ActiveWorkout] Error reactivating workout:', updateResult.error);
+        toast.error('Failed to reactivate workout');
+        return;
       }
 
       await refreshActiveWorkout(workoutId);

@@ -41,21 +41,15 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
   // Start typing animation when isLoading becomes true
   useEffect(() => {
-    console.log('[LoadingOverlay] Effect triggered - isLoading:', isLoading, 'hasStartedTyping:', hasStartedTyping);
-    
     if (!isLoading) {
       // Don't start typing if loading is false
-      console.log('[LoadingOverlay] Not loading, skipping typing start');
       return;
     }
 
     // Only start typing once - if we've already started, don't restart
     if (hasStartedTyping || typingIntervalRef.current) {
-      console.log('[LoadingOverlay] Already started typing, skipping');
       return;
     }
-
-    console.log('[LoadingOverlay] Starting typing animation');
     
     // Reset and start typing
     setDisplayedText("");
@@ -74,7 +68,6 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
         currentIndexRef.current++;
       } else {
         // Typing complete
-        console.log('[LoadingOverlay] Typing complete');
         if (typingIntervalRef.current) {
           clearInterval(typingIntervalRef.current);
           typingIntervalRef.current = null;
@@ -109,8 +102,6 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       return;
     }
 
-    console.log('[LoadingOverlay] Page ready, starting 0.2s delay');
-
     // Clear any existing delay timeout
     if (delayTimeoutRef.current) {
       clearTimeout(delayTimeoutRef.current);
@@ -121,7 +112,6 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     // Start delay timer
     delayTimeoutRef.current = setTimeout(() => {
-      console.log('[LoadingOverlay] Delay complete, hiding overlay');
       setDelayComplete(true);
       delayTimeoutRef.current = null;
     }, postAnimationDelay);
@@ -138,7 +128,6 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   useEffect(() => {
     if (animationComplete && delayComplete) {
       // Full cycle completed - reset for potential new cycle
-      console.log('[LoadingOverlay] Full cycle complete, resetting for next time');
       setHasStartedTyping(false);
       setAnimationComplete(false);
       setDelayComplete(false);
@@ -154,10 +143,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   const cycleInProgress = hasStartedTyping && !delayComplete;
   const shouldShow = isLoading || cycleInProgress;
 
-  console.log('[LoadingOverlay] Render - shouldShow:', shouldShow, 'hasStartedTyping:', hasStartedTyping, 'cycleInProgress:', cycleInProgress, 'isTypingActive:', isTypingActive, 'animationComplete:', animationComplete, 'delayComplete:', delayComplete, 'isLoading:', isLoading);
-
   if (!shouldShow) {
-    console.log('[LoadingOverlay] Hiding overlay');
     return null;
   }
 

@@ -189,10 +189,11 @@ export const useWorkoutAutoFocus = ({
         if (nextIncompleteExercises.length > 0) {
           const firstIncomplete = nextIncompleteExercises[0];
           console.log(`[useAutoFocus] Moving focus to "${nextSection}":`, firstIncomplete.exercise_id);
-          // Defer state update to avoid updating during render
+          // Defer state update to allow the next section to render and ensure autoscroll works
+          // Use a longer delay when moving to a different section to ensure DOM is ready
           setTimeout(() => {
             setFocusedExerciseId(firstIncomplete.exercise_id, nextSection);
-          }, 0);
+          }, 300);
           return firstIncomplete;
         }
       }

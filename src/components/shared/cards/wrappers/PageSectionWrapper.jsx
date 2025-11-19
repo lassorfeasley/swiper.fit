@@ -22,9 +22,11 @@ const PageSectionWrapper = ({
   paddingX = 20,
   style,
   applyPaddingOnParent = false,
+  showPlusButton,
+  onPlus,
   ...props 
 }) => {
-  // Filter out isFirstCard from props to prevent React warning
+  // Filter out custom props from props to prevent React warning
   const { isFirstCard, ...domProps } = props;
   // Separate style from domProps so we can control outer margin without interference
   const { style: incomingStyle, ...restDomProps } = domProps;

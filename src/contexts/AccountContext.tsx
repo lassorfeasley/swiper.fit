@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { supabase } from "@/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -73,36 +74,24 @@ export const AccountProvider = ({ children }: AccountProviderProps) => {
   };
 
   const returnToSelf = () => {
-    console.log('[AccountContext] returnToSelf called');
-    console.log('[AccountContext] Current acting user:', actingUser?.id);
-    console.log('[AccountContext] Current auth user:', authUser?.id);
-    setActingUser(null);
-    localStorage.removeItem("actingUserId");
-    // Navigate to account settings page since trainers page no longer exists
-    navigate("/account");
+    // Use flushSync to force synchronous state update before navigation
+    // This ensures isDelegated is false when Account component renders
+    flushSync(() => {
+      setActingUser(null);
+      localStorage.removeItem("actingUserId");
+    });
+    
+    // Navigate to clients section with state flag to prevent redirect (backup)
+    // The section=clients param is critical - it signals explicit navigation
+    navigate("/account?section=clients", { 
+      replace: true,
+      state: { exitingDelegation: true }
+    });
   };
 
   // The user the app should act as for queries
   const currentUser = actingUser || authUser;
   const isDelegated = Boolean(actingUser);
-  
-  // Debug logging for user changes
-  useEffect(() => {
-    console.log('[AccountContext] User state changed:', {
-      authUserId: authUser?.id,
-      actingUserId: actingUser?.id,
-      currentUserId: currentUser?.id,
-      isDelegated,
-      loading
-    });
-    
-    // Log when delegation state changes
-    if (isDelegated) {
-      console.log('[AccountContext] Currently delegated to:', actingUser?.id);
-    } else {
-      console.log('[AccountContext] Not delegated, using auth user:', authUser?.id);
-    }
-  }, [authUser?.id, actingUser?.id, currentUser?.id, isDelegated, loading]);
 
   return (
     <AccountContext.Provider

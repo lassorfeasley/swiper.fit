@@ -105,49 +105,17 @@ function AppContent() {
   // Delegates should NEVER be redirected to active workouts - they should be able to manage accounts freely
   const shouldRedirect = isWorkoutActive && !isAllowedPath && !workoutLoading && !isDelegated;
 
-  // Debug logging for workout redirect logic
-  useEffect(() => {
-      console.log('[App] Workout redirect state:', {
-      isWorkoutActive,
-      workoutLoading,
-      isAllowedPath,
-      shouldRedirect,
-      currentPath: location.pathname,
-      isDelegated,
-      allowedPaths: ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password', '/og-env']
-    });
-    
-    // Additional debugging for path matching
-    if (isWorkoutActive) {
-      const pathChecks = ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password', '/og-env'].map(allowed => {
-        const isMatch = allowed === '/' ? location.pathname === '/' : 
-                       location.pathname === allowed || location.pathname.startsWith(allowed + '/');
-        return { allowed, isMatch };
-      });
-      console.log('[App] Path matching details:', pathChecks);
-    }
-  }, [isWorkoutActive, workoutLoading, isAllowedPath, shouldRedirect, location.pathname, isDelegated]);
-
   // Redirect to active workout when one is live
   useEffect(() => {
     if (shouldRedirect) {
-      console.log('[App] Redirecting to active workout');
-      console.log('[App] Redirect details:', {
-        isWorkoutActive,
-        workoutLoading,
-        isAllowedPath,
-        currentPath: location.pathname,
-        isDelegated
-      });
       navigate('/workout/active', { replace: true });
     }
-  }, [shouldRedirect, navigate, isWorkoutActive, workoutLoading, isAllowedPath, location.pathname, isDelegated]);
+  }, [shouldRedirect, navigate]);
 
   // Immediate redirect when workout context finishes loading and detects active workout
   // But NEVER redirect delegates - they should be able to manage accounts freely
   useEffect(() => {
     if (!workoutLoading && isWorkoutActive && location.pathname !== '/workout/active' && !isDelegated) {
-      console.log('[App] Immediate redirect to active workout after loading');
       navigate('/workout/active', { replace: true });
     }
   }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
@@ -156,7 +124,6 @@ function AppContent() {
   // This prevents trainers from getting stuck on the routines page when switching to a client with an active workout
   useEffect(() => {
     if (!workoutLoading && isWorkoutActive && isDelegated && location.pathname === '/routines') {
-      console.log('[App] Delegate with active workout on /routines - redirecting to /workout/active');
       navigate('/workout/active', { replace: true });
     }
   }, [workoutLoading, isWorkoutActive, isDelegated, location.pathname, navigate]);
@@ -167,13 +134,17 @@ function AppContent() {
       const restrictedPaths = ['/routines', '/history', '/trainers', '/account', '/dashboard'];
       const isOnRestrictedPath = restrictedPaths.some(path => location.pathname.startsWith(path));
       
+      // Don't redirect if we're on /account with a section param (explicit navigation, e.g., exiting manage mode)
+      const isExplicitAccountNavigation = location.pathname === '/account' && 
+                                         (location.search.includes('section=') || location.state?.exitingDelegation);
+      
       // Delegates should NEVER be redirected - they can access all pages freely
-      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegated) {
-        console.log('[App] Safety redirect: on restricted page with active workout:', location.pathname);
+      // Also don't redirect if explicitly navigating to account with a section param
+      if (isOnRestrictedPath && location.pathname !== '/workout/active' && !isDelegated && !isExplicitAccountNavigation) {
         navigate('/workout/active', { replace: true });
       }
     }
-  }, [workoutLoading, isWorkoutActive, location.pathname, navigate, isDelegated]);
+  }, [workoutLoading, isWorkoutActive, location.pathname, location.search, location.state, navigate, isDelegated]);
 
   // Render loading overlays (manage their own visibility based on animation state)
   // Only show workout checking overlay for authenticated users
@@ -253,8 +224,9 @@ function AppContent() {
           {/* Unified URL routes - work for both owners and viewers */}
           <Route path="/routines/:routineId/configure" element={<RoutineBuilder />} />
           <Route path="/routines/:routineId" element={<RoutineBuilder />} />
-          <Route path="/history/:userId" element={<History />} />
           <Route path="/history/workout/:workoutId" element={<CompletedWorkout />} />
+          <Route path="/history/:workoutId" element={<CompletedWorkout />} />
+          <Route path="/history/:userId" element={<History />} />
         </Routes>
       </main>
 

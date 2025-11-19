@@ -17,11 +17,6 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
     // DEBUG: warn if any ancestor blocks position: sticky
     const debugSticky = (el) => {
       if (!el) return;
-      try {
-        const cs = getComputedStyle(el);
-        // eslint-disable-next-line no-console
-        console.log('[StickySubNav]', { position: cs.position, top: cs.top, zIndex: cs.zIndex });
-      } catch (_) {}
       let p = el.parentElement;
       while (p) {
         const cs = getComputedStyle(p);
@@ -29,8 +24,6 @@ export default function ActiveWorkoutNav({ onEnd, progress = 0 }) {
         const ovY = cs.overflowY;
         const hasOverflow = ["hidden", "auto", "scroll", "clip"].includes(ov) || ["hidden", "auto", "scroll", "clip"].includes(ovY);
         if (hasOverflow) {
-          // eslint-disable-next-line no-console
-          console.warn("[Sticky blocked by ancestor]", p, { overflow: ov, overflowY: ovY });
           blocked = true;
         }
         p = p.parentElement;
