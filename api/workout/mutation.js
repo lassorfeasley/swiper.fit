@@ -112,6 +112,7 @@ async function handleStartWorkout(payload, actorId) {
     throw workoutError;
   }
 
+  const ownerId = workout.user_id;
   const normalizedExercises = normalizeProgramExercises(program);
 
   let insertedExercises = [];
@@ -125,6 +126,7 @@ async function handleStartWorkout(payload, actorId) {
           exercise_order: exercise.index,
           snapshot_name: exercise.name,
           section_override: exercise.section || null,
+          user_id: ownerId,
         })),
       )
       .select();
@@ -154,7 +156,7 @@ async function handleStartWorkout(payload, actorId) {
           weight_unit: set.weight_unit || set.unit,
           set_variant: set.set_variant || `Set ${idx + 1}`,
           set_order: typeof set.set_order === 'number' ? set.set_order : idx + 1,
-          user_id: actorId,
+          user_id: ownerId,
         });
       });
     });
@@ -184,6 +186,7 @@ async function handleCompleteSet(payload, actorId) {
     throw new Error('workoutId and exerciseId are required');
   }
 
+  const ownerId = await getWorkoutOwnerId(workoutId);
   const workoutExerciseId = await resolveWorkoutExerciseId(workoutId, exerciseId);
   const setPayload = {
     workout_id: workoutId,
@@ -199,7 +202,7 @@ async function handleCompleteSet(payload, actorId) {
     set_type: setConfig.set_type || 'reps',
     timed_set_duration: deriveNumber(setConfig.timed_set_duration, 0),
     set_order: typeof setConfig.set_order === 'number' ? setConfig.set_order : 0,
-    user_id: actorId,
+    user_id: ownerId,
   };
 
   if (setConfig.set_type === 'timed' && !setPayload.reps) {
@@ -294,12 +297,14 @@ async function handleAddExerciseToday(payload, actorId) {
     throw new Error('workoutId and exercise name are required');
   }
 
+  const ownerId = await getWorkoutOwnerId(workoutId);
   const exerciseId = await findOrCreateExercise(name, section);
   const workoutExerciseId = await ensureWorkoutExercise({
     workoutId,
     exerciseId,
     section,
     snapshotName: name,
+    ownerId,
   });
 
   if (setConfigs.length > 0 && workoutExerciseId?.created) {
@@ -315,7 +320,7 @@ async function handleAddExerciseToday(payload, actorId) {
       set_type: cfg.set_type || 'reps',
       timed_set_duration: deriveNumber(cfg.timed_set_duration, 30),
       status: 'default',
-      user_id: actorId,
+      user_id: ownerId,
     }));
 
     const { error: setError } = await supabase.from('sets').insert(rows);
@@ -343,10 +348,12 @@ async function handleAddExerciseFuture(payload, actorId) {
     throw new Error('workoutId, routineId and exercise name are required');
   }
 
+  const ownerId = await getWorkoutOwnerId(workoutId);
   const exerciseId = await findOrCreateExercise(name, section);
   const routineExerciseId = await insertRoutineExercise({
     routineId,
     exerciseId,
+    ownerId,
   });
 
   if (setConfigs.length > 0) {
@@ -359,6 +366,7 @@ async function handleAddExerciseFuture(payload, actorId) {
       set_variant: cfg.set_variant || `Set ${idx + 1}`,
       set_type: cfg.set_type || 'reps',
       timed_set_duration: deriveNumber(cfg.timed_set_duration, 30),
+      user_id: ownerId,
     }));
     const { error } = await supabase.from('routine_sets').insert(rows);
     if (error) {
@@ -371,6 +379,7 @@ async function handleAddExerciseFuture(payload, actorId) {
     exerciseId,
     section,
     snapshotName: name,
+    ownerId,
   });
 
   if (workoutExercise?.created && setConfigs.length === 0) {
@@ -386,7 +395,7 @@ async function handleAddExerciseFuture(payload, actorId) {
       set_type: 'reps',
       timed_set_duration: 30,
       status: 'default',
-      user_id: actorId,
+      user_id: ownerId,
     }));
     const { error } = await supabase.from('sets').insert(rows);
     if (error) {
@@ -546,7 +555,7 @@ async function getNextExerciseOrder(table, column, value) {
   return (data[0].exercise_order || 0) + 1;
 }
 
-async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotName }) {
+async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotName, ownerId }) {
   const { data: existing, error } = await supabase
     .from('workout_exercises')
     .select('id')
@@ -571,6 +580,7 @@ async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotN
       exercise_order: order,
       snapshot_name: snapshotName.trim(),
       section_override: section,
+      user_id: ownerId,
     })
     .select('id')
     .single();
@@ -582,7 +592,7 @@ async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotN
   return { id: data.id, created: true };
 }
 
-async function insertRoutineExercise({ routineId, exerciseId }) {
+async function insertRoutineExercise({ routineId, exerciseId, ownerId }) {
   const order = await getNextExerciseOrder('routine_exercises', 'routine_id', routineId);
   const { data, error } = await supabase
     .from('routine_exercises')
@@ -590,6 +600,7 @@ async function insertRoutineExercise({ routineId, exerciseId }) {
       routine_id: routineId,
       exercise_id: exerciseId,
       exercise_order: order,
+      user_id: ownerId,
     })
     .select('id')
     .single();
@@ -613,6 +624,24 @@ function deriveNumber(value, fallback) {
 }
 
 function generateWorkoutName() {
+async function getWorkoutOwnerId(workoutId) {
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('user_id')
+    .eq('id', workoutId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.user_id) {
+    throw new Error(`Workout ${workoutId} missing user_id`);
+  }
+
+  return data.user_id;
+}
+
   const now = new Date();
   const day = now.toLocaleDateString('en-US', { weekday: 'long' });
   const hour = now.getHours();
