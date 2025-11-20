@@ -1,6 +1,6 @@
-import { getSupabaseServerClient } from '../../server/supabase.js';
+import { getSupabaseServerClient, getSupabaseUserClient } from '../../server/supabase.js';
 
-const supabase = getSupabaseServerClient();
+const supabaseAdmin = getSupabaseServerClient();
 const MAX_SET_NAME_LEN = 25;
 
 export default async function handler(req, res) {
@@ -22,12 +22,13 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Missing Authorization token' });
     }
 
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !authData?.user) {
       return res.status(401).json({ error: 'Invalid access token' });
     }
 
     const actorId = authData.user.id;
+    const supabaseUser = getSupabaseUserClient(token);
     const { action, payload = {} } = req.body || {};
 
     if (!action) {
@@ -36,27 +37,27 @@ export default async function handler(req, res) {
 
     switch (action) {
       case 'start_workout': {
-        const result = await handleStartWorkout(payload, actorId);
+        const result = await handleStartWorkout(payload, actorId, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       case 'complete_set': {
-        const result = await handleCompleteSet(payload, actorId);
+        const result = await handleCompleteSet(payload, actorId, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       case 'undo_set': {
-        const result = await handleUndoSet(payload);
+        const result = await handleUndoSet(payload, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       case 'add_exercise_today': {
-        const result = await handleAddExerciseToday(payload, actorId);
+        const result = await handleAddExerciseToday(payload, actorId, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       case 'add_exercise_future': {
-        const result = await handleAddExerciseFuture(payload, actorId);
+        const result = await handleAddExerciseFuture(payload, actorId, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       case 'update_focus': {
-        const result = await handleUpdateFocus(payload, actorId);
+        const result = await handleUpdateFocus(payload, actorId, supabaseUser);
         return res.status(200).json({ ok: true, ...result });
       }
       default:
@@ -80,7 +81,7 @@ function extractBearerToken(headerValue) {
   return headerValue;
 }
 
-async function handleStartWorkout(payload, actorId) {
+async function handleStartWorkout(payload, actorId, supabase) {
   const program = payload?.program;
   if (!program) {
     throw new Error('Program payload is required to start a workout');
@@ -177,7 +178,7 @@ async function handleStartWorkout(payload, actorId) {
   };
 }
 
-async function handleCompleteSet(payload, actorId) {
+async function handleCompleteSet(payload, actorId, supabase) {
   const workoutId = payload?.workoutId;
   const exerciseId = payload?.exerciseId;
   const setConfig = payload?.setConfig || {};
@@ -186,7 +187,7 @@ async function handleCompleteSet(payload, actorId) {
     throw new Error('workoutId and exerciseId are required');
   }
 
-  const ownerId = await getWorkoutOwnerId(workoutId);
+  const ownerId = await getWorkoutOwnerId(supabase, workoutId);
   const workoutExerciseId = await resolveWorkoutExerciseId(workoutId, exerciseId);
   const setPayload = {
     workout_id: workoutId,
@@ -238,7 +239,7 @@ async function handleCompleteSet(payload, actorId) {
   };
 }
 
-async function handleUndoSet(payload) {
+async function handleUndoSet(payload, supabase) {
   const workoutId = payload?.workoutId;
   const exerciseId = payload?.exerciseId;
   const setConfig = payload?.setConfig || {};
@@ -287,7 +288,7 @@ async function handleUndoSet(payload) {
   };
 }
 
-async function handleAddExerciseToday(payload, actorId) {
+async function handleAddExerciseToday(payload, actorId, supabase) {
   const workoutId = payload?.workoutId;
   const name = payload?.exercise?.name;
   const section = payload?.exercise?.section || 'training';
@@ -297,7 +298,7 @@ async function handleAddExerciseToday(payload, actorId) {
     throw new Error('workoutId and exercise name are required');
   }
 
-  const ownerId = await getWorkoutOwnerId(workoutId);
+  const ownerId = await getWorkoutOwnerId(supabase, workoutId);
   const exerciseId = await findOrCreateExercise(name, section);
   const workoutExerciseId = await ensureWorkoutExercise({
     workoutId,
@@ -337,7 +338,7 @@ async function handleAddExerciseToday(payload, actorId) {
   };
 }
 
-async function handleAddExerciseFuture(payload, actorId) {
+async function handleAddExerciseFuture(payload, actorId, supabase) {
   const workoutId = payload?.workoutId;
   const routineId = payload?.routineId;
   const name = payload?.exercise?.name;
@@ -348,7 +349,7 @@ async function handleAddExerciseFuture(payload, actorId) {
     throw new Error('workoutId, routineId and exercise name are required');
   }
 
-  const ownerId = await getWorkoutOwnerId(workoutId);
+  const ownerId = await getWorkoutOwnerId(supabase, workoutId);
   const exerciseId = await findOrCreateExercise(name, section);
   const routineExerciseId = await insertRoutineExercise({
     routineId,
@@ -411,7 +412,7 @@ async function handleAddExerciseFuture(payload, actorId) {
   };
 }
 
-async function handleUpdateFocus(payload) {
+async function handleUpdateFocus(payload, actorId, supabase) {
   const workoutId = payload?.workoutId;
   const workoutExerciseId = payload?.workoutExerciseId;
 
@@ -624,7 +625,7 @@ function deriveNumber(value, fallback) {
 }
 
 function generateWorkoutName() {
-async function getWorkoutOwnerId(workoutId) {
+async function getWorkoutOwnerId(supabase, workoutId) {
   const { data, error } = await supabase
     .from('workouts')
     .select('user_id')
