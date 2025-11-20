@@ -77,6 +77,12 @@ const ActiveWorkoutContent: React.FC = () => {
     }
     
     if (!isWorkoutActive) {
+      try {
+        if (sessionStorage.getItem('skip_active_workout_redirect') === 'true') {
+          skipAutoRedirectRef.current = true;
+          sessionStorage.removeItem('skip_active_workout_redirect');
+        }
+      } catch (_) {}
       // Skip auto-redirect if user just ended workout
       if (skipAutoRedirectRef.current) {
         skipAutoRedirectRef.current = false;

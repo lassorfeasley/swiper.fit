@@ -51,6 +51,7 @@ interface Workout {
   og_image_url?: string;
   active_seconds_accumulated?: number;
   running_since?: string | null;
+  completed_at?: string | null;
   exercises: WorkoutExercise[];
   routines?: {
     routine_name: string;
@@ -409,6 +410,16 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
         const updatedWorkout = payload.new as Workout;
         const oldWorkout = payload.old as Workout;
         
+        console.log('[ActiveWorkout] UPDATE event received:', {
+          workoutId: updatedWorkout.id,
+          userId: updatedWorkout.user_id,
+          isActive: updatedWorkout.is_active,
+          wasActive: oldWorkout?.is_active,
+          currentUser: user.id,
+          hasActiveWorkout: !!activeWorkoutRef.current,
+          currentWorkoutId: activeWorkoutRef.current?.id
+        });
+        
         // Check if a workout just became active (for this user)
         const justBecameActive = updatedWorkout.is_active === true && 
                                   (oldWorkout?.is_active === false || oldWorkout?.is_active === undefined) &&
@@ -480,7 +491,103 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
           }
         }
         
-        // Update workout state and handle side effects
+        // Check if workout ended - handle this BEFORE checking if we have it loaded
+        // This ensures both trainer and client are notified when either one ends the workout
+        // IMPORTANT: We must distinguish between pause and end
+        const isActiveChanged = updatedWorkout.is_active === false && 
+                                (oldWorkout?.is_active === true || oldWorkout?.is_active === undefined);
+        
+        const currentWorkout = activeWorkoutRef.current;
+        const isCurrentWorkout = currentWorkout && currentWorkout.id === updatedWorkout.id;
+        
+        // If is_active changed to false, we need to check if it's a pause or an end
+        if (isActiveChanged && isCurrentWorkout) {
+          // Check if workout is paused (new schema with is_paused field)
+          // The real-time payload might not include is_paused, so fetch the workout to check
+          const hasPausedFieldInPayload = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
+          const isPausedInPayload = hasPausedFieldInPayload ? Boolean((updatedWorkout as any).is_paused) : null;
+          
+          let isPaused = false;
+          let isEnded = false;
+          
+          if (hasPausedFieldInPayload) {
+            // New schema: use the is_paused field from the payload
+            isPaused = isPausedInPayload === true;
+            isEnded = isPausedInPayload === false;
+          } else {
+            // Legacy schema or payload doesn't include is_paused
+            // Check if completed_at is set - if yes, it's ended; if no, wait for next update
+            // This works because endWorkout sets completed_at, but pauseWorkout doesn't
+            const hasCompletedAt = Object.prototype.hasOwnProperty.call(updatedWorkout, 'completed_at');
+            const completedAtFromPayload = hasCompletedAt ? updatedWorkout.completed_at : null;
+            
+            console.log('[ActiveWorkout] Legacy schema - checking completed_at:', {
+              hasCompletedAt,
+              completedAtFromPayload,
+              workoutId: updatedWorkout.id,
+              isActive: updatedWorkout.is_active
+            });
+            
+            if (completedAtFromPayload) {
+              // If completed_at is set in payload, workout ended
+              console.log('[ActiveWorkout] completed_at in payload - workout ended');
+              isEnded = true;
+              isPaused = false;
+            } else {
+              // If completed_at is not in payload:
+              // - If we're the user ending it (isFinishingRef), it's ended
+              // - Otherwise, treat as paused for now (another UPDATE will arrive with completed_at if it's ended)
+              // This avoids unnecessary fetches and race conditions
+              console.log('[ActiveWorkout] completed_at not in payload, checking isFinishingRef:', isFinishingRef.current);
+              isEnded = isFinishingRef.current;
+              isPaused = !isEnded;
+              console.log('[ActiveWorkout] Decision:', { isEnded, isPaused });
+            }
+          }
+          
+          // If workout ended (not paused), handle navigation for both users
+          if (isEnded) {
+            console.log('[ActiveWorkout] Workout ended (not paused), navigating to summary. Workout ID:', updatedWorkout.id, {
+              hasPausedFieldInPayload,
+              isPausedInPayload,
+              isFinishingRef: isFinishingRef.current,
+              isPaused,
+              isEnded
+            });
+            try {
+              sessionStorage.setItem('skip_active_workout_redirect', 'true');
+            } catch (_) {}
+            // Show notification that workout ended
+            toast.success('Workout completed!', {
+              description: 'Viewing workout summary...'
+            });
+            // Navigate to workout summary page for both trainer and client
+            if (updatedWorkout.id) {
+              navigate(`/history/${updatedWorkout.id}`, { replace: true });
+            } else {
+              navigate('/history', { replace: true });
+            }
+            // Clear workout state
+            setIsWorkoutActive(false);
+            setActiveWorkout(null);
+            activeWorkoutRef.current = null;
+            setElapsedTime(0);
+            // Don't process further updates - workout is ended
+            return;
+          } else if (isPaused) {
+            // Workout was paused, log it but don't navigate
+            console.log('[ActiveWorkout] Workout paused (not ended). Workout ID:', updatedWorkout.id, {
+              hasPausedFieldInPayload,
+              isPausedInPayload,
+              isFinishingRef: isFinishingRef.current,
+              isPaused,
+              isEnded
+            });
+            // Continue processing the update normally (workout state will be updated below)
+          }
+        }
+        
+        // Update workout state and handle side effects (only if we have the workout loaded)
         setActiveWorkout(prev => {
           // Only process if this is the active workout
           if (!prev || updatedWorkout.id !== prev.id) return prev;
@@ -500,62 +607,16 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
             setElapsedTime(updatedWorkout.active_seconds_accumulated);
           }
           
-          const hasPausedField = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
-          const paused = hasPausedField ? Boolean((updatedWorkout as any).is_paused) : false;
+          const hasPausedFieldLocal = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
+          const paused = hasPausedFieldLocal ? Boolean((updatedWorkout as any).is_paused) : false;
           
-          if (hasPausedField) {
+          if (hasPausedFieldLocal) {
             // New schema: active if either active or paused
             setIsWorkoutActive(Boolean(updatedWorkout.is_active || paused));
           } else {
             // Legacy schema (no is_paused): do NOT flip off during pause updates; only
-            // allow turning off when we know we're finishing (handled below)
+            // allow turning off when we know we're finishing (handled above)
             if (updatedWorkout.is_active === true) setIsWorkoutActive(true);
-          }
-          
-          // Only navigate to history if the workout truly ended, not merely paused
-          if (updatedWorkout.is_active === false) {
-            const hasPausedField2 = Object.prototype.hasOwnProperty.call(updatedWorkout as any, 'is_paused');
-            const isPausedNow = hasPausedField2 ? Boolean((updatedWorkout as any).is_paused) : false;
-
-            if (!isPausedNow) {
-              // Only end workout if we're actually finishing (not just pausing)
-              if (hasPausedField2) {
-                // New schema: if is_paused is false and is_active is false, workout ended
-                // Show notification that workout ended
-                toast.success('Workout completed!', {
-                  description: 'Viewing workout summary...'
-                });
-                // Navigate to workout summary page for both trainer and client
-                if (updatedWorkout.id) {
-                  navigate(`/history/${updatedWorkout.id}`, { replace: true });
-                } else {
-                  navigate('/history', { replace: true });
-                }
-                // Clear workout state
-                setIsWorkoutActive(false);
-                setActiveWorkout(null);
-                activeWorkoutRef.current = null;
-                setElapsedTime(0);
-              } else if (isFinishingRef.current) {
-                // Legacy schema: only end if isFinishingRef indicates we're finishing
-                // Show notification that workout ended
-                toast.success('Workout completed!', {
-                  description: 'Viewing workout summary...'
-                });
-                // Navigate to workout summary page for both trainer and client
-                if (updatedWorkout.id) {
-                  navigate(`/history/${updatedWorkout.id}`, { replace: true });
-                } else {
-                  navigate('/history', { replace: true });
-                }
-                // Clear workout state
-                setIsWorkoutActive(false);
-                setActiveWorkout(null);
-                activeWorkoutRef.current = null;
-                setElapsedTime(0);
-              }
-              // If neither condition is met, workout is paused (legacy schema) - keep it active
-            }
           }
           
           return updated;
