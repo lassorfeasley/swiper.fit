@@ -115,6 +115,7 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
   const startGuardUntilRef = useRef<number>(0);
   // Ref to track active workout for use in subscription handlers
   const activeWorkoutRef = useRef<Workout | null>(null);
+  const lastWorkoutStartNotificationRef = useRef<string | null>(null);
   
   // Fire-and-forget Slack event
   const postSlackEvent = useCallback((event: string, data: any) => {
@@ -838,6 +839,8 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
     };
   }, [user, activeWorkout?.id, navigate]); // Only depend on activeWorkout.id to avoid recreating subscription when workout data changes
 
+  
+
   // Timer for elapsed time - calculate from running_since instead of incrementing
   useEffect(() => {
     if (!isWorkoutActive || !activeWorkout?.is_active || loading) return;
@@ -940,6 +943,52 @@ export function ActiveWorkoutProvider({ children }: ActiveWorkoutProviderProps) 
       console.error('[ActiveWorkout] Error in refreshActiveWorkout:', error);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channelName = `active-workout-notify-${user.id}`;
+    const notifyChannel = supabase.channel(channelName, {
+      config: {
+        broadcast: { self: false }
+      }
+    });
+
+    const handleWorkoutStartedBroadcast = async (payload: any) => {
+      const workoutId = payload?.workoutId;
+      const targetUserId = payload?.clientId;
+
+      if (!workoutId) return;
+      if (targetUserId && targetUserId !== user.id) return;
+
+      if (activeWorkoutRef.current?.id === workoutId || lastWorkoutStartNotificationRef.current === workoutId) {
+        return;
+      }
+
+      lastWorkoutStartNotificationRef.current = workoutId;
+
+      try {
+        await refreshActiveWorkout(workoutId);
+        toast.info('A new workout has started. Redirecting...');
+        navigate('/workout/active', { replace: true });
+      } catch (error) {
+        console.error('[ActiveWorkout] Error handling workout-start broadcast:', error);
+        lastWorkoutStartNotificationRef.current = null;
+      }
+    };
+
+    notifyChannel.on('broadcast', { event: 'workout-started' }, ({ payload }) => {
+      handleWorkoutStartedBroadcast(payload);
+    });
+
+    notifyChannel.subscribe((status) => {
+      console.log('[ActiveWorkout] Workout-start notify channel status:', status);
+    });
+
+    return () => {
+      notifyChannel.unsubscribe();
+    };
+  }, [user?.id, refreshActiveWorkout, navigate]);
 
   const startWorkout = useCallback(async (program: Program) => {
     if (!user) {

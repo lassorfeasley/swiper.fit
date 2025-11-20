@@ -64,6 +64,32 @@ const Account = () => {
     'email-password': 'Login and password',
   };
 
+  const notifyClientWorkoutStarted = React.useCallback(async (clientId: string, workoutId: string) => {
+    try {
+      const channelName = `active-workout-notify-${clientId}`;
+      const channel = supabase.channel(channelName, {
+        config: {
+          broadcast: { self: false }
+        }
+      });
+
+      await channel.subscribe();
+      await channel.send({
+        type: 'broadcast',
+        event: 'workout-started',
+        payload: {
+          clientId,
+          workoutId,
+          triggeredBy: user?.id
+        }
+      });
+      await channel.unsubscribe();
+      console.log('[Account] Notified client about workout start via channel:', channelName);
+    } catch (error) {
+      console.error('[Account] Failed to notify client about workout start:', error);
+    }
+  }, [user?.id]);
+
   // Handle query parameter for section navigation
   useEffect(() => {
     const sectionParam = searchParams.get('section');
@@ -1004,6 +1030,8 @@ const Account = () => {
         throw new Error('Could not create workout exercises. Please try again.');
       }
       
+      await notifyClientWorkoutStarted(clientId, workout.id);
+
       toast.success(`Workout started for ${formatUserDisplay(clientProfile)}. They will be notified when they open the app.`);
       
       console.log('[Account] Switching to user:', clientId);
