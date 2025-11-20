@@ -613,18 +613,6 @@ async function insertRoutineExercise({ routineId, exerciseId, ownerId }) {
   return data.id;
 }
 
-function deriveNumber(value, fallback) {
-  if (typeof value === 'number' && !Number.isNaN(value)) {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? fallback : parsed;
-  }
-  return fallback;
-}
-
-function generateWorkoutName() {
 async function getWorkoutOwnerId(supabase, workoutId) {
   const { data, error } = await supabase
     .from('workouts')
@@ -643,6 +631,18 @@ async function getWorkoutOwnerId(supabase, workoutId) {
   return data.user_id;
 }
 
+function deriveNumber(value, fallback) {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
+}
+
+function generateWorkoutName() {
   const now = new Date();
   const day = now.toLocaleDateString('en-US', { weekday: 'long' });
   const hour = now.getHours();
