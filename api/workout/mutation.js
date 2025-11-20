@@ -170,7 +170,7 @@ async function handleStartWorkout(payload, actorId, supabase) {
     }
   }
 
-  const snapshot = await fetchWorkoutSnapshot(workout.id);
+  const snapshot = await fetchWorkoutSnapshot(supabase, workout.id);
   return {
     workout: snapshot,
     sessionVersion: Date.now(),
@@ -188,7 +188,7 @@ async function handleCompleteSet(payload, actorId, supabase) {
   }
 
   const ownerId = await getWorkoutOwnerId(supabase, workoutId);
-  const workoutExerciseId = await resolveWorkoutExerciseId(workoutId, exerciseId);
+  const workoutExerciseId = await resolveWorkoutExerciseId(supabase, workoutId, exerciseId);
   const setPayload = {
     workout_id: workoutId,
     exercise_id: exerciseId,
@@ -299,8 +299,9 @@ async function handleAddExerciseToday(payload, actorId, supabase) {
   }
 
   const ownerId = await getWorkoutOwnerId(supabase, workoutId);
-  const exerciseId = await findOrCreateExercise(name, section);
+  const exerciseId = await findOrCreateExercise(supabase, name, section);
   const workoutExerciseId = await ensureWorkoutExercise({
+    supabase,
     workoutId,
     exerciseId,
     section,
@@ -350,8 +351,9 @@ async function handleAddExerciseFuture(payload, actorId, supabase) {
   }
 
   const ownerId = await getWorkoutOwnerId(supabase, workoutId);
-  const exerciseId = await findOrCreateExercise(name, section);
+  const exerciseId = await findOrCreateExercise(supabase, name, section);
   const routineExerciseId = await insertRoutineExercise({
+    supabase,
     routineId,
     exerciseId,
     ownerId,
@@ -376,6 +378,7 @@ async function handleAddExerciseFuture(payload, actorId, supabase) {
   }
 
   const workoutExercise = await ensureWorkoutExercise({
+    supabase,
     workoutId,
     exerciseId,
     section,
@@ -424,7 +427,6 @@ async function handleUpdateFocus(payload, actorId, supabase) {
     .from('workouts')
     .update({
       last_workout_exercise_id: workoutExerciseId,
-      last_focus_at: new Date().toISOString(),
     })
     .eq('id', workoutId);
 
@@ -454,7 +456,7 @@ function normalizeProgramExercises(program) {
   }));
 }
 
-async function fetchWorkoutSnapshot(workoutId) {
+async function fetchWorkoutSnapshot(supabase, workoutId) {
   const { data, error } = await supabase
     .from('workouts')
     .select(`
@@ -486,7 +488,7 @@ async function fetchWorkoutSnapshot(workoutId) {
   };
 }
 
-async function resolveWorkoutExerciseId(workoutId, exerciseId) {
+async function resolveWorkoutExerciseId(supabase, workoutId, exerciseId) {
   const { data, error } = await supabase
     .from('workout_exercises')
     .select('id')
@@ -503,7 +505,7 @@ async function resolveWorkoutExerciseId(workoutId, exerciseId) {
   return data?.id || null;
 }
 
-async function findOrCreateExercise(name, section) {
+async function findOrCreateExercise(supabase, name, section) {
   const { data: existing, error } = await supabase
     .from('exercises')
     .select('id, section')
@@ -537,7 +539,7 @@ async function findOrCreateExercise(name, section) {
   return created.id;
 }
 
-async function getNextExerciseOrder(table, column, value) {
+async function getNextExerciseOrder(supabase, table, column, value) {
   const { data, error } = await supabase
     .from(table)
     .select('exercise_order')
@@ -556,7 +558,7 @@ async function getNextExerciseOrder(table, column, value) {
   return (data[0].exercise_order || 0) + 1;
 }
 
-async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotName, ownerId }) {
+async function ensureWorkoutExercise({ supabase, workoutId, exerciseId, section, snapshotName, ownerId }) {
   const { data: existing, error } = await supabase
     .from('workout_exercises')
     .select('id')
@@ -572,7 +574,7 @@ async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotN
     return { id: existing[0].id, created: false };
   }
 
-  const order = await getNextExerciseOrder('workout_exercises', 'workout_id', workoutId);
+  const order = await getNextExerciseOrder(supabase, 'workout_exercises', 'workout_id', workoutId);
   const { data, error: insertError } = await supabase
     .from('workout_exercises')
     .insert({
@@ -593,8 +595,8 @@ async function ensureWorkoutExercise({ workoutId, exerciseId, section, snapshotN
   return { id: data.id, created: true };
 }
 
-async function insertRoutineExercise({ routineId, exerciseId, ownerId }) {
-  const order = await getNextExerciseOrder('routine_exercises', 'routine_id', routineId);
+async function insertRoutineExercise({ supabase, routineId, exerciseId, ownerId }) {
+  const order = await getNextExerciseOrder(supabase, 'routine_exercises', 'routine_id', routineId);
   const { data, error } = await supabase
     .from('routine_exercises')
     .insert({
