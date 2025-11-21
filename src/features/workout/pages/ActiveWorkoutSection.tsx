@@ -637,7 +637,7 @@ const ActiveWorkoutSection = ({
       setShowAddExercise(false);
 
       await fetchExercises();
-      if (newlyFocusedId && !isRestoringFocusRef?.current) {
+      if (newlyFocusedId && !isRestoringFocus) {
         changeFocus(newlyFocusedId);
       } else {
         const focusTarget = newlyFocusedId;
@@ -677,7 +677,7 @@ const ActiveWorkoutSection = ({
       setShowAddExercise(false);
 
       await fetchExercises();
-      if (newlyFocusedId && !isRestoringFocusRef?.current) {
+      if (newlyFocusedId && !isRestoringFocus) {
         changeFocus(newlyFocusedId);
       } else {
         const focusTarget = newlyFocusedId;
