@@ -622,7 +622,7 @@ const ActiveWorkoutSection = ({
     try {
       const { name: exerciseName, section: exerciseSection, setConfigs } = data;
       if (!activeWorkout?.id) return;
-
+      let newlyFocusedId: string | null = null;
       const result = await addExerciseToWorkoutToday({
         workoutId: activeWorkout.id,
         exercise: {
@@ -631,17 +631,21 @@ const ActiveWorkoutSection = ({
           setConfigs,
         },
       });
+      newlyFocusedId = result?.exerciseId || null;
 
       toast.success(`Added ${exerciseName} to ${section}`);
       setShowAddExercise(false);
 
       await fetchExercises();
-
-      const focusTarget = result?.exerciseId;
-      if (focusTarget) {
-        setTimeout(() => {
-          changeFocus(focusTarget);
-        }, 100);
+      if (newlyFocusedId && !isRestoringFocusRef?.current) {
+        changeFocus(newlyFocusedId);
+      } else {
+        const focusTarget = newlyFocusedId;
+        if (focusTarget) {
+          setTimeout(() => {
+            changeFocus(focusTarget);
+          }, 100);
+        }
       }
     } catch (error) {
       console.error("Error adding exercise via mutation API:", error);
@@ -657,7 +661,7 @@ const ActiveWorkoutSection = ({
         toast.error("No routine available for this workout.");
         return;
       }
-
+      let newlyFocusedId: string | null = null;
       const result = await addExerciseToWorkoutFuture({
         workoutId: activeWorkout.id,
         routineId: activeWorkout.routine_id,
@@ -667,16 +671,21 @@ const ActiveWorkoutSection = ({
           setConfigs,
         },
       });
+      newlyFocusedId = result?.exerciseId || null;
 
       toast.success(`Added ${exerciseName} to ${exerciseSection || section}`);
       setShowAddExercise(false);
 
       await fetchExercises();
-      const focusTarget = result?.exerciseId;
-      if (focusTarget) {
-        setTimeout(() => {
-          changeFocus(focusTarget);
-        }, 100);
+      if (newlyFocusedId && !isRestoringFocusRef?.current) {
+        changeFocus(newlyFocusedId);
+      } else {
+        const focusTarget = newlyFocusedId;
+        if (focusTarget) {
+          setTimeout(() => {
+            changeFocus(focusTarget);
+          }, 100);
+        }
       }
     } catch (error) {
       console.error('[ActiveWorkoutSection] Error adding exercise to routine via mutation API:', error);
