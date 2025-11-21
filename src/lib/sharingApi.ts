@@ -160,12 +160,15 @@ export async function inviteClientToBeManaged(
         throw new Error("Failed to create invitation");
       }
 
-      // Send email notification for non-member (join invitation)
+    try {
       await postEmailEvent('join.trainer-invitation', clientEmail, {
         inviter_name: inviterName,
         email: clientEmail,
         permissions: invitationData
       });
+    } catch (emailErr) {
+      console.error('[inviteClientToBeManaged] Email notification failed (non-member)', emailErr);
+    }
 
       return;
     }
@@ -250,11 +253,14 @@ export async function inviteClientToBeManaged(
       throw new Error("Failed to create invitation");
     }
 
-    // Send email notification for existing member
-    await postEmailEvent('trainer.invitation', clientEmailToUse, {
-      inviter_name: inviterName,
-      permissions: invitationData
-    });
+    try {
+      await postEmailEvent('trainer.invitation', clientEmailToUse, {
+        inviter_name: inviterName,
+        permissions: invitationData
+      });
+    } catch (emailErr) {
+      console.error('[inviteClientToBeManaged] Email notification failed (member)', emailErr);
+    }
 
   } catch (error) {
     console.error("inviteClientToBeManaged error:", error);
@@ -375,12 +381,15 @@ export async function inviteTrainerToManage(
         throw new Error("Failed to create invitation");
       }
 
-      // Send email notification for non-member (join invitation)
-      await postEmailEvent('join.client-invitation', trainerEmail, {
-        inviter_name: inviterName,
-        email: trainerEmail,
-        permissions: invitationData
-      });
+      try {
+        await postEmailEvent('join.client-invitation', trainerEmail, {
+          inviter_name: inviterName,
+          email: trainerEmail,
+          permissions: invitationData
+        });
+      } catch (emailErr) {
+        console.error('[inviteTrainerToManage] Email notification failed (non-member)', emailErr);
+      }
 
       return;
     }
@@ -457,11 +466,14 @@ export async function inviteTrainerToManage(
       throw new Error("Failed to create invitation");
     }
 
-    // Send email notification for existing member
-    await postEmailEvent('client.invitation', trainerEmailToUse, {
-      inviter_name: inviterName,
-      permissions: invitationData
-    });
+    try {
+      await postEmailEvent('client.invitation', trainerEmailToUse, {
+        inviter_name: inviterName,
+        permissions: invitationData
+      });
+    } catch (emailErr) {
+      console.error('[inviteTrainerToManage] Email notification failed (member)', emailErr);
+    }
 
   } catch (error) {
     console.error("inviteTrainerToManage error:", error);
