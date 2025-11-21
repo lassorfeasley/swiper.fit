@@ -1,6 +1,6 @@
 // @https://www.figma.com/design/Fg0Jeq5kdncLRU9GnkZx7S/SwiperFit?node-id=61-389
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { useCurrentUser, useAccount } from "@/contexts/AccountContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -20,6 +20,8 @@ import WorkoutHistoryList from "../components/WorkoutHistoryList";
 import MainContentSection from "@/components/layout/MainContentSection";
 import SwiperCombobox from "@/components/shared/SwiperCombobox";
 import CompletedWorkoutCard from "../components/CompletedWorkoutCard";
+import { useQuery } from "@tanstack/react-query";
+import { fetchHistoryWorkouts, historyKeys } from "@/lib/queries/history";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -30,8 +32,6 @@ const History = () => {
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState("");
 
   const [hasSwitchedContext, setHasSwitchedContext] = useState(false);
@@ -213,83 +213,51 @@ const History = () => {
     </SwiperForm>
   );
 
-  /* ------------------------------------------------------------------
-    Fetch workouts whenever target user changes
-  ------------------------------------------------------------------*/
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const bypassPermission =
+    viewingOwn || isDelegated || managingForOwner || managingForClient;
+
+  const historyQuery = useQuery({
+    queryKey: historyKeys.list(targetUserId, bypassPermission ? "bypass" : user?.id ?? ""),
+    queryFn: async () => {
       if (!targetUserId) {
-        setWorkouts([]);
-        setLoading(false);
-        return;
+        return [];
       }
 
-      // If viewing own history, already delegated, or in sharing mode (permission already checked), proceed
-      if (viewingOwn || isDelegated || managingForOwner || managingForClient) {
-        const { data: workoutsData, error } = await supabase
-          .from("workouts")
-          .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
-          .eq("user_id", targetUserId)
-          .order("created_at", { ascending: false });
+      if (!bypassPermission) {
+        const { data: shareData, error: shareError } = await supabase
+          .from("account_shares")
+          .select("can_review_history")
+          .eq("owner_user_id", targetUserId)
+          .eq("delegate_user_id", user?.id)
+          .is("revoked_at", null)
+          .single();
 
-        if (error) {
-          console.error("Error fetching workouts:", error);
-          setWorkouts([]);
-          setLoading(false);
-          return;
+        if (shareError || !shareData?.can_review_history) {
+          const permissionError = new Error("You don't have permission to view this user's workout history");
+          (permissionError as any).code = "NO_PERMISSION";
+          throw permissionError;
         }
-
-        const processed = (workoutsData || []).map((w) => ({
-          ...w,
-          exerciseCount: new Set(w.sets?.map((s) => s.exercise_id) || []).size,
-        }));
-        setWorkouts(processed);
-        setLoading(false);
-        return;
       }
 
-      // For viewing someone else's history, check can_review_history permission
-      const { data: shareData, error: shareError } = await supabase
-        .from("account_shares")
-        .select("can_review_history")
-        .eq("owner_user_id", targetUserId)
-        .eq("delegate_user_id", user?.id)
-        .is("revoked_at", null)
-        .single();
+      return fetchHistoryWorkouts(targetUserId);
+    },
+    enabled: Boolean(targetUserId),
+    staleTime: 1000 * 60,
+  });
 
-      if (shareError || !shareData?.can_review_history) {
-        console.error("No permission to review history for user:", targetUserId);
-        toast.error("You don't have permission to view this user's workout history");
-        setWorkouts([]);
-        setLoading(false);
-        return;
+  useEffect(() => {
+    if (historyQuery.error) {
+      const error = historyQuery.error as Error & { code?: string };
+      if (error.code === "NO_PERMISSION") {
+        toast.error(error.message);
+      } else {
+        toast.error(error.message || "Failed to load workout history");
       }
+    }
+  }, [historyQuery.error]);
 
-      // Permission granted, fetch workouts
-      const { data: workoutsData, error } = await supabase
-        .from("workouts")
-        .select("*, routines!fk_workouts__routines(routine_name), sets!fk_sets__workouts(id, exercise_id)")
-        .eq("user_id", targetUserId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching workouts:", error);
-        setWorkouts([]);
-        setLoading(false);
-        return;
-      }
-
-      const processed = (workoutsData || []).map((w) => ({
-        ...w,
-        exerciseCount: new Set(w.sets?.map((s) => s.exercise_id) || []).size,
-      }));
-      setWorkouts(processed);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [targetUserId, viewingOwn, isDelegated, user?.id]);
+  const workouts = historyQuery.data ?? [];
+  const isHistoryLoading = historyQuery.isPending || historyQuery.isLoading || historyQuery.isFetching;
 
   // Initialize routine filter from navigation state when arriving from a workout
   useEffect(() => {
@@ -319,8 +287,17 @@ const History = () => {
   }, [viewingOwn, targetUserId]);
 
   // Build routine options from loaded workouts (distinct routine names)
-  const routineOptions = Array.from(new Set((workouts || []).map(w => w?.routines?.routine_name).filter(Boolean)))
-    .map(name => ({ value: name, label: name }));
+  const routineOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (workouts || [])
+            .map((w) => w?.routines?.routine_name)
+            .filter((name): name is string => Boolean(name))
+        )
+      ).map((name) => ({ value: name, label: name })),
+    [workouts]
+  );
 
   const [selectedRoutine, setSelectedRoutine] = useState("");
 
@@ -349,11 +326,16 @@ const History = () => {
     >
       <MainContentSection className="!p-0 flex-1 min-h-0">
         {/* Workout History List */}
-        {!loading && (
+        {!isHistoryLoading && !historyQuery.error && (
           <WorkoutHistoryList
             workouts={selectedRoutine ? workouts.filter(w => w?.routines?.routine_name === selectedRoutine) : workouts}
             viewingOwn={viewingOwn || isDelegated}
           />
+        )}
+        {historyQuery.error && (
+          <div className="p-4 text-sm text-red-500">
+            {(historyQuery.error as Error).message || "Failed to load workout history."}
+          </div>
         )}
       </MainContentSection>
 

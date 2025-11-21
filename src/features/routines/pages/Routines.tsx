@@ -24,18 +24,18 @@ import { Plus, ListChecks } from "lucide-react";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import { useSpacing } from "@/hooks/useSpacing";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchUserRoutines, routineKeys } from "@/lib/queries/routines";
 
 const RoutinesIndex = () => {
   const { setPageName } = useContext(PageNameContext);
   const user = useCurrentUser();
   const { isDelegated } = useAccount();
   const { isWorkoutActive, startWorkout } = useActiveWorkout();
-  const [routines, setRoutines] = useState([]);
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
   const [programName, setProgramName] = useState("");
-  const [refreshFlag, setRefreshFlag] = useState(0);
   const [search, setSearch] = useState("");
   const inputRef = React.useRef(null);
   const navigate = useNavigate();
@@ -45,101 +45,20 @@ const RoutinesIndex = () => {
 
   useEffect(() => {
     setPageName("Routines");
-    async function fetchRoutines() {
-      setLoading(true);
-      if (!user) {
-        setRoutines([]);
-        setLoading(false);
-        return;
-      }
-      // Fetch routines and their exercises for this user
-      const { data, error } = await supabase
-        .from("routines")
-        .select(
-          `id, routine_name, routine_exercises!fk_routine_exercises__routines(
-            id,
-            exercise_id,
-            exercises!fk_routine_exercises__exercises(name),
-            routine_sets!fk_routine_sets__routine_exercises(id)
-          ),
-          workouts!fk_workouts__routines(
-            id,
-            completed_at
-          )`
-        )
-        .eq("user_id", user.id)
-        .eq("is_archived", false)
-        .order("created_at", { ascending: false });
-      if (error) {
-        setRoutines([]);
-        setLoading(false);
-        return;
-      }
-      // Map exercises for each program
-      const routinesWithExercises = (data || []).map((program) => {
-        const setCount = (program.routine_exercises || []).reduce(
-          (total, pe) => total + (pe.routine_sets ? pe.routine_sets.length : 0),
-          0
-        );
-        
-        // Get the most recent completed workout
-        const completedWorkouts = (program.workouts || []).filter((w) => w.completed_at);
-        const lastCompletedWorkout =
-          completedWorkouts.length > 0
-            ? completedWorkouts.sort(
-                (a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
-              )[0]
-            : null;
+  }, [setPageName]);
 
-        // Format the completion date (date-only compare; includes today/yesterday)
-        let lastCompletedText = null;
-        if (lastCompletedWorkout) {
-          const completedDate = new Date(lastCompletedWorkout.completed_at);
-          const now = new Date();
+  const routinesQuery = useQuery({
+    queryKey: routineKeys.list(user?.id),
+    queryFn: () => {
+      if (!user?.id) return Promise.resolve([]);
+      return fetchUserRoutines(user.id);
+    },
+    enabled: Boolean(user?.id),
+    staleTime: 1000 * 60,
+  });
 
-          const completedDateOnly = new Date(
-            completedDate.getFullYear(),
-            completedDate.getMonth(),
-            completedDate.getDate()
-          );
-          const nowDateOnly = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-          );
-
-          const diffTime = Math.abs(nowDateOnly.getTime() - completedDateOnly.getTime());
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-          if (diffDays === 0) {
-            lastCompletedText = "Completed today";
-          } else if (diffDays === 1) {
-            lastCompletedText = "Completed yesterday";
-          } else if (diffDays < 7) {
-            lastCompletedText = `Completed ${diffDays} days ago`;
-          } else if (diffDays < 30) {
-            const weeks = Math.floor(diffDays / 7);
-            lastCompletedText = `Completed ${weeks} week${weeks > 1 ? 's' : ''} ago`;
-          } else {
-            const months = Math.floor(diffDays / 30);
-            lastCompletedText = `Completed ${months} month${months > 1 ? 's' : ''} ago`;
-          }
-        }
-        
-        return {
-          ...program,
-          setCount,
-          exerciseNames: (program.routine_exercises || [])
-            .map((pe) => (pe.exercises as any)?.name)
-            .filter(Boolean),
-          lastCompleted: lastCompletedText,
-        };
-      });
-      setRoutines(routinesWithExercises);
-      setLoading(false);
-    }
-    fetchRoutines();
-  }, [setPageName, user, refreshFlag]);
+  const routines = routinesQuery.data || [];
+  const isRoutinesLoading = routinesQuery.isLoading || routinesQuery.isFetching;
 
   const handleCreateProgram = async () => {
     try {
@@ -160,7 +79,7 @@ const RoutinesIndex = () => {
       // Success: close sheet, refresh list, and redirect
       setShowSheet(false);
       setProgramName("");
-      setRefreshFlag((f) => f + 1);
+      await queryClient.invalidateQueries({ queryKey: routineKeys.list(user.id) });
       // Slack notify (fire-and-forget)
       postSlackEvent('routine.created', {
         routine_id: program_id,
@@ -212,7 +131,11 @@ const RoutinesIndex = () => {
             maxWidth={spacing.maxWidth}
             className="flex-1 mt-0 min-h-screen"
           >
-          {loading ? (
+          {routinesQuery.error ? (
+            <div className="text-red-500 text-center py-8">
+              {(routinesQuery.error as Error).message || "Failed to load routines."}
+            </div>
+          ) : isRoutinesLoading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : filteredRoutines.length === 0 ? (
             <EmptyState
