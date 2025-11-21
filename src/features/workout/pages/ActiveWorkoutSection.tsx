@@ -402,7 +402,7 @@ const ActiveWorkoutSection = ({
 
   // Internal focus change logic
   const changeFocus = useCallback(
-    (newExerciseId, overrideExercises) => {
+    (newExerciseId, overrideExercises = null) => {
       // Set global focus immediately
       setFocusedExerciseId(newExerciseId, section);
 
