@@ -622,7 +622,6 @@ const ActiveWorkoutSection = ({
     try {
       const { name: exerciseName, section: exerciseSection, setConfigs } = data;
       if (!activeWorkout?.id) return;
-      let newlyFocusedId: string | null = null;
       const result = await addExerciseToWorkoutToday({
         workoutId: activeWorkout.id,
         exercise: {
@@ -631,20 +630,23 @@ const ActiveWorkoutSection = ({
           setConfigs,
         },
       });
-      newlyFocusedId = result?.exerciseId || null;
+      const exerciseId = result?.exerciseId || null;
+      const workoutExerciseId = result?.workoutExerciseId || null;
 
       toast.success(`Added ${exerciseName} to ${section}`);
       setShowAddExercise(false);
 
-      await fetchExercises();
-      if (newlyFocusedId && !isRestoringFocus) {
-        changeFocus(newlyFocusedId);
-      } else {
-        const focusTarget = newlyFocusedId;
-        if (focusTarget) {
-          setTimeout(() => {
-            changeFocus(focusTarget);
-          }, 100);
+      const updatedExercises = await fetchExercises();
+      const focusExerciseId =
+        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.exercise_id ||
+        exerciseId;
+
+      if (focusExerciseId) {
+        const applyFocus = () => changeFocus(focusExerciseId);
+        if (isRestoringFocus) {
+          setTimeout(applyFocus, 100);
+        } else {
+          applyFocus();
         }
       }
     } catch (error) {
@@ -661,7 +663,6 @@ const ActiveWorkoutSection = ({
         toast.error("No routine available for this workout.");
         return;
       }
-      let newlyFocusedId: string | null = null;
       const result = await addExerciseToWorkoutFuture({
         workoutId: activeWorkout.id,
         routineId: activeWorkout.routine_id,
@@ -671,20 +672,23 @@ const ActiveWorkoutSection = ({
           setConfigs,
         },
       });
-      newlyFocusedId = result?.exerciseId || null;
+      const exerciseId = result?.exerciseId || null;
+      const workoutExerciseId = result?.workoutExerciseId || null;
 
       toast.success(`Added ${exerciseName} to ${exerciseSection || section}`);
       setShowAddExercise(false);
 
-      await fetchExercises();
-      if (newlyFocusedId && !isRestoringFocus) {
-        changeFocus(newlyFocusedId);
-      } else {
-        const focusTarget = newlyFocusedId;
-        if (focusTarget) {
-          setTimeout(() => {
-            changeFocus(focusTarget);
-          }, 100);
+      const updatedExercises = await fetchExercises();
+      const focusExerciseId =
+        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.exercise_id ||
+        exerciseId;
+
+      if (focusExerciseId) {
+        const applyFocus = () => changeFocus(focusExerciseId);
+        if (isRestoringFocus) {
+          setTimeout(applyFocus, 100);
+        } else {
+          applyFocus();
         }
       }
     } catch (error) {
