@@ -402,11 +402,12 @@ const ActiveWorkoutSection = ({
 
   // Internal focus change logic
   const changeFocus = useCallback(
-    (newExerciseId) => {
+    (newExerciseId, overrideExercises) => {
       // Set global focus immediately
       setFocusedExerciseId(newExerciseId, section);
 
-      const exercise = exercises.find(
+      const sourceExercises = overrideExercises ?? exercises;
+      const exercise = sourceExercises.find(
         (ex) => ex.exercise_id === newExerciseId
       );
       // Only update database if this is a user-initiated focus change, not restoration
@@ -642,7 +643,7 @@ const ActiveWorkoutSection = ({
         exerciseId;
 
       if (focusExerciseId) {
-        const applyFocus = () => changeFocus(focusExerciseId);
+        const applyFocus = () => changeFocus(focusExerciseId, updatedExercises || []);
         if (isRestoringFocus) {
           setTimeout(applyFocus, 100);
         } else {
@@ -684,7 +685,7 @@ const ActiveWorkoutSection = ({
         exerciseId;
 
       if (focusExerciseId) {
-        const applyFocus = () => changeFocus(focusExerciseId);
+        const applyFocus = () => changeFocus(focusExerciseId, updatedExercises || []);
         if (isRestoringFocus) {
           setTimeout(applyFocus, 100);
         } else {
