@@ -135,6 +135,15 @@ export const useWorkoutAutoFocus = ({
   completedExercises,
   setFocusedExerciseId
 }: WorkoutAutoFocusOptions) => {
+  const getExerciseKey = (exercise: any): string | null => {
+    if (!exercise) return null;
+    return (
+      (typeof exercise.id === 'string' && exercise.id) ||
+      (typeof exercise.workoutExerciseId === 'string' && exercise.workoutExerciseId) ||
+      (typeof exercise.exercise_id === 'string' && exercise.exercise_id) ||
+      null
+    );
+  };
   
   const handleSectionComplete = useCallback((section: string, justCompletedExerciseId?: string): any => {
     console.log(`[useAutoFocus] Section "${section}" completed, looking for next exercise...`);
@@ -154,9 +163,10 @@ export const useWorkoutAutoFocus = ({
       completedSet.add(justCompletedExerciseId);
     }
     
-    const incompleteExercises = exercises.filter(exercise => 
-      !completedSet.has(exercise.exercise_id)
-    );
+    const incompleteExercises = exercises.filter(exercise => {
+      const key = getExerciseKey(exercise);
+      return key ? !completedSet.has(key) : true;
+    });
     
     console.log(`[useAutoFocus] Incomplete exercises in "${section}":`, incompleteExercises.map(e => e.exercise_id));
     
@@ -165,9 +175,12 @@ export const useWorkoutAutoFocus = ({
       const firstIncomplete = incompleteExercises[0];
       console.log(`[useAutoFocus] Found incomplete exercise in "${section}":`, firstIncomplete.exercise_id);
       // Defer state update to avoid updating during render
-      setTimeout(() => {
-        setFocusedExerciseId(firstIncomplete.exercise_id, section);
-      }, 0);
+      const key = getExerciseKey(firstIncomplete);
+      if (key) {
+        setTimeout(() => {
+          setFocusedExerciseId(key, section);
+        }, 0);
+      }
       return firstIncomplete;
     } else {
       // All exercises in this section are complete, look for next section
@@ -179,9 +192,10 @@ export const useWorkoutAutoFocus = ({
         const nextSection = sections[i];
         const nextSectionExercises = sectionExercises[nextSection] || [];
         console.log(`[useAutoFocus] Section "${nextSection}" has ${nextSectionExercises.length} exercises`);
-        const nextIncompleteExercises = nextSectionExercises.filter(exercise => 
-          !completedExercises.has(exercise.exercise_id)
-        );
+        const nextIncompleteExercises = nextSectionExercises.filter(exercise => {
+          const key = getExerciseKey(exercise);
+          return key ? !completedExercises.has(key) : true;
+        });
         
         console.log(`[useAutoFocus] Checking section "${nextSection}": ${nextIncompleteExercises.length} incomplete exercises`);
         console.log(`[useAutoFocus] Exercises in "${nextSection}":`, nextSectionExercises.map(e => ({ id: e.exercise_id, completed: completedExercises.has(e.exercise_id) })));
@@ -191,9 +205,12 @@ export const useWorkoutAutoFocus = ({
           console.log(`[useAutoFocus] Moving focus to "${nextSection}":`, firstIncomplete.exercise_id);
           // Defer state update to allow the next section to render and ensure autoscroll works
           // Use a longer delay when moving to a different section to ensure DOM is ready
-          setTimeout(() => {
-            setFocusedExerciseId(firstIncomplete.exercise_id, nextSection);
-          }, 300);
+          const key = getExerciseKey(firstIncomplete);
+          if (key) {
+            setTimeout(() => {
+              setFocusedExerciseId(key, nextSection);
+            }, 300);
+          }
           return firstIncomplete;
         }
       }

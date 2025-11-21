@@ -38,6 +38,7 @@ export const CARD_ANIMATION_DURATION_MS = 500;
 
 interface ActiveExerciseCardProps {
   exerciseId: string | number;
+  workoutExerciseId?: string | number;
   exerciseName: string;
   initialSetConfigs?: any[];
   onSetComplete?: (setId: string, data: any) => void;
@@ -62,6 +63,7 @@ interface ActiveExerciseCardProps {
 
 const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardProps>(({
   exerciseId,
+  workoutExerciseId,
   exerciseName,
   initialSetConfigs = [],
   onSetComplete,
@@ -84,6 +86,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
   demo = false,
 }, ref) => {
   const { setSwipeAnimationRunning } = useWorkoutNavigation();
+  const focusId = workoutExerciseId ?? exerciseId;
 
   const mountedRef = useRef(true);
   const setsRef = useRef([]);
@@ -141,7 +144,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
     // Notify parent of the reorder for database persistence
     if (onSetReorder) {
       Promise.resolve(
-      onSetReorder(exerciseId, newOrder)
+        onSetReorder(workoutExerciseId ?? exerciseId, newOrder)
       ).catch((error) => {
         console.error('Failed to persist set reorder:', error);
         // Revert optimistic update on error
@@ -154,7 +157,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
     async (setIdx) => {
       if (!mountedRef.current) return;
 
-      const setToComplete = { ...sets[setIdx] };
+        const setToComplete = { ...sets[setIdx] };
 
       // Call onSetComplete for the parent to handle
       if (onSetComplete) {
@@ -184,14 +187,14 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
         const fallback = setTimeout(() => {
           // Apply the extra post-complete delay even in fallback
           setTimeout(() => {
-            onExerciseComplete?.(exerciseId);
+            onExerciseComplete?.(focusId);
             setSwipeAnimationRunning(false);
           }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
         }, ANIMATION_DURATIONS.SWIPE_COMPLETE_ANIMATION_MS);
         pendingOpenNextRef.current = () => {
           clearTimeout(fallback);
           setTimeout(() => {
-            onExerciseComplete?.(exerciseId);
+            onExerciseComplete?.(focusId);
             setSwipeAnimationRunning(false);
           }, ANIMATION_DURATIONS.EXTRA_POST_COMPLETE_DELAY_MS);
         };
@@ -236,7 +239,7 @@ const ActiveExerciseCard = React.forwardRef<HTMLDivElement, ActiveExerciseCardPr
         if (isFocused) {
           onEditExercise?.(exerciseId);
         } else {
-          onFocus?.(exerciseId);
+          onFocus?.(focusId);
         }
       }}
       index={index}

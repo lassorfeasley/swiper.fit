@@ -303,7 +303,8 @@ const ActiveWorkoutSection = ({
         const finalSetConfigs = mergedSetConfigs.filter(set => set != null);
         
         return {
-          id: we.id,
+          id: we.id, // workout_exercise.id
+          workoutExerciseId: we.id,
           exercise_id: we.exercise_id,
           section: section,
           name: we.name_override || we.snapshot_name,
@@ -372,17 +373,20 @@ const ActiveWorkoutSection = ({
   ]);
 
   // Simplified focus management - just use global focus
-  const isExerciseFocused = useCallback((exerciseId) => {
-    return focusedExercise?.exercise_id === exerciseId;
-  }, [focusedExercise]);
+  const isExerciseFocused = useCallback(
+    (workoutExerciseId) => focusedExercise?.id === workoutExerciseId,
+    [focusedExercise]
+  );
 
   // Handle cross-section navigation when focused exercise changes
   useEffect(() => {
     if (focusedExercise && (focusedExercise.section === section || focusedExercise.section === null)) {
       // Check if the exercise exists in this section before setting focus
-      const exerciseExists = exercises.some(ex => ex.exercise_id === focusedExercise.exercise_id);
+      const exerciseExists = exercises.some(
+        (ex) => ex.id === focusedExercise.id
+      );
       if (exerciseExists) {
-        // console.log(`[${section}] Global focus set to exercise: ${focusedExercise.exercise_id}`);
+        // console.log(`[${section}] Global focus set to exercise: ${focusedExercise.id}`);
       }
     }
   }, [focusedExercise, section, exercises]);
@@ -402,13 +406,13 @@ const ActiveWorkoutSection = ({
 
   // Internal focus change logic
   const changeFocus = useCallback(
-    (newExerciseId, overrideExercises = null) => {
+    (newWorkoutExerciseId, overrideExercises = null) => {
       // Set global focus immediately
-      setFocusedExerciseId(newExerciseId, section);
+      setFocusedExerciseId(newWorkoutExerciseId, section);
 
       const sourceExercises = overrideExercises ?? exercises;
       const exercise = sourceExercises.find(
-        (ex) => ex.exercise_id === newExerciseId
+        (ex) => ex.id === newWorkoutExerciseId || ex.workoutExerciseId === newWorkoutExerciseId
       );
       // Only update database if this is a user-initiated focus change, not restoration
       if (exercise?.id && onUpdateLastExercise && !isRestoringFocus) {
@@ -459,9 +463,9 @@ const ActiveWorkoutSection = ({
       // Update only the local exercises state to reflect the reorder
       // We don't update the global context for reordering to avoid infinite loops
       // The global context is mainly used for completion tracking and navigation
-      setExercises(prevExercises => 
-        prevExercises.map(ex => 
-          ex.exercise_id === exerciseId 
+      setExercises(prevExercises =>
+        prevExercises.map(ex =>
+          ex.id === exerciseId || ex.workoutExerciseId === exerciseId
             ? { ...ex, setConfigs: newSetOrder }
             : ex
         )
@@ -480,28 +484,30 @@ const ActiveWorkoutSection = ({
   };
 
   // Handle exercise completion
-  const handleExerciseComplete = useCallback((exerciseId) => {
+  const handleExerciseComplete = useCallback((workoutExerciseId) => {
     // Mark as completed in global context
-    markExerciseComplete(exerciseId);
+    markExerciseComplete(workoutExerciseId);
 
     // Keep a local completed set that includes the just-completed exercise immediately
     const completedNow = new Set(globalCompletedExercises);
-    completedNow.add(exerciseId);
+    completedNow.add(workoutExerciseId);
 
     // Prefer next incomplete lower in the list; if none, go upward; if none, section is complete
-    const currentIndex = exercises.findIndex((ex) => ex.exercise_id === exerciseId);
+    const currentIndex = exercises.findIndex(
+      (ex) => ex.id === workoutExerciseId
+    );
     if (currentIndex !== -1) {
       for (let i = currentIndex + 1; i < exercises.length; i++) {
         const ex = exercises[i];
-        if (!completedNow.has(ex.exercise_id)) {
-          changeFocus(ex.exercise_id);
+        if (!completedNow.has(ex.id)) {
+          changeFocus(ex.id);
           return;
         }
       }
       for (let i = currentIndex - 1; i >= 0; i--) {
         const ex = exercises[i];
-        if (!completedNow.has(ex.exercise_id)) {
-          changeFocus(ex.exercise_id);
+        if (!completedNow.has(ex.id)) {
+          changeFocus(ex.id);
           return;
         }
       }
@@ -510,7 +516,7 @@ const ActiveWorkoutSection = ({
     // No incomplete exercises left in this section
     // Pass the just-completed exercise ID so handleSectionComplete can account for it
     // even if the state update hasn't propagated yet
-    onSectionComplete?.(section, exerciseId);
+    onSectionComplete?.(section, workoutExerciseId);
   }, [globalCompletedExercises, exercises, section, onSectionComplete, changeFocus, markExerciseComplete]);
 
   // Handle set press (open edit modal)
@@ -583,9 +589,9 @@ const ActiveWorkoutSection = ({
   };
 
   // Simplified handle focus function
-  const handleFocus = (exerciseId) => {
+  const handleFocus = (workoutExerciseId) => {
     // Allow focusing any exercise, including completed ones
-    changeFocus(exerciseId);
+    changeFocus(workoutExerciseId);
   };
 
   // Handle adding new exercise to section
@@ -638,12 +644,21 @@ const ActiveWorkoutSection = ({
       setShowAddExercise(false);
 
       const updatedExercises = await fetchExercises();
-      const focusExerciseId =
-        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.exercise_id ||
-        exerciseId;
+      let focusWorkoutExerciseId =
+        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.id ||
+        workoutExerciseId ||
+        null;
 
-      if (focusExerciseId) {
-        const applyFocus = () => changeFocus(focusExerciseId, updatedExercises || []);
+      if (!focusWorkoutExerciseId && exerciseId) {
+        const fallback = (updatedExercises || []).find(
+          (ex) => ex.exercise_id === exerciseId
+        );
+        focusWorkoutExerciseId = fallback?.id || null;
+      }
+
+      if (focusWorkoutExerciseId) {
+        const applyFocus = () =>
+          changeFocus(focusWorkoutExerciseId, updatedExercises || []);
         if (isRestoringFocus) {
           setTimeout(applyFocus, 100);
         } else {
@@ -680,12 +695,21 @@ const ActiveWorkoutSection = ({
       setShowAddExercise(false);
 
       const updatedExercises = await fetchExercises();
-      const focusExerciseId =
-        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.exercise_id ||
-        exerciseId;
+      let focusWorkoutExerciseId =
+        (updatedExercises || []).find((ex) => ex.id === workoutExerciseId)?.id ||
+        workoutExerciseId ||
+        null;
 
-      if (focusExerciseId) {
-        const applyFocus = () => changeFocus(focusExerciseId, updatedExercises || []);
+      if (!focusWorkoutExerciseId && exerciseId) {
+        const fallback = (updatedExercises || []).find(
+          (ex) => ex.exercise_id === exerciseId
+        );
+        focusWorkoutExerciseId = fallback?.id || null;
+      }
+
+      if (focusWorkoutExerciseId) {
+        const applyFocus = () =>
+          changeFocus(focusWorkoutExerciseId, updatedExercises || []);
         if (isRestoringFocus) {
           setTimeout(applyFocus, 100);
         } else {
@@ -1456,8 +1480,8 @@ const ActiveWorkoutSection = ({
         style={{ paddingBottom: 0, paddingTop: 0, paddingLeft: 32, paddingRight: 32 }}
       >
         {exercises.map((ex, index) => {
-          const isFocused = isExerciseFocused(ex.exercise_id);
-          const isExpanded = isFocused || focusedExercise?.exercise_id === ex.exercise_id;
+          const isFocused = isExerciseFocused(ex.id);
+          const isExpanded = isFocused || focusedExercise?.id === ex.id;
           
           // Simplified stacking calculation
           const STACKING_OFFSET_PX = 64;
@@ -1480,11 +1504,12 @@ const ActiveWorkoutSection = ({
               <ActiveExerciseCard
                 // ref={isFocused ? focusRef : null} // This line is removed
                 exerciseId={ex.exercise_id}
+                workoutExerciseId={ex.id}
                 exerciseName={ex.name}
                 initialSetConfigs={ex.setConfigs}
                 onSetComplete={handleSetComplete}
                 onSetDataChange={(setId, data) => handleSetDataChange(ex.exercise_id, setId, 'data', data)}
-                onExerciseComplete={() => handleExerciseComplete(ex.exercise_id)}
+                onExerciseComplete={() => handleExerciseComplete(ex.id)}
                 onSetPress={(setConfig, index) => {
                   console.log(`[ActiveWorkoutSection] onSetPress called with:`, { setConfig, index, exerciseId: ex.exercise_id, setConfigsLength: ex.setConfigs?.length });
                   console.log(`[ActiveWorkoutSection] Full setConfigs array:`, ex.setConfigs);
@@ -1496,11 +1521,11 @@ const ActiveWorkoutSection = ({
                 isFocused={isFocused}
                 isExpanded={isExpanded}
                 onFocus={() => {
-                  if (!isFocused) handleFocus(ex.exercise_id);
+                  if (!isFocused) handleFocus(ex.id);
                 }}
                 onEditExercise={() => handleEditExercise(ex)}
                 index={index}
-                focusedIndex={exercises.findIndex(e => e.exercise_id === focusedExercise?.exercise_id)}
+                focusedIndex={exercises.findIndex((e) => e.id === focusedExercise?.id)}
                 totalCards={exercises.length}
                 topOffset={topOffset}
               />
