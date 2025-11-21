@@ -325,6 +325,7 @@ const Account = () => {
       });
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60,
   });
 
   const clientSharesQuery = useQuery({
@@ -378,6 +379,7 @@ const Account = () => {
       });
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60,
   });
 
   const pendingRequestsQuery = useQuery({

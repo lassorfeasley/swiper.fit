@@ -238,7 +238,42 @@ function AppContent() {
   );
 }
 
-const queryClient = new QueryClient();
+function isClientError(error: unknown): boolean {
+  if (!error) return false;
+  const status =
+    (error as { status?: number })?.status ??
+    (error as { response?: { status?: number } })?.response?.status;
+
+  if (typeof status === "number") {
+    return status >= 400 && status < 500;
+  }
+
+  const code = (error as { code?: string })?.code;
+  if (typeof code === "string") {
+    return ["400", "401", "402", "403", "404", "422"].includes(code);
+  }
+
+  return false;
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 30,
+      gcTime: 1000 * 60 * 5,
+      retry: (failureCount, error) =>
+        isClientError(error) ? false : failureCount < 2,
+      retryDelay: (attemptIndex) =>
+        Math.min(1000 * Math.pow(2, attemptIndex), 5000),
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: (failureCount, error) =>
+        isClientError(error) ? false : failureCount < 1,
+    },
+  },
+});
 
 export default function App() {
   const [pageName, setPageName] = useState("");
