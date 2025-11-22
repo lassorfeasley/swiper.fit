@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
-import { supabase } from '@/supabaseClient';
+import { useCallback, useEffect, useRef } from "react";
+import { useWorkoutRealtimeChannel } from "./useWorkoutRealtimeChannel";
 
 /**
- * Subscribes to Postgres changes for sets and workout_exercises for a workout section
- * and invokes the provided callbacks to refresh data and mark toasts.
- */
+ * Subscribes to Postgres changes for sets/workout_exercises via shared channel.
+*/
 export function useRealtimeSets({
   workoutId,
   section,
@@ -15,65 +14,59 @@ export function useRealtimeSets({
   isSetToasted,
   markSetToasted,
 }) {
-  // Sets channel
-  useEffect(() => {
-    if (!workoutId) return;
+  const queueRef = useRef(() => {});
 
-    const setsChan = supabase
-      .channel(`sets-section-${section}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'sets',
-        filter: `workout_id=eq.${workoutId}`,
-      }, async ({ eventType, new: row, old }) => {
-        const currentExerciseIds = getCurrentExerciseIds();
-        if (!currentExerciseIds.includes(row.exercise_id)) return;
+  const handleEvent = useCallback(
+    async (payload) => {
+      if (!workoutId) return;
+      const exerciseIds = getCurrentExerciseIds();
 
-        if (eventType === 'DELETE') {
-          await fetchExercises();
+      if (payload.table === "sets") {
+        const row = payload.new || payload.old;
+        if (!row) return;
+        if (!exerciseIds.includes(row.exercise_id)) return;
+
+        if (payload.eventType === "DELETE") {
+          queueFetch();
           return;
         }
 
-        if ((eventType === 'UPDATE' && row.status === 'complete' && old?.status !== 'complete') ||
-            (eventType === 'INSERT' && row.status === 'complete')) {
+        if (
+          (payload.eventType === "UPDATE" &&
+            row.status === "complete" &&
+            payload.old?.status !== "complete") ||
+          (payload.eventType === "INSERT" && row.status === "complete")
+        ) {
           if (!isSetToasted(row.id)) {
-            // Determine who completed the set (for future UX if needed)
-            const uid = await getUserId();
-            const wasCompletedByCurrentUser = row.account_id === uid;
-            // eslint-disable-next-line no-unused-vars
-            const completedByUserType = wasCompletedByCurrentUser ? (isDelegated ? 'Manager' : 'Client') : (isDelegated ? 'Client' : 'Manager');
+            await getUserId();
             markSetToasted(row.id);
           }
         }
 
-        await fetchExercises();
-      })
-      .subscribe();
+        queueRef.current();
+      } else if (payload.table === "workout_exercises") {
+        queueRef.current();
+      }
+    },
+    [
+      workoutId,
+      getCurrentExerciseIds,
+      isSetToasted,
+      markSetToasted,
+      getUserId,
+      isDelegated
+    ]
+  );
 
-    return () => { void setsChan.unsubscribe(); };
-  }, [workoutId, section, getCurrentExerciseIds, fetchExercises, getUserId, isDelegated, isSetToasted, markSetToasted]);
+  const { queueFetch } = useWorkoutRealtimeChannel({
+    workoutId,
+    onEvent: handleEvent,
+    onFetchRequest: fetchExercises,
+  });
 
-  // Workout exercises channel
   useEffect(() => {
-    if (!workoutId) return;
-
-    const exercisesChan = supabase
-      .channel(`workout-exercises-section-${section}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'workout_exercises',
-        filter: `workout_id=eq.${workoutId}`,
-      }, async ({ eventType }) => {
-        if (eventType === 'INSERT' || eventType === 'UPDATE' || eventType === 'DELETE') {
-          await fetchExercises();
-        }
-      })
-      .subscribe();
-
-    return () => { void exercisesChan.unsubscribe(); };
-  }, [workoutId, section, fetchExercises]);
+    queueRef.current = queueFetch;
+  }, [queueFetch]);
 }
 
 
