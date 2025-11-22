@@ -139,8 +139,13 @@ const ActiveWorkoutContent: React.FC = () => {
         const firstWarm = warm[0];
         isRestoringFocusRef.current = true;
         didWarmupOverrideRef.current = true;
-        setFocusedExerciseId(firstWarm.exercise_id, 'warmup');
-        try { if (firstWarm.id) updateLastExercise(firstWarm.id); } catch (_) {}
+        const focusId = firstWarm.id || firstWarm.exercise_id;
+        if (focusId) {
+          setFocusedExerciseId(focusId, 'warmup');
+        }
+        try {
+          if (firstWarm.id) updateLastExercise(firstWarm.id);
+        } catch (_) {}
         // Reset restoration flag after a short delay to allow real-time syncs
         setTimeout(() => {
           isRestoringFocusRef.current = false;
@@ -170,7 +175,10 @@ const ActiveWorkoutContent: React.FC = () => {
         
         if (foundExercise) {
           isRestoringFocusRef.current = true;
-          setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
+          const focusId = foundExercise.id || foundExercise.exercise_id;
+          if (focusId) {
+            setFocusedExerciseId(focusId, foundSection || undefined);
+          }
           // Reset restoration flag after a short delay to allow real-time syncs
           setTimeout(() => {
             isRestoringFocusRef.current = false;
@@ -186,7 +194,10 @@ const ActiveWorkoutContent: React.FC = () => {
           if (exercises.length > 0) {
             const firstExercise = exercises[0];
             isRestoringFocusRef.current = true;
-            setFocusedExerciseId(firstExercise.exercise_id, section);
+            const focusId = firstExercise.id || firstExercise.exercise_id;
+            if (focusId) {
+              setFocusedExerciseId(focusId, section);
+            }
             // Reset restoration flag after a short delay to allow real-time syncs
             setTimeout(() => {
               isRestoringFocusRef.current = false;
@@ -230,7 +241,10 @@ const ActiveWorkoutContent: React.FC = () => {
         
         // Use setTimeout to defer the state update to the next tick
         setTimeout(() => {
-          setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
+          const focusId = foundExercise.id || foundExercise.exercise_id;
+          if (focusId) {
+            setFocusedExerciseId(focusId, foundSection || undefined);
+          }
           // Reset restoration flag after focus is set to allow real-time syncs
           setTimeout(() => {
             isRestoringFocusRef.current = false;
@@ -253,7 +267,10 @@ const ActiveWorkoutContent: React.FC = () => {
         const exercises = sectionExercises[section] || [];
         if (exercises.length > 0) {
           const firstExercise = exercises[0];
-          setFocusedExerciseId(firstExercise.exercise_id, section);
+          const focusId = firstExercise.id || firstExercise.exercise_id;
+          if (focusId) {
+            setFocusedExerciseId(focusId, section);
+          }
           break;
         }
         // if loaded and empty, continue
@@ -303,7 +320,7 @@ const ActiveWorkoutContent: React.FC = () => {
     
     // Skip if focused exercise already matches the database value (we're already in sync)
     // This handles both cases: we just updated it ourselves, or we already synced it
-    if (focusedExercise?.exercise_id === foundExercise.exercise_id) {
+    if (focusedExercise && (focusedExercise.id === foundExercise.id || focusedExercise.exercise_id === foundExercise.exercise_id)) {
       lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
       return;
     }
@@ -315,7 +332,10 @@ const ActiveWorkoutContent: React.FC = () => {
     
     // This is a real-time update from another device - sync the focus
     lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
-    setFocusedExerciseId(foundExercise.exercise_id, foundSection || undefined);
+    const focusId = foundExercise.id || foundExercise.exercise_id;
+    if (focusId) {
+      setFocusedExerciseId(focusId, foundSection || undefined);
+    }
   }, [activeWorkout?.last_workout_exercise_id, focusedExercise?.exercise_id, setFocusedExerciseId, sectionExercises]);
 
   const handleEndWorkout = () => {
