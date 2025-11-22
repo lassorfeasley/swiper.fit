@@ -1,29 +1,44 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Train } from "@/features/workout";
-import Home from "./pages/Home/Home.tsx";
+import React, { Suspense, lazy, createContext, useState, useEffect } from "react";
+import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+// Eagerly load critical routes
 import Landing from "./pages/Landing/Landing.tsx";
-import { Routines, RoutineBuilder } from "@/features/routines";
-import { History, CompletedWorkout } from "@/features/history";
-import { ActiveWorkout } from "@/features/workout";
+import { Login, CreateAccount, PasswordReset, UpdatePassword, RequireAuth, LoggedOutNav } from "@/features/auth";
+// Lazy routes
+const Home = lazy(() => import("./pages/Home/Home.tsx"));
+const Train = lazy(() =>
+  import("@/features/workout").then((module) => ({ default: module.Train }))
+);
+const ActiveWorkout = lazy(() =>
+  import("@/features/workout").then((module) => ({ default: module.ActiveWorkout }))
+);
+const Routines = lazy(() =>
+  import("@/features/routines").then((module) => ({ default: module.Routines }))
+);
+const RoutineBuilder = lazy(() =>
+  import("@/features/routines").then((module) => ({ default: module.RoutineBuilder }))
+);
+const History = lazy(() =>
+  import("@/features/history").then((module) => ({ default: module.History }))
+);
+const CompletedWorkout = lazy(() =>
+  import("@/features/history").then((module) => ({ default: module.CompletedWorkout }))
+);
+const Account = lazy(() => import("./pages/Account/Account.tsx"));
 import "./App.css";
 import {
   NavBarVisibilityProvider,
   useNavBarVisibility,
 } from "@/contexts/NavBarVisibilityContext";
-import React, { createContext, useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { Login, CreateAccount, PasswordReset, UpdatePassword, RequireAuth } from "@/features/auth";
 import { ActiveWorkoutProvider, useActiveWorkout } from "./contexts/ActiveWorkoutContext";
 import OGImageAdmin from "./pages/OGImageAdmin";
 import MobileNav from "./components/layout/MobileNav";
 import SideBarNav from "./components/layout/SideBarNav";
-import { LoggedOutNav } from "@/features/auth";
-import Account from "./pages/Account/Account.tsx";
 import EmailTest from "./pages/EmailTest";
 import ButtonTest from "./pages/ButtonTest";
 import ComponentsGallery from "./pages/ComponentsGallery";
-import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
 import { Toaster } from "sonner";
 
 import { AccountProvider, useAccount } from "@/contexts/AccountContext";
@@ -194,40 +209,42 @@ function AppContent() {
       
       {/* Main Content */}
       <main className="min-h-screen">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/create-account" element={<CreateAccount />} />
-          <Route path="/reset-password" element={<PasswordReset />} />
+        <Suspense fallback={<LoadingOverlay isLoading message="Loading..." />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/create-account" element={<CreateAccount />} />
+            <Route path="/reset-password" element={<PasswordReset />} />
 
-          {/* Protected routes wrapper */}
-          <Route element={<RequireAuth />}>
-            <Route path="/dashboard" element={<Home />} />
-            <Route path="/train" element={<Train />} />
-            <Route path="/routines" element={<Routines />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/workout/active" element={<ActiveWorkout />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/og-image-admin" element={<OGImageAdmin />} />
-            {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
-              <>
-                <Route path="/email-test" element={<EmailTest />} />
-                <Route path="/button-test" element={<ButtonTest />} />
-                <Route path="/components-gallery" element={<ComponentsGallery />} />
-              </>
-            )}
+            {/* Protected routes wrapper */}
+            <Route element={<RequireAuth />}>
+              <Route path="/dashboard" element={<Home />} />
+              <Route path="/train" element={<Train />} />
+              <Route path="/routines" element={<Routines />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/workout/active" element={<ActiveWorkout />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/og-image-admin" element={<OGImageAdmin />} />
+              {(((typeof window !== 'undefined' && window.location.hostname === 'staging.swiper.fit')) || import.meta.env.MODE === 'development') && (
+                <>
+                  <Route path="/email-test" element={<EmailTest />} />
+                  <Route path="/button-test" element={<ButtonTest />} />
+                  <Route path="/components-gallery" element={<ComponentsGallery />} />
+                </>
+              )}
 
-          </Route>
+            </Route>
 
-          {/* Unified URL routes - work for both owners and viewers */}
-          <Route path="/routines/:routineId/configure" element={<RoutineBuilder />} />
-          <Route path="/routines/:routineId" element={<RoutineBuilder />} />
-          <Route path="/history/workout/:workoutId" element={<CompletedWorkout />} />
-          <Route path="/history/:workoutId" element={<CompletedWorkout />} />
-          <Route path="/history/:userId" element={<History />} />
-        </Routes>
+            {/* Unified URL routes - work for both owners and viewers */}
+            <Route path="/routines/:routineId/configure" element={<RoutineBuilder />} />
+            <Route path="/routines/:routineId" element={<RoutineBuilder />} />
+            <Route path="/history/workout/:workoutId" element={<CompletedWorkout />} />
+            <Route path="/history/:workoutId" element={<CompletedWorkout />} />
+            <Route path="/history/:userId" element={<History />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Show normal navigation only when no workout is active and not delegated */}
