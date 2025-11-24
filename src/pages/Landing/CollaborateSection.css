@@ -1,0 +1,17 @@
+.slide-card-container {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.slide-card {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+

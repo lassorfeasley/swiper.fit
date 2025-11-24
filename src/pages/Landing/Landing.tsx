@@ -7,6 +7,7 @@ import DemoWorkoutSection from "@/components/DemoWorkout/DemoWorkoutSection";
 import { MoveUpRight } from "lucide-react";
 import LoggedOutNav from "@/features/auth/components/LoggedOutNav";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+import CollaborateSection from "./CollaborateSection";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -61,24 +62,26 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Demo workout section - fills remaining space, prevents overflow */}
-          <div className="w-full px-5 outline outline-1 outline-neutral-neutral-300 flex-1 min-h-0 overflow-hidden">
-            <DemoWorkoutSection />
-          </div>
-        </div>
-
-        {/* Footer - Fixed height */}
-        <div className="w-full h-[152px] px-3 pt-3 pb-[100px] bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
-          <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">Developed by Lassor</div>
-          <div className="self-stretch flex flex-col justify-start items-start gap-1">
-            <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">www.Lassor.com</div>
-            <div className="w-50 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Feasley@Lassor.com</div>
-          </div>
+        {/* Demo workout section - fills remaining space, prevents overflow */}
+        <div className="w-full px-5 outline outline-1 outline-neutral-neutral-300 flex-1 min-h-0 overflow-hidden">
+          <DemoWorkoutSection />
         </div>
       </div>
 
-      {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
-      <div className="hidden md:block w-full bg-stone-100 pt-20">
+      <CollaborateSection className="md:hidden border-t border-white bg-stone-100" />
+
+      {/* Footer - Fixed height */}
+      <div className="md:hidden w-full h-[152px] px-3 pt-3 pb-[100px] bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
+        <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">Developed by Lassor</div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">www.Lassor.com</div>
+          <div className="w-50 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">Feasley@Lassor.com</div>
+        </div>
+      </div>
+    </div>
+
+    {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
+    <div className="hidden md:block w-full bg-stone-100 pt-20">
 
         {/* Main Content - at least viewport height minus navbar; footer flows below */}
         <div
@@ -98,6 +101,8 @@ export default function Landing() {
             </div>
           </div>
         </div>
+
+        <CollaborateSection className="hidden md:block border-t border-white bg-stone-100" />
 
         {/* Footer */}
         <div className="w-full h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
