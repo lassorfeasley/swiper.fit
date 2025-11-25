@@ -4,6 +4,12 @@ import ClientInvitation, { subject as subjectClientInvitation } from './ClientIn
 import JoinTrainerInvitation, { subject as subjectJoinTrainerInvitation } from './JoinTrainerInvitation.js';
 import JoinClientInvitation, { subject as subjectJoinClientInvitation } from './JoinClientInvitation.js';
 
+const DEFAULT_ACCEPT_URL = 'https://www.swiper.fit/accept-invite';
+const mapInviteData = (data = {}) => ({
+  inviterName: data.inviter_name || 'John Smith',
+  ctaUrl: data.cta_url || DEFAULT_ACCEPT_URL,
+});
+
 export const EmailTemplates = {
   'account.created': {
     component: AccountCreated,
@@ -13,32 +19,22 @@ export const EmailTemplates = {
   'trainer.invitation': {
     component: TrainerInvitation,
     subject: subjectTrainerInvitation,
-    mapData: (data) => ({
-      inviterName: data?.inviter_name || 'John Smith',
-    }),
+    mapData: mapInviteData,
   },
   'client.invitation': {
     component: ClientInvitation,
     subject: subjectClientInvitation,
-    mapData: (data) => ({
-      inviterName: data?.inviter_name || 'John Smith',
-    }),
+    mapData: mapInviteData,
   },
   'join.trainer-invitation': {
     component: JoinTrainerInvitation,
     subject: subjectJoinTrainerInvitation,
-    mapData: (data) => ({
-      inviterName: data?.inviter_name || 'John Smith',
-      email: data?.email || '',
-    }),
+    mapData: mapInviteData,
   },
   'join.client-invitation': {
     component: JoinClientInvitation,
     subject: subjectJoinClientInvitation,
-    mapData: (data) => ({
-      inviterName: data?.inviter_name || 'John Smith',
-      email: data?.email || '',
-    }),
+    mapData: mapInviteData,
   },
 };
 

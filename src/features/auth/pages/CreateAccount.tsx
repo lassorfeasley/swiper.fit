@@ -19,7 +19,7 @@ import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { postEmailEvent } from "@/lib/emailEvents";
-import { linkPendingInvitations } from "@/lib/sharingApi";
+import { linkPendingInvitations, linkInvitationRecordsToUser } from "@/lib/sharingApi";
 import { toast } from "@/lib/toastReplacement";
 
 export default function CreateAccount(): React.JSX.Element {
@@ -32,12 +32,13 @@ export default function CreateAccount(): React.JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
-  const importRoutineId = new URLSearchParams(location.search).get('importRoutineId');
+  const searchParams = new URLSearchParams(location.search);
+  const importRoutineId = searchParams.get('importRoutineId');
+  const inviteToken = searchParams.get('inviteToken');
 
   // Handle email pre-population from invitation links
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const emailParam = urlParams.get("email");
+    const emailParam = new URLSearchParams(location.search).get("email");
     if (emailParam) {
       setEmail(emailParam);
     }
@@ -231,6 +232,7 @@ export default function CreateAccount(): React.JSX.Element {
             if (linkedCount > 0) {
               toast.success(`You have ${linkedCount} pending invitation${linkedCount > 1 ? 's' : ''}! Check the Trainers page to accept them.`);
             }
+            await linkInvitationRecordsToUser(uid, email);
           } catch (inviteError) {
             console.error('Failed to link pending invitations:', inviteError);
             // Don't throw - account creation was successful
@@ -239,6 +241,11 @@ export default function CreateAccount(): React.JSX.Element {
       } catch (_) {}
 
       // If coming from a public routine, import it now and jump into builder
+      if (inviteToken) {
+        navigate(`/accept-invite?token=${inviteToken}`, { replace: true });
+        return;
+      }
+
       try {
         if (importRoutineId) {
           const newId = await cloneRoutineForCurrentUser(importRoutineId);
@@ -305,7 +312,13 @@ export default function CreateAccount(): React.JSX.Element {
                   </div>
                   <div 
                     className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
-                    onClick={() => navigate(importRoutineId ? `/login?importRoutineId=${importRoutineId}` : "/login")}
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (importRoutineId) params.set('importRoutineId', importRoutineId);
+                      if (inviteToken) params.set('inviteToken', inviteToken);
+                      const suffix = params.toString();
+                      navigate(`/login${suffix ? `?${suffix}` : ''}`);
+                    }}
                   >
                     Log in
                   </div>
@@ -365,7 +378,7 @@ export default function CreateAccount(): React.JSX.Element {
                     id="create-account-email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={signupMutation.isPending || (new URLSearchParams(location.search).get("email") !== null)}
+                    disabled={signupMutation.isPending || searchParams.get("email") !== null}
                     error={!!errorMessage}
                   />
                 </div>

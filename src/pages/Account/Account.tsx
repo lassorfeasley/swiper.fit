@@ -23,7 +23,17 @@ import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
-import { getPendingInvitations, acceptInvitation, rejectInvitation, inviteClientToBeManaged, inviteTrainerToManage } from "@/lib/sharingApi";
+import {
+  getPendingInvitations,
+  acceptInvitation,
+  rejectInvitation,
+  inviteClientToBeManaged,
+  inviteTrainerToManage,
+  getOutgoingInvitations,
+  cancelInvitationRequest,
+  acceptTokenInvitation,
+  declineTokenInvitation,
+} from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 import { generateWorkoutName } from "@/lib/utils";
@@ -52,7 +62,7 @@ const Account = () => {
   const [activeSection, setActiveSection] = useState(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showDeclineConfirmDialog, setShowDeclineConfirmDialog] = useState(false);
-  const [requestToDeclineId, setRequestToDeclineId] = useState<string | null>(null);
+  const [requestToDecline, setRequestToDecline] = useState<any | null>(null);
   const hasSetSectionRef = useRef(false);
 
   // Section name mapping for breadcrumbs
@@ -161,7 +171,7 @@ const Account = () => {
   const [shareToDeleteId, setShareToDeleteId] = useState(null);
   const [shareToDeleteName, setShareToDeleteName] = useState("");
   const [showDeleteInvitationDialog, setShowDeleteInvitationDialog] = useState(false);
-  const [invitationToDeleteId, setInvitationToDeleteId] = useState(null);
+  const [invitationToDelete, setInvitationToDelete] = useState<{ id: string; source: 'legacy' | 'token' } | null>(null);
   const [showRoutineSelectionDialog, setShowRoutineSelectionDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientRoutines, setClientRoutines] = useState([]);
@@ -392,66 +402,92 @@ const Account = () => {
     enabled: !!user?.id,
   });
 
+  const fetchLegacyOutgoingRequests = async (userId: string) => {
+    console.log('[Account] Fetching outgoing requests for user:', userId);
+    const { data: requests, error } = await supabase
+      .from("account_shares")
+      .select(`
+        id,
+        owner_user_id,
+        delegate_user_id,
+        delegate_email,
+        request_type,
+        status,
+        created_at,
+        expires_at,
+        can_create_routines,
+        can_start_workouts,
+        can_review_history
+      `)
+      .eq("owner_user_id", userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch outgoing requests:", error);
+      throw new Error("Failed to fetch outgoing requests");
+    }
+
+    const requestsWithProfiles = await Promise.all(
+      (requests || []).map(async (request) => {
+        let profile = null;
+        if (request.delegate_user_id) {
+          const { data: fetchedProfile } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, email")
+            .eq("id", request.delegate_user_id)
+            .maybeSingle();
+          profile = fetchedProfile || null;
+        }
+        if (!profile && request.delegate_email) {
+          const { data: fetchedByEmail } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, email")
+            .eq("email", request.delegate_email.toLowerCase())
+            .maybeSingle();
+          profile = fetchedByEmail || null;
+        }
+        return {
+          ...request,
+          profiles: profile || (request.delegate_email ? { email: request.delegate_email } : null),
+        };
+      })
+    );
+
+    const now = new Date();
+    return requestsWithProfiles
+      .filter((request) => new Date(request.expires_at).getTime() > now.getTime())
+      .map((request) => ({ ...request, source: 'legacy' as const }));
+  };
+
+  const mapTokenOutgoingInvitation = (invite) => {
+    const requestType = invite.intended_role === 'manager' ? 'trainer_invite' : 'client_invite';
+    const perms = invite.permissions || {};
+    return {
+      id: invite.id,
+      delegate_email: invite.recipient_email,
+      request_type: requestType,
+      status: invite.status,
+      created_at: invite.created_at,
+      expires_at: invite.expires_at,
+      can_create_routines: !!perms.can_create_routines,
+      can_start_workouts: !!perms.can_start_workouts,
+      can_review_history: !!perms.can_review_history,
+      profiles: invite.recipient_profile || (invite.recipient_email ? { email: invite.recipient_email } : null),
+      source: 'token' as const,
+    };
+  };
+
   const outgoingRequestsQuery = useQuery({
     queryKey: ["outgoing_requests", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      console.log('[Account] Fetching outgoing requests for user:', user.id);
-      
-      const { data: requests, error } = await supabase
-        .from("account_shares")
-        .select(`
-          id,
-          owner_user_id,
-          delegate_user_id,
-          delegate_email,
-          request_type,
-          status,
-          created_at,
-          expires_at,
-          can_create_routines,
-          can_start_workouts,
-          can_review_history
-        `)
-        .eq("owner_user_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Failed to fetch outgoing requests:", error);
-        throw new Error("Failed to fetch outgoing requests");
-      }
-
-      const requestsWithProfiles = await Promise.all(
-        requests.map(async (request) => {
-          let profile = null;
-          if (request.delegate_user_id) {
-            const { data: fetchedProfile } = await supabase
-              .from("profiles")
-              .select("id, first_name, last_name, email")
-              .eq("id", request.delegate_user_id)
-              .maybeSingle();
-            profile = fetchedProfile || null;
-          }
-          if (!profile && request.delegate_email) {
-            const { data: fetchedByEmail } = await supabase
-              .from("profiles")
-              .select("id, first_name, last_name, email")
-              .eq("email", request.delegate_email.toLowerCase())
-              .maybeSingle();
-            profile = fetchedByEmail || null;
-          }
-          return {
-            ...request,
-            profiles: profile || (request.delegate_email ? { email: request.delegate_email } : null),
-          };
-        })
-      );
-
-      const now = new Date();
-      return requestsWithProfiles.filter(request => 
-        new Date(request.expires_at) > now
-      );
+      const [legacyRequests, tokenInvitations] = await Promise.all([
+        fetchLegacyOutgoingRequests(user.id),
+        getOutgoingInvitations(),
+      ]);
+      const mappedTokenInvitations = tokenInvitations.map(mapTokenOutgoingInvitation);
+      return [...legacyRequests, ...mappedTokenInvitations];
     },
     enabled: !!user?.id,
   });
@@ -574,8 +610,11 @@ const Account = () => {
   });
 
   const acceptRequestMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      return await acceptInvitation(requestId);
+    mutationFn: async (request: any) => {
+      if (request?.source === 'token' && request?.invite_token) {
+        return await acceptTokenInvitation(request.invite_token);
+      }
+      return await acceptInvitation(request.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
@@ -591,8 +630,11 @@ const Account = () => {
   });
 
   const declineRequestMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      return await rejectInvitation(requestId);
+    mutationFn: async (request: any) => {
+      if (request?.source === 'token' && request?.invite_token) {
+        return await declineTokenInvitation(request.invite_token);
+      }
+      return await rejectInvitation(request.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
@@ -1057,20 +1099,20 @@ const Account = () => {
     setShowDeleteShareDialog(true);
   };
 
-  const handleAcceptRequest = (requestId) => {
-    acceptRequestMutation.mutate(requestId);
+  const handleAcceptRequest = (request) => {
+    acceptRequestMutation.mutate(request);
   };
 
-  const handleDeclineRequest = (requestId) => {
-    setRequestToDeclineId(requestId);
+  const handleDeclineRequest = (request) => {
+    setRequestToDecline(request);
     setShowDeclineConfirmDialog(true);
   };
 
   const handleConfirmDecline = () => {
-    if (requestToDeclineId) {
-      declineRequestMutation.mutate(requestToDeclineId);
+    if (requestToDecline) {
+      declineRequestMutation.mutate(requestToDecline);
       setShowDeclineConfirmDialog(false);
-      setRequestToDeclineId(null);
+      setRequestToDecline(null);
     }
   };
 
@@ -1156,23 +1198,27 @@ const Account = () => {
     });
   };
 
-  const handleDeleteInvitation = (requestId: string) => {
-    setInvitationToDeleteId(requestId);
+  const handleDeleteInvitation = (request: any) => {
+    setInvitationToDelete({ id: request.id, source: request.source || 'legacy' });
     setShowDeleteInvitationDialog(true);
   };
 
   const performDeleteInvitation = async () => {
-    if (!invitationToDeleteId) return;
+    if (!invitationToDelete) return;
     try {
-      const { error } = await supabase
-        .from("account_shares")
-        .delete()
-        .eq("id", invitationToDeleteId);
+      if (invitationToDelete.source === 'token') {
+        await cancelInvitationRequest(invitationToDelete.id);
+      } else {
+        const { error } = await supabase
+          .from("account_shares")
+          .delete()
+          .eq("id", invitationToDelete.id);
 
-      if (error) {
-        console.error("Failed to delete invitation:", error);
-        toast.error("Failed to delete invitation");
-        return;
+        if (error) {
+          console.error("Failed to delete invitation:", error);
+          toast.error("Failed to delete invitation");
+          return;
+        }
       }
 
       toast.success("Invitation deleted");
@@ -1183,7 +1229,7 @@ const Account = () => {
       toast.error("Failed to delete invitation");
     } finally {
       setShowDeleteInvitationDialog(false);
-      setInvitationToDeleteId(null);
+      setInvitationToDelete(null);
     }
   };
 
@@ -1329,14 +1375,16 @@ const Account = () => {
                               })()}
                             </div>
                           </div>
-                          <ActionPill
-                            onClick={() => handleDeleteInvitation(request.id)}
-                            Icon={Trash2}
-                            showText={false}
-                            color="neutral"
-                            iconColor="neutral"
-                            fill={false}
-                          />
+                          {request.source !== 'token' && (
+                            <ActionPill
+                              onClick={() => handleDeleteInvitation(request)}
+                              Icon={Trash2}
+                              showText={false}
+                              color="neutral"
+                              iconColor="neutral"
+                              fill={false}
+                            />
+                          )}
                         </div>
                         <div className="Frame79 self-stretch p-3 flex flex-col justify-start items-start gap-4">
                           <div className="YourPermissions self-stretch justify-center text-neutral-neutral-700 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Your permissions:</div>
@@ -1386,14 +1434,14 @@ const Account = () => {
                           </div>
                           <div className="self-stretch inline-flex justify-start items-start gap-2.5 flex-wrap content-start">
                             <Button
-                              onClick={() => handleAcceptRequest(request.id)}
+                              onClick={() => handleAcceptRequest(request)}
                               disabled={acceptRequestMutation.isPending}
                               className="flex-1"
                             >
                               Accept
                             </Button>
                             <Button
-                              onClick={() => handleDeclineRequest(request.id)}
+                              onClick={() => handleDeclineRequest(request)}
                               disabled={declineRequestMutation.isPending}
                               className="flex-1"
                             >
@@ -1435,7 +1483,7 @@ const Account = () => {
                             <button
                               type="button"
                               aria-label="Delete invitation"
-                              onClick={() => handleDeleteInvitation(request.id)}
+                              onClick={() => handleDeleteInvitation(request)}
                               className="LucideIcon w-8 h-8 relative overflow-hidden flex items-center justify-center"
                             >
                               <Trash2 className="w-6 h-7 text-neutral-neutral-700" />
@@ -1968,7 +2016,7 @@ const Account = () => {
             onConfirm={performDeleteInvitation}
             onCancel={() => {
               setShowDeleteInvitationDialog(false);
-              setInvitationToDeleteId(null);
+              setInvitationToDelete(null);
             }}
           />
           
@@ -2037,7 +2085,7 @@ const Account = () => {
             onConfirm={handleConfirmDecline}
             onCancel={() => {
               setShowDeclineConfirmDialog(false);
-              setRequestToDeclineId(null);
+              setRequestToDecline(null);
             }}
             title="Decline request?"
             description="Are you sure you want to decline this request?"

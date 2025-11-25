@@ -7,6 +7,7 @@ export default function EmailTest() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState('');
   const defaultTo = 'feasley@lassor.com';
+  const defaultCtaUrl = 'https://www.swiper.fit/accept-invite?token=demo-token';
 
   const sendEmail = async (event, data = {}) => {
     try {
@@ -22,10 +23,14 @@ export default function EmailTest() {
   };
 
   const sendAccountCreated = () => sendEmail('account.created', { user_name: 'Lassor', email: defaultTo });
-  const sendTrainerInvitation = () => sendEmail('trainer.invitation', { inviter_name: 'John Smith' });
-  const sendClientInvitation = () => sendEmail('client.invitation', { inviter_name: 'John Smith' });
-  const sendJoinTrainerInvitation = () => sendEmail('join.trainer-invitation', { inviter_name: 'John Smith', email: defaultTo });
-  const sendJoinClientInvitation = () => sendEmail('join.client-invitation', { inviter_name: 'John Smith', email: defaultTo });
+  const sendTrainerInvitation = () =>
+    sendEmail('trainer.invitation', { inviter_name: 'John Smith', cta_url: defaultCtaUrl });
+  const sendClientInvitation = () =>
+    sendEmail('client.invitation', { inviter_name: 'John Smith', cta_url: defaultCtaUrl });
+  const sendJoinTrainerInvitation = () =>
+    sendEmail('join.trainer-invitation', { inviter_name: 'John Smith', cta_url: defaultCtaUrl });
+  const sendJoinClientInvitation = () =>
+    sendEmail('join.client-invitation', { inviter_name: 'John Smith', cta_url: defaultCtaUrl });
 
   return (
     <AppLayout>

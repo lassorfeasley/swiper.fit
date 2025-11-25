@@ -1,5 +1,4 @@
 import { supabase } from '@/supabaseClient';
-import { postEmailEvent } from '@/lib/emailEvents';
 
 /**
  * Consolidated Sharing API (client helper)
@@ -17,10 +16,10 @@ interface Permissions {
 }
 
 interface Profile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
 }
 
 interface AccountShare {
@@ -34,449 +33,177 @@ interface AccountShare {
   can_create_routines: boolean;
   can_start_workouts: boolean;
   can_review_history: boolean;
-  profiles?: Profile; // Added for invitation sender profile data
+  owner_profile?: Profile | null;
+  delegate_profile?: Profile | null;
+  source?: 'legacy' | 'token';
+  invite_token?: string;
+}
+
+interface InvitationSummary {
+  id: string;
+  token?: string;
+  inviter_id?: string;
+  recipient_email: string;
+  recipient_user_id?: string;
+  intended_role: InvitationRole;
+  status: string;
+  expires_at: string;
+  created_at: string;
+  permissions: Permissions;
+  inviter_profile?: Profile | null;
+  recipient_profile?: Profile | null;
 }
 
 // ============================================================================
 // INVITATION FUNCTIONS
 // ============================================================================
 
-/**
- * Invites a client to be managed by a trainer.
- * Creates an invitation where the trainer will manage the client's account.
- * 
- * Relationship created: owner=client, delegate=trainer
- * This means the trainer (delegate) manages the client's (owner) account.
- * 
- * @param clientEmail - Email of the client to invite
- * @param trainerId - ID of the trainer sending the invitation (will be the delegate)
- * @param permissions - Permissions to grant the trainer
- */
-export async function inviteClientToBeManaged(
-  clientEmail: string, 
-  trainerId: string, 
-  permissions: Permissions = {}
-): Promise<void> {
+type InvitationRole = 'manager' | 'managed';
+
+interface InviteRequestPayload {
+  inviteeEmail: string;
+  intendedRole: InvitationRole;
+  permissions: Permissions;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function sanitizePermissions(permissions: Permissions = {}): Permissions {
+  return {
+    can_create_routines: !!permissions.can_create_routines,
+    can_start_workouts: !!permissions.can_start_workouts,
+    can_review_history: !!permissions.can_review_history,
+  };
+}
+
+async function getSessionOrThrow() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    throw error;
+  }
+  if (!data?.session?.access_token) {
+    throw new Error("You must be logged in to send invitations");
+  }
+  return data.session;
+}
+
+async function postInvitationRequest(payload: InviteRequestPayload) {
+  const session = await getSessionOrThrow();
+  const response = await fetch('/api/sharing/invite', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      inviteeEmail: normalizeEmail(payload.inviteeEmail),
+      intendedRole: payload.intendedRole,
+      permissions: sanitizePermissions(payload.permissions),
+    }),
+  });
+
+  let body: any = null;
   try {
-    // Fetch the trainer's (inviter's) profile
-    const { data: trainerProfiles, error: trainerProfileError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email")
-      .eq("id", trainerId)
-      .limit(1);
+    const text = await response.text();
+    body = text ? JSON.parse(text) : null;
+  } catch (_) {
+    body = null;
+  }
 
-    if (trainerProfileError || !trainerProfiles?.length) {
-      console.error("Trainer profile lookup error:", trainerProfileError);
-      throw new Error("Failed to look up trainer profile");
-    }
+  if (!response.ok) {
+    const message = body?.error || body?.details || 'Failed to send invitation';
+    throw new Error(message);
+  }
 
-    const trainerProfile = trainerProfiles[0] as Profile;
-    
-    // Get trainer email from profile or auth user
-    let trainerEmail = trainerProfile.email;
-    if (!trainerEmail) {
-      // If profile doesn't have email, get it from auth user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser || authUser.id !== trainerId) {
-        throw new Error("Trainer profile is missing an email address and cannot be retrieved from authentication");
-      }
-      trainerEmail = authUser.email || null;
-      if (!trainerEmail) {
-        throw new Error("Trainer account is missing an email address");
-      }
-    }
-    
-    const inviterName = `${trainerProfile.first_name} ${trainerProfile.last_name}`.trim() || trainerEmail;
+  return body;
+}
 
-    // VALIDATION: Prevent self-invitation by email
-    const normalizedClientEmail = clientEmail.trim().toLowerCase();
-    const normalizedTrainerEmail = trainerEmail.trim().toLowerCase();
-    
-    if (normalizedClientEmail === normalizedTrainerEmail) {
-      throw new Error("You cannot invite yourself");
-    }
+export async function inviteClientToBeManaged(
+  clientEmail: string,
+  _trainerId: string,
+  permissions: Permissions = {},
+): Promise<void> {
+  await postInvitationRequest({
+    inviteeEmail: clientEmail,
+    intendedRole: 'manager',
+    permissions,
+  });
+}
 
-    // Fetch the client's (invitee's) profile
-    const { data: profiles, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email")
-      .eq("email", clientEmail.trim().toLowerCase())
-      .limit(1);
+export async function inviteTrainerToManage(
+  trainerEmail: string, 
+  _clientId: string,
+  permissions: Permissions = {},
+): Promise<void> {
+  await postInvitationRequest({
+    inviteeEmail: trainerEmail,
+    intendedRole: 'managed',
+    permissions,
+  });
+}
 
-    if (profileError) {
-      console.error("Profile lookup error:", profileError);
-      throw new Error("Failed to look up user");
-    }
+async function fetchInvitationsFromApi(scope: 'incoming' | 'outgoing'): Promise<InvitationSummary[]> {
+  const session = await getSessionOrThrow();
+  const response = await fetch(`/api/sharing/invite?scope=${scope}`, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
 
-    if (!profiles?.length) {
-      console.log(`[inviteClientToBeManaged] No user found, creating non-member invitation for: ${clientEmail}`);
-      
-      // Check for existing pending invitation by email, regardless of request_type
-      // This catches old incorrect records and prevents duplicates
-      const normalizedClientEmail = clientEmail.trim().toLowerCase();
-      
-      const { count: pendingDupCount } = await supabase
-        .from("account_shares")
-        .select("id", { count: "exact", head: true })
-        .is("owner_user_id", null)
-        .eq("delegate_user_id", trainerId)
-        .eq("delegate_email", normalizedClientEmail)
-        .eq("status", "pending")
-        .is("revoked_at", null);
-      
-      if ((pendingDupCount || 0) > 0) {
-        console.log(`[inviteClientToBeManaged] Duplicate pending invitation found for email ${normalizedClientEmail}`);
-        throw new Error("A pending invitation already exists for this email");
-      }
+  let body: any = null;
+  try {
+    body = await response.json();
+  } catch (_) {
+    body = null;
+  }
 
-      const invitationData: Partial<AccountShare> = {
-        owner_user_id: null, // Will be populated when client creates account
-        delegate_user_id: trainerId, // Trainer is the delegate who will manage
-        delegate_email: clientEmail.trim().toLowerCase(),
-        status: 'pending',
-        request_type: 'trainer_invite',
-        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        can_create_routines: permissions.can_create_routines || false,
-        can_start_workouts: permissions.can_start_workouts || false,
-        can_review_history: permissions.can_review_history || false,
-      };
+  if (!response.ok) {
+    throw new Error(body?.error || 'Failed to fetch invitations');
+  }
 
-      // Guard against accidental self-invites
-      if (
-        invitationData.owner_user_id &&
-        invitationData.delegate_user_id &&
-        invitationData.owner_user_id === invitationData.delegate_user_id
-      ) {
-        console.error("[inviteClientToBeManaged] Self-invite detected (non-member):", invitationData);
-        throw new Error("You cannot invite yourself");
-      }
+  return body?.invitations || [];
+}
 
-      const { error: insertError } = await supabase
-        .from("account_shares")
-        .insert(invitationData);
+export function getOutgoingInvitations(): Promise<InvitationSummary[]> {
+  return fetchInvitationsFromApi('outgoing');
+}
 
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        throw new Error("Failed to create invitation");
-      }
+async function getIncomingInvitationSummaries(): Promise<InvitationSummary[]> {
+  return fetchInvitationsFromApi('incoming');
+}
 
+export async function cancelInvitationRequest(invitationId: string): Promise<void> {
+  const session = await getSessionOrThrow();
+  const response = await fetch(`/api/sharing/invite?id=${invitationId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    let body: any = null;
     try {
-      await postEmailEvent('join.trainer-invitation', clientEmail, {
-        inviter_name: inviterName,
-        email: clientEmail,
-        permissions: invitationData
-      });
-    } catch (emailErr) {
-      console.error('[inviteClientToBeManaged] Email notification failed (non-member)', emailErr);
+      body = await response.json();
+    } catch (_) {
+      body = null;
     }
+    throw new Error(body?.error || 'Failed to cancel invitation');
+  }
+}
 
-      return;
-    }
-
-    // User exists, create member invitation
-    const clientProfile = profiles[0] as Profile;
-    
-    // Use the clientEmail parameter (we looked them up by this email)
-    // But verify the profile has it or use the parameter
-    const clientEmailToUse = clientProfile.email || clientEmail.trim().toLowerCase();
-    
-    console.log(`[inviteClientToBeManaged] User found, creating member invitation for: ${clientEmailToUse}`);
-
-    // VALIDATION: Prevent self-invitation by ID
-    if (clientProfile.id === trainerId) {
-      throw new Error("You cannot invite yourself");
-    }
-
-    // Check for existing pending invitation in BOTH directions, regardless of request_type
-    // This catches old incorrect records and prevents duplicates
-    const { count: pendingDupCount } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .or(`and(owner_user_id.eq.${trainerId},delegate_user_id.eq.${clientProfile.id}),and(owner_user_id.eq.${clientProfile.id},delegate_user_id.eq.${trainerId})`)
-      .eq("status", "pending")
-      .is("revoked_at", null);
-    
-    if ((pendingDupCount || 0) > 0) {
-      console.log(`[inviteClientToBeManaged] Duplicate pending invitation found between trainer ${trainerId} and client ${clientProfile.id}`);
-      throw new Error("A pending invitation already exists for this user");
-    }
-
-    // Check for existing active relationship in the same direction (prevent duplicates)
-    const { count: activeInSameDirection } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", clientProfile.id)
-      .eq("delegate_user_id", trainerId)
-      .eq("status", "active")
-      .is("revoked_at", null);
-
-    if ((activeInSameDirection || 0) > 0) {
-      throw new Error("An active sharing relationship already exists with this user");
-    }
-
-    // Insert with correct relationship (RLS policy now allows this)
-    const invitationData: Partial<AccountShare> = {
-      owner_user_id: clientProfile.id, // Client's account is being shared
-      delegate_user_id: trainerId, // Trainer manages it
-      delegate_email: clientEmailToUse,
-      status: 'pending',
-      request_type: 'trainer_invite',
-      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      can_create_routines: permissions.can_create_routines || false,
-      can_start_workouts: permissions.can_start_workouts || false,
-      can_review_history: permissions.can_review_history || false,
-    };
-
-    // Guard against accidental self-invites
-    if (
-      invitationData.owner_user_id &&
-      invitationData.delegate_user_id &&
-      invitationData.owner_user_id === invitationData.delegate_user_id
-    ) {
-      console.error("[inviteClientToBeManaged] Self-invite detected (member):", invitationData);
-      throw new Error("You cannot invite yourself");
-    }
-
-    console.log("[inviteClientToBeManaged] Inserting invitation:", {
-      owner_user_id: clientProfile.id,
-      owner_email: clientProfile.email,
-      delegate_user_id: trainerId,
-      request_type: 'trainer_invite',
-    });
-
-    const { error: insertError } = await supabase
-      .from("account_shares")
-      .insert(invitationData);
-
-    if (insertError) {
-      console.error("Insert error:", insertError);
-      throw new Error("Failed to create invitation");
-    }
-
-    try {
-      await postEmailEvent('trainer.invitation', clientEmailToUse, {
-        inviter_name: inviterName,
-        permissions: invitationData
-      });
-    } catch (emailErr) {
-      console.error('[inviteClientToBeManaged] Email notification failed (member)', emailErr);
-    }
-
-  } catch (error) {
-    console.error("inviteClientToBeManaged error:", error);
+export async function acceptTokenInvitation(inviteToken: string): Promise<void> {
+  const { error } = await supabase.rpc('accept_invitation', { invite_token: inviteToken });
+  if (error) {
     throw error;
   }
 }
 
-/**
- * Invites a trainer to manage a client's account.
- * Creates an invitation where the trainer will manage the client's account.
- * 
- * Relationship created: owner=client, delegate=trainer
- * This means the trainer (delegate) manages the client's (owner) account.
- * 
- * @param trainerEmail - Email of the trainer to invite
- * @param clientId - ID of the client sending the invitation (will be the owner)
- * @param permissions - Permissions to grant the trainer
- */
-export async function inviteTrainerToManage(
-  trainerEmail: string, 
-  clientId: string, 
-  permissions: Permissions = {}
-): Promise<void> {
-  try {
-    // Fetch the client's (inviter's) profile
-    const { data: clientProfiles, error: clientProfileError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email")
-      .eq("id", clientId)
-      .limit(1);
-
-    if (clientProfileError || !clientProfiles?.length) {
-      console.error("Client profile lookup error:", clientProfileError);
-      throw new Error("Failed to look up client profile");
-    }
-
-    const clientProfile = clientProfiles[0] as Profile;
-    
-    // Get client email from profile or auth user
-    let clientEmail = clientProfile.email;
-    if (!clientEmail) {
-      // If profile doesn't have email, get it from auth user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser || authUser.id !== clientId) {
-        throw new Error("Client profile is missing an email address and cannot be retrieved from authentication");
-      }
-      clientEmail = authUser.email || null;
-      if (!clientEmail) {
-        throw new Error("Client account is missing an email address");
-      }
-    }
-    
-    const inviterName = `${clientProfile.first_name} ${clientProfile.last_name}`.trim() || clientEmail;
-
-    // VALIDATION: Prevent self-invitation by email
-    const normalizedTrainerEmail = trainerEmail.trim().toLowerCase();
-    const normalizedClientEmail = clientEmail.trim().toLowerCase();
-    
-    if (normalizedTrainerEmail === normalizedClientEmail) {
-      throw new Error("You cannot invite yourself");
-    }
-
-    // Fetch the trainer's (invitee's) profile
-    const { data: profiles, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email")
-      .eq("email", trainerEmail.trim().toLowerCase())
-      .limit(1);
-
-    if (profileError) {
-      console.error("Profile lookup error:", profileError);
-      throw new Error("Failed to look up trainer");
-    }
-
-    if (!profiles?.length) {
-      console.log(`[inviteTrainerToManage] No trainer found, creating non-member invitation for: ${trainerEmail}`);
-      const { count: pendingDupCount } = await supabase
-        .from("account_shares")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_user_id", clientId)
-        .is("delegate_user_id", null)
-        .eq("delegate_email", trainerEmail.trim().toLowerCase())
-        .eq("request_type", "client_invite")
-        .eq("status", "pending")
-        .is("revoked_at", null);
-      if ((pendingDupCount || 0) > 0) {
-        throw new Error("A pending invitation already exists for this email");
-      }
-
-      const invitationData: Partial<AccountShare> = {
-        owner_user_id: clientId, // The client (person inviting) is the owner
-        delegate_user_id: null,
-        delegate_email: trainerEmail.trim().toLowerCase(), // The trainer (person being invited) is the delegate
-        status: 'pending',
-        request_type: 'client_invite',
-        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        can_create_routines: permissions.can_create_routines || false,
-        can_start_workouts: permissions.can_start_workouts || false,
-        can_review_history: permissions.can_review_history || false,
-      };
-
-      // Guard against accidental self-invites
-      if (
-        invitationData.owner_user_id &&
-        invitationData.delegate_user_id &&
-        invitationData.owner_user_id === invitationData.delegate_user_id
-      ) {
-        console.error("[inviteTrainerToManage] Self-invite detected (non-member):", invitationData);
-        throw new Error("You cannot invite yourself");
-      }
-
-      const { error: insertError } = await supabase
-        .from("account_shares")
-        .insert(invitationData);
-
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        throw new Error("Failed to create invitation");
-      }
-
-      try {
-        await postEmailEvent('join.client-invitation', trainerEmail, {
-          inviter_name: inviterName,
-          email: trainerEmail,
-          permissions: invitationData
-        });
-      } catch (emailErr) {
-        console.error('[inviteTrainerToManage] Email notification failed (non-member)', emailErr);
-      }
-
-      return;
-    }
-
-    // Trainer exists, create member invitation
-    const trainerProfile = profiles[0] as Profile;
-    
-    // Use the trainerEmail parameter (we looked them up by this email)
-    // But verify the profile has it or use the parameter
-    const trainerEmailToUse = trainerProfile.email || trainerEmail.trim().toLowerCase();
-    
-    console.log(`[inviteTrainerToManage] Trainer found, creating member invitation for: ${trainerEmailToUse}`);
-
-    // VALIDATION: Prevent self-invitation by ID
-    if (trainerProfile.id === clientId) {
-      throw new Error("You cannot invite yourself");
-    }
-
-    // Check for existing pending invitation (excluding revoked ones)
-    const { count: pendingDupCount } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", clientId)
-      .eq("delegate_user_id", trainerProfile.id)
-      .eq("request_type", "client_invite")
-      .eq("status", "pending")
-      .is("revoked_at", null);
-    
-    if ((pendingDupCount || 0) > 0) {
-      throw new Error("A pending invitation already exists for this trainer");
-    }
-
-    // Check for existing active relationship in the same direction (prevent duplicates)
-    const { count: activeInSameDirection } = await supabase
-      .from("account_shares")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_user_id", clientId)
-      .eq("delegate_user_id", trainerProfile.id)
-      .eq("status", "active")
-      .is("revoked_at", null);
-
-    if ((activeInSameDirection || 0) > 0) {
-      throw new Error("An active sharing relationship already exists with this trainer");
-    }
-
-    const invitationData: Partial<AccountShare> = {
-      owner_user_id: clientId,
-      delegate_user_id: trainerProfile.id,
-      delegate_email: trainerEmailToUse,
-      status: 'pending',
-      request_type: 'client_invite',
-      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      can_create_routines: permissions.can_create_routines || false,
-      can_start_workouts: permissions.can_start_workouts || false,
-      can_review_history: permissions.can_review_history || false,
-    };
-
-    // Guard against accidental self-invites
-    if (
-      invitationData.owner_user_id &&
-      invitationData.delegate_user_id &&
-      invitationData.owner_user_id === invitationData.delegate_user_id
-    ) {
-      console.error("[inviteTrainerToManage] Self-invite detected (member):", invitationData);
-      throw new Error("You cannot invite yourself");
-    }
-
-    const { error: insertError } = await supabase
-      .from("account_shares")
-      .insert(invitationData);
-
-    if (insertError) {
-      console.error("Insert error:", insertError);
-      throw new Error("Failed to create invitation");
-    }
-
-    try {
-      await postEmailEvent('client.invitation', trainerEmailToUse, {
-        inviter_name: inviterName,
-        permissions: invitationData
-      });
-    } catch (emailErr) {
-      console.error('[inviteTrainerToManage] Email notification failed (member)', emailErr);
-    }
-
-  } catch (error) {
-    console.error("inviteTrainerToManage error:", error);
+export async function declineTokenInvitation(inviteToken: string): Promise<void> {
+  const { error } = await supabase.rpc('decline_invitation', { invite_token: inviteToken });
+  if (error) {
     throw error;
   }
 }
@@ -684,14 +411,18 @@ export async function removeShare(shareId: string): Promise<void> {
 
 export async function getPendingInvitations(userId: string): Promise<AccountShare[]> {
   try {
-    // A "pending invitation" is any account_share where:
-    // - status = 'pending'
-    // - the current user is the one who must respond
-    //
-    // Recipient rules:
-    // - trainer_invite: client (owner) must accept  -> owner_user_id = userId
-    // - client_invite:  trainer (delegate) must accept -> delegate_user_id = userId
-    // - legacy: treat delegate as recipient (if any)
+    const [legacyInvites, tokenInvites] = await Promise.all([
+      fetchLegacyPendingInvitations(userId),
+      mapIncomingTokenInvitations(userId),
+    ]);
+    return [...legacyInvites, ...tokenInvites];
+  } catch (error) {
+    console.error("getPendingInvitations error:", error);
+    throw error;
+  }
+}
+
+async function fetchLegacyPendingInvitations(userId: string): Promise<AccountShare[]> {
     const { data, error } = await supabase
       .from("account_shares")
       .select(`
@@ -715,19 +446,22 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
           `and(request_type.eq.trainer_invite,owner_user_id.eq.${userId})`,
           `and(request_type.eq.client_invite,delegate_user_id.eq.${userId})`,
           `and(request_type.eq.legacy,delegate_user_id.eq.${userId})`,
-        ].join(",")
+      ].join(","),
       )
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Get pending invitations error:", error);
+    console.error("Get legacy pending invitations error:", error);
       throw new Error("Failed to get pending invitations");
     }
 
-    const invitations = data || [];
+  const invitations = (data || []).map((inv) => ({
+    ...inv,
+    source: 'legacy' as const,
+  }));
 
     console.log(
-      "[getPendingInvitations] Found invitations:",
+    "[getPendingInvitations] Found legacy invitations:",
       invitations.map((inv) => ({
         id: inv.id,
         owner_user_id: inv.owner_user_id,
@@ -739,10 +473,45 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
     );
 
     return invitations;
+}
+
+async function mapIncomingTokenInvitations(userId: string): Promise<AccountShare[]> {
+  try {
+    const tokenInvites = await getIncomingInvitationSummaries();
+    return tokenInvites.map((invite) => mapTokenInviteToShare(invite, userId));
   } catch (error) {
-    console.error("getPendingInvitations error:", error);
+    console.error("[mapIncomingTokenInvitations] Failed to fetch token invitations", error);
     throw error;
   }
+}
+
+function mapTokenInviteToShare(invite: InvitationSummary, currentUserId: string): AccountShare {
+  const requestType = invite.intended_role === 'manager' ? 'trainer_invite' : 'client_invite';
+  const permissions = invite.permissions || {};
+  const baseShare: AccountShare = {
+    id: invite.id,
+    owner_user_id: requestType === 'trainer_invite' ? currentUserId : (invite.inviter_id || ''),
+    delegate_user_id: requestType === 'trainer_invite' ? (invite.inviter_id || '') : currentUserId,
+    delegate_email: invite.recipient_email,
+    status: invite.status,
+    request_type: requestType,
+    expires_at: invite.expires_at,
+    can_create_routines: !!permissions.can_create_routines,
+    can_start_workouts: !!permissions.can_start_workouts,
+    can_review_history: !!permissions.can_review_history,
+    owner_profile: null,
+    delegate_profile: null,
+    source: 'token',
+    invite_token: invite.token,
+  };
+
+  if (requestType === 'trainer_invite') {
+    baseShare.delegate_profile = invite.inviter_profile || null;
+  } else {
+    baseShare.owner_profile = invite.inviter_profile || null;
+  }
+
+  return baseShare;
 }
 
 export async function getAccountShares(userId: string): Promise<AccountShare[]> {
@@ -913,5 +682,17 @@ export async function linkPendingInvitations(userId: string, email: string): Pro
   } catch (error) {
     console.error("linkPendingInvitations error:", error);
     return 0;
+  }
+}
+
+export async function linkInvitationRecordsToUser(userId: string, email: string): Promise<void> {
+  try {
+    await supabase
+      .from('invitations')
+      .update({ recipient_user_id: userId })
+      .is('recipient_user_id', null)
+      .eq('recipient_email', email.toLowerCase());
+  } catch (error) {
+    console.error('[linkInvitationRecordsToUser] Failed to link invitations', error);
   }
 }

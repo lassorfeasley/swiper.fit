@@ -26,6 +26,7 @@ const CompletedWorkout = lazy(() =>
   import("@/features/history").then((module) => ({ default: module.CompletedWorkout }))
 );
 const Account = lazy(() => import("./pages/Account/Account.tsx"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite.tsx"));
 import "./App.css";
 import {
   NavBarVisibilityProvider,
@@ -97,20 +98,22 @@ function AppContent() {
     '/create-account',
     '/reset-password',
     '/update-password',
+    '/accept-invite',
     '/og-env'                    // Allow OG Env while workout is active for testing
   ];
   
   // Check if current path is allowed
   // When any workout is active (delegate or regular user), be very restrictive
   // BUT always allow login and create-account pages
+  const alwaysAllowed = ['/login', '/create-account', '/accept-invite'];
   const isAllowedPath = isWorkoutActive 
-    ? ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password'].some(allowed => {
+    ? ['/workout/active', '/', '/login', '/create-account', '/reset-password', '/update-password', '/accept-invite'].some(allowed => {
         if (allowed === '/') {
           return location.pathname === '/';
         }
         // More precise path matching - exact match or starts with allowed path followed by /
         return location.pathname === allowed || location.pathname.startsWith(allowed + '/');
-      }) || ['/login', '/create-account'].includes(location.pathname)
+      }) || alwaysAllowed.includes(location.pathname)
     : true; // If no workout is active, allow all paths
   
 
@@ -216,6 +219,7 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/reset-password" element={<PasswordReset />} />
+            <Route path="/accept-invite" element={<AcceptInvite />} />
 
             {/* Protected routes wrapper */}
             <Route element={<RequireAuth />}>

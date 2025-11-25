@@ -5,7 +5,7 @@ export function subject({ inviterName }) {
   return `Become ${inviterName}'s trainer on Swiper`;
 }
 
-export default function TrainerInvitation({ inviterName = 'John Smith' }) {
+export default function TrainerInvitation({ inviterName = 'John Smith', ctaUrl = 'https://www.swiper.fit/accept-invite' }) {
   const titleStyle = { color: '#000000', fontSize: 24, fontWeight: 700, fontFamily: 'Arial, sans-serif', margin: '0 0 8px 0' };
   const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: 0 };
   const ctaStyle = { color: '#166534', fontSize: 14, fontWeight: 700, fontFamily: 'Arial, sans-serif', textDecoration: 'none' };
@@ -32,7 +32,7 @@ export default function TrainerInvitation({ inviterName = 'John Smith' }) {
     ),
     // CTA link
     React.createElement('div', { style: { marginTop: 16 } },
-      React.createElement('a', { href: 'https://www.swiper.fit/trainers', style: ctaStyle }, 'Reply to request →')
+      React.createElement('a', { href: ctaUrl, style: ctaStyle }, 'Respond to request →')
     )
   );
 }

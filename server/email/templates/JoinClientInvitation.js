@@ -5,14 +5,12 @@ export function subject({ inviterName }) {
   return `Join Swiper to become ${inviterName}'s client`;
 }
 
-export default function JoinClientInvitation({ inviterName = 'John Smith', email = '' }) {
+export default function JoinClientInvitation({ inviterName = 'John Smith', ctaUrl = 'https://www.swiper.fit/accept-invite' }) {
   const titleStyle = { color: '#000000', fontSize: 24, fontWeight: 700, fontFamily: 'Arial, sans-serif', margin: '0 0 16px 0' };
   const bodyStyle = { color: '#000000', fontSize: 14, fontWeight: 400, fontFamily: 'Arial, sans-serif', lineHeight: 1.6, margin: '0 0 16px 0' };
   const ctaStyle = { color: '#166534', fontSize: 14, fontWeight: 700, fontFamily: 'Arial, sans-serif', textDecoration: 'none' };
   const logoWrap = { marginBottom: 16 };
   const iconStyle = { width: 48, height: 40, marginBottom: 16 };
-
-  const signupUrl = `https://www.swiper.fit/create-account?email=${encodeURIComponent(email)}&fromInvite=client`;
 
   return React.createElement(
     DefaultLayout,
@@ -38,7 +36,7 @@ export default function JoinClientInvitation({ inviterName = 'John Smith', email
     ),
     // CTA link
     React.createElement('div', { style: { marginTop: 16 } },
-      React.createElement('a', { href: signupUrl, style: ctaStyle }, 'Create account →')
+      React.createElement('a', { href: ctaUrl, style: ctaStyle }, 'Answer the invite →')
     )
   );
 }

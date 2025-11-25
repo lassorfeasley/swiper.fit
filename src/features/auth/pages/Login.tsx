@@ -27,7 +27,9 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const importRoutineId = new URLSearchParams(location.search).get('importRoutineId');
+  const searchParams = new URLSearchParams(location.search);
+  const importRoutineId = searchParams.get('importRoutineId');
+  const inviteToken = searchParams.get('inviteToken');
   const { isWorkoutActive, loading: workoutLoading } = useActiveWorkout();
 
   const loginMutation = useMutation({
@@ -45,6 +47,10 @@ export default function Login() {
       setErrorMessage("");
       toast.success("Logged in successfully");
       try {
+        if (inviteToken) {
+          navigate(`/accept-invite?token=${inviteToken}`, { replace: true });
+          return;
+        }
         if (importRoutineId) {
           // After login, navigate to public routine page to trigger clone flow in builder route
           navigate(`/routines/${importRoutineId}/configure`, { replace: true, state: { fromPublicImport: true } });
@@ -120,7 +126,13 @@ export default function Login() {
                   </div>
                   <div 
                     className="justify-center text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight cursor-pointer"
-                    onClick={() => navigate(importRoutineId ? `/create-account?importRoutineId=${importRoutineId}` : "/create-account")}
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (importRoutineId) params.set('importRoutineId', importRoutineId);
+                      if (inviteToken) params.set('inviteToken', inviteToken);
+                      const suffix = params.toString();
+                      navigate(`/create-account${suffix ? `?${suffix}` : ''}`);
+                    }}
                   >
                     Sign up
                   </div>
