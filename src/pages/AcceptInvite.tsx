@@ -97,7 +97,7 @@ export default function AcceptInvite() {
               {viewState === 'missing' && (
                 <>
                   <div className="text-red-600 text-sm">{message}</div>
-                  <Button variant="secondary" onClick={() => navigate('/')}>
+                  <Button variant="outline" onClick={() => navigate('/')}>
                     Go home
                   </Button>
                 </>
