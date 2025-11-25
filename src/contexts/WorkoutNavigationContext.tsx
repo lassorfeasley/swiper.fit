@@ -30,16 +30,20 @@ interface FocusedExercise extends Exercise {
   section: string | null;
 }
 
+type FocusSource = 'user' | 'sync' | 'restore';
+
 interface WorkoutNavigationContextType {
   sectionExercises: SectionExercises;
   loadedSections: LoadedSections;
   completedExercises: Set<string>;
-  focusedExercise: FocusedExercise | null;
+  focusedExercise: FocusedExercise | null; // Alias to activeFocus for backward compatibility
+  activeFocus: FocusedExercise | null; // Current UI state - what card is open
+  persistedFocus: string | null; // What's in the database - for restoration and sync
   isRestoringFocus: boolean;
   updateSectionExercises: (section: string, exercises: Exercise[]) => void;
   markExerciseComplete: (exerciseId: string) => void;
   markExerciseIncomplete: (exerciseId: string) => void;
-  setFocusedExerciseId: (exerciseId: string | null, section?: string) => void;
+  setFocusedExerciseId: (exerciseId: string | null, section?: string, source?: FocusSource) => void;
   setSwipeAnimationRunning: (running: boolean) => void;
   handleSectionComplete: (section: string, justCompletedExerciseId?: string) => Exercise | null;
   isWorkoutComplete: () => boolean;
@@ -49,6 +53,9 @@ interface WorkoutNavigationContextType {
     remaining: number;
     percentage: number;
   };
+  // Optional callback for DB writes (provided by ActiveWorkout)
+  updateLastExercise?: (workoutExerciseId: string) => Promise<void>;
+  setUpdateLastExercise?: (callback: (workoutExerciseId: string) => Promise<void>) => void;
 }
 
 const WorkoutNavigationContext = createContext<WorkoutNavigationContextType | null>(null);
@@ -119,20 +126,28 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
   // Store completed exercises across all sections
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   
-  // Store the currently focused exercise
-  const [focusedExercise, setFocusedExercise] = useState<FocusedExercise | null>(null);
-  // Timeout handle for deferring focus until previous card collapses
-  const pendingFocusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Track the ID of the exercise we are waiting to focus.
-  // This guards against redundant focus requests (e.g. from real-time sync echoes)
-  // clobbering the transition animation.
-  const pendingFocusIdRef = useRef<string | null>(null);
+  // Separate active focus (UI state) from persisted focus (DB state)
+  const [activeFocus, setActiveFocus] = useState<FocusedExercise | null>(null); // Current UI state
+  const [persistedFocus, setPersistedFocus] = useState<string | null>(null); // DB state for sync/restore
+  
+  // Alias for backward compatibility during migration
+  const focusedExercise = activeFocus;
+  
   // Block focus changes while a swipe completion animation is running
   const isSwipeAnimationRunningRef = useRef<boolean>(false);
-  const queuedFocusRef = useRef<{ exerciseId: string; section?: string } | null>(null);
+  const queuedFocusRef = useRef<{ exerciseId: string; section?: string; source?: FocusSource } | null>(null);
   
   // Flag to prevent auto-focus when restoring from database
   const [isRestoringFocus, setIsRestoringFocus] = useState<boolean>(false);
+  
+  // Track last user action timestamp for idle detection
+  const lastUserActionRef = useRef<number>(0);
+  
+  // Callback for DB writes (set by ActiveWorkout)
+  const updateLastExerciseRef = useRef<((workoutExerciseId: string) => Promise<void>) | null>(null);
+  
+  // Track what we last wrote to DB to ignore echo
+  const lastWrittenExerciseIdRef = useRef<string | null>(null);
 
   // Update exercises for a specific section
   const updateSectionExercises = useCallback((section: string, exercises: Exercise[]) => {
@@ -159,9 +174,9 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     });
   }, []);
 
-  // Set the focused exercise; when switching between different cards, defer until collapse completes
-  const setFocusedExerciseId = useCallback((exerciseId: string | null, section?: string) => {
-    const currentFocusedKey = getExerciseKey(focusedExercise);
+  // Set the focused exercise with source-aware logic
+  const setFocusedExerciseId = useCallback((exerciseId: string | null, section?: string, source: FocusSource = 'user') => {
+    const currentFocusedKey = getExerciseKey(activeFocus);
 
     // If we're being asked to focus the same exercise that's already focused,
     // skip work entirely to avoid redundant state updates and autoscroll runs.
@@ -169,109 +184,115 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
       return;
     }
 
-    // If we are already in a transition to this exact exercise (pendingFocusIdRef matches),
-    // ignore this request to prevent clobbering the animation timer.
-    // This commonly happens when a local focus change triggers a DB update,
-    // and the real-time subscription echoes that update back immediately.
-    if (pendingFocusTimeoutRef.current && pendingFocusIdRef.current === exerciseId) {
-      return;
-    }
-
     if (isSwipeAnimationRunningRef.current) {
       // Defer and queue the most recent focus request until animation finishes
-      queuedFocusRef.current = exerciseId ? { exerciseId, section } : null;
+      queuedFocusRef.current = exerciseId ? { exerciseId, section, source } : null;
       return;
     }
+    
     if (!exerciseId) {
-      setFocusedExercise(null);
-      return;
-    }
-
-    // Clear any pending focus timer
-    if (pendingFocusTimeoutRef.current) {
-      clearTimeout(pendingFocusTimeoutRef.current);
-      pendingFocusTimeoutRef.current = null;
-      // If we force-cleared the timeout (e.g. user tapped a different card),
-      // clear the pending ID too.
-      pendingFocusIdRef.current = null;
-    }
-
-    const applyFocus = () => {
-      if (section) {
-        const exercises = sectionExercises[section as keyof SectionExercises] || [];
-        const exercise = exercises.find(ex => exerciseMatchesId(ex, exerciseId));
-        if (exercise) {
-          setFocusedExercise({ ...exercise, section });
-        }
-      } else {
-        setIsRestoringFocus(true);
-        const { exercise, section: foundSection } = findExerciseInSections(exerciseId, sectionExercises);
-        if (exercise) {
-          setFocusedExercise({ ...exercise, section: foundSection });
-          setIsRestoringFocus(false);
-        } else if (exerciseId) {
-          setFocusedExercise({ id: exerciseId, exercise_id: exerciseId, section: null });
-        } else {
-          setFocusedExercise(null);
-          setIsRestoringFocus(false);
-        }
+      setActiveFocus(null);
+      if (source === 'user') {
+        // User cleared focus - also clear persisted
+        setPersistedFocus(null);
       }
-    };
-
-    // If switching from one focused exercise to another, first clear focus so the open card collapses,
-    // then wait for the collapse animation to finish before focusing the new one.
-    if (currentFocusedKey && currentFocusedKey !== exerciseId) {
-      setFocusedExercise(null);
-      const delay = (ANIMATION_DURATIONS?.CARD_ANIMATION_DURATION_MS ?? 500);
-      // Track the pending focus target
-      pendingFocusIdRef.current = exerciseId;
-      
-      pendingFocusTimeoutRef.current = setTimeout(() => {
-        applyFocus();
-        pendingFocusTimeoutRef.current = null;
-        pendingFocusIdRef.current = null;
-      }, delay);
       return;
     }
 
+    // Find the exercise object
+    let exercise: Exercise | null = null;
+    let foundSection: string | null = null;
+    
     if (section) {
       const exercises = sectionExercises[section as keyof SectionExercises] || [];
-      const exercise = exercises.find(ex => exerciseMatchesId(ex, exerciseId));
-      if (exercise) {
-        setFocusedExercise({ ...exercise, section });
-      }
+      exercise = exercises.find(ex => exerciseMatchesId(ex, exerciseId)) || null;
+      foundSection = section;
     } else {
-      setIsRestoringFocus(true);
-      const { exercise, section: foundSection } = findExerciseInSections(exerciseId, sectionExercises);
-      if (exercise) {
-        setFocusedExercise({ ...exercise, section: foundSection });
-        setIsRestoringFocus(false);
-      } else if (exerciseId) {
-        setFocusedExercise({ id: exerciseId, exercise_id: exerciseId, section: null });
-      } else {
-        setFocusedExercise(null);
-        setIsRestoringFocus(false);
-      }
+      const result = findExerciseInSections(exerciseId, sectionExercises);
+      exercise = result.exercise;
+      foundSection = result.section;
     }
-  }, [sectionExercises, focusedExercise]);
+
+    const exerciseKey = exercise ? (exercise.id || exercise.exercise_id) : exerciseId;
+
+    // Handle based on source
+    if (source === 'user') {
+      // User action: Update activeFocus immediately, write to DB async
+      if (exercise) {
+        setActiveFocus({ ...exercise, section: foundSection });
+      } else {
+        setActiveFocus({ id: exerciseId, exercise_id: exerciseId, section: foundSection });
+      }
+      
+      // Track user action timestamp
+      lastUserActionRef.current = Date.now();
+      
+      // Write to DB (fire-and-forget)
+      if (exerciseKey && updateLastExerciseRef.current) {
+        lastWrittenExerciseIdRef.current = exerciseKey;
+        updateLastExerciseRef.current(exerciseKey).catch(err => {
+          console.error('[WorkoutNavigation] Failed to update last exercise:', err);
+        });
+      }
+      
+    } else if (source === 'sync') {
+      // Sync from remote: Update persistedFocus, only apply to activeFocus if user is idle
+      // First check if this is our own write echoing back (ignore echo)
+      if (lastWrittenExerciseIdRef.current === exerciseKey) {
+        // This is our own write - just update persistedFocus to acknowledge it, but don't change activeFocus
+        if (exerciseKey) {
+          setPersistedFocus(exerciseKey);
+        }
+        lastWrittenExerciseIdRef.current = null; // Clear after acknowledging
+        return;
+      }
+      
+      // This is a legitimate remote update
+      if (exerciseKey) {
+        setPersistedFocus(exerciseKey);
+      }
+      
+      // Only apply to activeFocus if user is idle (>2s since last user action)
+      const timeSinceUserAction = Date.now() - lastUserActionRef.current;
+      if (timeSinceUserAction > 2000) {
+        // User is idle - safe to apply sync
+        if (exercise) {
+          setActiveFocus({ ...exercise, section: foundSection });
+        } else if (exerciseId) {
+          setActiveFocus({ id: exerciseId, exercise_id: exerciseId, section: foundSection });
+        }
+      }
+      // If user is not idle, leave activeFocus alone (user is actively using the app)
+      
+    } else if (source === 'restore') {
+      // Restoration: Copy persistedFocus to activeFocus
+      setIsRestoringFocus(true);
+      if (exercise) {
+        setActiveFocus({ ...exercise, section: foundSection });
+      } else if (exerciseId) {
+        setActiveFocus({ id: exerciseId, exercise_id: exerciseId, section: foundSection });
+      }
+      setIsRestoringFocus(false);
+    }
+  }, [sectionExercises, activeFocus]);
 
   // Resolve focus when exercises are loaded (for restoration)
   useEffect(() => {
-    if (isRestoringFocus && focusedExercise && focusedExercise.section === null) {
-      const key = getExerciseKey(focusedExercise);
+    if (isRestoringFocus && activeFocus && activeFocus.section === null) {
+      const key = getExerciseKey(activeFocus);
       const { exercise, section: foundSection } = key
         ? findExerciseInSections(key, sectionExercises)
         : { exercise: null, section: null };
       
       if (exercise) {
-        setFocusedExercise({ ...exercise, section: foundSection });
+        setActiveFocus({ ...exercise, section: foundSection });
         setIsRestoringFocus(false);
       } else {
         // Exercise still not found in any section, clear restoring flag
         setIsRestoringFocus(false);
       }
     }
-  }, [sectionExercises, focusedExercise, isRestoringFocus]);
+  }, [sectionExercises, activeFocus, isRestoringFocus]);
 
   // Use the dedicated auto focus hook
   const { handleSectionComplete } = useWorkoutAutoFocus({
@@ -342,7 +363,9 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     sectionExercises,
     loadedSections,
     completedExercises,
-    focusedExercise,
+    focusedExercise, // Alias to activeFocus for backward compatibility
+    activeFocus,
+    persistedFocus,
     isRestoringFocus,
     
     // Actions
@@ -354,11 +377,14 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     setSwipeAnimationRunning: (running: boolean) => {
       isSwipeAnimationRunningRef.current = running;
       if (!running && queuedFocusRef.current) {
-        const { exerciseId, section } = queuedFocusRef.current;
+        const { exerciseId, section, source } = queuedFocusRef.current;
         queuedFocusRef.current = null;
         // Apply the queued focus now that animations are done
-        setFocusedExerciseId(exerciseId, section);
+        setFocusedExerciseId(exerciseId, section, source);
       }
+    },
+    setUpdateLastExercise: (callback: (workoutExerciseId: string) => Promise<void>) => {
+      updateLastExerciseRef.current = callback;
     },
     handleSectionComplete,
     

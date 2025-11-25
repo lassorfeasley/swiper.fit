@@ -38,22 +38,12 @@ export const useAutoScroll = ({
   // older focus target, preventing \"scroll to old card, then back to new card\"
   // glitches when focus changes quickly.
   const latestFocusedIdRef = useRef<string | number | null>(null);
-  // Track the actual current focusedId prop value (including null during transitions).
-  // This allows us to block all scrolls when we're in a transition state.
-  const currentFocusedIdRef = useRef<string | number | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef<number>(0);
   const lastScrollTimeRef = useRef<number>(0);
   const recenterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToElement = (elementId: string | number): void => {
-    // Block ALL scrolls when we're in a transition state (focusedId is null).
-    // This prevents retry timeouts or other in-flight scrolls from executing
-    // during card collapse transitions.
-    if (currentFocusedIdRef.current === null) {
-      return;
-    }
-    
     // Ignore scroll requests for stale focus targets
     if (latestFocusedIdRef.current !== null && elementId !== latestFocusedIdRef.current) {
       return;
@@ -119,9 +109,6 @@ export const useAutoScroll = ({
   };
 
   useEffect(() => {
-    // Update the current focusedId ref to always reflect the prop value (including null)
-    currentFocusedIdRef.current = focusedId;
-    
     // Clear any existing timeouts
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);

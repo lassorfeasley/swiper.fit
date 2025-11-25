@@ -39,14 +39,24 @@ const ActiveWorkoutContent: React.FC = () => {
   } = useActiveWorkout();
 
   const {
-    focusedExercise,
+    focusedExercise, // Alias to activeFocus for backward compatibility
+    activeFocus,
+    persistedFocus,
     setFocusedExerciseId,
     handleSectionComplete: navigationHandleSectionComplete,
     isWorkoutComplete,
     getProgressStats,
     sectionExercises,
-    loadedSections
+    loadedSections,
+    setUpdateLastExercise
   } = useWorkoutNavigation();
+  
+  // Register the DB update callback with the context
+  useEffect(() => {
+    if (updateLastExercise && setUpdateLastExercise) {
+      setUpdateLastExercise(updateLastExercise);
+    }
+  }, [updateLastExercise, setUpdateLastExercise]);
 
   // Remove user activity tracking - simplified approach
   const [search, setSearch] = useState("");
@@ -105,7 +115,7 @@ const ActiveWorkoutContent: React.FC = () => {
   // Use the dedicated autoscroll hook
   // Increase retries and delay for restoration to ensure element is found
   useAutoScroll({
-    focusedId: focusedExercise?.exercise_id || null,
+    focusedId: activeFocus?.exercise_id || null,
     elementPrefix: 'exercise-',
     viewportPosition: 0.2,
     scrollBehavior: 'smooth',
@@ -121,131 +131,26 @@ const ActiveWorkoutContent: React.FC = () => {
     // a second adjustment 5 seconds later.
     initialScrollDelayMs: 550
   });
-  // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
-  const isRestoringFocusRef = useRef(false);
-  const didWarmupOverrideRef = useRef(false);
-  // Track if we've ever had a focused exercise to prevent fallback from running during transitions
-  const hasEverFocusedRef = useRef(false);
-  
-  // Reset restoration flag when workout changes
+  // Check if exercises are loaded (all sections have loaded)
+  const exercisesLoaded = Object.values(loadedSections).every(loaded => loaded === true);
+
+  // Single simple restoration rule: Restore focus when exercises are loaded
   useEffect(() => {
-    isRestoringFocusRef.current = false;
-    hasEverFocusedRef.current = false;
-  }, [activeWorkout?.id]);
-
-  // Track if we've ever had a focused exercise
-  useEffect(() => {
-    if (focusedExercise && !hasEverFocusedRef.current) {
-      hasEverFocusedRef.current = true;
-    }
-  }, [focusedExercise]);
-
-  
-  useEffect(() => {
-    if (!activeWorkout?.id) return;
-
-    // Prevent multiple restoration attempts
-    if (isRestoringFocusRef.current) return;
-
-    // Fresh workout: only prefer warmup if there's no last_workout_exercise_id (truly new workout)
-    const isFreshWorkout = (elapsedTime ?? 0) < 120;
-    if (isFreshWorkout && !didWarmupOverrideRef.current && !activeWorkout?.last_workout_exercise_id) {
-      if (!loadedSections?.warmup) return; // wait until we know if warmup exists
-      const warm = sectionExercises?.warmup || [];
-      if (warm.length > 0) {
-        const firstWarm = warm[0];
-        isRestoringFocusRef.current = true;
-        didWarmupOverrideRef.current = true;
-        const focusId = firstWarm.id || firstWarm.exercise_id;
-        if (focusId) {
-          setFocusedExerciseId(focusId, 'warmup');
-        }
-        try {
-          if (firstWarm.id) updateLastExercise(firstWarm.id);
-        } catch (_) {}
-        // Reset restoration flag after a short delay to allow real-time syncs
-        setTimeout(() => {
-          isRestoringFocusRef.current = false;
-        }, 500);
-        return;
-      }
-      // If no warmup, fall through to training/cooldown order
-    }
-
-    // Standard restore flow - restore to last opened exercise
-    const timer = setTimeout(() => {
-      if (activeWorkout?.last_workout_exercise_id) {
-        // Find the exercise by workout_exercise.id (stored in last_workout_exercise_id)
-        // and get its exercise_id to set focus
-        let foundExercise = null;
-        let foundSection = null;
-        
-        const sections = ['warmup', 'training', 'cooldown'];
-        for (const section of sections) {
-          const exercises = sectionExercises[section] || [];
-          foundExercise = exercises.find(ex => ex.id === activeWorkout.last_workout_exercise_id);
-          if (foundExercise) {
-            foundSection = section;
-            break;
-          }
-        }
-        
-        if (foundExercise) {
-          isRestoringFocusRef.current = true;
-          const focusId = foundExercise.id || foundExercise.exercise_id;
-          if (focusId) {
-            setFocusedExerciseId(focusId, foundSection || undefined);
-          }
-          // Reset restoration flag after a short delay to allow real-time syncs
-          setTimeout(() => {
-            isRestoringFocusRef.current = false;
-          }, 500);
-        }
-        // Exercise not loaded yet, will be handled by the reactive restoration effect
-      } else {
-        // No last exercise, focus on first exercise of first available section
-        const order = ['warmup', 'training', 'cooldown'];
-        for (const section of order) {
-          if (!loadedSections[section]) return;
-          const exercises = sectionExercises[section] || [];
-          if (exercises.length > 0) {
-            const firstExercise = exercises[0];
-            isRestoringFocusRef.current = true;
-            const focusId = firstExercise.id || firstExercise.exercise_id;
-            if (focusId) {
-              setFocusedExerciseId(focusId, section);
-            }
-            // Reset restoration flag after a short delay to allow real-time syncs
-            setTimeout(() => {
-              isRestoringFocusRef.current = false;
-            }, 500);
-            break;
-          }
-        }
-      }
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [activeWorkout?.id, elapsedTime, loadedSections?.warmup, loadedSections?.training, loadedSections?.cooldown, sectionExercises, setFocusedExerciseId, updateLastExercise]);
-
-  // Reactive trigger: Restore focus as soon as sections have loaded exercises
-  useEffect(() => {
-    // If we've enforced warmup-first, don't revert to last_workout_exercise_id
-    if (didWarmupOverrideRef.current) return;
-    if (!activeWorkout?.last_workout_exercise_id || isRestoringFocusRef.current) return;
+    if (!activeWorkout?.id || !exercisesLoaded) return;
     
-    // Check if any sections have loaded exercises
-    const hasExercises = Object.values(sectionExercises).some(exercises => exercises.length > 0);
+    // If we already have active focus, don't restore
+    if (activeFocus) return;
     
-    if (hasExercises) {
-      // Find the exercise by workout_exercise.id and get its exercise_id
+    // Try to restore from persistedFocus (DB value)
+    if (persistedFocus) {
+      // Find the exercise by workout_exercise.id
       let foundExercise = null;
       let foundSection = null;
       
       const sections = ['warmup', 'training', 'cooldown'];
       for (const section of sections) {
         const exercises = sectionExercises[section] || [];
-        foundExercise = exercises.find(ex => ex.id === activeWorkout.last_workout_exercise_id);
+        foundExercise = exercises.find(ex => ex.id === persistedFocus);
         if (foundExercise) {
           foundSection = section;
           break;
@@ -253,76 +158,46 @@ const ActiveWorkoutContent: React.FC = () => {
       }
       
       if (foundExercise) {
-        // Sections are ready, restore focus with a small delay to avoid render-phase state updates
-        isRestoringFocusRef.current = true;
-        
-        // Use setTimeout to defer the state update to the next tick
-        setTimeout(() => {
-          const focusId = foundExercise.id || foundExercise.exercise_id;
-          if (focusId) {
-            setFocusedExerciseId(focusId, foundSection || undefined);
-          }
-          // Reset restoration flag after focus is set to allow real-time syncs
-          setTimeout(() => {
-            isRestoringFocusRef.current = false;
-          }, 500);
-        }, 100);
-      }
-    }
-  }, [sectionExercises, activeWorkout?.last_workout_exercise_id, setFocusedExerciseId]);
-
-  // Fallback rule: If no exercise is focused, focus the first exercise of the first section
-  // BUT only if we have an active workout (otherwise we're just loading)
-  // AND only if we haven't ever had focus (to prevent interfering with card transitions)
-  useEffect(() => {
-    if (
-      !focusedExercise &&
-      !isRestoringFocusRef.current &&
-      activeWorkout?.id &&
-      !hasEverFocusedRef.current
-    ) {
-      // Prefer warmup once it has loaded. Do not skip ahead unless warmup loaded and is empty.
-      const order = ['warmup', 'training', 'cooldown'];
-      for (const section of order) {
-        if (!loadedSections[section]) {
-          return; // wait for this section (especially warmup) to load
+        const focusId = foundExercise.id || foundExercise.exercise_id;
+        if (focusId) {
+          setFocusedExerciseId(focusId, foundSection || undefined, 'restore');
         }
-        const exercises = sectionExercises[section] || [];
-        if (exercises.length > 0) {
-          const firstExercise = exercises[0];
-          const focusId = firstExercise.id || firstExercise.exercise_id;
-          if (focusId) {
-            setFocusedExerciseId(focusId, section);
-          }
-          break;
-        }
-        // if loaded and empty, continue
+        return;
       }
-    }
-  }, [sectionExercises, loadedSections, focusedExercise, setFocusedExerciseId, activeWorkout?.id]);
-
-  // Real-time focus synchronization: Watch for changes to last_workout_exercise_id from other devices
-  const lastSyncedExerciseIdRef = useRef<string | null>(null);
-  
-  // Reset sync tracking when workout changes
-  useEffect(() => {
-    lastSyncedExerciseIdRef.current = null;
-  }, [activeWorkout?.id]);
-  
-  useEffect(() => {
-    // Skip if we're in the middle of restoring focus (initial load)
-    // BUT allow sync if this is a real-time update (lastSyncedId is not null, meaning we've synced before)
-    // This prevents blocking real-time updates during initial restoration
-    if (isRestoringFocusRef.current && lastSyncedExerciseIdRef.current === null) {
-      return;
     }
     
+    // No persisted focus, or exercise not found - fallback to first exercise
+    // Prefer warmup for fresh workouts
+    const isFreshWorkout = (elapsedTime ?? 0) < 120;
+    const order = isFreshWorkout ? ['warmup', 'training', 'cooldown'] : ['warmup', 'training', 'cooldown'];
+    
+    for (const section of order) {
+      const exercises = sectionExercises[section] || [];
+      if (exercises.length > 0) {
+        const firstExercise = exercises[0];
+        const focusId = firstExercise.id || firstExercise.exercise_id;
+        if (focusId) {
+          setFocusedExerciseId(focusId, section, 'restore');
+        }
+        break;
+      }
+    }
+  }, [exercisesLoaded, activeFocus, persistedFocus, sectionExercises, activeWorkout?.id, elapsedTime, setFocusedExerciseId]);
+
+  // Real-time focus synchronization: Update persistedFocus when DB changes
+  // The context will handle applying it to activeFocus only if user is idle
+  useEffect(() => {
     // Skip if no workout or no last_workout_exercise_id
     if (!activeWorkout?.last_workout_exercise_id) {
       return;
     }
     
-    // Find the exercise by workout_exercise.id to get its exercise_id
+    // Skip if persistedFocus already matches (we're in sync)
+    if (persistedFocus === activeWorkout.last_workout_exercise_id) {
+      return;
+    }
+    
+    // Find the exercise by workout_exercise.id
     let foundExercise = null;
     let foundSection = null;
     
@@ -337,29 +212,16 @@ const ActiveWorkoutContent: React.FC = () => {
     }
     
     if (!foundExercise) {
-      // Exercise not loaded yet, skip for now
+      // Exercise not loaded yet, skip for now (will retry when exercises load)
       return;
     }
     
-    // Skip if focused exercise already matches the database value (we're already in sync)
-    // This handles both cases: we just updated it ourselves, or we already synced it
-    if (focusedExercise && (focusedExercise.id === foundExercise.id || focusedExercise.exercise_id === foundExercise.exercise_id)) {
-      lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
-      return;
-    }
-    
-    // Skip if we just synced to this exercise (prevent loops)
-    if (lastSyncedExerciseIdRef.current === activeWorkout.last_workout_exercise_id) {
-      return;
-    }
-    
-    // This is a real-time update from another device - sync the focus
-    lastSyncedExerciseIdRef.current = activeWorkout.last_workout_exercise_id;
+    // Update via sync - context will handle echo detection and idle checking
     const focusId = foundExercise.id || foundExercise.exercise_id;
     if (focusId) {
-      setFocusedExerciseId(focusId, foundSection || undefined);
+      setFocusedExerciseId(focusId, foundSection || undefined, 'sync');
     }
-  }, [activeWorkout?.last_workout_exercise_id, focusedExercise?.exercise_id, setFocusedExerciseId, sectionExercises]);
+  }, [activeWorkout?.last_workout_exercise_id, persistedFocus, setFocusedExerciseId, sectionExercises]);
 
   const handleEndWorkout = () => {
     setEndConfirmOpen(true);
@@ -511,21 +373,18 @@ const ActiveWorkoutContent: React.FC = () => {
         <ActiveWorkoutSection
           section="warmup"
           onSectionComplete={handleSectionComplete}
-          onUpdateLastExercise={updateLastExercise}
         />
 
         {/* Training Section */}
         <ActiveWorkoutSection
           section="training"
           onSectionComplete={handleSectionComplete}
-          onUpdateLastExercise={updateLastExercise}
         />
 
         {/* Cooldown Section */}
         <ActiveWorkoutSection
           section="cooldown"
           onSectionComplete={handleSectionComplete}
-          onUpdateLastExercise={updateLastExercise}
           isLastSection={true}
         />
       </div>

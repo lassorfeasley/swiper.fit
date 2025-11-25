@@ -28,7 +28,6 @@ import {
 const ActiveWorkoutSection = ({
   section,
   onSectionComplete,
-  onUpdateLastExercise,
   isLastSection = false,
 }) => {
   const { activeWorkout, markSetManuallyCompleted, markSetToasted, isSetToasted, isPaused } = useActiveWorkout();
@@ -407,19 +406,10 @@ const ActiveWorkoutSection = ({
   // Internal focus change logic
   const changeFocus = useCallback(
     (newWorkoutExerciseId, overrideExercises = null) => {
-      // Set global focus immediately
-      setFocusedExerciseId(newWorkoutExerciseId, section);
-
-      const sourceExercises = overrideExercises ?? exercises;
-      const exercise = sourceExercises.find(
-        (ex) => ex.id === newWorkoutExerciseId || ex.workoutExerciseId === newWorkoutExerciseId
-      );
-      // Only update database if this is a user-initiated focus change, not restoration
-      if (exercise?.id && onUpdateLastExercise && !isRestoringFocus) {
-        onUpdateLastExercise(exercise.id);
-      }
+      // Set global focus with source: 'user' - context will handle DB write
+      setFocusedExerciseId(newWorkoutExerciseId, section, 'user');
     },
-    [exercises, onUpdateLastExercise, setFocusedExerciseId, section, isRestoringFocus]
+    [setFocusedExerciseId, section]
   );
 
   // Handle set completion
