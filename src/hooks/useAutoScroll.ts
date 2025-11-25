@@ -101,34 +101,77 @@ export const useAutoScroll = ({
     // Reset retry count on successful element find
     retryCountRef.current = 0;
 
+    // Check if element height is stable (not still expanding/collapsing)
+    // This ensures we measure and scroll when the card is at its final size
     const elementRect = element.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const elementTop = elementRect.top + window.pageYOffset;
+    const currentHeight = elementRect.height;
     
-    // Calculate target scroll position so that the TOP of the element
-    // sits at viewportPosition * viewportHeight from the top of the viewport.
-    const targetScrollTop = elementTop - (viewportHeight * viewportPosition);
+    // Wait a short time and check if height changed (element still animating)
+    const heightCheckDelay = 100; // Check after 100ms
+    const heightStabilityThreshold = 2; // Allow 2px tolerance for sub-pixel rendering
     
-    // Check if element is already in the desired position
-    const currentScrollTop = window.pageYOffset;
-    const scrollDifference = Math.abs(currentScrollTop - targetScrollTop);
-    
-    if (scrollDifference < recenterThresholdPx) {
-      return; // Already positioned correctly
-    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      // Re-check if this is still the target (might have changed during delay)
+      if (latestFocusedIdRef.current !== null && elementId !== latestFocusedIdRef.current) {
+        return; // Focus changed, abort
+      }
+      
+      const checkElement = document.getElementById(fullId);
+      if (!checkElement) {
+        // Element disappeared, retry
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          scrollTimeoutRef.current = setTimeout(() => {
+            scrollToElement(elementId);
+          }, debounceMs);
+        }
+        return;
+      }
+      
+      const checkRect = checkElement.getBoundingClientRect();
+      const newHeight = checkRect.height;
+      const heightChanged = Math.abs(newHeight - currentHeight) > heightStabilityThreshold;
+      
+      if (heightChanged) {
+        // Height is still changing (card expanding/collapsing), retry after a bit
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          scrollTimeoutRef.current = setTimeout(() => {
+            scrollToElement(elementId);
+          }, debounceMs);
+        }
+        return;
+      }
+      
+      // Height is stable - proceed with scroll measurement and execution
+      const viewportHeight = window.innerHeight;
+      const elementTop = checkRect.top + window.pageYOffset;
+      
+      // Calculate target scroll position so that the TOP of the element
+      // sits at viewportPosition * viewportHeight from the top of the viewport.
+      const targetScrollTop = elementTop - (viewportHeight * viewportPosition);
+      
+      // Check if element is already in the desired position
+      const currentScrollTop = window.pageYOffset;
+      const scrollDifference = Math.abs(currentScrollTop - targetScrollTop);
+      
+      if (scrollDifference < recenterThresholdPx) {
+        return; // Already positioned correctly
+      }
 
-    // Perform the scroll with custom smooth animation for better UX
-    if (scrollBehavior === 'smooth') {
-      smoothScrollTo(targetScrollTop, 600); // 600ms custom eased animation
-    } else {
-      window.scrollTo({
-        top: targetScrollTop,
-        behavior: scrollBehavior
-      });
-    }
+      // Perform the scroll with custom smooth animation for better UX
+      if (scrollBehavior === 'smooth') {
+        smoothScrollTo(targetScrollTop, 600); // 600ms custom eased animation
+      } else {
+        window.scrollTo({
+          top: targetScrollTop,
+          behavior: scrollBehavior
+        });
+      }
 
-    lastScrollTimeRef.current = Date.now();
-    onScrolled?.();
+      lastScrollTimeRef.current = Date.now();
+      onScrolled?.();
+    }, heightCheckDelay);
   };
 
   const clearRecentering = (): void => {

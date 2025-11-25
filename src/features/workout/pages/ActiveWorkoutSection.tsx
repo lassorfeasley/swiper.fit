@@ -38,7 +38,8 @@ const ActiveWorkoutSection = ({
     completedExercises: globalCompletedExercises,
     focusedExercise,
     setFocusedExerciseId,
-    isRestoringFocus
+    isRestoringFocus,
+    sectionExercises: allSectionExercises
   } = useWorkoutNavigation();
 
   // Local state for this section's exercises
@@ -473,41 +474,91 @@ const ActiveWorkoutSection = ({
     }
   };
 
+  // Helper function to check if an exercise has incomplete sets
+  const hasIncompleteSets = useCallback((exercise) => {
+    if (!exercise?.setConfigs || exercise.setConfigs.length === 0) {
+      return false;
+    }
+    return exercise.setConfigs.some(
+      (set) => set.status !== "complete" && set.status !== "hidden"
+    );
+  }, []);
+
   // Handle exercise completion
   const handleExerciseComplete = useCallback((workoutExerciseId) => {
     // Mark as completed in global context
     markExerciseComplete(workoutExerciseId);
 
-    // Keep a local completed set that includes the just-completed exercise immediately
-    const completedNow = new Set(globalCompletedExercises);
-    completedNow.add(workoutExerciseId);
-
-    // Prefer next incomplete lower in the list; if none, go upward; if none, section is complete
+    // Find current exercise and its index
     const currentIndex = exercises.findIndex(
       (ex) => ex.id === workoutExerciseId
     );
-    if (currentIndex !== -1) {
-      for (let i = currentIndex + 1; i < exercises.length; i++) {
-        const ex = exercises[i];
-        if (!completedNow.has(ex.id)) {
-          changeFocus(ex.id);
-          return;
-        }
+    
+    if (currentIndex === -1) {
+      // Exercise not found, do nothing
+      return;
+    }
+
+    // Priority 1: Same section, lower on list (after current - higher index)
+    for (let i = currentIndex + 1; i < exercises.length; i++) {
+      const ex = exercises[i];
+      if (hasIncompleteSets(ex)) {
+        changeFocus(ex.id);
+        return;
       }
-      for (let i = currentIndex - 1; i >= 0; i--) {
-        const ex = exercises[i];
-        if (!completedNow.has(ex.id)) {
-          changeFocus(ex.id);
+    }
+
+    // Priority 2: Same section, higher on list (before current - lower index)
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      const ex = exercises[i];
+      if (hasIncompleteSets(ex)) {
+        changeFocus(ex.id);
+        return;
+      }
+    }
+
+    // Priority 3: Next section
+    const SECTION_ORDER = ['warmup', 'training', 'cooldown'];
+    const currentSectionIndex = SECTION_ORDER.indexOf(section);
+    if (currentSectionIndex !== -1 && currentSectionIndex < SECTION_ORDER.length - 1) {
+      const nextSection = SECTION_ORDER[currentSectionIndex + 1];
+      const nextSectionExercises = allSectionExercises[nextSection] || [];
+      
+      for (const ex of nextSectionExercises) {
+        if (hasIncompleteSets(ex)) {
+          // Use setFocusedExerciseId directly with target section for cross-section navigation
+          setFocusedExerciseId(ex.id, nextSection, 'user');
           return;
         }
       }
     }
 
-    // No incomplete exercises left in this section
-    // Pass the just-completed exercise ID so handleSectionComplete can account for it
-    // even if the state update hasn't propagated yet
-    onSectionComplete?.(section, workoutExerciseId);
-  }, [globalCompletedExercises, exercises, section, onSectionComplete, changeFocus, markExerciseComplete]);
+    // Priority 4: Previous section(s) - if immediate previous is empty, try the one before that
+    // When going backwards, go to the LAST exercise with incomplete sets (lowest on the list)
+    if (currentSectionIndex > 0) {
+      // Try immediate previous section, then keep going back if empty
+      let prevSectionIndex = currentSectionIndex - 1;
+      while (prevSectionIndex >= 0) {
+        const prevSection = SECTION_ORDER[prevSectionIndex];
+        const prevSectionExercises = allSectionExercises[prevSection] || [];
+        
+        // Loop backwards through exercises to find the last one with incomplete sets
+        for (let i = prevSectionExercises.length - 1; i >= 0; i--) {
+          const ex = prevSectionExercises[i];
+          if (hasIncompleteSets(ex)) {
+            // Use setFocusedExerciseId directly with target section for cross-section navigation
+            setFocusedExerciseId(ex.id, prevSection, 'user');
+            return;
+          }
+        }
+        
+        // If this section had no incomplete sets, try the one before it
+        prevSectionIndex--;
+      }
+    }
+
+    // Priority 5: All sets complete - do nothing (don't call onSectionComplete)
+  }, [exercises, section, changeFocus, markExerciseComplete, allSectionExercises, hasIncompleteSets, setFocusedExerciseId]);
 
   // Handle set press (open edit modal)
   const handleSetPress = (exerciseId, setConfig, index) => {
