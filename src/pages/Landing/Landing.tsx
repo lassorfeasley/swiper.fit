@@ -81,44 +81,44 @@ export default function Landing() {
     </div>
 
     {/* Desktop Layout - Hidden on mobile, visible on md+ breakpoints */}
-    <div className="hidden md:block w-full bg-stone-100 pt-20">
-
-        {/* Main Content - at least viewport height minus navbar; footer flows below */}
-        <div
-          className="w-full max-w-[1643px] mx-auto px-16 flex justify-center items-stretch gap-6 md:gap-12 lg:gap-24 min-h-0"
-          style={{ minHeight: 'calc(100vh - 44px)' }}
-        >
-          {/* Demo Workout Section - spans full height */}
-          <div className="w-full max-w-[450px] min-w-80 h-full flex flex-col justify-start items-stretch">
-            <DemoWorkoutSection />
-          </div>
-          
-          {/* Text Content Section */}
-          <div className="w-full max-w-[500px] min-w-72 flex flex-col justify-center items-start gap-2.5">
-            <div className="w-full max-w-96 flex flex-col justify-start items-start gap-2">
-              <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">Log workouts effortlessly.</div>
-              <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">Enter your routine and start a workout. Never miss an exercise and track your progress with AI.</div>
-            </div>
-          </div>
+    <div className="hidden md:block w-full bg-stone-100 pt-16">
+      {/* Main Content - content-based height; footer flows below */}
+      <div className="w-full max-w-[1643px] mx-auto px-16 pb-16 flex justify-center items-stretch gap-6 md:gap-12 lg:gap-24">
+        {/* Demo Workout Section - content-height */}
+        <div className="w-full max-w-[450px] min-w-80 flex flex-col justify-start items-stretch">
+          <DemoWorkoutSection />
         </div>
-
-        <CollaborateSection className="hidden md:block border-t border-white bg-stone-100" />
-
-        {/* Footer */}
-        <div className="w-full h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
-          <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
-            Developed by Lassor
-          </div>
-          <div className="self-stretch flex flex-col justify-start items-start gap-1">
-            <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-              www.Lassor.com
+        
+        {/* Text Content Section */}
+        <div className="w-full max-w-[500px] min-w-72 flex flex-col justify-center items-start gap-2.5">
+          <div className="w-full max-w-96 flex flex-col justify-start items-start gap-2">
+            <div className="self-stretch justify-start text-neutral-neutral-700 text-2xl font-bold font-['Be_Vietnam_Pro'] leading-loose">
+              Log workouts effortlessly.
             </div>
-            <div className="w-56 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
-              Feasley@Lassor.com
+            <div className="self-stretch justify-start text-neutral-neutral-500 text-base font-medium font-['Be_Vietnam_Pro'] leading-tight">
+              Enter your routine and start a workout. Never miss an exercise and track your progress with AI.
             </div>
           </div>
         </div>
       </div>
+
+      <CollaborateSection className="hidden md:block border-t border-white bg-stone-100" />
+
+      {/* Footer */}
+      <div className="w-full h-36 px-3 pt-3 pb-24 bg-white border-t border-neutral-neutral-300 flex flex-col justify-start items-start gap-3">
+        <div className="self-stretch min-w-36 justify-start text-neutral-neutral-500 text-xs font-bold font-['Be_Vietnam_Pro'] leading-none">
+          Developed by Lassor
+        </div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            www.Lassor.com
+          </div>
+          <div className="w-56 justify-start text-neutral-neutral-500 text-xs font-medium font-['Be_Vietnam_Pro'] leading-none">
+            Feasley@Lassor.com
+          </div>
+        </div>
+      </div>
+    </div>
     </DemoWorkoutProvider>
     </>
   );

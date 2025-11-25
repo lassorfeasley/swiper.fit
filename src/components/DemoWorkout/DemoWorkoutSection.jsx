@@ -105,23 +105,19 @@ export default function DemoWorkoutSection() {
   const setEditFormRef = useRef(null);
 
   return (
-    <div className="w-full bg-transparent h-full">
-      {/* Exercise Cards Container - flexible height, scroll within on mobile */}
-      <div 
-        className="w-full demo-workout-container flex-1 h-full min-h-0 flex flex-col items-center justify-start overflow-y-visible px-0"
+    <div className="w-full bg-transparent">
+      {/* Exercise Cards Container - flexible, content-based height on desktop */}
+      <div
+        className="w-full demo-workout-container flex flex-col items-center justify-start overflow-y-visible px-0"
       >
         <DeckWrapper
           gap={12}
-          className="flex flex-1 justify-center items-start h-full"
-          paddingTop={40}
+          className="flex justify-center items-start"
+          paddingTop={100}
           paddingBottom={0}
           maxWidth={500}
           minWidth={0}
           useChildMargin={true}
-          style={{ 
-            minHeight: '100vh'
-          }}
-
         >
           {trainingExercises.map((exercise, index) => {
             const isFocused = focusedExerciseId === exercise.exercise_id;
