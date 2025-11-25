@@ -450,14 +450,13 @@ const Account = () => {
         return {
           ...request,
           profiles: profile || (request.delegate_email ? { email: request.delegate_email } : null),
+          source: 'legacy' as const,
         };
       })
     );
 
     const now = new Date();
-    return requestsWithProfiles
-      .filter((request) => new Date(request.expires_at).getTime() > now.getTime())
-      .map((request) => ({ ...request, source: 'legacy' as const }));
+    return requestsWithProfiles.filter((request) => new Date(request.expires_at).getTime() > now.getTime());
   };
 
   const mapTokenOutgoingInvitation = (invite) => {
@@ -466,6 +465,8 @@ const Account = () => {
     return {
       id: invite.id,
       delegate_email: invite.recipient_email,
+      owner_user_id: invite.inviter_id || null,
+      delegate_user_id: invite.recipient_user_id || null,
       request_type: requestType,
       status: invite.status,
       created_at: invite.created_at,
@@ -478,6 +479,12 @@ const Account = () => {
     };
   };
 
+  const buildOutgoingKey = (request) => {
+    const owner = request.owner_user_id || user?.id || 'owner:unknown';
+    const delegate = request.delegate_user_id || request.delegate_email || 'delegate:unknown';
+    return `${request.request_type}:${owner}:${delegate}`.toLowerCase();
+  };
+
   const outgoingRequestsQuery = useQuery({
     queryKey: ["outgoing_requests", user?.id],
     queryFn: async () => {
@@ -487,7 +494,9 @@ const Account = () => {
         getOutgoingInvitations(),
       ]);
       const mappedTokenInvitations = tokenInvitations.map(mapTokenOutgoingInvitation);
-      return [...legacyRequests, ...mappedTokenInvitations];
+      const tokenKeys = new Set(mappedTokenInvitations.map(buildOutgoingKey));
+      const filteredLegacy = legacyRequests.filter((request) => !tokenKeys.has(buildOutgoingKey(request)));
+      return [...mappedTokenInvitations, ...filteredLegacy];
     },
     enabled: !!user?.id,
   });
@@ -623,9 +632,17 @@ const Account = () => {
       queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
       toast.success("Request accepted successfully");
     },
-    onError: (error) => {
+    onError: (error, request) => {
       console.error("Error accepting request:", error);
       toast.error(error.message || "Failed to accept request");
+      try {
+        postSlackEvent('invitation.accept.error', {
+          stage: 'account-accept',
+          error: error?.message || 'Unknown error',
+          request_id: request?.id,
+          source: request?.source || 'legacy',
+        });
+      } catch (_) {}
     },
   });
 
@@ -641,9 +658,17 @@ const Account = () => {
       queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
       toast.success("Request declined");
     },
-    onError: (error) => {
+    onError: (error, request) => {
       console.error("Error declining request:", error);
       toast.error(error.message || "Failed to decline request");
+      try {
+        postSlackEvent('invitation.accept.error', {
+          stage: 'account-decline',
+          error: error?.message || 'Unknown error',
+          request_id: request?.id,
+          source: request?.source || 'legacy',
+        });
+      } catch (_) {}
     },
   });
 

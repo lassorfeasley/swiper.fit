@@ -39,6 +39,17 @@ interface AccountShare {
   invite_token?: string;
 }
 
+function buildShareKey(input: {
+  request_type: string;
+  owner_user_id?: string | null;
+  delegate_user_id?: string | null;
+  delegate_email?: string | null;
+}): string {
+  const owner = input.owner_user_id || 'owner:unknown';
+  const delegate = input.delegate_user_id || input.delegate_email || 'delegate:unknown';
+  return `${input.request_type}:${owner}:${delegate}`.toLowerCase();
+}
+
 interface InvitationSummary {
   id: string;
   token?: string;
@@ -415,7 +426,11 @@ export async function getPendingInvitations(userId: string): Promise<AccountShar
       fetchLegacyPendingInvitations(userId),
       mapIncomingTokenInvitations(userId),
     ]);
-    return [...legacyInvites, ...tokenInvites];
+
+    const tokenKeys = new Set(tokenInvites.map((invite) => buildShareKey(invite)));
+    const filteredLegacy = legacyInvites.filter((invite) => !tokenKeys.has(buildShareKey(invite)));
+
+    return [...filteredLegacy, ...tokenInvites];
   } catch (error) {
     console.error("getPendingInvitations error:", error);
     throw error;

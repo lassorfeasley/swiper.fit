@@ -106,6 +106,58 @@ export function formatEvent(eventKey, contextData = {}, data = {}) {
         ],
       };
 
+    case 'invitation.created':
+      return {
+        text: `Invitation created (${env})`,
+        blocks: [
+          header('✉️ Invitation Created'),
+          sectionMarkdown([
+            data.invitationId ? `• invitation: ${asCode(data.invitationId)}` : null,
+            data.inviterId ? `• inviter: ${asCode(data.inviterId)}` : null,
+            data.inviteeEmail ? `• invitee: ${asCode(data.inviteeEmail)}` : null,
+            data.intendedRole ? `• role: ${asCode(data.intendedRole)}` : null,
+          ].filter(Boolean).join('\n')),
+          divider(),
+          context(commonContext),
+        ],
+      };
+
+    case 'invitation.email_send_failed':
+    case 'invitation.email_request_exception':
+      return {
+        text: `Invitation email issue (${env})`,
+        blocks: [
+          header('🚨 Invitation Email Failure'),
+          sectionMarkdown([
+            `• event: ${asCode(eventKey.split('.').pop())}`,
+            data.to ? `• to: ${asCode(data.to)}` : null,
+            data.event ? `• template: ${asCode(data.event)}` : null,
+            data.status ? `• status: ${asCode(data.status)}` : null,
+            data.error ? `• error: ${asCode(data.error)}` : null,
+          ].filter(Boolean).join('\n')),
+          divider(),
+          context(commonContext),
+        ],
+      };
+
+    case 'invitation.error':
+    case 'invitation.accept.error':
+      return {
+        text: `Invitation error (${env})`,
+        blocks: [
+          header('⚠️ Invitation Error'),
+          sectionMarkdown([
+            data.stage ? `• stage: ${asCode(data.stage)}` : null,
+            data.request_id ? `• request: ${asCode(data.request_id)}` : null,
+            data.source ? `• source: ${asCode(data.source)}` : null,
+            data.reason ? `• reason: ${asCode(data.reason)}` : null,
+            data.error ? `• error: ${asCode(data.error)}` : null,
+          ].filter(Boolean).join('\n')),
+          divider(),
+          context(commonContext),
+        ],
+      };
+
     case 'routine.copied_from_share':
       return {
         text: `Routine copied via share (${env})`,

@@ -14,6 +14,34 @@ const EMAIL_ENDPOINT_BASE = process.env.INTERNAL_EMAIL_BASE_URL || SITE_URL;
 
 const ALLOWED_ROLES = new Set(['manager', 'managed']);
 
+let slackNotifierPromise = null;
+
+async function notifyInviteSlack(eventKey, payload = {}) {
+  if (!process.env.SLACK_WEBHOOK_URL) return;
+  if (!slackNotifierPromise) {
+    slackNotifierPromise = import('../../server/slack/index.js')
+      .then((mod) => mod.notifySlack)
+      .catch((err) => {
+        console.error('[Invite API] Failed to load Slack notifier', err);
+        return null;
+      });
+  }
+  const notifySlack = await slackNotifierPromise;
+  if (!notifySlack) return;
+  try {
+    await notifySlack(`invitation.${eventKey}`, {
+      env: process.env.VERCEL_ENV || process.env.NODE_ENV || 'local',
+    }, payload);
+  } catch (err) {
+    console.error('[Invite API] Slack notification failed', err);
+  }
+}
+
+async function logInviteEvent(eventKey, payload = {}) {
+  console.log(`[Invite API] ${eventKey}`, payload);
+  await notifyInviteSlack(eventKey, payload);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
@@ -42,10 +70,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     if (error instanceof InviteApiError) {
+      await logInviteEvent('error', { reason: error.message, status: error.status, stage: 'api-handler' });
       return res.status(error.status).json({ error: error.message });
     }
 
     console.error('[Invite API] Unexpected error', error);
+    await logInviteEvent('error', { reason: error?.message || 'Unexpected error', status: 500, stage: 'api-handler' });
     return res.status(500).json({
       error: 'Unexpected server error',
       details: error?.message || 'Unknown error',
@@ -125,6 +155,12 @@ async function handleCreateInvite(req, res, auth) {
 
   if (insertError) {
     console.error('[Invite API] Failed to create invitation', insertError);
+    await logInviteEvent('error', {
+      reason: insertError?.message || 'Insert failed',
+      inviterId,
+      inviteeEmail: normalizedEmail,
+      stage: 'insert',
+    });
     return res.status(500).json({ error: 'Failed to create invitation' });
   }
 
@@ -136,6 +172,13 @@ async function handleCreateInvite(req, res, auth) {
     to: normalizedEmail,
     inviterName,
     acceptUrl,
+  });
+
+  await logInviteEvent('created', {
+    invitationId: newInvitation.id,
+    inviterId,
+    inviteeEmail: normalizedEmail,
+    intendedRole,
   });
 
   return res.status(200).json({
@@ -402,6 +445,11 @@ async function assertNoDuplicatePendingInvite({ intendedRole, inviterId, recipie
   }
 
   if ((count || 0) > 0) {
+    console.warn('[Invite API] Duplicate pending invitation detected', {
+      inviterId,
+      recipientEmail,
+      intendedRole,
+    });
     throw new InviteApiError(409, 'A pending invitation already exists for this email');
   }
 }
@@ -441,9 +489,26 @@ async function sendInviteEmail({ event, to, inviterName, acceptUrl }) {
     if (!result.ok) {
       const errorBody = await result.text();
       console.error('[Invite API] Email send failed', result.status, errorBody);
+      await logInviteEvent('email_send_failed', {
+        status: result.status,
+        to,
+        event,
+        error: errorBody,
+      });
+    } else {
+      await logInviteEvent('email_sent', {
+        status: result.status,
+        to,
+        event,
+      });
     }
   } catch (err) {
     console.error('[Invite API] Email request failed', err);
+    await logInviteEvent('email_request_exception', {
+      to,
+      event,
+      error: err?.message || String(err),
+    });
   }
 }
 

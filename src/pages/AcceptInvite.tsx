@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
+import { postSlackEvent } from '@/lib/slackEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shadcn/button';
 import LoggedOutNav from '@/features/auth/components/LoggedOutNav';
@@ -45,6 +46,12 @@ export default function AcceptInvite() {
       console.error('[AcceptInvite] Failed to accept invitation', error);
       setViewState('error');
       setMessage(error?.message || 'Failed to accept invitation. Please try again.');
+      try {
+        postSlackEvent('invitation.accept.error', {
+          stage: 'accept-invite-page',
+          error: error?.message || 'Unknown error',
+        });
+      } catch (_) {}
     }
   }, []);
 
