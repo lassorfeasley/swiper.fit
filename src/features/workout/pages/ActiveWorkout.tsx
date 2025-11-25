@@ -112,7 +112,11 @@ const ActiveWorkoutContent: React.FC = () => {
     debounceMs: 150,
     maxRetries: 20, // Increase retries for restoration (up to 3 seconds)
     recenterOnIdleMs: 5000,
-    recenterThresholdPx: 40
+    recenterThresholdPx: 40,
+    // Delay the initial scroll slightly so the focused card has time to expand
+    // before we measure and position it. This should make the first scroll
+    // land in the same place as the 5-second recenter.
+    initialScrollDelayMs: 550
   });
   // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
   const isRestoringFocusRef = useRef(false);

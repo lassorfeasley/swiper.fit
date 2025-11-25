@@ -10,6 +10,12 @@ interface AutoScrollOptions {
   recenterOnIdleMs?: number;
   recenterThresholdPx?: number;
   onScrolled?: () => void;
+  /**
+   * Optional delay before performing the initial scroll after a focus change.
+   * This is useful when the focused element animates its height (e.g. cards
+   * expanding/collapsing), so we measure after the layout has settled.
+   */
+  initialScrollDelayMs?: number;
 }
 
 /**
@@ -24,7 +30,8 @@ export const useAutoScroll = ({
   maxRetries = 10,
   recenterOnIdleMs = 5000,
   recenterThresholdPx = 24,
-  onScrolled
+  onScrolled,
+  initialScrollDelayMs = 0
 }: AutoScrollOptions): void => {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef<number>(0);
@@ -101,12 +108,21 @@ export const useAutoScroll = ({
     if (focusedId) {
       // Reset retry count when focusedId changes
       retryCountRef.current = 0;
-      
-      // Scroll to the element
-      scrollToElement(focusedId);
-      
-      // Schedule recentering if configured
-      scheduleRecentering();
+
+      const performScroll = (): void => {
+        // Scroll to the element
+        scrollToElement(focusedId);
+        // Schedule recentering if configured
+        scheduleRecentering();
+      };
+
+      // Optionally delay the first scroll so that animated elements
+      // (like expanding cards) have time to reach their final height.
+      if (initialScrollDelayMs > 0) {
+        scrollTimeoutRef.current = setTimeout(performScroll, initialScrollDelayMs);
+      } else {
+        performScroll();
+      }
     }
 
     // Cleanup function
@@ -116,7 +132,7 @@ export const useAutoScroll = ({
       }
       clearRecentering();
     };
-  }, [focusedId, elementPrefix, viewportPosition, scrollBehavior, debounceMs, maxRetries, recenterOnIdleMs, recenterThresholdPx]);
+  }, [focusedId, elementPrefix, viewportPosition, scrollBehavior, debounceMs, maxRetries, recenterOnIdleMs, recenterThresholdPx, initialScrollDelayMs]);
 
   // Cleanup on unmount
   useEffect(() => {
