@@ -90,7 +90,12 @@ async function callWorkoutMutation(
   for (let attempt = 0; attempt < retryOptions.maxAttempts; attempt += 1) {
     let response: Response | null = null;
     try {
-      response = await fetch('/api/workout/mutation', {
+      const base =
+        typeof window !== 'undefined' && window.location.origin.includes('localhost')
+          ? 'https://www.swiper.fit'
+          : '';
+
+      response = await fetch(`${base}/api/workout/mutation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

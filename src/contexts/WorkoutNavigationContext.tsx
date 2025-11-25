@@ -123,6 +123,10 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
   const [focusedExercise, setFocusedExercise] = useState<FocusedExercise | null>(null);
   // Timeout handle for deferring focus until previous card collapses
   const pendingFocusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track the ID of the exercise we are waiting to focus.
+  // This guards against redundant focus requests (e.g. from real-time sync echoes)
+  // clobbering the transition animation.
+  const pendingFocusIdRef = useRef<string | null>(null);
   // Block focus changes while a swipe completion animation is running
   const isSwipeAnimationRunningRef = useRef<boolean>(false);
   const queuedFocusRef = useRef<{ exerciseId: string; section?: string } | null>(null);
@@ -157,6 +161,22 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
 
   // Set the focused exercise; when switching between different cards, defer until collapse completes
   const setFocusedExerciseId = useCallback((exerciseId: string | null, section?: string) => {
+    const currentFocusedKey = getExerciseKey(focusedExercise);
+
+    // If we're being asked to focus the same exercise that's already focused,
+    // skip work entirely to avoid redundant state updates and autoscroll runs.
+    if (exerciseId && currentFocusedKey === exerciseId) {
+      return;
+    }
+
+    // If we are already in a transition to this exact exercise (pendingFocusIdRef matches),
+    // ignore this request to prevent clobbering the animation timer.
+    // This commonly happens when a local focus change triggers a DB update,
+    // and the real-time subscription echoes that update back immediately.
+    if (pendingFocusTimeoutRef.current && pendingFocusIdRef.current === exerciseId) {
+      return;
+    }
+
     if (isSwipeAnimationRunningRef.current) {
       // Defer and queue the most recent focus request until animation finishes
       queuedFocusRef.current = exerciseId ? { exerciseId, section } : null;
@@ -171,6 +191,9 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
     if (pendingFocusTimeoutRef.current) {
       clearTimeout(pendingFocusTimeoutRef.current);
       pendingFocusTimeoutRef.current = null;
+      // If we force-cleared the timeout (e.g. user tapped a different card),
+      // clear the pending ID too.
+      pendingFocusIdRef.current = null;
     }
 
     const applyFocus = () => {
@@ -197,13 +220,16 @@ export const WorkoutNavigationProvider = ({ children }: WorkoutNavigationProvide
 
     // If switching from one focused exercise to another, first clear focus so the open card collapses,
     // then wait for the collapse animation to finish before focusing the new one.
-    const currentFocusedKey = getExerciseKey(focusedExercise);
     if (currentFocusedKey && currentFocusedKey !== exerciseId) {
       setFocusedExercise(null);
       const delay = (ANIMATION_DURATIONS?.CARD_ANIMATION_DURATION_MS ?? 500);
+      // Track the pending focus target
+      pendingFocusIdRef.current = exerciseId;
+      
       pendingFocusTimeoutRef.current = setTimeout(() => {
         applyFocus();
         pendingFocusTimeoutRef.current = null;
+        pendingFocusIdRef.current = null;
       }, delay);
       return;
     }

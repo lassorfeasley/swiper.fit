@@ -110,22 +110,35 @@ const ActiveWorkoutContent: React.FC = () => {
     viewportPosition: 0.2,
     scrollBehavior: 'smooth',
     debounceMs: 150,
-    maxRetries: 20, // Increase retries for restoration (up to 3 seconds)
+    maxRetries: 20, // Increase retries for restoration (up to ~3 seconds)
+    // Re-enable idle recentering so manual scrolls or late layout shifts
+    // are gently corrected, using the same positioning math as the initial scroll.
     recenterOnIdleMs: 5000,
     recenterThresholdPx: 40,
     // Delay the initial scroll slightly so the focused card has time to expand
     // before we measure and position it. This should make the first scroll
-    // land in the same place as the 5-second recenter.
+    // land in the same place the idle recenter used to land, but without
+    // a second adjustment 5 seconds later.
     initialScrollDelayMs: 550
   });
   // Auto-focus on first exercise when starting a new workout, or restore focus to last exercise
   const isRestoringFocusRef = useRef(false);
   const didWarmupOverrideRef = useRef(false);
+  // Track if we've ever had a focused exercise to prevent fallback from running during transitions
+  const hasEverFocusedRef = useRef(false);
   
   // Reset restoration flag when workout changes
   useEffect(() => {
     isRestoringFocusRef.current = false;
+    hasEverFocusedRef.current = false;
   }, [activeWorkout?.id]);
+
+  // Track if we've ever had a focused exercise
+  useEffect(() => {
+    if (focusedExercise && !hasEverFocusedRef.current) {
+      hasEverFocusedRef.current = true;
+    }
+  }, [focusedExercise]);
 
   
   useEffect(() => {
@@ -260,8 +273,14 @@ const ActiveWorkoutContent: React.FC = () => {
 
   // Fallback rule: If no exercise is focused, focus the first exercise of the first section
   // BUT only if we have an active workout (otherwise we're just loading)
+  // AND only if we haven't ever had focus (to prevent interfering with card transitions)
   useEffect(() => {
-    if (!focusedExercise && !isRestoringFocusRef.current && activeWorkout?.id) {
+    if (
+      !focusedExercise &&
+      !isRestoringFocusRef.current &&
+      activeWorkout?.id &&
+      !hasEverFocusedRef.current
+    ) {
       // Prefer warmup once it has loaded. Do not skip ahead unless warmup loaded and is empty.
       const order = ['warmup', 'training', 'cooldown'];
       for (const section of order) {
