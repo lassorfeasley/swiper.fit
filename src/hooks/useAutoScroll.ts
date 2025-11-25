@@ -42,6 +42,42 @@ export const useAutoScroll = ({
   const retryCountRef = useRef<number>(0);
   const lastScrollTimeRef = useRef<number>(0);
   const recenterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollAnimationFrameRef = useRef<number | null>(null);
+
+  // Custom smooth scroll with easing for a more natural, less jarring animation
+  const smoothScrollTo = (targetY: number, duration: number = 600): void => {
+    // Cancel any existing scroll animation
+    if (scrollAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
+    }
+
+    const startY = window.pageYOffset;
+    const distance = targetY - startY;
+    let startTime: number | null = null;
+
+    // Ease-in-out cubic function for smooth acceleration and deceleration
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    const animateScroll = (currentTime: number) => {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const eased = easeInOutCubic(progress);
+      
+      window.scrollTo(0, startY + distance * eased);
+      
+      if (progress < 1) {
+        scrollAnimationFrameRef.current = requestAnimationFrame(animateScroll);
+      } else {
+        scrollAnimationFrameRef.current = null;
+      }
+    };
+
+    scrollAnimationFrameRef.current = requestAnimationFrame(animateScroll);
+  };
 
   const scrollToElement = (elementId: string | number): void => {
     // Ignore scroll requests for stale focus targets
@@ -81,11 +117,15 @@ export const useAutoScroll = ({
       return; // Already positioned correctly
     }
 
-    // Perform the scroll
-    window.scrollTo({
-      top: targetScrollTop,
-      behavior: scrollBehavior
-    });
+    // Perform the scroll with custom smooth animation for better UX
+    if (scrollBehavior === 'smooth') {
+      smoothScrollTo(targetScrollTop, 600); // 600ms custom eased animation
+    } else {
+      window.scrollTo({
+        top: targetScrollTop,
+        behavior: scrollBehavior
+      });
+    }
 
     lastScrollTimeRef.current = Date.now();
     onScrolled?.();
@@ -109,9 +149,13 @@ export const useAutoScroll = ({
   };
 
   useEffect(() => {
-    // Clear any existing timeouts
+    // Clear any existing timeouts and animations
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
+    }
+    if (scrollAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
     }
     clearRecentering();
 
@@ -147,6 +191,10 @@ export const useAutoScroll = ({
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (scrollAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationFrameRef.current);
+        scrollAnimationFrameRef.current = null;
+      }
       clearRecentering();
     };
   }, [focusedId, elementPrefix, viewportPosition, scrollBehavior, debounceMs, maxRetries, recenterOnIdleMs, recenterThresholdPx, initialScrollDelayMs]);
@@ -156,6 +204,10 @@ export const useAutoScroll = ({
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
+      }
+      if (scrollAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationFrameRef.current);
+        scrollAnimationFrameRef.current = null;
       }
       clearRecentering();
     };
