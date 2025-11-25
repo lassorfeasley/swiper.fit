@@ -313,12 +313,16 @@ async function fetchOutgoingInvitations(inviterId) {
     .from('invitations')
     .select('id, recipient_email, recipient_user_id, intended_role, status, expires_at, created_at, permissions')
     .eq('inviter_id', inviterId)
+    .eq('status', 'pending')
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('[Invite API] Failed to fetch outgoing invitations', error);
     throw new InviteApiError(500, 'Failed to fetch outgoing invitations');
   }
+
+  const pendingCount = (data || []).length;
+  console.log('[Invite API] Outgoing pending invitations', { inviterId, pendingCount });
 
   const recipientIds = Array.from(
     new Set(

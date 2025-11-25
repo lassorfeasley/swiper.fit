@@ -402,63 +402,6 @@ const Account = () => {
     enabled: !!user?.id,
   });
 
-  const fetchLegacyOutgoingRequests = async (userId: string) => {
-    console.log('[Account] Fetching outgoing requests for user:', userId);
-    const { data: requests, error } = await supabase
-      .from("account_shares")
-      .select(`
-        id,
-        owner_user_id,
-        delegate_user_id,
-        delegate_email,
-        request_type,
-        status,
-        created_at,
-        expires_at,
-        can_create_routines,
-        can_start_workouts,
-        can_review_history
-      `)
-      .eq("owner_user_id", userId)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Failed to fetch outgoing requests:", error);
-      throw new Error("Failed to fetch outgoing requests");
-    }
-
-    const requestsWithProfiles = await Promise.all(
-      (requests || []).map(async (request) => {
-        let profile = null;
-        if (request.delegate_user_id) {
-          const { data: fetchedProfile } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, email")
-            .eq("id", request.delegate_user_id)
-            .maybeSingle();
-          profile = fetchedProfile || null;
-        }
-        if (!profile && request.delegate_email) {
-          const { data: fetchedByEmail } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, email")
-            .eq("email", request.delegate_email.toLowerCase())
-            .maybeSingle();
-          profile = fetchedByEmail || null;
-        }
-        return {
-          ...request,
-          profiles: profile || (request.delegate_email ? { email: request.delegate_email } : null),
-          source: 'legacy' as const,
-        };
-      })
-    );
-
-    const now = new Date();
-    return requestsWithProfiles.filter((request) => new Date(request.expires_at).getTime() > now.getTime());
-  };
-
   const mapTokenOutgoingInvitation = (invite) => {
     const requestType = invite.intended_role === 'manager' ? 'trainer_invite' : 'client_invite';
     const perms = invite.permissions || {};
@@ -479,24 +422,12 @@ const Account = () => {
     };
   };
 
-  const buildOutgoingKey = (request) => {
-    const owner = request.owner_user_id || user?.id || 'owner:unknown';
-    const delegate = request.delegate_user_id || request.delegate_email || 'delegate:unknown';
-    return `${request.request_type}:${owner}:${delegate}`.toLowerCase();
-  };
-
   const outgoingRequestsQuery = useQuery({
     queryKey: ["outgoing_requests", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const [legacyRequests, tokenInvitations] = await Promise.all([
-        fetchLegacyOutgoingRequests(user.id),
-        getOutgoingInvitations(),
-      ]);
-      const mappedTokenInvitations = tokenInvitations.map(mapTokenOutgoingInvitation);
-      const tokenKeys = new Set(mappedTokenInvitations.map(buildOutgoingKey));
-      const filteredLegacy = legacyRequests.filter((request) => !tokenKeys.has(buildOutgoingKey(request)));
-      return [...mappedTokenInvitations, ...filteredLegacy];
+      const tokenInvitations = await getOutgoingInvitations();
+      return tokenInvitations.map(mapTokenOutgoingInvitation);
     },
     enabled: !!user?.id,
   });
