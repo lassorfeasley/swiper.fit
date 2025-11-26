@@ -185,20 +185,16 @@ const Account = () => {
   const inviteDialogCopy = {
     trainer: {
       title: "Invite someone to manage you",
-      description: "Send this when you need coaching. The person you invite will be able to build routines, start workouts, and review history according to the permissions below.",
-      helper: "Need a fully mutual relationship? Turn on the toggle to also invite them to let you manage them.",
+      description: "They’ll be able to build routines, start workouts, and review your history when you grant permission. You can also let them invite you back.",
       emailLabel: "Trainer's email",
       mirrorLabel: "Also invite them to let me manage them",
-      mirrorHint: "Creates a second invite so we both manage each other.",
       buttonLabel: "Invite someone to manage you",
     },
     client: {
       title: "Invite someone you will manage",
-      description: "Use this when you want to coach someone else. You control their permissions and can optionally invite them to manage you back.",
-      helper: "Turn on the toggle if you also want them to coach you.",
+      description: "Use this when you want to coach someone else. You’ll be able to build routines and track their progress.",
       emailLabel: "Client's email",
       mirrorLabel: "Also invite them to manage me",
-      mirrorHint: "Creates a second invite where they coach you.",
       buttonLabel: "Invite someone you manage",
     },
   };
@@ -1333,14 +1329,9 @@ const Account = () => {
                                 : `${formatUserDisplay(inviter)} wants to be your trainer`;
 
                               return (
-                                <>
-                                  <div className="text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                                    {heading}
-                                  </div>
-                                  <div className="text-xs font-semibold text-neutral-600 bg-neutral-100 rounded-full px-3 py-1 w-fit">
-                                    {isTrainerInvite ? 'You will manage them' : 'They will manage you'}
-                                  </div>
-                                </>
+                                <div className="text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                                  {heading}
+                                </div>
                               );
                             })()}
                           </div>
@@ -1446,9 +1437,6 @@ const Account = () => {
                                     ? "was invited to be your client"
                                     : "was invited to be your trainer"}
                                 </span>
-                              </div>
-                              <div className="text-xs font-semibold text-neutral-600 bg-neutral-100 rounded-full px-3 py-1">
-                                {request.request_type === 'client_invite' ? 'You will manage them' : 'They will manage you'}
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
                             </div>
@@ -1833,9 +1821,6 @@ const Account = () => {
               <div className="text-sm text-neutral-500 mb-3">
                 {inviteDialogCopy[dialogInviteType].description}
               </div>
-              <div className="text-xs text-neutral-500 mb-3">
-                {inviteDialogCopy[dialogInviteType].helper}
-              </div>
               <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
                 {dialogInviteType === 'client' ? (
                   <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
@@ -1889,9 +1874,6 @@ const Account = () => {
                 onCheckedChange={(checked) => setDialogMirrorInvite(checked)}
                 className="bg-white"
               />
-              <div className="text-xs text-neutral-500 mt-1">
-                {inviteDialogCopy[dialogInviteType].mirrorHint}
-              </div>
             </div>
             <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
               This invitation will expire in {dialogInviteType === 'client' ? '14' : '14'} days.
