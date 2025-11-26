@@ -445,7 +445,18 @@ const Account = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       const tokenInvitations = await getOutgoingInvitations();
-      return tokenInvitations.map(mapTokenOutgoingInvitation);
+      console.log('[Account] Raw token invitations from API:', tokenInvitations.map(inv => ({
+        id: inv.id,
+        intended_role: inv.intended_role,
+        recipient_email: inv.recipient_email
+      })));
+      const mapped = tokenInvitations.map(mapTokenOutgoingInvitation);
+      console.log('[Account] Mapped outgoing invitations:', mapped.map(req => ({
+        id: req.id,
+        request_type: req.request_type,
+        recipient: formatUserDisplay(req.profiles)
+      })));
+      return mapped;
     },
     enabled: !!user?.id,
   });
@@ -1425,7 +1436,16 @@ const Account = () => {
                     </div>
                   )}
                   {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
-                    outgoingRequestsQuery.data.map((request) => (
+                    outgoingRequestsQuery.data.map((request) => {
+                      // Debug logging to diagnose the issue
+                      console.log('[Account] Outgoing request debug:', {
+                        id: request.id,
+                        request_type: request.request_type,
+                        recipient: formatUserDisplay(request.profiles),
+                        source: request.source,
+                        rawInvite: request.source === 'token' ? 'check API response' : 'legacy share'
+                      });
+                      return (
                       <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
                         <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white flex flex-col justify-start items-start gap-3">
                           <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
@@ -1453,7 +1473,8 @@ const Account = () => {
                           </div>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   )}
 
                   {/* Error states */}
