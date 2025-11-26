@@ -1,11 +1,21 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/lib/utils";
 
 const MobileNav: React.FC = () => {
   const navItems = useNavItems();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  const handleItemClick = (e: React.MouseEvent, item: any) => {
+    // If clicking Account while already on /account (possibly with query params), 
+    // force a reset to the main account page
+    if (item.label === "Account" && pathname === '/account') {
+      e.preventDefault();
+      navigate('/account?reset=true', { replace: true });
+    }
+  };
 
   return (
     <div className="md:hidden fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 px-5 pb-4 mobile-nav-fixed">
@@ -17,6 +27,7 @@ const MobileNav: React.FC = () => {
             <div key={item.to} className="flex-1">
               <Link
                 to={item.to}
+                onClick={(e) => handleItemClick(e, item)}
                 className={cn(
                   "flex flex-col justify-center items-center gap-2 w-full",
                   item.disabled && "opacity-50 pointer-events-none"
