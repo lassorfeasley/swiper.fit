@@ -46,6 +46,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import SharingRequests from "@/features/account/components/SharingRequests";
 import TrainersList from "@/features/account/components/TrainersList";
 import ClientsList from "@/features/account/components/ClientsList";
+import InviteDialog from "@/features/account/dialogs/InviteDialog";
+import RoutineSelectionDialog from "@/features/account/dialogs/RoutineSelectionDialog";
 
 const Account = () => {
   const { isDelegated, switchToUser } = useAccount();
@@ -185,21 +187,6 @@ const Account = () => {
   const [showCreateRoutineSheet, setShowCreateRoutineSheet] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState("");
   const createNameInputRef = useRef(null);
-
-  const inviteDialogCopy = {
-    trainer: {
-      title: "Invite someone to manage you",
-      description: "They’ll be able to build routines, start workouts, and review your history when you grant permission. You can also let them invite you back.",
-      emailLabel: "Trainer's email",
-      buttonLabel: "Invite someone to manage you",
-    },
-    client: {
-      title: "Invite someone you will manage",
-      description: "Use this when you want to coach someone else. You’ll be able to build routines and track their progress.",
-      emailLabel: "Client's email",
-      buttonLabel: "Invite someone you manage",
-    },
-  };
 
   // Helper function to format user display name
   const formatUserDisplay = (profile) => {
@@ -745,9 +732,9 @@ const Account = () => {
     }, 100);
   };
 
-  const handleConfirmCreateRoutineForClient = async () => {
+  const handleConfirmCreateRoutineForClient = async (nameOverride?: string) => {
     if (!selectedClient) return;
-    const name = (newRoutineName || "").trim().slice(0, MAX_ROUTINE_NAME_LEN);
+    const name = (nameOverride || newRoutineName || "").trim().slice(0, MAX_ROUTINE_NAME_LEN);
     if (!name) return;
     try {
       const { data: routine, error } = await supabase
@@ -987,28 +974,28 @@ const Account = () => {
     }
   };
 
-  const handleDialogSubmit = async () => {
-    if (!dialogEmail.trim()) return;
+  const handleDialogSubmit = async (email: string, permissions: any) => {
+    if (!email.trim()) return;
 
     try {
-      console.log("Dialog form submitted with email:", dialogEmail, "invite type:", dialogInviteType);
+      console.log("Dialog form submitted with email:", email, "invite type:", dialogInviteType);
       
       // Close dialog and show loading overlay
       setShowAddPersonDialog(false);
       setIsSendingInvitation(true);
-      setInviteeEmail(dialogEmail.trim());
+      setInviteeEmail(email.trim());
       
       if (dialogInviteType === 'trainer') {
         if (!user.email) {
           throw new Error("Unable to send invitation: your email not found");
         }
-        const trainerEmail = dialogEmail.trim();
-        await inviteTrainerToManage(trainerEmail, user.id, dialogPermissions, dialogMirrorInvite);
-        toast.success(dialogMirrorInvite ? "Invitations sent in both directions" : "Trainer invitation sent successfully");
+        const trainerEmail = email.trim();
+        await inviteTrainerToManage(trainerEmail, user.id, permissions, false);
+        toast.success("Trainer invitation sent successfully");
       } else {
-        const clientEmail = dialogEmail.trim();
-        await inviteClientToBeManaged(clientEmail, user.id, dialogPermissions, dialogMirrorInvite);
-        toast.success(dialogMirrorInvite ? "Invitations sent in both directions" : "Client invitation sent successfully");
+        const clientEmail = email.trim();
+        await inviteClientToBeManaged(clientEmail, user.id, permissions, false);
+        toast.success("Client invitation sent successfully");
       }
 
       setDialogEmail("");
@@ -1022,7 +1009,7 @@ const Account = () => {
       
       queryClient.invalidateQueries({ queryKey: ["outgoing_requests"] });
       queryClient.invalidateQueries({ queryKey: ["pending_requests"] });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating invitation:", error);
       toast.error(error.message || "Failed to send invitation. Please try again.");
     } finally {
@@ -1032,22 +1019,7 @@ const Account = () => {
   };
 
   const handleDialogCancel = () => {
-    setDialogEmail("");
-    setDialogInviteType('trainer');
-    setDialogMirrorInvite(false);
-    setDialogPermissions({
-      can_create_routines: true,
-      can_start_workouts: true,
-      can_review_history: true
-    });
     setShowAddPersonDialog(false);
-  };
-
-  const handleDialogPermissionToggle = (permission, value) => {
-    setDialogPermissions(prev => ({
-      ...prev,
-      [permission]: value
-    }));
   };
 
   const performDeleteInvitation = async () => {
@@ -1358,198 +1330,40 @@ const Account = () => {
         </div>
 
           {/* Add person dialog */}
-          <SwiperDialog
+          <InviteDialog
             open={showAddPersonDialog}
             onOpenChange={setShowAddPersonDialog}
-            title={dialogInviteType === 'trainer' ? "Invite a trainer" : "Invite a client"}
-            confirmText={dialogInviteType === 'trainer' ? "Invite trainer" : "Invite client"}
-            cancelText="Cancel"
-            confirmVariant="default"
-            cancelVariant="outline"
-            onConfirm={handleDialogSubmit}
+            type={dialogInviteType as "trainer" | "client"}
+            onSubmit={handleDialogSubmit}
             onCancel={handleDialogCancel}
-            containerClassName="bg-stone-100"
-          >
-            <div className="self-stretch flex flex-col justify-start items-start gap-0">
-              <div className="self-stretch min-w-64 rounded flex flex-col justify-center items-start gap-2">
-                <div className="self-stretch inline-flex justify-start items-start gap-2">
-                  <div className="flex-1 flex justify-between items-start">
-                    <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
-                      {dialogInviteType === 'trainer' ? "Trainer's email" : "Client's email"}
-                    </div>
-                  </div>
-                </div>
-                <div className="self-stretch h-11 pl-3 bg-white rounded-lg border border-neutral-300 inline-flex justify-center items-center gap-2.5">
-                  <input
-                    type="email"
-                    value={dialogEmail}
-                    onChange={(e) => setDialogEmail(e.target.value)}
-                    placeholder="Enter email address"
-                    className="flex-1 justify-center text-neutral-neutral-700 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight bg-transparent border-none outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="self-stretch flex flex-col justify-start items-start gap-0">
-              <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                {dialogInviteType === 'client' ? (
-                  <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
-                    <SwiperFormSwitch
-                      label="Create or edit routines"
-                      checked={dialogPermissions.can_create_routines}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
-                      className="bg-white"
-                    />
-                    <SwiperFormSwitch
-                      label="Start a workout"
-                      checked={dialogPermissions.can_start_workouts}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
-                      className="bg-neutral-Neutral-50"
-                    />
-                    <SwiperFormSwitch
-                      label="Review history"
-                      checked={dialogPermissions.can_review_history}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
-                      className="bg-white"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <SwiperFormSwitch
-                      label="Create or edit routines"
-                      checked={dialogPermissions.can_create_routines}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_create_routines', checked)}
-                      className="bg-white"
-                    />
-                    <SwiperFormSwitch
-                      label="Start a workout"
-                      checked={dialogPermissions.can_start_workouts}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_start_workouts', checked)}
-                      className="bg-neutral-Neutral-50"
-                    />
-                    <SwiperFormSwitch
-                      label="Review history"
-                      checked={dialogPermissions.can_review_history}
-                      onCheckedChange={(checked) => handleDialogPermissionToggle('can_review_history', checked)}
-                      className="bg-white"
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3 mt-3">
-              This invitation will expire in {dialogInviteType === 'client' ? '14' : '14'} days.
-            </div>
-          </SwiperDialog>
+          />
 
           {/* Routine selection dialog */}
-          <SwiperDialog
+          <RoutineSelectionDialog
             open={showRoutineSelectionDialog}
             onOpenChange={setShowRoutineSelectionDialog}
-            title={dialogMode === 'workout' ? `Start a workout for ${formatUserDisplay(selectedClient)}` : `${formatUserDisplay(selectedClient)}'s routines`}
-            hideFooter
-            containerClassName="bg-stone-100"
-            headerClassName="self-stretch h-11 px-3 bg-neutral-50 border-b border-neutral-neutral-300 inline-flex justify-start items-center"
-            bodyClassName="min-h-0 overflow-y-auto pt-3"
-            maxBodyHeight="60vh"
-            headerRight={
-              <button
-                onClick={() => setShowRoutineSelectionDialog(false)}
-                className="w-4 h-4 bg-red-300 rounded-full border border-neutral-neutral-300 hover:bg-red-400 transition-colors cursor-pointer focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-neutral-neutral-300"
-                aria-label="Close dialog"
-              />
-            }
+            client={selectedClient}
+            routines={clientRoutines}
+            mode={dialogMode as 'workout' | 'manage'}
+            onSelectRoutine={dialogMode === 'workout' ? handleRoutineSelect : handleRoutineManage}
+            onCreateRoutine={(name) => {
+              setNewRoutineName(name);
+              // Since we moved the sheet into the dialog component, we need to bridge the logic
+              // Actually, the dialog component now calls a prop to create.
+              // But handleConfirmCreateRoutineForClient relies on `newRoutineName` state being set.
+              // Let's update handleConfirmCreateRoutineForClient to take name as arg or rely on state update.
+              // Better: Update handleConfirmCreateRoutineForClient to accept name
+              handleConfirmCreateRoutineForClient(name);
+            }}
             onCancel={() => {
               setShowRoutineSelectionDialog(false);
               setSelectedClient(null);
               setClientRoutines([]);
               setDialogMode('workout');
             }}
-          >
-            <div className="w-full flex flex-col items-center gap-3 pb-4">
-            {dialogMode !== 'workout' && (
-              <CardWrapper gap={0} marginTop={0} marginBottom={0}>
-                <ActionCard
-                  text="Create new routine"
-                  className="self-stretch w-full"
-                  onClick={handleCreateRoutineForClient}
-                />
-              </CardWrapper>
-            )}
+          />
 
-            {clientRoutines.map((routine, index) => (
-              dialogMode === 'workout' ? (
-                <div key={routine.id} className="w-full flex justify-center">
-                  <StartWorkoutCard
-                    id={routine.id}
-                    name={routine.routine_name || `Routine ${routine.id}`}
-                    lastCompleted={routine.lastCompletedText}
-                    routineData={routine}
-                    onCardClick={() => handleRoutineSelect(routine)}
-                  />
-                </div>
-              ) : (
-                <CardWrapper key={routine.id} gap={0} marginTop={0} marginBottom={0}>
-                  <RoutineCard
-                    id={routine.id}
-                    name={routine.routine_name || `Routine ${routine.id}`}
-                    lastCompleted={routine.lastCompletedText}
-                    routineData={routine}
-                    onCardClick={() => handleRoutineManage(routine)}
-                  />
-                </CardWrapper>
-              )
-            ))}
-            {clientRoutines.length === 0 && (
-              <div data-layer="Routine Card" className="RoutineCard w-full max-w-[500px] p-3 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-6 overflow-hidden">
-                <div data-layer="Frame 5001" className="Frame5001 self-stretch flex flex-col justify-start items-start gap-5">
-                  <div data-layer="Frame 5007" className="Frame5007 self-stretch flex flex-col justify-start items-start">
-                    <div data-layer="Biceps and chest" className="BicepsAndChest w-[452px] justify-start text-lg font-medium font-['Be_Vietnam_Pro'] leading-tight text-neutral-neutral-600">
-                      {dialogMode === 'workout' ? 'No routines found for this client.' : 'No routines found for this account.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            </div>
-          </SwiperDialog>
-
-          {/* Create routine name sheet */}
-          <SwiperForm
-            open={showCreateRoutineSheet}
-            onOpenChange={setShowCreateRoutineSheet}
-            title=""
-            description={`Create a new workout routine for ${formatUserDisplay(selectedClient)}`}
-            leftAction={() => {
-              setShowCreateRoutineSheet(false);
-              setTimeout(() => setShowRoutineSelectionDialog(true), 0);
-            }}
-            rightAction={handleConfirmCreateRoutineForClient}
-            rightEnabled={(newRoutineName || "").trim().length > 0}
-            rightText="Create"
-            leftText="Cancel"
-          >
-            <FormSectionWrapper bordered={false}>
-              <div className="w-full flex flex-col">
-                <div className="w-full flex justify-between items-center mb-2">
-                  <div className="text-slate-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight">Name routine</div>
-                  <div
-                    className={`${(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN ? 'text-red-400' : 'text-neutral-400'} text-sm font-medium font-['Be_Vietnam_Pro'] leading-tight`}
-                    aria-live="polite"
-                  >
-                    {(newRoutineName || '').length} of {MAX_ROUTINE_NAME_LEN} characters
-                  </div>
-                </div>
-                <TextInput
-                  value={newRoutineName}
-                  onChange={(e) => setNewRoutineName(e.target.value)}
-                  ref={createNameInputRef}
-                  maxLength={MAX_ROUTINE_NAME_LEN}
-                  error={(newRoutineName || '').length >= MAX_ROUTINE_NAME_LEN}
-                />
-              </div>
-            </FormSectionWrapper>
-          </SwiperForm>
+          {/* Delete Share Confirmation Dialog */}
 
           {/* Delete Share Confirmation Dialog */}
           <SwiperDialog
