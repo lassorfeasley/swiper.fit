@@ -187,14 +187,12 @@ const Account = () => {
       title: "Invite someone to manage you",
       description: "They’ll be able to build routines, start workouts, and review your history when you grant permission. You can also let them invite you back.",
       emailLabel: "Trainer's email",
-      mirrorLabel: "Also invite them to let me manage them",
       buttonLabel: "Invite someone to manage you",
     },
     client: {
       title: "Invite someone you will manage",
       description: "Use this when you want to coach someone else. You’ll be able to build routines and track their progress.",
       emailLabel: "Client's email",
-      mirrorLabel: "Also invite them to manage me",
       buttonLabel: "Invite someone you manage",
     },
   };
@@ -1860,15 +1858,7 @@ const Account = () => {
                 )}
               </div>
             </div>
-            <div className="self-stretch mt-3">
-              <SwiperFormSwitch
-                label={inviteDialogCopy[dialogInviteType].mirrorLabel}
-                checked={dialogMirrorInvite}
-                onCheckedChange={(checked) => setDialogMirrorInvite(checked)}
-                className="bg-white"
-              />
-            </div>
-            <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
+            <div className="self-stretch justify-center text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3 mt-3">
               This invitation will expire in {dialogInviteType === 'client' ? '14' : '14'} days.
             </div>
           </SwiperDialog>
