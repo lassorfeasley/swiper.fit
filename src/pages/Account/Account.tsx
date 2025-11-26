@@ -4,48 +4,31 @@ import { Navigate, useNavigate, useSearchParams, useLocation } from "react-route
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/supabaseClient";
 import { TextInput } from "@/components/shared/inputs/TextInput";
-import { Button } from "@/components/shadcn/button";
-import SectionWrapperLabel from "@/components/shared/cards/wrappers/SectionWrapperLabel";
-import ToggleInput from "@/components/shared/inputs/ToggleInput";
 import { toast } from "@/lib/toastReplacement";
-import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
-import { Eye, EyeOff, Pencil, UserRoundPlus, UserRoundX, Blend, Plus, Cog, History, MoveUpRight, X, Trash2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import SwiperDialog from "@/components/shared/SwiperDialog";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import ActionPill from "@/components/shared/ActionPill";
-import { ActionCard } from "@/components/shared/ActionCard";
-import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
-import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
-import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
-import PageSectionWrapper from "@/components/shared/cards/wrappers/PageSectionWrapper";
 import SwiperForm from "@/components/shared/SwiperForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { postSlackEvent } from "@/lib/slackEvents";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
 import {
-  getPendingInvitations,
-  acceptInvitation,
-  rejectInvitation,
   inviteClientToBeManaged,
   inviteTrainerToManage,
-  getOutgoingInvitations,
   cancelInvitationRequest,
-  acceptTokenInvitation,
+  rejectInvitation,
   declineTokenInvitation,
 } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
-import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
 import { generateWorkoutName } from "@/lib/utils";
-import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
-import RoutineCard from "@/features/routines/components/RoutineCard";
 import AccountSettingsMenu from "@/components/shared/AccountSettingsMenu";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { EmptyState } from "@/components/shared/EmptyState";
 
 import SharingRequests from "@/features/account/components/SharingRequests";
 import TrainersList from "@/features/account/components/TrainersList";
 import ClientsList from "@/features/account/components/ClientsList";
+import ProfileSettings from "@/features/account/components/ProfileSettings";
+import LoginSettings from "@/features/account/components/LoginSettings";
 import InviteDialog from "@/features/account/dialogs/InviteDialog";
 import RoutineSelectionDialog from "@/features/account/dialogs/RoutineSelectionDialog";
 
@@ -147,19 +130,10 @@ const Account = () => {
   }, [searchParams, setSearchParams, location.pathname, location.search]);
 
   // Account info state
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState({ first_name: "", last_name: "" });
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [dirtyName, setDirtyName] = useState(false);
-  const [dirtyEmail, setDirtyEmail] = useState(false);
+  const [loading, setLoading] = useState(true); // Kept for initial user check? Or remove?
+  // We'll keep loading state for the initial auth check
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingLogin, setIsEditingLogin] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
 
   // Trainers functionality state
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -212,77 +186,11 @@ const Account = () => {
   };
 
   // Account info queries and handlers
-  useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      if (!authUser) {
-        setLoading(false);
-        return;
-      }
-      setEmail(authUser.email || "");
-
-      const { data: profileData, error: profileErr } = await supabase
-        .from("profiles")
-        .select("first_name, last_name")
-        .eq("id", authUser.id)
-        .single();
-
-      if (profileErr && profileErr.code === "PGRST116") {
-        await supabase.from("profiles").insert({ id: authUser.id });
-      }
-
-      if (profileData) {
-        setProfile(profileData);
-        setFirstName(profileData.first_name || "");
-        setLastName(profileData.last_name || "");
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
-
-  const handleSaveName = async () => {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ first_name: firstName, last_name: lastName })
-        .eq("id", user.id);
-      if (error) throw error;
-      setProfile({ first_name: firstName, last_name: lastName });
-      setDirtyName(false);
-      toast.success("Name updated");
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  const handleSaveLoginSection = async () => {
-    try {
-      if (dirtyEmail) {
-        const { data, error } = await supabase.auth.updateUser({ email });
-        if (error) throw error;
-        setEmail(data.user.email);
-        setDirtyEmail(false);
-        toast.success("Email updated. Please check your inbox to confirm.");
-      }
-      if (newPassword) {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw error;
-        toast.success("Password updated");
-        setNewPassword("");
-      }
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     try {
       await supabase.from("profiles").delete().eq("id", user.id);
       toast.success("Account deletion requested (admin action required)");
-    } catch (e) {
+    } catch (e: any) {
       toast.error(e.message);
     }
   };
@@ -301,103 +209,6 @@ const Account = () => {
     setDeleteConfirmOpen(false);
     setDeletePassword("");
   };
-
-  // Trainers functionality queries
-  const trainerSharesQuery = useQuery({
-    queryKey: ["shares_owned_by_me", user?.id],
-    queryFn: async () => {
-      console.log('[Account] Fetching trainers (account managers) for user:', user.id);
-      const { data: shares, error } = await supabase
-        .from("account_shares")
-        .select("id, owner_user_id, delegate_user_id, delegate_email, created_at, can_create_routines, can_start_workouts, can_review_history")
-        .eq("owner_user_id", user.id)
-        .eq("status", "active")
-        .is("revoked_at", null);
-
-      if (error) throw error;
-      
-      if (!shares || shares.length === 0) return [];
-
-      const trainerIds = shares.map(share => share.delegate_user_id).filter(Boolean);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email")
-        .in("id", trainerIds);
-
-      if (profileError) throw profileError;
-
-      const combinedData = shares.map(share => ({
-        ...share,
-        profile: profiles?.find(profile => profile.id === share.delegate_user_id) || {
-          email: share.delegate_email,
-          first_name: "",
-          last_name: ""
-        }
-      }));
-      
-      return combinedData.sort((a, b) => {
-        const nameA = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim().toLowerCase();
-        const nameB = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim().toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60,
-  });
-
-  const clientSharesQuery = useQuery({
-    queryKey: ["shares_shared_with_me", user?.id],
-    queryFn: async () => {
-      console.log('[Account] Fetching clients (account owners) for user:', user.id);
-      const { data: shares, error } = await supabase
-        .from("account_shares")
-        .select("id, owner_user_id, created_at, can_create_routines, can_start_workouts, can_review_history")
-        .eq("delegate_user_id", user.id)
-        .eq("status", "active")
-        .is("revoked_at", null);
-
-      if (error) throw error;
-      
-      if (!shares || shares.length === 0) return [];
-
-      const clientIds = shares.map(share => share.owner_user_id);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email")
-        .in("id", clientIds);
-
-      if (profileError) throw profileError;
-
-      let activeByClient = {};
-      if (clientIds && clientIds.length > 0) {
-        const { data: activeWorkouts, error: activeErr } = await supabase
-          .from('workouts')
-          .select(`id, user_id, routine_id, is_active, completed_at, routines!fk_workouts__routines(routine_name)`) 
-          .in('user_id', clientIds)
-          .eq('is_active', true);
-        if (!activeErr && Array.isArray(activeWorkouts)) {
-          activeByClient = activeWorkouts.reduce((acc, w) => {
-            acc[w.user_id] = w;
-            return acc;
-          }, {});
-        }
-      }
-
-      const combinedData = shares.map(share => ({
-        ...share,
-        profile: profiles?.find(profile => profile.id === share.owner_user_id) || null,
-        activeWorkout: activeByClient[share.owner_user_id] || null
-      }));
-      
-      return combinedData.sort((a, b) => {
-        const nameA = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim().toLowerCase();
-        const nameB = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim().toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60,
-  });
 
   // Real-time subscription for account_shares changes
   useEffect(() => {
@@ -464,7 +275,6 @@ const Account = () => {
     onSuccess: () => {
       console.log("Mutation onSuccess called");
       queryClient.invalidateQueries({ queryKey: ["shares_owned_by_me"] });
-      setEmail("");
       setShowAddPerson(false);
       try {
         postSlackEvent('sharing.connected', {
@@ -1202,127 +1012,12 @@ const Account = () => {
 
               {/* Personal info section */}
               {activeSection === 'personal-info' && (
-                <div className="w-full flex justify-center pb-5">
-            <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="CardWrapper w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-center items-center gap-5">
-              {/* First Name Field */}
-              <EditableTextInput
-                label="First name"
-                value={firstName}
-                onChange={(value) => {
-                  setFirstName(value);
-                  setDirtyName(true);
-                }}
-                editing={isEditingName}
-                onActivate={() => setIsEditingName(true)}
-                className="w-full"
-              />
-
-              {/* Last Name Field */}
-              <EditableTextInput
-                label="Last name"
-                value={lastName}
-                onChange={(value) => {
-                  setLastName(value);
-                  setDirtyName(true);
-                }}
-                editing={isEditingName}
-                onActivate={() => setIsEditingName(true)}
-                className="w-full"
-              />
-
-              {/* Action Buttons */}
-              {isEditingName && (
-                <div className="flex flex-col gap-3 w-full">
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      handleSaveName();
-                      setIsEditingName(false);
-                    }}
-                  >
-                    Save changes
-                  </Button>
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      setFirstName(profile.first_name);
-                      setLastName(profile.last_name);
-                      setDirtyName(false);
-                      setIsEditingName(false);
-                    }}
-                  >
-                    Discard changes
-                  </Button>
-                </div>
-              )}
-              </div>
-            </div>
-                </div>
+                <ProfileSettings user={user} />
               )}
 
               {/* Email and password section */}
               {activeSection === 'email-password' && (
-                <div className="w-full flex justify-center pb-5">
-            <div className="w-full max-w-[500px] pt-5 pb-10 flex flex-col justify-start items-start gap-3">
-              <div className="Frame56 w-full p-5 bg-white rounded-lg border border-neutral-300 flex flex-col justify-start items-start gap-5">
-              {/* Email Field */}
-              <EditableTextInput
-                label="Email"
-                value={email}
-                onChange={(value) => {
-                  setEmail(value);
-                  setDirtyEmail(true);
-                }}
-                editing={isEditingLogin}
-                onActivate={() => setIsEditingLogin(true)}
-                className="w-full"
-              />
-
-              {/* Password Field */}
-              <EditableTextInput
-                label="Password"
-                value="●●●●●●●●●"
-                onChange={(value) => {
-                  setNewPassword(value);
-                }}
-                editing={isEditingLogin}
-                onActivate={() => setIsEditingLogin(true)}
-                className="w-full"
-                inputProps={{
-                  type: "password",
-                  placeholder: "Enter new password"
-                }}
-              />
-
-              {/* Action Buttons for Login Section */}
-              {isEditingLogin && (
-                <div className="flex flex-col gap-3 w-full">
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      handleSaveLoginSection();
-                      setIsEditingLogin(false);
-                    }}
-                  >
-                    Save changes
-                  </Button>
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      setEmail(user.email || "");
-                      setDirtyEmail(false);
-                      setNewPassword("");
-                      setIsEditingLogin(false);
-                    }}
-                  >
-                    Discard changes
-                  </Button>
-                </div>
-              )}
-              </div>
-            </div>
-                </div>
+                <LoginSettings user={user} />
               )}
 
             </div>
