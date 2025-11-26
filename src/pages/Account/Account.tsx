@@ -1328,12 +1328,12 @@ const Account = () => {
                                 // For trainer_invite, the trainer (delegate) invited the client (owner)
                                 if (isTrainerInvite) {
                                   const inviter = delegateProfile || ownerProfile;
-                                  return `${formatUserDisplay(inviter)} wants to be your trainer`;
+                                  return `${formatUserDisplay(inviter)} wants you to be their trainer`;
                                 }
 
                                 // For client_invite, the client (owner) invited the trainer (delegate)
                                 const inviter = ownerProfile || delegateProfile;
-                                return `${formatUserDisplay(inviter)} wants you to be their trainer`;
+                                return `${formatUserDisplay(inviter)} wants to be your trainer`;
                               })()}
                             </div>
                           </div>
