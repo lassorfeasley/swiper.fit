@@ -50,14 +50,14 @@ const InviteDialog: React.FC<InviteDialogProps> = ({
 
   const copy = {
     trainer: {
-      title: "Invite someone to manage you",
-      description: "They’ll be able to build routines, start workouts, and review your history when you grant permission. You can also let them invite you back.",
+      title: "Invite a trainer",
+      description: null,
       emailLabel: "Trainer's email",
       buttonLabel: "Invite someone to manage you",
     },
     client: {
-      title: "Invite someone you will manage",
-      description: "Use this when you want to coach someone else. You’ll be able to build routines and track their progress.",
+      title: "Invite a client",
+      description: null,
       emailLabel: "Client's email",
       buttonLabel: "Invite someone you manage",
     },
@@ -99,9 +99,11 @@ const InviteDialog: React.FC<InviteDialogProps> = ({
         </div>
       </div>
       <div className="self-stretch flex flex-col justify-start items-start gap-0">
-        <div className="text-sm text-neutral-500 mb-3">
-          {currentCopy.description}
-        </div>
+        {currentCopy.description && (
+          <div className="text-sm text-neutral-500 mb-3">
+            {currentCopy.description}
+          </div>
+        )}
         <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
           {/* Permissions are the same for both types in the current UI, but wrapped differently? No, seems identical structure */}
           <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
