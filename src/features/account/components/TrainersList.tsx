@@ -1,10 +1,12 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabaseClient";
 import { ActionCard } from "@/components/shared/ActionCard";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
 import { EmptyState } from "@/components/shared/EmptyState";
 import ManagePermissionsCard from "@/features/sharing/components/ManagePermissionsCard";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
+import { useTrainerShares } from "@/features/account/hooks/useTrainerShares";
 
 interface TrainersListProps {
   user: any;
@@ -18,59 +20,8 @@ const TrainersList: React.FC<TrainersListProps> = ({
   onRemoveShare,
 }) => {
   const queryClient = useQueryClient();
-
-  const formatUserDisplay = (profile: any) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
-
-  const trainerSharesQuery = useQuery({
-    queryKey: ["shares_owned_by_me", user?.id],
-    queryFn: async () => {
-      console.log('[Account] Fetching trainers (account managers) for user:', user.id);
-      const { data: shares, error } = await supabase
-        .from("account_shares")
-        .select("id, owner_user_id, delegate_user_id, delegate_email, created_at, can_create_routines, can_start_workouts, can_review_history")
-        .eq("owner_user_id", user.id)
-        .eq("status", "active")
-        .is("revoked_at", null);
-
-      if (error) throw error;
-      
-      if (!shares || shares.length === 0) return [];
-
-      const trainerIds = shares.map(share => share.delegate_user_id).filter(Boolean);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email")
-        .in("id", trainerIds);
-
-      if (profileError) throw profileError;
-
-      const combinedData = shares.map(share => ({
-        ...share,
-        profile: profiles?.find(profile => profile.id === share.delegate_user_id) || {
-          email: share.delegate_email,
-          first_name: "",
-          last_name: ""
-        }
-      }));
-      
-      return combinedData.sort((a, b) => {
-        const nameA = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim().toLowerCase();
-        const nameB = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim().toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60,
-  });
+  const formatUserDisplay = useFormatUserDisplay();
+  const trainerSharesQuery = useTrainerShares(user?.id);
 
   const updateSharePermissionsMutation = useMutation({
     mutationFn: async (params: { shareId: string; permissions: any }) => {

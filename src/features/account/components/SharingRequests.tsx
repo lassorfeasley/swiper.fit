@@ -1,5 +1,5 @@
 import React from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toastReplacement";
 import { ActionCard } from "@/components/shared/ActionCard";
 import DeckWrapper from "@/components/shared/cards/wrappers/DeckWrapper";
@@ -7,14 +7,13 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import IncomingInvitationCard from "@/features/account/components/IncomingInvitationCard";
 import OutgoingInvitationCard from "@/features/account/components/OutgoingInvitationCard";
 import {
-  getPendingInvitations,
-  getOutgoingInvitations,
   acceptInvitation,
-  rejectInvitation,
   acceptTokenInvitation,
-  declineTokenInvitation,
 } from "@/lib/sharingApi";
 import { postSlackEvent } from "@/lib/slackEvents";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
+import { usePendingInvitations } from "@/features/account/hooks/usePendingInvitations";
+import { useOutgoingInvitations } from "@/features/account/hooks/useOutgoingInvitations";
 
 interface SharingRequestsProps {
   user: any;
@@ -36,57 +35,9 @@ const SharingRequests: React.FC<SharingRequestsProps> = ({
   setShowDeleteInvitationDialog,
 }) => {
   const queryClient = useQueryClient();
-
-  const formatUserDisplay = (profile: any) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
-
-  const mapTokenOutgoingInvitation = (invite: any) => {
-    const requestType = invite.intended_role === 'manager' ? 'trainer_invite' : 'client_invite';
-    const perms = invite.permissions || {};
-    return {
-      id: invite.id,
-      delegate_email: invite.recipient_email,
-      owner_user_id: invite.inviter_id || null,
-      delegate_user_id: invite.recipient_user_id || null,
-      request_type: requestType,
-      status: invite.status,
-      created_at: invite.created_at,
-      expires_at: invite.expires_at,
-      can_create_routines: !!perms.can_create_routines,
-      can_start_workouts: !!perms.can_start_workouts,
-      can_review_history: !!perms.can_review_history,
-      profiles: invite.recipient_profile || (invite.recipient_email ? { email: invite.recipient_email } : null),
-      source: 'token' as const,
-    };
-  };
-
-  const pendingRequestsQuery = useQuery({
-    queryKey: ["pending_requests", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      console.log('[Account] Fetching pending requests for user:', user.id);
-      return await getPendingInvitations(user.id);
-    },
-    enabled: !!user?.id,
-  });
-
-  const outgoingRequestsQuery = useQuery({
-    queryKey: ["outgoing_requests", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const tokenInvitations = await getOutgoingInvitations();
-      return tokenInvitations.map(mapTokenOutgoingInvitation);
-    },
-    enabled: !!user?.id,
-  });
+  const formatUserDisplay = useFormatUserDisplay();
+  const pendingRequestsQuery = usePendingInvitations(user?.id);
+  const outgoingRequestsQuery = useOutgoingInvitations(user?.id);
 
   const acceptRequestMutation = useMutation({
     mutationFn: async (request: any) => {
