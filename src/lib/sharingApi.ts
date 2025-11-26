@@ -75,6 +75,7 @@ interface InviteRequestPayload {
   inviteeEmail: string;
   intendedRole: InvitationRole;
   permissions: Permissions;
+  mirror?: boolean;
 }
 
 function normalizeEmail(email: string): string {
@@ -112,6 +113,7 @@ async function postInvitationRequest(payload: InviteRequestPayload) {
       inviteeEmail: normalizeEmail(payload.inviteeEmail),
       intendedRole: payload.intendedRole,
       permissions: sanitizePermissions(payload.permissions),
+      mirror: !!payload.mirror,
     }),
   });
 
@@ -135,11 +137,13 @@ export async function inviteClientToBeManaged(
   clientEmail: string,
   _trainerId: string,
   permissions: Permissions = {},
+  mirror: boolean = false,
 ): Promise<void> {
   await postInvitationRequest({
     inviteeEmail: clientEmail,
     intendedRole: 'manager',
     permissions,
+    mirror,
   });
 }
 
@@ -147,11 +151,13 @@ export async function inviteTrainerToManage(
   trainerEmail: string, 
   _clientId: string,
   permissions: Permissions = {},
+  mirror: boolean = false,
 ): Promise<void> {
   await postInvitationRequest({
     inviteeEmail: trainerEmail,
     intendedRole: 'managed',
     permissions,
+    mirror,
   });
 }
 

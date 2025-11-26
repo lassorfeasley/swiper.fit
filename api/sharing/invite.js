@@ -104,7 +104,7 @@ async function handleCreateInvite(req, res, auth) {
     inviterEmail ||
     'Swiper member';
 
-  const { inviteeEmail, intendedRole, permissions = {} } = req.body || {};
+  const { inviteeEmail, intendedRole, permissions = {}, mirror = false } = req.body || {};
 
   if (!inviteeEmail || typeof inviteeEmail !== 'string') {
     return res.status(400).json({ error: 'inviteeEmail is required' });
@@ -130,61 +130,36 @@ async function handleCreateInvite(req, res, auth) {
   };
 
   const existingRecipient = await fetchProfileByEmail(normalizedEmail);
-  await assertNoActiveShare({
-    intendedRole,
+
+  const primaryInvitation = await createInvitationRecord({
     inviterId,
-    recipientId: existingRecipient?.id || null,
-  });
-  await assertNoDuplicatePendingInvite({
-    intendedRole,
-    inviterId,
-    recipientEmail: normalizedEmail,
-  });
-
-  const { data: newInvitation, error: insertError } = await supabaseAdmin
-    .from('invitations')
-    .insert({
-      inviter_id: inviterId,
-      recipient_email: normalizedEmail,
-      recipient_user_id: existingRecipient?.id || null,
-      intended_role: intendedRole,
-      permissions: sanitizedPermissions,
-    })
-    .select('id, token, expires_at')
-    .single();
-
-  if (insertError) {
-    console.error('[Invite API] Failed to create invitation', insertError);
-    await logInviteEvent('error', {
-      reason: insertError?.message || 'Insert failed',
-      inviterId,
-      inviteeEmail: normalizedEmail,
-      stage: 'insert',
-    });
-    return res.status(500).json({ error: 'Failed to create invitation' });
-  }
-
-  const eventKey = resolveEmailEvent({ intendedRole, hasAccount: !!existingRecipient });
-  const acceptUrl = buildAcceptUrl(newInvitation.token);
-
-  await sendInviteEmail({
-    event: eventKey,
-    to: normalizedEmail,
     inviterName,
-    acceptUrl,
-  });
-
-  await logInviteEvent('created', {
-    invitationId: newInvitation.id,
-    inviterId,
     inviteeEmail: normalizedEmail,
     intendedRole,
+    permissions: sanitizedPermissions,
+    existingRecipient,
+    logLabel: 'created',
   });
+
+  let mirrorInvitation = null;
+  if (mirror) {
+    const mirrorRole = intendedRole === 'manager' ? 'managed' : 'manager';
+    mirrorInvitation = await createInvitationRecord({
+      inviterId,
+      inviterName,
+      inviteeEmail: normalizedEmail,
+      intendedRole: mirrorRole,
+      permissions: sanitizedPermissions,
+      existingRecipient,
+      logLabel: 'mirror_created',
+    });
+  }
 
   return res.status(200).json({
     ok: true,
-    invitationId: newInvitation.id,
-    expiresAt: newInvitation.expires_at,
+    invitationId: primaryInvitation.id,
+    mirrorInvitationId: mirrorInvitation?.id || null,
+    expiresAt: primaryInvitation.expires_at,
   });
 }
 
@@ -236,6 +211,73 @@ async function handleDeleteInvite(req, res, auth) {
   }
 
   return res.status(200).json({ ok: true });
+}
+
+async function createInvitationRecord({
+  inviterId,
+  inviterName,
+  inviteeEmail,
+  intendedRole,
+  permissions,
+  existingRecipient = null,
+  logLabel = 'created',
+}) {
+  const normalizedEmail = inviteeEmail.trim().toLowerCase();
+  const recipientProfile = existingRecipient || (await fetchProfileByEmail(normalizedEmail));
+
+  await assertNoActiveShare({
+    intendedRole,
+    inviterId,
+    recipientId: recipientProfile?.id || null,
+  });
+
+  await assertNoDuplicatePendingInvite({
+    intendedRole,
+    inviterId,
+    recipientEmail: normalizedEmail,
+  });
+
+  const { data: newInvitation, error: insertError } = await supabaseAdmin
+    .from('invitations')
+    .insert({
+      inviter_id: inviterId,
+      recipient_email: normalizedEmail,
+      recipient_user_id: recipientProfile?.id || null,
+      intended_role: intendedRole,
+      permissions,
+    })
+    .select('id, token, expires_at')
+    .single();
+
+  if (insertError) {
+    console.error('[Invite API] Failed to create invitation', insertError);
+    await logInviteEvent('error', {
+      reason: insertError?.message || 'Insert failed',
+      inviterId,
+      inviteeEmail: normalizedEmail,
+      stage: 'insert',
+    });
+    throw new InviteApiError(500, 'Failed to create invitation');
+  }
+
+  const eventKey = resolveEmailEvent({ intendedRole, hasAccount: !!recipientProfile });
+  const acceptUrl = buildAcceptUrl(newInvitation.token);
+
+  await sendInviteEmail({
+    event: eventKey,
+    to: normalizedEmail,
+    inviterName,
+    acceptUrl,
+  });
+
+  await logInviteEvent(logLabel, {
+    invitationId: newInvitation.id,
+    inviterId,
+    inviteeEmail: normalizedEmail,
+    intendedRole,
+  });
+
+  return newInvitation;
 }
 
 async function fetchInviterProfile(userId) {

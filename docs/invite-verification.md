@@ -23,3 +23,10 @@ Use this checklist after deploying any sharing changes to ensure pending cards c
 
 **Reminder:** The database now rejects `account_shares` inserts where `request_type` is `trainer_invite`/`client_invite` and `status='pending'`. All pending cards must come from the `invitations` table. If any legacy card appears, capture the inviter id + invitation id, run `supabase/scripts/final_cleanup_pending_invites.sql`, and open a bug before shipping.
 
+## Dual-direction invitations
+
+1. From Account **A**, open “Invite someone to manage you”, toggle **“Also invite them to let me manage them”**, and send the invite.
+2. Confirm Account A now shows **two** outgoing cards (one for each direction).
+3. Log in as Account **B** and accept just one of the cards—Account A should now show only the remaining pending card.
+4. Accept the second card and confirm both relationships appear in Account A’s “Trainers” and Account B’s “Clients”.
+
