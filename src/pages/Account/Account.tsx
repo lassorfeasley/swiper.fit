@@ -445,18 +445,7 @@ const Account = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       const tokenInvitations = await getOutgoingInvitations();
-      console.log('[Account] Raw token invitations from API:', tokenInvitations.map(inv => ({
-        id: inv.id,
-        intended_role: inv.intended_role,
-        recipient_email: inv.recipient_email
-      })));
-      const mapped = tokenInvitations.map(mapTokenOutgoingInvitation);
-      console.log('[Account] Mapped outgoing invitations:', mapped.map(req => ({
-        id: req.id,
-        request_type: req.request_type,
-        recipient: formatUserDisplay(req.profiles)
-      })));
-      return mapped;
+      return tokenInvitations.map(mapTokenOutgoingInvitation);
     },
     enabled: !!user?.id,
   });
@@ -1436,16 +1425,7 @@ const Account = () => {
                     </div>
                   )}
                   {outgoingRequestsQuery.data && outgoingRequestsQuery.data.length > 0 && (
-                    outgoingRequestsQuery.data.map((request) => {
-                      // Debug logging to diagnose the issue
-                      console.log('[Account] Outgoing request debug:', {
-                        id: request.id,
-                        request_type: request.request_type,
-                        recipient: formatUserDisplay(request.profiles),
-                        source: request.source,
-                        rawInvite: request.source === 'token' ? 'check API response' : 'legacy share'
-                      });
-                      return (
+                    outgoingRequestsQuery.data.map((request) => (
                       <div key={request.id} data-layer="Property 1=Awaiting responce" className="Property1AwaitingResponce w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
                         <div data-layer="card-header" className="CardHeader self-stretch p-3 bg-white flex flex-col justify-start items-start gap-3">
                           <div data-layer="Frame 86" className="Frame86 self-stretch inline-flex justify-start items-center gap-3">
@@ -1455,17 +1435,9 @@ const Account = () => {
                                   {formatUserDisplay(request.profiles)}{" "}
                                 </span>
                                 <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                                  {(() => {
-                                    const isTrainerInvite = request.request_type === "trainer_invite";
-                                    console.log('[Account] Display logic check:', {
-                                      request_type: request.request_type,
-                                      isTrainerInvite,
-                                      willShow: isTrainerInvite ? 'trainer' : 'client'
-                                    });
-                                    return isTrainerInvite
-                                      ? "was invited to be your trainer"
-                                      : "was invited to be your client";
-                                  })()}
+                                  {request.request_type === "trainer_invite"
+                                    ? "was invited to be your trainer"
+                                    : "was invited to be your client"}
                                 </span>
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
@@ -1481,8 +1453,7 @@ const Account = () => {
                           </div>
                         </div>
                       </div>
-                      );
-                    })
+                    ))
                   )}
 
                   {/* Error states */}

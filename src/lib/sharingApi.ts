@@ -509,10 +509,16 @@ async function mapIncomingTokenInvitations(userId: string): Promise<AccountShare
 function mapTokenInviteToShare(invite: InvitationSummary, currentUserId: string): AccountShare {
   const requestType = invite.intended_role === 'manager' ? 'trainer_invite' : 'client_invite';
   const permissions = invite.permissions || {};
+  
+  // Determine roles based on request type
+  const isTrainerInvite = requestType === 'trainer_invite';
+
   const baseShare: AccountShare = {
     id: invite.id,
-    owner_user_id: requestType === 'trainer_invite' ? currentUserId : (invite.inviter_id || ''),
-    delegate_user_id: requestType === 'trainer_invite' ? (invite.inviter_id || '') : currentUserId,
+    // If trainer_invite (Client invites Trainer): Inviter is Owner, Recipient is Delegate
+    // If client_invite (Trainer invites Client): Inviter is Delegate, Recipient is Owner
+    owner_user_id: isTrainerInvite ? (invite.inviter_id || '') : currentUserId,
+    delegate_user_id: isTrainerInvite ? currentUserId : (invite.inviter_id || ''),
     delegate_email: invite.recipient_email,
     status: invite.status,
     request_type: requestType,
@@ -526,10 +532,12 @@ function mapTokenInviteToShare(invite: InvitationSummary, currentUserId: string)
     invite_token: invite.token,
   };
 
-  if (requestType === 'trainer_invite') {
-    baseShare.delegate_profile = invite.inviter_profile || null;
-  } else {
+  if (isTrainerInvite) {
+    // Inviter is the Owner (Client)
     baseShare.owner_profile = invite.inviter_profile || null;
+  } else {
+    // Inviter is the Delegate (Trainer)
+    baseShare.delegate_profile = invite.inviter_profile || null;
   }
 
   return baseShare;

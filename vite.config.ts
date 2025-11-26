@@ -8,6 +8,13 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    proxy: {
+      '/api': {
+        target: 'https://www.swiper.fit',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   },
   optimizeDeps: {
     include: ["vaul"],
