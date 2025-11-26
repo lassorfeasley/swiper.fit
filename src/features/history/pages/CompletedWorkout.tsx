@@ -837,6 +837,7 @@ const CompletedWorkout = () => {
                 imageUrl={workout?.og_image_url || `/api/og-images?type=workout&workoutId=${workoutId}`}
                 title={workout?.routines?.routine_name || 'View routine'}
                 onLinkClick={workout?.routine_id ? handleOpenRoutine : undefined}
+                onShare={shareWorkout}
               />
             </div>
 

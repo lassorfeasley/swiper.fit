@@ -7,6 +7,7 @@ interface SummaryHeaderCardProps {
   title: string;
   subtitle?: string;
   onLinkClick?: () => void;
+  onShare?: () => void;
   fallbackImageUrl?: string;
   className?: string;
 }
@@ -15,12 +16,25 @@ export const SummaryHeaderCard = ({
   imageUrl,
   title,
   onLinkClick,
+  onShare,
   fallbackImageUrl = "/images/default-open-graph.png",
   className
 }: SummaryHeaderCardProps) => {
   return (
     <div className={cn("w-full max-w-[500px] rounded-sm border border-neutral-neutral-300 flex flex-col overflow-hidden", className)}>
-      <div className="overflow-hidden rounded-t-sm">
+      <div 
+        className={cn("overflow-hidden rounded-t-sm", onShare && "cursor-pointer")}
+        onClick={onShare}
+        role={onShare ? "button" : undefined}
+        tabIndex={onShare ? 0 : undefined}
+        onKeyDown={onShare ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onShare();
+          }
+        } : undefined}
+        aria-label={onShare ? "Share" : undefined}
+      >
         <img
           data-layer="open-graph-image"
           className="OpenGraphImage w-full h-auto"

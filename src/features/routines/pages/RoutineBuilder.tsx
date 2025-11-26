@@ -1110,6 +1110,7 @@ const RoutineBuilder = () => {
                 imageUrl={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`}
                 title={programName}
                 onLinkClick={shareRoutine}
+                onShare={shareRoutine}
               />
             </div>
             
@@ -1159,6 +1160,7 @@ const RoutineBuilder = () => {
               imageUrl={program?.og_image_url || "https://placehold.co/500x262"}
               title={programName}
               onLinkClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+              onShare={shareRoutine}
             />
           </div>
           
