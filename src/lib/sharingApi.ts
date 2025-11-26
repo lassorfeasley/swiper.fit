@@ -163,7 +163,8 @@ export async function inviteTrainerToManage(
 
 async function fetchInvitationsFromApi(scope: 'incoming' | 'outgoing'): Promise<InvitationSummary[]> {
   const session = await getSessionOrThrow();
-  const response = await fetch(`/api/sharing/invite?scope=${scope}`, {
+  // Add cache-busting timestamp to prevent stale data
+  const response = await fetch(`/api/sharing/invite?scope=${scope}&t=${Date.now()}`, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
