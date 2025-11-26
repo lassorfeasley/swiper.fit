@@ -26,6 +26,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Copy, Blend, X, ListChecks, Bookmark } from "lucide-react";
 import { useSpacing } from "@/hooks/useSpacing";
 import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
+import SummaryHeaderCard from "@/components/shared/cards/SummaryHeaderCard";
+import StickyBottomAction from "@/components/shared/StickyBottomAction";
 
 const RoutineBuilder = () => {
   const { routineId } = useParams();
@@ -858,7 +860,7 @@ const RoutineBuilder = () => {
          exercises!fk_routine_exercises__exercises(
            name,
            section
-         ),
+           ),
          routine_sets!fk_routine_sets__routine_exercises(
            id,
            reps,
@@ -1100,36 +1102,15 @@ const RoutineBuilder = () => {
           /* VIEWER MODE: Read-only view for non-owners */
           <div className="flex flex-col min-h-screen" style={{ paddingTop: 'calc(var(--header-height) + 20px)' }}>
             {/* Routine Image */}
-            <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
-              <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 flex flex-col overflow-hidden">
-                <img 
-                  data-layer="open-graph-image"
-                  className="OpenGraphImage w-full h-auto" 
-                  src={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`} 
-                  alt={`${programName} routine`}
-                  draggable={false}
-                  style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
-                  onError={(e) => {
-                    console.log('Image failed to load:', (e.target as HTMLImageElement).src);
-                    console.log('Falling back to default image');
-                    (e.target as HTMLImageElement).src = "/images/default-open-graph.png";
-                  }}
-                  onLoad={(e) => console.log('Image loaded successfully:', (e.target as HTMLImageElement).src)}
-                />
-                <div 
-                  data-layer="routine-link"
-                  className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
-                  onClick={shareRoutine}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div data-layer="routine-name" className="ChestAndTriceps justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
-                    {programName} 
-                  </div>
-                  <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
-                    <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
-                  </div>
-                </div>
-              </div>
+            <div 
+              className="self-stretch inline-flex flex-col justify-center items-center mb-3"
+              style={{ paddingLeft: spacing.paddingX, paddingRight: spacing.paddingX }}
+            >
+              <SummaryHeaderCard 
+                imageUrl={program?.og_image_url || `/api/og-images?type=routine&routineId=${routineId}`}
+                title={programName}
+                onLinkClick={shareRoutine}
+              />
             </div>
             
             {/* Exercise list (read-only) */}
@@ -1158,56 +1139,27 @@ const RoutineBuilder = () => {
             </PageSectionWrapper>
             
             {/* Persistent Add Button - Absolutely positioned at bottom */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center px-5 pb-5 bg-[linear-gradient(to_bottom,rgba(245,245,244,0)_0%,rgba(245,245,244,0)_10%,rgba(245,245,244,0.5)_40%,rgba(245,245,244,1)_80%,rgba(245,245,244,1)_100%)]" style={{ paddingBottom: '20px' }}>
-              <ActionCard
-                text={user ? "Add routine to my account" : "Create account or login to add routine"}
-                onClick={openAddDialog}
-                icon={Bookmark}
-                fillColor="bg-blue-500"
-                textColor="text-white"
-                className="w-full shadow-lg"
-                aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
-              />
-            </div>
+            <StickyBottomAction 
+              text={user ? "Add routine to my account" : "Create account or login to add routine"}
+              onClick={openAddDialog}
+              icon={Bookmark}
+              aria-label={user ? "Add routine to my account" : "Create account or login to add routine"}
+            />
           </div>
         ) : (
           /* OWNER MODE: Full editor for routine owners */
           <>
             <div className="flex flex-col min-h-screen" style={{ paddingTop: spacing.paddingTop }}>
               {/* Routine Image and Link Section */}
-          <div className="self-stretch inline-flex flex-col justify-center items-center mb-3">
-            <div className="w-full max-w-[500px] rounded-sm outline outline-1 outline-offset-[-1px] outline-neutral-neutral-300 overflow-hidden flex flex-col">
-              <img 
-                data-layer="open-graph-image"
-                className="OpenGraphImage w-full h-auto" 
-                src={program?.og_image_url || "https://placehold.co/500x262"} 
-                alt={`${programName} routine`}
-                draggable={false}
-                style={{ maxHeight: '256px', objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  console.log('Image failed to load:', program?.og_image_url);
-                  (e.target as HTMLImageElement).src = "https://placehold.co/500x262";
-                }}
-                onLoad={() => console.log('Image loaded successfully:', program?.og_image_url)}
-              />
-              <div 
-                data-layer="routine-link"
-                className="RoutineLink w-full h-11 max-w-[500px] px-3 bg-neutral-Neutral-50 border-t border-neutral-neutral-300 inline-flex justify-between items-center"
-                onClick={() => navigate('/history', { state: { filterRoutine: programName } })}
-                style={{ cursor: "pointer" }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/history', { state: { filterRoutine: programName } }); } }}
-                aria-label="View routine history"
-              >
-                <div data-layer="routine-name" className="justify-center text-neutral-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5">
-                  {programName} 
-                </div>
-                <div data-layer="lucide-icon" data-icon="list-checks" className="LucideIcon size-6 relative overflow-hidden">
-                  <ListChecks className="w-6 h-6 text-neutral-neutral-600" />
-                </div>
-              </div>
-            </div>
+          <div 
+            className="self-stretch inline-flex flex-col justify-center items-center mb-3"
+            style={{ paddingLeft: spacing.paddingX, paddingRight: spacing.paddingX }}
+          >
+            <SummaryHeaderCard 
+              imageUrl={program?.og_image_url || "https://placehold.co/500x262"}
+              title={programName}
+              onLinkClick={() => navigate('/history', { state: { filterRoutine: programName } })}
+            />
           </div>
           
           {exercisesBySection.map(({ section, exercises: secExercises }, index) => (
