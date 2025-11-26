@@ -22,6 +22,7 @@ import SwiperCombobox from "@/components/shared/SwiperCombobox";
 import CompletedWorkoutCard from "../components/CompletedWorkoutCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHistoryWorkouts, historyKeys } from "@/lib/queries/history";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 const History = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -49,16 +50,7 @@ const History = () => {
   const viewingOwn = !!user && (!paramUserId || paramUserId === user.id) && !managingForOwner && !managingForClient;
 
   // Helper to format delegate display name
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
+  const formatUserDisplay = useFormatUserDisplay();
 
   // Build the sharing nav content for delegates and sharing mode
   const isInSharingMode = isDelegated || managingForOwner || managingForClient;

@@ -8,6 +8,7 @@ import CardWrapper from "@/components/shared/cards/wrappers/CardWrapper";
 import StartWorkoutCard from "@/components/shared/cards/StartWorkoutCard";
 import RoutineCard from "@/features/routines/components/RoutineCard";
 import { MAX_ROUTINE_NAME_LEN } from "@/lib/constants";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 interface RoutineSelectionDialogProps {
   open: boolean;
@@ -34,16 +35,7 @@ const RoutineSelectionDialog: React.FC<RoutineSelectionDialogProps> = ({
   const [newRoutineName, setNewRoutineName] = useState("");
   const createNameInputRef = useRef<HTMLInputElement>(null);
 
-  const formatUserDisplay = (profile: any) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
+  const formatUserDisplay = useFormatUserDisplay();
 
   const handleCreateClick = () => {
     onOpenChange(false); // Hide parent dialog temporarily? Or keep it open?

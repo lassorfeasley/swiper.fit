@@ -25,6 +25,7 @@ import { scrollToSection } from "@/lib/scroll";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Copy, Blend, X, ListChecks, Bookmark } from "lucide-react";
 import { useSpacing } from "@/hooks/useSpacing";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 const RoutineBuilder = () => {
   const { routineId } = useParams();
@@ -75,16 +76,7 @@ const RoutineBuilder = () => {
   const spacing = useSpacing('SIMPLE_LIST');
   
   // Helper to format delegate display name
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
+  const formatUserDisplay = useFormatUserDisplay();
 
   // Full sharing nav row content matching Active Workout style
   const headerSharingContent = isDelegated ? (

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Trash2, ArrowRight, ChevronDown } from "lucide-react";
 import SwiperFormSwitch from "@/components/shared/SwiperFormSwitch";
 import ActionPill from "@/components/shared/ActionPill";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 interface ManagePermissionsCardProps {
   variant?: "trainer" | "client";
@@ -37,20 +38,10 @@ const ManagePermissionsCard = ({
   className = ""
 }: ManagePermissionsCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const formatUserDisplay = useFormatUserDisplay();
 
   const handlePermissionChange = (permission: string, value: boolean) => {
     onPermissionChange(permission, value);
-  };
-
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
   };
 
   const displayName = typeof name === 'string' ? name : formatUserDisplay(name);

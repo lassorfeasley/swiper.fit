@@ -27,6 +27,7 @@ import { ActionCard } from "@/components/shared/ActionCard";
 
 import { useAccount } from "@/contexts/AccountContext";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 // Individual Exercise Card Component
 const ExerciseCompletedCard = ({ exercise, setLog }) => {
@@ -133,16 +134,7 @@ const CompletedWorkout = () => {
   const { isDelegated, actingUser, returnToSelf } = useAccount();
   const showSidebar = isOwner && !isDelegated;
   // Helper to format delegate display name
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    if (firstName && lastName) return `${firstName} ${lastName}`;
-    if (firstName) return firstName;
-    if (lastName) return lastName;
-    return email;
-  };
+  const formatUserDisplay = useFormatUserDisplay();
 
   const headerSharingContent = isDelegated ? (
     <>

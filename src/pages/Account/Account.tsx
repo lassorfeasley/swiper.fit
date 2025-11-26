@@ -17,12 +17,12 @@ import {
   inviteTrainerToManage,
   cancelInvitationRequest,
   rejectInvitation,
-  declineTokenInvitation,
 } from "@/lib/sharingApi";
 import MainContentSection from "@/components/layout/MainContentSection";
 import { generateWorkoutName } from "@/lib/utils";
 import AccountSettingsMenu from "@/components/shared/AccountSettingsMenu";
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
+import { useFormatUserDisplay } from "@/hooks/useFormatUserDisplay";
 
 import SharingRequests from "@/features/account/components/SharingRequests";
 import TrainersList from "@/features/account/components/TrainersList";
@@ -163,27 +163,7 @@ const Account = () => {
   const createNameInputRef = useRef(null);
 
   // Helper function to format user display name
-  const formatUserDisplay = (profile) => {
-    if (!profile) return "Unknown User";
-    
-    const firstName = profile.first_name?.trim() || "";
-    const lastName = profile.last_name?.trim() || "";
-    const email = profile.email || "";
-    
-    if (firstName && lastName) {
-      return `${firstName} ${lastName}`;
-    }
-    
-    if (firstName) {
-      return firstName;
-    }
-    
-    if (lastName) {
-      return lastName;
-    }
-    
-    return email;
-  };
+  const formatUserDisplay = useFormatUserDisplay();
 
   // Account info queries and handlers
   const handleDeleteAccount = async () => {
