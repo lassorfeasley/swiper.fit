@@ -141,7 +141,7 @@ export async function inviteClientToBeManaged(
 ): Promise<void> {
   await postInvitationRequest({
     inviteeEmail: clientEmail,
-    intendedRole: 'manager',
+    intendedRole: 'managed',
     permissions,
     mirror,
   });
@@ -155,7 +155,7 @@ export async function inviteTrainerToManage(
 ): Promise<void> {
   await postInvitationRequest({
     inviteeEmail: trainerEmail,
-    intendedRole: 'managed',
+    intendedRole: 'manager',
     permissions,
     mirror,
   });

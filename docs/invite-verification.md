@@ -29,4 +29,7 @@ Use this checklist after deploying any sharing changes to ensure pending cards c
 2. Confirm Account A now shows **two** outgoing cards (one for each direction).
 3. Log in as Account **B** and accept just one of the cards—Account A should now show only the remaining pending card.
 4. Accept the second card and confirm both relationships appear in Account A’s “Trainers” and Account B’s “Clients”.
+5. Validate copy/badges:
+   - Trainer invite (A invites B to manage A): Account A’s outgoing card must read “was invited to be your trainer” with badge “They will manage you”; Account B’s incoming card must read “A wants you to be their trainer” with badge “You will manage them”.
+   - Client invite (A invites B to be managed by A): Account A’s outgoing card must read “was invited to be your client” with badge “You will manage them”; Account B’s incoming card must read “A wants to be your trainer” with badge “They will manage you”.
 

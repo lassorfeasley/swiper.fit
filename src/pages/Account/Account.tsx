@@ -1326,10 +1326,8 @@ const Account = () => {
                               const isTrainerInvite = request.request_type === 'trainer_invite';
                               const ownerProfile = (request as any).owner_profile;
                               const delegateProfile = (request as any).delegate_profile;
-                              const inviter =
-                                isTrainerInvite
-                                  ? ownerProfile || delegateProfile
-                                  : ownerProfile || delegateProfile;
+                              // owner_profile always reflects the inviter; delegate_profile is the recipient.
+                              const inviter = ownerProfile || delegateProfile;
                               const heading = isTrainerInvite
                                 ? `${formatUserDisplay(inviter)} wants you to be their trainer`
                                 : `${formatUserDisplay(inviter)} wants to be your trainer`;
@@ -1445,12 +1443,12 @@ const Account = () => {
                                 </span>
                                 <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
                                   {request.request_type === "client_invite"
-                                    ? "was invited to be your trainer"
-                                    : "was invited to be your client"}
+                                    ? "was invited to be your client"
+                                    : "was invited to be your trainer"}
                                 </span>
                               </div>
                               <div className="text-xs font-semibold text-neutral-600 bg-neutral-100 rounded-full px-3 py-1">
-                                {request.request_type === 'client_invite' ? 'They will manage you' : 'You will manage them'}
+                                {request.request_type === 'client_invite' ? 'You will manage them' : 'They will manage you'}
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
                             </div>
