@@ -1455,9 +1455,17 @@ const Account = () => {
                                   {formatUserDisplay(request.profiles)}{" "}
                                 </span>
                                 <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                                  {request.request_type === "trainer_invite"
-                                    ? "was invited to be your trainer"
-                                    : "was invited to be your client"}
+                                  {(() => {
+                                    const isTrainerInvite = request.request_type === "trainer_invite";
+                                    console.log('[Account] Display logic check:', {
+                                      request_type: request.request_type,
+                                      isTrainerInvite,
+                                      willShow: isTrainerInvite ? 'trainer' : 'client'
+                                    });
+                                    return isTrainerInvite
+                                      ? "was invited to be your trainer"
+                                      : "was invited to be your client";
+                                  })()}
                                 </span>
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
