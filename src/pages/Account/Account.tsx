@@ -1435,7 +1435,7 @@ const Account = () => {
                                   {formatUserDisplay(request.profiles)}{" "}
                                 </span>
                                 <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
-                                  {request.request_type === "client_invite"
+                                  {request.request_type === "trainer_invite"
                                     ? "was invited to be your trainer"
                                     : "was invited to be your client"}
                                 </span>
