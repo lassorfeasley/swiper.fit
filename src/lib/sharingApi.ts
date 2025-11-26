@@ -345,15 +345,15 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
 
 export async function rejectInvitation(invitationId: string): Promise<void> {
   try {
-    const { error } = await supabase
-      .from("account_shares")
-      .update({ status: 'declined' })
-      .eq("id", invitationId);
+    const { data, error } = await supabase.rpc('reject_invitation_by_id', { target_id: invitationId });
 
     if (error) {
       console.error("Reject invitation error:", error);
       throw new Error("Failed to reject invitation");
     }
+    
+    // If data is false, it means no record was found/updated, but we treat it as success (idempotent)
+    // or we could throw if strictness is required.
   } catch (error) {
     console.error("rejectInvitation error:", error);
     throw error;
