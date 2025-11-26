@@ -214,6 +214,18 @@ export async function cancelInvitationRequest(invitationId: string): Promise<voi
 export async function acceptTokenInvitation(inviteToken: string): Promise<void> {
   const { error } = await supabase.rpc('accept_invitation', { invite_token: inviteToken });
   if (error) {
+    // If the relationship already exists, treat as success and cleanup the pending invite
+    if (error.code === '23505' || error.message?.includes('already exists')) {
+      console.warn('[acceptTokenInvitation] Relationship already exists, marking invite as handled.');
+      // We decline it to remove it from the pending list, effectively "closing" the request
+      // since the goal (active share) is already achieved.
+      try {
+        await declineTokenInvitation(inviteToken);
+      } catch (cleanupError) {
+        console.error('[acceptTokenInvitation] Failed to cleanup duplicate invite:', cleanupError);
+      }
+      return;
+    }
     throw error;
   }
 }
