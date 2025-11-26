@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/shadcn/button";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
-import { supabase } from "@/supabaseClient";
 import { toast } from "@/lib/toastReplacement";
 
 interface ProfileSettingsProps {
@@ -13,11 +13,12 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [dirtyName, setDirtyName] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) {
+    const fetchData = async () => {
+      if (!user) {
         setLoading(false);
         return;
       }
@@ -39,8 +40,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       }
       setLoading(false);
     };
-    fetchProfile();
-  }, [user?.id]);
+    fetchData();
+  }, [user]);
 
   const handleSaveName = async () => {
     try {
@@ -50,15 +51,16 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
         .eq("id", user.id);
       if (error) throw error;
       setProfile({ first_name: firstName, last_name: lastName });
-      setIsEditingName(false);
+      setDirtyName(false);
       toast.success("Name updated");
+      setIsEditingName(false);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Failed to update name");
     }
   };
 
   if (loading) {
-    return <div className="text-center p-4">Loading profile...</div>;
+    return <div className="p-6 text-center text-gray-400">Loading profile...</div>;
   }
 
   return (
@@ -69,7 +71,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           <EditableTextInput
             label="First name"
             value={firstName}
-            onChange={(value) => setFirstName(value)}
+            onChange={(value) => {
+              setFirstName(value);
+              setDirtyName(true);
+            }}
             editing={isEditingName}
             onActivate={() => setIsEditingName(true)}
             className="w-full"
@@ -79,7 +84,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           <EditableTextInput
             label="Last name"
             value={lastName}
-            onChange={(value) => setLastName(value)}
+            onChange={(value) => {
+              setLastName(value);
+              setDirtyName(true);
+            }}
             editing={isEditingName}
             onActivate={() => setIsEditingName(true)}
             className="w-full"
@@ -96,9 +104,11 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </Button>
               <Button
                 className="w-full"
+                variant="outline"
                 onClick={() => {
                   setFirstName(profile.first_name || "");
                   setLastName(profile.last_name || "");
+                  setDirtyName(false);
                   setIsEditingName(false);
                 }}
               >
@@ -113,4 +123,3 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
 };
 
 export default ProfileSettings;
-

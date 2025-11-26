@@ -862,12 +862,6 @@ const Account = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6">Loading…</div>
-    );
-  }
-
   // Don't redirect if we're explicitly navigating to account (e.g., when exiting manage mode)
   // Check if we're on the account page, have a section query param, have an activeSection set,
   // OR if we're exiting delegation (passed via navigation state)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/shadcn/button";
 import EditableTextInput from "@/components/shared/inputs/EditableTextInput";
-import { supabase } from "@/supabaseClient";
 import { toast } from "@/lib/toastReplacement";
 
 interface LoginSettingsProps {
@@ -18,14 +18,15 @@ const LoginSettings: React.FC<LoginSettingsProps> = ({ user }) => {
     if (user?.email) {
       setEmail(user.email);
     }
-  }, [user?.email]);
+  }, [user]);
 
   const handleSaveLoginSection = async () => {
     try {
       if (dirtyEmail) {
         const { data, error } = await supabase.auth.updateUser({ email });
         if (error) throw error;
-        if (data.user?.email) setEmail(data.user.email);
+        // Note: Email update usually requires confirmation, data.user.email might not update immediately
+        setEmail(email); 
         setDirtyEmail(false);
         toast.success("Email updated. Please check your inbox to confirm.");
       }
@@ -37,7 +38,7 @@ const LoginSettings: React.FC<LoginSettingsProps> = ({ user }) => {
       }
       setIsEditingLogin(false);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Failed to update login info");
     }
   };
 
@@ -62,13 +63,15 @@ const LoginSettings: React.FC<LoginSettingsProps> = ({ user }) => {
           <EditableTextInput
             label="Password"
             value="●●●●●●●●●"
-            onChange={(value) => setNewPassword(value)}
+            onChange={(value) => {
+              setNewPassword(value);
+            }}
             editing={isEditingLogin}
             onActivate={() => setIsEditingLogin(true)}
             className="w-full"
             inputProps={{
               type: "password",
-              placeholder: "Enter new password",
+              placeholder: "Enter new password"
             }}
           />
 
@@ -83,8 +86,9 @@ const LoginSettings: React.FC<LoginSettingsProps> = ({ user }) => {
               </Button>
               <Button
                 className="w-full"
+                variant="outline"
                 onClick={() => {
-                  setEmail(user.email || "");
+                  setEmail(user?.email || "");
                   setDirtyEmail(false);
                   setNewPassword("");
                   setIsEditingLogin(false);
@@ -101,4 +105,3 @@ const LoginSettings: React.FC<LoginSettingsProps> = ({ user }) => {
 };
 
 export default LoginSettings;
-
