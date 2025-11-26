@@ -1316,24 +1316,26 @@ const Account = () => {
                   {pendingRequestsQuery.data && pendingRequestsQuery.data.length > 0 && (
                     pendingRequestsQuery.data.map((request) => (
                       <div key={request.id} className="SharedWithMeCard w-full bg-white rounded-lg border border-neutral-300 inline-flex flex-col justify-start items-start overflow-hidden">
-                        <div className="CardHeader self-stretch p-3 border-b border-neutral-300 inline-flex justify-between items-center gap-3 flex-wrap">
-                          <div className="Frame84 flex-1 flex flex-col gap-1">
-                            {(() => {
-                              const isTrainerInvite = request.request_type === 'trainer_invite';
-                              const ownerProfile = (request as any).owner_profile;
-                              const delegateProfile = (request as any).delegate_profile;
-                              // owner_profile always reflects the inviter; delegate_profile is the recipient.
-                              const inviter = ownerProfile || delegateProfile;
-                              const heading = isTrainerInvite
-                                ? `${formatUserDisplay(inviter)} wants you to be their trainer`
-                                : `${formatUserDisplay(inviter)} wants to be your trainer`;
+                        <div className="CardHeader self-stretch p-3 border-b border-neutral-300 inline-flex justify-between items-center">
+                          <div className="Frame84 flex-1 flex justify-start items-center gap-3">
+                            <div className="flex-1 justify-center text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
+                              {(() => {
+                                const currentUserId = user?.id;
+                                const isTrainerInvite = request.request_type === 'trainer_invite';
+                                const ownerProfile = (request as any).owner_profile;
+                                const delegateProfile = (request as any).delegate_profile;
 
-                              return (
-                                <div className="text-neutral-neutral-700 text-xl font-medium font-['Be_Vietnam_Pro'] leading-tight">
-                                  {heading}
-                                </div>
-                              );
-                            })()}
+                                // For trainer_invite, the trainer (delegate) invited the client (owner)
+                                if (isTrainerInvite) {
+                                  const inviter = delegateProfile || ownerProfile;
+                                  return `${formatUserDisplay(inviter)} wants to be your trainer`;
+                                }
+
+                                // For client_invite, the client (owner) invited the trainer (delegate)
+                                const inviter = ownerProfile || delegateProfile;
+                                return `${formatUserDisplay(inviter)} wants you to be their trainer`;
+                              })()}
+                            </div>
                           </div>
                           {request.source !== 'token' && (
                             <ActionPill
@@ -1434,8 +1436,8 @@ const Account = () => {
                                 </span>
                                 <span className="text-neutral-neutral-700 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">
                                   {request.request_type === "client_invite"
-                                    ? "was invited to be your client"
-                                    : "was invited to be your trainer"}
+                                    ? "was invited to be your trainer"
+                                    : "was invited to be your client"}
                                 </span>
                               </div>
                               <div data-layer="Awaiting response" className="AwaitingResponse justify-center text-neutral-neutral-500 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight">Awaiting response</div>
@@ -1474,13 +1476,10 @@ const Account = () => {
                           <div className="w-full flex flex-col gap-3">
                             <EmptyState
                               title="No invitations pending."
-                              description="You can create connections in both directions: invite someone to manage you, invite someone you manage, or do both."
+                              description="Invite a trainer to manage your account or invite a client so you can manage theirs."
                             />
-                            <div className="text-sm text-neutral-500">
-                              Pick one of the options below—each invitation is directional, and you can send both if you need a fully bidirectional relationship.
-                            </div>
                             <ActionCard
-                              text={inviteDialogCopy.trainer.buttonLabel}
+                              text="Invite a trainer"
                               onClick={() => {
                                 setDialogInviteType('trainer');
                                 setDialogMirrorInvite(false);
@@ -1489,7 +1488,7 @@ const Account = () => {
                               className="w-full h-14 rounded-lg border border-neutral-300"
                             />
                             <ActionCard
-                              text={inviteDialogCopy.client.buttonLabel}
+                              text="Invite a client"
                               onClick={() => {
                                 setDialogInviteType('client');
                                 setDialogMirrorInvite(false);
@@ -1504,11 +1503,8 @@ const Account = () => {
                         pendingRequestsQuery.isLoading ||
                         outgoingRequestsQuery.isLoading) && (
                         <div className="w-full flex flex-col gap-3">
-                          <div className="text-sm text-neutral-500">
-                            Need another direction? Invite someone to manage you or invite someone you manage—each invitation is independent.
-                          </div>
                           <ActionCard
-                            text={inviteDialogCopy.trainer.buttonLabel}
+                            text="Invite a trainer"
                             onClick={() => {
                               setDialogInviteType('trainer');
                               setDialogMirrorInvite(false);
@@ -1517,7 +1513,7 @@ const Account = () => {
                             className="w-full"
                           />
                           <ActionCard
-                            text={inviteDialogCopy.client.buttonLabel}
+                            text="Invite a client"
                             onClick={() => {
                               setDialogInviteType('client');
                               setDialogMirrorInvite(false);
@@ -1542,10 +1538,10 @@ const Account = () => {
                   <>
                     <EmptyState
                       title="Add a trainer to your account."
-                      description="Invite someone to manage you so they can build routines, review history, and start workouts on your behalf."
+                      description="Invite a trainer to manage you account to let them build you routines, review your history, and start workouts."
                     />
                     <ActionCard
-                      text={inviteDialogCopy.trainer.buttonLabel}
+                      text="Invite a trainer"
                       onClick={() => {
                         setDialogInviteType('trainer');
                         setDialogMirrorInvite(false);
@@ -1577,7 +1573,7 @@ const Account = () => {
                       />
                     ))}
                     <ActionCard
-                      text={inviteDialogCopy.trainer.buttonLabel}
+                      text="Invite a trainer"
                       onClick={() => {
                         setDialogInviteType('trainer');
                         setDialogMirrorInvite(false);
@@ -1601,10 +1597,10 @@ const Account = () => {
                   <>
                     <EmptyState
                       title="Add a client to your account."
-                      description="Invite someone you’ll manage so you can plan workouts, review their history, and keep them on track."
+                      description="Invite a client to manage their account to build routines for them, review their history, and start workouts."
                     />
                     <ActionCard
-                      text={inviteDialogCopy.client.buttonLabel}
+                      text="Invite a client"
                       onClick={() => {
                         setDialogInviteType('client');
                         setDialogMirrorInvite(false);
@@ -1641,7 +1637,7 @@ const Account = () => {
                       />
                     ))}
                     <ActionCard
-                      text={inviteDialogCopy.client.buttonLabel}
+                      text="Invite a client"
                       onClick={() => {
                         setDialogInviteType('client');
                         setDialogMirrorInvite(false);
@@ -1788,7 +1784,7 @@ const Account = () => {
           <SwiperDialog
             open={showAddPersonDialog}
             onOpenChange={setShowAddPersonDialog}
-            title={inviteDialogCopy[dialogInviteType].title}
+            title={dialogInviteType === 'trainer' ? "Invite a trainer" : "Invite a client"}
             confirmText={dialogInviteType === 'trainer' ? "Invite trainer" : "Invite client"}
             cancelText="Cancel"
             confirmVariant="default"
@@ -1802,7 +1798,7 @@ const Account = () => {
                 <div className="self-stretch inline-flex justify-start items-start gap-2">
                   <div className="flex-1 flex justify-between items-start">
                     <div className="flex-1 justify-start text-neutral-neutral-500 text-sm font-medium font-['Be_Vietnam_Pro'] leading-3">
-                        {inviteDialogCopy[dialogInviteType].emailLabel}
+                      {dialogInviteType === 'trainer' ? "Trainer's email" : "Client's email"}
                     </div>
                   </div>
                 </div>
@@ -1818,9 +1814,6 @@ const Account = () => {
               </div>
             </div>
             <div className="self-stretch flex flex-col justify-start items-start gap-0">
-              <div className="text-sm text-neutral-500 mb-3">
-                {inviteDialogCopy[dialogInviteType].description}
-              </div>
               <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
                 {dialogInviteType === 'client' ? (
                   <div className="self-stretch rounded-lg border border-neutral-300 flex flex-col justify-start items-start overflow-hidden">
