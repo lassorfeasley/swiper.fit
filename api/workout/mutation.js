@@ -509,7 +509,7 @@ async function findOrCreateExercise(supabase, name, section) {
   const { data: existing, error } = await supabase
     .from('exercises')
     .select('id, section')
-    .eq('name', name);
+    .ilike('name', name);
 
   if (error) {
     throw error;

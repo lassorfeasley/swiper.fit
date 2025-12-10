@@ -808,22 +808,8 @@ const ActiveWorkoutSection = ({
       if (type === "future") {
         console.log('[ActiveWorkoutSection] Updating routine template for exercise:', exercise_id);
         
-        // Update the exercise name and section in the exercises table
-        const { error: exerciseUpdateError } = await supabase
-          .from("exercises")
-          .update({ 
-            name: newName,
-            section: newSection 
-          })
-          .eq("id", exercise_id);
-
-        if (exerciseUpdateError) {
-          console.error("[ActiveWorkoutSection] Failed to update exercise in routine template:", exerciseUpdateError);
-          toast.error("Failed to update exercise in routine template. Changes saved for today only.");
-          // Don't return - continue with set updates attempt
-        } else {
-          console.log('[ActiveWorkoutSection] Exercise name/section updated successfully');
-        }
+        // Note: We no longer update the exercise name - only section and sets
+        // Exercise names are managed in the routine builder
 
         // Find the routine_exercise_id for this exercise
         console.log('[ActiveWorkoutSection] Looking for routine_exercise with routine_id:', activeWorkout.routine_id, 'exercise_id:', exercise_id);
@@ -1658,6 +1644,7 @@ const ActiveWorkoutSection = ({
               hideActionButtons={true}
               showAddToProgramToggle={false}
               hideSetDefaults={true}
+              readOnlyName={true}
               onActionIconClick={(data) => {
                 handleSaveExerciseEdit(data, exerciseUpdateType);
               }}
