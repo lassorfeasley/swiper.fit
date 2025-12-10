@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { ChevronDown, Check, Search } from "lucide-react";
+import { ChevronDown, Check, Search, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SwiperComboboxProps {
@@ -18,6 +18,7 @@ interface SwiperComboboxProps {
   useRelativePositioning?: boolean;
   onSearchChange?: (query: string) => void;
   disableClientFilter?: boolean;
+  displayValue?: string; // Override display text when no item is selected
 }
 
 /**
@@ -42,6 +43,7 @@ export default function SwiperCombobox({
   disabled = false,
   onSearchChange,
   disableClientFilter = false,
+  displayValue,
 }: SwiperComboboxProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -52,6 +54,9 @@ export default function SwiperCombobox({
   const selectedLabel = useMemo(() => {
     return items.find((i) => i.value === value)?.label || "";
   }, [items, value]);
+
+  // Use displayValue only when no item is selected, otherwise use selectedLabel
+  const displayText = selectedLabel || displayValue || placeholder;
 
   // Update dropdown position when opened
   useEffect(() => {
@@ -132,7 +137,7 @@ export default function SwiperCombobox({
           <div className="SelectionArea self-stretch px-1 pt-1 pb-1 flex flex-col justify-start items-start max-h-64 overflow-auto bg-white">
             {filtered.map((item, index) => {
               const selected = value === item.value;
-              const isAddExercise = item.value.startsWith('__new__') && item.label === 'Add exercise';
+              const isAddItem = item.value.startsWith('__new__');
               const isLastItem = index === filtered.length - 1;
               return (
                 <div
@@ -142,20 +147,24 @@ export default function SwiperCombobox({
                     setIsOpen(false);
                     setQuery("");
                   }}
-                  className={cn(
+                    className={cn(
                     "self-stretch h-9 p-2 rounded-lg inline-flex justify-center items-center gap-2.5 w-full cursor-pointer",
                     selected ? "bg-stone-100" : "bg-white hover:bg-stone-100",
                     item.disabled && "opacity-50 cursor-not-allowed",
-                    isAddExercise && isLastItem && "border-t border-neutral-200 mt-1 pt-3"
+                    isAddItem && isLastItem && "border-t border-neutral-200 mt-1 pt-3"
                   )}
                 >
                   <div className={cn(
                     "flex-1 justify-start text-sm font-['Be_Vietnam_Pro'] leading-tight truncate",
-                    isAddExercise ? "text-blue-600 font-medium" : "text-neutral-600 font-normal"
+                    isAddItem ? "text-blue-600 font-medium" : "text-neutral-600 font-normal"
                   )}>
                     {item.label || item.value}
                   </div>
-                  <Check className={cn("ml-2 text-neutral-600", selected ? "opacity-100" : "opacity-0")}/>
+                  {isAddItem ? (
+                    <Plus className="w-4 h-4 text-neutral-600" />
+                  ) : (
+                    <Check className={cn("ml-2 text-neutral-600", selected ? "opacity-100" : "opacity-0")} />
+                  )}
                 </div>
               );
             })}
@@ -180,7 +189,7 @@ export default function SwiperCombobox({
         style={width !== undefined ? { width, maxWidth: 425 } : {}}
       >
         <div className="DropdownText flex-1 justify-start text-neutral-600 text-sm font-normal font-['Be_Vietnam_Pro'] leading-tight truncate">
-          {selectedLabel || placeholder}
+          {displayText}
         </div>
         <div className="LucideIcon w-6 h-6 relative overflow-hidden">
           <ChevronDown className="w-4 h-4 text-neutral-700 absolute left-[4px] top-[4px]" />

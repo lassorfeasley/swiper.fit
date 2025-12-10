@@ -151,7 +151,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
       const timeoutId = setTimeout(async () => {
         setIsSearching(true);
         try {
-          const results = query.length >= 2 
+          const results = (query.length >= 2 && user?.id)
             ? await searchUserExercises(user.id, query)
             : [];
           
@@ -164,7 +164,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
           // Always add "Add exercise" as the 4th option
           const addExerciseOption = {
             value: `__new__${query}`,
-            label: 'Add exercise',
+            label: `Add "${query}"`,
           };
           
           setExerciseOptions([...exerciseItems, addExerciseOption]);
@@ -173,7 +173,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
           // Even on error, show "Add exercise" option
           setExerciseOptions([{
             value: `__new__${query}`,
-            label: 'Add exercise',
+            label: `Add "${query}"`,
           }]);
         } finally {
           setIsSearching(false);
@@ -328,6 +328,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
               <SwiperCombobox
                 items={exerciseOptions}
                 value={selectedExerciseId || undefined}
+                displayValue={exerciseName || undefined}
                 onChange={(value) => {
                   if (value?.startsWith('__new__')) {
                     // Extract the name from the value or use current query
@@ -350,7 +351,7 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
                 }}
                 onSearchChange={handleSearchChange}
                 disableClientFilter={true}
-                placeholder="Type to search or create exercise..."
+                placeholder="Select or name exercise"
                 filterPlaceholder="Search exercises..."
                 emptyText={isSearching ? "Searching..." : "No exercises found"}
                 disabled={disabled}
