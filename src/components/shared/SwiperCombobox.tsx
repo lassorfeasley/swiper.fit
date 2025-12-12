@@ -249,6 +249,7 @@ export default function SwiperCombobox({
             <input
               ref={inputRef}
               type="text"
+              autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onClick={(e) => e.stopPropagation()}
