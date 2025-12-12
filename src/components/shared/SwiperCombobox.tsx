@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check, Search, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,32 @@ export default function SwiperCombobox({
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  // Find the appropriate portal container - either a Radix portal or document.body
+  useEffect(() => {
+    if (triggerRef.current) {
+      // Look for nearest Radix portal container (to avoid inert attribute issues)
+      let element: HTMLElement | null = triggerRef.current;
+      while (element) {
+        // Check for Radix portal data attribute
+        if (element.hasAttribute('data-radix-portal')) {
+          setPortalContainer(element);
+          return;
+        }
+        // Also check for Vaul (drawer) portal
+        if (element.hasAttribute('vaul-drawer')) {
+          setPortalContainer(element.parentElement || document.body);
+          return;
+        }
+        element = element.parentElement;
+      }
+      // Fallback to document.body if not in a modal
+      setPortalContainer(document.body);
+    }
+  }, []);
 
   const selectedLabel = useMemo(() => {
     return items.find((i) => i.value === value)?.label || "";
@@ -64,9 +90,12 @@ export default function SwiperCombobox({
   useEffect(() => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      // Use viewport-relative coordinates only (no scroll offset)
+      // since we're using fixed positioning via portal
+      // Gap of 12px between trigger and dropdown
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + 12,
+        left: rect.left,
         width: rect.width,
       });
     }
@@ -105,28 +134,41 @@ export default function SwiperCombobox({
     onSearchChange?.(query);
   }, [query, onSearchChange]);
 
-  const dropdownContent = isOpen ? (
-    <>
-      {/* Click outside to close */}
-      <div 
-        className="fixed inset-0 z-[9998]" 
-        onClick={() => {
-          setIsOpen(false);
-        }}
-      />
-      {(query.trim() || (showItemsWithoutQuery && filtered.length > 0)) && (
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      // Check if click is outside both trigger and dropdown
+      if (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    // Use mousedown to catch clicks before they bubble
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const dropdownContent = isOpen && (query.trim() || (showItemsWithoutQuery && filtered.length > 0)) ? (
         <div
-          className={cn("ResultsWrapper self-stretch pt-2 fixed z-[9999]", contentClassName)}
+          ref={dropdownRef}
+          className={cn("ResultsWrapper self-stretch fixed z-[9999]", contentClassName)}
           style={{ 
             top: dropdownPosition.top, 
             left: dropdownPosition.left, 
             width: dropdownPosition.width,
-            maxWidth: 425 
+            maxWidth: 425,
+            pointerEvents: 'auto'
           }}
-          onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <div className="SearchBox self-stretch rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] border border-neutral-300 backdrop-blur-[1px] flex flex-col justify-start items-center overflow-hidden bg-white">
+          <div className="SearchBox self-stretch rounded-lg shadow-[0px_0px_8px_0px_rgba(229,229,229,1.00)] border border-neutral-300 backdrop-blur-[1px] flex flex-col justify-start items-center overflow-hidden bg-white" style={{ pointerEvents: 'auto' }}>
           {(() => {
             const regularItems = filtered.filter(item => !item.value.startsWith('__new__'));
             const addItems = filtered.filter(item => item.value.startsWith('__new__'));
@@ -186,8 +228,6 @@ export default function SwiperCombobox({
           })()}
           </div>
         </div>
-      )}
-    </>
   ) : null;
 
   return (
@@ -248,7 +288,8 @@ export default function SwiperCombobox({
         )}
       </div>
       
-      {dropdownContent}
+      {/* Portal the dropdown - use Radix portal container if inside a modal, otherwise document.body */}
+      {dropdownContent && portalContainer && createPortal(dropdownContent, portalContainer)}
     </div>
   );
 }
