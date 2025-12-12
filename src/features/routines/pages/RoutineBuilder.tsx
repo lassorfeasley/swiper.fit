@@ -716,11 +716,12 @@ const RoutineBuilder = () => {
 
   const handleAddExercise = async (exerciseData) => {
     try {
-      let { data: existing } = await supabase
+      let { data: existingResults } = await supabase
         .from("exercises")
         .select("id, section")
-        .eq("name", exerciseData.name)
-        .maybeSingle();
+        .ilike("name", exerciseData.name)
+        .limit(1);
+      let existing = existingResults && existingResults.length > 0 ? existingResults[0] : null;
       let exercise_id = existing?.id;
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
@@ -1249,6 +1250,7 @@ const RoutineBuilder = () => {
                 hideActionButtons
                 showAddToProgramToggle={false}
                 hideSetDefaults={!!editingExercise}
+                readOnlyName={!!editingExercise}
                 onEditSet={() => handleEditSet(0, {})}
               />
               {editingExercise && (

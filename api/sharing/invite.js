@@ -454,8 +454,10 @@ async function assertNoActiveShare({ intendedRole, inviterId, recipientId }) {
     return;
   }
 
-  const ownerId = intendedRole === 'manager' ? recipientId : inviterId;
-  const delegateId = intendedRole === 'manager' ? inviterId : recipientId;
+  // For 'manager': inviter wants recipient to manage them, so inviter = owner, recipient = delegate
+  // For 'managed': inviter wants to manage recipient, so recipient = owner, inviter = delegate
+  const ownerId = intendedRole === 'manager' ? inviterId : recipientId;
+  const delegateId = intendedRole === 'manager' ? recipientId : inviterId;
 
   const { count, error } = await supabaseAdmin
     .from('account_shares')
@@ -502,9 +504,11 @@ async function assertNoDuplicatePendingInvite({ intendedRole, inviterId, recipie
 
 function resolveEmailEvent({ intendedRole, hasAccount }) {
   if (intendedRole === 'manager') {
-    return hasAccount ? 'client.invitation' : 'join.client-invitation';
+    // Recipient is being invited to be a manager (trainer)
+    return hasAccount ? 'trainer.invitation' : 'join.trainer-invitation';
   }
-  return hasAccount ? 'trainer.invitation' : 'join.trainer-invitation';
+  // Recipient is being invited to be managed (client)
+  return hasAccount ? 'client.invitation' : 'join.client-invitation';
 }
 
 async function sendInviteEmail({ event, to, inviterName, acceptUrl }) {

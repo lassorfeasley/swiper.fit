@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { TextInput } from "@/components/shared/inputs/TextInput";
 import { MAX_EXERCISE_NAME_LEN } from "@/lib/constants";
 import ToggleInput from "@/components/shared/inputs/ToggleInput";
@@ -9,6 +9,9 @@ import useSetConfig from "@/hooks/use-set-config";
 import SetBuilderForm from "./SetBuilderForm";
 import FormSectionWrapper from "@/components/shared/forms/wrappers/FormSectionWrapper";
 import { Minus, Plus } from "lucide-react";
+import { searchUserExercises } from "@/lib/queries/exercises";
+import { useAuth } from "@/contexts/AuthContext";
+import SwiperCombobox from "@/components/shared/SwiperCombobox";
 
 interface AddNewExerciseFormProps {
   onActionIconClick?: (exerciseData?: any, type?: string) => void;
@@ -29,6 +32,7 @@ interface AddNewExerciseFormProps {
   onSetsConfigChange?: (configs: any[]) => void;
   disabled?: boolean;
   hideSetDefaults?: boolean;
+  readOnlyName?: boolean;
 }
 
 const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormProps>(
@@ -52,9 +56,11 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
       onSetsConfigChange,
       disabled = false,
       hideSetDefaults = false,
+      readOnlyName = false,
     },
     ref
   ) => {
+    const { user } = useAuth();
     /* ------------------------------------------------------------------ */
     //  Local state – name & set config hook
     /* ------------------------------------------------------------------ */
@@ -67,6 +73,12 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
     const initialSectionRef = React.useRef(initialSection);
     const initialUpdateTypeRef = React.useRef(updateType);
     const lastInitialSetConfigsRef = React.useRef(initialSetConfigs);
+    
+    // Exercise search state
+    const [exerciseOptions, setExerciseOptions] = useState<Array<{ value: string; label: string }>>([]);
+    const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+    const [isSearching, setIsSearching] = useState(false);
+    const [comboboxQuery, setComboboxQuery] = useState(initialName || "");
 
     // Build initial defaults from the first supplied set config (if any)
     const initialDefaults = initialSetConfigs[0]
@@ -104,6 +116,76 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
     useEffect(() => {
       setIsInitialized(true);
       console.log('[AddNewExerciseForm] Initialized with updateType:', updateType);
+      // Initialize combobox query with initial name
+      if (initialName && !readOnlyName) {
+        setComboboxQuery(initialName);
+      }
+    }, []);
+
+    // Debounced exercise search based on combobox query
+    useEffect(() => {
+      if (readOnlyName || !user?.id) {
+        setExerciseOptions([]);
+        return;
+      }
+
+      const query = comboboxQuery.trim();
+      
+      // If query is empty, show only "Add exercise"
+      if (query.length === 0) {
+        setExerciseOptions([{
+          value: '__new__',
+          label: 'Add exercise',
+        }]);
+        return;
+      }
+
+      // Update exercise name as user types (respecting max length)
+      const clampedName = comboboxQuery.slice(0, MAX_EXERCISE_NAME_LEN);
+      if (exerciseName !== clampedName) {
+        setExerciseName(clampedName);
+      }
+      setSelectedExerciseId(null);
+
+      // Debounced async search
+      const timeoutId = setTimeout(async () => {
+        setIsSearching(true);
+        try {
+          const results = (query.length >= 2 && user?.id)
+            ? await searchUserExercises(user.id, query)
+            : [];
+          
+          // Limit to 3 matching exercises
+          const exerciseItems = results.slice(0, 3).map((ex) => ({
+            value: ex.id,
+            label: ex.name,
+          }));
+          
+          // Always add "Add exercise" as the 4th option
+          const addExerciseOption = {
+            value: `__new__${query}`,
+            label: `Add "${query}"`,
+          };
+          
+          setExerciseOptions([...exerciseItems, addExerciseOption]);
+        } catch (error) {
+          console.error('[AddNewExerciseForm] Error searching exercises:', error);
+          // Even on error, show "Add exercise" option
+          setExerciseOptions([{
+            value: `__new__${query}`,
+            label: `Add "${query}"`,
+          }]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }, [comboboxQuery, user?.id, readOnlyName, exerciseName]);
+
+    // Handle async search from combobox
+    const handleSearchChange = React.useCallback((query: string) => {
+      setComboboxQuery(query);
     }, []);
 
     // Merge incoming per-set configs into hook state on mount
@@ -226,14 +308,58 @@ const AddNewExerciseForm = React.forwardRef<HTMLFormElement, AddNewExerciseFormP
                 {(exerciseName || '').length} of {MAX_EXERCISE_NAME_LEN} characters
               </div>
             </div>
-            <TextInput
-              value={exerciseName}
-              onChange={(e) => setExerciseName(e.target.value)}
-              customPlaceholder=""
-              disabled={disabled}
-              maxLength={MAX_EXERCISE_NAME_LEN}
-              error={(exerciseName || '').length >= MAX_EXERCISE_NAME_LEN}
-            />
+            {readOnlyName ? (
+              <>
+                <TextInput
+                  value={exerciseName}
+                  onChange={(e) => {
+                    const clampedName = e.target.value.slice(0, MAX_EXERCISE_NAME_LEN);
+                    setExerciseName(clampedName);
+                  }}
+                  maxLength={MAX_EXERCISE_NAME_LEN}
+                  placeholder="Exercise name"
+                  disabled={disabled}
+                />
+                <p className="text-xs text-slate-500 font-normal font-['Be_Vietnam_Pro'] mt-2">
+                  Updating this name will apply across all routines and workout history where this exercise appears.
+                </p>
+              </>
+            ) : (
+              <SwiperCombobox
+                items={exerciseOptions}
+                value={selectedExerciseId || undefined}
+                displayValue={exerciseName || undefined}
+                onChange={(value) => {
+                  if (value?.startsWith('__new__')) {
+                    // Extract the name from the value or use current query
+                    const newName = value.replace('__new__', '') || comboboxQuery.trim();
+                    if (newName) {
+                      const clampedName = newName.slice(0, MAX_EXERCISE_NAME_LEN);
+                      setExerciseName(clampedName);
+                      setSelectedExerciseId(null);
+                      setComboboxQuery(clampedName);
+                    }
+                  } else {
+                    // Select existing exercise
+                    const selected = exerciseOptions.find((opt) => opt.value === value);
+                    if (selected) {
+                      setExerciseName(selected.label);
+                      setSelectedExerciseId(value);
+                      setComboboxQuery(selected.label);
+                    }
+                  }
+                }}
+                onSearchChange={handleSearchChange}
+                disableClientFilter={true}
+                placeholder="Select or name exercise"
+                filterPlaceholder="Search exercises..."
+                emptyText={isSearching ? "Searching..." : "No exercises found"}
+                disabled={disabled}
+                width={undefined}
+                className="w-full"
+                contentClassName="w-full"
+              />
+            )}
           </div>
           
           {showSectionToggle && (
