@@ -502,9 +502,11 @@ async function assertNoDuplicatePendingInvite({ intendedRole, inviterId, recipie
 
 function resolveEmailEvent({ intendedRole, hasAccount }) {
   if (intendedRole === 'manager') {
-    return hasAccount ? 'client.invitation' : 'join.client-invitation';
+    // Recipient is being invited to be a manager (trainer)
+    return hasAccount ? 'trainer.invitation' : 'join.trainer-invitation';
   }
-  return hasAccount ? 'trainer.invitation' : 'join.trainer-invitation';
+  // Recipient is being invited to be managed (client)
+  return hasAccount ? 'client.invitation' : 'join.client-invitation';
 }
 
 async function sendInviteEmail({ event, to, inviterName, acceptUrl }) {
