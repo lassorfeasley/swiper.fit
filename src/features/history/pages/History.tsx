@@ -286,18 +286,23 @@ const History = () => {
     })();
   }, [viewingOwn, targetUserId]);
 
-  // Build routine options from loaded workouts (distinct routine names)
-  const routineOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (workouts || [])
-            .map((w) => w?.routines?.routine_name)
-            .filter((name): name is string => Boolean(name))
-        )
-      ).map((name) => ({ value: name, label: name })),
-    [workouts]
-  );
+  // Build routine options from the top 3 most recently completed workouts (by completion order)
+  const routineOptions = useMemo(() => {
+    const recentRoutineNames: string[] = [];
+    const seen = new Set<string>();
+    
+    // workouts are already sorted by most recent first
+    for (const w of workouts || []) {
+      const name = w?.routines?.routine_name;
+      if (name && !seen.has(name)) {
+        seen.add(name);
+        recentRoutineNames.push(name);
+        if (recentRoutineNames.length >= 3) break;
+      }
+    }
+    
+    return recentRoutineNames.map((name) => ({ value: name, label: name }));
+  }, [workouts]);
 
   const [selectedRoutine, setSelectedRoutine] = useState("");
 
@@ -316,10 +321,11 @@ const History = () => {
           items={routineOptions}
           value={selectedRoutine}
           onChange={setSelectedRoutine}
-          placeholder="Filter routines"
+          placeholder="body"
           filterPlaceholder="Search"
           width={240}
           useRelativePositioning={true}
+          showItemsWithoutQuery={true}
         />
       }
       data-component="AppHeader"

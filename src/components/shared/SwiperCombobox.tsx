@@ -19,6 +19,7 @@ interface SwiperComboboxProps {
   onSearchChange?: (query: string) => void;
   disableClientFilter?: boolean;
   displayValue?: string; // Override display text when no item is selected
+  showItemsWithoutQuery?: boolean; // Show items even when query is empty
 }
 
 /**
@@ -44,6 +45,7 @@ export default function SwiperCombobox({
   onSearchChange,
   disableClientFilter = false,
   displayValue,
+  showItemsWithoutQuery = false,
 }: SwiperComboboxProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -112,7 +114,7 @@ export default function SwiperCombobox({
           setIsOpen(false);
         }}
       />
-      {query.trim() && (
+      {(query.trim() || (showItemsWithoutQuery && filtered.length > 0)) && (
         <div
           className={cn("ResultsWrapper self-stretch pt-2 fixed z-[9999]", contentClassName)}
           style={{ 
@@ -209,20 +211,38 @@ export default function SwiperCombobox({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && query.trim()) {
+                  e.preventDefault();
+                  // Check if there's an "add new" item available
+                  const addItem = filtered.find(item => item.value.startsWith('__new__'));
+                  if (addItem) {
+                    onChange?.(addItem.value);
+                  } else {
+                    // If no add item exists, create one with the current query
+                    onChange?.(`__new__${query.trim()}`);
+                  }
+                  setIsOpen(false);
+                  setQuery("");
+                }
+              }}
               placeholder={filterPlaceholder}
-              className="DropdownText flex-1 justify-start text-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5 bg-transparent border-none outline-none placeholder:text-neutral-600"
+              className="DropdownText flex-1 justify-start text-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5 bg-transparent border-none outline-none placeholder:text-neutral-400"
             />
-            <div className="LucideIcon size-4 relative overflow-hidden">
-              <Search className="size-3 absolute left-[2px] top-[2px] text-neutral-500" strokeWidth={2} />
+            <div className="LucideIcon size-6 relative overflow-hidden">
+              <Search className="size-4 absolute left-[3px] top-[3px] text-neutral-700" strokeWidth={2} />
             </div>
           </>
         ) : (
           <>
-            <div className="DropdownText flex-1 justify-start text-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5 truncate">
+            <div className={cn(
+              "DropdownText flex-1 justify-start text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5 truncate",
+              selectedLabel || displayValue ? "text-neutral-600" : "text-neutral-400"
+            )}>
               {displayText}
             </div>
-            <div className="LucideIcon size-6 relative overflow-hidden flex items-center justify-center">
-              <ChevronDown className="size-4 text-neutral-700" strokeWidth={2} />
+            <div className="LucideIcon size-6 relative overflow-hidden">
+              <ChevronDown className="size-4 absolute left-[3px] top-[3px] text-neutral-700" strokeWidth={2} />
             </div>
           </>
         )}
