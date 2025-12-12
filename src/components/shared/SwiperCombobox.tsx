@@ -269,7 +269,7 @@ export default function SwiperCombobox({
                 }
               }}
               placeholder={filterPlaceholder}
-              className="DropdownText flex-1 justify-start text-neutral-600 text-sm font-semibold font-['Be_Vietnam_Pro'] leading-5 bg-transparent border-none outline-none placeholder:text-neutral-400"
+              className="DropdownText flex-1 justify-start text-neutral-600 text-base font-semibold font-['Be_Vietnam_Pro'] leading-5 bg-transparent border-none outline-none placeholder:text-neutral-400"
             />
             <div className="LucideIcon size-6 relative overflow-hidden">
               <Search className="size-4 absolute left-[3px] top-[3px] text-neutral-700" strokeWidth={2} />
