@@ -251,6 +251,7 @@ export default function SwiperCombobox({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && query.trim()) {
                   e.preventDefault();
