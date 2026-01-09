@@ -45,42 +45,22 @@ export default function CreateAccount(): React.JSX.Element {
   }, [location.search]);
 
   const cloneRoutineForCurrentUser = async (sourceRoutineId) => {
-    console.log('[CreateAccount] Attempting RPC clone_routine for routine:', sourceRoutineId);
+    console.log('[CreateAccount] Attempting RPC clone_routine_with_exercises for routine:', sourceRoutineId);
     try {
-      // Lookup owner name for attribution used in RPC new_name
-      let ownerName;
-      try {
-        const { data: srcOwner } = await supabase
-          .from('routines')
-          .select('user_id')
-          .eq('id', sourceRoutineId)
-          .maybeSingle();
-        if (srcOwner?.user_id) {
-          const { data: owner } = await supabase
-            .from('profiles')
-            .select('first_name, last_name')
-            .eq('id', srcOwner.user_id)
-            .maybeSingle();
-          if (owner) {
-            ownerName = `${owner.first_name || ''} ${owner.last_name || ''}`.trim();
-          }
-        }
-      } catch (_) {}
-
-      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
+      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine_with_exercises', {
         source_routine_id: sourceRoutineId,
         new_name: null, // Will use original routine name
       });
       if (!rpcError && newId) {
-        console.log('[CreateAccount] RPC clone_routine succeeded, new routine ID:', newId);
+        console.log('[CreateAccount] RPC clone_routine_with_exercises succeeded, new routine ID:', newId);
         return newId;
       }
     } catch (e) {
-      console.log('[CreateAccount] RPC clone_routine failed, falling back to manual clone:', e);
+      console.log('[CreateAccount] RPC clone_routine_with_exercises failed, falling back to manual clone:', e);
     }
 
-    // Fallback manual clone
-    console.log('[CreateAccount] Starting manual clone with attribution:');
+    // Fallback manual clone with exercise duplication
+    console.log('[CreateAccount] Starting manual clone with exercise duplication:');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth?.user?.id;
     if (!uid) throw new Error('Not authenticated');
@@ -96,7 +76,7 @@ export default function CreateAccount(): React.JSX.Element {
         routine_exercises!fk_routine_exercises__routines(
           id,
           exercise_order,
-          exercises!fk_routine_exercises__exercises(id),
+          exercises!fk_routine_exercises__exercises(id, name, section),
           routine_sets!fk_routine_sets__routine_exercises(
             id, reps, weight, weight_unit, set_order, set_variant, set_type, timed_set_duration
           )
@@ -131,9 +111,58 @@ export default function CreateAccount(): React.JSX.Element {
     
     const newRoutineId = newRoutine.id;
 
-    const exercisesPayload = (src.routine_exercises || [])
-      .sort((a: any, b: any) => (a.exercise_order||0) - (b.exercise_order||0))
-      .map((re: any) => ({ routine_id: newRoutineId, exercise_id: re.exercises.id, exercise_order: re.exercise_order || 0, user_id: uid }));
+    // Clone exercises and routine_exercises with exercise duplication
+    const exercisesPayload = [];
+    const exerciseIdMap = new Map(); // old_exercise_id -> new_exercise_id
+    
+    for (const re of (src.routine_exercises || []).sort((a: any, b: any) => (a.exercise_order||0) - (b.exercise_order||0))) {
+      const sourceExercise = (re as any).exercises;
+      if (!sourceExercise) continue;
+      
+      let newExerciseId = exerciseIdMap.get(sourceExercise.id);
+      
+      // Check if exercise already exists for this user (by name)
+      if (!newExerciseId) {
+        const { data: existingExercise } = await supabase
+          .from('exercises')
+          .select('id')
+          .eq('user_id', uid)
+          .ilike('name', sourceExercise.name)
+          .limit(1)
+          .maybeSingle();
+        
+        if (existingExercise) {
+          newExerciseId = existingExercise.id;
+        } else {
+          // Create new exercise for this user
+          const { data: newExercise, error: exErr } = await supabase
+            .from('exercises')
+            .insert({
+              name: sourceExercise.name,
+              section: sourceExercise.section || 'training',
+              user_id: uid
+            })
+            .select('id')
+            .single();
+          
+          if (exErr || !newExercise) {
+            console.error('[CreateAccount] Failed to create exercise:', exErr);
+            continue;
+          }
+          newExerciseId = newExercise.id;
+        }
+        
+        exerciseIdMap.set(sourceExercise.id, newExerciseId);
+      }
+      
+      exercisesPayload.push({
+        routine_id: newRoutineId,
+        exercise_id: newExerciseId,
+        exercise_order: re.exercise_order || 0,
+        user_id: uid
+      });
+    }
+    
     let inserted = [];
     if (exercisesPayload.length > 0) {
       const { data: reRows, error: reErr } = await supabase
@@ -143,9 +172,15 @@ export default function CreateAccount(): React.JSX.Element {
       if (reErr) throw reErr;
       inserted = reRows || [];
     }
+    
+    // Clone routine_sets
     for (const re of src.routine_exercises || []) {
-      const target = inserted.find((x: any) => x.exercise_id === (re as any).exercises.id);
+      const newExerciseId = exerciseIdMap.get((re as any).exercises?.id);
+      if (!newExerciseId) continue;
+      
+      const target = inserted.find((x: any) => x.exercise_id === newExerciseId);
       if (!target) continue;
+      
       const setsPayload = (re.routine_sets || []).sort((a,b)=> (a.set_order||0)-(b.set_order||0)).map((rs) => ({
         routine_exercise_id: target.id,
         set_order: rs.set_order,
