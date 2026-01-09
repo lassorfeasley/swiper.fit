@@ -438,25 +438,25 @@ const RoutineBuilder = () => {
     }, 300);
   };
 
-  // Clone routine for non-owner viewers
+  // Clone routine for non-owner viewers (with exercise duplication for isolation)
   const cloneRoutineForCurrentUser = async () => {
     if (!program) return null;
     
-    // Try RPC first (if function exists)
+    // Try RPC first (uses clone_routine_with_exercises for proper isolation)
     try {
-      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine', {
+      const { data: newId, error: rpcError } = await supabase.rpc('clone_routine_with_exercises', {
         source_routine_id: routineId,
         new_name: program.routine_name,
       });
       if (!rpcError && newId) {
-        console.log('[RoutineBuilder] RPC clone_routine succeeded, new routine ID:', newId);
+        console.log('[RoutineBuilder] RPC clone_routine_with_exercises succeeded, new routine ID:', newId);
         return newId;
       }
     } catch (e) {
-      console.log('[RoutineBuilder] RPC clone_routine failed, falling back to manual clone:', e);
+      console.log('[RoutineBuilder] RPC clone_routine_with_exercises failed, falling back to manual clone:', e);
     }
 
-    // Fallback manual clone
+    // Fallback manual clone with exercise duplication
     const { data: newRoutine, error: routineErr } = await supabase
       .from('routines')
       .insert({
@@ -472,14 +472,57 @@ const RoutineBuilder = () => {
 
     const newRoutineId = newRoutine.id;
 
-    // Insert routine_exercises
-    const exercisesPayload = exercises
-      .map((ex) => ({
+    // Clone exercises and create routine_exercises with exercise duplication
+    const exerciseIdMap = new Map(); // old_exercise_id -> new_exercise_id
+    const exercisesPayload = [];
+    
+    for (const ex of exercises) {
+      let newExerciseId = exerciseIdMap.get(ex.exercise_id);
+      
+      // Check if exercise already exists for this user (by name)
+      if (!newExerciseId) {
+        const exerciseName = ex.name || 'Unknown Exercise';
+        
+        const { data: existingExercise } = await supabase
+          .from('exercises')
+          .select('id')
+          .eq('user_id', user.id)
+          .ilike('name', exerciseName)
+          .limit(1)
+          .maybeSingle();
+        
+        if (existingExercise) {
+          newExerciseId = existingExercise.id;
+        } else {
+          // Create new exercise for this user
+          const { data: newExercise, error: exErr } = await supabase
+            .from('exercises')
+            .insert({
+              name: exerciseName,
+              section: ex.section || 'training',
+              user_id: user.id
+            })
+            .select('id')
+            .single();
+          
+          if (exErr || !newExercise) {
+            console.error('[RoutineBuilder] Failed to create exercise:', exErr);
+            continue;
+          }
+          newExerciseId = newExercise.id;
+        }
+        
+        exerciseIdMap.set(ex.exercise_id, newExerciseId);
+      }
+      
+      exercisesPayload.push({
         routine_id: newRoutineId,
-        exercise_id: ex.exercise_id,
+        exercise_id: newExerciseId,
         exercise_order: ex.order || 0,
         user_id: user.id,
-      }));
+      });
+    }
+    
     let insertedREs = [];
     if (exercisesPayload.length > 0) {
       const { data: reRows, error: reErr } = await supabase
@@ -492,7 +535,10 @@ const RoutineBuilder = () => {
 
     // Insert routine_sets
     for (const ex of exercises) {
-      const newRE = insertedREs.find((row) => row.exercise_id === ex.exercise_id);
+      const newExerciseId = exerciseIdMap.get(ex.exercise_id);
+      if (!newExerciseId) continue;
+      
+      const newRE = insertedREs.find((row) => row.exercise_id === newExerciseId);
       if (!newRE) continue;
       const setsPayload = (ex.setConfigs || [])
         .map((config, idx) => ({
@@ -722,9 +768,15 @@ const RoutineBuilder = () => {
 
   const handleAddExercise = async (exerciseData) => {
     try {
+      // Get current user ID (accounting for delegate mode)
+      const effectiveUserId = isDelegated && actingUser ? actingUser.id : user?.id;
+      if (!effectiveUserId) throw new Error("Not authenticated");
+
+      // Search for exercise by name AND user_id (user-scoped)
       let { data: existingResults } = await supabase
         .from("exercises")
         .select("id, section")
+        .eq("user_id", effectiveUserId)
         .ilike("name", exerciseData.name)
         .limit(1);
       let existing = existingResults && existingResults.length > 0 ? existingResults[0] : null;
@@ -732,19 +784,24 @@ const RoutineBuilder = () => {
       if (!exercise_id) {
         const { data: newEx, error: insertError } = await supabase
           .from("exercises")
-          .insert([{ name: exerciseData.name, section: exerciseData.section || "training" }])
+          .insert([{ 
+            name: exerciseData.name, 
+            section: exerciseData.section || "training",
+            user_id: effectiveUserId
+          }])
           .select("id")
           .single();
         if (insertError || !newEx) throw new Error("Failed to create exercise");
         exercise_id = newEx.id;
       } else {
-        // Ensure the exercise's canonical section matches the user's selection from the sheet
+        // Update section if different (user owns this exercise, so safe to update)
         const desiredSection = exerciseData.section || "training";
         if (existing.section !== desiredSection) {
           await supabase
             .from("exercises")
             .update({ section: desiredSection })
-            .eq("id", exercise_id);
+            .eq("id", exercise_id)
+            .eq("user_id", effectiveUserId);
         }
       }
       // Check if this exercise is already in the routine
@@ -814,10 +871,15 @@ const RoutineBuilder = () => {
   const handleEditExercise = async (exerciseData) => {
     try {
       if (!editingExercise) return;
+      // Get current user ID (accounting for delegate mode)
+      const effectiveUserId = isDelegated && actingUser ? actingUser.id : user?.id;
+      if (!effectiveUserId) throw new Error("Not authenticated");
+      
       await supabase
         .from("exercises")
         .update({ name: exerciseData.name, section: exerciseData.section })
-        .eq("id", editingExercise.exercise_id);
+        .eq("id", editingExercise.exercise_id)
+        .eq("user_id", effectiveUserId);
       // Safely persist set changes using the shared updater that respects the DB trigger
       await handleSetConfigsChange(editingExercise.exercise_id, exerciseData.setConfigs || []);
       setEditingExercise(null);
