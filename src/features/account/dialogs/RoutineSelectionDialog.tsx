@@ -112,6 +112,7 @@ const RoutineSelectionDialog: React.FC<RoutineSelectionDialogProps> = ({
                   lastCompleted={routine.lastCompletedText}
                   routineData={routine}
                   onCardClick={() => onSelectRoutine(routine)}
+                  onSettingsClick={() => onSelectRoutine(routine)}
                 />
               </CardWrapper>
             )
