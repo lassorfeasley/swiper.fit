@@ -106,8 +106,38 @@ async function generateWorkoutOG(workoutId, save, res) {
           backgroundColor: '#0084D1',
           position: 'relative',
           fontFamily: 'Inter',
+          overflow: 'hidden',
         },
         children: [
+          // Watermark - diagonal checkmark in background
+          {
+            type: 'div',
+            props: {
+              style: {
+                position: 'absolute',
+                top: '-200px',
+                left: '-100px',
+                width: '1000px',
+                height: '1000px',
+                display: 'flex',
+              },
+              children: {
+                type: 'svg',
+                props: {
+                  width: '1000',
+                  height: '1000',
+                  viewBox: '0 0 1524 1193',
+                  children: {
+                    type: 'path',
+                    props: {
+                      d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
+                      fill: '#0069A8',
+                    },
+                  },
+                },
+              },
+            },
+          },
           // Top row: metrics
           {
             type: 'div',
@@ -337,8 +367,38 @@ async function generateRoutineOG(routineId, save, res) {
           backgroundColor: '#F54900',
           position: 'relative',
           fontFamily: 'Inter',
+          overflow: 'hidden',
         },
         children: [
+          // Watermark - diagonal checkmark in background
+          {
+            type: 'div',
+            props: {
+              style: {
+                position: 'absolute',
+                top: '-200px',
+                left: '-100px',
+                width: '1000px',
+                height: '1000px',
+                display: 'flex',
+              },
+              children: {
+                type: 'svg',
+                props: {
+                  width: '1000',
+                  height: '1000',
+                  viewBox: '0 0 1524 1193',
+                  children: {
+                    type: 'path',
+                    props: {
+                      d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
+                      fill: '#CA3500',
+                    },
+                  },
+                },
+              },
+            },
+          },
           // Top: WWW.SWIPER.FIT
           {
             type: 'div',
