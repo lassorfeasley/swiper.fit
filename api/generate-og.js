@@ -109,28 +109,28 @@ async function generateWorkoutOG(workoutId, save, res) {
           overflow: 'hidden',
         },
         children: [
-          // Watermark - diagonal checkmark in background
+          // Watermark - diagonal checkmark in background (from Figma)
           {
             type: 'div',
             props: {
               style: {
                 position: 'absolute',
-                top: '-200px',
-                left: '-100px',
-                width: '1000px',
-                height: '1000px',
+                top: '0',
+                left: '0',
+                width: '1200px',
+                height: '630px',
                 display: 'flex',
               },
               children: {
                 type: 'svg',
                 props: {
-                  width: '1000',
-                  height: '1000',
-                  viewBox: '0 0 1524 1193',
+                  width: '1200',
+                  height: '630',
+                  viewBox: '0 0 1200 630',
                   children: {
                     type: 'path',
                     props: {
-                      d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
+                      d: 'M1356 -149.166L359.034 856.442L-168 369.111L4.22965 174.458L351.387 495.463L1175.74 -336L1356 -149.166Z',
                       fill: '#0069A8',
                     },
                   },
@@ -370,28 +370,28 @@ async function generateRoutineOG(routineId, save, res) {
           overflow: 'hidden',
         },
         children: [
-          // Watermark - diagonal checkmark in background
+          // Watermark - diagonal checkmark in background (from Figma)
           {
             type: 'div',
             props: {
               style: {
                 position: 'absolute',
-                top: '-200px',
-                left: '-100px',
-                width: '1000px',
-                height: '1000px',
+                top: '0',
+                left: '0',
+                width: '1200px',
+                height: '630px',
                 display: 'flex',
               },
               children: {
                 type: 'svg',
                 props: {
-                  width: '1000',
-                  height: '1000',
-                  viewBox: '0 0 1524 1193',
+                  width: '1200',
+                  height: '630',
+                  viewBox: '0 0 1200 630',
                   children: {
                     type: 'path',
                     props: {
-                      d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
+                      d: 'M1356 -149.166L359.034 856.442L-168 369.111L4.22965 174.458L351.387 495.463L1175.74 -336L1356 -149.166Z',
                       fill: '#CA3500',
                     },
                   },
