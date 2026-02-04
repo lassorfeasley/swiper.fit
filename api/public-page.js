@@ -128,8 +128,8 @@ async function handleRoutinePage(req, res, routineId, isBot, userAgent, supabase
     const title = ownerName ? `${ownerName} shared a ${routine.routine_name} on Swiper` : `${routine.routine_name} on Swiper`;
     const description = `Swiper is the effortless way to log workouts`;
     
-    // Use pre-generated OG image if available, otherwise use API endpoint
-    const ogImageUrl = routine.og_image_url || `${baseUrl}/api/og-images?type=routine&routineId=${routineId}`;
+    // Use pre-generated OG image if available, otherwise use API endpoint to generate
+    const ogImageUrl = routine.og_image_url || `${baseUrl}/api/generate-og?type=routine&id=${routineId}`;
     
     console.log('[public-page] Routine OG image:', {
       routineId,
@@ -338,6 +338,18 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
       return res.status(500).send('Internal server error');
     }
 
+    // Get exercise and set counts for the workout
+    const { count: exerciseCount } = await supabase
+      .from('workout_exercises')
+      .select('*', { count: 'exact', head: true })
+      .eq('workout_id', workoutId);
+
+    const { count: setCount } = await supabase
+      .from('sets')
+      .select('*', { count: 'exact', head: true })
+      .eq('workout_id', workoutId)
+      .eq('status', 'complete');
+
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.swiper.fit';
     const pageUrl = `${baseUrl}/history/public/workout/${workoutId}`;
     
@@ -365,13 +377,13 @@ async function handleWorkoutPage(req, res, workoutId, isBot, userAgent, supabase
     const title = `${ownerName} completed a ${workout.workout_name || routineName} on Swiper`;
     const description = `Swiper is the effortless way to log workouts`;
     
-    // Use pre-generated OG image if available, otherwise use API endpoint
+    // Use pre-generated OG image if available, otherwise use API endpoint to generate
     // IMPORTANT: Always use the direct image URL when available (not the API endpoint)
     // This ensures better caching and avoids redirect chains
     const ogImageUrl = workout.og_image_url && typeof workout.og_image_url === 'string' 
       ? workout.og_image_url.trim() 
       : null;
-    const ogImage = ogImageUrl || `${baseUrl}/api/og-images?type=workout&workoutId=${workoutId}`;
+    const ogImage = ogImageUrl || `${baseUrl}/api/generate-og?type=workout&id=${workoutId}`;
     
     console.log('[public-page] Workout OG image:', {
       workoutId,
