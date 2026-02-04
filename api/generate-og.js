@@ -108,27 +108,6 @@ async function generateWorkoutOG(workoutId, save, res) {
           fontFamily: 'Inter',
         },
         children: [
-          // Logomark watermark (as background shape)
-          {
-            type: 'svg',
-            props: {
-              width: 1524,
-              height: 1193,
-              viewBox: '0 0 1524 1193',
-              style: {
-                position: 'absolute',
-                top: '-336px',
-                left: '-168px',
-              },
-              children: {
-                type: 'path',
-                props: {
-                  d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
-                  fill: '#0069A8',
-                },
-              },
-            },
-          },
           // Top row: metrics
           {
             type: 'div',
@@ -206,6 +185,7 @@ async function generateWorkoutOG(workoutId, save, res) {
                     lineHeight: 1.2,
                     maxWidth: '1112px',
                     wordWrap: 'break-word',
+                    display: 'flex',
                   },
                   children: workoutName,
                 },
@@ -217,6 +197,7 @@ async function generateWorkoutOG(workoutId, save, res) {
             type: 'div',
             props: {
               style: {
+                display: 'flex',
                 padding: '0 44px 44px',
                 position: 'relative',
                 zIndex: 1,
@@ -228,6 +209,7 @@ async function generateWorkoutOG(workoutId, save, res) {
                     color: 'white',
                     fontSize: '50px',
                     fontWeight: 300,
+                    display: 'flex',
                   },
                   children: routineName,
                 },
@@ -357,32 +339,12 @@ async function generateRoutineOG(routineId, save, res) {
           fontFamily: 'Inter',
         },
         children: [
-          // Logomark watermark
-          {
-            type: 'svg',
-            props: {
-              width: 1524,
-              height: 1193,
-              viewBox: '0 0 1524 1193',
-              style: {
-                position: 'absolute',
-                top: '-336px',
-                left: '-168px',
-              },
-              children: {
-                type: 'path',
-                props: {
-                  d: 'M1524 186.834L527.034 1192.44L0 705.111L172.23 510.458L519.387 831.463L1343.74 0L1524 186.834Z',
-                  fill: '#CA3500',
-                },
-              },
-            },
-          },
           // Top: WWW.SWIPER.FIT
           {
             type: 'div',
             props: {
               style: {
+                display: 'flex',
                 padding: '44px',
                 position: 'relative',
                 zIndex: 1,
@@ -395,6 +357,7 @@ async function generateRoutineOG(routineId, save, res) {
                     fontSize: '30px',
                     fontWeight: 700,
                     letterSpacing: '1.2px',
+                    display: 'flex',
                   },
                   children: 'WWW.SWIPER.FIT',
                 },
@@ -423,6 +386,7 @@ async function generateRoutineOG(routineId, save, res) {
                     lineHeight: 1,
                     maxWidth: '1025px',
                     wordWrap: 'break-word',
+                    display: 'flex',
                   },
                   children: routineName,
                 },
@@ -434,6 +398,7 @@ async function generateRoutineOG(routineId, save, res) {
             type: 'div',
             props: {
               style: {
+                display: 'flex',
                 padding: '0 44px 44px',
                 position: 'relative',
                 zIndex: 1,
@@ -445,6 +410,7 @@ async function generateRoutineOG(routineId, save, res) {
                     color: 'white',
                     fontSize: '50px',
                     fontWeight: 300,
+                    display: 'flex',
                   },
                   children: ownerName ? `Routine created by ${ownerName}` : 'Routine',
                 },
